@@ -1,0 +1,86 @@
+@font-face {
+    font-family: 'body';
+    src: url('./files/fonts/Montserrat-Regular.ttf') format('truetype');
+    font-display: fallback;
+}
+
+body {
+    margin: 0px;
+    background-color: #f0f0f0;
+    color: #fff;
+    font-family: "body", "Arial", sans-serif;
+    font-size: 13px;
+	line-height: 24px;
+	overscroll-behavior: none;
+    overflow: hidden;
+}
+
+.dark {
+    color: #000;
+}
+
+a {
+    color: #FF7F02;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#info {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    -moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+    pointer-events: none;
+    z-index: 1; /* TODO Solve this in HTML */
+}
+
+a {
+    pointer-events: auto;
+}
+
+canvas {
+    display: block;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.lil-gui {
+    --number-color: #ff8002;
+	--string-color: lightgreen;
+	z-index: 2 !important; /* TODO Solve this in HTML */
+}
+
+@media all and (max-width: 640px) {
+	.lil-gui.root { 
+		right: auto;
+		top: auto;
+		max-height: 50%;
+		max-width: 80%;
+		bottom: 0;
+		left: 0;
+	}
+}
+
+.bar {
+    background: lightgreen;
+}
+
+#notSupported {
+	width: 50%;
+	margin: auto;
+	background-color: #f00;
+	margin-top: 20px;
+	padding: 10px;
+}

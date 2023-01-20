@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - texture heatmap</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - texture heatmap
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { HeatmapGenerator } from './jsm/textures/HeatmapGenerator.js';
+		import { GradientTextureGenerator } from './jsm/textures/GradientTextureGenerator.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.Renderer(gl);
+		renderer.renderPass.setClearColor(0.6, 0.6, 0.6, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 120, 120);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const gui = new GUI();
+		gui.close();
+
+		// heatmap
+
+		const generator = new HeatmapGenerator(1024, 1024);
+
+		const gradientTexture = new GradientTextureGenerator().gradient({
+			0.1: 'blue', 0.4: 'cyan', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red'
+		}).getTexture();
+
+		const planeGeometry = new t3d.PlaneGeometry(50, 50);
+
+		const material = new t3d.BasicMaterial();
+		material.diffuseMap = generator.getGrayTexture();
+		material.transparent = true;
+		const mesh = new t3d.Mesh(planeGeometry, material);
+		mesh.position.set(30, 0, 30);
+		scene.add(mesh);
+
+		const material2 = new t3d.BasicMaterial();
+		material2.diffuseMap = generator.getTexture();
+		material2.transparent = true;
+		const mesh2 = new t3d.Mesh(planeGeometry, material2);
+		mesh2.position.set(-30, 0, 30);
+		scene.add(mesh2);
+
+		const params = { radius: 30, interpolation: 'gaussian', gaussianSigma: 0.158, alpha: false, gradientTexture: 0 };
+
+		function updateTextures() {
+			generator.render(renderer, [
+				[15, -15, 38],
+				[15, 15, 39],
+				[-15, 15, 40],
+				[-15, -15, 41]
+			], {
+				size: [60, 60],
+				radius: params.radius,
+				interpolation: params.interpolation,
+				gaussianSigma: params.gaussianSigma,
+				range: [35, 41]
+			}).colorize(renderer, gradientTexture, {
+				alpha: params.alpha
+			});
+		}
+
+		updateTextures();
+
+		const debugFolder = gui.addFolder('debug');
+		debugFolder.add(params, 'radius', 1, 30, 0.1).onChange(updateTextures);
+		debugFolder.add(params, 'interpolation', ['gaussian', 'linear', 'cos']).onChange(updateTextures);
+		debugFolder.add(params, 'gaussianSigma', 0, 0.5, 0.001).onChange(updateTextures);
+		debugFolder.add(params, 'alpha').onChange(updateTextures);
+
+		// heatmap with hightmap
+
+		const heatmapHeightShader = {
+			name: 'hm_s',
+			uniforms: {
+				hightMap: null,
+				colorMap: null,
+				heightFactor: 20
+			},
+			vertexShader: `
+				attribute vec3 a_Position;
+				attribute vec2 a_Uv;
+				uniform mat4 u_ProjectionView;
+				uniform mat4 u_Model;
+				uniform sampler2D hightMap;
+				uniform float heightFactor;
+				varying vec2 v_Uv;
+				void main() {
+					v_Uv = a_Uv;
+
+					vec4 texel = texture2D(hightMap, v_Uv);
+					vec3 position = a_Position;
+					position.y += texel.r * heightFactor;
+					
+					gl_Position = u_ProjectionView * u_Model * vec4(position, 1.0);
+				}
+			`,
+			fragmentShader: `
+				uniform sampler2D colorMap;
+				varying vec2 v_Uv;
+				void main() {
+					vec4 texel = texture2D(colorMap, v_Uv);
+					gl_FragColor = texel;
+				}
+			`
+		}
+
+		const supportVertexTextures = renderer.renderPass.capabilities.maxVertexTextures > 0;
+
+		if (supportVertexTextures) {
+			new Texture2DLoader().load('./resources/platte.png', function(texture) {
+				const generator2 = new HeatmapGenerator(2048, 1024);
+				const data = [];
+				for (let i = 0; i < 50; i++) {
+					data[i] = [Math.random() * 120 - 60, Math.random() * 60 - 30, Math.random() * 0.6];
+				}
+				generator2.render(renderer, data, {
+					size: [120, 60],
+					radius: 15
+				}).colorize(renderer, texture, {
+					alpha: false
+				});
+
+				const hightMaterial = new t3d.ShaderMaterial(heatmapHeightShader);
+				hightMaterial.uniforms.hightMap = generator2.getGrayTexture();
+				hightMaterial.uniforms.colorMap = generator2.getTexture();
+				hightMaterial.transparent = true;
+
+				const hightGeometry = new t3d.PlaneGeometry(100, 50, 100, 50);
+		
+				const hightMesh = new t3d.Mesh(hightGeometry, hightMaterial);
+				hightMesh.position.z = -30;
+				scene.add(hightMesh);
+			});
+		}
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+		
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+		
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.clear(true, true, true);
+			renderer.renderScene(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

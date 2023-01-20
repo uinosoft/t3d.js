@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custom pass blur</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - custom pass blur
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { AssimpJsonLoader } from './jsm/loaders/AssimpJsonLoader.js';
+		import { FastGaussianBlurShader } from './jsm/shaders/FastGaussianBlurShader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const scene = new t3d.Scene();
+
+		const jeep = "resources/models/assimp/jeep/jeep.assimp.json";
+		const interior = "resources/models/assimp/interior/interior.assimp.json";
+
+		const loader1 = new AssimpJsonLoader();
+		loader1.load(jeep, function(object) {
+			object.scale.set(0.4, 0.4, 0.4);
+			object.traverse(function(obj) {
+				if (obj.isMesh) {
+					obj.castShadow = true;
+				}
+			});
+			scene.add(object);
+		});
+
+		const loader2 = new AssimpJsonLoader();
+		loader2.load(interior, function(object) {
+			object.traverse(function(obj) {
+				if (obj.isMesh) {
+					obj.receiveShadow = true;
+				}
+			});
+			scene.add(object);
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const spotLight = new t3d.SpotLight(0xffffff, 0.5, 30, Math.PI / 5, 0.3);
+		spotLight.position.set(0, 10, 0);
+		spotLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		spotLight.castShadow = true;
+		scene.add(spotLight);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.3;
+		camera.position.set(0, 4, 10);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		// custom pass
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const tempRenderTarget1 = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget1.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget1.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget1.texture.encoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		const shadowMapPass = new t3d.ShadowMapPass();
+		const blurPass = new t3d.ShaderPostPass(FastGaussianBlurShader);
+		blurPass.uniforms["resolution"] = [1 / width, 1 / height];
+
+		// gui
+		let params = { radius: 5 };
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(params, "radius", 0, 10, 0.01);
+		gui.add(blurPass.material.defines, "SAMPLERS", [5, 9, 13]).onChange(val => {
+			blurPass.material.needsUpdate = true;
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			camera.position.x = 10 * Math.sin(count / 1000 * .5);
+			camera.position.z = 10 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			shadowMapPass.render(renderer, scene);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget1);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			renderer.renderScene(scene, camera);
+
+			const iterations = Math.floor(params.radius / 2) * 2 + 2;
+			let read = tempRenderTarget1, write = tempRenderTarget2, temp;
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			for (let i = 0; i < iterations; i++) {
+				const radius = params.radius * (1 + i) / iterations;
+				renderer.renderPass.setRenderTarget(i === (iterations - 1) ? backRenderTarget : write);
+				renderer.renderPass.clear(true, true, true);
+				blurPass.uniforms.tDiffuse = read.texture;
+				blurPass.uniforms.direction[0] = i % 2 === 0 ? radius : 0;
+				blurPass.uniforms.direction[1] = i % 2 === 1 ? radius : 0;
+				blurPass.render(renderer);
+
+				temp = read;
+				read = write;
+				write = temp;
+			}
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width, height);
+			tempRenderTarget1.resize(width, height);
+			tempRenderTarget2.resize(width, height);
+
+			blurPass.uniforms["resolution"] = [1 / width, 1 / height];
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

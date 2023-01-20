@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - gltf camera</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf camera
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const file = "resources/models/gltf/Duck/glTF/Duck.gltf";
+
+		let camera, controller;
+
+		const loader = new GLTFLoader();
+		loader.load(file).then(function(result) {
+			scene.add(result.root);
+			camera = result.cameras[0];
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			controller = new OrbitControls(camera, canvas);
+			controller.target.set(0, 1, 0);
+		}).catch(e => console.error(e));
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const lambert = new t3d.BasicMaterial();
+		lambert.diffuse.setHex(0x888888);
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		scene.add(plane);
+		
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(2, 1, -2);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller && controller.update();
+
+			camera && forwardRenderer.render(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shader sky</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - shader sky
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { Sky } from './jsm/objects/Sky.js';
+		import { GridHelper } from './jsm/objects/GridHelper.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const grid = new GridHelper(100, 10, 0x85a4d7, 0xffffff);
+		grid.position.y = -10;
+		scene.add(grid);
+		
+		const sunSphere = new t3d.Mesh(
+			new t3d.SphereGeometry(20000, 16, 8),
+			new t3d.BasicMaterial()
+		);
+		sunSphere.material.diffuse.setRGB(1, 1, 1);
+		sunSphere.position.y = -700000;
+
+		const sky = new Sky();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 100);
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 2000000);
+		camera.add(sky);
+		scene.add(camera);
+
+		// add a hover controller
+		const controller = new OrbitControls(camera, canvas);
+		
+		// GUI
+
+		const effectController  = {
+			turbidity: 10,
+			rayleigh: 2,
+			mieCoefficient: 0.005,
+			mieDirectionalG: 0.8,
+			luminance: 1,
+			inclination: 0.49, // elevation / inclination
+			azimuth: 0.25, // Facing front,
+			sun: !true
+		};
+
+		const distance = 400000;
+
+		function guiChanged() {
+			const uniforms = sky.material.uniforms;
+			uniforms.turbidity = effectController.turbidity;
+			uniforms.rayleigh = effectController.rayleigh;
+			uniforms.luminance = effectController.luminance;
+			uniforms.mieCoefficient = effectController.mieCoefficient;
+			uniforms.mieDirectionalG = effectController.mieDirectionalG;
+
+			const theta = Math.PI * (effectController.inclination - 0.5);
+			const phi = 2 * Math.PI * (effectController.azimuth - 0.5);
+
+			sunSphere.position.x = distance * Math.cos(phi);
+			sunSphere.position.y = distance * Math.sin(phi) * Math.sin(theta);
+			sunSphere.position.z = distance * Math.sin(phi) * Math.cos(theta);
+
+			scene.remove(sunSphere);
+			effectController.sun && scene.add(sunSphere);
+
+			uniforms.sunPosition[0] = distance * Math.cos(phi);
+			uniforms.sunPosition[1] = distance * Math.sin(phi) * Math.sin(theta);
+			uniforms.sunPosition[2] = distance * Math.sin(phi) * Math.cos(theta);
+		}
+
+		const gui = new GUI();
+
+		gui.add(effectController, "turbidity", 1.0, 20.0, 0.1).onChange(guiChanged);
+		gui.add(effectController, "rayleigh", 0.0, 4, 0.001).onChange(guiChanged);
+		gui.add(effectController, "mieCoefficient", 0.0, 0.1, 0.001).onChange(guiChanged);
+		gui.add(effectController, "mieDirectionalG", 0.0, 1, 0.001).onChange(guiChanged);
+		gui.add(effectController, "luminance", 0.0, 2).onChange(guiChanged);
+		gui.add(effectController, "inclination", 0, 1, 0.0001).onChange(guiChanged);
+		gui.add(effectController, "azimuth", 0, 1, 0.0001).onChange(guiChanged);
+		gui.add(effectController, "sun").onChange(guiChanged);
+
+		guiChanged();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 2000000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

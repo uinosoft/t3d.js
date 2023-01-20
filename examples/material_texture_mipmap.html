@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - mipmap</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - mipmap
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+
+		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
+		const material = new t3d.BasicMaterial();
+		material.diffuseMap = texture;
+		const cube = new t3d.Mesh(cube_geometry, material);
+		scene.add(cube);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(0, 10, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		// gui
+		const params = { minFilter: "LINEAR" };
+		const gui = new GUI();
+		gui.add(params, "minFilter", ["LINEAR", "NEAREST", "LINEAR_MIPMAP_LINEAR", "NEAREST_MIPMAP_NEAREST"]).onChange(value => {
+			switch (value) {
+				case "LINEAR":
+					texture.generateMipMaps = false;
+					texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+					break;
+				case "NEAREST":
+					texture.generateMipMaps = false;
+					texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+					break;
+				case "LINEAR_MIPMAP_LINEAR":
+					texture.generateMipMaps = true;
+					texture.minFilter = t3d.TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+					break;
+				case "NEAREST_MIPMAP_NEAREST":
+					texture.generateMipMaps = true;
+					texture.minFilter = t3d.TEXTURE_FILTER.NEAREST_MIPMAP_NEAREST;
+					break;
+			}
+			texture.version++;
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			camera.position.x = 30 * Math.sin(count / 1000 * .5);
+			camera.position.z = 30 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

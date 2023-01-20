@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shadow adapter</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - shadow adapter
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+		import { ShadowAdapter } from './jsm/math/ShadowAdapter.js';
+		import { Box3Helper } from './jsm/objects/Box3Helper.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		const scene = new t3d.Scene();
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
+		directionalLight.castShadow = true;
+		directionalLight.shadow.mapSize.set(2048, 2048);
+		directionalLight.shadow.bias = 0.0013;
+		directionalLight.shadow.normalBias = 4;
+		directionalLight.shadow.frustumEdgeFalloff = 0.5;
+		scene.add(directionalLight);
+		
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 100);
+		directionalLight.add(directionalLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 800, 2000);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
+		scene.add(camera);
+
+		const debugCamera = new t3d.Camera();
+		debugCamera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
+		scene.add(debugCamera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = true;
+
+		const debugController = new OrbitControls(debugCamera, canvas);
+		debugController.enablePan = true;
+		debugController.enabled = false;
+
+		const geometries = [], offsetMatrix = new t3d.Matrix4();
+		for (let i = 0; i < 2000; i++) {
+			offsetMatrix.elements[12] = Math.random() * 20000 - 10000;
+			offsetMatrix.elements[13] = 100;
+			offsetMatrix.elements[14] = Math.random() * 20000 - 10000;
+			const geometry = new t3d.BoxGeometry(50, 200, 50);
+			GeometryUtils.applyMatrix4(geometry, offsetMatrix);
+			geometries.push(geometry);
+		}
+		const boxesGeometry = GeometryUtils.mergeGeometries(geometries);
+		boxesGeometry.computeBoundingBox();
+		boxesGeometry.computeBoundingSphere();
+		const boxes = new t3d.Mesh(boxesGeometry, new t3d.PhongMaterial());
+		boxes.material.diffuse.setHex(0xBBBBBB);
+		boxes.material.metalness = 0;
+		boxes.material.roughness = 1;
+		boxes.castShadow = true;
+		boxes.receiveShadow = true;
+		scene.add(boxes);
+
+		const plane = new t3d.Mesh(new t3d.PlaneGeometry(100000, 100000), new t3d.LambertMaterial());
+		plane.material.diffuse.setHex(0x999999);
+		plane.material.dithering = true;
+		plane.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const shadowBox = new t3d.Box3();
+		shadowBox.min.set(-10000, 0, -10000);
+		shadowBox.max.set(10000, 200, 10000);
+
+		const boxHelper = new Box3Helper(shadowBox, 0xffff00);
+		scene.add(boxHelper);
+
+		const debugSphere = new t3d.Mesh(new t3d.SphereGeometry(1, 16, 10), new t3d.BasicMaterial());
+		debugSphere.material.diffuse.setRGB(0.6, 1, 0.8);
+		debugSphere.material.drawMode = t3d.DRAW_MODE.LINE_STRIP;
+		scene.add(debugSphere);
+
+		const frustumArray = new Float32Array([
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+		]);
+		const frustumBuffer = new t3d.Buffer(frustumArray, 3);
+		const frustumHelper = new t3d.Mesh(new t3d.Geometry(), new t3d.BasicMaterial());
+		frustumHelper.geometry.addAttribute('a_Position', new t3d.Attribute(frustumBuffer));
+		frustumHelper.material.diffuse.setRGB(0.6, 0.6, 1);
+		frustumHelper.material.drawMode = t3d.DRAW_MODE.LINES;
+		camera.add(frustumHelper);
+		const vector3 = new t3d.Vector3();
+		function updateFrustumBuffer() {
+			vector3.set(1, 1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 3);
+			vector3.set(1, -1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 9);
+			vector3.set(-1, -1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 15);
+			vector3.set(-1, 1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 21);
+			frustumBuffer.version++;
+			frustumHelper.geometry.computeBoundingBox();
+			frustumHelper.geometry.computeBoundingSphere();
+		}
+		updateFrustumBuffer();
+
+		const debugPointGeometry = new t3d.SphereGeometry(100, 8, 6);
+		const debugPointMaterial = new t3d.BasicMaterial();
+		debugPointMaterial.diffuse.setHex(0xff0000);
+		const pointContainer = new t3d.Object3D();
+		scene.add(pointContainer);
+
+		// gui
+		const params = { phi: 45, theta: 45, shadowBox: true, distance: 2000, helper: false, debug: false };
+
+		const lightSphere = new t3d.Sphere();
+
+		const gui = new GUI();
+		const adapterFolder = gui.addFolder('ShadowAdapter');
+		adapterFolder.add(params, 'phi', 0, 90, 0.1);
+		adapterFolder.add(params, 'theta', 0, 360, 0.1);
+		adapterFolder.add(params, 'distance', 0, 4000, 1);
+		adapterFolder.add(params, 'shadowBox');
+		adapterFolder.add(params, 'helper');
+		adapterFolder.add(params, 'debug').onChange(value => {
+			controller.enabled = !value;
+			debugController.enabled = value;
+			if (value) {
+				debugCamera.position.copy(camera.position);
+				debugCamera.quaternion.copy(camera.quaternion);
+				debugController.target.copy(controller.target);
+			}
+		});
+		adapterFolder.add(lightSphere, 'radius').name('sphere radius').listen().disable();
+		const shadowFolder = gui.addFolder('Shadow');
+		shadowFolder.add(directionalLight.shadow, 'bias', -0.02, 0.02, 0.0001);
+		shadowFolder.add(directionalLight.shadow, 'normalBias', -5, 5, 0.1);
+		shadowFolder.add(directionalLight.shadow, 'frustumEdgeFalloff', 0, 1, 0.01);
+		shadowFolder.close();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+			debugController.update();
+
+			// update camera matrix before calculate shadow
+			camera.updateMatrix();
+
+			// set shadow area
+
+			const useShadowDistance = params.distance > 0;
+			const useShadowBox = params.shadowBox;
+			let debugPolygons;
+
+			if (useShadowDistance && useShadowBox) {
+				debugPolygons = ShadowAdapter.getSphereByBox3AndCamera(shadowBox, camera, 1, params.distance, lightSphere);
+			} else if (useShadowDistance) {
+				ShadowAdapter.getSphereByCamera(camera, 1, params.distance, lightSphere);
+			} else if (useShadowBox) {
+				ShadowAdapter.getSphereByBox3(shadowBox, lightSphere);
+			}
+
+			ShadowAdapter.setDirectionalLight(directionalLight, params.phi / 180 * Math.PI, params.theta / 180 * Math.PI, lightSphere);
+
+			// helpers
+
+			boxHelper.visible = params.helper;
+
+			pointContainer.children.forEach(point => point.visible = false);
+			if (params.debug && debugPolygons) {
+				let pointIndex = 0;
+				debugPolygons.forEach(polygon => {
+					for (let i = 0; i < polygon.verticesIndex; i++) {
+						let point = pointContainer.children[pointIndex];
+						if (!point) {
+							point = new t3d.Mesh(debugPointGeometry, debugPointMaterial);
+							pointContainer.add(point);
+						}
+						point.position.copy(polygon.vertices[i]);
+						point.scale.set(lightSphere.radius / 10000, lightSphere.radius / 10000, lightSphere.radius / 10000);
+						point.visible = true;
+						pointIndex++;
+					}
+				})
+			}
+
+			debugSphere.visible = params.helper;
+			debugSphere.position.copy(lightSphere.center);
+			debugSphere.scale.set(lightSphere.radius, lightSphere.radius, lightSphere.radius);
+		
+			directionalLightHelper.visible = params.helper;
+			directionalLightHelper.update();
+
+			//
+
+			forwardRenderer.render(scene, params.debug ? debugCamera : camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
+			debugCamera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
+
+			updateFrustumBuffer();
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

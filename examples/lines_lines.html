@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - lines</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - lines
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from "./jsm/Clock.js";
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x000000, 50, 60);
+		
+		const texture = new Texture2DLoader().load('./resources/light1.png');
+		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const linesMaterial = new t3d.BasicMaterial();
+		linesMaterial.diffuse.setHex(0xffffff);
+		linesMaterial.diffuseMap = texture;
+		linesMaterial.drawMode = t3d.DRAW_MODE.LINE_LOOP;
+		linesMaterial.transparent = true;
+		linesMaterial.blend = t3d.BLEND_TYPE.ADD;
+
+		const material = new t3d.BasicMaterial();
+		material.diffuse.setHex(0xffff00);
+		material.drawMode = t3d.DRAW_MODE.LINES;
+		material.transparent = true;
+		material.opacity = 0.7;
+		material.blend = t3d.BLEND_TYPE.NORMAL;
+
+		const lines = [];
+		const speeds = [];
+		for (let i = 0; i < 18; i++) {
+			const lineGeometry = new t3d.SphereGeometry(2 * i + 2, 10, 5);
+
+			const line = new t3d.Mesh(lineGeometry, i == 0 ? material : linesMaterial);
+		
+			if (i > 0) {
+				line.euler.x = Math.PI * 2 * Math.random();
+				line.euler.y = Math.PI * 2 * Math.random();
+				line.euler.z = Math.PI * 2 * Math.random();
+			}
+
+			scene.add(line);
+
+			lines.push(line);
+
+			speeds.push(new t3d.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.005));
+		}
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 50);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const clock = new Clock();
+
+		let offsetX = 0;
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			let deltaTime = clock.getDelta();
+
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i];
+				const speed = speeds[i];
+
+				line.euler.x += speed.x;
+				line.euler.y += speed.y;
+				line.euler.z += speed.z;
+			}
+
+			offsetX += 0.2 * deltaTime;
+			linesMaterial.diffuseMapTransform.setUvTransform(offsetX, 0, 1, 1, 0, 0.5, 0.5);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

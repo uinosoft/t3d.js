@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - external buffer</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - external buffer
+		<br/>
+		Setting external glBuffer for t3d buffer.
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x050505, 2000, 3500);
+
+		const array = [];
+		const array2 = [];
+
+		const particles = 100000;
+
+		const n = 1000, n2 = n / 2;
+
+		for (let i = 0; i < particles; i++) {
+			// positions
+			const x = Math.random() * n - n2;
+			const y = Math.random() * n - n2;
+			const z = Math.random() * n - n2;
+
+			// colors
+			const r = (x / n) + 0.5;
+			const g = (y / n) + 0.5;
+			const b = (z / n) + 0.5;
+
+			array.push(x, y, z, r, g, b);
+			array2.push(z * 0.3, x * 0.3, y * 0.3);
+		}
+
+		const gl = forwardRenderer.renderPass.gl;
+
+		const glBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(array), gl.STATIC_DRAW);
+
+		const buffer = new t3d.Buffer(new Float32Array(array2), 6);
+
+		const geometry = new t3d.Geometry();
+		geometry.addAttribute('a_Position', new t3d.Attribute(buffer, 3, 0));
+		geometry.addAttribute('a_Color', new t3d.Attribute(buffer, 3, 3));
+
+		const material = new t3d.PointsMaterial();
+		material.size = 15;
+		material.vertexColors = t3d.VERTEX_COLOR.RGB;
+
+		const points = new t3d.Mesh(geometry, material);
+		points.frustumCulled = false;
+
+		scene.add(points);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 2750);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(27 / 180 * Math.PI, width / height, 5, 3500);
+		scene.add(camera);
+
+		const funcs = {
+			restoreBuffer: function() {
+				buffer.version++;
+				geometry.version++; // refresh vao
+			},
+			setExternalBuffer: function() {
+				forwardRenderer.renderPass.setBufferExternal(buffer, glBuffer);
+				geometry.version++; // refresh vao
+			}
+		};
+
+		funcs.setExternalBuffer();
+
+		const gui = new GUI();
+		gui.add(funcs, 'restoreBuffer').name('Restore buffer');
+		gui.add(funcs, 'setExternalBuffer').name('Set external glBuffer');
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			const time = Date.now() * 0.001;
+
+			points.euler.x = time * 0.1;
+			points.euler.y = time * 0.2;
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(27 / 180 * Math.PI, width / height, 5, 3500);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

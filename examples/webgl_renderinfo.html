@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - render info</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - render info
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+        import { OrbitControls } from './jsm/controls/OrbitControls.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const gl = canvas.getContext('webgl2', {
+        	antialias: true
+        });
+
+        const renderer = new t3d.Renderer(gl);
+        renderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+        const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+        const scene = new t3d.Scene();
+
+        const positionAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array([
+        	-5, -5, 0,
+        	-5, 5, 0,
+        	0, -5, 0,
+        	0, 5, 0,
+        	5, -5, 0,
+        	5, 5, 0
+        ]), 3));
+
+        const drawModes = ['LINES', 'LINE_STRIP', 'LINE_LOOP', 'TRIANGLES', 'TRIANGLE_STRIP', 'TRIANGLE_FAN', 'POINTS'];
+
+        const type = {
+        	drawMode: 'LINES'
+        }
+
+        const geometry = new t3d.Geometry();
+        geometry.addAttribute('a_Position', positionAttribute);
+        const material = new t3d.BasicMaterial();
+        material.side = t3d.DRAW_SIDE.DOUBLE;
+        material.drawMode = t3d.DRAW_MODE.LINES;
+        const mesh = new t3d.Mesh(geometry, material);
+        scene.add(mesh);
+
+        const pointsMaterial = new t3d.PointsMaterial();
+
+        const camera = new t3d.Camera();
+        camera.position.set(0, 10, 30);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+        scene.add(camera);
+
+        const controller = new OrbitControls(camera, canvas);
+
+        const renderInfo = new t3d.RenderInfo();
+
+        const gui = new GUI();
+        gui.add({ RenderInfo: "Render" }, "RenderInfo").disable();
+
+        gui.add(type, 'drawMode', drawModes).onChange((value) => {
+        	if (value == 'POINTS') {
+        		mesh.material = pointsMaterial;
+        	} else {
+        		mesh.material == pointsMaterial ? mesh.material = material : null;
+        		material.drawMode = t3d.DRAW_MODE[value];
+        	}
+        });
+
+        gui.add(renderInfo.render, "calls").disable().listen();
+        gui.add(renderInfo.render, "triangles").disable().listen();
+        gui.add(renderInfo.render, "lines").disable().listen();
+        gui.add(renderInfo.render, "points").disable().listen();
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	controller.update();
+
+        	scene.updateMatrix();
+        	const renderStates = scene.updateRenderStates(camera);
+        	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
+
+        	renderer.renderPass.setRenderTarget(backRenderTarget);
+        	renderer.renderPass.clear(true, true, false);
+
+        	renderInfo.reset();
+
+        	renderer.renderRenderableList(mainLayer.opaque, renderStates, { renderInfo: renderInfo });
+        	renderer.renderRenderableList(mainLayer.transparent, renderStates, { renderInfo: renderInfo });
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+        	backRenderTarget.resize(width, height);
+        }
+        window.addEventListener("resize", onWindowResize, false);
+
+    </script>
+</body>
+
+</html>

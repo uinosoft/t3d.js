@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custom pass ssr</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - custom pass ssr
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GBuffer } from './jsm/GBuffer.js';
+		import { SSRShader } from './jsm/shaders/SSRShader.js';
+		import { BlurShader } from './jsm/shaders/BlurShader.js';
+		import { BlendShader } from './jsm/shaders/BlendShader.js';
+		import { Clock } from './jsm/Clock.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const scene = new t3d.Scene();
+
+		let objects = [];
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load('resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
+			const object = result.root.children[0];
+		
+			for (let i = 0; i < 11; i++) {
+				for (let j = 0; j < 11; j++) {
+					const monkey = object.clone();
+					monkey.position.set((i - 5) * 4, 1, (j - 5) * 4);
+					monkey.material = monkey.material.clone();
+					monkey.material.diffuse.setHSL(Math.random(), 1.0, 0.3);
+					monkey.castShadow = true;
+					monkey.receiveShadow = true;
+					scene.add(monkey);
+					objects.push(monkey);
+				}
+			}
+		});
+
+		const plane_geometry = new t3d.PlaneGeometry(50, 50);
+		const material = new t3d.PBRMaterial();
+		material.diffuse.setHex(0xffffff);
+		material.roughness = 0.1;
+		material.metalness = 0.9;
+		material.dithering = true;
+		const plane = new t3d.Mesh(plane_geometry, material);
+		plane.position.y = 0;
+		scene.add(plane);
+		
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.7);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-40, 40, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 50;
+		directionalLight.shadow.cameraNear = 40;
+		directionalLight.shadow.cameraFar = 100;
+		scene.add(directionalLight);
+
+		plane.receiveShadow = true;
+		directionalLight.castShadow = true;
+		directionalLight.shadow.mapSize.set(1024, 1024);
+
+		const camera = new t3d.Camera();
+		camera.position.set(-8, 7, 20);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 500);
+		scene.add(camera);
+		
+		// TODO set camera near by distance
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// custom pass
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		// todo webgl 1.0 has bug on android here?
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		const gBuffer = new GBuffer(width, height);
+		gBuffer.enableAlbedoMetalness = false;
+
+		const shadowMapPass = new t3d.ShadowMapPass();
+
+		const ssrPass = new t3d.ShaderPostPass(SSRShader);
+		ssrPass.uniforms.maxRayDistance = 10;
+		ssrPass.uniforms.pixelStrideZCutoff = 50;
+
+		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.generateMipmaps = false;
+
+		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget2.texture.generateMipmaps = false;
+
+		const tempRenderTarget3 = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget3.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget3.texture.generateMipmaps = false;
+
+		let projection = new t3d.Matrix4();
+		let projectionInv = new t3d.Matrix4();
+		let viewInverseTranspose = new t3d.Matrix4();
+
+		ssrPass.uniforms["projection"] = projection.elements;
+		ssrPass.uniforms["projectionInv"] = projectionInv.elements;
+		ssrPass.uniforms["viewInverseTranspose"] = viewInverseTranspose.elements;
+
+		ssrPass.uniforms["colorTex"] = tempRenderTarget.texture;
+		ssrPass.uniforms["gBufferTexture1"] = gBuffer.getNormalGlossinessTexture();
+		ssrPass.uniforms["gBufferTexture2"] = gBuffer.getDepthTexture();
+		ssrPass.uniforms["viewportSize"][0] = width;
+		ssrPass.uniforms["viewportSize"][1] = height;
+
+		const blurPass = new t3d.ShaderPostPass(BlurShader);
+		blurPass.uniforms["projection"] = projection.elements;
+		blurPass.uniforms["viewInverseTranspose"] = viewInverseTranspose.elements;
+
+		blurPass.uniforms["normalTex"] = gBuffer.getNormalGlossinessTexture();
+		blurPass.uniforms["depthTex"] = gBuffer.getDepthTexture();
+		blurPass.uniforms["textureSize"][0] = width;
+		blurPass.uniforms["textureSize"][1] = height;
+
+		blurPass.uniforms["blurSize"] = 2;
+		blurPass.uniforms["depthRange"] = 1;
+
+		blurPass.material.defines["NORMALTEX_ENABLED"] = 1;
+		blurPass.material.defines["DEPTHTEX_ENABLED"] = 1;
+		blurPass.material.defines["DEPTH_PACKING"] = 0;
+
+		const blendPass = new t3d.ShaderPostPass(BlendShader);
+		blendPass.uniforms["tDiffuse1"] = tempRenderTarget.texture;
+		blendPass.uniforms["tDiffuse2"] = tempRenderTarget3.texture;
+		blendPass.uniforms["opacity2"] = 1;
+
+		const gui = new GUI();
+		gui.add(material, 'roughness', 0, 1, 0.01);
+		gui.add(material, 'metalness', 0, 1, 0.01);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			let elpasedTime = clock.getElapsedTime();
+			objects.forEach(function(object, idx) {
+				object.position.y = 1 + 0.5 * (Math.sin(elpasedTime * 3 + idx) + 1);
+			});
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			shadowMapPass.render(renderer, scene);
+
+			gBuffer.update(renderer, scene, camera);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			renderer.renderScene(scene, camera);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			projection.copy(camera.projectionMatrix);
+			projectionInv.copy(camera.projectionMatrix).inverse();
+			viewInverseTranspose.copy(camera.worldMatrix).transpose();
+
+			ssrPass.render(renderer);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget3);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			blurPass.uniforms["tDiffuse"] = tempRenderTarget2.texture;
+			blurPass.uniforms["direction"] = 0;
+			blurPass.render(renderer);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			blurPass.uniforms["tDiffuse"] = tempRenderTarget3.texture;
+			blurPass.uniforms["direction"] = 1;
+			blurPass.render(renderer);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			renderer.renderPass.clear(true, true, true);
+
+			blendPass.render(renderer);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 500);
+
+			backRenderTarget.resize(width, height);
+			gBuffer.resize(width, height);
+
+			tempRenderTarget2.resize(width, height);
+			tempRenderTarget3.resize(width, height);
+
+			ssrPass.uniforms["viewportSize"][0] = width;
+			ssrPass.uniforms["viewportSize"][1] = height;
+
+			blurPass.uniforms["textureSize"][0] = width;
+			blurPass.uniforms["textureSize"][1] = height;
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

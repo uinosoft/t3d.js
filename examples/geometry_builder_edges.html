@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - geometry edges builder</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - geometry edges builder
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { EdgesBuilder } from './jsm/geometries/builders/EdgesBuilder.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.9, 0.9, 0.9, 1);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 50, 100);
+		scene.fog.color.setRGB(0.9, 0.9, 0.9);
+
+		const basicMaterial = new t3d.BasicMaterial();
+		basicMaterial.diffuse.setHex(0x000000);
+		basicMaterial.drawMode = t3d.DRAW_MODE.LINES;
+
+		const cube_geometry = new t3d.BoxGeometry(4, 4, 4);
+		const sphere_geometry = new t3d.SphereGeometry(2, 16, 12);
+
+		const geometryData1 = EdgesBuilder.getGeometryData(
+			cube_geometry.attributes.a_Position.buffer.array,
+			cube_geometry.index.buffer.array,
+			{ thresholdAngle: 0.5 }
+		);
+		const cubeEdgesGeometry = new t3d.Geometry();
+		cubeEdgesGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.positions), 3)));
+		cubeEdgesGeometry.computeBoundingBox();
+		cubeEdgesGeometry.computeBoundingSphere();
+		const cubeEdges = new t3d.Mesh(cubeEdgesGeometry, basicMaterial);
+		cubeEdges.position.set(3, 0, 0);
+		scene.add(cubeEdges);
+		
+		const geometryData2 = EdgesBuilder.getGeometryData(
+			sphere_geometry.attributes.a_Position.buffer.array,
+			sphere_geometry.index.buffer.array,
+			{ thresholdAngle: 0.5 }
+		);
+		const sphereEdgesGeometry = new t3d.Geometry();
+		sphereEdgesGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData2.positions), 3)));
+		sphereEdgesGeometry.computeBoundingBox();
+		sphereEdgesGeometry.computeBoundingSphere();
+		const sphereEdges = new t3d.Mesh(sphereEdgesGeometry, basicMaterial);
+		sphereEdges.position.set(-3, 0, 0);
+		scene.add(sphereEdges);
+
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.BasicMaterial();
+		plane_material.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.position.y -= 3;
+		scene.add(plane);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 3, 20);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		// controller.enablePan = false;
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

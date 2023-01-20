@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - deferred lights</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - deferred lights
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { FXAAShader } from './jsm/shaders/FXAAShader.js';
+		import { PMREM } from './jsm/PMREM.js';
+		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+		import { DeferredRenderer } from './jsm/render/DeferredRenderer.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const scene = new t3d.Scene();
+
+		// Create spheres
+
+		const spheresMaterial = new t3d.PBRMaterial();
+		spheresMaterial.diffuse.setRGB(1, 1, 1);
+		spheresMaterial.roughness = 0.4;
+		spheresMaterial.metalness = 0.6;
+
+		const geometries = [], offsetMatrix = new t3d.Matrix4();
+		for (let i = 0; i < 15; i++) {
+			for (let j = 0; j < 15; j++) {
+				offsetMatrix.elements[12] = (i - 7) * 50;
+				offsetMatrix.elements[14] = (j - 7) * 50;
+				offsetMatrix.elements[5] = Math.random() * 1 + 2;
+				const geometry = Math.random() > 0.6 ? new t3d.BoxGeometry(20, 20, 20) : new t3d.SphereGeometry(10, 10, 20);
+				GeometryUtils.applyMatrix4(geometry, offsetMatrix);
+				geometries.push(geometry);
+			}
+		}
+		const spheresGeometry = GeometryUtils.mergeGeometries(geometries);
+		spheresGeometry.computeBoundingBox();
+		spheresGeometry.computeBoundingSphere();
+		const spheres = new t3d.Mesh(spheresGeometry, spheresMaterial);
+		spheres.castShadow = true;
+		scene.add(spheres);
+
+		// Create plane
+
+		const plane_geometry = new t3d.PlaneGeometry(1500, 1500);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.diffuse.setHex(0x555555);
+		plane_material.roughness = 0.8;
+		plane_material.metalness = 0.2;
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.receiveShadow = true;
+		plane.position.y = -10;
+		scene.add(plane);
+
+		// Create Lights
+
+		const maxLightCount = 500;
+
+		// const ambientLight = new t3d.AmbientLight(0xaaaaff, 0.05);
+		// scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.08);
+		directionalLight.position.set(50, 200, -50);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 1000;
+		directionalLight.shadow.mapSize.set(2048, 2048);
+		directionalLight.shadow.autoUpdate = false;
+		directionalLight.shadow.needsUpdate = true;
+		scene.add(directionalLight);
+		
+		let lights = [], lightHelpers = [];
+		const helpherGeometry = new t3d.SphereGeometry(10);
+		for (let i = 0; i < maxLightCount; i++) {
+			const pointLight = new t3d.PointLight(undefined, 0.8, 50);
+			pointLight.color.setHSL(Math.random(), Math.random(), 0.5);
+			pointLight.position.y = Math.random() * 10;
+			lights.push(pointLight);
+
+			pointLight._angle = Math.PI * 2 * Math.random();
+			pointLight._radius = Math.random() * 350 + 20;
+			pointLight._speed = (Math.random() - 0.5) * 0.03;
+
+			pointLight.position.x = Math.cos(pointLight._angle) * pointLight._radius;
+			pointLight.position.z = Math.sin(pointLight._angle) * pointLight._radius;
+
+			const mesh = new t3d.Mesh(helpherGeometry, new t3d.PBRMaterial());
+			mesh.material.diffuse.copy(pointLight.color);
+			mesh.material.roughness = 1;
+			mesh.material.metalness = 0;
+			lightHelpers.push(mesh);
+		}
+
+		function setLights(value) {
+			for (let i = 0, light; i < maxLightCount; i++) {
+				light = lights[i];
+				if (i < value) {
+					scene.add(light);
+				} else {
+					scene.remove(light);
+				}
+			}
+		}
+
+		setLights(100);
+
+		//
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 300, 300);
+		camera.lookAt(new t3d.Vector3(0, 0, -20), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, -5, 0);
+
+		const deferredRenderer = new DeferredRenderer(canvas);
+
+		let cubeTexture = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		], function() {
+			cubeTexture = PMREM.prefilterEnvironmentMap(deferredRenderer, cubeTexture, {
+				sampleSize: 1024
+			});
+
+			deferredRenderer.ambientCubemap = cubeTexture;
+			deferredRenderer.ambientCubemapIntensity = 1;
+		});
+
+		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		
+		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
+		fxaaPass.uniforms["tDiffuse"] = tempRenderTarget.texture;
+		fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+
+		const params = { lightCount: 100, rotate: true, fxaa: true };
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + deferredRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(params, "lightCount", 0, maxLightCount, 1).onChange(setLights);
+		gui.add(params, "rotate");
+		gui.add(params, "fxaa");
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			if (params.rotate) {
+				for (let i = 0; i < lights.length; i++) {
+					const pointLight = lights[i];
+
+					pointLight._angle += pointLight._speed;
+
+					pointLight.position.x = Math.cos(pointLight._angle) * pointLight._radius;
+					pointLight.position.z = Math.sin(pointLight._angle) * pointLight._radius;
+				}
+			}
+
+			if (params.fxaa) {
+				deferredRenderer.render(scene, camera, tempRenderTarget);
+				deferredRenderer.renderPass.setRenderTarget(deferredRenderer.backRenderTarget);
+				fxaaPass.render(deferredRenderer);
+			} else {
+				deferredRenderer.render(scene, camera);
+			}
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+
+			deferredRenderer.resize(width, height);
+			tempRenderTarget.resize(width, height);
+
+			fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

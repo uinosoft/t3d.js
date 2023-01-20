@@ -1,0 +1,195 @@
+{
+	"asset":
+	{
+		"version": "2.0",
+		"generator": "Unreal Engine 4.27.0 glTF Exporter 1.0.6"
+	},
+	"scene": 0,
+	"accessors": [
+		{
+			"bufferView": 0,
+			"count": 16890,
+			"type": "SCALAR",
+			"componentType": 5123
+		},
+		{
+			"bufferView": 1,
+			"count": 4087,
+			"type": "VEC3",
+			"componentType": 5126,
+			"min": [ -0.315339983,
+				0.840499163,
+				-0.253357053
+			],
+			"max": [ 0.293061942,
+				1.51543701,
+				0.295733541
+			]
+		},
+		{
+			"bufferView": 2,
+			"count": 4087,
+			"type": "VEC3",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 3,
+			"count": 4087,
+			"type": "VEC4",
+			"componentType": 5126
+		},
+		{
+			"bufferView": 4,
+			"count": 4087,
+			"type": "VEC2",
+			"componentType": 5126
+		}
+	],
+	"buffers": [
+		{
+			"uri": "a01.bin",
+			"byteLength": 229956
+		}
+	],
+	"bufferViews": [
+		{
+			"buffer": 0,
+			"byteLength": 33780,
+			"target": 34963
+		},
+		{
+			"buffer": 0,
+			"byteLength": 49044,
+			"byteOffset": 33780,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 49044,
+			"byteOffset": 82824,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 65392,
+			"byteOffset": 131868,
+			"target": 34962
+		},
+		{
+			"buffer": 0,
+			"byteLength": 32696,
+			"byteOffset": 197260,
+			"target": 34962
+		}
+	],
+	"images": [
+		{
+			"uri": "lambert9_MetallicRoughness.jpg"
+		},
+		{
+			"uri": "lambert9_Occlusion.jpg"
+		},
+		{
+			"uri": "lambert9_Base_Color.jpg"
+		},
+		{
+			"uri": "lambert9_Normal_OpenGL.jpg"
+		}
+	],
+	"materials": [
+		{
+			"name": "lambert9",
+			"pbrMetallicRoughness":
+			{
+				"baseColorTexture":
+				{
+					"index": 0
+				},
+				"metallicRoughnessTexture":
+				{
+					"index": 1
+				}
+			},
+			"normalTexture":
+			{
+				"index": 2
+			},
+			"occlusionTexture":
+			{
+				"index": 3
+			}
+		}
+	],
+	"meshes": [
+		{
+			"name": "a01",
+			"primitives": [
+				{
+					"attributes":
+					{
+						"POSITION": 1,
+						"NORMAL": 2,
+						"TANGENT": 3,
+						"TEXCOORD_0": 4
+					},
+					"indices": 0,
+					"material": 0
+				}
+			]
+		}
+	],
+	"nodes": [
+		{
+			"mesh": 0
+		}
+	],
+	"samplers": [
+		{
+			"name": "lambert9_MetallicRoughness",
+			"minFilter": 9987,
+			"magFilter": 9729
+		},
+		{
+			"name": "lambert9_Occlusion",
+			"minFilter": 9987,
+			"magFilter": 9729
+		},
+		{
+			"name": "lambert9_Base_Color",
+			"minFilter": 9987,
+			"magFilter": 9729
+		},
+		{
+			"name": "lambert9_Normal_OpenGL",
+			"minFilter": 9987,
+			"magFilter": 9729
+		}
+	],
+	"scenes": [
+		{
+			"nodes": [ 0 ]
+		}
+	],
+	"textures": [
+		{
+			"name": "lambert9_Base_Color",
+			"sampler": 2,
+			"source": 2
+		},
+		{
+			"name": "lambert9_MetallicRoughness",
+			"sampler": 0,
+			"source": 0
+		},
+		{
+			"name": "lambert9_Normal_OpenGL",
+			"sampler": 3,
+			"source": 3
+		},
+		{
+			"name": "lambert9_Occlusion",
+			"sampler": 1,
+			"source": 1
+		}
+	]
+}

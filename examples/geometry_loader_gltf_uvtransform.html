@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - gltf uv transform</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf uv transform
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const file = "resources/models/gltf/TextureTransformTest/glTF/TextureTransformTest.gltf";
+
+		const loader = new GLTFLoader();
+		loader.load(file).then(function(result) {
+			result.root.traverse(function(obj) {
+				if (obj.isMesh) {
+					obj.frustumCulled = false;
+					obj.material.side = t3d.DRAW_SIDE.DOUBLE;
+				}
+			});
+
+			// add mesh to scene
+			const children = result.root.children.slice(0);
+			for (let i = 0, l = children.length; i < l; i++) {
+				scene.add(children[i]);
+			}
+		}).catch(e => console.error(e));
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 1.2);
+		scene.add(ambientLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 8);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

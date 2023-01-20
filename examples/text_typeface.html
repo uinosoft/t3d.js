@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>t3d - text typeface</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - text typeface
+        <br/>Use <a href="https://gero3.github.io/facetype.js/" target="_blank">Facetype.js</a> to generate typeface.json fonts.
+        <br/><a href="https://github.com/components-ai/typefaces" target="_blank">Collection of Google fonts as typeface data.</a>
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { ExtrudeShapeBuilder } from './jsm/geometries/builders/ExtrudeShapeBuilder.js';
+        import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+        import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+        import { Font } from './jsm/geometries/builders/Font.js';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+
+        const scene = new t3d.Scene();
+
+        scene.fog = new t3d.FogExp2(0x000000, 0.0023);
+
+        const planeGeo = new t3d.PlaneGeometry(10000, 10000);
+        const planeMaterial = new t3d.BasicMaterial();
+        planeMaterial.transparent = true;
+        planeMaterial.opacity = 0.5;
+
+        const plane = new t3d.Mesh(planeGeo, planeMaterial);
+        scene.add(plane);
+
+        const ambientLight = new t3d.AmbientLight(0xffffff, 1.2);
+        scene.add(ambientLight);
+
+        const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+        directionalLight.position.set(0, 0.2, 1);
+        directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        scene.add(directionalLight);
+
+        const camera = new t3d.Camera();
+        camera.position.set(0, 80, 300);
+        camera.lookAt(new t3d.Vector3(0, 20, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+        scene.add(camera);
+
+        const group1 = new t3d.Object3D();
+        const group2 = new t3d.Object3D();
+        const group3 = new t3d.Object3D();
+
+        group3.add(group1);
+        group3.add(group2);
+        scene.add(group3);
+
+        const pbrMaterial = new t3d.PBRMaterial();
+        pbrMaterial.diffuse.setHex(0xFF9900);
+        pbrMaterial.roughness = 0.6;
+        pbrMaterial.metalness = 0.4;
+
+        const loader = new t3d.FileLoader();
+        loader.setResponseType('json');
+
+        const message = 'T3D';
+
+        let geometries = [];
+
+        function createText(fontType) {
+        	loader.loadAsync('./resources/fonts/typeface/' + fontType + '.typeface.json')
+        		.then(json => new Font(json))
+        		.then(font => {
+        			// Clear
+        
+        			for (let i = group1.children.length; i >= 0; i--) {
+        				group1.remove(group1.children[i]);
+        			}
+
+        			for (let i = group2.children.length; i >= 0; i--) {
+        				group2.remove(group2.children[i]);
+        			}
+
+        			geometries.forEach(geometry => geometry.dispose());
+        			geometries = [];
+
+        			// Create
+
+        			const shapes = font.generateShapes(message, 70);
+
+        			for (let i = 0; i < shapes.length; i++) {
+        				const geometryData1 = ExtrudeShapeBuilder.getGeometryData({
+        					contour: shapes[i].contour,
+        					holes: shapes[i].holes,
+        					depth: 25
+        				});
+        
+        				const geometry = new t3d.Geometry();
+        				geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.positions), 3)));
+        				geometry.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.uvs), 2)));
+        				geometry.setIndex(new t3d.Attribute(new t3d.Buffer(
+        					(geometryData1.positions.length / 3) > 65536 ? new Uint32Array(geometryData1.indices) : new Uint16Array(geometryData1.indices),
+        					1
+        				)));
+
+        				GeometryUtils.computeNormals(geometry);
+        				geometry.computeBoundingBox();
+        				geometry.computeBoundingSphere();
+
+        				geometries.push(geometry);
+
+        				const extrudeShape1 = new t3d.Mesh(geometry, pbrMaterial);
+        				group1.add(extrudeShape1);
+
+        				const extrudeShape2 = new t3d.Mesh(geometry, pbrMaterial);
+        				group2.add(extrudeShape2);
+        			}
+
+        			group1.position.set(-85, 10, 0);
+        			group1.euler.set(0, Math.PI * 2, 0);
+
+        			group2.position.set(-85, -10, -25);
+        			group2.euler.set(Math.PI, Math.PI * 2, 0);
+        		});
+        }
+
+        createText('optimer_bold');
+
+        const fontParam = {
+        	type: 'optimer_bold'
+        };
+
+        const types = ['optimer_regular', 'optimer_bold', 'helvetiker_regular', 'helvetiker_bold'];
+
+        const gui = new GUI();
+        gui.add(fontParam, 'type', types).onChange(createText);
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+        
+        	group3.euler.y = count / 2000;
+
+        	forwardRenderer.render(scene, camera);
+        }
+
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+
+        	forwardRenderer.backRenderTarget.resize(width, height);
+        }
+        window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+</html>

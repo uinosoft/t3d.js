@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>t3d - boundings</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - boundings
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Box3Helper } from './jsm/objects/Box3Helper.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		forwardRenderer.renderPass.setClearColor(0.6, 0.7, 0.8, 1);
+
+		const scene = new t3d.Scene();
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(20, 30, 40);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 100;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 20);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+		scene.add(camera);
+
+		function createMorphtargetsGeometry() {
+			const geometry = new t3d.CubeGeometry(2, 2, 2, 32, 32, 32);
+
+			// create an empty array to  hold targets for the attribute we want to morph
+			// morphing positions and normals is supported
+			geometry.morphAttributes.position = [];
+
+			// the original positions of the cube's vertices
+			const positionAttribute = geometry.attributes["a_Position"];
+
+			// for the first morph target we'll move the cube's vertices onto the surface of a sphere
+			const spherePositions = [];
+
+			// for the second morph target, we'll twist the cubes vertices
+			const twistPositions = [];
+			const xAxis = new t3d.Vector3(1, 0, 0);
+			const quaternion = new t3d.Quaternion();
+			const vertex = new t3d.Vector3();
+
+			for (let i = 0; i < positionAttribute.buffer.count; i++) {
+				const x = positionAttribute.buffer.array[i * 3];
+				const y = positionAttribute.buffer.array[i * 3 + 1];
+				const z = positionAttribute.buffer.array[i * 3 + 2];
+
+				spherePositions.push(
+					x * Math.sqrt(1 - (y * y / 2) - (z * z / 2) + (y * y * z * z / 3)),
+					y * Math.sqrt(1 - (z * z / 2) - (x * x / 2) + (z * z * x * x / 3)),
+					z * Math.sqrt(1 - (x * x / 2) - (y * y / 2) + (x * x * y * y / 3))
+				);
+
+				// stretch along the x-axis so we can see the twist better
+				vertex.set(x * 2, y, z);
+				quaternion.setFromAxisAngle(xAxis, Math.PI * x / 2);
+				vertex.applyQuaternion(quaternion);
+
+				vertex.toArray(twistPositions, twistPositions.length);
+			}
+
+			// add the spherical positions as the first morph target
+			geometry.morphAttributes.position[0] = new t3d.Attribute(new t3d.Buffer(new Float32Array(spherePositions), 3));
+			// add the twisted positions as the second morph target
+			geometry.morphAttributes.position[1] = new t3d.Attribute(new t3d.Buffer(new Float32Array(twistPositions), 3));
+
+			geometry.computeBoundingBox();
+			geometry.computeBoundingSphere();
+
+			return geometry;
+		}
+
+		const geometry = createMorphtargetsGeometry();
+
+		const material = new t3d.PhongMaterial();
+
+		const mesh = new t3d.Mesh(geometry, material);
+		mesh.morphTargetInfluences = [1, 1];
+		scene.add(mesh);
+
+		// box3 helper
+
+		const box3 = geometry.boundingBox;
+
+		const boxHelper = new Box3Helper(box3);
+		mesh.add(boxHelper);
+
+		// bounding sphere helper
+
+		const sphereMath = geometry.boundingSphere;
+
+		const sphereMat = new t3d.BasicMaterial();
+		sphereMat.transparent = true;
+		sphereMat.opacity = 0.5;
+
+		const sphereGeo = new t3d.SphereGeometry(sphereMath.radius, 32, 32);
+		const sphere = new t3d.Mesh(sphereGeo, sphereMat);
+		sphere.position = sphereMath.center;
+		mesh.add(sphere);
+
+		// Set up dat.GUI to control targets
+
+		const params = {
+			Spherify: 1,
+			Twist: 1,
+			BoundingBox: true,
+			BoundingSphere: true
+		};
+
+		const gui = new GUI({ title: 'Morph Targets' });
+
+		gui.add(params, 'Spherify', 0, 1).step(0.01).onChange(function (value) {
+			mesh.morphTargetInfluences[0] = value;
+		});
+
+		gui.add(params, 'Twist', 0, 1).step(0.01).onChange(function (value) {
+			mesh.morphTargetInfluences[1] = value;
+		});
+
+		gui.add(params, "BoundingBox").onChange(value => {
+			if (value) {
+				boxHelper.visible = true;
+			} else {
+				boxHelper.visible = false;
+			}
+		});
+
+		gui.add(params, "BoundingSphere").onChange(value => {
+			if (value) {
+				sphere.visible = true;
+			} else {
+				sphere.visible = false;
+			}
+		});
+
+		const controller = new OrbitControls(camera, canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+</html>

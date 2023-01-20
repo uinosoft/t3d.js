@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custom pass taa</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - custom pass taa
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GBuffer } from './jsm/GBuffer.js';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
+		import { CopyShader } from './jsm/shaders/CopyShader.js';
+		import { SuperSampling } from './jsm/SuperSampling.js';
+		import { Clock } from './jsm/Clock.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		const scene = new t3d.Scene();
+		scene.disableShadowSampler = true;
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg', function() {
+			sceneChange = true;
+		});
+		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const cube_geometry = new t3d.PlaneGeometry(200, 200);
+		const material = new t3d.LambertMaterial();
+		material.diffuseMap = texture;
+		material.diffuseMapTransform.setUvTransform(0, 0, 10, 10, 0, 0.5, 0.5);
+		const cube = new t3d.Mesh(cube_geometry, material);
+		cube.position.set(-5, 0, 0);
+		cube.receiveShadow = true;
+		scene.add(cube);
+
+		const file = "resources/models/gltf/CesiumMan/glTF-Binary/CesiumMan.glb";
+
+		let animation, object;
+
+		const loader = new GLTFLoader();
+		loader.load(file).then(function(result) {
+			// add mesh to scene
+			object = result.root.children[0];
+			object.children[1].castShadow = true;
+
+			object.children[1].frustumCulled = false;
+		
+			animation = new t3d.AnimationMixer();
+			result.animations.forEach(function (clip) {
+				const action = new t3d.AnimationAction(clip);
+				action.weight = 1;
+				animation.addAction(action);
+			});
+
+			object.scale.set(8, 8, 8);
+
+			object.position.set(5, 0, 0);
+
+			scene.add(object);
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-30, 30, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 50;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/right.jpg",
+			"resources/skybox/left.jpg",
+			"resources/skybox/up.jpg",
+			"resources/skybox/down.jpg",
+			"resources/skybox/back.jpg",
+			"resources/skybox/front.jpg"
+		], function() {
+			sceneChange = true;
+		});
+		const sky_box = new SkyBox(cube_texture);
+
+		const camera = new t3d.Camera();
+		camera.position.set(50, 20, 40);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		camera.add(sky_box);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// custom pass
+
+		const shadowMapPass = new t3d.ShadowMapPass();
+
+		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.generateMipmaps = false;
+
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+
+		const gBuffer = new GBuffer(width, height);
+		gBuffer.enableMotion = true;
+
+		const superSampling = new SuperSampling(width, height);
+
+		let oldProjectionMatrix = new t3d.Matrix4();
+
+		let sceneChange = false;
+
+		const params = { taa: window.devicePixelRatio == 1, dynamic: true }; // taa works bad on android and ios
+		const gui = new GUI();
+		gui.add(params, 'taa').onChange(() => {
+			superSampling.start();
+		});
+		gui.add(params, 'dynamic').onChange(() => {
+			superSampling.start();
+		});
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			animation && animation.update(clock.getDelta() * 1.3);
+
+			let change = controller.update() || sceneChange;
+
+			if (!params.taa) {
+				scene.updateMatrix();
+				scene.updateRenderStates(camera);
+				scene.updateRenderQueue(camera);
+
+				shadowMapPass.render(renderer, scene);
+
+				renderer.renderPass.setRenderTarget(backRenderTarget);
+
+				renderer.renderPass.setClearColor(0.3, 0.3, 0.3, 1);
+				renderer.renderPass.clear(true, true, true);
+		
+				renderer.renderScene(scene, camera);
+				return;
+			}
+
+			if (change) {
+				if (!params.dynamic || sceneChange) {
+					superSampling.start();
+				}
+		
+				sceneChange = false;
+			}
+
+			let tex;
+
+			if (params.dynamic || !superSampling.finished()) {
+				scene.updateMatrix();
+				scene.updateRenderStates(camera);
+				scene.updateRenderQueue(camera);
+
+				shadowMapPass.render(renderer, scene);
+
+				if (params.dynamic) {
+					gBuffer.update(renderer, scene, camera);
+				}
+
+				renderer.renderPass.setRenderTarget(tempRenderTarget);
+
+				renderer.renderPass.setClearColor(0.3, 0.3, 0.3, 1);
+				renderer.renderPass.clear(true, true, true);
+
+				if (params.dynamic) {
+					if (superSampling.finished()) {
+						superSampling._frame = 1;
+					}
+				}
+
+				oldProjectionMatrix.copy(camera.projectionMatrix);
+				superSampling.jitterProjection(camera, width, height);
+
+				scene.updateRenderStates(camera, false);
+				renderer.renderScene(scene, camera);
+
+				camera.projectionMatrix.copy(oldProjectionMatrix);
+
+				tex = superSampling.sample(renderer, tempRenderTarget.texture, gBuffer.getMotionTexture(), gBuffer.getDepthTexture(), !params.dynamic);
+			} else {
+				tex = superSampling.output();
+			}
+
+			copyPass.uniforms["tDiffuse"] = tex;
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+		
+			copyPass.material.transparent = true;
+			copyPass.render(renderer);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			tempRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			gBuffer.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			superSampling.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+
+			sceneChange = true;
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

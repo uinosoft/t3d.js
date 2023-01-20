@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - lens flare</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - lens flare<br/>
+		textures from <a href="http://www.ro.me" target="_blank" rel="noopener">ro.me</a><br/>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { CopyShader } from './jsm/shaders/CopyShader.js';
+		import { GridHelper } from './jsm/objects/GridHelper.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+		const maxSamples = renderer.renderPass.capabilities.maxSamples;
+		const multipleSampling = maxSamples > 1 ? Math.min(4, maxSamples) : 0;
+
+		// Create scene
+
+		const scene = new t3d.Scene();
+
+		const lensflareGeometry = new t3d.Geometry();
+		const float32Array = new Float32Array([
+			-1, -1, 0, 0, 0,
+			1, -1, 0, 1, 0,
+			1, 1, 0, 1, 1,
+			-1, 1, 0, 0, 1
+		]);
+		const buffer = new t3d.Buffer(float32Array, 5);
+		lensflareGeometry.setIndex(
+			new t3d.Attribute(new t3d.Buffer(new Uint16Array([0, 1, 2, 0, 2, 3]), 1))
+		);
+		lensflareGeometry.addAttribute('a_Position', new t3d.Attribute(buffer, 3, 0));
+		lensflareGeometry.addAttribute('a_Uv', new t3d.Attribute(buffer, 2, 3));
+
+		const lensflareGroup = new t3d.Object3D();
+		lensflareGroup.position.set(-5, 3.8, -5);
+		scene.add(lensflareGroup);
+
+		// Create lens flares
+
+		const textureLoader = new Texture2DLoader();
+
+		const textureFlare0 = textureLoader.load('./resources/lensflare/lensflare0.png');
+		const textureFlare3 = textureLoader.load('./resources/lensflare/lensflare3.png');
+
+		const lensflaresConfig = [
+			{ texture: textureFlare0, scale: 0.6, offset: 0 },
+			{ texture: textureFlare3, scale: 0.05, offset: 0.6 },
+			{ texture: textureFlare3, scale: 0.06, offset: 0.7 },
+			{ texture: textureFlare3, scale: 0.1, offset: 0.9 },
+			{ texture: textureFlare3, scale: 0.06, offset: 1 },
+		];
+
+		const lensflareShader = {
+			name: 'lensflare',
+			defines: {},
+			uniforms: {
+				'map': null,
+				'occlusionMap': null,
+				'color': [1, 1, 1],
+				'scale': [1, 1],
+				'screenPosition': [0, 0, 0]
+			},
+			vertexShader: `
+				uniform vec3 screenPosition;
+				uniform vec2 scale;
+
+				uniform sampler2D occlusionMap;
+
+				attribute vec3 a_Position;
+				attribute vec2 a_Uv;
+
+				varying vec2 v_Uv;
+				varying float v_Visibility;
+
+				void main() {
+					v_Uv = a_Uv;
+
+					vec2 pos = a_Position.xy;
+
+					vec4 visibility = texture2D(occlusionMap, vec2(0.5, 0.5)) * 0.2;
+					visibility += texture2D(occlusionMap, vec2(0.34, 0.34)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.34, 0.66)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.66, 0.34)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.66, 0.66)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.18, 0.5)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.82, 0.5)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.5, 0.18)) * 0.1;
+					visibility += texture2D(occlusionMap, vec2(0.5, 0.82)) * 0.1;
+
+					v_Visibility = visibility.r;
+
+					gl_Position = vec4(pos * scale + screenPosition.xy, screenPosition.z, 1.0);
+				}
+			`,
+			fragmentShader: `
+				uniform sampler2D map;
+				uniform vec3 color;
+
+				varying vec2 v_Uv;
+				varying float v_Visibility;
+
+				void main() {
+					vec4 texture = texture2D(map, v_Uv);
+					texture.a *= v_Visibility;
+					gl_FragColor = texture;
+					gl_FragColor.rgb *= color;
+				}
+			`
+		};
+
+		const lensflares = [];
+		lensflaresConfig.forEach(function(config) {
+			const lensflareMaterial = new t3d.ShaderMaterial(lensflareShader);
+			lensflareMaterial.transparent = true;
+			lensflareMaterial.blending = t3d.BLEND_TYPE.ADD;
+			lensflareMaterial.depthWrite = false;
+			lensflareMaterial.uniforms.map = config.texture;
+			const lensflare = new t3d.Mesh(lensflareGeometry, lensflareMaterial);
+			lensflare.renderLayer = 2; // Setting layer 2 as lens flare layer
+			lensflare.frustumCulled = false;
+			lensflareGroup.add(lensflare);
+
+			lensflares.push(lensflare);
+		});
+
+		// Create lens flare occlusion mesh, used to test occlusion.
+
+		const occlusionShader = {
+			name: 'lensflare_occlusion',
+			defines: {},
+			uniforms: {
+				'scale': [1, 1],
+				'screenPosition': [0, 0, 0]
+			},
+			vertexShader: `
+				uniform vec3 screenPosition;
+				uniform vec2 scale;
+
+				attribute vec3 a_Position;
+				attribute vec2 a_Uv;
+
+				varying vec2 v_Uv;
+
+				void main() {
+					v_Uv = a_Uv;
+					vec2 pos = a_Position.xy;
+					gl_Position = vec4(pos * scale + screenPosition.xy, screenPosition.z, 1.0);
+				}
+			`,
+			fragmentShader: `
+				uniform sampler2D map;
+				uniform vec3 color;
+
+				varying vec2 v_Uv;
+
+				void main() {
+					float dist = length(v_Uv - vec2(0.5));
+					float mask = 1.0 - smoothstep(0.49, 0.5, dist);
+					gl_FragColor = vec4(mask, mask, mask, 1.);
+				}
+			`
+		};
+
+		const occlusionTestMaterial = new t3d.ShaderMaterial(occlusionShader);
+		occlusionTestMaterial.depthWrite = false;
+		const occlusionTestMesh = new t3d.Mesh(lensflareGeometry, occlusionTestMaterial);
+		occlusionTestMesh.renderLayer = 1; // Setting layer 1 as lens flare occlusion test layer
+		occlusionTestMesh.frustumCulled = false;
+		lensflareGroup.add(occlusionTestMesh);
+
+		// Create main layer objects.
+
+		const texture = textureLoader.load('./resources/logo.jpg');
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+
+		for (let i = 0; i < 3; i++) {
+			const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
+			const material = new t3d.PBRMaterial();
+			material.roughness = 1;
+			material.metalness = 0;
+			material.diffuseMap = texture;
+			const cube = new t3d.Mesh(cube_geometry, material);
+			cube.position.set(i * 10 - 10, 0, 0);
+			scene.add(cube);
+		}
+
+		const grid = new GridHelper(100, 20, 0xffffff, 0x888888);
+		grid.position.y = -4;
+		scene.add(grid);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		scene.add(ambientLight);
+
+		const pointLight = new t3d.PointLight(0xffffff, 0.7, 50);
+		lensflareGroup.add(pointLight);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(0, 5, 40);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		camera.frustumCulled = false;
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// Render targets
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const depthRenderBuffer = new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH24_STENCIL8, multipleSampling);
+
+		const sceneRenderTarget = new t3d.RenderTarget2D(width, height);
+		sceneRenderTarget.attach(
+			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, multipleSampling),
+			t3d.ATTACHMENT.COLOR_ATTACHMENT0
+		);
+		sceneRenderTarget.attach(
+			depthRenderBuffer,
+			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
+		);
+
+		const occlusionRenderTarget = new t3d.RenderTarget2D(width, height);
+		occlusionRenderTarget.attach(
+			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, multipleSampling),
+			t3d.ATTACHMENT.COLOR_ATTACHMENT0
+		);
+		occlusionRenderTarget.attach(
+			depthRenderBuffer,
+			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
+		);
+
+		const clippedOcclusionRenderTarget = new t3d.RenderTarget2D(64, 64);
+		clippedOcclusionRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		clippedOcclusionRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+
+		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+
+		// Passes
+
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+
+		const clipShader = {
+			name: 'clip',
+			defines: {},
+			uniforms: {
+				'tDiffuse': null,
+				'clipRect': [0, 0, 1, 1]
+			},
+			vertexShader: `
+				attribute vec3 a_Position;
+				attribute vec2 a_Uv;
+
+				uniform mat4 u_ProjectionView;
+				uniform mat4 u_Model;
+
+				uniform vec4 clipRect;
+
+				varying vec2 v_Uv;
+
+				void main() {
+					v_Uv = a_Uv * clipRect.zw + clipRect.xy;
+					gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+				}
+			`,
+			fragmentShader: `
+				uniform sampler2D tDiffuse;
+
+				varying vec2 v_Uv;
+
+				void main() {
+					vec4 texel = texture2D(tDiffuse, v_Uv);
+					gl_FragColor = texel;
+				}
+			`
+		};
+
+		const clipPass = new t3d.ShaderPostPass(clipShader);
+
+		// GUI
+
+		const params = { position: 0.25, color: [255, 255, 255], scale: 1, occlusionScale: 0.02, debug: false };
+
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(params, "position", 0, 1, 0.01).onChange(value => {
+			lensflareGroup.position.x = -10 + 20 * value;
+			lensflareGroup.position.y = Math.sin(value * Math.PI) * 5;
+		});
+		gui.add(params, 'scale', 0, 1, 0.01);
+		gui.add(params, 'occlusionScale', 0, 0.5, 0.001);
+		gui.addColor(lensflares[0].material.uniforms, "color").onChange(value => {
+			pointLight.color.fromArray(value);
+		});
+		gui.add(params, 'debug');
+
+		function renderLayer(id) {
+			const renderStates = scene.getRenderStates(camera);
+			const renderQueue = scene.getRenderQueue(camera);
+
+			const renderQueueLayer = renderQueue.layerList[id];
+
+			renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
+			renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
+		}
+
+		const screenPosition = new t3d.Vector3();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			screenPosition.setFromMatrixPosition(occlusionTestMesh.worldMatrix).applyMatrix4(camera.viewMatrix).applyMatrix4(camera.projectionMatrix);
+
+			lensflares.forEach(function(lensflare, index) {
+				const scale = lensflaresConfig[index].scale * params.scale;
+				const offset = lensflaresConfig[index].offset;
+
+				const vecX = -screenPosition.x * 2;
+				const vecY = -screenPosition.y * 2;
+
+				const lensflareMaterial = lensflare.material;
+				lensflareMaterial.uniforms.screenPosition[0] = screenPosition.x + vecX * offset;
+				lensflareMaterial.uniforms.screenPosition[1] = screenPosition.y + vecY * offset;
+				lensflareMaterial.uniforms.scale[0] = scale * height / width;
+				lensflareMaterial.uniforms.scale[1] = scale;
+			});
+
+			screenPosition.toArray(occlusionTestMaterial.uniforms.screenPosition);
+			occlusionTestMaterial.uniforms.scale[0] = params.occlusionScale * height / width;
+			occlusionTestMaterial.uniforms.scale[1] = params.occlusionScale;
+
+			// Render main scene, write depth buffer.
+
+			renderer.renderPass.setRenderTarget(sceneRenderTarget);
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+			renderLayer(0);
+
+			// Render lens flare occlusion mesh, test depth.
+
+			renderer.renderPass.setRenderTarget(occlusionRenderTarget);
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, false, true);
+			renderLayer(1);
+
+			// Render and Clip occlusion map.
+
+			renderer.renderPass.setRenderTarget(resultRenderTarget);
+			renderer.renderPass.blitRenderTarget(occlusionRenderTarget, resultRenderTarget, true, true, true);
+
+			renderer.renderPass.setRenderTarget(clippedOcclusionRenderTarget);
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+			clipPass.uniforms.tDiffuse = resultRenderTarget.texture;
+			clipPass.uniforms.clipRect[0] = ((screenPosition.x - params.occlusionScale * height / width)  * 0.5 + 0.5);
+			clipPass.uniforms.clipRect[1] = ((screenPosition.y - params.occlusionScale) * 0.5 + 0.5);
+			clipPass.uniforms.clipRect[2] = params.occlusionScale * height / width;
+			clipPass.uniforms.clipRect[3] = params.occlusionScale;
+			clipPass.render(renderer);
+
+			lensflares.forEach(function(lensflare) {
+				const lensflareMaterial = lensflare.material;
+				lensflareMaterial.uniforms.occlusionMap = clippedOcclusionRenderTarget.texture;
+			});
+
+			// Render lens flares overlay resultRenderTarget
+
+			renderer.renderPass.setRenderTarget(sceneRenderTarget);
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(false, true, true);
+			renderLayer(2);
+
+			// Blit color buffer to resultRenderTarget
+
+			renderer.renderPass.setRenderTarget(resultRenderTarget);
+			renderer.renderPass.blitRenderTarget(sceneRenderTarget, resultRenderTarget);
+
+			// Copy resultRenderTarget to screen
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+			copyPass.uniforms.tDiffuse = resultRenderTarget.texture;
+			copyPass.render(renderer);
+
+			if (params.debug) {
+				// Copy clipped occlusion map to left bottom corner (1/25) of the screen
+				renderer.renderPass.setRenderTarget(backRenderTarget);
+				renderer.renderPass.setClearColor(0, 0, 0, 0);
+				renderer.renderPass.clear(false, true, true);
+				copyPass.uniforms.tDiffuse = clippedOcclusionRenderTarget.texture;
+				copyPass.renderStates.camera.rect.set(0, 0, 0.2, 0.2);
+				copyPass.render(renderer);
+				copyPass.renderStates.camera.rect.set(0, 0, 1, 1);
+			}
+		}
+		
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width, height);
+			sceneRenderTarget.resize(width, height);
+			occlusionRenderTarget.resize(width, height);
+			resultRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - texture blending</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+	<script src="./libs/simplex-noise.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.1, 0.8, 0.9, 1);
+
+		const scene = new t3d.Scene();
+
+		function generateLabelMaterial(text) {
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+			canvas.width = 128;
+			canvas.height = 32;
+
+			ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+			ctx.fillRect(0, 0, 128, 32);
+
+			ctx.fillStyle = 'white';
+			ctx.font = 'bold 14pt arial';
+			ctx.textAlign = "center";
+			ctx.fillText(text, 64, 22);
+
+			const map = new t3d.Texture2D();
+			map.image = canvas;
+			map.version++;
+
+			const material = new t3d.BasicMaterial();
+			material.diffuseMap = map;
+			material.transparent = true;
+
+			return material;
+		}
+
+		const blendings = [
+			{ constant: t3d.BLEND_TYPE.NONE, labelMaterial: generateLabelMaterial('None') },
+			{ constant: t3d.BLEND_TYPE.NORMAL, labelMaterial: generateLabelMaterial('Normal') },
+			{ constant: t3d.BLEND_TYPE.ADD, labelMaterial: generateLabelMaterial('Add') },
+			{ constant: t3d.BLEND_TYPE.SUB, labelMaterial: generateLabelMaterial('Sub') },
+			{ constant: t3d.BLEND_TYPE.MUL, labelMaterial: generateLabelMaterial('Mul') }
+		];
+
+		const loader = new Texture2DLoader();
+
+		const map0 = loader.load('./resources/UV_Grid_Sm.jpg');
+		const map1 = loader.load('./resources/sprites/sprite0.jpg');
+		const map2 = loader.load('./resources/sprites/sprite0.png');
+		const map3 = loader.load('./resources/lensflare/lensflare0.png');
+		const map4 = loader.load('./resources/lensflare/lensflare0_alpha.png');
+
+		const geo1 = new t3d.PlaneGeometry(100, 100);
+		const geo2 = new t3d.PlaneGeometry(100, 25);
+
+		function addImageRow(map, y) {
+			for (let i = 0; i < blendings.length; i++) {
+				const blending = blendings[i];
+
+				const material = new t3d.BasicMaterial();
+				material.diffuseMap = map;
+				material.transparent = true;
+				material.blending = blending.constant;
+
+				const x = (i - blendings.length / 2 + 0.5) * 110;
+				const z = 0;
+
+				let mesh = new t3d.Mesh(geo1, material);
+				mesh.position.set(x, y, z);
+				mesh.euler.x = Math.PI / 2;
+				scene.add(mesh);
+
+				mesh = new t3d.Mesh(geo2, blending.labelMaterial);
+				mesh.position.set(x, y - 75, z);
+				mesh.euler.x = Math.PI / 2;
+				scene.add(mesh);
+			}
+		}
+
+		addImageRow(map0, 300);
+		addImageRow(map1, 150);
+		addImageRow(map2, 0);
+		addImageRow(map3, -150);
+		addImageRow(map4, -300);
+
+		// Create background plane
+
+		const bgCanvas = document.createElement('canvas');
+		const bgContext = bgCanvas.getContext('2d');
+		bgCanvas.width = bgCanvas.height = 128;
+		bgContext.fillStyle = '#ddd';
+		bgContext.fillRect(0, 0, 128, 128);
+		bgContext.fillStyle = '#555';
+		bgContext.fillRect(0, 0, 64, 64);
+		bgContext.fillStyle = '#555';
+		bgContext.fillRect(64, 64, 64, 64);
+
+		const texture = new t3d.Texture2D();
+		texture.image = bgCanvas;
+		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const bg_geometry = new t3d.PlaneGeometry(2000, 2000);
+		const bg_material = new t3d.BasicMaterial();
+		bg_material.diffuseMap = texture;
+		bg_material.diffuseMapTransform.setUvTransform(0, 0, 64, 64, 0, 0.5, 0.5);
+		const background = new t3d.Mesh(bg_geometry, bg_material);
+		background.position.set(0, 0, -1);
+		background.euler.x = Math.PI / 2;
+		scene.add(background);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 600);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			const offset = count / 4000;
+			bg_material.diffuseMapTransform.setUvTransform(-offset, -offset, 64, 64, 0, 0.5, 0.5);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

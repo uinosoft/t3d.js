@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - image bitmap</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - image bitmap
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+        import { ImageBitmapLoader } from './jsm/loaders/ImageBitmapLoader.js'
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+
+        const scene = new t3d.Scene();
+
+        const camera = new t3d.Camera();
+        camera.position.set(0, 0, 8);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+        scene.add(camera);
+
+        const cubes = [];
+
+        const geometry = new t3d.BoxGeometry(1.2, 1.2, 1.2);
+
+        function addImageBitMapTextureCube(url, options, position) {
+        	new ImageBitmapLoader().
+        		setOptions(options).
+        		load(url,
+        			(imageBitmap) => {
+        				const texture = new t3d.Texture2D();
+        				texture.image = imageBitmap;
+        				texture.version++;
+
+        				const material = new t3d.BasicMaterial();
+        				material.diffuseMap = texture;
+
+        				if (url.indexOf('png') > -1) {
+        					material.transparent = true;
+        					material.side = t3d.DRAW_SIDE.DOUBLE;
+        					material.depthWrite = false;
+        				}
+
+        				const cube = new t3d.Mesh(geometry, material);
+        				cube.position.fromArray(position);
+        				scene.add(cube);
+        				cubes.push(cube);
+        			},
+        			(p) => {
+        				console.log(p);
+        			},
+        			(e) => {
+        				console.error(e);
+        			}
+        		);
+        }
+
+        addImageBitMapTextureCube('./resources/logo.jpg', { imageOrientation: 'none' }, [-1, 1, 0]);
+        addImageBitMapTextureCube('./resources/logo.jpg', { imageOrientation: 'flipY' }, [-1, -1, 0]);
+        addImageBitMapTextureCube('./resources/sprites/circle.png', { premultiplyAlpha: 'premultiply' }, [1, 1, 0]);
+        addImageBitMapTextureCube('./resources/sprites/circle.png', { premultiplyAlpha: 'none' }, [1, -1, 0]);
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	for (let i = 0; i < cubes.length; i++) {
+        		const cube = cubes[i];
+        		cube.euler.y = -count / 1000;
+        	}
+
+        	forwardRenderer.render(scene, camera);
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+        	forwardRenderer.backRenderTarget.resize(width, height);
+        }
+        window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+
+</html>

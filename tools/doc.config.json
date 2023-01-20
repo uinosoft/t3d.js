@@ -1,0 +1,17 @@
+{
+    "templates": {
+        "default": {
+            "outputSourceFiles": false
+        }
+    },
+    "opts":{
+        "template": "node_modules/clean-jsdoc-theme",
+        "theme_opts": {
+            "favicon": "../examples/favicon.ico",
+            "title": "t3d.js",
+            "default_theme": "light",
+            "base_url": "http://192.168.1.238:8088/docs/",
+            "exclude_inherited": true
+        }
+    }
+}

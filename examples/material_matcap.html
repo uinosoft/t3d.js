@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - matcap</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - matcap
+    </div>
+
+	<script src="./libs/nanobar.min.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const textureLoader = new Texture2DLoader();
+
+		const matcapTextures = {
+			collor: textureLoader.load('./resources/matcaps/matcap-collor.jpg'),
+			darkgreymetal: textureLoader.load('./resources/matcaps/matcap-darkgreymetal.jpg')
+		};
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const file = "resources/models/gltf/LeePerrySmith/LeePerrySmith.glb";
+		const loader = new GLTFLoader(loadingManager);
+		let root;
+		loader.load(file).then(function(result) {
+			// add mesh to scene
+			root = result.root;
+
+			root.traverse(node => {
+				if (node.material) {
+					node.material = new t3d.MatcapMaterial();
+					node.material.matcap = matcapTextures.darkgreymetal;
+				}
+			});
+
+			scene.add(root);
+		});
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(0, 3, 15);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = false;
+		controller.minDistance = 10;
+		controller.maxDistance = 200;
+
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ matcap: 'darkgreymetal' }, "matcap", ['collor', 'darkgreymetal']).onChange(value => {
+			root.traverse(node => {
+				if (node.material) {
+					node.material.matcap = matcapTextures[value];
+				}
+			});
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

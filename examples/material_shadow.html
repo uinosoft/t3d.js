@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shadow material</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - shadow material
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
+		import { ShadowShader } from './jsm/shaders/ShadowShader.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.8, 0.8, 0.8, 1);
+		forwardRenderer.shadowAutoUpdate = false;
+
+		const scene = new t3d.Scene();
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load('resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
+			const object = result.root.children[0];
+			object.castShadow = true;
+			scene.add(object);
+
+			forwardRenderer.shadowNeedsUpdate = true;
+		});
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const shadowMaterial = new t3d.ShaderMaterial(ShadowShader);
+		shadowMaterial.transparent = true;
+		shadowMaterial.opacity = 0.5;
+		shadowMaterial.acceptLight = true;
+		shadowMaterial.diffuse.setHex(0x000000);
+		const plane = new t3d.Mesh(plane_geometry, shadowMaterial);
+		plane.position.y = -1;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-3, 3, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 10;
+		directionalLight.shadow.cameraFar = 20;
+		directionalLight.shadow.mapSize.set(1024, 1024);
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+		
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 0.5);
+		directionalLight.add(directionalLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(3, 5, 15);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			directionalLightHelper.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

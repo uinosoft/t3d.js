@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - normalmap</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - normalmap
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		// couch
+		const textureLoader = new Texture2DLoader();
+		const couch_texture = textureLoader.load('./resources/normal/couch.jpg');
+		const couch_norm_texture = textureLoader.load('./resources/normal/counch_norm.jpg');
+		const couch_material = new t3d.PhongMaterial();
+		couch_material.diffuseMap = couch_texture;
+		couch_material.normalMap = couch_norm_texture;
+		const couch_geom = new t3d.PlaneGeometry(100, 100);
+		const couch = new t3d.Mesh(couch_geom, couch_material);
+		scene.add(couch);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const pointLight = new t3d.PointLight(0xffffff, 1, 300, 1);
+		pointLight.position.set(0, 5, 0);
+		scene.add(pointLight);
+
+		const lightBall_geometry = new t3d.SphereGeometry(2, 10, 10);
+		const basic = new t3d.BasicMaterial();
+		basic.diffuse.setHex(0xffffff);
+		const lightBall = new t3d.Mesh(lightBall_geometry, basic);
+		lightBall.position.set(0, 5, 0);
+		scene.add(lightBall);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 100, 80);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
+		scene.add(camera);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			pointLight.position.x = 30 * Math.sin(count / 1000 * 1);
+			pointLight.position.z = 30 * Math.cos(count / 1000 * 1);
+
+			lightBall.position.x = 30 * Math.sin(count / 1000 * 1);
+			lightBall.position.z = 30 * Math.cos(count / 1000 * 1);
+
+			// rotate camera
+			camera.position.x = 80 * Math.sin(count / 1000 * .1);
+			camera.position.z = 80 * Math.cos(count / 1000 * .1);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

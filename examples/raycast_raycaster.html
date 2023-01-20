@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - raycaster</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - raycaster
+		<br/>
+		move mouse to raycast objects
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Raycaster } from './jsm/Raycaster.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const group = new t3d.Object3D();
+
+		const cube_geometry = new t3d.PlaneGeometry(20, 20, 20);
+
+		// non-indexed geometry
+		const triangle_geometry = new t3d.Geometry();
+		const positionAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array([10, 10, 0, -10, -10, 0, 10, -10, 0]), 3));
+		const normalAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]), 3));
+		triangle_geometry.addAttribute('a_Position', positionAttribute);
+		triangle_geometry.addAttribute('a_Normal', normalAttribute);
+		triangle_geometry.computeBoundingBox();
+		triangle_geometry.computeBoundingSphere();
+
+		for (let i = 0; i < 15; i++) {
+			const material = new t3d.BasicMaterial();
+			material.side = t3d.DRAW_SIDE.DOUBLE;
+			material.diffuse.setHex(0x888888);
+			const plane = new t3d.Mesh(cube_geometry, material);
+			plane.position.x = Math.random() * 200 - 100;
+			plane.position.y = Math.random() * 200 - 100;
+			plane.position.z = Math.random() * 200 - 100;
+			plane.euler.x = -Math.PI / 2;
+			group.add(plane);
+		}
+
+		for (let i = 0; i < 15; i++) {
+			const material = new t3d.BasicMaterial();
+			material.side = t3d.DRAW_SIDE.DOUBLE;
+			material.diffuse.setHex(0x888888);
+			const triangle = new t3d.Mesh(triangle_geometry, material);
+			triangle.position.x = Math.random() * 200 - 100;
+			triangle.position.y = Math.random() * 200 - 100;
+			triangle.position.z = Math.random() * 200 - 100;
+			group.add(triangle);
+		}
+
+		scene.add(group);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 400);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+		scene.add(camera);
+
+		// input
+		const raycaster = new Raycaster();
+
+		const mouse = new t3d.Vector2();
+
+		document.addEventListener("mousemove", function(e) {
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+			raycaster.setFromCamera(mouse, camera);
+
+			for (let i = 0, l = group.children.length; i < l; i++) {
+				const child = group.children[i];
+				child.material.diffuse.setHex(0x888888);
+			}
+
+			const array = raycaster.intersectObject(scene, true);
+			for (let i = 0, l = array.length; i < l; i++) {
+				const object = array[i].object;
+				if (i === 0) {
+					object.material.diffuse.setHex(0xff0000);
+				}
+			}
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			camera.position.x = 600 * Math.sin(count / 1000 * .5);
+			camera.position.z = 600 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

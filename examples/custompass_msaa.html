@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custom pass msaa</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+		<a href="" target="_blank">t3d</a> - MSAA by Multisampled Renderbuffers
+		<br/> Available only for WebGL 2.0
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support Multisampled Renderbuffers</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { CopyShader } from './jsm/shaders/CopyShader.js';
+		import { GridHelper } from './jsm/objects/GridHelper.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		const scene = new t3d.Scene();
+
+		const grid = new GridHelper(50, 20, 0xffffff, 0xffffff);
+		scene.add(grid);
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+
+		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
+		const material = new t3d.BasicMaterial();
+		material.diffuseMap = texture;
+		const cube = new t3d.Mesh(cube_geometry, material);
+		scene.add(cube);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(10, 10, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.detach(t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		tempRenderTarget.attach(
+			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH_COMPONENT16),
+			t3d.ATTACHMENT.DEPTH_ATTACHMENT
+		);
+
+		const renderTargets = {};
+		function getMultipleSamplingRenderTarget(value) {
+			if (!renderTargets[value]) {
+				const renderTarget = new t3d.RenderTarget2D(width, height);
+				renderTarget.attach(
+					new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, value),
+					t3d.ATTACHMENT.COLOR_ATTACHMENT0
+				);
+				renderTarget.detach(t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+				renderTarget.attach(
+					new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH_COMPONENT16, value),
+					t3d.ATTACHMENT.DEPTH_ATTACHMENT
+				);
+		
+				renderTargets[value] = renderTarget;
+			}
+
+			return renderTargets[value];
+		}
+
+		const params = { "msaa": true, "samplers": Math.min(5, renderer.renderPass.capabilities.maxSamples) };
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(renderer.renderPass.capabilities, "maxSamples").disable();
+		gui.add(params, "msaa");
+		gui.add(params, "samplers", 1, renderer.renderPass.capabilities.maxSamples, 1);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			if (params.msaa) {
+				renderer.renderPass.setRenderTarget(getMultipleSamplingRenderTarget(params.samplers));
+
+				renderer.renderPass.setClearColor(0, 0, 0, 0);
+				renderer.renderPass.clear(true, true, true);
+
+				renderer.renderScene(scene, camera);
+
+				renderer.renderPass.setRenderTarget(tempRenderTarget);
+
+				if (renderer.renderPass.capabilities.version < 2) {
+					document.getElementById('notSupported').style.display = '';
+				} else {
+					renderer.renderPass.blitRenderTarget(getMultipleSamplingRenderTarget(params.samplers), tempRenderTarget, true, true, false);
+				}
+			}
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			if (params.msaa) {
+				copyPass.uniforms.tDiffuse = tempRenderTarget.texture;
+				copyPass.render(renderer);
+			} else {
+				renderer.renderScene(scene, camera);
+			}
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width, height);
+			tempRenderTarget.resize(width, height);
+
+			for (const key in renderTargets) {
+				const renderTarget = renderTargets[key];
+				renderTarget && renderTarget.resize(width, height);
+			}
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

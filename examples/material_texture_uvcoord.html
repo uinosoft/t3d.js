@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - uv coord</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - uv coord
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const texture = new Texture2DLoader().load('./resources/UV_Grid_Sm.jpg');
+		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const geometry = new t3d.PlaneGeometry(30, 30);
+		geometry.addAttribute('a_Uv2', new t3d.Attribute(new t3d.Buffer(new Float32Array([0.5, 1, 1, 1, 0.5, 0, 1, 0]), 2)));
+		const material = new t3d.BasicMaterial();
+		material.diffuseMap = texture;
+		material.diffuseMapCoord = 0;
+		const cube = new t3d.Mesh(geometry, material);
+		scene.add(cube);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 10, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+		
+		function updateUvCoord(val) {
+			material.diffuseMapCoord = parseInt(val);
+			material.needsUpdate = true;
+		}
+
+		// gui
+		const gui = new GUI();
+		gui.add({ coord: 0 }, "coord", [0, 1]).onChange(updateUvCoord);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			camera.position.x = 30 * Math.sin(count / 1000 * .5);
+			camera.position.z = 30 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

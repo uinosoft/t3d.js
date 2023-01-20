@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - animation crossfade</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - animation crossfade
+		<br/>
+		model from <a href="https://www.mixamo.com/" target="_blank">mixamo.com</a>
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from './jsm/Clock.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import Stats from './libs/stats.module.js';
+
+		const devicePixelRatio = window.devicePixelRatio;
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.floor(width * devicePixelRatio);
+		canvas.height = Math.floor(height * devicePixelRatio);
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.6, 0.7, 0.8, 1);
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		]);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 10, 100);
+		scene.fog.color.setRGB(0.6, 0.7, 0.8);
+		scene.environmentLightIntensity = 0.8;
+		scene.environment = cube_texture;
+
+		let mixer, params = { timeScale: 1 }, actionMap = {}, controls = [], crossFadeUpdateFunction = null;
+
+		const loopEvent = { type: 'loop' };
+
+		class AnimationAction extends t3d.AnimationAction {
+
+			constructor(clip) {
+				super(clip);
+				this.timeScale = 1;
+			}
+
+			update(deltaTime) {
+				this.time += deltaTime * this.timeScale;
+
+				const endTime = this.clip.duration;
+
+				if (this.time > endTime) {
+					this.time = this.time % endTime;
+					this.dispatchEvent(loopEvent);
+				}
+
+				if (this.time < 0) {
+					this.time = this.time % endTime + endTime;
+					this.dispatchEvent(loopEvent);
+				}
+			}
+
+		}
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const file = "resources/models/gltf/Soldier.glb";
+		const loader = new GLTFLoader(loadingManager);
+		loader.load(file).then(function(result) {
+			const object = result.root;
+
+			object.traverse(function(node) {
+				if (node.material) {
+					node.castShadow = true;
+					// node.receiveShadow = true;
+					node.frustumCulled = false;
+				}
+			});
+
+			object.euler.y = Math.PI;
+
+			scene.add(object);
+
+			mixer = new t3d.AnimationMixer();
+
+			result.animations.forEach(function (clip) {
+				const action = new AnimationAction(clip);
+				action.time = 0;
+				actionMap[action.clip.name] = action;
+				mixer.addAction(action);
+			});
+
+			actionMap['Walk'].weight = 1;
+
+			function crossFade(fadeOut, fadeIn, time = 1) {
+				const fadeOutAction = actionMap[fadeOut];
+				const fadeInAction = actionMap[fadeIn];
+
+				const fadeOutDuration = fadeOutAction.clip.duration;
+				const fadeInDuration = fadeInAction.clip.duration;
+
+				const startEndRatio = fadeOutDuration / fadeInDuration;
+				const endStartRatio = fadeInDuration / fadeOutDuration;
+
+				function executeCrossFade() {
+					console.log('cross fade start.');
+					fadeOutAction.timeScale = 1;
+					fadeInAction.timeScale = endStartRatio;
+
+					fadeInAction.time = 0;
+
+					crossFadeUpdateFunction = function(deltaTime) {
+						const advance = deltaTime / time;
+
+						fadeOutAction.timeScale += (startEndRatio - 1) * advance;
+						fadeInAction.timeScale += (1 - endStartRatio) * advance;
+
+						fadeOutAction.weight -= advance;
+						fadeInAction.weight += advance;
+
+						if (fadeOutAction.weight <= 0 || fadeInAction.weight >= 1) {
+							fadeOutAction.weight = 0;
+							fadeInAction.weight = 1;
+
+							fadeOutAction.timeScale = startEndRatio;
+							fadeInAction.timeScale = 1;
+
+							crossFadeUpdateFunction = null;
+
+							console.log('cross fade finish.');
+						}
+					}
+				}
+
+				if (fadeOutAction === actionMap['Idle']) {
+					executeCrossFade();
+				} else {
+					function onLoopFinished(event) {
+						fadeOutAction.removeEventListener('loop', onLoopFinished);
+						executeCrossFade();
+					}
+					fadeOutAction.addEventListener('loop', onLoopFinished);
+				}
+			}
+
+			const crossFadeFunctions = {
+				'Walk-Idle': function() {
+					crossFade('Walk', 'Idle', 1.0);
+				},
+				'Idle-Walk': function() {
+					crossFade('Idle', 'Walk', 0.5);
+				},
+				'Walk-Run': function() {
+					crossFade('Walk', 'Run', 2.5);
+				},
+				'Run-Walk': function() {
+					crossFade('Run', 'Walk', 5.0);
+				}
+			}
+
+			const gui = new GUI();
+
+			gui.add(params, 'timeScale', -2, 2, 0.1);
+
+			const crossFadeFolder = gui.addFolder('CrossFade');
+			for (let key in crossFadeFunctions) {
+				const control = crossFadeFolder.add(crossFadeFunctions, key);
+				controls.push(control);
+			}
+			crossFadeFolder.open();
+		}).catch(e => console.error(e));
+
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.roughness = 1;
+		plane_material.diffuse.setHex(0x888888);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-4, 5, 4);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 8;
+		directionalLight.shadow.cameraNear = 2;
+		directionalLight.shadow.cameraFar = 20;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(0, 2, 3);
+		camera.lookAt(new t3d.Vector3(0, 1, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1, 0);
+
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			const deltaTime = clock.getDelta();
+			mixer && mixer.update(deltaTime * params.timeScale);
+
+			if (crossFadeUpdateFunction) {
+				crossFadeUpdateFunction(deltaTime * params.timeScale);
+			}
+
+			controls.forEach(function(control) {
+				control.disable();
+			});
+
+			if (mixer) {
+				if (actionMap['Idle'].weight === 1 && actionMap['Walk'].weight === 0 && actionMap['Run'].weight === 0) {
+					controls[1].enable();
+				} else if (actionMap['Idle'].weight === 0 && actionMap['Walk'].weight === 1 && actionMap['Run'].weight === 0) {
+					controls[0].enable();
+					controls[2].enable();
+				} else if (actionMap['Idle'].weight === 0 && actionMap['Walk'].weight === 0 && actionMap['Run'].weight === 1) {
+					controls[3].enable();
+				}
+			}
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

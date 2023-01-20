@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - soft shadow</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - soft shadow
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { Clock } from './jsm/Clock.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { SpotLightHelper } from './jsm/objects/SpotLightHelper.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x000000, 10, 1000);
+		
+		const cubes = [];
+		const positions = [
+			new t3d.Vector3(0, 20, 0),
+			new t3d.Vector3(20, 20, -20),
+			new t3d.Vector3(-20, 20, 20)
+		];
+
+		for (let i = 0; i < 3; i++) {
+			const cube_geometry = new t3d.BoxGeometry(3, 40, 3);
+			const lambert = new t3d.LambertMaterial();
+			lambert.diffuse.setHex(0xffffff);
+			const cube = new t3d.Mesh(cube_geometry, lambert);
+			cube.position.copy(positions[i]);
+			cube.castShadow = true;
+			cube.receiveShadow = true;
+			scene.add(cube);
+			cubes.push(cube);
+		}
+
+		const plane_geometry = new t3d.PlaneGeometry(2000, 2000);
+		const lambert = new t3d.LambertMaterial();
+		lambert.diffuse.setHex(0xffffff);
+		lambert.dithering = true;
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		plane.receiveShadow = true;
+		plane.shadowType = forwardRenderer.renderPass.capabilities.version >= 2 ? t3d.SHADOW_TYPE.PCSS32_SOFT : t3d.SHADOW_TYPE.POISSON_SOFT;
+		scene.add(plane);
+
+		const sphere_geometry = new t3d.SphereGeometry(3, 10, 10);
+		const basic = new t3d.BasicMaterial();
+		basic.diffuse.setHex(0xffffff);
+		const lightSphere = new t3d.Mesh(sphere_geometry, basic);
+		lightSphere.position.set(50, 50, 50);
+		scene.add(lightSphere);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		scene.add(ambientLight);
+
+		const spotLight = new t3d.SpotLight(0xffffff, 0.9, 400, Math.PI / 5, 0.2);
+		spotLight.position.set(50, 50, 50);
+		spotLight.lookAt(new t3d.Vector3(0, 10, 0), new t3d.Vector3(0, 1, 0));
+		spotLight.castShadow = true;
+		spotLight.shadow.cameraNear = 20; // because PCSS soft shadow need a bigger value range
+		spotLight.shadow.cameraFar = 350;
+		spotLight.shadow.mapSize.set(1024, 1024);
+		scene.add(spotLight);
+		
+		const spotLightHelper = new SpotLightHelper(spotLight);
+		spotLight.add(spotLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(80, 130, 150);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 20, 0);
+
+		const gui = new GUI();
+		gui.add({ version: 'WebGL ' + forwardRenderer.renderPass.capabilities.version }, 'version').disable();
+		gui.add(scene, 'disableShadowSampler');
+		const shadowTypes = ['hard', 'poisson_soft', 'pcf3_soft', 'pcf5_soft', 'pcss16_soft', 'pcss32_soft', 'pcss64_soft'];
+		gui.add(plane, 'shadowType', shadowTypes);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			const elapsedTime = clock.getElapsedTime();
+			cubes[0].position.y = 25 * Math.sin(elapsedTime * 1.2) + 25;
+
+			spotLightHelper.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

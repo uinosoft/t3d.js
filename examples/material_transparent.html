@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - transparent</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - transparent
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		// Create 3 torus-knot
+
+		const geometry = new t3d.TorusKnotGeometry(1, 0.4, 128, 16);
+
+		const material1 = new t3d.PhongMaterial();
+		material1.diffuse.setHex(0x00ff00);
+		material1.transparent = true;
+		material1.opacity = 0.7;
+		material1.depthWrite = false;
+		const mesh1 = new t3d.Mesh(geometry, material1);
+		mesh1.position.set(-1 / Math.tan(Math.PI / 6), -1, 0);
+		scene.add(mesh1);
+
+		const material2 = new t3d.PhongMaterial();
+		material2.diffuse.setHex(0xff0000);
+		material2.transparent = true;
+		material2.opacity = 0.7;
+		material2.depthWrite = false;
+		const mesh2 = new t3d.Mesh(geometry, material2);
+		mesh2.position.set(1 / Math.tan(Math.PI / 6), -1, 0);
+		scene.add(mesh2);
+
+		const material3 = new t3d.PhongMaterial();
+		material3.diffuse.setHex(0x0000ff);
+		material3.transparent = true;
+		material3.opacity = 0.7;
+		const mesh3 = new t3d.Mesh(geometry, material3);
+		mesh3.position.set(0, 2, 0);
+		scene.add(mesh3);
+
+		// Create background plane
+
+		const bgCanvas = document.createElement('canvas');
+		const bgContext = bgCanvas.getContext('2d');
+		bgCanvas.width = bgCanvas.height = 128;
+		bgContext.fillStyle = '#ddd';
+		bgContext.fillRect(0, 0, 128, 128);
+		bgContext.fillStyle = '#555';
+		bgContext.fillRect(0, 0, 64, 64);
+		bgContext.fillStyle = '#555';
+		bgContext.fillRect(64, 64, 64, 64);
+
+		const texture = new t3d.Texture2D();
+		texture.image = bgCanvas;
+		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const bg_geometry = new t3d.BoxGeometry(50, 50, 50);
+		const bg_material = new t3d.BasicMaterial();
+		bg_material.diffuseMap = texture;
+		bg_material.diffuseMapTransform.setUvTransform(0, 0, 64, 64, 0, 0.5, 0.5);
+		bg_material.side = t3d.DRAW_SIDE.BACK;
+		const background = new t3d.Mesh(bg_geometry, bg_material);
+		background.euler.x = Math.PI / 2;
+		background.position.set(0, 0.5, -2);
+		scene.add(background);
+
+		// Create lights and camera
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const directLight1 = new t3d.DirectionalLight(0xffffff, 0.5);
+		directLight1.euler.set(Math.PI / 2, Math.PI / 4, 0);
+		directLight1.position.set(40, 40, 40);
+		directLight1.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		scene.add(directLight1);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0.5, 16);
+		camera.lookAt(new t3d.Vector3(0, 0.5, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+		
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0.5, 0);
+		
+		// GUI
+
+		const params = { depthWrite: false, depthTest: true, doubleSide: false };
+		const gui = new GUI();
+		gui.add(params, 'depthWrite').onChange(value => {
+			material1.depthWrite = value;
+			material2.depthWrite = value;
+		});
+		gui.add(params, 'depthTest').onChange(value => {
+			material1.depthTest = value;
+			material2.depthTest = value;
+		});
+		gui.add(params, 'doubleSide').onChange(value => {
+			material1.side = value ? t3d.DRAW_SIDE.DOUBLE : t3d.DRAW_SIDE.FRONT;
+			material2.side = value ? t3d.DRAW_SIDE.DOUBLE : t3d.DRAW_SIDE.FRONT;
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

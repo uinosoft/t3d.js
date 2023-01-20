@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - compressed texture pvr</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - compressed texture pvr
+		<br />
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support pvr</div>
+	</div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+        import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+        import { PVRLoader } from './jsm/loaders/PVRLoader.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+
+        const scene = new t3d.Scene();
+
+        const camera = new t3d.Camera();
+        camera.position.set(0, 0, 15);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+        scene.add(camera);
+
+        const capabilities = forwardRenderer.renderPass.capabilities;
+        if ((!capabilities.getExtension('WEBGL_compressed_texture_pvrtc'))) {
+        	document.getElementById('notSupported').style.display = '';
+        	console.error('Not supported pvr!');
+        }
+
+        const loader = new PVRLoader();
+
+        const meshes = [];
+
+        const startX = -8;
+
+        const offset = 5;
+
+        function createMeshWithCompressedTexMap(url, material) {
+        	loader.load(url, function (texData) {
+        		const compressedTexture = new t3d.Texture2D();
+
+        		// no flipping for cube textures
+        		// (also flipping doesn't work for compressed textures )
+
+        		compressedTexture.flipY = false;
+
+        		// can't generate mipmaps for compressed textures
+        		// mips must be embedded in DDS files
+
+        		compressedTexture.generateMipmaps = false;
+
+        		compressedTexture.image = { data: texData.mipmaps[0].data, width: texData.width, height: texData.height, isCompressed: true }
+        		compressedTexture.version++;
+
+        		compressedTexture.mipmaps = texData.mipmaps;
+
+        		if (texData.mipmapCount === 1) {
+        			compressedTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+        		}
+
+        		compressedTexture.format = texData.format;
+
+        		compressedTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+        		compressedTexture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+
+        		compressedTexture.anisotropy = 4;
+
+        		material.transparent = true;
+        		material.diffuseMap = compressedTexture;
+        		material.side = t3d.DRAW_SIDE.DOUBLE;
+        		material.needsUpdate = true;
+        	});
+        }
+
+        const mapUrls = [
+        	'resources/compressed/disturb_4bpp_rgb.pvr',
+        	'resources/compressed/disturb_4bpp_rgb_v3.pvr',
+        	'resources/compressed/disturb_4bpp_rgb_mips.pvr',
+        	'resources/compressed/disturb_2bpp_rgb.pvr',
+        	'resources/compressed/flare_4bpp_rgba.pvr',
+        	'resources/compressed/flare_2bpp_rgba.pvr',
+        ];
+
+        const cube_geometry = new t3d.BoxGeometry(2, 2, 2);
+
+        const mat1 = new t3d.BasicMaterial();
+        createMeshWithCompressedTexMap(mapUrls[0], mat1)
+        const cube1 = new t3d.Mesh(cube_geometry, mat1);
+        cube1.position.set(startX, 3, 0);
+        scene.add(cube1);
+        meshes.push(cube1);
+
+        const mat2 = new t3d.BasicMaterial();
+        createMeshWithCompressedTexMap(mapUrls[1], mat2)
+        const cube2 = new t3d.Mesh(cube_geometry, mat1);
+        cube2.position.set(startX, -3, 0);
+        scene.add(cube2);
+        meshes.push(cube2);
+
+        const mat3 = new t3d.BasicMaterial();
+        createMeshWithCompressedTexMap(mapUrls[2], mat3)
+        const cube3 = new t3d.Mesh(cube_geometry, mat3);
+        cube3.position.set(startX + offset, 3, 0);
+        scene.add(cube3);
+        meshes.push(cube3);
+
+        const mat4 = new t3d.BasicMaterial();
+        createMeshWithCompressedTexMap(mapUrls[3], mat4)
+        const cube4 = new t3d.Mesh(cube_geometry, mat4);
+        cube4.position.set(startX + offset, -3, 0);
+        scene.add(cube4);
+        meshes.push(cube4);
+
+        const mat5 = new t3d.BasicMaterial();
+        createMeshWithCompressedTexMap(mapUrls[4], mat5)
+        const cube5 = new t3d.Mesh(cube_geometry, mat5);
+        cube5.position.set(startX + 2 * offset, 3, 0);
+        scene.add(cube5);
+        meshes.push(cube5);
+
+        const mat6 = new t3d.BasicMaterial();
+        createMeshWithCompressedTexMap(mapUrls[5], mat6)
+        const cube6 = new t3d.Mesh(cube_geometry, mat6);
+        cube6.position.set(startX + 2 * offset, -3, 0);
+        scene.add(cube6);
+        meshes.push(cube6);
+
+        function createMeshWithCompressedEnvMap(url, material) {
+        	loader.load(url, function (texData) {
+        		const compressedTexture = new t3d.TextureCube();
+
+        		// can't generate mipmaps for compressed textures
+        		// mips must be embedded in DDS files
+
+        		compressedTexture.generateMipmaps = false;
+
+        		// because texData is cubeMap
+
+        		const faces = texData.mipmaps.length / texData.mipmapCount;
+
+        		// mipmaps [ [six pictures of the first level],.....,[nth level]]
+
+        		compressedTexture.mipmaps[0] = [];
+
+        		// generate image
+        		for (let f = 0; f < faces; f++) {
+        			compressedTexture.images[f] = {};
+        			compressedTexture.images[f].data = texData.mipmaps[f * texData.mipmapCount];    // use first mipmap data
+        			compressedTexture.images[f].format = texData.format;
+        			compressedTexture.images[f].width = texData.width;
+        			compressedTexture.images[f].height = texData.height;
+        			compressedTexture.images[f].isCompressed = true;
+        		}
+
+        		// generate mipmaps
+        		for (let i = 0; i < texData.mipmapCount; i++) {
+        			compressedTexture.mipmaps[i] = [];
+        			for (let f = 0; f < faces; f++) {
+        				compressedTexture.mipmaps[i].push(texData.mipmaps[f * texData.mipmapCount + i]);
+        			}
+        		}
+
+        		if (texData.mipmapCount === 1) {
+        			compressedTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+        		}
+
+        		compressedTexture.format = texData.format;
+
+        		compressedTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+        		compressedTexture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+
+        		compressedTexture.version++;
+
+        		material.envMap = compressedTexture;
+        		material.side = t3d.DRAW_SIDE.DOUBLE;
+        		material.needsUpdate = true;
+        	});
+        }
+
+        const envMapUrls = [
+        	'resources/compressed/park3_cube_nomip_4bpp_rgb.pvr',
+        	'resources/compressed/park3_cube_mip_2bpp_rgb_v3.pvr'
+        ]
+
+        const cubeMat1 = new t3d.BasicMaterial();
+        createMeshWithCompressedEnvMap(envMapUrls[0], cubeMat1)
+        const cube7 = new t3d.Mesh(cube_geometry, cubeMat1);
+        cube7.position.set(startX + 3 * offset, 3, 0);
+        scene.add(cube7);
+        meshes.push(cube7);
+
+        const cubeMat2 = new t3d.BasicMaterial();
+        createMeshWithCompressedEnvMap(envMapUrls[1], cubeMat2)
+        const cube8 = new t3d.Mesh(cube_geometry, cubeMat2);
+        cube8.position.set(startX + 3 * offset, -3, 0);
+        scene.add(cube8);
+        meshes.push(cube8);
+
+        const gui = new GUI();
+        gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	for (let i = 0; i < meshes.length; i++) {
+        		const mesh = meshes[i];
+        		mesh.euler.x = -count / 1000;
+        		mesh.euler.y = -count / 1000;
+        	}
+
+        	forwardRenderer.render(scene, camera);
+        }
+
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+
+        	forwardRenderer.backRenderTarget.resize(width, height);
+        }
+        window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+
+</html>

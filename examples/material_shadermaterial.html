@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shadermaterial</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - shadermaterial
+    </div>
+
+	<script id="vertexShader" type="x-shader/x-vertex">
+		attribute vec3 a_Position;
+
+		attribute vec2 a_Uv;
+		varying vec2 v_Uv;
+
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+
+		void main() {
+			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+			v_Uv = a_Uv;
+		}
+	</script>
+
+	<script id="fragmentShader1" type="x-shader/x-fragment">
+		varying vec2 v_Uv;
+
+		uniform float time;
+
+		void main() {
+			vec3 c;
+			float l,z=time;
+			for(int i=0;i<3;i++) {
+				vec2 uv,p=v_Uv;
+				uv=p;
+				p-=.5;
+				z+=.07;
+				l=length(p);
+				uv+=p/l*(sin(z)+1.)*abs(sin(l*9.-z*2.));
+				c[i]=.01/length(abs(mod(uv,1.)-.5));
+			}
+			gl_FragColor=vec4(c/l, time);
+		}
+	</script>
+
+	<script id="fragmentShader2" type="x-shader/x-fragment">
+		varying vec2 v_Uv;
+
+		uniform float time;
+
+		void main() {
+			vec3 p = (vec3(v_Uv.xy, .0) - 0.5) * abs(sin(time/10.0)) * 50.0;
+			float d = sin(length(p)+time), a = sin(mod(atan(p.y, p.x) + time + sin(d+time), 3.1416/3.)*3.), v = a + d, m = sin(length(p)*4.0-a+time);
+			float _r = -v*sin(m*sin(-d)+time*.1);
+			float _g = v*m*sin(tan(sin(-a))*sin(-a*3.)*3.+time*.5);
+			float _b = mod(v,m);
+			gl_FragColor = vec4(_r, _g, _b, 1.);
+		}
+	</script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const vertexShader = document.getElementById('vertexShader').textContent;
+		const fragmentShader1 = document.getElementById('fragmentShader1').textContent;
+		const fragmentShader2 = document.getElementById('fragmentShader2').textContent;
+
+		const shader1 = {
+			vertexShader: vertexShader,
+			fragmentShader: fragmentShader1,
+			uniforms: { time: 10 }
+		};
+
+		const shader2 = {
+			vertexShader: vertexShader,
+			fragmentShader: fragmentShader2,
+			uniforms: { time: 10 }
+		};
+
+		const material1 = new t3d.ShaderMaterial(shader1);
+		const material2 = new t3d.ShaderMaterial(shader2);
+
+		const sphere_geometry = new t3d.SphereGeometry(10, 20, 20);
+		const sphere = new t3d.Mesh(sphere_geometry, material2);
+		sphere.euler.z = -Math.PI / 2;
+		sphere.position.y = 10;
+		scene.add(sphere);
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const plane = new t3d.Mesh(plane_geometry, material2);
+		plane.position.y = 0;
+		scene.add(plane);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 80, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ material: 'sample1' }, "material", ['sample1', 'sample2']).onChange(value => {
+			sphere.material = value === 'sample1' ? material2 : material1;
+			plane.material = value === 'sample1' ? material2 : material1;
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			material1.uniforms.time += 0.01;
+			material2.uniforms.time += 0.01;
+			if (material1.uniforms.time > 100) {
+				material1.uniforms.time = 0;
+				material2.uniforms.time = 0;
+			}
+
+			// rotate camera
+			camera.position.x = 100 * Math.sin(count / 1000 * .5);
+			camera.position.z = 100 * Math.cos(count / 1000 * .5);
+			camera.position.y = 30 * Math.cos(count / 1000 * .5) + 50;
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

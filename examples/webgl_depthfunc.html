@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - depth func</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - depth func
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const spheres = [];
+		for (let i = 0; i < 4; i++) {
+			const sphere_geometry = new t3d.SphereGeometry(i * 5 + 10, 20, 20);
+			const basicMat = new t3d.BasicMaterial();
+			basicMat.diffuse.setHex(0xffffcc);
+			basicMat.side = t3d.DRAW_SIDE.BACK;
+			basicMat.depthFunc = t3d.COMPARE_FUNC.GREATER;
+			basicMat.depthWrite = false;
+			basicMat.transparent = true;
+			basicMat.opacity = 0.3 - i / 4 * 0.3;
+			const sphere = new t3d.Mesh(sphere_geometry, basicMat);
+			sphere.position.set(0, 8, 8);
+			sphere.renderOrder = 1;
+			scene.add(sphere);
+			spheres.push(sphere);
+		}
+
+		const plane_geometry = new t3d.PlaneGeometry(70, 70);
+		const basicMat = new t3d.BasicMaterial();
+		basicMat.diffuse.setHex(0x888888);
+		basicMat.side = t3d.DRAW_SIDE.DOUBLE;
+		
+		const plane1 = new t3d.Mesh(plane_geometry, basicMat);
+		scene.add(plane1);
+		
+		const plane2 = new t3d.Mesh(plane_geometry, basicMat);
+		plane2.euler.x = Math.PI / 2;
+		scene.add(plane2);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 80, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const gui = new GUI();
+		gui.add({ pos: 8 }, 'pos', 5, 15, 0.01).onChange(val => {
+			spheres.forEach(sphere => sphere.position.set(0, val, val));
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

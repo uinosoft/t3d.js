@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - geometry line builders</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - geometry line builders
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { MathUtils } from './jsm/math/MathUtils.js';
+		import { CurvePath3 } from './jsm/math/curves/Curves.js';
+		import { TubeBuilder } from './jsm/geometries/builders/TubeBuilder.js';
+		import { RouteBuilder } from './jsm/geometries/builders/RouteBuilder.js';
+		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.9, 0.9, 0.9, 1);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 50, 100);
+		scene.fog.color.setRGB(0.9, 0.9, 0.9);
+
+		const texture = new Texture2DLoader().load('./resources/logo.jpg');
+		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const lambertMaterial = new t3d.LambertMaterial();
+		lambertMaterial.diffuse.setHex(0xffffff);
+		lambertMaterial.diffuseMap = texture;
+		lambertMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const hilbert3DPoints = MathUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 3, 1, 0, 1, 2, 3, 4, 5, 6, 7);
+
+		const hilbert2DPoints = MathUtils.hilbert2D(new t3d.Vector3(0, 0, 0), 3, 1, 0, 1, 2, 3);
+		hilbert2DPoints.forEach(p => {
+			p.y = p.z;
+			p.z = 0;
+		});
+
+		const curvePath3 = new CurvePath3();
+		curvePath3.setFromPoints(hilbert3DPoints, { bevelRadius: 0.5 });
+		const frames = curvePath3.computeFrames({
+			up: new t3d.Vector3(-1, 0, 0),
+			divisions: 8
+		});
+		const geometryData1 = TubeBuilder.getGeometryData(frames, { radius: 0.15 });
+		const geometry1 = new t3d.Geometry();
+		geometry1.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.positions), 3)));
+		geometry1.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.normals), 3)));
+		geometry1.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.uvs), 2)));
+		geometry1.setIndex(new t3d.Attribute(new t3d.Buffer(
+			(geometryData1.positions.length / 3) > 65536 ? new Uint32Array(geometryData1.indices) : new Uint16Array(geometryData1.indices),
+			1
+		)));
+		geometry1.computeBoundingBox();
+		geometry1.computeBoundingSphere();
+		const tube = new t3d.Mesh(geometry1, lambertMaterial);
+		tube.position.set(3, 0, 0);
+		tube.castShadow = true;
+		scene.add(tube);
+		
+		const curvePath3_2 = new CurvePath3();
+		curvePath3_2.setFromPoints(hilbert2DPoints, { bevelRadius: 0.5 });
+		const frames2 = curvePath3_2.computeFrames({
+			up: new t3d.Vector3(0, 0, 1),
+			divisions: 8
+		});
+		const geometryData2 = RouteBuilder.getGeometryData(frames2, { width: 0.5, side: 'both' });
+		const geometry2 = new t3d.Geometry();
+		geometry2.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData2.positions), 3)));
+		geometry2.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData2.normals), 3)));
+		geometry2.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData2.uvs), 2)));
+		geometry2.setIndex(new t3d.Attribute(new t3d.Buffer(
+			(geometryData2.positions.length / 3) > 65536 ? new Uint32Array(geometryData2.indices) : new Uint16Array(geometryData2.indices),
+			1
+		)));
+		geometry2.computeBoundingBox();
+		geometry2.computeBoundingSphere();
+		const route = new t3d.Mesh(geometry2, lambertMaterial);
+		route.position.set(-3, 0, 2);
+		route.castShadow = true;
+		scene.add(route);
+
+		const curvePath3_3 = new CurvePath3();
+		curvePath3_3.setFromPoints(hilbert2DPoints, { bevelRadius: 0 });
+		const frames3 = curvePath3_3.computeFrames({
+			up: new t3d.Vector3(0, 0, 1)
+		});
+		const geometryData3 = RouteBuilder.getGeometryData(frames3, { width: 0.5, sharp: true, side: 'both' });
+		const geometry3 = new t3d.Geometry();
+		geometry3.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData3.positions), 3)));
+		geometry3.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData3.normals), 3)));
+		geometry3.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData3.uvs), 2)));
+		geometry3.setIndex(new t3d.Attribute(new t3d.Buffer(
+			(geometryData3.positions.length / 3) > 65536 ? new Uint32Array(geometryData3.indices) : new Uint16Array(geometryData3.indices),
+			1
+		)));
+		geometry3.computeBoundingBox();
+		geometry3.computeBoundingSphere();
+		const route2 = new t3d.Mesh(geometry3, lambertMaterial);
+		route2.position.set(-3, 0, -2);
+		route2.castShadow = true;
+		scene.add(route2);
+
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.LambertMaterial();
+		plane_material.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.position.y -= 3;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
+		directionalLight.position.set(-10, 20, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 15;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 3, 20);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		// controller.enablePan = false;
+
+		const wireframeGeometries = new WeakMap();
+		function getWireframeGeometry(geometry) {
+			if (wireframeGeometries.has(geometry)) {
+				return wireframeGeometries.get(geometry);
+			} else {
+				const wireframeGeometry = new t3d.Geometry();
+				wireframeGeometry.attributes = geometry.attributes;
+				wireframeGeometry.morphAttributes = geometry.morphAttributes;
+				wireframeGeometry.index = GeometryUtils.getWireframeAttribute(geometry);
+				wireframeGeometry.boundingBox = geometry.boundingBox;
+				wireframeGeometry.boundingSphere = geometry.boundingSphere;
+				wireframeGeometry.groups = geometry.groups;
+				wireframeGeometry.instanceCount = geometry.instanceCount;
+				wireframeGeometries.set(geometry, wireframeGeometry);
+				return wireframeGeometry;
+			}
+		}
+
+		const gui = new GUI();
+		gui.add({ wireframe: false }, 'wireframe').onChange(value => {
+			tube.geometry = value ? getWireframeGeometry(geometry1) : geometry1;
+			route.geometry = value ? getWireframeGeometry(geometry2) : geometry2;
+			route2.geometry = value ? getWireframeGeometry(geometry3) : geometry3;
+
+			lambertMaterial.drawMode = value ? t3d.DRAW_MODE.LINES : t3d.DRAW_MODE.TRIANGLES;
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

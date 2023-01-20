@@ -1,0 +1,68 @@
+{
+  "name": "t3d",
+  "version": "0.1.1",
+  "description": "JavaScript 3D library",
+  "type": "module",
+  "main": "./build/t3d.js",
+  "module": "./build/t3d.module.js",
+  "files": [
+    "build/t3d.js",
+    "build/t3d.min.js",
+    "build/t3d.module.js",
+    "examples/jsm",
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "src"
+  ],
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
+  },
+  "keywords": [
+    "t3d",
+    "javascript",
+    "3d",
+    "virtual-reality",
+    "augmented-reality",
+    "webgl",
+    "webgl2",
+    "webvr",
+    "webxr",
+    "canvas",
+    "html5"
+  ],
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "./tools/.eslintrc.cjs"
+    ],
+    "plugins": [
+      "html"
+    ]
+  },
+  "author": "uino",
+  "license": "BSD-3-Clause",
+  "devDependencies": {
+    "@babel/core": "^7.19.1",
+    "@babel/preset-env": "^7.19.1",
+    "@rollup/plugin-babel": "^5.3.1",
+    "clean-jsdoc-theme": "^4.1.8",
+    "eslint": "^8.24.0",
+    "eslint-plugin-html": "^7.1.0",
+    "jsdoc": "^3.6.10",
+    "rollup": "^2.79.1",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "scripts": {
+    "default": "rollup -c",
+    "b": "rollup -c",
+    "build": "rollup -c",
+    "doc": "jsdoc --readme ./README.md ./src -r -d ./docs -c ./tools/doc.config.json",
+    "lint": "eslint src",
+    "lint-fix": "eslint src --fix",
+    "lint-examples": "eslint examples/jsm",
+    "lint-examples-fix": "eslint examples/jsm --fix"
+  }
+}

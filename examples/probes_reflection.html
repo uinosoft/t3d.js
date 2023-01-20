@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - probes reflection</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - probes reflection
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { ReflectionProbe } from './jsm/probes/ReflectionProbe.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.matrixAutoUpdate = false;
+		forwardRenderer.renderStatesAutoUpdate = false;
+		forwardRenderer.renderQueueAutoUpdate = false;
+		forwardRenderer.renderPass.setClearColor(0.1, 0.2, 0.3, 1);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 50, 500);
+		scene.fog.color.setRGB(0.1, 0.2, 0.3);
+
+		// small ball
+		const ball_geometry = new t3d.SphereGeometry(2, 32, 16);
+
+		const ball1_material = new t3d.BasicMaterial();
+		ball1_material.diffuse.setHex(0xff2222);
+		const ball1 = new t3d.Mesh(ball_geometry, ball1_material);
+		ball1.position.set(20, 0, 0);
+		scene.add(ball1);
+
+		const pointLight1 = new t3d.PointLight(0xff2222, 1, 50);
+		ball1.add(pointLight1);
+
+		const ball2_material = new t3d.BasicMaterial();
+		ball2_material.diffuse.setHex(0x2222ff);
+		const ball2 = new t3d.Mesh(ball_geometry, ball2_material);
+		ball2.position.set(0, 0, 15);
+		scene.add(ball2);
+
+		const pointLight2 = new t3d.PointLight(0x2222ff, 1, 50);
+		ball2.add(pointLight2);
+
+		// plane
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+		texture.anisotropy = 16;
+		texture.wrapT = texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.diffuse.setHex(0xffffff);
+		plane_material.diffuseMap = texture;
+		plane_material.diffuseMapTransform.setUvTransform(0, 0, 20, 20, 0, 0.5, 0.5);
+		plane_material.roughness = 0.8;
+		plane_material.metalness = 0.2;
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.position.set(0, -18, 0);
+		scene.add(plane);
+
+		// sphere
+		const reflectionProbe = new ReflectionProbe();
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load('./resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
+			const object = result.root.children[0];
+			object.scale.set(10, 10, 10);
+			object.material.roughness = 0.2;
+			object.material.metalness = 0.95;
+			object.material.diffuse.setRGB(1, 1, 1);
+			object.skipReflectionProbe = true;
+			object.material.envMap = reflectionProbe.renderTexture;
+			scene.add(object);
+
+			forwardRenderer.shadowNeedsUpdate = true;
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.8);
+		scene.add(ambientLight);
+
+		// camera
+		const camera = new t3d.Camera();
+		camera.position.set(0, 10, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// ball rotation
+			ball1.position.x = Math.sin(count / 1000 * 1) * 20;
+			ball1.position.y = 0;
+			ball1.position.z = Math.cos(count / 1000 * 1) * 20;
+			ball2.position.x = 0;
+			ball2.position.y = Math.sin(count / 1000 * 1) * 15;
+			ball2.position.z = Math.cos(count / 1000 * 1) * 15;
+
+			// rotate camera
+			camera.position.x = 80 * Math.sin(count / 1000 * .2);
+			camera.position.z = 80 * Math.cos(count / 1000 * .2);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			reflectionProbe.render(forwardRenderer, scene);
+		
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

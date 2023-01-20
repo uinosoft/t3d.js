@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - ocean</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - ocean
+	</div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { Water } from './jsm/objects/Water.js';
+		import { Sky } from './jsm/objects/Sky.js';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { ReflectionProbe } from './jsm/probes/ReflectionProbe.js';
+		
+		const devicePixelRatio = window.devicePixelRatio;
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = devicePixelRatio * width;
+		canvas.height = devicePixelRatio * height;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.matrixAutoUpdate = false;
+		forwardRenderer.renderStatesAutoUpdate = false;
+		forwardRenderer.renderQueueAutoUpdate = false;
+
+		// Sky
+
+		const reflectionProbe = new ReflectionProbe();
+
+		const skyScene = new t3d.Scene();
+		const sky = new Sky();
+		skyScene.add(sky);
+
+		// Scene
+
+		const scene = new t3d.Scene();
+
+		const light = new t3d.DirectionalLight(0xffffff);
+		light.color.setHex(0xffffff);
+		scene.add(light);
+
+		// Sphere
+
+		const geometry = new t3d.SphereGeometry(20, 8, 8);
+		const material = new t3d.PBRMaterial();
+		material.shading = t3d.SHADING_TYPE.FLAT_SHADING;
+		material.envMap = reflectionProbe.renderTexture;
+		material.envMapIntensity = 0.5;
+		material.side = t3d.DRAW_SIDE.DOUBLE; // fix white edge between sphere and water
+		const sphere = new t3d.Mesh(geometry, material);
+		scene.add(sphere);
+
+		// Water
+
+		const waterGeometry = new t3d.PlaneGeometry(10000, 10000);
+		const waterNormalTexture = new Texture2DLoader().load('./resources/waternormals.jpg');
+		waterNormalTexture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
+		waterNormalTexture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const water = new Water(
+			waterGeometry,
+			{
+				textureWidth: 512,
+				textureHeight: 512,
+				waterNormals: waterNormalTexture,
+				alpha: 1.0,
+				sunDirection: light.position.clone().normalize(),
+				sunColor: 0xffffff,
+				waterColor: 0x001e0f,
+				distortionScale: 3.7
+			}
+		);
+
+		scene.add(water);
+
+		// Camera
+
+		const camera = new t3d.Camera();
+		camera.position.set(30, 30, 100);
+		camera.setPerspective(55 / 180 * Math.PI, width / height, 1, 20000);
+		const skyBox = new SkyBox();
+		skyBox.texture = reflectionProbe.renderTexture;
+		camera.add(skyBox);
+		scene.add(camera);
+
+		// add a hover controller
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.minDistance = 40.0;
+		controller.maxDistance = 200.0;
+		controller.target.set(0, 10, 0);
+		controller.maxPolarAngle = Math.PI * 0.495;
+		
+		// GUI
+
+		const effectController  = {
+			turbidity: 10,
+			rayleigh: 2,
+			mieCoefficient: 0.005,
+			mieDirectionalG: 0.8,
+			luminance: 1,
+			inclination: 0.49, // elevation / inclination
+			azimuth: 0.205, // Facing front
+		};
+
+		const distance = 400;
+
+		function skyChanged() {
+			const uniforms = sky.material.uniforms;
+			uniforms.turbidity = effectController.turbidity;
+			uniforms.rayleigh = effectController.rayleigh;
+			uniforms.luminance = effectController.luminance;
+			uniforms.mieCoefficient = effectController.mieCoefficient;
+			uniforms.mieDirectionalG = effectController.mieDirectionalG;
+
+			const theta = Math.PI * (effectController.inclination - 0.5);
+			const phi = 2 * Math.PI * (effectController.azimuth - 0.5);
+
+			uniforms.sunPosition[0] = distance * Math.cos(phi);
+			uniforms.sunPosition[1] = distance * Math.sin(phi) * Math.sin(theta);
+			uniforms.sunPosition[2] = distance * Math.sin(phi) * Math.cos(theta);
+
+			light.position.x = distance * Math.cos(phi);
+			light.position.y = distance * Math.sin(phi) * Math.sin(theta);
+			light.position.z = distance * Math.sin(phi) * Math.cos(theta);
+			light.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			light.position.clone().normalize().toArray(water.material.uniforms['sunDirection']);
+
+			skyScene.updateRenderStates(camera);
+			skyScene.updateRenderQueue(camera);
+
+			reflectionProbe.render(forwardRenderer, skyScene);
+		}
+
+		const gui = new GUI();
+
+		const skyFolder = gui.addFolder('Sky');
+		// skyFolder.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( skyChanged );
+		// skyFolder.add( effectController, "rayleigh", 0.0, 4, 0.001 ).onChange( skyChanged );
+		// skyFolder.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( skyChanged );
+		// skyFolder.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( skyChanged );
+		// skyFolder.add( effectController, "luminance", 0.0, 2 ).onChange( skyChanged );
+		skyFolder.add(effectController, "inclination", 0, 0.5, 0.0001).onChange(skyChanged);
+		skyFolder.add(effectController, "azimuth", 0, 1, 0.0001).onChange(skyChanged);
+
+		const uniforms = water.material.uniforms;
+
+		const waterFolder = gui.addFolder('Water');
+		waterFolder.add(uniforms, 'distortionScale', 0, 8, 0.1);
+		waterFolder.add(uniforms, 'size', 0.1, 10, 0.1);
+		waterFolder.add(uniforms, 'alpha', 0.9, 1, .001);
+
+		skyChanged();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			let time = performance.now() * 0.001;
+
+			sphere.position.y = Math.sin(time) * 20 + 5;
+			sphere.euler.x = time * 0.5;
+			sphere.euler.z = time * 0.51;
+
+			water.material.uniforms['time'] += 1.0 / 60.0;
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			water.updateReflect(forwardRenderer, scene, camera, skyBox); // need pass skyBox for now
+
+			skyBox.updateMatrix();
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(55 / 180 * Math.PI, width / height, 1, 20000);
+
+			forwardRenderer.backRenderTarget.resize(devicePixelRatio * width, devicePixelRatio * height);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

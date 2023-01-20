@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - deferred renderer</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - deferred renderer
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
+		import { PointLightHelper } from './jsm/objects/PointLightHelper.js';
+		import { SpotLightHelper } from './jsm/objects/SpotLightHelper.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { FXAAShader } from './jsm/shaders/FXAAShader.js';
+		import { DeferredRenderer } from './jsm/render/DeferredRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const scene = new t3d.Scene();
+
+		const file = "resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+
+		const loader = new GLTFLoader();
+		loader.load(file).then(function(result) {
+			// add mesh to scene
+			let object = result.root.children[0];
+
+			object.castShadow = true;
+
+			object.position.set(0, 5, 0);
+			object.scale.set(15, 15, 15);
+			object.euler.z = -Math.PI / 6;
+
+			scene.add(object);
+		});
+
+		const cube_material = new t3d.BasicMaterial();
+		cube_material.diffuse.setRGB(0, 1, 1);
+		cube_material.transparent = true;
+		cube_material.opacity = 0.3;
+		const cube = new t3d.Mesh(new t3d.BoxGeometry(5, 5, 5), cube_material);
+		cube.position.set(20, 0, 0);
+		scene.add(cube);
+
+		const plane_geometry = new t3d.PlaneGeometry(500, 500);
+		const plane_material = new t3d.LambertMaterial();
+		plane_material.diffuse.setHex(0xffffff);
+		plane_material.roughness = 0.9;
+		plane_material.metalness = 0.9;
+		// material.emissive.setRGB(1, 0, 0);
+		// material.specular.setRGB(0, 0, 0);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.receiveShadow = true;
+		plane.position.y = -10;
+		scene.add(plane);
+
+		// const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		// scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.3);
+		directionalLight.position.set(-30, 30, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 50;
+		scene.add(directionalLight);
+
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 3);
+		directionalLight.add(directionalLightHelper);
+
+		const pointLight = new t3d.PointLight(0x00ffff, 0.3, 200, 2);
+		pointLight.position.set(30, 30, 30);
+		pointLight.castShadow = true;
+		scene.add(pointLight);
+
+		const pointLightHelper = new PointLightHelper(pointLight, 2);
+		pointLight.add(pointLightHelper);
+
+		const spotLight = new t3d.SpotLight(0x00ff00, 0.3, 400, Math.PI / 6, 0.2);
+		spotLight.position.set(0, 40, -40);
+		spotLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		spotLight.castShadow = true;
+		spotLight.shadow.windowSize = 50;
+		scene.add(spotLight);
+		
+		const spotLightHelper = new SpotLightHelper(spotLight);
+		spotLight.add(spotLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.position.set(30, 50, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const deferredRenderer = new DeferredRenderer(canvas);
+		deferredRenderer.ambientCubemap = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		]);
+		deferredRenderer.ambientCubemapIntensity = 1;
+
+		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		
+		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
+		fxaaPass.uniforms["tDiffuse"] = tempRenderTarget.texture;
+		fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+
+		const params = { fxaa: true };
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + deferredRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(params, "fxaa");
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			directionalLightHelper.update();
+			pointLightHelper.update();
+			spotLightHelper.update();
+
+			if (params.fxaa) {
+				deferredRenderer.render(scene, camera, tempRenderTarget);
+				deferredRenderer.renderPass.setRenderTarget(deferredRenderer.backRenderTarget);
+				fxaaPass.render(deferredRenderer);
+			} else {
+				deferredRenderer.render(scene, camera);
+			}
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+
+			deferredRenderer.resize(width, height);
+			tempRenderTarget.resize(width, height);
+
+			fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

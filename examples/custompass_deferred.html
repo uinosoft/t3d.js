@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custom pass deferred</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - custom pass deferred
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
+		import { PointLightHelper } from './jsm/objects/PointLightHelper.js';
+		import { SpotLightHelper } from './jsm/objects/SpotLightHelper.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { CopyShader } from './jsm/shaders/CopyShader.js';
+		import { FXAAShader } from './jsm/shaders/FXAAShader.js';
+		import { DeferredShader } from './jsm/shaders/DeferredShader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		const isMobile = (function () {
+			if (!window.navigator) {
+				return true;
+			}
+			const ua = navigator.userAgent.toLowerCase();
+			return (ua.indexOf('mobile') != -1 || ua.indexOf('android') != -1);
+		})();
+
+		// todo avoid frequently updating materials
+		// but it's ok for this demo
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const scene = new t3d.Scene();
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load('resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
+			const object = result.root.children[0];
+			object.material.diffuse.setRGB(1, 1, 1);
+			object.material.emissive.setRGB(0.2, 0, 0);
+			object.castShadow = true;
+			object.scale.set(10, 10, 10);
+			object.position.y = 2;
+			scene.add(object);
+		});
+
+		const basicMaterial = new t3d.BasicMaterial();
+		basicMaterial.diffuse.setRGB(0, 1, 1);
+		basicMaterial.transparent = true;
+		basicMaterial.opacity = 0.3;
+		const cube = new t3d.Mesh(new t3d.BoxGeometry(5, 5, 5), basicMaterial);
+		cube.position.set(20, 0, 0);
+		scene.add(cube);
+
+		const plane_geometry = new t3d.PlaneGeometry(500, 500);
+		const lambertMaterial = new t3d.LambertMaterial();
+		lambertMaterial.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(plane_geometry, lambertMaterial);
+		plane.receiveShadow = true;
+		plane.position.y = -10;
+		scene.add(plane);
+
+		// not support ambient light yet
+		// const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		// scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffff00, 0.4);
+		directionalLight.position.set(-30, 30, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 50;
+		scene.add(directionalLight);
+
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 3);
+		directionalLight.add(directionalLightHelper);
+
+		const pointLight = new t3d.PointLight(0x00ffff, 0.4, 200, 2);
+		pointLight.position.set(30, 30, 30);
+		pointLight.castShadow = true;
+		scene.add(pointLight);
+
+		const pointLightHelper = new PointLightHelper(pointLight, 2);
+		pointLight.add(pointLightHelper);
+
+		const spotLight = new t3d.SpotLight(0x00ff00, 0.4, 400, Math.PI / 6, 0.2);
+		spotLight.position.set(0, 40, -40);
+		spotLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		spotLight.castShadow = true;
+		spotLight.shadow.windowSize = 50;
+		scene.add(spotLight);
+		
+		const spotLightHelper = new SpotLightHelper(spotLight);
+		spotLight.add(spotLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.position.set(30, 50, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const normalDepthRenderTarget = new t3d.RenderTarget2D(width, height);
+		normalDepthRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		normalDepthRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+		normalDepthRenderTarget.texture.type = isMobile ? t3d.PIXEL_TYPE.HALF_FLOAT : t3d.PIXEL_TYPE.FLOAT;
+		normalDepthRenderTarget.texture.generateMipmaps = false;
+
+		const colorRenderTarget = new t3d.RenderTarget2D(width, height);
+		colorRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		colorRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+		colorRenderTarget.texture.type = isMobile ? t3d.PIXEL_TYPE.HALF_FLOAT : t3d.PIXEL_TYPE.FLOAT;
+		colorRenderTarget.texture.generateMipmaps = false;
+
+		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		// resultRenderTarget.texture.type = t3d.PIXEL_TYPE.FLOAT;
+		resultRenderTarget.texture.generateMipmaps = false;
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext("webgl", contextParams); // this demo not support webgl2 yet (shadow)
+		const renderer = new t3d.Renderer(gl);
+
+		const shadowMapPass = new t3d.ShadowMapPass();
+
+		const normalDepthMaterial = new t3d.ShaderMaterial(DeferredShader.normalDepth);
+
+		const normalDepthShininessMaterial = new t3d.ShaderMaterial(DeferredShader.normalDepthShininess);
+
+		const colorMaterial = new t3d.ShaderMaterial(DeferredShader.color);
+
+		const reconstructionMaterial = new t3d.ShaderMaterial(DeferredShader.reconstruction);
+
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
+
+		const emissiveLightPass = new t3d.ShaderPostPass(DeferredShader.emissiveLight);
+		emissiveLightPass.material.depthWrite = false;
+
+		const directionalLightPass = new t3d.ShaderPostPass(DeferredShader.directionalLight);
+		directionalLightPass.material.transparent = true;
+		directionalLightPass.material.blending = t3d.BLEND_TYPE.ADD;
+		directionalLightPass.material.depthWrite = false;
+		directionalLightPass.material.depthTest = false;
+
+		const pointLightPass = new t3d.ShaderPostPass(DeferredShader.pointLight);
+		pointLightPass.material.transparent = true;
+		pointLightPass.material.blending = t3d.BLEND_TYPE.ADD;
+		pointLightPass.material.depthWrite = false;
+		pointLightPass.material.depthTest = false;
+
+		const spotLightPass = new t3d.ShaderPostPass(DeferredShader.spotLight);
+		spotLightPass.material.transparent = true;
+		spotLightPass.material.blending = t3d.BLEND_TYPE.ADD;
+		spotLightPass.material.depthWrite = false;
+		spotLightPass.material.depthTest = false;
+
+		const directionalLightPrePass = new t3d.ShaderPostPass(DeferredShader.directionalLightPre);
+		directionalLightPrePass.material.transparent = true;
+		directionalLightPrePass.material.blending = t3d.BLEND_TYPE.ADD;
+		directionalLightPrePass.material.depthWrite = false;
+		directionalLightPrePass.material.depthTest = false;
+		directionalLightPrePass.material.premultipliedAlpha = true;
+
+		const pointLightPrePass = new t3d.ShaderPostPass(DeferredShader.pointLightPre);
+		pointLightPrePass.material.transparent = true;
+		pointLightPrePass.material.blending = t3d.BLEND_TYPE.ADD;
+		pointLightPrePass.material.depthWrite = false;
+		pointLightPrePass.material.depthTest = false;
+		pointLightPrePass.material.premultipliedAlpha = true;
+
+		const spotLightPrePass = new t3d.ShaderPostPass(DeferredShader.spotLightPre);
+		spotLightPrePass.material.transparent = true;
+		spotLightPrePass.material.blending = t3d.BLEND_TYPE.ADD;
+		spotLightPrePass.material.depthWrite = false;
+		spotLightPrePass.material.depthTest = false;
+		spotLightPrePass.material.premultipliedAlpha = true;
+
+		// gui
+		const params = { render: "prelight-deferred", pass: "result", fxaa: false, directionalLight: true, pointLight: true, spotLight: true };
+		const gui = new GUI();
+		gui.add(params, "render", ["forward", "deferred", "prelight-deferred"]);
+		gui.add(params, "pass", ["normalDepth(Shininess)", "color(light)", "result"]);
+		gui.add(params, "fxaa");
+
+		const lightFolder = gui.addFolder("lights");
+		lightFolder.add(directionalLight, "visible").name("directionalLight");
+		lightFolder.add(pointLight, "visible").name("pointLight");
+		lightFolder.add(spotLight, "visible").name("spotLight");
+
+		let matProjViewInverse = new t3d.Matrix4();
+		let cameraPos = new t3d.Vector3();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			directionalLightHelper.update();
+			pointLightHelper.update();
+			spotLightHelper.update();
+
+			scene.updateMatrix();
+		
+			const renderStates = scene.updateRenderStates(camera);
+
+			const renderQueue = scene.updateRenderQueue(camera);
+			const renderQueueLayer = renderQueue.layerList[0];
+
+			shadowMapPass.render(renderer, scene);
+
+			if (params.render === "forward") {
+				renderer.renderPass.setRenderTarget(backRenderTarget);
+
+				renderer.renderPass.setClearColor(0, 0, 0, 1);
+				renderer.renderPass.clear(true, true, true);
+
+				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
+
+				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
+			} else {
+				// render normalDepth texture
+
+				renderer.renderPass.setRenderTarget(normalDepthRenderTarget);
+
+				renderer.renderPass.setClearColor(0, 0, 0, 0);
+				renderer.renderPass.clear(true, true, true);
+
+				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
+					getMaterial: function(renderable) {
+						if (params.render == "prelight-deferred") {
+							if (!renderable.geometry.attributes["a_Normal"]) {
+								normalDepthShininessMaterial.shading = t3d.SHADING_TYPE.FLAT_SHADING;
+							} else {
+								normalDepthShininessMaterial.shading = t3d.SHADING_TYPE.SMOOTH_SHADING;
+							}
+							if (renderable.material.shininess !== undefined) {
+								normalDepthShininessMaterial.uniforms["shininess"] = renderable.material.shininess;
+							} else {
+								normalDepthShininessMaterial.uniforms["shininess"] = 30;
+							}
+							normalDepthShininessMaterial.needsUpdate = true;
+							return normalDepthShininessMaterial;
+						} else {
+							if (!renderable.geometry.attributes["a_Normal"]) {
+								normalDepthMaterial.shading = t3d.SHADING_TYPE.FLAT_SHADING;
+							} else {
+								normalDepthMaterial.shading = t3d.SHADING_TYPE.SMOOTH_SHADING;
+							}
+							normalDepthMaterial.needsUpdate = true;
+							return normalDepthMaterial;
+						}
+					},
+					ifRender: function(renderable) {
+						return !!renderable.geometry.getAttribute("a_Normal");
+					}
+				});
+
+				if (params.render == "deferred") {
+					// render color texture
+
+					renderer.renderPass.setRenderTarget(colorRenderTarget);
+
+					renderer.renderPass.setClearColor(0, 0, 0, 0);
+					renderer.renderPass.clear(true, true, true);
+
+					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
+						getMaterial: function(renderable) {
+							colorMaterial.diffuse.copy(renderable.material.diffuse);
+							colorMaterial.diffuseMap = renderable.material.diffuseMap;
+							colorMaterial.emissive.copy(renderable.material.emissive);
+		
+							if (renderable.material.specular !== undefined) {
+								colorMaterial.uniforms["specular"][0] = renderable.material.specular.r;
+								colorMaterial.uniforms["specular"][1] = renderable.material.specular.g;
+								colorMaterial.uniforms["specular"][2] = renderable.material.specular.b;
+							} else {
+								colorMaterial.uniforms["specular"][0] = 0;
+								colorMaterial.uniforms["specular"][1] = 0;
+								colorMaterial.uniforms["specular"][2] = 0;
+							}
+		
+							if (renderable.material.shininess !== undefined) {
+								colorMaterial.uniforms["shininess"] = renderable.material.shininess;
+							} else {
+								colorMaterial.uniforms["shininess"] = 30;
+							}
+
+							colorMaterial.needsUpdate = true;
+		
+							return colorMaterial;
+						},
+						ifRender: function(renderable) {
+							return !!renderable.geometry.getAttribute("a_Normal");
+						}
+					});
+				}
+
+
+				if (params.render == "deferred") {
+					// render emissive light
+
+					renderer.renderPass.setRenderTarget(resultRenderTarget);
+
+					renderer.renderPass.setClearColor(0, 0, 0, 0);
+					renderer.renderPass.clear(true, true, true);
+
+					emissiveLightPass.uniforms["samplerColor"] = colorRenderTarget.texture;
+					emissiveLightPass.uniforms["viewWidth"] = width;
+					emissiveLightPass.uniforms["viewHeight"] = height;
+					emissiveLightPass.render(renderer);
+				}
+		
+
+				// todo support ambient light
+
+				// render lights
+
+				if (params.render == "prelight-deferred") {
+					renderer.renderPass.setRenderTarget(colorRenderTarget);
+
+					renderer.renderPass.setClearColor(0, 0, 0, 0);
+					renderer.renderPass.clear(true, true, true);
+				}
+
+				matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).inverse();
+				cameraPos.copy(renderStates.camera.position);
+
+				// directional
+				const d_Pass = params.render == "prelight-deferred" ? directionalLightPrePass : directionalLightPass;
+				if (params.render !== "prelight-deferred") {
+					d_Pass.uniforms["samplerNormalDepth"] = normalDepthRenderTarget.texture;
+					d_Pass.uniforms["samplerColor"] = colorRenderTarget.texture;
+				} else {
+					d_Pass.uniforms["samplerNormalDepthShininess"] = normalDepthRenderTarget.texture;
+				}
+				d_Pass.uniforms["viewWidth"] = width;
+				d_Pass.uniforms["viewHeight"] = height;
+				d_Pass.uniforms["matProjViewInverse"].set(matProjViewInverse.elements);
+				d_Pass.uniforms["cameraPos"] = [cameraPos.x, cameraPos.y, cameraPos.z];
+
+				const directionalLights = renderStates.lights.directional;
+				const directionalShadows = renderStates.lights.directionalShadow;
+				const directsNum = renderStates.lights.directsNum;
+				const directShadowNum = renderStates.lights.directShadowNum;
+
+				for (let i = 0; i < directsNum; i++) {
+					const directionalLight = directionalLights[i];
+
+					d_Pass.uniforms["lightColor"] = [directionalLight.color[0], directionalLight.color[1], directionalLight.color[2]];
+					d_Pass.uniforms["lightDirectionVS"] = [-directionalLight.direction[0], -directionalLight.direction[1], -directionalLight.direction[2]];
+
+					if (i < directShadowNum) {
+						const directionalShadow = directionalShadows[i];
+		
+						d_Pass.material.defines["SHADOW"] = 1;
+						d_Pass.uniforms["shadowBias"] = directionalShadow.shadowBias[0];
+						d_Pass.uniforms["shadowRadius"] = directionalShadow.shadowParams[0];
+						d_Pass.uniforms["shadowMapSize"][0] = directionalShadow.shadowMapSize[0];
+						d_Pass.uniforms["shadowMapSize"][1] = directionalShadow.shadowMapSize[1];
+
+						d_Pass.uniforms["shadowMap"] = renderer.renderPass.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
+						d_Pass.uniforms["shadowMatrix"].set(renderStates.lights.directionalShadowMatrix, i * 16);
+					} else {
+						d_Pass.material.defines["SHADOW"] = 0;
+					}
+
+					d_Pass.render(renderer);
+				}
+
+				// point
+				const p_Pass = params.render == "prelight-deferred" ? pointLightPrePass : pointLightPass;
+				if (params.render !== "prelight-deferred") {
+					p_Pass.uniforms["samplerNormalDepth"] = normalDepthRenderTarget.texture;
+					p_Pass.uniforms["samplerColor"] = colorRenderTarget.texture;
+				} else {
+					p_Pass.uniforms["samplerNormalDepthShininess"] = normalDepthRenderTarget.texture;
+				}
+				p_Pass.uniforms["viewWidth"] = width;
+				p_Pass.uniforms["viewHeight"] = height;
+				p_Pass.uniforms["matProjViewInverse"].set(matProjViewInverse.elements);
+				p_Pass.uniforms["cameraPos"] = [cameraPos.x, cameraPos.y, cameraPos.z];
+
+				const pointLights = renderStates.lights.point;
+				const pointShadows = renderStates.lights.pointShadow;
+				const pointsNum = renderStates.lights.pointsNum;
+				const pointShadowNum = renderStates.lights.pointShadowNum;
+
+				for (let i = 0; i < pointsNum; i++) {
+					const pointLight = pointLights[i];
+
+					p_Pass.uniforms["lightColor"] = [pointLight.color[0], pointLight.color[1], pointLight.color[2]];
+					p_Pass.uniforms["lightPositionVS"] = [pointLight.position[0], pointLight.position[1], pointLight.position[2]];
+					p_Pass.uniforms["lightRadius"] = pointLight.distance;
+					p_Pass.uniforms["lightDecay"] = pointLight.decay;
+
+					if (i < pointShadowNum) {
+						const pointShadow = pointShadows[i];
+
+						p_Pass.material.defines["SHADOW"] = 1;
+						p_Pass.uniforms["shadowBias"] = pointShadow.shadowBias[0];
+						p_Pass.uniforms["shadowRadius"] = pointShadow.shadowParams[0];
+						p_Pass.uniforms["shadowMapSize"][0] = pointShadow.shadowMapSize[0];
+						p_Pass.uniforms["shadowMapSize"][1] = pointShadow.shadowMapSize[1];
+
+						p_Pass.uniforms["shadowMap"] = renderStates.lights.pointShadowMap[i];
+
+						p_Pass.uniforms["shadowCameraNear"] = pointShadow.shadowCameraRange[0];
+						p_Pass.uniforms["shadowCameraFar"] = pointShadow.shadowCameraRange[1];
+					} else {
+						p_Pass.material.defines["SHADOW"] = 0;
+					}
+
+					p_Pass.render(renderer);
+				}
+
+				// spot lights
+				const s_Pass = params.render == "prelight-deferred" ? spotLightPrePass : spotLightPass;
+				if (params.render !== "prelight-deferred") {
+					s_Pass.uniforms["samplerNormalDepth"] = normalDepthRenderTarget.texture;
+					s_Pass.uniforms["samplerColor"] = colorRenderTarget.texture;
+				} else {
+					s_Pass.uniforms["samplerNormalDepthShininess"] = normalDepthRenderTarget.texture;
+				}
+				s_Pass.uniforms["viewWidth"] = width;
+				s_Pass.uniforms["viewHeight"] = height;
+				s_Pass.uniforms["matProjViewInverse"].set(matProjViewInverse.elements);
+				s_Pass.uniforms["cameraPos"] = [cameraPos.x, cameraPos.y, cameraPos.z];
+
+				const spotLights = renderStates.lights.spot;
+				const spotShadows = renderStates.lights.spotShadow;
+				const spotsNum = renderStates.lights.spotsNum;
+				const spotShadowNum = renderStates.lights.spotShadowNum;
+
+				for (let i = 0; i < spotsNum; i++) {
+					const spotLight = spotLights[i];
+
+					s_Pass.uniforms["lightColor"] = [spotLight.color[0], spotLight.color[1], spotLight.color[2]];
+					s_Pass.uniforms["lightPositionVS"] = [spotLight.position[0], spotLight.position[1], spotLight.position[2]];
+					s_Pass.uniforms["lightDirectionVS"] = [-spotLight.direction[0], -spotLight.direction[1], -spotLight.direction[2]];
+					s_Pass.uniforms["lightConeCos"] = spotLight.coneCos;
+					s_Pass.uniforms["lightPenumbraCos"] = spotLight.penumbraCos;
+					s_Pass.uniforms["lightRadius"] = spotLight.distance;
+					s_Pass.uniforms["lightDecay"] = spotLight.decay;
+
+					if (i < spotShadowNum) {
+						const spotShadow = spotShadows[i];
+
+						s_Pass.material.defines["SHADOW"] = 1;
+						s_Pass.uniforms["shadowBias"] = spotShadow.shadowBias[0];
+						s_Pass.uniforms["shadowRadius"] = spotShadow.shadowParams[0];
+						s_Pass.uniforms["shadowMapSize"][0] = spotShadow.shadowMapSize[0];
+						s_Pass.uniforms["shadowMapSize"][1] = spotShadow.shadowMapSize[1];
+
+						s_Pass.uniforms["shadowMap"] = renderer.renderPass.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
+						s_Pass.uniforms["shadowMatrix"].set(renderStates.lights.spotShadowMatrix, i * 16);
+					} else {
+						s_Pass.material.defines["SHADOW"] = 0;
+					}
+
+					s_Pass.render(renderer);
+				}
+
+				if (params.render == "prelight-deferred") {
+					// reconstruction
+
+					renderer.renderPass.setRenderTarget(resultRenderTarget);
+
+					renderer.renderPass.setClearColor(0, 0, 0, 1);
+					renderer.renderPass.clear(true, true, true);
+
+					reconstructionMaterial.uniforms["viewWidth"] = width;
+					reconstructionMaterial.uniforms["viewHeight"] = height;
+					reconstructionMaterial.uniforms["samplerLight"] = colorRenderTarget.texture;
+					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
+						getMaterial: function(renderable) {
+							if (renderable.material.acceptLight) {
+								reconstructionMaterial.diffuse.copy(renderable.material.diffuse);
+								reconstructionMaterial.diffuseMap = renderable.material.diffuseMap;
+								reconstructionMaterial.emissive.copy(renderable.material.emissive);
+		
+								if (renderable.material.specular !== undefined) {
+									reconstructionMaterial.uniforms["specular"][0] = renderable.material.specular.r;
+									reconstructionMaterial.uniforms["specular"][1] = renderable.material.specular.g;
+									reconstructionMaterial.uniforms["specular"][2] = renderable.material.specular.b;
+								} else {
+									reconstructionMaterial.uniforms["specular"][0] = 0;
+									reconstructionMaterial.uniforms["specular"][1] = 0;
+									reconstructionMaterial.uniforms["specular"][2] = 0;
+								}
+		
+								if (renderable.material.shininess !== undefined) {
+									reconstructionMaterial.uniforms["shininess"] = renderable.material.shininess;
+								} else {
+									reconstructionMaterial.uniforms["shininess"] = 30;
+								}
+
+								reconstructionMaterial.needsUpdate = true;
+		
+								return reconstructionMaterial;
+							} else {
+								return renderable.material;
+							}
+						}
+					});
+				}
+
+				// prelight-deferred support transparent objects
+				if (params.render == "prelight-deferred") {
+					// render transparent objects forward
+					renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
+				}
+
+				// output
+
+				renderer.renderPass.setRenderTarget(backRenderTarget);
+
+				renderer.renderPass.setClearColor(0, 0, 0, 1);
+				renderer.renderPass.clear(true, true, true);
+
+				const pass = params.fxaa ? fxaaPass : copyPass;
+
+				if (params.pass === "normalDepth(Shininess)") {
+					pass.uniforms["tDiffuse"] = normalDepthRenderTarget.texture;
+				} else if (params.pass === "color(light)") {
+					pass.uniforms["tDiffuse"] = colorRenderTarget.texture;
+				} else if (params.pass === "result") {
+					pass.uniforms["tDiffuse"] = resultRenderTarget.texture;
+				}
+
+				fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+		
+				pass.render(renderer);
+			}
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+
+			backRenderTarget.resize(width, height);
+			normalDepthRenderTarget.resize(width, height);
+			colorRenderTarget.resize(width, height);
+			resultRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

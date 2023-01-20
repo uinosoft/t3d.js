@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - snake</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - snake
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+
+		const numBones = 30;
+		const distance = 50;
+		const halfDistance = distance / 2;
+		const boneLength = distance / numBones;
+		const bones = [];
+		const boneInverses = [];
+		for (let i = 0; i <= numBones; i++) {
+			const bone = new t3d.Bone();
+			bone.position.y = (i === 0) ? -halfDistance : boneLength;
+			bones.push(bone);
+
+			const boneInverse = new t3d.Matrix4();
+			boneInverses.push(boneInverse.set(
+				1, 0, 0, 0,
+				0, 1, 0, halfDistance - i * boneLength,
+				0, 0, 1, 0,
+				0, 0, 0, 1
+			));
+
+			if (i > 0) {
+				bones[bones.length - 2].add(bone);
+			}
+		}
+
+		const skeleton = new t3d.Skeleton(bones, boneInverses);
+
+		const cylinder_geometry = new t3d.CylinderGeometry(2, 2, distance, 10, numBones);
+
+		// insert skinIndex & skinWeight
+		const skinIndexArray = [];
+		const skinWeightArray = [];
+		const verticesArray = cylinder_geometry.getAttribute("a_Position").buffer.array;
+		const vertexCount = cylinder_geometry.getAttribute("a_Position").buffer.count;
+		for (let i = 0; i < vertexCount; i++) {
+			let offset = i * 3;
+			let y = verticesArray[offset + 1];
+
+			let boneId = 0;
+			for (let j = 0; j <= numBones; j++) {
+				if (y < (-halfDistance + j * boneLength + 0.1)) {
+					boneId = j;
+					break;
+				}
+			}
+
+			// bind bone
+			skinIndexArray.push(boneId, 0, 0, 0);
+			skinWeightArray.push(1, 0, 0, 0);
+		}
+
+		cylinder_geometry.removeAttribute("a_Color");
+		cylinder_geometry.addAttribute("skinIndex", new t3d.Attribute(new t3d.Buffer(new Float32Array(skinIndexArray), 4)));
+		cylinder_geometry.addAttribute("skinWeight", new t3d.Attribute(new t3d.Buffer(new Float32Array(skinWeightArray), 4)));
+
+		const phong = new t3d.PhongMaterial();
+		phong.diffuse.setHex(0xffffff);
+		phong.diffuseMap = texture;
+		const cylinder = new t3d.SkinnedMesh(cylinder_geometry, phong);
+		cylinder.bind(skeleton);
+		cylinder.add(bones[0]);
+		cylinder.euler.z = Math.PI / 2;
+		cylinder.position.x = -25;
+		cylinder.castShadow = true;
+		scene.add(cylinder);
+
+		const plane_geometry = new t3d.PlaneGeometry(200, 200);
+		const lambert = new t3d.LambertMaterial();
+		lambert.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		plane.position.y = -20;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(20, 30, 40);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 100;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 40, 80);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		// input
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// transform bones
+			for (let i = 0; i < bones.length; i++) {
+				bones[i].euler.x = Math.cos(count / 1000 * 0.5) * Math.PI / 180 * 12;
+			}
+
+			// rotate camera
+			camera.position.x = 80 * Math.sin(count / 1000 * .5);
+			camera.position.z = 80 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - scene clipping planes</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - scene clipping planes
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		scene.clippingPlanes = [new t3d.Plane(new t3d.Vector3(-1, 0, 0), 4), new t3d.Plane(new t3d.Vector3(1, 0, 0), 4)];
+
+		const sphere_geometry = new t3d.SphereGeometry(10, 20, 20);
+		const phong = new t3d.PhongMaterial();
+		phong.diffuse.setHex(0xffffff);
+		phong.side = t3d.DRAW_SIDE.DOUBLE;
+		const sphere = new t3d.Mesh(sphere_geometry, phong);
+		sphere.castShadow = true;
+		scene.add(sphere);
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const lambert = new t3d.LambertMaterial();
+		lambert.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		plane.position.y = -10;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-40, 40, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 100;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 80, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			camera.position.x = 100 * Math.sin(count / 1000 * .5);
+			camera.position.z = 100 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

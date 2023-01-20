@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - clouds</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - clouds
+	</div>
+	
+	<script id="vs" type="x-shader/x-vertex">
+        attribute vec3 a_Position;
+
+		attribute vec2 a_Uv;
+		varying vec2 v_Uv;
+
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+
+		void main() {
+			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+			v_Uv = a_Uv;
+		}
+    </script>
+
+    <script id="fs" type="x-shader/x-fragment">
+        uniform sampler2D tex;
+
+        uniform vec3 fogColor;
+        uniform float fogNear;
+        uniform float fogFar;
+
+        varying vec2 v_Uv;
+
+        void main() {
+            float depth = gl_FragCoord.z / gl_FragCoord.w;
+            float fogFactor = smoothstep( fogNear, fogFar, depth );
+
+            gl_FragColor = texture2D( tex, v_Uv );
+            gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 );
+			gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+        }
+    </script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+		
+		const container = document.createElement('div');
+		document.body.appendChild(container);
+
+		// 2D gradient Sky
+
+		const skyCanvas = document.createElement('canvas');
+		skyCanvas.width = 32;
+		skyCanvas.height = window.innerHeight;
+
+		const context = skyCanvas.getContext('2d');
+
+		const gradient = context.createLinearGradient(0, 0, 0, skyCanvas.height);
+		gradient.addColorStop(0, "#1e4877");
+		gradient.addColorStop(0.5, "#4584b4");
+
+		context.fillStyle = gradient;
+		context.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
+
+		container.style.background = 'url(' + skyCanvas.toDataURL('image/png') + ')';
+		container.style.backgroundSize = '32px 100%';
+		
+		// 3d Clouds
+
+		const cloudsCanvas = document.createElement('canvas');
+		cloudsCanvas.width = width;
+		cloudsCanvas.height = height;
+		container.appendChild(cloudsCanvas);
+
+		const forwardRenderer = new ForwardRenderer(cloudsCanvas, { antialias: true, alpha: true });
+		forwardRenderer.renderPass.setClearColor(0, 0, 0, 0);
+
+		const scene = new t3d.Scene();
+		
+		const texture = new Texture2DLoader().load('./resources/cloud10.png');
+		texture.anisotropy = 16;
+
+		const material = new t3d.ShaderMaterial({
+			uniforms: {
+				"tex": texture,
+				"fogColor": new t3d.Color3().setHex(0x4584b4).toArray(),
+				"fogNear": -100,
+				"fogFar": 3000,
+			},
+			vertexShader: document.getElementById('vs').textContent,
+			fragmentShader: document.getElementById('fs').textContent
+		});
+		material.depthWrite = false;
+		material.depthTest = false;
+		material.transparent = true;
+
+		const plane = new t3d.Mesh(new t3d.PlaneGeometry(64, 64), material);
+		let planeGeometries = [];
+
+		for (let i = 0; i < 8000; i++) {
+			plane.position.x = Math.random() * 1000 - 500;
+			plane.position.y = -Math.random() * Math.random() * 200 - 15;
+			plane.position.z = i;
+			plane.euler.x = Math.PI / 2;
+			plane.euler.y = Math.random() * Math.PI;
+			plane.scale.x = plane.scale.y = Math.random() * Math.random() * 1.5 + 0.5;
+			plane.updateMatrix();
+
+			const cloneGeo = plane.geometry.clone();
+			GeometryUtils.applyMatrix4(cloneGeo, plane.matrix);
+			planeGeometries.push(cloneGeo);
+		}
+
+		// merge
+		const geometry = GeometryUtils.mergeGeometries(planeGeometries);
+		
+		const mesh0 = new t3d.Mesh(geometry, material);
+		scene.add(mesh0);
+
+		const mesh = new t3d.Mesh(geometry, material);
+		mesh.position.z = -8000;
+		scene.add(mesh);
+
+		const camera = new t3d.Camera();
+		camera.frustumCulled = false;
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 3000);
+		scene.add(camera);
+
+		let mouseX = 0, mouseY = 0;
+		let start_time = Date.now();
+
+		const windowHalfX = window.innerWidth / 2;
+		const windowHalfY = window.innerHeight / 2;
+
+		function onDocumentMouseMove(event) {
+			mouseX = (event.clientX - windowHalfX) * 0.25;
+			mouseY = (event.clientY - windowHalfY) * 0.15;
+		}
+		document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+		
+			const position = ((Date.now() - start_time) * 0.03) % 8000;
+
+			camera.position.x += (mouseX - camera.position.x) * 0.01;
+			camera.position.y += (-mouseY - camera.position.y) * 0.01;
+			camera.position.z = -position + 8000;
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 3000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

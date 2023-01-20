@@ -1,0 +1,180 @@
+{
+	"light": [
+		"light_directlight",
+		"light_pointlight",
+		"light_spotlight",
+		"light_hemispherelight",
+		"light_shadow",
+		"light_shadow_adapter",
+		"light_softshadow"
+	],
+	"geometry": [
+		"geometry_geometries",
+		"geometry_loader_assimp2json",
+		"geometry_loader_vox",
+		"geometry_loader_gltf",
+		"geometry_loader_gltf2",
+		"geometry_loader_gltf3",
+		"geometry_loader_gltf_helmat",
+		"geometry_loader_gltf_tangent",
+		"geometry_loader_gltf_lights",
+		"geometry_loader_gltf_skinning",
+		"geometry_loader_gltf_morphtargets",
+		"geometry_loader_gltf_materials_unlit",
+		"geometry_loader_gltf_uvtransform",
+		"geometry_loader_gltf_draco",
+		"geometry_loader_gltf_camera",
+		"geometry_builder_shapes",
+		"geometry_builder_lines",
+		"geometry_builder_edges",
+		"geometry_groups",
+		"geometry_boundings"
+	],
+	"material": [
+		"material_materials",
+		"material_pbr",
+		"material_depth",
+		"material_depth_texture",
+		"material_shadow",
+		"material_matcap",
+		"material_texture_imagebitmap",
+		"material_texture_normalmap",
+		"material_texture_emissivemap",
+		"material_texture_bumpmap",
+		"material_texture_mipmap",
+		"material_texture_uvtransform",
+		"material_texture_uvcoord",
+		"material_texture_anisotropic",
+		"material_texture_blending",
+		"material_texture_hdr",
+		"material_texture_video",
+		"material_texture_heatmap",
+		"material_texture_idwmap",
+		"material_compressedtexture_dds",
+		"material_compressedtexture_pvr",
+		"material_cubetexture_skybox",
+		"material_cubetexture_skybox_tga",
+		"material_cubetexture_skybox_hdr",
+		"material_cubetexture_skybox_hdr_panorama",
+		"material_cubetexture_filter",
+		"material_cubetexture_envmap",
+		"material_texture3d",
+		"material_volume",
+		"material_transparent",
+		"material_shadermaterial",
+		"material_shader_sky",
+		"material_shader_water",
+		"material_shader_xray",
+		"material_shader_extend",
+		"material_flatshading",
+		"material_vertexcolors",
+		"material_alphamask",
+		"material_clippingplanes"
+	],
+	"camera": [
+		"camera_cameras",
+		"camera_multiple",
+		"camera_controls_orbit",
+		"camera_controls_fly",
+		"camera_controls_free"
+	],
+	"scene": [
+		"scene_fog",
+		"scene_gamma_correction",
+		"scene_anchor",
+		"scene_clippingplanes"
+	],
+	"probes": [
+		"probes_reflection"
+	],
+	"math": [
+		"math_frustumtest",
+		"math_curve"
+	],
+	"sprite": [
+		"sprite_sprites"
+	],
+	"points": [
+		"points_sprites"
+	],
+	"lines": [
+		"lines_lines",
+		"lines_dashedlines",
+		"lines_instancedlines"
+	],
+	"text": [
+		"text_sdf",
+		"text_typeface"
+	],
+	"canvas2d": [
+		"canvas2d_canvas2d"
+	],
+	"raycast": [
+		"raycast_raycaster"
+	],
+	"stereo": [
+		"stereo_webvr_car",
+		"stereo_webxr_vr_car"
+	],
+	"physics": [
+		"physics_cannon",
+		"physics_ammo",
+		"physics_ammo_softbody_volume"
+	],
+	"particle": [
+		"particle_particle"
+	],
+	"animation": [
+		"animation_morphtargets",
+		"animation_skinned_mesh",
+		"animation_keyframe_animation",
+		"animation_snake",
+		"animation_multiple",
+		"animation_crossfade",
+		"animation_blending_additive",
+		"animation_skinned_instancing"
+	],
+	"custompass": [
+		"custompass_car",
+		"custompass_deferred",
+		"custompass_gbuffer",
+		"custompass_ssao",
+		"custompass_sketch",
+		"custompass_ssr",
+		"custompass_dof",
+		"custompass_taa",
+		"custompass_bloom",
+		"custompass_blur",
+		"custompass_msaa",
+		"custompass_motion_blur",
+		"custompass_depth_texture_share",
+		"custompass_depth_buffer_share",
+		"custompass_lensflare"
+	],
+	"deferred": [
+		"deferred_renderer",
+		"deferred_lights"
+	],
+	"webgl": [
+		"webgl_depthfunc",
+		"webgl_instanced_draw",
+		"webgl_polygonoffset",
+		"webgl_logarithmicDepthBuffer",
+		"webgl_canvas_transparent",
+		"webgl_stencil",
+		"webgl_external_texture",
+		"webgl_external_buffer",
+		"webgl_primitive_restart",
+		"webgl_renderinfo",
+		"webgl_query_occlusion",
+		"webgl_query_timer",
+		"webgl_helpers"
+	],
+	"lab": [
+		"lab_clouds",
+		"lab_earth",
+		"lab_ocean",
+		"lab_ground",
+		"lab_texture_variation"
+	]
+}

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - texture idwmap</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> - texture idwmap
+	</div>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { IDWMapGenerator } from './jsm/textures/IDWMapGenerator.js';
+		import { GradientTextureGenerator } from './jsm/textures/GradientTextureGenerator.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.Renderer(gl);
+		renderer.renderPass.setClearColor(0.6, 0.6, 0.6, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 120, 120);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const generator = new IDWMapGenerator(1024, 1024);
+
+		const gradientTexture = new GradientTextureGenerator().gradient({
+			0.1: 'blue', 0.4: 'cyan', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red'
+		}).getTexture();
+
+		const planeGeometry = new t3d.PlaneGeometry(50, 50);
+
+		const material = new t3d.BasicMaterial();
+		material.diffuseMap = generator.getGrayTexture();
+		const mesh = new t3d.Mesh(planeGeometry, material);
+		mesh.position.set(30, 0, 0);
+		scene.add(mesh);
+
+		const material2 = new t3d.BasicMaterial();
+		material2.diffuseMap = generator.getTexture();
+		const mesh2 = new t3d.Mesh(planeGeometry, material2);
+		mesh2.position.set(-30, 0, 0);
+		scene.add(mesh2);
+
+		const size = [60, 60];
+		const params = { exponent: 2, gradientTexture: 0, isoline: true };
+
+		function updateTextures() {
+			generator.render(renderer, [
+				[-30, 15, 10],
+				[-15, -15, 5],
+				[30, 15, 25],
+				[30, -15, 14]
+			], {
+				size: size,
+				range: [1, 28],
+				exponent: params.exponent
+			}).colorize(renderer, gradientTexture, {
+				isoline: params.isoline,
+			});
+		}
+
+		updateTextures();
+
+		const gui = new GUI();
+		gui.add(params, 'exponent', [1, 2, 3]).onChange(updateTextures);
+		gui.add(params, 'isoline').onChange(updateTextures);
+		gui.close();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.renderPass.clear(true, true, true);
+			renderer.renderScene(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+
+</html>

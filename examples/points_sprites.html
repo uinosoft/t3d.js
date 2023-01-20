@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - sprites</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - sprites
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.FogExp2(0x000000, 0.0008);
+
+		const loader = new Texture2DLoader();
+
+		const texture1 = loader.load('./resources/sprites/snowflake1.png');
+		const texture2 = loader.load('./resources/sprites/snowflake2.png');
+		const texture3 = loader.load('./resources/sprites/snowflake3.png');
+		const texture4 = loader.load('./resources/sprites/snowflake4.png');
+		const texture5 = loader.load('./resources/sprites/snowflake5.png');
+
+		const pointsGeometry = new t3d.Geometry();
+		const verticesArray = [];
+
+		for (let i = 0; i < 10000; i++) {
+			verticesArray.push(
+				Math.random() * 2000 - 1000,
+				Math.random() * 2000 - 1000,
+				Math.random() * 2000 - 1000
+			);
+		}
+
+		pointsGeometry.addAttribute("a_Position", new t3d.Attribute(new t3d.Buffer(new Float32Array(verticesArray), 3)));
+
+		pointsGeometry.computeBoundingBox();
+		pointsGeometry.computeBoundingSphere();
+
+		const params = [
+			[texture2, 20],
+			[texture3, 15],
+			[texture1, 10],
+			[texture5, 8],
+			[texture4, 5]
+		];
+		const pointsArray = [];
+		for (let j = 0; j < params.length; j++) {
+			const param = params[j];
+
+			const pointsMaterial = new t3d.PointsMaterial();
+			pointsMaterial.diffuse.setHex(0xffffff);
+			pointsMaterial.diffuseMap = param[0];
+			pointsMaterial.size = param[1];
+			pointsMaterial.blending = t3d.BLEND_TYPE.ADD;
+			pointsMaterial.depthWrite = false;
+			pointsMaterial.transparent = true;
+
+			const points = new t3d.Mesh(pointsGeometry, pointsMaterial);
+			scene.add(points);
+
+			points.euler.x = Math.random() * 6;
+			points.euler.y = Math.random() * 6;
+			points.euler.z = Math.random() * 6;
+
+			pointsArray.push(points);
+		}
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 1000);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 2000);
+		scene.add(camera);
+
+		// const controller = new OrbitControls(camera, canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			let time = Date.now() * 0.00005;
+
+			for (let i = 0; i < pointsArray.length; i++) {
+				pointsArray[i].euler.y = time * (i < 4 ? i + 1 : -(i + 1));
+			}
+
+			// controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 2000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

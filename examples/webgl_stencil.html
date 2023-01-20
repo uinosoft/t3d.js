@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - stencil</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - stencil
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.autoClear = false;
+
+		const floorTexture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+
+		const scene = new t3d.Scene();
+		const stencilScene = new t3d.Scene();
+
+		const sphere = new t3d.Mesh(new t3d.SphereGeometry(10, 20, 20), new t3d.PhongMaterial());
+		sphere.castShadow = true;
+		sphere.material.diffuse.setHex(0xffffff);
+		scene.add(sphere);
+
+		const cube = new t3d.Mesh(new t3d.BoxGeometry(15, 15, 15), new t3d.PhongMaterial());
+		cube.castShadow = true;
+		cube.material.diffuse.setHex(0xffffff);
+		cube.material.diffuseMap = floorTexture;
+		cube.material.stencilTest = true;
+		cube.material.stencilFunc = t3d.COMPARE_FUNC.LEQUAL;
+		cube.material.stencilRef = 1;
+		cube.material.stencilFuncMask = 1;
+		cube.material.stencilFail = t3d.OPERATION.KEEP;
+		cube.material.stencilZFail = t3d.OPERATION.KEEP;
+		cube.material.stencilZPass = t3d.OPERATION.KEEP;
+		scene.add(cube);
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const lambert = new t3d.LambertMaterial();
+		lambert.diffuse.setHex(0xffffff);
+		lambert.stencilTest = true;
+		lambert.stencilFunc = t3d.COMPARE_FUNC.LEQUAL;
+		lambert.stencilRef = 1;
+		lambert.stencilFuncMask = 1;
+		lambert.stencilFail = t3d.OPERATION.KEEP;
+		lambert.stencilZFail = t3d.OPERATION.KEEP;
+		lambert.stencilZPass = t3d.OPERATION.KEEP;
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		plane.position.y = -10;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const mask = new t3d.Mesh(new t3d.SphereGeometry(20, 20, 20), new t3d.BasicMaterial());
+		mask.material.diffuse.setHex(0x000000);
+		mask.material.depthWrite = false;
+		mask.material.stencilTest = true;
+		mask.material.stencilFunc = t3d.COMPARE_FUNC.ALWAYS;
+		mask.material.stencilRef = 1;
+		mask.material.stencilFuncMask = 1;
+		mask.material.stencilFail = t3d.OPERATION.KEEP;
+		mask.material.stencilZFail = t3d.OPERATION.KEEP;
+		mask.material.stencilZPass = t3d.OPERATION.REPLACE;
+		stencilScene.add(mask);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-40, 40, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 100;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+		
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 3);
+		directionalLight.add(directionalLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 80, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			camera.position.x = 100 * Math.sin(count / 1000 * .5);
+			camera.position.z = 100 * Math.cos(count / 1000 * .5);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.updateMatrix();
+
+			mask.position.z = 30 * Math.cos(count / 1000);
+
+			forwardRenderer.renderPass.setClearColor(0, 0, 0, 0);
+			forwardRenderer.renderPass.clear(true, true, true);
+
+			directionalLight.color.setHex(0xffffff);
+			directionalLightHelper.update();
+			directionalLightHelper.visible = true;
+			sphere.scale.set(1, 1, 1);
+			plane.scale.set(1, 1, 1);
+			lambert.diffuseMap = null;
+			lambert.stencilTest = false;
+			cube.visible = false;
+			sphere.visible = true;
+
+			forwardRenderer.render(scene, camera);
+			forwardRenderer.renderPass.clear(false, true, false);
+
+			forwardRenderer.render(stencilScene, camera);
+			forwardRenderer.renderPass.clear(false, true, false);
+
+			directionalLight.color.setHex(0xffaaaa);
+			directionalLightHelper.visible = false;
+			sphere.scale.set(1.1, 1.1, 1.1);
+			plane.scale.set(1.1, 1.1, 1.1);
+			lambert.diffuseMap = floorTexture;
+			lambert.stencilTest = true;
+			cube.visible = true;
+			sphere.visible = false;
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - gltf skinning</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf skinning
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from './jsm/Clock.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { SkeletonHelper } from './jsm/objects/SkeletonHelper.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		const devicePixelRatio = window.devicePixelRatio;
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.floor(width * devicePixelRatio);
+		canvas.height = Math.floor(height * devicePixelRatio);
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.6, 0.7, 0.8, 1);
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		]);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 10, 100);
+		scene.fog.color.setRGB(0.6, 0.7, 0.8);
+		scene.environmentLightIntensity = 0.8;
+		scene.environment = cube_texture;
+
+		// const file = "resources/models/gltf/UinoSpaceman/glTF/UinoSpaceman.gltf";
+		const file = "resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb";
+
+		let animation, params = { clipName: '', timeScale: 1, skeleton: false, loop: true };
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load(file).then(function(result) {
+			const object = result.root;
+
+			object.traverse(function(node) {
+				if (node.material) {
+					node.castShadow = true;
+					// node.receiveShadow = true;
+					node.frustumCulled = false;
+				}
+			});
+
+			animation = new t3d.AnimationMixer();
+			result.animations.forEach(function (clip) {
+				const action = new t3d.AnimationAction(clip);
+				animation.addAction(action);
+			});
+
+			const actions = animation.getActions();
+			const animNames = actions.map(function(action) {
+				return action.clip.name;
+			});
+
+			let actionIndex = 0;
+
+			actions[actionIndex].time = 0;
+			actions[actionIndex].weight = 1;
+
+			const currentAnimName = actions[actionIndex].clip.name;
+			params.clipName = currentAnimName;
+
+			scene.add(object);
+
+			const skeletonHelper = new SkeletonHelper(scene);
+
+			const gui = new GUI();
+			gui.add(params, "skeleton").onChange(value => {
+				if (value) {
+					scene.add(skeletonHelper);
+				} else {
+					scene.remove(skeletonHelper);
+				}
+			});
+			gui.add(params, 'clipName', animNames).onChange(value => {
+				const lastActionIndex = actionIndex;
+
+				actionIndex = actions.findIndex(function(action) {
+					return action.clip.name === value;
+				});
+
+				if (lastActionIndex !== actionIndex) {
+					actions[lastActionIndex].time = 0;
+					actions[lastActionIndex].weight = 0;
+
+					actions[actionIndex].time = 0;
+					actions[actionIndex].weight = 1;
+				}
+			});
+			gui.add(params, 'timeScale', -2, 2, 0.1);
+			gui.close();
+		}).catch(e => console.error(e));
+
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.roughness = 1;
+		plane_material.diffuse.setHex(0x888888);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-4, 5, 4);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 8;
+		directionalLight.shadow.cameraNear = 2;
+		directionalLight.shadow.cameraFar = 20;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(4, 3, 4);
+		camera.lookAt(new t3d.Vector3(0, 2, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1.5, 0);
+
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			animation && animation.update(clock.getDelta() * params.timeScale);
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - sprites</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - sprites
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Sprite } from './jsm/objects/Sprite.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x000000, 1, 40);
+
+		const loader = new Texture2DLoader();
+
+		const texture1 = loader.load('./resources/sprites/snowflake1.png');
+		const texture2 = loader.load('./resources/sprites/snowflake2.png');
+		const texture3 = loader.load('./resources/sprites/snowflake3.png');
+		const texture4 = loader.load('./resources/sprites/snowflake4.png');
+		const texture5 = loader.load('./resources/sprites/snowflake5.png');
+
+		const texs = [texture1, texture2, texture3, texture4, texture5];
+
+		const sprites = [];
+		for (let i = 0; i < 300; i++) {
+			const sprite = new Sprite();
+			sprite.material.diffuseMap = texs[Math.round(Math.random() * 4)];
+			sprite.material.diffuse.setHSL(Math.random(), Math.random(), Math.random());
+			sprite.material.transparent = true;
+			sprite.material.blending = t3d.BLEND_TYPE.ADD;
+
+			sprite.position.x = (Math.random() - 0.5) * 10;
+			sprite.position.y = (Math.random() - 0.5) * 10;
+			sprite.position.z = (Math.random() - 0.5) * 10;
+			sprite.scale.set(2, 2, 1);
+
+			scene.add(sprite);
+			sprites.push(sprite);
+		}
+
+		const sphere_geometry = new t3d.SphereGeometry(0.5, 4, 2);
+		const basic = new t3d.BasicMaterial();
+		basic.diffuse.setHex(0x00cccc);
+		const sphere = new t3d.Mesh(sphere_geometry, basic);
+		scene.add(sphere);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 10);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 2000);
+		scene.add(camera);
+		
+		const controller = new OrbitControls(camera, canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			// rotate camera
+			// camera.position.x = 10 * Math.sin(count / 8000);
+			// camera.position.z = 10 * Math.cos(count / 8000);
+			// camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			controller.update();
+
+			for (let i = 0; i < sprites.length; i++) {
+				sprites[i].rotation = count / 1000 * 2;
+
+				const scale = Math.cos(count / 100 + i * 10) * 0.5 + 0.7;
+				sprites[i].scale.set(scale, scale, 1);
+
+				// const key = count / (i % 15 * 100);
+				// const h = Math.cos(key) * 0.5 + 0.5;
+				// const s = Math.sin(key) * 0.5 + 0.5;
+				// const l = Math.cos(key) * 0.5 + 0.5;
+				// sprites[i].material.diffuse.setHSL(h, s, l);
+			}
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 2000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

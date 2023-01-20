@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - gltf materials unlit</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf materials unlit
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from './jsm/Clock.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const file = "resources/models/gltf/BotSkinned/glTF-MaterialsUnlit/Bot_Skinned.gltf";
+
+		let animation;
+
+		const loader = new GLTFLoader();
+		loader.load(file).then(function(result) {
+			// add mesh to scene
+			const object = result.root.children[0];
+			object.traverse(function (obj) {
+				if (obj.isSkinnedMesh) {
+					obj.frustumCulled = false;
+				}
+			});
+			object.scale.set(100, 100, 100);
+			object.position.y = -0.5;
+
+			// todo skeleton need auto inverse in GLTFLoader
+			const bones = result.root.children[0].children[0];
+			result.root.children[0].remove(bones);
+			scene.add(bones);
+		
+			animation = new t3d.AnimationMixer();
+			result.animations.forEach(function (clip) {
+				const action = new t3d.AnimationAction(clip);
+				action.weight = 1;
+				animation.addAction(action);
+			});
+
+			scene.add(object);
+		}).catch(e => console.error(e));
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const lambert = new t3d.BasicMaterial();
+		lambert.diffuse.setHex(0x888888);
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		scene.add(plane);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 2;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.position.set(-1, 2, 2);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1, 0);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			animation && animation.update(clock.getDelta() * 1.3);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

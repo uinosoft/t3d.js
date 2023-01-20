@@ -1,0 +1,128 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.7.33",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Model",
+            "rotation" : [
+                -0.7071068286895752,
+                0,
+                0,
+                0.7071068286895752
+            ],
+            "scale" : [
+                0.10000002384185791,
+                0.10000002384185791,
+                0.10000002384185791
+            ]
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "name" : "default_mat",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.800000011920929,
+                    0.800000011920929,
+                    0.800000011920929,
+                    1
+                ],
+                "metallicFactor" : 0.20000000298023224,
+                "roughnessFactor" : 0.800000011920929
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "model",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "indices" : 3,
+                    "material" : 0
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 32953,
+            "max" : [
+                177.9490966796875,
+                111.3333969116211,
+                532.2510375976562
+            ],
+            "min" : [
+                -172.76531982421875,
+                -104.85065460205078,
+                -1.408761181664886e-05
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 32953,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 32953,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5123,
+            "count" : 182364,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 395436,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 395436,
+            "byteOffset" : 395436
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 263624,
+            "byteOffset" : 790872
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 364728,
+            "byteOffset" : 1054496
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 1419224,
+            "uri" : "bust_of_woman.bin"
+        }
+    ]
+}

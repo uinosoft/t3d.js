@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custom depth texture share</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+		<a href="" target="_blank">t3d</a> - Share Depth Texture
+		<br/> Two FBO attach the same depth texture
+		<br/> Available only for WebGL 2.0
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebGL2</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { CopyShader } from './jsm/shaders/CopyShader.js';
+		import { GridHelper } from './jsm/objects/GridHelper.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		// Create an geometry object.
+
+		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
+
+		// Create depth scene.
+
+		const material0 = new t3d.BasicMaterial();
+		// material0.colorWrite = false;
+		const cube0 = new t3d.Mesh(cube_geometry, material0);
+		cube0.position.z = 10;
+		const depthScene = new t3d.Scene();
+		depthScene.add(cube0);
+
+		// Create scene.
+
+		const scene = new t3d.Scene();
+
+		const grid = new GridHelper(50, 20, 0xffffff, 0xffffff);
+		scene.add(grid);
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+
+		const material = new t3d.BasicMaterial();
+		material.diffuseMap = texture;
+		const cube = new t3d.Mesh(cube_geometry, material);
+		scene.add(cube);
+
+		// Use the same camera.
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.position.set(10, 10, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+		depthScene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const depthTexture = new t3d.Texture2D();
+		depthTexture.image = { data: null, width: 4, height: 4 };
+		depthTexture.type = t3d.PIXEL_TYPE.UNSIGNED_INT_24_8;
+		depthTexture.format = t3d.PIXEL_FORMAT.DEPTH_STENCIL;
+		depthTexture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+		depthTexture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		depthTexture.generateMipmaps = false;
+		depthTexture.flipY = false;
+
+		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+		tempRenderTarget.attach(
+			depthTexture,
+			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
+		);
+
+		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+		tempRenderTarget2.texture.encoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		tempRenderTarget2.attach(
+			depthTexture,
+			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
+		);
+
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(cube0.position, "z", -10, 10, 1);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			// Update matrix first, to avoid precision errors in viewMatrix.
+			scene.updateMatrix();
+			depthScene.updateMatrix();
+
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			depthScene.updateRenderStates(camera);
+			depthScene.updateRenderQueue(camera, false, false);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+
+			renderer.renderScene(depthScene, camera);
+
+			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, false, true);
+		
+			renderer.renderScene(scene, camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 0);
+			renderer.renderPass.clear(true, true, true);
+		
+			copyPass.uniforms.tDiffuse = tempRenderTarget2.texture;
+			copyPass.render(renderer);
+		}
+		
+		if (renderer.renderPass.capabilities.version < 2) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			requestAnimationFrame(loop);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width, height);
+			tempRenderTarget.resize(width, height);
+			tempRenderTarget2.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - text sdf</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> - text sdf
+		<br/>generate sdf font from <a href="https://github.com/mapbox/tiny-sdf" target="_blank">tiny-sdf</a>
+		<br/>generate msdf font from <a href="https://github.com/leochocolat/three-msdf-text" target="_blank">three-msdf-text</a>
+	</div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		// Font Shaders
+		// SDF https://github.com/mapbox/tiny-sdf
+		// MSDF https://github.com/leochocolat/three-msdf-text
+
+		const SDFShader = {
+			name: 'sdf_text',
+
+			defines: { SDF_DEBUG: false },
+		
+			uniforms: {},
+
+			vertexShader: `
+				#include <common_vert>
+
+				attribute vec2 a_Uv;
+				varying vec2 v_Uv;
+
+				uniform mat3 uvTransform;
+
+				void main() {
+					gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+					v_Uv = (uvTransform * vec3(a_Uv, 1.)).xy;
+				}
+			`,
+
+			fragmentShader: `
+				uniform vec3 u_Color;
+				uniform float u_Opacity;
+
+				uniform sampler2D diffuseMap;
+
+				varying vec2 v_Uv;
+
+				void main() {
+					float dist = texture2D(diffuseMap, v_Uv).r;
+					float alpha = smoothstep(0.727903125, 0.772096875, dist);
+					gl_FragColor = vec4(u_Color, alpha * u_Opacity);
+
+					#ifdef SDF_DEBUG
+						gl_FragColor = texture2D(diffuseMap, v_Uv);
+					#endif
+				}
+			`
+		}
+		
+		const MSDFShader = {
+			name: 'msdf_text',
+
+			defines: { SDF_DEBUG: false },
+		
+			uniforms: {},
+
+			vertexShader: `
+				#include <common_vert>
+
+				attribute vec2 a_Uv;
+				varying vec2 v_Uv;
+
+				uniform mat3 uvTransform;
+
+				void main() {
+					gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+					v_Uv = (uvTransform * vec3(a_Uv, 1.)).xy;
+				}
+			`,
+
+			fragmentShader: `
+				uniform vec3 u_Color;
+				uniform float u_Opacity;
+
+				uniform sampler2D diffuseMap;
+
+				varying vec2 v_Uv;
+
+				float median(float r, float g, float b) {
+					return max(min(r, g), min(max(r, g), b));
+				}
+
+				void main() {
+					vec3 msd = texture2D(diffuseMap, v_Uv).rgb;
+					float sd = median(msd.r, msd.g, msd.b) - 0.5;
+					float alpha = clamp(sd / fwidth(sd) + 0.5, 0.0, 1.0);
+					gl_FragColor = vec4(u_Color, alpha * u_Opacity);
+
+					#ifdef SDF_DEBUG
+						gl_FragColor = texture2D(diffuseMap, v_Uv);
+					#endif
+				}
+			`
+		}
+
+		// Init Scene
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.renderPass.setClearColor(0.9, 0.9, 0.9, 1);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 200);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 10000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.maxDistance = 9000;
+
+		// Add texts.
+
+		function generateLabel(text, x, y, z) {
+			const width = 80;
+			const height = 20;
+			const fontSize = 16;
+
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+
+			canvas.width = width;
+			canvas.height = height;
+
+			ctx.fillStyle = 'rgb(0.9, 0.9, 0.9)';
+			ctx.fillRect(0, 0, width, height);
+
+			ctx.font = fontSize + 'px Arial';
+			ctx.fillStyle = 'white';
+			ctx.textAlign = "center";
+			ctx.fillText(text, width * 0.5, fontSize);
+
+			const texture = new t3d.Texture2D();
+			texture.image = canvas;
+			texture.version++;
+
+			const material = new t3d.BasicMaterial();
+			material.diffuseMap = texture;
+			material.transparent = true;
+			material.side = t3d.DRAW_SIDE.DOUBLE;
+
+			const geo = new t3d.PlaneGeometry(width * 0.5 * 0.6, 9 * 0.6);
+
+			const mesh = new t3d.Mesh(geo, material);
+			mesh.position.set(x, y - 18, z);
+			mesh.euler.x = Math.PI / 2;
+
+			return mesh;
+		}
+
+		function createCanvasTexture(text, size = 50, padding = 2) {
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+
+			const fontSize = size - padding * 2;
+
+			ctx.font = fontSize + 'px Arial';
+			ctx.textAlign = "center";
+			ctx.textBaseline = 'middle';
+
+			const metrics = ctx.measureText(text);
+			const width = metrics.width;
+			const height = getFontHeight(metrics, fontSize);
+			canvas.width = width + padding * 2;
+			canvas.height = width + padding * 2;
+
+			ctx.fillStyle = 'black';
+			ctx.font = fontSize + 'px Arial';
+			ctx.textAlign = "center";
+			ctx.textBaseline = 'middle';
+			ctx.fillText(text, canvas.width / 2, padding + height / 2);
+
+			const texture = new t3d.Texture2D();
+			texture.image = canvas;
+			texture.version++;
+
+			return texture;
+		}
+
+		function getFontHeight(metrics, size) {
+			if (metrics.fontBoundingBoxAscent !== undefined && metrics.fontBoundingBoxDescent !== undefined) {
+				return metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+			} else if (metrics.actualBoundingBoxAscent !== undefined && metrics.actualBoundingBoxDescent !== undefined) {
+				return metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+			} else {
+				return size;
+			}
+		}
+
+		const loader = new Texture2DLoader();
+		const canvas_texture = createCanvasTexture('材');
+		const raw_texture = loader.load('./resources/fonts/text_raw.png');
+		const sdf_texture = loader.load('./resources/fonts/text_sdf.png');
+		const msdf_texture = loader.load('./resources/fonts/text_msdf.png');
+
+		const canvasMaterial = new t3d.BasicMaterial();
+		canvasMaterial.transparent = true;
+		canvasMaterial.diffuseMap = canvas_texture;
+		canvasMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const imageMaterial = new t3d.BasicMaterial();
+		imageMaterial.transparent = true;
+		imageMaterial.diffuseMap = raw_texture;
+		imageMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const sdfMaterial = new t3d.ShaderMaterial(SDFShader);
+		sdfMaterial.transparent = true;
+		sdfMaterial.diffuse.setRGB(0, 0, 0);
+		sdfMaterial.diffuseMap = sdf_texture;
+		sdfMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const msdfMaterial = new t3d.ShaderMaterial(MSDFShader);
+		msdfMaterial.transparent = true;
+		msdfMaterial.diffuse.setRGB(0, 0, 0);
+		msdfMaterial.diffuseMap = msdf_texture;
+		msdfMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const materialInfos = [
+			{ type: 'CANVAS', material: canvasMaterial, x: -22, y: 25 },
+			{ type: 'IMAGE', material: imageMaterial, x: -22, y: -18 },
+			{ type: 'SDF', material: sdfMaterial, x: 22, y: 25 },
+			{ type: 'MSDF', material: msdfMaterial, x: 22, y: -18 }
+		]
+
+		const geometry = new t3d.PlaneGeometry(30, 30);
+
+		for (let i = 0; i < materialInfos.length; i++) {
+			const info = materialInfos[i];
+			const textMesh = new t3d.Mesh(geometry, info.material);
+			textMesh.euler.x = Math.PI * 0.5;
+			scene.add(textMesh);
+
+			textMesh.position.set(info.x, info.y, 0);
+			scene.add(generateLabel(info.type, info.x, info.y, 0));
+		}
+
+		// GUI
+
+		const minFilters = ['LINEAR', 'NEAREST', 'NEAREST_MIPMAP_NEAREST', 'LINEAR_MIPMAP_LINEAR', 'LINEAR_MIPMAP_NEAREST', 'NEAREST_MIPMAP_LINEAR'];
+		const magFilters = ['LINEAR', 'NEAREST'];
+		const maxAnisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		const params = { alpha: 1, anisotropy: 1, minFilter: 'LINEAR_MIPMAP_LINEAR', magFilter: 'LINEAR', debug: false };
+		const gui = new GUI();
+		gui.add(params, 'alpha', 0, 1, 0.01).onChange(function(value) {
+			for (let i = 0; i < materialInfos.length; i++) {
+				materialInfos[i].material.opacity = value;
+			}
+		});
+		gui.add(params, 'anisotropy', 1, maxAnisotropy, 1).onChange(function(value) {
+			for (let i = 0; i < materialInfos.length; i++) {
+				materialInfos[i].material.diffuseMap.anisotropy = value;
+				materialInfos[i].material.diffuseMap.version++;
+			}
+		});
+		gui.add(params, 'minFilter', minFilters).onChange(function(value) {
+			for (let i = 0; i < materialInfos.length; i++) {
+				materialInfos[i].material.diffuseMap.minFilter = t3d.TEXTURE_FILTER[value];
+				materialInfos[i].material.diffuseMap.version++;
+			}
+		});
+		gui.add(params, 'magFilter', magFilters).onChange(function(value) {
+			for (let i = 0; i < materialInfos.length; i++) {
+				materialInfos[i].material.diffuseMap.magFilter = t3d.TEXTURE_FILTER[value];
+				materialInfos[i].material.diffuseMap.version++;
+			}
+		});
+		gui.add(params, 'debug').onChange(function(value) {
+			materialInfos[2].material.defines['SDF_DEBUG'] = value;
+			materialInfos[3].material.defines['SDF_DEBUG'] = value;
+			materialInfos[2].material.needsUpdate = true;
+			materialInfos[3].material.needsUpdate = true;
+		});
+
+		// Stats
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		// Main loop
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 10000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+
+</html>

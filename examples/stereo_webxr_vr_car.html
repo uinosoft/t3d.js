@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - car</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - car
+		<br/>
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebXR</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { WebXRControl } from './jsm/stereo/WebXRControls.js';
+		import { StereoCamera } from './jsm/stereo/StereoCamera.js';
+		import { StereoRenderer } from './jsm/stereo/StereoRenderer.js';
+		import { AssimpJsonLoader } from './jsm/loaders/AssimpJsonLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const stereoRenderer = new StereoRenderer(canvas, {
+			antialias: true,
+			alpha: false,
+			stencil: true,
+			xrCompatible: true
+		});
+		stereoRenderer.shadowAutoUpdate = false;
+
+		const scene = new t3d.Scene();
+
+		const jeep = "resources/models/assimp/jeep/jeep.assimp.json";
+		const interior = "resources/models/assimp/interior/interior.assimp.json";
+
+		const loader1 = new AssimpJsonLoader();
+		loader1.load(jeep, function(object) {
+			object.scale.set(0.4, 0.4, 0.4);
+
+			object.traverse(function(obj) {
+				if (obj.isMesh) {
+					obj.castShadow = true;
+				}
+			});
+
+			scene.add(object);
+
+			stereoRenderer.shadowNeedsUpdate = true;
+		});
+
+		const loader2 = new AssimpJsonLoader();
+		loader2.load(interior, function(object) {
+			object.traverse(function(obj) {
+				if (obj.isMesh) {
+					obj.receiveShadow = true;
+				}
+			});
+
+			scene.add(object);
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const spotLight = new t3d.SpotLight(0xffffff, 0.4, 30, Math.PI / 5, 0.3);
+		spotLight.position.set(0, 10, 0);
+		spotLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		spotLight.castShadow = true;
+		scene.add(spotLight);
+
+		const camera = new StereoCamera();
+		camera.position.set(3.0, 2.3, 1.0);
+		camera.near = 1;
+		camera.far = 1000;
+		scene.add(camera);
+		
+		const webxrControl = new WebXRControl(camera);
+		webxrControl.enter(stereoRenderer.renderPass.gl).then(function(context) {
+			context.requestAnimationFrame(loop);
+		}).catch(function(e) {
+			document.getElementById('notSupported').style.display = '';
+			console.error(e);
+		});
+
+		function loop(count, frame) {
+			webxrControl.getContext().requestAnimationFrame(loop);
+
+			webxrControl.update(frame, width, height);
+
+			stereoRenderer.render(scene, camera, webxrControl.getFramebuffer());
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			stereoRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

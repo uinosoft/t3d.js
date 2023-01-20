@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>t3d test</title>
+    <link rel="stylesheet" href="./qunit/qunit.css">
+</head>
+
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script src="./qunit/qunit.js"></script>
+    <script src="../build/t3d.js"></script>
+
+    <script>
+        const zero3 = new t3d.Vector3();
+        const one3 = new t3d.Vector3(1, 1, 1);
+        const two3 = new t3d.Vector3(2, 2, 2);
+
+        const eps = 0.0001;
+
+        const x = 2;
+        const y = 3;
+        const z = 4;
+        const w = 5;
+    </script>
+
+    <script src="./Color3.js"></script>
+    <script src="./Matrix3.js"></script>
+    <script src="./Matrix4.js"></script>
+    <script src="./Quaternion.js"></script>
+    <script src="./Sphere.js"></script>
+    <script src="./Vector2.js"></script>
+    <script src="./Vector3.js"></script>
+    <script src="./Vector4.js"></script>
+
+</body>
+
+</html>

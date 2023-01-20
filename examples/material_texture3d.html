@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - texture3d</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+		<a href="" target="_blank">t3d</a> - texture3d
+		<br/>reference: <a href="http://medium.ixviii.io/texture3d.html" target="_blank">http://medium.ixviii.io/texture3d.html</a>
+	</div>
+	
+	<script id="vertexShader" type="x-shader/x-vertex">
+		attribute vec3 a_Position;
+		attribute vec2 a_Uv;
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+		
+		attribute float a_UvZ;
+
+		uniform float u_Uvz;
+		uniform float uFogDensity;
+		uniform float uTime;
+		uniform float uSpeed;
+
+		varying vec2 vUv;
+		varying vec3 vUv3;
+		varying float vFogAmount;
+
+		float fogExp2(const float dist, const float density) {
+			const float LOG2 = -1.442695;
+			float d = density * dist;
+			return 1.0 - clamp(exp2(d * d * LOG2), 0.0, 1.0);
+		}
+
+		void main(){
+
+			vec3 transformed = vec3(0.0);
+			transformed.y = (-u_Uvz * 0.5) + (a_UvZ * u_Uvz);
+
+			gl_Position = u_ProjectionView * u_Model * vec4(a_Position.xyz + transformed, 1.0 );
+
+			vUv = a_Uv;
+			vUv3.x = vUv.x;
+			vUv3.y = vUv.y;
+			vUv3.z = a_UvZ + uTime * uSpeed;
+
+			float fogDistance = length(gl_Position.xyz);
+			vFogAmount = fogExp2(fogDistance, uFogDensity);
+			
+		}
+	</script>
+
+	<script id="fragmentShader" type="x-shader/x-fragment">
+		precision highp sampler3D;
+
+		varying vec2 vUv;
+		varying vec3 vUv3;
+		varying float vFogAmount;
+
+		uniform sampler3D uTexture;
+
+		void main() {
+			vec3 fogColor = vec3(0.0);
+
+			vec3 color = mix(vec3(1.0), fogColor, vFogAmount);
+			vec4 color2 = texture(uTexture, vUv3);
+			gl_FragColor = vec4(color * color2.r, 1.0 - color2.r);
+		}
+	</script>
+
+	<script src="./libs/simplex-noise.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { Clock } from './jsm/Clock.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		
+		const SIZE = 64;
+		const simplex = new SimplexNoise(Math.random);
+		const scale = 0.035;
+
+		const src = new Uint8Array(SIZE * SIZE * SIZE);
+		for (let k = 0; k < SIZE; k += 1) {
+			for (let j = 0; j < SIZE; j += 1) {
+				for (let i = 0; i < SIZE; i += 1) {
+					src[i + j * SIZE + k * SIZE * SIZE] = Math.abs(simplex.noise3D(i * scale, j * scale, k * scale)) * 256;
+				}
+			}
+		}
+
+		const data = new Float32Array(SIZE);
+		for (let _i = 0; _i < SIZE; _i += 1) {
+			data[_i] = _i / SIZE;
+		}
+
+		const texture3d = new t3d.Texture3D();
+		texture3d.image = {
+			data: src,
+			width: SIZE,
+			height: SIZE,
+			depth: SIZE
+		};
+		texture3d.wrapR = t3d.TEXTURE_WRAP.REPEAT;
+
+		function createInstancedGeoemtry(geometry) {
+			const instancedGeometry = geometry.clone();
+
+			instancedGeometry.addAttribute('a_UvZ', new t3d.Attribute(new t3d.Buffer(data, 1)));
+			instancedGeometry.getAttribute('a_UvZ').divisor = 1;
+
+			return instancedGeometry;
+		}
+
+		const PLANE_SIZE = 20;
+		const geometry = new t3d.PlaneGeometry(PLANE_SIZE, PLANE_SIZE, 1, 1);
+		const instancedGeometry = createInstancedGeoemtry(geometry);
+		instancedGeometry.instanceCount = SIZE;
+
+		const shaderMaterial = new t3d.ShaderMaterial({
+			vertexShader: document.getElementById('vertexShader').textContent,
+			fragmentShader: document.getElementById('fragmentShader').textContent,
+			uniforms: {
+				uTexture: texture3d,
+				uSpeed: 0.38,
+				uTime: 0,
+				u_Uvz: PLANE_SIZE,
+				uFogDensity: 0.022
+			}
+		});
+		
+		shaderMaterial.transparent = true;
+		shaderMaterial.premultipliedAlpha = true;
+		shaderMaterial.blending = t3d.BLEND_TYPE.CUSTOM;
+		shaderMaterial.blendSrc = t3d.BLEND_FACTOR.ONE;
+		shaderMaterial.blendDst = t3d.BLEND_FACTOR.SRC_ALPHA;
+		shaderMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const plane = new t3d.Mesh(instancedGeometry, shaderMaterial);
+		plane.euler.x = Math.PI / 2;
+		plane.frustumCulled = false;
+		scene.add(plane);
+
+		const camera = new t3d.Camera();
+		camera.position.set(35, 20, 35);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
+		scene.add(camera);
+		
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 2, 0);
+		controller.enablePan = false;
+		controller.rotateSpeed = 0.2;
+
+		const clock = new Clock();
+
+		// gui
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(shaderMaterial.uniforms, 'u_Uvz', 0, 64, 0.01).name('depth');
+		gui.add(shaderMaterial.uniforms, 'uFogDensity', 0, 0.1, 0.001).name('fog density');
+		gui.add(shaderMaterial.uniforms, 'uSpeed', 0, 5, 0.01).name('speed');
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+		
+			controller.update();
+
+			shaderMaterial.uniforms.uTime = clock.getElapsedTime();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

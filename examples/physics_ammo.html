@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - ammo</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - physics ammo
+		<br/>
+        use <a href="https://github.com/kripken/ammo.js/" target="_blank">ammo.js</a>
+        <br/>
+        touch screen to add a cube
+    </div>
+
+	<script src="./libs/ammo.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		Ammo().then(Ammo => {
+			let width = window.innerWidth || 2;
+			let height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const forwardRenderer = new ForwardRenderer(canvas);
+
+			const scene = new t3d.Scene();
+
+			const plane_geometry = new t3d.PlaneGeometry(100, 100);
+			const lambert = new t3d.LambertMaterial();
+			lambert.diffuse.setHex(0xffffff);
+			const plane = new t3d.Mesh(plane_geometry, lambert);
+			plane.position.y = 0;
+			plane.receiveShadow = true;
+			scene.add(plane);
+
+			const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+			scene.add(ambientLight);
+
+			const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+			directionalLight.position.set(-40, 40, 0);
+			directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+			directionalLight.castShadow = true;
+			directionalLight.shadow.mapSize.set(1024, 1024);
+			directionalLight.shadow.windowSize = 50;
+			scene.add(directionalLight);
+
+			const camera = new t3d.Camera();
+			camera.position.set(0, 30, 45);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+			scene.add(camera);
+
+			// ammo.js init
+			const collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+			const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+			const broadphase = new Ammo.btDbvtBroadphase();
+			const solver = new Ammo.btSequentialImpulseConstraintSolver();
+			const physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+			physicsWorld.setGravity(new Ammo.btVector3(0, -9.8, 0));
+			const shape = new Ammo.btBoxShape(new Ammo.btVector3(100, 1, 100)); // ground
+			// shape.setMargin( 0.05 );
+			const transform = new Ammo.btTransform();
+			transform.setIdentity();
+			transform.setOrigin(new Ammo.btVector3(0, -0.5, 0));
+			transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
+			const motionState = new Ammo.btDefaultMotionState(transform);
+			const localInertia = new Ammo.btVector3(0, 0, 0);
+			shape.calculateLocalInertia(0, localInertia);
+			const rbInfo = new Ammo.btRigidBodyConstructionInfo(0, motionState, shape, localInertia);
+			const body = new Ammo.btRigidBody(rbInfo);
+			body.setFriction(0.8);
+			physicsWorld.addRigidBody(body);
+			const transformAux1 = new Ammo.btTransform();
+
+			const position = new t3d.Vector3();
+			const cube_meshes = [];
+			const cube_bodys = [];
+			let size = 0;
+			function addOneCube() {
+				size++;
+
+				position.x = Math.random() * 10 - 5;
+				position.y = Math.random() * 10 + 3;
+				position.z = Math.random() * 10 - 5;
+
+				const cube_geometry = new t3d.BoxGeometry(2, 2, 2);
+				const phong = new t3d.PhongMaterial();
+				phong.diffuse.setHSL(Math.random(), 1, Math.random());
+				const cube = new t3d.Mesh(cube_geometry, phong);
+				cube.position.copy(position);
+				cube.castShadow = true;
+				scene.add(cube);
+				cube_meshes.push(cube);
+
+				const shape = new Ammo.btBoxShape(new Ammo.btVector3(1, 1, 1)); // ground
+				// shape.setMargin( 0.05 );
+				const transform = new Ammo.btTransform();
+				transform.setIdentity();
+				transform.setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
+				transform.setRotation(new Ammo.btQuaternion(0, 0, 0, 1));
+				const motionState = new Ammo.btDefaultMotionState(transform);
+				const localInertia = new Ammo.btVector3(0, 0, 0);
+				shape.calculateLocalInertia(2000, localInertia);
+				const rbInfo = new Ammo.btRigidBodyConstructionInfo(2000, motionState, shape, localInertia);
+				const body = new Ammo.btRigidBody(rbInfo);
+				// body.setActivationState( 4 );
+				body.setAngularVelocity(new Ammo.btVector3(0, 10, 0));
+				body.setRollingFriction(30);
+				body.setFriction(0.8);
+				body.setDamping(0.5, 0.5);
+				physicsWorld.addRigidBody(body);
+				cube_bodys.push(body);
+			}
+
+			document.addEventListener("mouseup", addOneCube);
+			document.addEventListener("touchend", addOneCube);
+
+			addOneCube();
+
+			let timeTamp = 0;
+			function loop(count) {
+				requestAnimationFrame(loop);
+
+				let time = count - timeTamp;
+				timeTamp = count;
+
+				// Step the physics world
+				physicsWorld.stepSimulation(time / 1000, 10);
+
+				for (let i = 0; i < size; i++) {
+					// Copy transform from Ammo.js to t3d.js
+					const ms = cube_bodys[i].getMotionState();
+					if (ms) {
+						ms.getWorldTransform(transformAux1);
+						const p = transformAux1.getOrigin();
+						const q = transformAux1.getRotation();
+						cube_meshes[i].position.set(p.x(), p.y(), p.z());
+						cube_meshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
+					}
+				}
+
+				forwardRenderer.render(scene, camera);
+			}
+			requestAnimationFrame(loop);
+
+			function onWindowResize() {
+				width = window.innerWidth || 2;
+				height = window.innerHeight || 2;
+
+				camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+				forwardRenderer.backRenderTarget.resize(width, height);
+			}
+			window.addEventListener("resize", onWindowResize, false);
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - webgl helpers</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - webgl helpers
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { GridHelper } from './jsm/objects/GridHelper.js';
+		import { PolarGridHelper } from './jsm/objects/PolarGridHelper.js';
+		import { VertexNormalsHelper } from './jsm/objects/VertexNormalsHelper.js';
+		import { VertexTangentsHelper } from './jsm/objects/VertexTangentsHelper.js';
+		import { BoxHelper } from './jsm/objects/BoxHelper.js';
+		import { Box3Helper } from './jsm/objects/Box3Helper.js';
+		import { AxisHelper } from './jsm/objects/AxisHelper.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+		
+		let vnh = null;
+		let vth = null;
+		let box = null;
+		let root = null;
+		const box3 = new t3d.Box3(new t3d.Vector3(20, -10, -10), new t3d.Vector3(40, 10, 10));
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		]);
+
+		const scene = new t3d.Scene();
+
+		const file = "resources/models/gltf/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function () {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function (url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load(file).then(function (result) {
+			root = result.root;
+			root.children[0].material.envMap = cube_texture;
+
+			root.scale.set(20, 20, 20);
+			root.position.set(-20, 0, 0);
+
+			vnh = new VertexNormalsHelper(root.children[0], 0.5);
+			scene.add(vnh);
+
+			box = new BoxHelper(root);
+			scene.add(box);
+
+			vth = new VertexTangentsHelper(root.children[0], 0.5);
+			scene.add(vth);
+
+			scene.add(root);
+		}).catch(e => console.error(e));
+
+		const grid = new GridHelper(50, 20, 0xff0000, 0xffffff);
+		grid.position.set(30, -30, 0);
+		scene.add(grid);
+
+		const polargrid = new PolarGridHelper(30, 16, 8, 64, 0x0000ff, 0x808080);
+		polargrid.position.set(-30, -30, 0);
+		scene.add(polargrid);
+
+		const axis = new AxisHelper(100);
+		scene.add(axis);
+
+		const _boxHelper = new Box3Helper(box3);
+		scene.add(_boxHelper);
+
+		const directionalLight = new t3d.DirectionalLight(0xbbbbff, 0.5);
+		directionalLight.position.set(0, 30, 100);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.gammaFactor = 1.5;
+		camera.position.set(10, 10, 80);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			box3.max.y = Math.sin(count * 0.001) * 5 + 5;
+			root && (root.euler.y = count * 0.001);
+			vnh && vnh.update();
+			vth && vth.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			renderer.renderPass.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+
+</html>

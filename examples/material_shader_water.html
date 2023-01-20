@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shader water</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - shader water
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
+		import { WaterShader } from './jsm/shaders/WaterShader.js';
+		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const renderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		const fog = new t3d.Fog(0x304847, 500, 2000);
+		const fogExp2 = new t3d.FogExp2(0x304847, 0.0006);
+		scene.fog = fogExp2;
+
+		// skybox
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		]);
+		const sky_box = new SkyBox(cube_texture);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 150, 350);
+		camera.lookAt(new t3d.Vector3(-0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.01, 3000);
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
+		controller.maxDistance = 900;
+		controller.enablePan = false;
+		controller.maxPolarAngle = Math.PI / 2 - 0.001;
+		camera.add(sky_box);
+		scene.add(camera);
+
+		const texture = new Texture2DLoader().load('./resources/waternormals.jpg');
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const waterMaterial = new t3d.ShaderMaterial(WaterShader);
+		waterMaterial.transparent = true;
+		const uniforms = waterMaterial.uniforms;
+		uniforms.envMap = cube_texture;
+		uniforms.normalMap = texture;
+		const waterGeometry = new t3d.PlaneGeometry(3000, 3000);
+		const uvArray = waterGeometry.getAttribute('a_Uv').buffer.array;
+		for (let i = 0; i < uvArray.length; i++) {
+			uvArray[i] *= 3000;
+		}
+		const water = new t3d.Mesh(waterGeometry, waterMaterial);
+		water.position.set(-0, 0, 0);
+		scene.add(water);
+
+		// gui
+
+		const params = { scroll: [0.003, 0.003], timeScaler: 0.004 };
+
+		const gui = new GUI();
+		
+		const waterFolder = gui.addFolder('water');
+		waterFolder.addColor(uniforms, 'waterColor');
+		waterFolder.addColor(uniforms, 'sunColor');
+		waterFolder.add(uniforms, 'distortionScale', 0, 20, 0.1);
+		waterFolder.add(uniforms, 'opacity', 0, 1, .001);
+		waterFolder.add(uniforms, 'waveStrength', 0, 1, .001);
+		waterFolder.add(uniforms, 'reflectWeight', 0, 1, .001);
+		waterFolder.add(uniforms.size, 0, 0.1, 1, 0.1).name('sizeX').onChange((ev) => {
+			uniforms.size[0] = ev;
+		});
+		waterFolder.add(uniforms.size, 1, 0.1, 1, 0.1).name('sizeY').onChange((ev) => {
+			uniforms.size[1] = ev;
+		});
+
+		const flowFolder = gui.addFolder('flow');
+		flowFolder.add(params.scroll, 0, -0.1, 0.1, 0.001).name("flowX");
+		flowFolder.add(params.scroll, 1, -0.1, 0.1, 0.001).name("flowY");
+		flowFolder.add(params, 'timeScaler', -0.1, 0.1, 0.001).name("timeScaler");
+
+		const fogFolder = gui.addFolder('fog');
+		fogFolder.add({ type: "exp" }, "type", ["linear", "exp", "none"]).onChange(value => {
+			switch (value) {
+				case "linear":
+					scene.fog = fog;
+					break;
+				case "exp":
+					scene.fog = fogExp2;
+					break;
+				default:
+					scene.fog = null;
+			}
+		});
+		fogFolder.add(fogExp2, "density", 0, 0.01);
+		fogFolder.add(fog, "near", 1, 1000);
+		fogFolder.add(fog, "far", 2000, 5000);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			waterMaterial.uniforms.offset[0] += params.scroll[0];
+			waterMaterial.uniforms.offset[1] += params.scroll[1];
+			waterMaterial.uniforms.time += params.timeScaler;
+
+			controller.update();
+
+			renderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 3000);
+
+			renderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

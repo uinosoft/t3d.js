@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - instanced draw</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - instanced draw
+	</div>
+	
+	<script id="vertexShader" type="x-shader/x-vertex">
+		attribute vec3 a_Position;
+		attribute vec2 a_Uv;
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+
+		attribute mat4 instanceMatrix;
+
+		varying vec2 vUv;
+
+		void main(){
+			vUv = a_Uv;
+			vec4 transformed = vec4(a_Position, 1.0);
+			transformed = instanceMatrix * transformed;
+			gl_Position = u_ProjectionView * u_Model * transformed;
+		}
+	</script>
+
+	<script id="fragmentShader" type="x-shader/x-fragment">
+		varying vec2 vUv;
+
+		uniform sampler2D map;
+
+		void main() {
+			gl_FragColor = texture2D(map, vUv);
+		}
+	</script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { TGALoader } from './jsm/loaders/TGALoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const texture = new t3d.Texture2D();
+		texture.anisotropy = 16;
+
+		const tgaLoader = new TGALoader();
+		tgaLoader.load('resources/crate_color8.tga', function(textureData) {
+			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
+			texture.version++;
+		});
+		
+		const shaderMaterial = new t3d.ShaderMaterial({
+			vertexShader: document.getElementById('vertexShader').textContent,
+			fragmentShader: document.getElementById('fragmentShader').textContent,
+			uniforms: {
+				map: texture
+			}
+		});
+
+		const instances = 5000;
+
+		const geometry = new t3d.BoxGeometry(3, 3, 3);
+		const instancedGeometry = createInstancedGeoemtry(geometry);
+		instancedGeometry.instanceCount = instances;
+
+		const instancedMesh = new t3d.Mesh(instancedGeometry, shaderMaterial);
+		instancedMesh.frustumCulled = false;
+		scene.add(instancedMesh);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 0);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+		
+		function createInstancedGeoemtry(geometry) {
+			const matrices = [];
+
+			const position = new t3d.Vector3();
+			const orientation = new t3d.Quaternion();
+			const scale = new t3d.Vector3();
+			const matrix = new t3d.Matrix4();
+
+			for (let i = 0; i < instances; i++) {
+				position.x = Math.random() * 100 - 50;
+				position.y = Math.random() * 100 - 50;
+				position.z = Math.random() * 100 - 50;
+
+				orientation.x = Math.random() * 2 - 1;
+				orientation.y = Math.random() * 2 - 1;
+				orientation.z = Math.random() * 2 - 1;
+				orientation.w = Math.random() * 2 - 1;
+				orientation.normalize();
+
+				scale.set(1, 1, 1);
+
+				matrix.transform(position, scale, orientation);
+				matrix.toArray(matrices, i * 16);
+			}
+
+			const instancedGeometry = geometry.clone();
+			const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(matrices), 16));
+			instanceMatrixAttribute.divisor = 1;
+			instancedGeometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
+
+			return instancedGeometry;
+		}
+
+		const gui = new GUI();
+		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add(instancedGeometry, 'instanceCount', 0, instances, 1);
+
+		let lastTime = 0;
+
+		const moveQ = new t3d.Quaternion(0.5, 0.5, 0.5, 0.0).normalize();
+		const tmpQ = new t3d.Quaternion();
+		const matrix = new t3d.Matrix4();
+		const rotationMatrix = new t3d.Matrix4();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			let time = performance.now();
+
+			// rotate camera
+			// camera.euler.y = time * 0.00005;
+			camera.position.x = 130 * Math.sin(time / 1000 * .1);
+			camera.position.z = 130 * Math.cos(time / 1000 * .1);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+
+			let delta = (time - lastTime) / 2000;
+			tmpQ.set(moveQ.x * delta, moveQ.y * delta, moveQ.z * delta, 1).normalize();
+			tmpQ.toMatrix4(rotationMatrix);
+			const matricesAttribute = instancedGeometry.getAttribute('instanceMatrix');
+
+			for (let i = 0, il = matricesAttribute.buffer.count; i < il; i++) {
+				const offset = i * 16;
+
+				matrix.fromArray(matricesAttribute.buffer.array, offset);
+				matrix.multiply(rotationMatrix);
+
+				matrix.toArray(matricesAttribute.buffer.array, offset);
+			}
+
+			matricesAttribute.buffer.version++;
+			lastTime = time;
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>
