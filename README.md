@@ -5,6 +5,8 @@ t3d.js is a web-first, light weight, extendable 3D rendering library.
 
 *Note: The current interface is not stable, especially the RenderPass related interface, which may change in subsequent versions.*
 
+Mostly inspired by three.js, but with improvements in the renderer and many implementation details.
+
 ### Usage ###
 
 Use `t3d.js` or `t3d.min.js` in your page:
@@ -31,8 +33,8 @@ canvas.height = height;
 document.body.appendChild(canvas);
 
 const gl = canvas.getContext("webgl2", {
-	antialias: true,
-	alpha: false
+  antialias: true,
+  alpha: false
 });
 const renderer = new t3d.Renderer(gl);
 renderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
@@ -60,17 +62,17 @@ camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 scene.add(camera);
 
 function loop(count) {
-	requestAnimationFrame(loop);
-	
-	mesh.euler.y = count / 1000 * .5; // rotate cube
+  requestAnimationFrame(loop);
 
-	scene.updateMatrix();
-	scene.updateRenderStates(camera);
-	scene.updateRenderQueue(camera);
+  mesh.euler.y = count / 1000 * .5; // rotate cube
 
-	renderer.renderPass.setRenderTarget(backRenderTarget);
-	renderer.renderPass.clear(true, true, false);
-	renderer.renderScene(scene, camera);
+  scene.updateMatrix();
+  scene.updateRenderStates(camera);
+  scene.updateRenderQueue(camera);
+
+  renderer.renderPass.setRenderTarget(backRenderTarget);
+  renderer.renderPass.clear(true, true, false);
+  renderer.renderScene(scene, camera);
 }
 requestAnimationFrame(loop);
 ````
@@ -86,16 +88,3 @@ npm install
 ````
 npm run build
 ````
-
-### WebGL2 Support ###
-
-* Multiple Render Targets. (WebGL 1.0 extension / WebGL 2.0)
-* Instancing. (WebGL 1.0 extension / WebGL 2.0)
-* Vertex Array Object. (WebGL 1.0 extension / WebGL 2.0)
-* Shader Texture LOD. (WebGL 1.0 extension / WebGL 2.0)
-* Shadow Sampler. (WebGL 2.0)
-* Fragment Depth. (WebGL 1.0 extension / WebGL 2.0)
-* Transform Feedback. (TODO)
-* Sampler Objects. (TODO)
-* 3D Texture. (WebGL 2.0)
-* Multisampled Renderbuffers. (WebGL 2.0)

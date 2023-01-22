@@ -151,7 +151,7 @@ class IDWMapGenerator {
 			for (let i = 0; i < dataLength; i++) {
 				pointMatrices[4 * i] = toHalf(data[i][0] / size[0]);
 				pointMatrices[4 * i + 1] = toHalf(data[i][1] / size[1]);
-				pointMatrices[4 * i + 2] = toHalf(data[i][2]);
+				pointMatrices[4 * i + 2] = toHalf((data[i][2] - rangeMin) / rangeDist);
 				pointMatrices[4 * i + 3] = toHalf(1);
 			}
 		}
@@ -378,8 +378,8 @@ const int32View = new Int32Array(floatView.buffer);
 function toHalf(fval) {
 	floatView[0] = fval;
 	const fbits = int32View[0];
-	const sign  = (fbits >> 16) & 0x8000;          // sign only
-	const val   = (fbits & 0x7fffffff) + 0x1000; // rounded value
+	const sign = (fbits >> 16) & 0x8000;          // sign only
+	let val = (fbits & 0x7fffffff) + 0x1000; // rounded value
 
 	if (val >= 0x47800000) {             // might be or become NaN/Inf
 		if ((fbits & 0x7fffffff) >= 0x47800000) {
