@@ -10,7 +10,7 @@
             "favicon": "../examples/favicon.ico",
             "title": "t3d.js",
             "default_theme": "light",
-            "base_url": "http://192.168.1.238:8088/docs/",
+            "base_url": "https://uinosoft.github.io/t3d.js/docs/",
             "exclude_inherited": true
         }
     }

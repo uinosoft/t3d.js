@@ -1,11 +1,16 @@
 t3d.js
 ========
 
+[![Issues][issues-badge]][issues-badge-url]
+
 t3d.js is a web-first, light weight, extendable 3D rendering library.
 
 *Note: The current interface is not stable, especially the RenderPass related interface, which may change in subsequent versions.*
 
 Mostly inspired by three.js, but with improvements in the renderer and many implementation details.
+
+[Examples](https://uinosoft.github.io/t3d.js/examples/) &mdash;
+[Documentation](https://uinosoft.github.io/t3d.js/docs/)
 
 ### Usage ###
 
@@ -88,3 +93,6 @@ npm install
 ````
 npm run build
 ````
+
+[issues-badge]: https://img.shields.io/github/issues/uinosoft/t3d.js.svg
+[issues-badge-url]: https://github.com/uinosoft/t3d.js/issues
