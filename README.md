@@ -2,6 +2,7 @@ t3d.js
 ========
 
 [![Issues][issues-badge]][issues-badge-url]
+[![DeepScan grade](https://deepscan.io/api/teams/20241/projects/23692/branches/722329/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=20241&pid=23692&bid=722329)
 
 t3d.js is a web-first, light weight, extendable 3D rendering library.
 

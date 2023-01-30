@@ -12424,7 +12424,7 @@
 		return WebGLGeometries;
 	}();
 	function getBufferType(gl, array) {
-		var type = gl.FLOAT;
+		var type;
 		if (array instanceof Float32Array) {
 			type = gl.FLOAT;
 		} else if (array instanceof Float64Array) {
@@ -12441,6 +12441,8 @@
 			type = gl.BYTE;
 		} else if (array instanceof Uint8Array) {
 			type = gl.UNSIGNED_BYTE;
+		} else {
+			type = gl.FLOAT;
 		}
 		return type;
 	}

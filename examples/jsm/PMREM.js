@@ -74,7 +74,7 @@ class PMREM {
 		target.texture.minFilter = TEXTURE_FILTER.LINEAR;
 		target.texture.generateMipmaps = false;
 
-		const normalDistributionTexture = generateNormalDistribution(renderer.renderPass.capabilities, 256, sampleSize);
+		const normalDistributionTexture = generateNormalDistribution(256, sampleSize);
 
 		const reflectionProbe = new ReflectionProbe(target);
 
@@ -211,7 +211,7 @@ const prefilterShader = {
 
 };
 
-function generateNormalDistribution(capabilities, roughnessLevels, sampleSize) {
+function generateNormalDistribution(roughnessLevels, sampleSize) {
 	// GLSL not support bit operation, use lookup instead
 	// V -> i / N, U -> roughness
 	roughnessLevels = roughnessLevels || 256;

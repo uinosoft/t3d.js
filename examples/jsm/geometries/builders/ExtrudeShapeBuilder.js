@@ -65,7 +65,7 @@ var ExtrudeShapeBuilder = {
 		// side
 
 		vertexCount = positions.length / 3;
-		var hasHoles = holeIndices && holeIndices.length;
+		var hasHoles = holeIndices.length;
 
 		var loop = [];
 		if (hasHoles) {

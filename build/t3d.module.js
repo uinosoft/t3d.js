@@ -13313,7 +13313,7 @@ class WebGLGeometries {
 }
 
 function getBufferType(gl, array) {
-	let type = gl.FLOAT;
+	let type;
 
 	if (array instanceof Float32Array) {
 		type = gl.FLOAT;
@@ -13331,6 +13331,8 @@ function getBufferType(gl, array) {
 		type = gl.BYTE;
 	} else if (array instanceof Uint8Array) {
 		type = gl.UNSIGNED_BYTE;
+	} else {
+		type = gl.FLOAT;
 	}
 
 	return type;

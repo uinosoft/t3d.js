@@ -664,12 +664,12 @@ class OrbitControls {
 			switch (pointers.length) {
 				case scope.touches.ORBIT:
 					if (scope.enableRotate === false) return;
-					handleTouchStartRotate(event);
+					handleTouchStartRotate();
 					state = STATE.TOUCH_ROTATE;
 					break;
 				case scope.touches.DOLLY_PAN:
 					if (scope.enableDollying === false && scope.enablePan === false) return;
-					handleTouchStartDollyPan(event);
+					handleTouchStartDollyPan();
 					state = STATE.TOUCH_DOLLY_PAN;
 					break;
 				default:

@@ -95,7 +95,7 @@ const worldMatrixInv = new Matrix4();
 function getBoneList(object) {
 	const boneList = [];
 
-	if (object && object.isBone) {
+	if (object.isBone) {
 		boneList.push(object);
 	}
 
