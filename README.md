@@ -1,8 +1,9 @@
 t3d.js
 ========
 
+[![NPM Package][npm]][npm-url]
 [![Issues][issues-badge]][issues-badge-url]
-[![DeepScan grade](https://deepscan.io/api/teams/20241/projects/23692/branches/722329/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=20241&pid=23692&bid=722329)
+[![DeepScan grade][deepscan]][deepscan-url]
 
 t3d.js is a web-first, light weight, extendable 3D rendering library.
 
@@ -25,6 +26,12 @@ or import as es6 module:
 
 ````javascript
 import * as t3d from 't3d.module.js';
+````
+
+or use npm package:
+
+````text
+npm install t3d --save
 ````
 
 draw a simple cube:
@@ -95,5 +102,9 @@ npm install
 npm run build
 ````
 
+[npm]: https://img.shields.io/npm/v/t3d
+[npm-url]: https://www.npmjs.com/package/t3d
 [issues-badge]: https://img.shields.io/github/issues/uinosoft/t3d.js.svg
 [issues-badge-url]: https://github.com/uinosoft/t3d.js/issues
+[deepscan]: https://deepscan.io/api/teams/20241/projects/23692/branches/722329/badge/grade.svg
+[deepscan-url]: https://deepscan.io/dashboard#view=project&tid=20241&pid=23692&bid=722329
