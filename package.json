@@ -1,10 +1,19 @@
 {
   "name": "t3d",
   "version": "0.1.2",
-  "description": "JavaScript 3D library",
+  "description": "t3d.js is a web-first, light weight, extendable 3D rendering library.",
   "type": "module",
   "main": "./build/t3d.js",
   "module": "./build/t3d.module.js",
+  "exports": {
+    ".": "./build/t3d.module.js",
+    "./src/*": "./src/*",
+    "./examples/jsm/*": "./examples/jsm/*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UINOSOFT/t3d.js"
+  },
   "files": [
     "build/t3d.js",
     "build/t3d.min.js",
@@ -15,11 +24,6 @@
     "README.md",
     "src"
   ],
-  "directories": {
-    "doc": "docs",
-    "example": "examples",
-    "test": "test"
-  },
   "keywords": [
     "t3d",
     "javascript",
@@ -44,6 +48,9 @@
   },
   "author": "uino",
   "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/UINOSOFT/t3d.js/issues"
+  },
   "devDependencies": {
     "@babel/core": "^7.19.1",
     "@babel/preset-env": "^7.19.1",
