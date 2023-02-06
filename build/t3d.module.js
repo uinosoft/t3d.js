@@ -6949,6 +6949,7 @@ class RenderQueueLayer {
 
 		this._cache = [];
 		this._cacheIndex = 0;
+		this._lastCacheIndex = 0;
 	}
 
 	begin() {
@@ -6961,6 +6962,21 @@ class RenderQueueLayer {
 	end() {
 		this.opaque.length = this.opaqueCount;
 		this.transparent.length = this.transparentCount;
+
+		// Clear references from inactive renderables in the list
+		const cacheIndex = this._cacheIndex,
+			lastCacheIndex = this._lastCacheIndex;
+		if (lastCacheIndex > cacheIndex) {
+			const cache = this._cache;
+			for (let i = cacheIndex; i < lastCacheIndex; i++) {
+				const renderable = cache[i];
+				renderable.object = null;
+				renderable.geometry = null;
+				renderable.material = null;
+				renderable.group = null;
+			}
+		}
+		this._lastCacheIndex = cacheIndex;
 	}
 
 	addRenderable(object, geometry, material, z, group) {

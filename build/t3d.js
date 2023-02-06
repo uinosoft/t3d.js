@@ -6948,6 +6948,7 @@
 			this.transparentCount = 0;
 			this._cache = [];
 			this._cacheIndex = 0;
+			this._lastCacheIndex = 0;
 		}
 		var _proto = RenderQueueLayer.prototype;
 		_proto.begin = function begin() {
@@ -6958,6 +6959,21 @@
 		_proto.end = function end() {
 			this.opaque.length = this.opaqueCount;
 			this.transparent.length = this.transparentCount;
+
+			// Clear references from inactive renderables in the list
+			var cacheIndex = this._cacheIndex,
+				lastCacheIndex = this._lastCacheIndex;
+			if (lastCacheIndex > cacheIndex) {
+				var cache = this._cache;
+				for (var i = cacheIndex; i < lastCacheIndex; i++) {
+					var renderable = cache[i];
+					renderable.object = null;
+					renderable.geometry = null;
+					renderable.material = null;
+					renderable.group = null;
+				}
+			}
+			this._lastCacheIndex = cacheIndex;
 		};
 		_proto.addRenderable = function addRenderable(object, geometry, material, z, group) {
 			var cache = this._cache;
