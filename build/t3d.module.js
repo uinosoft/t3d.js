@@ -6415,6 +6415,8 @@ const tempDirectionalShadowMatrices = [];
 const tempPointShadowMatrices = [];
 const tempSpotShadowMatrices = [];
 
+let _lightDataId = 0;
+
 /**
  * The LightData class is used to collect lights,
  * and process them into a data format suitable for uploading to the GPU.
@@ -6423,6 +6425,9 @@ const tempSpotShadowMatrices = [];
 class LightData {
 
 	constructor() {
+		this.id = _lightDataId++;
+		this.version = 0;
+
 		// Light collection array
 
 		this.lights = [];
@@ -6489,6 +6494,8 @@ class LightData {
 		this._setupCache(sceneData);
 
 		this.hash.update(this);
+
+		this.version++;
 	}
 
 	_setupCache(sceneData) {
@@ -7150,6 +7157,8 @@ function sortLayer(a, b) {
 
 const _plane_1 = new Plane();
 
+let _sceneDataId = 0;
+
 /**
  * SceneData collect all render states about scene, Including lights.
  * @memberof t3d
@@ -7157,6 +7166,9 @@ const _plane_1 = new Plane();
 class SceneData {
 
 	constructor() {
+		this.id = _sceneDataId++;
+		this.version = 0;
+
 		this.useAnchorMatrix = false;
 		this.anchorMatrix = new Matrix4();
 		this.anchorMatrixInverse = new Matrix4();
@@ -7194,6 +7206,8 @@ class SceneData {
 		}
 		this.setClippingPlanesData(scene.clippingPlanes, this.clippingPlanesData);
 		this.numClippingPlanes = scene.clippingPlanes.length;
+
+		this.version++;
 	}
 
 	setClippingPlanesData(clippingPlanes, clippingPlanesData) {
@@ -7217,6 +7231,8 @@ function _isPerspectiveMatrix(m) {
 	return m.elements[11] === -1.0;
 }
 
+let _cameraDataId = 0;
+
 /**
  * RenderStates collect all render states about scene and camera.
  * @memberof t3d
@@ -7228,6 +7244,8 @@ class RenderStates {
 		this.lights = lightsData;
 
 		this.camera = {
+			id: _cameraDataId++,
+			version: 0,
 			near: 0,
 			far: 0,
 			position: new Vector3(),
@@ -7289,6 +7307,8 @@ class RenderStates {
 
 		this.gammaFactor = camera.gammaFactor;
 		this.outputEncoding = camera.outputEncoding;
+
+		this.camera.version++;
 	}
 
 }
@@ -9939,6 +9959,56 @@ class Texture3D extends TextureBase {
  */
 Texture3D.prototype.isTexture3D = true;
 
+// Build-in uniforms
+
+const internalUniforms = {
+	'u_Model': [1, null],
+	'u_Projection': [2, function(cameraData, renderStates) { return this.set(cameraData.projectionMatrix.elements) }],
+	'u_View': [2, function(cameraData, renderStates) { return this.set(cameraData.viewMatrix.elements) }],
+	'u_ProjectionView': [2, function(cameraData, renderStates) { return this.set(cameraData.projectionViewMatrix.elements) }],
+	'u_CameraPosition': [2, function(cameraData, renderStates) { return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z) }],
+	'logDepthBufFC': [2, function(cameraData, renderStates) { return this.set(renderStates.logDepthBufFC) }],
+	'logDepthCameraNear': [2, function(cameraData, renderStates) { return this.set(renderStates.logDepthCameraNear) }],
+	'u_EnvMapLight_Intensity': [3, function(sceneData) { return this.set(sceneData.environmentLightIntensity) }],
+	'u_FogColor': [3, function(sceneData) { const color = sceneData.fog.color; return this.setValue(color.r, color.g, color.b) }],
+	'u_FogDensity': [3, function(sceneData) { return this.set(sceneData.fog.density) }],
+	'u_FogNear': [3, function(sceneData) { return this.set(sceneData.fog.near) }],
+	'u_FogFar': [3, function(sceneData) { return this.set(sceneData.fog.far) }],
+	'u_Color': [4, function(material, textures) { const color = material.diffuse; return this.setValue(color.r, color.g, color.b) }],
+	'u_Opacity': [4, function(material, textures) { return this.set(material.opacity) }],
+	'diffuseMap': [4, function(material, textures) { return this.set(material.diffuseMap, textures) }],
+	'alphaMap': [4, function(material, textures) { return this.set(material.alphaMap, textures) }],
+	'alphaMapUVTransform': [4, function(material, textures) { return this.set(material.alphaMapTransform.elements) }],
+	'normalMap': [4, function(material, textures) { return this.set(material.normalMap, textures) }],
+	'normalScale': [4, function(material, textures) { return this.setValue(material.normalScale.x, material.normalScale.y) }],
+	'bumpMap': [4, function(material, textures) { return this.set(material.bumpMap, textures) }],
+	'bumpScale': [4, function(material, textures) { return this.set(material.bumpScale) }],
+	'cubeMap': [4, function(material, textures) { return this.set(material.cubeMap, textures) }],
+	'u_EnvMap_Intensity': [4, function(material, textures) { return this.set(material.envMapIntensity) }],
+	'u_Specular': [4, function(material, textures) { return this.set(material.shininess) }],
+	'u_SpecularColor': [4, function(material, textures) { const color = material.specular; return this.setValue(color.r, color.g, color.b) }],
+	'specularMap': [4, function(material, textures) { return this.set(material.specularMap, textures) }],
+	'aoMap': [4, function(material, textures) { return this.set(material.aoMap, textures) }],
+	'aoMapIntensity': [4, function(material, textures) { return this.set(material.aoMapIntensity) }],
+	'aoMapUVTransform': [4, function(material, textures) { return this.set(material.aoMapTransform.elements) }],
+	'u_Roughness': [4, function(material, textures) { return this.set(material.roughness) }],
+	'roughnessMap': [4, function(material, textures) { return this.set(material.roughnessMap, textures) }],
+	'u_Metalness': [4, function(material, textures) { return this.set(material.metalness) }],
+	'metalnessMap': [4, function(material, textures) { return this.set(material.metalnessMap, textures) }],
+	'glossiness': [4, function(material, textures) { return this.set(material.glossiness) }],
+	'glossinessMap': [4, function(material, textures) { return this.set(material.glossinessMap, textures) }],
+	'emissive': [4, function(material, textures) { const color = material.emissive; return this.setValue(color.r, color.g, color.b) }],
+	'emissiveMap': [4, function(material, textures) { return this.set(material.emissiveMap, textures) }],
+	'emissiveMapUVTransform': [4, function(material, textures) { return this.set(material.emissiveMapTransform.elements) }],
+	'matcap': [4, function(material, textures) { return this.set(material.matcap, textures) }],
+	'uvTransform': [4, function(material, textures) { return this.set(material.diffuseMapTransform.elements) }],
+	'u_PointSize': [4, function(material, textures) { return this.set(material.size) }],
+	'u_PointScale': [5, null],
+	'maxMipLevel': [5, null],
+	'envMap': [5, null],
+	'u_EnvMap_Flip': [5, null]
+};
+
 // Empty textures
 
 const emptyTexture = new Texture2D();
@@ -10300,6 +10370,17 @@ class SingleUniform {
 		this.cache = [];
 
 		generateSetter(this);
+
+		// internal
+
+		this.internalGroup = 0;
+		this.internalFun = null;
+
+		const internal = internalUniforms[id];
+		if (internal) {
+			this.internalGroup = internal[0];
+			this.internalFun = internal[1];
+		}
 	}
 
 }
@@ -10519,7 +10600,15 @@ class WebGLProgram {
 
 		this.id = programIdCount++;
 		this.usedTimes = 1;
+
 		this.code = "";
+
+		this.lightId = -1;
+		this.lightVersion = -1;
+		this.cameraId = -1;
+		this.cameraVersion = -1;
+		this.sceneId = -1;
+		this.sceneVersion = -1;
 
 		this.program;
 
@@ -14173,14 +14262,32 @@ class WebGLRenderPass {
 
 		vertexArrayBindings.setup(object, geometry, program);
 
-		// update uniforms
+		let refreshLights = false;
+		if (program.lightId !== lightData.id || program.lightVersion !== lightData.version) {
+			refreshLights = true;
+			program.lightId = lightData.id;
+			program.lightVersion = lightData.version;
+		}
+
+		let refreshCamera = false;
+		if (program.cameraId !== cameraData.id || program.cameraVersion !== cameraData.version) {
+			refreshCamera = true;
+			program.cameraId = cameraData.id;
+			program.cameraVersion = cameraData.version;
+		}
+
+		let refreshScene = false;
+		if (program.sceneId !== sceneData.id || program.sceneVersion !== sceneData.version) {
+			refreshScene = true;
+			program.sceneId = sceneData.id;
+			program.sceneVersion = sceneData.version;
+		}
+
 		const uniforms = program.getUniforms();
 
 		// upload light uniforms
-		// shadow map need upload first ?
-		// or it will cause bug
 		if (material.acceptLight) {
-			this._uploadLights(uniforms, lightData, sceneData.disableShadowSampler);
+			this._uploadLights(uniforms, lightData, sceneData.disableShadowSampler, refreshLights);
 		}
 
 		// upload bone matrices
@@ -14192,6 +14299,7 @@ class WebGLRenderPass {
 		for (let n = 0, ll = uniforms.seq.length; n < ll; n++) {
 			const uniform = uniforms.seq[n];
 			const key = uniform.id;
+			const internalGroup = uniform.internalGroup;
 
 			// upload custom uniforms
 			if (material.uniforms && material.uniforms[key] !== undefined) {
@@ -14199,170 +14307,56 @@ class WebGLRenderPass {
 				continue;
 			}
 
-			let modelMatrix, color, scale;
+			// u_Model: always upload this matrix
+			if (internalGroup === 1) {
+				let modelMatrix = object.worldMatrix;
+				if (sceneData.useAnchorMatrix) {
+					modelMatrix = helpMatrix4.copy(modelMatrix).premultiply(sceneData.anchorMatrixInverse);
+				}
+				uniform.set(modelMatrix.elements);
+				continue;
+			}
 
-			switch (key) {
-				// pvm matrix
-				case "u_Projection":
-					uniform.set(cameraData.projectionMatrix.elements);
-					break;
-				case "u_View":
-					uniform.set(cameraData.viewMatrix.elements);
-					break;
-				case "u_Model":
-					modelMatrix = object.worldMatrix;
-					if (sceneData.useAnchorMatrix) {
-						modelMatrix = helpMatrix4.copy(modelMatrix).premultiply(sceneData.anchorMatrixInverse);
-					}
-					uniform.set(modelMatrix.elements);
-					break;
-				case "u_ProjectionView":
-					uniform.set(cameraData.projectionViewMatrix.elements);
-					break;
+			// uniforms about camera data
+			if (internalGroup === 2 && refreshCamera) {
+				uniform.internalFun(cameraData, renderStates);
+				continue;
+			}
 
-				case "u_CameraPosition":
-					uniform.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z);
-					break;
+			// uniforms about scene data
+			if (internalGroup === 3 && refreshScene) {
+				uniform.internalFun(sceneData);
+				continue;
+			}
 
-				case "u_Color":
-					color = material.diffuse;
-					uniform.setValue(color.r, color.g, color.b);
-					break;
-				case "u_Opacity":
-					uniform.set(material.opacity);
-					break;
+			// uniforms about material
+			if (internalGroup === 4) {
+				uniform.internalFun(material, textures);
+				continue;
+			}
 
-				case "diffuseMap":
-					uniform.set(material.diffuseMap, textures);
-					break;
-				case "alphaMap":
-					uniform.set(material.alphaMap, textures);
-					break;
-				case "alphaMapUVTransform":
-					uniform.set(material.alphaMapTransform.elements);
-					break;
-				case "normalMap":
-					uniform.set(material.normalMap, textures);
-					break;
-				case "normalScale":
-					uniform.setValue(material.normalScale.x, material.normalScale.y);
-					break;
-				case "bumpMap":
-					uniform.set(material.bumpMap, textures);
-					break;
-				case "bumpScale":
-					uniform.set(material.bumpScale);
-					break;
-				case "envMap":
-					uniform.set(envMap, textures);
-					break;
-				case "cubeMap":
-					uniform.set(material.cubeMap, textures);
-					break;
+			// other internal uniforms
+			if (internalGroup === 5) {
+				switch (key) {
+					case "envMap":
+						uniform.set(envMap, textures);
+						break;
+					case "u_EnvMap_Flip":
+						uniform.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1);
+						break;
+					case "maxMipLevel":
+						uniform.set(this._properties.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
+						break;
+					case "u_PointScale":
+						const scale = currentRenderTarget.height * 0.5; // three.js do this
+						uniform.set(scale);
+						break;
+				}
+				continue;
+			}
 
-				case "u_EnvMap_Flip":
-					uniform.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1);
-					break;
-				case "u_EnvMap_Intensity":
-					uniform.set(material.envMapIntensity);
-					break;
-				case "u_EnvMapLight_Intensity":
-					uniform.set(sceneData.environmentLightIntensity);
-					break;
-				case "maxMipLevel":
-					uniform.set(this._properties.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
-					break;
-				case "u_Specular":
-					uniform.set(material.shininess);
-					break;
-				case "u_SpecularColor":
-					color = material.specular;
-					uniform.setValue(color.r, color.g, color.b);
-					break;
-				case "specularMap":
-					uniform.set(material.specularMap, textures);
-					break;
-				case "aoMap":
-					uniform.set(material.aoMap, textures);
-					break;
-				case "aoMapIntensity":
-					uniform.set(material.aoMapIntensity);
-					break;
-				case "aoMapUVTransform":
-					uniform.set(material.aoMapTransform.elements);
-					break;
-				case "u_Roughness":
-					uniform.set(material.roughness);
-					break;
-				case "roughnessMap":
-					uniform.set(material.roughnessMap, textures);
-					break;
-				case "u_Metalness":
-					uniform.set(material.metalness);
-					break;
-				case "metalnessMap":
-					uniform.set(material.metalnessMap, textures);
-					break;
-				case "glossiness":
-					uniform.set(material.glossiness);
-					break;
-				case "glossinessMap":
-					uniform.set(material.glossinessMap, textures);
-					break;
-				case "emissive":
-					color = material.emissive;
-					uniform.setValue(color.r, color.g, color.b);
-					break;
-				case "emissiveMap":
-					uniform.set(material.emissiveMap, textures);
-					break;
-				case "emissiveMapUVTransform":
-					uniform.set(material.emissiveMapTransform.elements);
-					break;
-				case "u_FogColor":
-					color = sceneData.fog.color;
-					uniform.setValue(color.r, color.g, color.b);
-					break;
-				case "u_FogDensity":
-					uniform.set(sceneData.fog.density);
-					break;
-				case "u_FogNear":
-					uniform.set(sceneData.fog.near);
-					break;
-				case "u_FogFar":
-					uniform.set(sceneData.fog.far);
-					break;
-				case "logDepthBufFC":
-					uniform.set(renderStates.logDepthBufFC);
-					break;
-				case "logDepthCameraNear":
-					uniform.set(renderStates.logDepthCameraNear);
-					break;
-				case "u_PointSize":
-					uniform.set(material.size);
-					break;
-				case "u_PointScale":
-					scale = currentRenderTarget.height * 0.5; // three.js do this
-					uniform.set(scale);
-					break;
-				case "dashSize":
-					uniform.set(material.dashSize);
-					break;
-				case "totalSize":
-					uniform.set(material.dashSize + material.gapSize);
-					break;
-				case "scale":
-					uniform.set(material.scale);
-					break;
-				case "matcap":
-					uniform.set(material.matcap, textures);
-					break;
-				case "clippingPlanes":
-					uniform.set(clippingPlanesData);
-					break;
-				case "uvTransform":
-					uniform.set(material.diffuseMapTransform.elements);
-					break;
+			if (key === 'clippingPlanes') {
+				uniform.set(clippingPlanesData);
 			}
 		}
 
@@ -14400,22 +14394,22 @@ class WebGLRenderPass {
 		object.onAfterRender(renderable);
 	}
 
-	_uploadLights(uniforms, lights, disableShadowSampler) {
+	_uploadLights(uniforms, lights, disableShadowSampler, refresh) {
 		const textures = this._textures;
 
-		if (lights.useAmbient) {
+		if (lights.useAmbient && refresh) {
 			uniforms.set("u_AmbientLightColor", lights.ambient);
 		}
 
-		if (lights.hemisNum > 0) {
+		if (lights.hemisNum > 0 && refresh) {
 			uniforms.set("u_Hemi", lights.hemisphere);
 		}
 
 		if (lights.directsNum > 0) {
-			uniforms.set("u_Directional", lights.directional);
+			if (refresh) uniforms.set("u_Directional", lights.directional);
 
 			if (lights.directShadowNum > 0) {
-				uniforms.set("u_DirectionalShadow", lights.directionalShadow);
+				if (refresh) uniforms.set("u_DirectionalShadow", lights.directionalShadow);
 
 				if (uniforms.has("directionalShadowMap")) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
@@ -14433,10 +14427,10 @@ class WebGLRenderPass {
 		}
 
 		if (lights.pointsNum > 0) {
-			uniforms.set("u_Point", lights.point);
+			if (refresh) uniforms.set("u_Point", lights.point);
 
 			if (lights.pointShadowNum > 0) {
-				uniforms.set("u_PointShadow", lights.pointShadow);
+				if (refresh) uniforms.set("u_PointShadow", lights.pointShadow);
 
 				if (uniforms.has("pointShadowMap")) {
 					uniforms.set("pointShadowMap", lights.pointShadowMap, textures);
@@ -14446,10 +14440,10 @@ class WebGLRenderPass {
 		}
 
 		if (lights.spotsNum > 0) {
-			uniforms.set("u_Spot", lights.spot);
+			if (refresh) uniforms.set("u_Spot", lights.spot);
 
 			if (lights.spotShadowNum > 0) {
-				uniforms.set("u_SpotShadow", lights.spotShadow);
+				if (refresh) uniforms.set("u_SpotShadow", lights.spotShadow);
 
 				if (uniforms.has("spotShadowMap")) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {

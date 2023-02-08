@@ -7,6 +7,8 @@ function _isPerspectiveMatrix(m) {
 	return m.elements[11] === -1.0;
 }
 
+let _cameraDataId = 0;
+
 /**
  * RenderStates collect all render states about scene and camera.
  * @memberof t3d
@@ -18,6 +20,8 @@ class RenderStates {
 		this.lights = lightsData;
 
 		this.camera = {
+			id: _cameraDataId++,
+			version: 0,
 			near: 0,
 			far: 0,
 			position: new Vector3(),
@@ -79,6 +83,8 @@ class RenderStates {
 
 		this.gammaFactor = camera.gammaFactor;
 		this.outputEncoding = camera.outputEncoding;
+
+		this.camera.version++;
 	}
 
 }

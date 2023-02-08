@@ -12,7 +12,15 @@ class WebGLProgram {
 
 		this.id = programIdCount++;
 		this.usedTimes = 1;
+
 		this.code = "";
+
+		this.lightId = -1;
+		this.lightVersion = -1;
+		this.cameraId = -1;
+		this.cameraVersion = -1;
+		this.sceneId = -1;
+		this.sceneVersion = -1;
 
 		this.program;
 

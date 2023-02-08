@@ -6,6 +6,8 @@ const tempDirectionalShadowMatrices = [];
 const tempPointShadowMatrices = [];
 const tempSpotShadowMatrices = [];
 
+let _lightDataId = 0;
+
 /**
  * The LightData class is used to collect lights,
  * and process them into a data format suitable for uploading to the GPU.
@@ -14,6 +16,9 @@ const tempSpotShadowMatrices = [];
 class LightData {
 
 	constructor() {
+		this.id = _lightDataId++;
+		this.version = 0;
+
 		// Light collection array
 
 		this.lights = [];
@@ -80,6 +85,8 @@ class LightData {
 		this._setupCache(sceneData);
 
 		this.hash.update(this);
+
+		this.version++;
 	}
 
 	_setupCache(sceneData) {

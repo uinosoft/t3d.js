@@ -3,6 +3,8 @@ import { Plane } from '../math/Plane.js';
 
 const _plane_1 = new Plane();
 
+let _sceneDataId = 0;
+
 /**
  * SceneData collect all render states about scene, Including lights.
  * @memberof t3d
@@ -10,6 +12,9 @@ const _plane_1 = new Plane();
 class SceneData {
 
 	constructor() {
+		this.id = _sceneDataId++;
+		this.version = 0;
+
 		this.useAnchorMatrix = false;
 		this.anchorMatrix = new Matrix4();
 		this.anchorMatrixInverse = new Matrix4();
@@ -47,6 +52,8 @@ class SceneData {
 		}
 		this.setClippingPlanesData(scene.clippingPlanes, this.clippingPlanesData);
 		this.numClippingPlanes = scene.clippingPlanes.length;
+
+		this.version++;
 	}
 
 	setClippingPlanesData(clippingPlanes, clippingPlanesData) {
