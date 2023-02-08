@@ -13,7 +13,7 @@ class WebGLPrograms {
 		this._programs = [];
 	}
 
-	getProgram(material, object, renderStates) {
+	getProgram(material, object, renderStates, checkErrors) {
 		const programs = this._programs;
 
 		const props = generateProps(this._state, this._capabilities, material, object, renderStates);
@@ -36,6 +36,7 @@ class WebGLPrograms {
 			const fragmentShader = ShaderLib[material.type + "_frag"] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
+			program.compile(checkErrors);
 			program.code = code;
 
 			programs.push(program);

@@ -10513,40 +10513,58 @@ let programIdCount = 0;
 class WebGLProgram {
 
 	constructor(gl, vshader, fshader) {
-		// create shaders
+		this.gl = gl;
+		this.vshaderSource = vshader;
+		this.fshaderSource = fshader;
 
-		const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
-		const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
+		this.id = programIdCount++;
+		this.usedTimes = 1;
+		this.code = "";
 
-		// create a program object
+		this.program;
 
-		const program = gl.createProgram();
-		gl.attachShader(program, vertexShader);
-		gl.attachShader(program, fragmentShader);
-		gl.linkProgram(program);
+		// compile program
 
-		// check errors
+		let program;
 
-		if (gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
-			const programLog = gl.getProgramInfoLog(program).trim();
+		this.compile = function(checkErrors) {
+			// create shaders
 
-			const vertexErrors = getShaderErrors(gl, vertexShader, 'VERTEX');
-			const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
+			const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
+			const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
 
-			console.error(
-				'THREE.WebGLProgram: Shader Error ' + gl.getError() + ' - ' +
-				'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' +
-				'Program Info Log: ' + programLog + '\n' +
-				vertexErrors + '\n' +
-				fragmentErrors
-			);
-		}
+			// create a program object
 
-		// here we can delete shaders,
-		// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
+			program = gl.createProgram();
+			gl.attachShader(program, vertexShader);
+			gl.attachShader(program, fragmentShader);
+			gl.linkProgram(program);
 
-		gl.deleteShader(vertexShader);
-		gl.deleteShader(fragmentShader);
+			// check errors
+
+			if (checkErrors && gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
+				const programLog = gl.getProgramInfoLog(program).trim();
+
+				const vertexErrors = getShaderErrors(gl, vertexShader, 'VERTEX');
+				const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
+
+				console.error(
+					'Shader Error ' + gl.getError() + ' - ' +
+					'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' +
+					'Program Info Log: ' + programLog + '\n' +
+					vertexErrors + '\n' +
+					fragmentErrors
+				);
+			} else {
+				this.program = program;
+			}
+
+			// here we can delete shaders,
+			// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
+
+			gl.deleteShader(vertexShader);
+			gl.deleteShader(fragmentShader);
+		};
 
 		// set up caching for uniforms
 
@@ -10576,16 +10594,6 @@ class WebGLProgram {
 			gl.deleteProgram(program);
 			this.program = undefined;
 		};
-
-		//
-
-		this.id = programIdCount++;
-		this.usedTimes = 1;
-		this.code = "";
-		this.gl = gl;
-		this.vshaderSource = vshader;
-		this.fshaderSource = fshader;
-		this.program = program;
 	}
 
 }
@@ -10941,7 +10949,7 @@ class WebGLPrograms {
 		this._programs = [];
 	}
 
-	getProgram(material, object, renderStates) {
+	getProgram(material, object, renderStates, checkErrors) {
 		const programs = this._programs;
 
 		const props = generateProps(this._state, this._capabilities, material, object, renderStates);
@@ -10964,6 +10972,7 @@ class WebGLPrograms {
 			const fragmentShader = ShaderLib[material.type + "_frag"] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
+			program.compile(checkErrors);
 			program.code = code;
 
 			programs.push(program);
@@ -14127,7 +14136,7 @@ class WebGLRenderPass {
 			}
 
 			const oldProgram = materialProperties.program;
-			materialProperties.program = this._programs.getProgram(material, object, renderStates);
+			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 			if (oldProgram) {
 				this._programs.releaseProgram(oldProgram); // release after new program is created.
 			}
@@ -14150,6 +14159,9 @@ class WebGLRenderPass {
 		}
 
 		const program = materialProperties.program;
+
+		if (program.program === undefined) return;
+
 		state.setProgram(program);
 
 		this._geometries.setGeometry(geometry);

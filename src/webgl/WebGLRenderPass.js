@@ -360,7 +360,7 @@ class WebGLRenderPass {
 			}
 
 			const oldProgram = materialProperties.program;
-			materialProperties.program = this._programs.getProgram(material, object, renderStates);
+			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 			if (oldProgram) {
 				this._programs.releaseProgram(oldProgram); // release after new program is created.
 			}
@@ -383,6 +383,9 @@ class WebGLRenderPass {
 		}
 
 		const program = materialProperties.program;
+
+		if (program.program === undefined) return;
+
 		state.setProgram(program);
 
 		this._geometries.setGeometry(geometry);
