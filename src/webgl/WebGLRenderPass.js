@@ -454,7 +454,7 @@ class WebGLRenderPass {
 
 			// uniforms about camera data
 			if (internalGroup === 2 && refreshCamera) {
-				uniform.internalFun(cameraData, renderStates);
+				uniform.internalFun(cameraData);
 				continue;
 			}
 

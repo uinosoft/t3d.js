@@ -7211,13 +7211,13 @@
 				near: 0,
 				far: 0,
 				position: new Vector3(),
+				logDepthCameraNear: 0,
+				logDepthBufFC: 0,
 				viewMatrix: new Matrix4(),
 				projectionMatrix: new Matrix4(),
 				projectionViewMatrix: new Matrix4(),
 				rect: new Vector4(0, 0, 1, 1)
 			};
-			this.logDepthCameraNear = 0;
-			this.logDepthBufFC = 0;
 			this.gammaFactor = 2.0;
 			this.outputEncoding = TEXEL_ENCODING_TYPE.LINEAR;
 		}
@@ -7229,6 +7229,7 @@
 		var _proto = RenderStates.prototype;
 		_proto.updateCamera = function updateCamera(camera) {
 			var sceneData = this.scene;
+			var cameraData = this.camera;
 			var projectionMatrix = camera.projectionMatrix;
 			var cameraNear = 0,
 				cameraFar = 0;
@@ -7239,29 +7240,29 @@
 				cameraNear = (projectionMatrix.elements[14] + 1) / projectionMatrix.elements[10];
 				cameraFar = (projectionMatrix.elements[14] - 1) / projectionMatrix.elements[10];
 			}
-			this.camera.near = cameraNear;
-			this.camera.far = cameraFar;
+			cameraData.near = cameraNear;
+			cameraData.far = cameraFar;
 			if (sceneData.logarithmicDepthBuffer) {
-				this.logDepthCameraNear = cameraNear;
-				this.logDepthBufFC = 2.0 / (Math.log(cameraFar - cameraNear + 1.0) * Math.LOG2E);
+				cameraData.logDepthCameraNear = cameraNear;
+				cameraData.logDepthBufFC = 2.0 / (Math.log(cameraFar - cameraNear + 1.0) * Math.LOG2E);
 			} else {
-				this.logDepthCameraNear = 0;
-				this.logDepthBufFC = 0;
+				cameraData.logDepthCameraNear = 0;
+				cameraData.logDepthBufFC = 0;
 			}
-			this.camera.position.setFromMatrixPosition(camera.worldMatrix);
+			cameraData.position.setFromMatrixPosition(camera.worldMatrix);
 			if (sceneData.useAnchorMatrix) {
-				this.camera.position.applyMatrix4(sceneData.anchorMatrixInverse);
+				cameraData.position.applyMatrix4(sceneData.anchorMatrixInverse);
 			}
-			this.camera.viewMatrix.copy(camera.viewMatrix);
+			cameraData.viewMatrix.copy(camera.viewMatrix);
 			if (sceneData.useAnchorMatrix) {
-				this.camera.viewMatrix.multiply(sceneData.anchorMatrix);
+				cameraData.viewMatrix.multiply(sceneData.anchorMatrix);
 			}
-			this.camera.projectionMatrix.copy(projectionMatrix);
-			this.camera.projectionViewMatrix.copy(projectionMatrix).multiply(this.camera.viewMatrix);
-			this.camera.rect.copy(camera.rect);
+			cameraData.projectionMatrix.copy(projectionMatrix);
+			cameraData.projectionViewMatrix.copy(projectionMatrix).multiply(cameraData.viewMatrix);
+			cameraData.rect.copy(camera.rect);
+			cameraData.version++;
 			this.gammaFactor = camera.gammaFactor;
 			this.outputEncoding = camera.outputEncoding;
-			this.camera.version++;
 		};
 		return RenderStates;
 	}();
@@ -9790,23 +9791,23 @@
 
 	var internalUniforms = {
 		'u_Model': [1, null],
-		'u_Projection': [2, function (cameraData, renderStates) {
+		'u_Projection': [2, function (cameraData) {
 			return this.set(cameraData.projectionMatrix.elements);
 		}],
-		'u_View': [2, function (cameraData, renderStates) {
+		'u_View': [2, function (cameraData) {
 			return this.set(cameraData.viewMatrix.elements);
 		}],
-		'u_ProjectionView': [2, function (cameraData, renderStates) {
+		'u_ProjectionView': [2, function (cameraData) {
 			return this.set(cameraData.projectionViewMatrix.elements);
 		}],
-		'u_CameraPosition': [2, function (cameraData, renderStates) {
+		'u_CameraPosition': [2, function (cameraData) {
 			return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z);
 		}],
-		'logDepthBufFC': [2, function (cameraData, renderStates) {
-			return this.set(renderStates.logDepthBufFC);
+		'logDepthBufFC': [2, function (cameraData) {
+			return this.set(cameraData.logDepthBufFC);
 		}],
-		'logDepthCameraNear': [2, function (cameraData, renderStates) {
-			return this.set(renderStates.logDepthCameraNear);
+		'logDepthCameraNear': [2, function (cameraData) {
+			return this.set(cameraData.logDepthCameraNear);
 		}],
 		'u_EnvMapLight_Intensity': [3, function (sceneData) {
 			return this.set(sceneData.environmentLightIntensity);
@@ -13384,7 +13385,7 @@
 
 				// uniforms about camera data
 				if (internalGroup === 2 && refreshCamera) {
-					uniform.internalFun(cameraData, renderStates);
+					uniform.internalFun(cameraData);
 					continue;
 				}
 

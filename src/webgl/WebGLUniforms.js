@@ -7,12 +7,12 @@ import { Texture3D } from '../resources/textures/Texture3D.js';
 
 const internalUniforms = {
 	'u_Model': [1, null],
-	'u_Projection': [2, function(cameraData, renderStates) { return this.set(cameraData.projectionMatrix.elements) }],
-	'u_View': [2, function(cameraData, renderStates) { return this.set(cameraData.viewMatrix.elements) }],
-	'u_ProjectionView': [2, function(cameraData, renderStates) { return this.set(cameraData.projectionViewMatrix.elements) }],
-	'u_CameraPosition': [2, function(cameraData, renderStates) { return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z) }],
-	'logDepthBufFC': [2, function(cameraData, renderStates) { return this.set(renderStates.logDepthBufFC) }],
-	'logDepthCameraNear': [2, function(cameraData, renderStates) { return this.set(renderStates.logDepthCameraNear) }],
+	'u_Projection': [2, function(cameraData) { return this.set(cameraData.projectionMatrix.elements) }],
+	'u_View': [2, function(cameraData) { return this.set(cameraData.viewMatrix.elements) }],
+	'u_ProjectionView': [2, function(cameraData) { return this.set(cameraData.projectionViewMatrix.elements) }],
+	'u_CameraPosition': [2, function(cameraData) { return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z) }],
+	'logDepthBufFC': [2, function(cameraData) { return this.set(cameraData.logDepthBufFC) }],
+	'logDepthCameraNear': [2, function(cameraData) { return this.set(cameraData.logDepthCameraNear) }],
 	'u_EnvMapLight_Intensity': [3, function(sceneData) { return this.set(sceneData.environmentLightIntensity) }],
 	'u_FogColor': [3, function(sceneData) { const color = sceneData.fog.color; return this.setValue(color.r, color.g, color.b) }],
 	'u_FogDensity': [3, function(sceneData) { return this.set(sceneData.fog.density) }],
