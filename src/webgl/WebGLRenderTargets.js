@@ -1,29 +1,33 @@
 import { ATTACHMENT, TEXTURE_FILTER } from '../const.js';
 import { isPowerOfTwo } from '../base.js';
+import { WebGLProperties } from './WebGLProperties.js';
 
-class WebGLRenderTargets {
+class WebGLRenderTargets extends WebGLProperties {
 
-	constructor(gl, state, textures, renderBuffers, properties, capabilities, constants) {
+	constructor(gl, state, capabilities, textures, renderBuffers, constants) {
+		super();
+
 		this._gl = gl;
 		this._state = state;
+		this._capabilities = capabilities;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
-		this._properties = properties;
-		this._capabilities = capabilities;
 		this._constants = constants;
+
+		const that = this;
 
 		function onRenderTargetDispose(event) {
 			const renderTarget = event.target;
 
 			renderTarget.removeEventListener('dispose', onRenderTargetDispose);
 
-			const renderTargetProperties = properties.get(renderTarget);
+			const renderTargetProperties = that.get(renderTarget);
 
 			if (renderTargetProperties.__webglFramebuffer) {
 				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer)
 			}
 
-			properties.delete(renderTarget);
+			that.delete(renderTarget);
 
 			if (state.currentRenderTarget === renderTarget) {
 				state.currentRenderTarget = null;
@@ -40,7 +44,7 @@ class WebGLRenderTargets {
 		const renderBuffers = this._renderBuffers;
 		const capabilities = this._capabilities;
 
-		const renderTargetProperties = this._properties.get(renderTarget);
+		const renderTargetProperties = this.get(renderTarget);
 
 		renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
 
@@ -95,7 +99,7 @@ class WebGLRenderTargets {
 	setRenderTarget(renderTarget) {
 		const gl = this._gl;
 		const state = this._state;
-		const properties = this._properties;
+		const textures = this._textures;
 
 		let renderTargetProperties;
 
@@ -103,7 +107,7 @@ class WebGLRenderTargets {
 			if (renderTarget.isRenderTargetBack) {
 				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			} else {
-				renderTargetProperties = properties.get(renderTarget);
+				renderTargetProperties = this.get(renderTarget);
 
 				if (renderTargetProperties.__webglFramebuffer === undefined) {
 					this._setupRenderTarget(renderTarget);
@@ -115,13 +119,13 @@ class WebGLRenderTargets {
 		}
 
 		if (renderTarget.isRenderTargetCube) {
-			renderTargetProperties = properties.get(renderTarget);
+			renderTargetProperties = this.get(renderTarget);
 			const activeCubeFace = renderTarget.activeCubeFace;
 			if (renderTargetProperties.__currentActiveCubeFace !== activeCubeFace) {
 				for (const attachTarget in renderTarget._attachments) {
 					const attachment = renderTarget._attachments[attachTarget];
 					if (attachment.isTextureCube) {
-						const textureProperties = properties.get(attachment);
+						const textureProperties = textures.get(attachment);
 						gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_CUBE_MAP_POSITIVE_X + activeCubeFace, textureProperties.__webglTexture, 0);
 					}
 				}
@@ -132,7 +136,6 @@ class WebGLRenderTargets {
 
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 		const gl = this._gl;
-		const properties = this._properties;
 		const capabilities = this._capabilities;
 
 		if (capabilities.version < 2) {
@@ -140,8 +143,8 @@ class WebGLRenderTargets {
 			return;
 		}
 
-		const readBuffer = properties.get(read).__webglFramebuffer;
-		const drawBuffer = properties.get(draw).__webglFramebuffer;
+		const readBuffer = this.get(read).__webglFramebuffer;
+		const drawBuffer = this.get(draw).__webglFramebuffer;
 		gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
 		gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, drawBuffer);
 
@@ -190,7 +193,7 @@ class WebGLRenderTargets {
 			if (texture.isTextureCube) glTarget = gl.TEXTURE_CUBE_MAP;
 			if (texture.isTexture3D) glTarget = gl.TEXTURE_3D;
 
-			const webglTexture = this._properties.get(texture).__webglTexture;
+			const webglTexture = this._textures.get(texture).__webglTexture;
 
 			state.bindTexture(glTarget, webglTexture);
 			gl.generateMipmap(glTarget);

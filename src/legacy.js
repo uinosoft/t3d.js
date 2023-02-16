@@ -9,6 +9,7 @@ import { Material } from './resources/materials/Material.js';
 import { Vector3 } from './math/Vector3.js';
 import { WebGLRenderPass } from './webgl/WebGLRenderPass.js';
 import { WebGLVertexArrayBindings } from './webgl/WebGLVertexArrayBindings.js';
+import { WebGLGeometries } from './webgl/WebGLGeometries.js';
 import { Camera } from './scenes/Camera.js';
 import { Light } from './scenes/Light.js';
 import { AmbientLight } from './scenes/lights/AmbientLight.js';
@@ -128,6 +129,11 @@ Object.defineProperties(WebGLRenderPass.prototype, {
 
 WebGLVertexArrayBindings.prototype.resetBinding = function() {
 	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
+}
+
+WebGLGeometries.prototype.setBufferExternal = function(buffer, webglBuffer) {
+	console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderPass.setBufferExternal instead.");
+	this._buffers.setBufferExternal(buffer, webglBuffer);
 }
 
 // Enum for WebGL Texture Type.

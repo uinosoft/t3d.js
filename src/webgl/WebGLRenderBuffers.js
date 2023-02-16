@@ -1,34 +1,39 @@
-class WebGLRenderBuffers {
+import { WebGLProperties } from './WebGLProperties.js';
 
-	constructor(gl, properties, capabilities, constants) {
-		this.gl = gl;
-		this.properties = properties;
-		this.capabilities = capabilities;
-		this.constants = constants;
+class WebGLRenderBuffers extends WebGLProperties {
+
+	constructor(gl, capabilities, constants) {
+		super();
+
+		this._gl = gl;
+		this._capabilities = capabilities;
+		this._constants = constants;
+
+		const that = this;
 
 		function onRenderBufferDispose(event) {
 			const renderBuffer = event.target;
 
 			renderBuffer.removeEventListener('dispose', onRenderBufferDispose);
 
-			const renderBufferProperties = properties.get(renderBuffer);
+			const renderBufferProperties = that.get(renderBuffer);
 
 			if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
 			}
 
-			properties.delete(renderBuffer);
+			that.delete(renderBuffer);
 		}
 
 		this._onRenderBufferDispose = onRenderBufferDispose;
 	}
 
 	setRenderBuffer(renderBuffer) {
-		const gl = this.gl;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
-		const renderBufferProperties = this.properties.get(renderBuffer);
+		const renderBufferProperties = this.get(renderBuffer);
 
 		if (renderBufferProperties.__webglRenderbuffer === undefined) {
 			renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
@@ -55,9 +60,9 @@ class WebGLRenderBuffers {
 	}
 
 	setRenderBufferExternal(renderBuffer, webglRenderbuffer) {
-		const gl = this.gl;
+		const gl = this._gl;
 
-		const renderBufferProperties = this.properties.get(renderBuffer);
+		const renderBufferProperties = this.get(renderBuffer);
 
 		if (!renderBufferProperties.__external) {
 			if (renderBufferProperties.__webglRenderbuffer) {

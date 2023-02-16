@@ -11525,31 +11525,6 @@ function unrollLoops(string) {
 		.replace(unrollLoopPattern, loopReplacer);
 }
 
-class WebGLProperties {
-
-	constructor() {
-		this._map = new WeakMap();
-	}
-
-	get(object) {
-		let properties = this._map.get(object);
-		if (properties === undefined) {
-			properties = {};
-			this._map.set(object, properties);
-		}
-		return properties;
-	}
-
-	delete(object) {
-		this._map.delete(object);
-	}
-
-	clear() {
-		this._map = new WeakMap();
-	}
-
-}
-
 class WebGLCapabilities {
 
 	constructor(gl) {
@@ -12523,20 +12498,53 @@ class WebGLState {
 
 }
 
-class WebGLTextures {
+class WebGLProperties {
 
-	constructor(gl, state, properties, capabilities, constants) {
-		this.gl = gl;
-		this.state = state;
-		this.properties = properties;
-		this.capabilities = capabilities;
-		this.constants = constants;
+	constructor() {
+		this._count = 0;
+	}
+
+	get(object) {
+		let properties = object.__webgl;
+		if (properties === undefined) {
+			properties = {};
+			object.__webgl = properties;
+			this._count++;
+		}
+		return properties;
+	}
+
+	delete(object) {
+		const properties = object.__webgl;
+		if (properties) {
+			this._count--;
+			delete object.__webgl;
+		}
+	}
+
+	size() {
+		return this._count;
+	}
+
+}
+
+class WebGLTextures extends WebGLProperties {
+
+	constructor(gl, state, capabilities, constants) {
+		super();
+
+		this._gl = gl;
+		this._state = state;
+		this._capabilities = capabilities;
+		this._constants = constants;
 
 		this._usedTextureUnits = 0;
 
+		const that = this;
+
 		function onTextureDispose(event) {
 			const texture = event.target;
-			const textureProperties = properties.get(texture);
+			const textureProperties = that.get(texture);
 
 			texture.removeEventListener('dispose', onTextureDispose);
 
@@ -12544,7 +12552,7 @@ class WebGLTextures {
 				gl.deleteTexture(textureProperties.__webglTexture);
 			}
 
-			properties.delete(texture);
+			that.delete(texture);
 		}
 
 		this._onTextureDispose = onTextureDispose;
@@ -12568,8 +12576,8 @@ class WebGLTextures {
 	allocTexUnit() {
 		const textureUnit = this._usedTextureUnits++;
 
-		if (textureUnit >= this.capabilities.maxTextures) {
-			console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.capabilities.maxTextures);
+		if (textureUnit >= this._capabilities.maxTextures) {
+			console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this._capabilities.maxTextures);
 		}
 
 		return textureUnit;
@@ -12580,16 +12588,16 @@ class WebGLTextures {
 	}
 
 	setTexture2D(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (slot !== undefined) {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && (!texture.image.rtt || slot === undefined) && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -12674,16 +12682,16 @@ class WebGLTextures {
 	}
 
 	setTextureCube(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (slot !== undefined) {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.images.length === 6 && textureProperties.__version !== texture.version && (!texture.images[0].rtt || slot === undefined) && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -12784,10 +12792,10 @@ class WebGLTextures {
 	}
 
 	setTexture3D(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (capabilities.version < 2) {
 			console.warn("Try to use Texture3D but browser not support WebGL2.0");
@@ -12798,7 +12806,7 @@ class WebGLTextures {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -12840,9 +12848,9 @@ class WebGLTextures {
 	}
 
 	setTextureExternal(texture, webglTexture) {
-		const gl = this.gl;
+		const gl = this._gl;
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (!textureProperties.__external) {
 			if (textureProperties.__webglTexture) {
@@ -12857,8 +12865,8 @@ class WebGLTextures {
 	}
 
 	_setTextureParameters(texture, needFallback) {
-		const gl = this.gl;
-		const capabilities = this.capabilities;
+		const gl = this._gl;
+		const capabilities = this._capabilities;
 
 		const wrappingToGL = this._wrappingToGL;
 		const filterToGL = this._filterToGL;
@@ -12896,11 +12904,11 @@ class WebGLTextures {
 	}
 
 	_generateMipmap(target, texture, width, height) {
-		const gl = this.gl;
+		const gl = this._gl;
 
 		gl.generateMipmap(target);
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 		// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
 		textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
 	}
@@ -13061,37 +13069,40 @@ function domCheck(image) {
 		|| (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap);
 }
 
-class WebGLRenderBuffers {
+class WebGLRenderBuffers extends WebGLProperties {
 
-	constructor(gl, properties, capabilities, constants) {
-		this.gl = gl;
-		this.properties = properties;
-		this.capabilities = capabilities;
-		this.constants = constants;
+	constructor(gl, capabilities, constants) {
+		super();
+
+		this._gl = gl;
+		this._capabilities = capabilities;
+		this._constants = constants;
+
+		const that = this;
 
 		function onRenderBufferDispose(event) {
 			const renderBuffer = event.target;
 
 			renderBuffer.removeEventListener('dispose', onRenderBufferDispose);
 
-			const renderBufferProperties = properties.get(renderBuffer);
+			const renderBufferProperties = that.get(renderBuffer);
 
 			if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
 			}
 
-			properties.delete(renderBuffer);
+			that.delete(renderBuffer);
 		}
 
 		this._onRenderBufferDispose = onRenderBufferDispose;
 	}
 
 	setRenderBuffer(renderBuffer) {
-		const gl = this.gl;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
-		const renderBufferProperties = this.properties.get(renderBuffer);
+		const renderBufferProperties = this.get(renderBuffer);
 
 		if (renderBufferProperties.__webglRenderbuffer === undefined) {
 			renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
@@ -13118,9 +13129,9 @@ class WebGLRenderBuffers {
 	}
 
 	setRenderBufferExternal(renderBuffer, webglRenderbuffer) {
-		const gl = this.gl;
+		const gl = this._gl;
 
-		const renderBufferProperties = this.properties.get(renderBuffer);
+		const renderBufferProperties = this.get(renderBuffer);
 
 		if (!renderBufferProperties.__external) {
 			if (renderBufferProperties.__webglRenderbuffer) {
@@ -13136,29 +13147,32 @@ class WebGLRenderBuffers {
 
 }
 
-class WebGLRenderTargets {
+class WebGLRenderTargets extends WebGLProperties {
 
-	constructor(gl, state, textures, renderBuffers, properties, capabilities, constants) {
+	constructor(gl, state, capabilities, textures, renderBuffers, constants) {
+		super();
+
 		this._gl = gl;
 		this._state = state;
+		this._capabilities = capabilities;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
-		this._properties = properties;
-		this._capabilities = capabilities;
 		this._constants = constants;
+
+		const that = this;
 
 		function onRenderTargetDispose(event) {
 			const renderTarget = event.target;
 
 			renderTarget.removeEventListener('dispose', onRenderTargetDispose);
 
-			const renderTargetProperties = properties.get(renderTarget);
+			const renderTargetProperties = that.get(renderTarget);
 
 			if (renderTargetProperties.__webglFramebuffer) {
 				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 			}
 
-			properties.delete(renderTarget);
+			that.delete(renderTarget);
 
 			if (state.currentRenderTarget === renderTarget) {
 				state.currentRenderTarget = null;
@@ -13175,7 +13189,7 @@ class WebGLRenderTargets {
 		const renderBuffers = this._renderBuffers;
 		const capabilities = this._capabilities;
 
-		const renderTargetProperties = this._properties.get(renderTarget);
+		const renderTargetProperties = this.get(renderTarget);
 
 		renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
 
@@ -13230,7 +13244,7 @@ class WebGLRenderTargets {
 	setRenderTarget(renderTarget) {
 		const gl = this._gl;
 		const state = this._state;
-		const properties = this._properties;
+		const textures = this._textures;
 
 		let renderTargetProperties;
 
@@ -13238,7 +13252,7 @@ class WebGLRenderTargets {
 			if (renderTarget.isRenderTargetBack) {
 				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			} else {
-				renderTargetProperties = properties.get(renderTarget);
+				renderTargetProperties = this.get(renderTarget);
 
 				if (renderTargetProperties.__webglFramebuffer === undefined) {
 					this._setupRenderTarget(renderTarget);
@@ -13250,13 +13264,13 @@ class WebGLRenderTargets {
 		}
 
 		if (renderTarget.isRenderTargetCube) {
-			renderTargetProperties = properties.get(renderTarget);
+			renderTargetProperties = this.get(renderTarget);
 			const activeCubeFace = renderTarget.activeCubeFace;
 			if (renderTargetProperties.__currentActiveCubeFace !== activeCubeFace) {
 				for (const attachTarget in renderTarget._attachments) {
 					const attachment = renderTarget._attachments[attachTarget];
 					if (attachment.isTextureCube) {
-						const textureProperties = properties.get(attachment);
+						const textureProperties = textures.get(attachment);
 						gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_CUBE_MAP_POSITIVE_X + activeCubeFace, textureProperties.__webglTexture, 0);
 					}
 				}
@@ -13267,7 +13281,6 @@ class WebGLRenderTargets {
 
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 		const gl = this._gl;
-		const properties = this._properties;
 		const capabilities = this._capabilities;
 
 		if (capabilities.version < 2) {
@@ -13275,8 +13288,8 @@ class WebGLRenderTargets {
 			return;
 		}
 
-		const readBuffer = properties.get(read).__webglFramebuffer;
-		const drawBuffer = properties.get(draw).__webglFramebuffer;
+		const readBuffer = this.get(read).__webglFramebuffer;
+		const drawBuffer = this.get(draw).__webglFramebuffer;
 		gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
 		gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, drawBuffer);
 
@@ -13325,7 +13338,7 @@ class WebGLRenderTargets {
 			if (texture.isTextureCube) glTarget = gl.TEXTURE_CUBE_MAP;
 			if (texture.isTexture3D) glTarget = gl.TEXTURE_3D;
 
-			const webglTexture = this._properties.get(texture).__webglTexture;
+			const webglTexture = this._textures.get(texture).__webglTexture;
 
 			state.bindTexture(glTarget, webglTexture);
 			gl.generateMipmap(glTarget);
@@ -13365,100 +13378,53 @@ function _isPowerOfTwo(renderTarget) {
 	return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
 }
 
-// This class handles buffer creation and updating for geometries.
-// When the geometry is released, release the corresponding buffer resources and VAO.
-class WebGLGeometries {
+class WebGLBuffers extends WebGLProperties {
 
-	constructor(gl, properties, capabilities, vertexArrayBindings) {
+	constructor(gl, capabilities) {
+		super();
+
 		this._gl = gl;
-		this._properties = properties;
 		this._capabilities = capabilities;
-		this._vertexArrayBindings = vertexArrayBindings;
-
-		function onGeometryDispose(event) {
-			const geometry = event.target;
-			const geometryProperties = properties.get(geometry);
-
-			geometry.removeEventListener('dispose', onGeometryDispose);
-
-			if (geometry.index !== null) {
-				removeBuffer(gl, properties, geometry.index.buffer);
-			}
-
-			for (const name in geometry.attributes) {
-				removeBuffer(gl, properties, geometry.attributes[name].buffer);
-			}
-
-			for (const name in geometry.morphAttributes) {
-				const array = geometry.morphAttributes[name];
-				for (let i = 0, l = array.length; i < l; i++) {
-					removeBuffer(gl, properties, array[i].buffer);
-				}
-			}
-
-			for (const key in geometryProperties._vaos) {
-				const vao = geometryProperties[key];
-				if (vao) {
-					vertexArrayBindings.disposeVAO(vao.object);
-				}
-			}
-
-			geometryProperties._vaos = {};
-			geometryProperties.created = false;
-
-			properties.delete(geometry);
-		}
-
-		this._onGeometryDispose = onGeometryDispose;
 	}
 
-	setGeometry(geometry) {
+	setBuffer(buffer, bufferType, vertexArrayBindings) {
+		const bufferProperties = this.get(buffer);
+
+		const needCreate = bufferProperties.glBuffer === undefined;
+
+		if (!needCreate && bufferProperties.version === buffer.version) return;
+
+		// Avoid polluting the binding state
+		if (!!vertexArrayBindings) {
+			vertexArrayBindings.reset();
+		}
+
+		if (needCreate || bufferProperties.__external) {
+			// Because Buffer does not have a dispose interface at present,
+			// when the version increases, the external is automatically closed
+			this._createGLBuffer(bufferProperties, buffer, bufferType);
+		} else {
+			this._updateGLBuffer(bufferProperties.glBuffer, buffer, bufferType);
+			bufferProperties.version = buffer.version;
+		}
+	}
+
+	removeBuffer(buffer) {
 		const gl = this._gl;
-		const properties = this._properties;
-		const capabilities = this._capabilities;
-		const vertexArrayBindings = this._vertexArrayBindings;
 
-		const geometryProperties = properties.get(geometry);
+		const bufferProperties = this.get(buffer);
 
-		if (!geometryProperties.created) {
-			geometry.addEventListener('dispose', this._onGeometryDispose);
-			geometryProperties.created = true;
-			geometryProperties._vaos = {};
+		if (bufferProperties.glBuffer && !bufferProperties.__external) {
+			gl.deleteBuffer(bufferProperties.glBuffer);
 		}
 
-		if (geometry.index !== null) {
-			const buffer = geometry.index.buffer;
-			const bufferProperties = properties.get(buffer);
-
-			if (bufferProperties.glBuffer === undefined) {
-				vertexArrayBindings.reset(); // Avoid polluting the binding state
-				createGLBuffer(gl, bufferProperties, buffer, gl.ELEMENT_ARRAY_BUFFER);
-			} else if (bufferProperties.version < buffer.version) {
-				vertexArrayBindings.reset(); // Avoid polluting the binding state
-				updateGLBuffer(gl, capabilities, bufferProperties.glBuffer, buffer, gl.ELEMENT_ARRAY_BUFFER);
-				bufferProperties.version = buffer.version;
-			}
-		}
-
-		for (const name in geometry.attributes) {
-			updateBuffer(gl, properties, capabilities, geometry.attributes[name].buffer, gl.ARRAY_BUFFER);
-		}
-
-		for (const name in geometry.morphAttributes) {
-			const array = geometry.morphAttributes[name];
-			for (let i = 0, l = array.length; i < l; i++) {
-				updateBuffer(gl, properties, capabilities, array[i].buffer, gl.ARRAY_BUFFER);
-			}
-		}
-
-		return geometryProperties;
+		this.delete(buffer);
 	}
 
 	setBufferExternal(buffer, webglBuffer) {
 		const gl = this._gl;
-		const properties = this._properties;
 
-		const bufferProperties = properties.get(buffer);
+		const bufferProperties = this.get(buffer);
 
 		if (!bufferProperties.__external) {
 			if (bufferProperties.glBuffer) {
@@ -13474,6 +13440,54 @@ class WebGLGeometries {
 		bufferProperties.version = buffer.version;
 
 		bufferProperties.__external = true;
+	}
+
+	_createGLBuffer(bufferProperties, buffer, bufferType) {
+		const gl = this._gl;
+
+		const array = buffer.array;
+		const usage = buffer.usage;
+
+		const glBuffer = gl.createBuffer();
+
+		gl.bindBuffer(bufferType, glBuffer);
+		gl.bufferData(bufferType, array, usage);
+
+		buffer.onUploadCallback();
+
+		const type = getBufferType(gl, array);
+
+		bufferProperties.glBuffer = glBuffer;
+		bufferProperties.type = type;
+		bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
+		bufferProperties.version = buffer.version;
+
+		bufferProperties.__external = false;
+	}
+
+	_updateGLBuffer(glBuffer, buffer, bufferType) {
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+
+		const array = buffer.array;
+		const updateRange = buffer.updateRange;
+
+		gl.bindBuffer(bufferType, glBuffer);
+
+		if (updateRange.count === -1) {
+			// Not using update ranges
+			gl.bufferSubData(bufferType, 0, array);
+		} else {
+			if (capabilities.version >= 2) {
+				gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
+					array, updateRange.offset, updateRange.count);
+			} else {
+				gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
+					array.subarray(updateRange.offset, updateRange.offset + updateRange.count));
+			}
+
+			updateRange.count = -1; // reset range
+		}
 	}
 
 }
@@ -13504,81 +13518,130 @@ function getBufferType(gl, array) {
 	return type;
 }
 
-function createGLBuffer(gl, properties, buffer, bufferType) {
-	const array = buffer.array;
-	const usage = buffer.usage;
+// This class handles buffer creation and updating for geometries.
+class WebGLGeometries extends WebGLProperties {
 
-	const glBuffer = gl.createBuffer();
+	constructor(gl, buffers, vertexArrayBindings) {
+		super();
 
-	gl.bindBuffer(bufferType, glBuffer);
-	gl.bufferData(bufferType, array, usage);
+		this._gl = gl;
+		this._buffers = buffers;
+		this._vertexArrayBindings = vertexArrayBindings;
 
-	buffer.onUploadCallback();
+		const that = this;
 
-	const type = getBufferType(gl, array);
+		function onGeometryDispose(event) {
+			const geometry = event.target;
+			const geometryProperties = that.get(geometry);
 
-	properties.glBuffer = glBuffer;
-	properties.type = type;
-	properties.bytesPerElement = array.BYTES_PER_ELEMENT;
-	properties.version = buffer.version;
-}
+			geometry.removeEventListener('dispose', onGeometryDispose);
 
-function updateGLBuffer(gl, capabilities, glBuffer, buffer, bufferType) {
-	const array = buffer.array;
-	const updateRange = buffer.updateRange;
+			if (geometry.index !== null) {
+				buffers.removeBuffer(geometry.index.buffer);
+			}
 
-	gl.bindBuffer(bufferType, glBuffer);
+			for (const name in geometry.attributes) {
+				buffers.removeBuffer(geometry.attributes[name].buffer);
+			}
 
-	if (updateRange.count === -1) {
-		// Not using update ranges
-		gl.bufferSubData(bufferType, 0, array);
-	} else {
-		if (capabilities.version >= 2) {
-			gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
-				array, updateRange.offset, updateRange.count);
-		} else {
-			gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
-				array.subarray(updateRange.offset, updateRange.offset + updateRange.count));
+			for (const name in geometry.morphAttributes) {
+				const array = geometry.morphAttributes[name];
+				for (let i = 0, l = array.length; i < l; i++) {
+					buffers.removeBuffer(array[i].buffer);
+				}
+			}
+
+			vertexArrayBindings.releaseByGeometry(geometry);
+
+			geometryProperties.created = false;
+
+			that.delete(geometry);
 		}
 
-		updateRange.count = -1; // reset range
+		this._onGeometryDispose = onGeometryDispose;
 	}
-}
 
-function updateBuffer(gl, properties, capabilities, buffer, bufferType) {
-	const bufferProperties = properties.get(buffer);
+	setGeometry(geometry) {
+		const gl = this._gl;
+		const buffers = this._buffers;
 
-	if (bufferProperties.glBuffer === undefined) {
-		createGLBuffer(gl, bufferProperties, buffer, bufferType);
-	} else if (bufferProperties.version < buffer.version) {
-		if (!!bufferProperties.__external) {
-			delete bufferProperties.glBuffer;
-			createGLBuffer(gl, bufferProperties, buffer, bufferType);
-		} else {
-			updateGLBuffer(gl, capabilities, bufferProperties.glBuffer, buffer, bufferType);
-			bufferProperties.version = buffer.version;
+		const geometryProperties = this.get(geometry);
+
+		if (!geometryProperties.created) {
+			geometry.addEventListener('dispose', this._onGeometryDispose);
+			geometryProperties.created = true;
 		}
+
+		if (geometry.index !== null) {
+			buffers.setBuffer(geometry.index.buffer, gl.ELEMENT_ARRAY_BUFFER, this._vertexArrayBindings);
+		}
+
+		for (const name in geometry.attributes) {
+			buffers.setBuffer(geometry.attributes[name].buffer, gl.ARRAY_BUFFER);
+		}
+
+		for (const name in geometry.morphAttributes) {
+			const array = geometry.morphAttributes[name];
+			for (let i = 0, l = array.length; i < l; i++) {
+				buffers.setBuffer(array[i].buffer, gl.ARRAY_BUFFER);
+			}
+		}
+
+		return geometryProperties;
 	}
+
 }
 
-function removeBuffer(gl, properties, buffer) {
-	const bufferProperties = properties.get(buffer);
+class WebGLMaterials extends WebGLProperties {
 
-	if (bufferProperties.glBuffer && !bufferProperties.__external) {
-		gl.deleteBuffer(bufferProperties.glBuffer);
+	constructor(programs) {
+		super();
+
+		const that = this;
+
+		function onMaterialDispose(event) {
+			const material = event.target;
+			const materialProperties = that.get(material);
+
+			material.removeEventListener('dispose', onMaterialDispose);
+
+			const program = materialProperties.program;
+
+			if (program !== undefined) {
+				programs.releaseProgram(program);
+				// TODO release vaos
+			}
+
+			that.delete(material);
+		}
+
+		this._onMaterialDispose = onMaterialDispose;
 	}
 
-	properties.delete(buffer);
+	setMaterial(material) {
+		const materialProperties = this.get(material);
+
+		if (materialProperties.program === undefined) {
+			material.addEventListener('dispose', this._onMaterialDispose);
+		}
+
+		// Set program in render pass
+
+		return materialProperties;
+	}
+
 }
 
 const emptyString = "";
 
-class WebGLVertexArrayBindings {
+class WebGLVertexArrayBindings extends WebGLProperties {
 
-	constructor(gl, properties, capabilities) {
+	constructor(gl, capabilities, buffers) {
+		super();
+
 		this._gl = gl;
-		this._properties = properties;
 		this._capabilities = capabilities;
+		this._buffers = buffers;
 
 		this._isWebGL2 = capabilities.version >= 2;
 		this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
@@ -13588,18 +13651,20 @@ class WebGLVertexArrayBindings {
 	}
 
 	setup(object, geometry, program) {
-		const geometryProperties = this._properties.get(geometry);
-
 		if (object.morphTargetInfluences) {
 			this.reset();
 			this._setupVertexAttributes(program, geometry);
 			this._currentGeometryProgram = emptyString;
 		} else if (this._isWebGL2 || this._vaoExt) { // use VAO
-			let vao;
-			if (!geometryProperties._vaos[program.id]) {
+			const geometryProperties = this.get(geometry);
+
+			if (geometryProperties._vaos === undefined) {
+				geometryProperties._vaos = {};
+			}
+
+			let vao = geometryProperties._vaos[program.id];
+			if (!vao) {
 				vao = geometryProperties._vaos[program.id] = { version: -1, object: this._createVAO() };
-			} else {
-				vao = geometryProperties._vaos[program.id];
 			}
 
 			this._bindVAO(vao.object);
@@ -13617,11 +13682,18 @@ class WebGLVertexArrayBindings {
 		}
 	}
 
-	disposeVAO(vao) {
-		if (this._isWebGL2) {
-			this._gl.deleteVertexArray(vao);
-		} else if (this._vaoExt) {
-			this._vaoExt.deleteVertexArrayOES(vao);
+	releaseByGeometry(geometry) {
+		const geometryProperties = this.get(geometry);
+
+		if (geometryProperties._vaos) {
+			for (const key in geometryProperties._vaos) {
+				const vao = geometryProperties[key];
+				if (vao) {
+					this._disposeVAO(vao.object);
+				}
+			}
+
+			geometryProperties._vaos = {};
 		}
 	}
 
@@ -13662,12 +13734,20 @@ class WebGLVertexArrayBindings {
 		}
 	}
 
+	_disposeVAO(vao) {
+		if (this._isWebGL2) {
+			this._gl.deleteVertexArray(vao);
+		} else if (this._vaoExt) {
+			this._vaoExt.deleteVertexArrayOES(vao);
+		}
+	}
+
 	_setupVertexAttributes(program, geometry) {
 		const gl = this._gl;
 		const isWebGL2 = this._isWebGL2;
 		const attributes = program.getAttributes();
-		const properties = this._properties;
 		const capabilities = this._capabilities;
+		const buffers = this._buffers;
 
 		for (const key in attributes) {
 			const programAttribute = attributes[key];
@@ -13680,7 +13760,7 @@ class WebGLVertexArrayBindings {
 				}
 
 				const buffer = geometryAttribute.buffer;
-				const bufferProperties = properties.get(buffer);
+				const bufferProperties = buffers.get(buffer);
 
 				const type = bufferProperties.type;
 				if (programAttribute.format !== type) ;
@@ -13728,27 +13808,27 @@ class WebGLVertexArrayBindings {
 
 		// bind index if could
 		if (geometry.index) {
-			const indexBufferProperties = properties.get(geometry.index.buffer);
+			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferProperties.glBuffer);
 		}
 	}
 
 }
 
-class WebGLQueries {
+class WebGLQueries extends WebGLProperties {
 
 	constructor(gl, capabilities) {
+		super();
+
 		this._gl = gl;
 		this._capabilities = capabilities;
 
 		const timerQuery = capabilities.timerQuery;
-
-		this._map = new WeakMap();
+		const that = this;
 
 		const onQueryDispose = (event) => {
 			const query = event.target;
-
-			const queryProperties = this._map.get(query);
+			const queryProperties = that.get(query);
 
 			query.removeEventListener('dispose', onQueryDispose);
 
@@ -13760,7 +13840,7 @@ class WebGLQueries {
 				}
 			}
 
-			this._map.delete(query);
+			that.delete(query);
 		};
 
 		this._onQueryDispose = onQueryDispose;
@@ -13772,35 +13852,27 @@ class WebGLQueries {
 		};
 	}
 
-	get(query) {
+	_get(query) {
 		const capabilities = this._capabilities;
-		const map = this._map;
 
-		let queryProperties = map.get(query);
+		const queryProperties = this.get(query);
 
-		if (queryProperties === undefined) {
-			queryProperties = {};
+		if (queryProperties._webglQuery === undefined) {
 			query.addEventListener('dispose', this._onQueryDispose);
 
 			queryProperties._webglQuery = capabilities.version > 1 ? this._gl.createQuery() : capabilities.timerQuery.createQueryEXT();
 			queryProperties._target = null;
 			queryProperties._result = null;
-
-			map.set(query, queryProperties);
 		}
 
 		return queryProperties;
-	}
-
-	clear() {
-		this._map = new WeakMap();
 	}
 
 	begin(query, target) {
 		const capabilities = this._capabilities;
 		const typeToGL = this._typeToGL;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (capabilities.version > 1) {
 			this._gl.beginQuery(typeToGL[target], queryProperties._webglQuery);
@@ -13816,7 +13888,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const typeToGL = this._typeToGL;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (capabilities.version > 1) {
 			this._gl.endQuery(typeToGL[queryProperties._target]);
@@ -13828,7 +13900,7 @@ class WebGLQueries {
 	counter(query) {
 		const timerQuery = this._capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		timerQuery.queryCounterEXT(queryProperties._webglQuery, timerQuery.TIMESTAMP_EXT);
 
@@ -13841,7 +13913,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const timerQuery = capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		let available;
 		if (capabilities.version > 1) {
@@ -13862,7 +13934,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const timerQuery = capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (queryProperties._result === null) {
 			if (capabilities.version > 1) {
@@ -13899,22 +13971,6 @@ function defaultIfRender(renderable) {
 
 function noop() { }
 
-function onMaterialDispose(event) {
-	const material = event.target;
-	const materialProperties = this._properties.get(material);
-
-	material.removeEventListener('dispose', onMaterialDispose, this);
-
-	const program = materialProperties.program;
-
-	if (program !== undefined) {
-		// release program reference
-		this._programs.releaseProgram(program);
-	}
-
-	this._properties.delete(material);
-}
-
 /**
  * WebGL Render Pass
  * @memberof t3d
@@ -13927,16 +13983,17 @@ class WebGLRenderPass {
 	constructor(gl) {
 		this.gl = gl;
 
-		const properties = new WebGLProperties();
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(gl, properties, capabilities);
-		const textures = new WebGLTextures(gl, state, properties, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(gl, properties, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(gl, state, textures, renderBuffers, properties, capabilities, constants);
-		const geometries = new WebGLGeometries(gl, properties, capabilities, vertexArrayBindings);
+		const textures = new WebGLTextures(gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
+		const materials = new WebGLMaterials(programs);
 		const queries = new WebGLQueries(gl, capabilities);
 
 		/**
@@ -13945,12 +14002,13 @@ class WebGLRenderPass {
 		 */
 		this.capabilities = capabilities;
 
-		this._properties = properties;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
 		this._renderTargets = renderTargets;
+		this._buffers = buffers;
 		this._geometries = geometries;
 		this._programs = programs;
+		this._materials = materials;
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
 		this._queries = queries;
@@ -14070,7 +14128,7 @@ class WebGLRenderPass {
 	 * @param {WebGLBuffer} webglBuffer
 	 */
 	setBufferExternal(buffer, webglBuffer) {
-		this._geometries.setBufferExternal(buffer, webglBuffer);
+		this._buffers.setBufferExternal(buffer, webglBuffer);
 	}
 
 	/**
@@ -14186,7 +14244,7 @@ class WebGLRenderPass {
 
 		// Check material version
 
-		const materialProperties = this._properties.get(material);
+		const materialProperties = this._materials.setMaterial(material);
 		if (material.needsUpdate === false) {
 			if (materialProperties.program === undefined) {
 				material.needsUpdate = true;
@@ -14220,10 +14278,6 @@ class WebGLRenderPass {
 		// Update program if needed.
 
 		if (material.needsUpdate) {
-			if (materialProperties.program === undefined) {
-				material.addEventListener('dispose', onMaterialDispose, this);
-			}
-
 			const oldProgram = materialProperties.program;
 			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 			if (oldProgram) {
@@ -14345,7 +14399,7 @@ class WebGLRenderPass {
 						uniform.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1);
 						break;
 					case "maxMipLevel":
-						uniform.set(this._properties.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
+						uniform.set(textures.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
 						break;
 					case "u_PointScale":
 						const scale = currentRenderTarget.height * 0.5; // three.js do this
@@ -14544,8 +14598,8 @@ class WebGLRenderPass {
 
 	_draw(geometry, material, group, renderInfo) {
 		const gl = this.gl;
-		const properties = this._properties;
 		const capabilities = this.capabilities;
+		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
 
@@ -14560,7 +14614,7 @@ class WebGLRenderPass {
 		const useInstancing = instanceCount >= 0;
 
 		if (useIndexBuffer) {
-			const indexBufferProperties = properties.get(geometry.index.buffer);
+			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			const bytesPerElement = indexBufferProperties.bytesPerElement;
 			const type = indexBufferProperties.type;
 
@@ -17372,6 +17426,11 @@ Object.defineProperties(WebGLRenderPass.prototype, {
 
 WebGLVertexArrayBindings.prototype.resetBinding = function() {
 	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
+};
+
+WebGLGeometries.prototype.setBufferExternal = function(buffer, webglBuffer) {
+	console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderPass.setBufferExternal instead.");
+	this._buffers.setBufferExternal(buffer, webglBuffer);
 };
 
 // Enum for WebGL Texture Type.

@@ -1,11 +1,15 @@
+import { WebGLProperties } from './WebGLProperties.js';
+
 const emptyString = "";
 
-export class WebGLVertexArrayBindings {
+export class WebGLVertexArrayBindings extends WebGLProperties {
 
-	constructor(gl, properties, capabilities) {
+	constructor(gl, capabilities, buffers) {
+		super();
+
 		this._gl = gl;
-		this._properties = properties;
 		this._capabilities = capabilities;
+		this._buffers = buffers;
 
 		this._isWebGL2 = capabilities.version >= 2;
 		this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
@@ -15,18 +19,20 @@ export class WebGLVertexArrayBindings {
 	}
 
 	setup(object, geometry, program) {
-		const geometryProperties = this._properties.get(geometry);
-
 		if (object.morphTargetInfluences) {
 			this.reset();
 			this._setupVertexAttributes(program, geometry);
 			this._currentGeometryProgram = emptyString;
 		} else if (this._isWebGL2 || this._vaoExt) { // use VAO
-			let vao;
-			if (!geometryProperties._vaos[program.id]) {
+			const geometryProperties = this.get(geometry);
+
+			if (geometryProperties._vaos === undefined) {
+				geometryProperties._vaos = {};
+			}
+
+			let vao = geometryProperties._vaos[program.id];
+			if (!vao) {
 				vao = geometryProperties._vaos[program.id] = { version: -1, object: this._createVAO() };
-			} else {
-				vao = geometryProperties._vaos[program.id];
 			}
 
 			this._bindVAO(vao.object);
@@ -44,11 +50,18 @@ export class WebGLVertexArrayBindings {
 		}
 	}
 
-	disposeVAO(vao) {
-		if (this._isWebGL2) {
-			this._gl.deleteVertexArray(vao);
-		} else if (this._vaoExt) {
-			this._vaoExt.deleteVertexArrayOES(vao);
+	releaseByGeometry(geometry) {
+		const geometryProperties = this.get(geometry);
+
+		if (geometryProperties._vaos) {
+			for (const key in geometryProperties._vaos) {
+				const vao = geometryProperties[key];
+				if (vao) {
+					this._disposeVAO(vao.object);
+				}
+			}
+
+			geometryProperties._vaos = {};
 		}
 	}
 
@@ -89,12 +102,20 @@ export class WebGLVertexArrayBindings {
 		}
 	}
 
+	_disposeVAO(vao) {
+		if (this._isWebGL2) {
+			this._gl.deleteVertexArray(vao);
+		} else if (this._vaoExt) {
+			this._vaoExt.deleteVertexArrayOES(vao);
+		}
+	}
+
 	_setupVertexAttributes(program, geometry) {
 		const gl = this._gl;
 		const isWebGL2 = this._isWebGL2;
 		const attributes = program.getAttributes();
-		const properties = this._properties;
 		const capabilities = this._capabilities;
+		const buffers = this._buffers;
 
 		for (const key in attributes) {
 			const programAttribute = attributes[key];
@@ -107,7 +128,7 @@ export class WebGLVertexArrayBindings {
 				}
 
 				const buffer = geometryAttribute.buffer;
-				const bufferProperties = properties.get(buffer);
+				const bufferProperties = buffers.get(buffer);
 
 				const type = bufferProperties.type;
 				if (programAttribute.format !== type) {
@@ -159,7 +180,7 @@ export class WebGLVertexArrayBindings {
 
 		// bind index if could
 		if (geometry.index) {
-			const indexBufferProperties = properties.get(geometry.index.buffer);
+			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferProperties.glBuffer);
 		}
 	}

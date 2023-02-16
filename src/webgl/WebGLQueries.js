@@ -1,19 +1,20 @@
 import { QUERY_TYPE } from '../const.js';
+import { WebGLProperties } from './WebGLProperties.js';
 
-class WebGLQueries {
+class WebGLQueries extends WebGLProperties {
 
 	constructor(gl, capabilities) {
+		super();
+
 		this._gl = gl;
 		this._capabilities = capabilities;
 
 		const timerQuery = capabilities.timerQuery;
-
-		this._map = new WeakMap();
+		const that = this;
 
 		const onQueryDispose = (event) => {
 			const query = event.target;
-
-			const queryProperties = this._map.get(query);
+			const queryProperties = that.get(query);
 
 			query.removeEventListener('dispose', onQueryDispose);
 
@@ -25,7 +26,7 @@ class WebGLQueries {
 				}
 			}
 
-			this._map.delete(query);
+			that.delete(query);
 		}
 
 		this._onQueryDispose = onQueryDispose;
@@ -37,35 +38,27 @@ class WebGLQueries {
 		}
 	}
 
-	get(query) {
+	_get(query) {
 		const capabilities = this._capabilities;
-		const map = this._map;
 
-		let queryProperties = map.get(query);
+		const queryProperties = this.get(query);
 
-		if (queryProperties === undefined) {
-			queryProperties = {};
+		if (queryProperties._webglQuery === undefined) {
 			query.addEventListener('dispose', this._onQueryDispose);
 
 			queryProperties._webglQuery = capabilities.version > 1 ? this._gl.createQuery() : capabilities.timerQuery.createQueryEXT();
 			queryProperties._target = null;
 			queryProperties._result = null;
-
-			map.set(query, queryProperties);
 		}
 
 		return queryProperties;
-	}
-
-	clear() {
-		this._map = new WeakMap();
 	}
 
 	begin(query, target) {
 		const capabilities = this._capabilities;
 		const typeToGL = this._typeToGL;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (capabilities.version > 1) {
 			this._gl.beginQuery(typeToGL[target], queryProperties._webglQuery);
@@ -81,7 +74,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const typeToGL = this._typeToGL;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (capabilities.version > 1) {
 			this._gl.endQuery(typeToGL[queryProperties._target]);
@@ -93,7 +86,7 @@ class WebGLQueries {
 	counter(query) {
 		const timerQuery = this._capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		timerQuery.queryCounterEXT(queryProperties._webglQuery, timerQuery.TIMESTAMP_EXT);
 
@@ -106,7 +99,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const timerQuery = capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		let available;
 		if (capabilities.version > 1) {
@@ -127,7 +120,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const timerQuery = capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (queryProperties._result === null) {
 			if (capabilities.version > 1) {
