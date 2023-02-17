@@ -1,5 +1,9 @@
 #define USE_PBR
 
+#define CLEARCOAT
+
+#include <clearcoat_pars_frag>
+
 #include <common_frag>
 #include <dithering_pars_frag>
 
@@ -26,6 +30,7 @@ uniform vec3 emissive;
 #include <aoMap_pars_frag>
 #include <light_pars_frag>
 #include <normal_pars_frag>
+#include <clearcoat_map_pars_frag>
 #include <modelPos_pars_frag>
 #include <bsdfs>
 #include <shadowMap_pars_frag>
@@ -42,6 +47,8 @@ void main() {
     #include <alphamap_frag>
     #include <alphaTest_frag>
     #include <normal_frag>
+    #include <clearcoat_normal_frag>
+	#include <clearcoat_normalMap_frag>
 
     float roughnessFactor = u_Roughness;
     #ifdef USE_ROUGHNESSMAP

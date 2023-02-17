@@ -69,7 +69,8 @@
 		"material_flatshading",
 		"material_vertexcolors",
 		"material_alphamask",
-		"material_clippingplanes"
+		"material_clippingplanes",
+		"material_clearcoat"
 	],
 	"camera": [
 		"camera_cameras",

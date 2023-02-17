@@ -1,5 +1,6 @@
 import { Material } from './Material.js';
 import { MATERIAL_TYPE } from '../../const.js';
+import { Vector2 } from '../../math/Vector2.js';
 
 /**
  * A standard physically based material, using Metallic-Roughness workflow.
@@ -54,6 +55,56 @@ class PBRMaterial extends Material {
 		 * @default true
 		 */
 		this.acceptLight = true;
+
+		/**
+		 * The strength of a clearcoat layer on a material surface.
+		 * When clearcoatFactor is set to 0.0, it indicates that there is no clearcoat present.
+		 * When it is set to 1.0, it indicates a very strong clearcoat that-
+		 * will cause the reflection and refraction effects on the surface of the object to become more prominent.
+		 * @type {Number}
+		 * @default 0.0
+		 */
+		this.clearcoat = 0.0;
+
+		/**
+		 * A texture property that allows for the modulation of the strength or roughness of the clearcoat layer.
+		 * @type {t3d.Texture2D}
+		 * @default null
+		 */
+		this.clearcoatMap = null;
+
+		/**
+		 * The roughness of a clearcoat layer on a material surface.
+		 * When clearcoatRoughness is set to 0.0, the clearcoat layer will appear perfectly smooth and reflective-
+		 * and 0.0 represents a rough, textured clearcoat layer.
+		 * Adjusting the clearcoatRoughness can achieve a wide range of effects and create more realistic materials.
+		 * @type {Number}
+		 * @default 0.0
+		 */
+		this.clearcoatRoughness = 0.0;
+
+		/**
+		 * A texture that will be applied to the clearcoat layer of a material to simulate the roughness of the surface.
+		 * @type {t3d.Texture2D}
+		 * @default null
+		 */
+		this.clearcoatRoughnessMap = null;
+
+		/**
+		 * Adjust the normal map's strength or intensity.
+		 * Affect the amount of bumpiness or surface detail that is visible on the clearcoat layer.
+		 * Typical ranges are 0-1.
+		 * @type {Number}
+		 * @default 1
+		 */
+		this.clearcoatNormalScale = new Vector2(1, 1);
+
+		/**
+		 * The texture that modulates the clearcoat layer's surface normal.
+		 * @type {t3d.Texture2D}
+		 * @default null
+		 */
+		this.clearcoatNormalMap = null;
 	}
 
 	copy(source) {
@@ -63,6 +114,12 @@ class PBRMaterial extends Material {
 		this.metalness = source.metalness;
 		this.roughnessMap = source.roughnessMap;
 		this.metalnessMap = source.metalnessMap;
+
+		this.clearcoat = source.clearcoat;
+		this.clearcoatMap = source.clearcoatMap;
+		this.clearcoatRoughness = source.clearcoatRoughness;
+		this.clearcoatRoughnessMap = source.clearcoatRoughnessMap;
+		this.clearcoatNormalScale = source.clearcoatNormalScale;
 
 		return this;
 	}

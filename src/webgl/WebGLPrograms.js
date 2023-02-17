@@ -127,8 +127,14 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.useMatcap = !!material.matcap;
 	props.useEnvMap = !!envMap;
 	props.envMapCombine = material.envMapCombine;
-	props.useUv1 = props.useDiffuseMap === 1 || props.useAlphaMap === 1 || props.useEmissiveMap === 1 || props.useAOMap === 1 || props.useNormalMap || props.useBumpMap || props.useSpecularMap || props.useRoughnessMap || props.useMetalnessMap || props.useGlossinessMap;
+
+	props.useClearcoatMap = !!material.clearcoatMap;
+	props.useClearcoatRoughnessMap = !!material.clearcoatRoughnessMap;
+	props.useClearcoatNormalMap = !!material.clearcoatNormalMap;
+
+	props.useUv1 = props.useDiffuseMap === 1 || props.useAlphaMap === 1 || props.useEmissiveMap === 1 || props.useAOMap === 1 || props.useNormalMap || props.useBumpMap || props.useSpecularMap || props.useRoughnessMap || props.useMetalnessMap || props.useGlossinessMap || props.useClearcoatMap || props.useClearcoatNormalMap || props.useClearcoatRoughnessMap;
 	props.useUv2 = props.useDiffuseMap === 2 || props.useAlphaMap === 2 || props.useEmissiveMap === 2 || props.useAOMap === 2;
+
 	// props.useVertexEnvDir = false;
 	// lights
 	props.useAmbientLight = !!lights && lights.useAmbient;
@@ -252,6 +258,10 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.useMetalnessMap ? '#define USE_METALNESSMAP' : '',
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
 
+		props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '',
+		props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
+		props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
+
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
 		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
@@ -328,6 +338,10 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '',
 		props.useMetalnessMap ? '#define USE_METALNESSMAP' : '',
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
+
+		props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '',
+		props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
+		props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
 
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',

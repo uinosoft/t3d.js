@@ -9,7 +9,20 @@
     vec3 N = normalize(v_Normal);
     #ifdef DOUBLE_SIDED
         N = N * ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-    #endif  
+    #endif
+
+    #if defined(USE_TANGENT) && (defined( USE_NORMAL_MAP ) || defined( USE_CLEARCOAT_NORMALMAP ))
+        vec3 tangent = normalize(v_Tangent);
+        vec3 bitangent = normalize(v_Bitangent);
+        #ifdef DOUBLE_SIDED
+            tangent = tangent * ( float( gl_FrontFacing ) * 2.0 - 1.0 );
+            bitangent = bitangent * ( float( gl_FrontFacing ) * 2.0 - 1.0 );
+        #endif 
+
+        mat3 tspace = mat3(tangent, bitangent, N);
+
+    #endif
+    
 #endif
 
 // non perturbed normal
@@ -18,19 +31,15 @@ vec3 geometryNormal = N;
 #ifdef USE_NORMAL_MAP
     vec3 mapN = texture2D(normalMap, v_Uv).rgb * 2.0 - 1.0;
     mapN.xy *= normalScale;
+
     #if defined(USE_TANGENT) && !defined(FLAT_SHADED)
-        vec3 tangent = normalize(v_Tangent);
-        vec3 bitangent = normalize(v_Bitangent);
-        #ifdef DOUBLE_SIDED
-            tangent = tangent * ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-            bitangent = bitangent * ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-        #endif  
-        mat3 tspace = mat3(tangent, bitangent, N);
+        N = normalize(tspace * mapN);
     #else
-        mat3 tspace = tsn(N, v_modelPos, v_Uv);
+        mat3 tBN = tsn(N, v_modelPos, v_Uv);
         mapN.xy *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
+        N = normalize(tBN * mapN);
     #endif
-    N = normalize(tspace * mapN);
+
 #elif defined(USE_BUMPMAP)
     N = perturbNormalArb(v_modelPos, N, dHdxy_fwd(v_Uv));
 #endif
