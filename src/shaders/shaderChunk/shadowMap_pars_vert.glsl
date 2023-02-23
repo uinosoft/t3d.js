@@ -23,7 +23,7 @@
 			float shadowCameraNear;
 			float shadowCameraFar;
 		};
-		uniform PointLightShadow u_PointShadow[NUM_POINT_LIGHTS];
+		uniform PointLightShadow u_PointShadow[NUM_POINT_SHADOWS];
 	#endif
 
 	#if NUM_SPOT_SHADOWS > 0
@@ -35,6 +35,6 @@
 			vec2 shadowMapSize;
 			vec2 shadowParams;
 		};
-		uniform SpotLightShadow u_SpotShadow[NUM_SPOT_LIGHTS];
+		uniform SpotLightShadow u_SpotShadow[NUM_SPOT_SHADOWS];
 	#endif
 #endif
