@@ -9791,133 +9791,140 @@
 	var internalUniforms = {
 		'u_Model': [1, null],
 		'u_Projection': [2, function (cameraData) {
-			return this.set(cameraData.projectionMatrix.elements);
+			this.set(cameraData.projectionMatrix.elements);
 		}],
 		'u_View': [2, function (cameraData) {
-			return this.set(cameraData.viewMatrix.elements);
+			this.set(cameraData.viewMatrix.elements);
 		}],
 		'u_ProjectionView': [2, function (cameraData) {
-			return this.set(cameraData.projectionViewMatrix.elements);
+			this.set(cameraData.projectionViewMatrix.elements);
 		}],
 		'u_CameraPosition': [2, function (cameraData) {
-			return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z);
+			this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z);
 		}],
 		'logDepthBufFC': [2, function (cameraData) {
-			return this.set(cameraData.logDepthBufFC);
+			this.set(cameraData.logDepthBufFC);
 		}],
 		'logDepthCameraNear': [2, function (cameraData) {
-			return this.set(cameraData.logDepthCameraNear);
+			this.set(cameraData.logDepthCameraNear);
 		}],
 		'u_EnvMapLight_Intensity': [3, function (sceneData) {
-			return this.set(sceneData.environmentLightIntensity);
+			this.set(sceneData.environmentLightIntensity);
 		}],
 		'u_FogColor': [3, function (sceneData) {
 			var color = sceneData.fog.color;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'u_FogDensity': [3, function (sceneData) {
-			return this.set(sceneData.fog.density);
+			this.set(sceneData.fog.density);
 		}],
 		'u_FogNear': [3, function (sceneData) {
-			return this.set(sceneData.fog.near);
+			this.set(sceneData.fog.near);
 		}],
 		'u_FogFar': [3, function (sceneData) {
-			return this.set(sceneData.fog.far);
+			this.set(sceneData.fog.far);
 		}],
 		'u_Color': [4, function (material, textures) {
 			var color = material.diffuse;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'u_Opacity': [4, function (material, textures) {
-			return this.set(material.opacity);
+			this.set(material.opacity);
 		}],
 		'diffuseMap': [4, function (material, textures) {
-			return this.set(material.diffuseMap, textures);
+			this.set(material.diffuseMap, textures);
 		}],
 		'alphaMap': [4, function (material, textures) {
-			return this.set(material.alphaMap, textures);
+			this.set(material.alphaMap, textures);
 		}],
 		'alphaMapUVTransform': [4, function (material, textures) {
-			return this.set(material.alphaMapTransform.elements);
+			this.set(material.alphaMapTransform.elements);
 		}],
 		'normalMap': [4, function (material, textures) {
-			return this.set(material.normalMap, textures);
+			this.set(material.normalMap, textures);
 		}],
 		'normalScale': [4, function (material, textures) {
-			return this.setValue(material.normalScale.x, material.normalScale.y);
+			this.setValue(material.normalScale.x, material.normalScale.y);
 		}],
 		'bumpMap': [4, function (material, textures) {
-			return this.set(material.bumpMap, textures);
+			this.set(material.bumpMap, textures);
 		}],
 		'bumpScale': [4, function (material, textures) {
-			return this.set(material.bumpScale);
+			this.set(material.bumpScale);
 		}],
 		'cubeMap': [4, function (material, textures) {
-			return this.set(material.cubeMap, textures);
+			this.set(material.cubeMap, textures);
 		}],
 		'u_EnvMap_Intensity': [4, function (material, textures) {
-			return this.set(material.envMapIntensity);
+			this.set(material.envMapIntensity);
 		}],
 		'u_Specular': [4, function (material, textures) {
-			return this.set(material.shininess);
+			this.set(material.shininess);
 		}],
 		'u_SpecularColor': [4, function (material, textures) {
 			var color = material.specular;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'specularMap': [4, function (material, textures) {
-			return this.set(material.specularMap, textures);
+			this.set(material.specularMap, textures);
 		}],
 		'aoMap': [4, function (material, textures) {
-			return this.set(material.aoMap, textures);
+			this.set(material.aoMap, textures);
 		}],
 		'aoMapIntensity': [4, function (material, textures) {
-			return this.set(material.aoMapIntensity);
+			this.set(material.aoMapIntensity);
 		}],
 		'aoMapUVTransform': [4, function (material, textures) {
-			return this.set(material.aoMapTransform.elements);
+			this.set(material.aoMapTransform.elements);
 		}],
 		'u_Roughness': [4, function (material, textures) {
-			return this.set(material.roughness);
+			this.set(material.roughness);
 		}],
 		'roughnessMap': [4, function (material, textures) {
-			return this.set(material.roughnessMap, textures);
+			this.set(material.roughnessMap, textures);
 		}],
 		'u_Metalness': [4, function (material, textures) {
-			return this.set(material.metalness);
+			this.set(material.metalness);
 		}],
 		'metalnessMap': [4, function (material, textures) {
-			return this.set(material.metalnessMap, textures);
+			this.set(material.metalnessMap, textures);
 		}],
 		'glossiness': [4, function (material, textures) {
-			return this.set(material.glossiness);
+			this.set(material.glossiness);
 		}],
 		'glossinessMap': [4, function (material, textures) {
-			return this.set(material.glossinessMap, textures);
+			this.set(material.glossinessMap, textures);
 		}],
 		'emissive': [4, function (material, textures) {
 			var color = material.emissive;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'emissiveMap': [4, function (material, textures) {
-			return this.set(material.emissiveMap, textures);
+			this.set(material.emissiveMap, textures);
 		}],
 		'emissiveMapUVTransform': [4, function (material, textures) {
-			return this.set(material.emissiveMapTransform.elements);
+			this.set(material.emissiveMapTransform.elements);
 		}],
 		'matcap': [4, function (material, textures) {
-			return this.set(material.matcap, textures);
+			this.set(material.matcap, textures);
 		}],
 		'uvTransform': [4, function (material, textures) {
-			return this.set(material.diffuseMapTransform.elements);
+			this.set(material.diffuseMapTransform.elements);
 		}],
 		'u_PointSize': [4, function (material, textures) {
-			return this.set(material.size);
+			this.set(material.size);
 		}],
 		'u_PointScale': [5, null],
-		'maxMipLevel': [5, null],
-		'envMap': [5, null],
-		'u_EnvMap_Flip': [5, null]
+		'maxMipLevel': [5, function (envMap, textures) {
+			this.set(textures.get(envMap).__maxMipLevel || 8);
+		}],
+		// TODO replace 8 with real mip level
+		'envMap': [5, function (envMap, textures) {
+			this.set(envMap, textures);
+		}],
+		'u_EnvMap_Flip': [5, function (envMap, textures) {
+			this.set(envMap.images[0] && envMap.images[0].rtt ? 1 : -1);
+		}]
 	};
 
 	// Empty textures
@@ -13460,20 +13467,11 @@
 
 				// other internal uniforms
 				if (internalGroup === 5) {
-					switch (key) {
-						case "envMap":
-							uniform.set(envMap, textures);
-							break;
-						case "u_EnvMap_Flip":
-							uniform.set(envMap.images[0] && envMap.images[0].rtt ? 1 : -1);
-							break;
-						case "maxMipLevel":
-							uniform.set(textures.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
-							break;
-						case "u_PointScale":
-							var scale = currentRenderTarget.height * 0.5; // three.js do this
-							uniform.set(scale);
-							break;
+					if (key === 'u_PointScale') {
+						var scale = currentRenderTarget.height * 0.5; // three.js do this
+						uniform.set(scale);
+					} else {
+						uniform.internalFun(envMap, textures);
 					}
 					continue;
 				}

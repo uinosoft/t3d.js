@@ -455,22 +455,11 @@ class WebGLRenderPass {
 
 			// other internal uniforms
 			if (internalGroup === 5) {
-				switch (key) {
-					case "envMap":
-						uniform.set(envMap, textures);
-						break;
-					case "u_EnvMap_Flip":
-						uniform.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1);
-						break;
-					case "maxMipLevel":
-						uniform.set(textures.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
-						break;
-					case "u_PointScale":
-						const scale = currentRenderTarget.height * 0.5; // three.js do this
-						uniform.set(scale);
-						break;
-					default:
-						break;
+				if (key === 'u_PointScale') {
+					const scale = currentRenderTarget.height * 0.5; // three.js do this
+					uniform.set(scale);
+				} else {
+					uniform.internalFun(envMap, textures);
 				}
 				continue;
 			}
