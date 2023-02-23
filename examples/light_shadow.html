@@ -78,7 +78,7 @@
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const pointLight = new t3d.SpotLight(0x00ff00);
+		const pointLight = new t3d.PointLight(0x00ff00, 0.3, 100);
 		pointLight.position.set(3, 1.5, -3);
 		pointLight.shadow.cameraNear = 0.1;
 		pointLight.shadow.cameraFar = 30;
@@ -89,12 +89,12 @@
 		const pointLightHelper = new PointLightHelper(pointLight, 0.5);
 		pointLight.add(pointLightHelper);
 
-		const pointLight2 = new t3d.SpotLight(0xff0000);
+		const pointLight2 = new t3d.PointLight(0xff0000, 0.3, 100);
 		pointLight2.position.set(3, 1.5, 3);
 		pointLight2.shadow.cameraNear = 0.1;
 		pointLight2.shadow.cameraFar = 30;
 		pointLight2.shadow.mapSize.set(1024, 1024);
-		// pointLight2.castShadow = true;
+		pointLight2.castShadow = true;
 		scene.add(pointLight2);
 		
 		const pointLightHelper2 = new PointLightHelper(pointLight2,  0.5);

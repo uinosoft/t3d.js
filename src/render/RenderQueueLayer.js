@@ -1,17 +1,14 @@
-function sortFrontToBack(a, b) {
+function defaultOpaqueSortCompare(a, b) {
 	if (a.renderOrder !== b.renderOrder) {
 		return a.renderOrder - b.renderOrder;
 	} else if (a.material.id !== b.material.id) {
-		// batch
 		return a.material.id - b.material.id;
-	} else if (a.z !== b.z) {
-		return a.z - b.z;
 	} else {
 		return a.id - b.id;
 	}
 }
 
-function sortBackToFront(a, b) {
+function defaultTransparentSortCompare(a, b) {
 	if (a.renderOrder !== b.renderOrder) {
 		return a.renderOrder - b.renderOrder;
 	} else if (a.z !== b.z) {
@@ -47,6 +44,9 @@ class RenderQueueLayer {
 		this._cache = [];
 		this._cacheIndex = 0;
 		this._lastCacheIndex = 0;
+
+		this.opaqueSortCompareFn = defaultOpaqueSortCompare;
+		this.transparentSortCompareFn = defaultTransparentSortCompare;
 	}
 
 	begin() {
@@ -112,8 +112,8 @@ class RenderQueueLayer {
 	}
 
 	sort() {
-		this.opaque.sort(sortFrontToBack);
-		this.transparent.sort(sortBackToFront);
+		this.opaque.sort(this.opaqueSortCompareFn);
+		this.transparent.sort(this.transparentSortCompareFn);
 	}
 
 }
