@@ -29,7 +29,7 @@ class ShaderPostPass {
 		camera.setOrtho(-1, 1, -1, 1, 0.1, 2);
 		scene.add(camera);
 
-		const geometry = new PlaneGeometry(2, 2, 1, 1);
+		const geometry = this.geometry = new PlaneGeometry(2, 2, 1, 1);
 		const material = this.material = new ShaderMaterial(shader);
 		this.uniforms = material.uniforms;
 		const plane = new Mesh(geometry, material);
@@ -54,6 +54,15 @@ class ShaderPostPass {
 	 */
 	render(renderer) {
 		renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
+	}
+
+	/**
+	 * Dispose the post pass.
+	 * @param {t3d.Renderer} renderer
+	 */
+	dispose() {
+		this.geometry.dispose();
+		this.material.dispose();
 	}
 
 }

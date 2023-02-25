@@ -9175,7 +9175,7 @@
 			camera.lookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1));
 			camera.setOrtho(-1, 1, -1, 1, 0.1, 2);
 			scene.add(camera);
-			var geometry = new PlaneGeometry(2, 2, 1, 1);
+			var geometry = this.geometry = new PlaneGeometry(2, 2, 1, 1);
 			var material = this.material = new ShaderMaterial(shader);
 			this.uniforms = material.uniforms;
 			var plane = new Mesh(geometry, material);
@@ -9198,6 +9198,10 @@
 		var _proto = ShaderPostPass.prototype;
 		_proto.render = function render(renderer) {
 			renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
+		};
+		_proto.dispose = function dispose() {
+			this.geometry.dispose();
+			this.material.dispose();
 		};
 		return ShaderPostPass;
 	}();
