@@ -9198,7 +9198,11 @@
 		var _proto = ShaderPostPass.prototype;
 		_proto.render = function render(renderer) {
 			renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
-		};
+		}
+
+		/**
+		 * Dispose the post pass.
+		 */;
 		_proto.dispose = function dispose() {
 			this.geometry.dispose();
 			this.material.dispose();

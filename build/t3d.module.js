@@ -9349,6 +9349,9 @@ class ShaderPostPass {
 		renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
 	}
 
+	/**
+	 * Dispose the post pass.
+	 */
 	dispose() {
 		this.geometry.dispose();
 		this.material.dispose();

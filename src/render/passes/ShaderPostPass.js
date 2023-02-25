@@ -58,7 +58,6 @@ class ShaderPostPass {
 
 	/**
 	 * Dispose the post pass.
-	 * @param {t3d.Renderer} renderer
 	 */
 	dispose() {
 		this.geometry.dispose();
