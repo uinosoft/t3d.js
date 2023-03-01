@@ -12508,25 +12508,27 @@ class WebGLState {
 
 class WebGLProperties {
 
-	constructor() {
+	constructor(passId) {
+		this._key = '__webgl$' + passId;
 		this._count = 0;
 	}
 
 	get(object) {
-		let properties = object.__webgl;
+		const key = this._key;
+		let properties = object[key];
 		if (properties === undefined) {
 			properties = {};
-			object.__webgl = properties;
+			object[key] = properties;
 			this._count++;
 		}
 		return properties;
 	}
 
 	delete(object) {
-		const properties = object.__webgl;
+		const properties = object[key];
 		if (properties) {
 			this._count--;
-			delete object.__webgl;
+			delete object[key];
 		}
 	}
 
@@ -12538,8 +12540,8 @@ class WebGLProperties {
 
 class WebGLTextures extends WebGLProperties {
 
-	constructor(gl, state, capabilities, constants) {
-		super();
+	constructor(passId, gl, state, capabilities, constants) {
+		super(passId);
 
 		this._gl = gl;
 		this._state = state;
@@ -13079,8 +13081,8 @@ function domCheck(image) {
 
 class WebGLRenderBuffers extends WebGLProperties {
 
-	constructor(gl, capabilities, constants) {
-		super();
+	constructor(passId, gl, capabilities, constants) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -13157,8 +13159,8 @@ class WebGLRenderBuffers extends WebGLProperties {
 
 class WebGLRenderTargets extends WebGLProperties {
 
-	constructor(gl, state, capabilities, textures, renderBuffers, constants) {
-		super();
+	constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
+		super(passId);
 
 		this._gl = gl;
 		this._state = state;
@@ -13388,8 +13390,8 @@ function _isPowerOfTwo(renderTarget) {
 
 class WebGLBuffers extends WebGLProperties {
 
-	constructor(gl, capabilities) {
-		super();
+	constructor(passId, gl, capabilities) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -13529,8 +13531,8 @@ function getBufferType(gl, array) {
 // This class handles buffer creation and updating for geometries.
 class WebGLGeometries extends WebGLProperties {
 
-	constructor(gl, buffers, vertexArrayBindings) {
-		super();
+	constructor(passId, gl, buffers, vertexArrayBindings) {
+		super(passId);
 
 		this._gl = gl;
 		this._buffers = buffers;
@@ -13602,8 +13604,8 @@ class WebGLGeometries extends WebGLProperties {
 
 class WebGLMaterials extends WebGLProperties {
 
-	constructor(programs) {
-		super();
+	constructor(passId, programs) {
+		super(passId);
 
 		const that = this;
 
@@ -13644,8 +13646,8 @@ const emptyString = "";
 
 class WebGLVertexArrayBindings extends WebGLProperties {
 
-	constructor(gl, capabilities, buffers) {
-		super();
+	constructor(passId, gl, capabilities, buffers) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -13825,8 +13827,8 @@ class WebGLVertexArrayBindings extends WebGLProperties {
 
 class WebGLQueries extends WebGLProperties {
 
-	constructor(gl, capabilities) {
-		super();
+	constructor(passId, gl, capabilities) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -13979,6 +13981,8 @@ function defaultIfRender(renderable) {
 
 function noop() { }
 
+let _renderPassId = 0;
+
 /**
  * WebGL Render Pass
  * @memberof t3d
@@ -13989,20 +13993,23 @@ class WebGLRenderPass {
 	 * @param {WebGLRenderingContext} gl
 	 */
 	constructor(gl) {
-		this.gl = gl;
+		const id = _renderPassId++;
 
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const textures = new WebGLTextures(gl, state, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(gl, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(gl, state, capabilities, textures, renderBuffers, constants);
-		const buffers = new WebGLBuffers(gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(gl, capabilities, buffers);
-		const geometries = new WebGLGeometries(gl, buffers, vertexArrayBindings);
+		const textures = new WebGLTextures(id, gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(id, gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const materials = new WebGLMaterials(programs);
-		const queries = new WebGLQueries(gl, capabilities);
+		const materials = new WebGLMaterials(id, programs);
+		const queries = new WebGLQueries(id, gl, capabilities);
+
+		this.id = id;
+		this.gl = gl;
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.

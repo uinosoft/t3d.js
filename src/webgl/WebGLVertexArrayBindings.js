@@ -4,8 +4,8 @@ const emptyString = "";
 
 export class WebGLVertexArrayBindings extends WebGLProperties {
 
-	constructor(gl, capabilities, buffers) {
-		super();
+	constructor(passId, gl, capabilities, buffers) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;

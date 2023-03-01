@@ -4,8 +4,8 @@ import { WebGLProperties } from './WebGLProperties.js';
 
 class WebGLRenderTargets extends WebGLProperties {
 
-	constructor(gl, state, capabilities, textures, renderBuffers, constants) {
-		super();
+	constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
+		super(passId);
 
 		this._gl = gl;
 		this._state = state;

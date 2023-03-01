@@ -1,24 +1,26 @@
 class WebGLProperties {
 
-	constructor() {
+	constructor(passId) {
+		this._key = '__webgl$' + passId;
 		this._count = 0;
 	}
 
 	get(object) {
-		let properties = object.__webgl;
+		const key = this._key;
+		let properties = object[key];
 		if (properties === undefined) {
 			properties = {};
-			object.__webgl = properties;
+			object[key] = properties;
 			this._count++;
 		}
 		return properties;
 	}
 
 	delete(object) {
-		const properties = object.__webgl;
+		const properties = object[key];
 		if (properties) {
 			this._count--;
-			delete object.__webgl;
+			delete object[key];
 		}
 	}
 

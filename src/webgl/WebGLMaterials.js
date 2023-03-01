@@ -2,8 +2,8 @@ import { WebGLProperties } from './WebGLProperties.js';
 
 class WebGLMaterials extends WebGLProperties {
 
-	constructor(programs) {
-		super();
+	constructor(passId, programs) {
+		super(passId);
 
 		const that = this;
 

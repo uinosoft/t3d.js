@@ -11937,24 +11937,26 @@
 	}();
 
 	var WebGLProperties = /*#__PURE__*/function () {
-		function WebGLProperties() {
+		function WebGLProperties(passId) {
+			this._key = '__webgl$' + passId;
 			this._count = 0;
 		}
 		var _proto = WebGLProperties.prototype;
 		_proto.get = function get(object) {
-			var properties = object.__webgl;
+			var key = this._key;
+			var properties = object[key];
 			if (properties === undefined) {
 				properties = {};
-				object.__webgl = properties;
+				object[key] = properties;
 				this._count++;
 			}
 			return properties;
 		};
 		_proto.delete = function _delete(object) {
-			var properties = object.__webgl;
+			var properties = object[key];
 			if (properties) {
 				this._count--;
-				delete object.__webgl;
+				delete object[key];
 			}
 		};
 		_proto.size = function size() {
@@ -11965,10 +11967,10 @@
 
 	var WebGLTextures = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLTextures, _WebGLProperties);
-		function WebGLTextures(gl, state, capabilities, constants) {
+		function WebGLTextures(passId, gl, state, capabilities, constants) {
 			var _this$_wrappingToGL, _this$_filterToGL;
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._state = state;
 			_this._capabilities = capabilities;
@@ -12361,9 +12363,9 @@
 
 	var WebGLRenderBuffers = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLRenderBuffers, _WebGLProperties);
-		function WebGLRenderBuffers(gl, capabilities, constants) {
+		function WebGLRenderBuffers(passId, gl, capabilities, constants) {
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._capabilities = capabilities;
 			_this._constants = constants;
@@ -12423,9 +12425,9 @@
 	var _attachTargetToGL;
 	var WebGLRenderTargets = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLRenderTargets, _WebGLProperties);
-		function WebGLRenderTargets(gl, state, capabilities, textures, renderBuffers, constants) {
+		function WebGLRenderTargets(passId, gl, state, capabilities, textures, renderBuffers, constants) {
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._state = state;
 			_this._capabilities = capabilities;
@@ -12599,9 +12601,9 @@
 
 	var WebGLBuffers = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLBuffers, _WebGLProperties);
-		function WebGLBuffers(gl, capabilities) {
+		function WebGLBuffers(passId, gl, capabilities) {
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._capabilities = capabilities;
 			return _this;
@@ -12710,9 +12712,9 @@
 	// This class handles buffer creation and updating for geometries.
 	var WebGLGeometries = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLGeometries, _WebGLProperties);
-		function WebGLGeometries(gl, buffers, vertexArrayBindings) {
+		function WebGLGeometries(passId, gl, buffers, vertexArrayBindings) {
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._buffers = buffers;
 			_this._vertexArrayBindings = vertexArrayBindings;
@@ -12768,9 +12770,9 @@
 
 	var WebGLMaterials = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLMaterials, _WebGLProperties);
-		function WebGLMaterials(programs) {
+		function WebGLMaterials(passId, programs) {
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			var that = _assertThisInitialized(_this);
 			function onMaterialDispose(event) {
 				var material = event.target;
@@ -12804,9 +12806,9 @@
 	var emptyString = "";
 	var WebGLVertexArrayBindings = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLVertexArrayBindings, _WebGLProperties);
-		function WebGLVertexArrayBindings(gl, capabilities, buffers) {
+		function WebGLVertexArrayBindings(passId, gl, capabilities, buffers) {
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._capabilities = capabilities;
 			_this._buffers = buffers;
@@ -12958,10 +12960,10 @@
 
 	var WebGLQueries = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLQueries, _WebGLProperties);
-		function WebGLQueries(gl, capabilities) {
+		function WebGLQueries(passId, gl, capabilities) {
 			var _this$_typeToGL;
 			var _this;
-			_this = _WebGLProperties.call(this) || this;
+			_this = _WebGLProperties.call(this, passId) || this;
 			_this._gl = gl;
 			_this._capabilities = capabilities;
 			var timerQuery = capabilities.timerQuery;
@@ -13072,6 +13074,7 @@
 		return true;
 	}
 	function noop() {}
+	var _renderPassId = 0;
 
 	/**
 	 * WebGL Render Pass
@@ -13082,19 +13085,21 @@
 		 * @param {WebGLRenderingContext} gl
 		 */
 		function WebGLRenderPass(gl) {
-			this.gl = gl;
+			var id = _renderPassId++;
 			var capabilities = new WebGLCapabilities(gl);
 			var constants = new WebGLConstants(gl, capabilities);
 			var state = new WebGLState(gl, capabilities);
-			var textures = new WebGLTextures(gl, state, capabilities, constants);
-			var renderBuffers = new WebGLRenderBuffers(gl, capabilities, constants);
-			var renderTargets = new WebGLRenderTargets(gl, state, capabilities, textures, renderBuffers, constants);
-			var buffers = new WebGLBuffers(gl, capabilities);
-			var vertexArrayBindings = new WebGLVertexArrayBindings(gl, capabilities, buffers);
-			var geometries = new WebGLGeometries(gl, buffers, vertexArrayBindings);
+			var textures = new WebGLTextures(id, gl, state, capabilities, constants);
+			var renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
+			var renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
+			var buffers = new WebGLBuffers(id, gl, capabilities);
+			var vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
+			var geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 			var programs = new WebGLPrograms(gl, state, capabilities);
-			var materials = new WebGLMaterials(programs);
-			var queries = new WebGLQueries(gl, capabilities);
+			var materials = new WebGLMaterials(id, programs);
+			var queries = new WebGLQueries(id, gl, capabilities);
+			this.id = id;
+			this.gl = gl;
 
 			/**
 			 * An object containing details about the capabilities of the current RenderingContext.

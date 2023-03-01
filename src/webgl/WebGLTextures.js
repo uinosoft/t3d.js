@@ -4,8 +4,8 @@ import { WebGLProperties } from './WebGLProperties.js';
 
 class WebGLTextures extends WebGLProperties {
 
-	constructor(gl, state, capabilities, constants) {
-		super();
+	constructor(passId, gl, state, capabilities, constants) {
+		super(passId);
 
 		this._gl = gl;
 		this._state = state;

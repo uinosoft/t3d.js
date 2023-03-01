@@ -3,8 +3,8 @@ import { WebGLProperties } from './WebGLProperties.js';
 // This class handles buffer creation and updating for geometries.
 class WebGLGeometries extends WebGLProperties {
 
-	constructor(gl, buffers, vertexArrayBindings) {
-		super();
+	constructor(passId, gl, buffers, vertexArrayBindings) {
+		super(passId);
 
 		this._gl = gl;
 		this._buffers = buffers;

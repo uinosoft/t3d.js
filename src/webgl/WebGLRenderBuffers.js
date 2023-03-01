@@ -2,8 +2,8 @@ import { WebGLProperties } from './WebGLProperties.js';
 
 class WebGLRenderBuffers extends WebGLProperties {
 
-	constructor(gl, capabilities, constants) {
-		super();
+	constructor(passId, gl, capabilities, constants) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;

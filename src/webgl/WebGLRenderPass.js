@@ -35,6 +35,8 @@ function defaultIfRender(renderable) {
 
 function noop() { }
 
+let _renderPassId = 0;
+
 /**
  * WebGL Render Pass
  * @memberof t3d
@@ -45,20 +47,23 @@ class WebGLRenderPass {
 	 * @param {WebGLRenderingContext} gl
 	 */
 	constructor(gl) {
-		this.gl = gl;
+		const id = _renderPassId++;
 
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const textures = new WebGLTextures(gl, state, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(gl, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(gl, state, capabilities, textures, renderBuffers, constants);
-		const buffers = new WebGLBuffers(gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(gl, capabilities, buffers);
-		const geometries = new WebGLGeometries(gl, buffers, vertexArrayBindings);
+		const textures = new WebGLTextures(id, gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(id, gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const materials = new WebGLMaterials(programs);
-		const queries = new WebGLQueries(gl, capabilities);
+		const materials = new WebGLMaterials(id, programs);
+		const queries = new WebGLQueries(id, gl, capabilities);
+
+		this.id = id;
+		this.gl = gl;
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.

@@ -3,8 +3,8 @@ import { WebGLProperties } from './WebGLProperties.js';
 
 class WebGLQueries extends WebGLProperties {
 
-	constructor(gl, capabilities) {
-		super();
+	constructor(passId, gl, capabilities) {
+		super(passId);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
