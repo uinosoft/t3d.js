@@ -72,10 +72,7 @@ import logdepthbuf_frag from "./shaderChunk/logdepthbuf_frag.glsl";
 import logdepthbuf_pars_frag from "./shaderChunk/logdepthbuf_pars_frag.glsl";
 import logdepthbuf_pars_vert from "./shaderChunk/logdepthbuf_pars_vert.glsl";
 import logdepthbuf_vert from "./shaderChunk/logdepthbuf_vert.glsl";
-import clearcoat_pars_frag from "./shaderChunk/clearcoat_pars_frag.glsl"
-import clearcoat_normal_frag from "./shaderChunk/clearcoat_normal_frag.glsl"
-import clearcoat_normalMap_frag from "./shaderChunk/clearcoat_normalMap_frag.glsl"
-import clearcoat_map_pars_frag from "./shaderChunk/clearcoat_map_pars_frag.glsl"
+import clearcoat_pars_frag from "./shaderChunk/clearcoat_pars_frag.glsl";
 
 export const ShaderChunk = {
 	alphaTest_frag: alphaTest_frag,
@@ -152,8 +149,5 @@ export const ShaderChunk = {
 	logdepthbuf_pars_frag: logdepthbuf_pars_frag,
 	logdepthbuf_pars_vert: logdepthbuf_pars_vert,
 	logdepthbuf_vert: logdepthbuf_vert,
-	clearcoat_pars_frag: clearcoat_pars_frag,
-	clearcoat_normal_frag: clearcoat_normal_frag,
-	clearcoat_normalMap_frag: clearcoat_normalMap_frag,
-	clearcoat_map_pars_frag: clearcoat_map_pars_frag
+	clearcoat_pars_frag: clearcoat_pars_frag
 }

@@ -2,10 +2,12 @@
     uniform vec3 u_AmbientLightColor;
 #endif
 
-// Clear coat directional hemishperical reflectance (this approximation should be improved)
-float clearcoatDHRApprox( const in float roughness, const in float dotNL ) {
-	return 0.04 + ( 1.0 - 0.16 ) * ( pow( 1.0 - dotNL, 5.0 ) * pow( 1.0 - roughness, 2.0 ) );
-}
+#ifdef USE_CLEARCOAT
+    // Clear coat directional hemishperical reflectance (this approximation should be improved)
+    float clearcoatDHRApprox(const in float roughness, const in float dotNL) {
+        return 0.04 + (1.0 - 0.16) * (pow(1.0 - dotNL, 5.0) * pow(1.0 - roughness, 2.0));
+    }
+#endif
 
 #if NUM_HEMI_LIGHTS > 0
     struct HemisphereLight {

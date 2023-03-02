@@ -52,11 +52,6 @@ class PBRMaterial extends Material {
 		this.metalnessMap = null;
 
 		/**
-		 * @default true
-		 */
-		this.acceptLight = true;
-
-		/**
 		 * The strength of a clearcoat layer on a material surface.
 		 * When clearcoatFactor is set to 0.0, it indicates that there is no clearcoat present.
 		 * When it is set to 1.0, it indicates a very strong clearcoat that-
@@ -105,6 +100,11 @@ class PBRMaterial extends Material {
 		 * @default null
 		 */
 		this.clearcoatNormalMap = null;
+
+		/**
+		 * @default true
+		 */
+		this.acceptLight = true;
 	}
 
 	copy(source) {
@@ -119,7 +119,7 @@ class PBRMaterial extends Material {
 		this.clearcoatMap = source.clearcoatMap;
 		this.clearcoatRoughness = source.clearcoatRoughness;
 		this.clearcoatRoughnessMap = source.clearcoatRoughnessMap;
-		this.clearcoatNormalScale = source.clearcoatNormalScale;
+		this.clearcoatNormalScale.copy(source.clearcoatNormalScale);
 
 		return this;
 	}
