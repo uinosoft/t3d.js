@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - gltf meshopt</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf meshopt
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		
+		import { KTX2Loader } from './jsm/loaders/KTX2Loader.js';
+		import { MeshoptDecoder } from './libs/meshopt_decoder.module.js';
+		import * as KTXParse from './libs/ktx-parse.module.js';
+		import { ZSTDDecoder } from './libs/zstddec.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const file = "resources/models/gltf/coffeemat.glb"; // meshopt + ktx2
+		
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/Bridge2/posx.jpg",
+			"resources/skybox/Bridge2/negx.jpg",
+			"resources/skybox/Bridge2/posy.jpg",
+			"resources/skybox/Bridge2/negy.jpg",
+			"resources/skybox/Bridge2/posz.jpg",
+			"resources/skybox/Bridge2/negz.jpg"
+		]);
+
+		const scene = new t3d.Scene();
+		scene.environment = cube_texture;
+
+		const sky_box = new SkyBox(cube_texture);
+		sky_box.level = 0;
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const zstdDecoder = new ZSTDDecoder().init();
+		KTX2Loader.setKTXParser(KTXParse).setZSTDDecoder(zstdDecoder);
+		const ktx2Loader = new KTX2Loader()
+			.setTranscoderPath('./libs/basis/')
+			.detectSupport(forwardRenderer);
+		const loader = new GLTFLoader(loadingManager);
+		loader.autoLogError = false;
+		loader.setKTX2Loader(ktx2Loader);
+		loader.setMeshoptDecoder(MeshoptDecoder);
+		console.time('GLTFLoader');
+		loader.load(file).then(function(result) {
+			console.timeEnd('GLTFLoader');
+
+			const object = result.root;
+			object.position.set(0, -80, 0);
+
+			scene.add(object);
+		}).catch(e => console.error(e));
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(0, 10, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.gammaFactor = 2;
+		camera.position.set(-100, 200, 350);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+		camera.add(sky_box);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

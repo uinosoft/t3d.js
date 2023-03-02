@@ -23,6 +23,7 @@
 		"geometry_loader_gltf_materials_unlit",
 		"geometry_loader_gltf_uvtransform",
 		"geometry_loader_gltf_draco",
+		"geometry_loader_gltf_meshopt",
 		"geometry_loader_gltf_camera",
 		"geometry_builder_shapes",
 		"geometry_builder_lines",
