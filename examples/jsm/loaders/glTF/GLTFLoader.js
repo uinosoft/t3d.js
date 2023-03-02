@@ -51,6 +51,8 @@ export class GLTFLoader {
 		this._parsers = parsers.slice(0);
 
 		this._dracoLoader = null;
+		this._meshoptDecoder = null;
+		this._ktx2Loader = null;
 
 		this._fileLoader = new FileLoader();
 
@@ -122,6 +124,22 @@ export class GLTFLoader {
 
 	getDRACOLoader() {
 		return this._dracoLoader;
+	}
+
+	setMeshoptDecoder(meshoptDecoder) {
+		this._meshoptDecoder = meshoptDecoder;
+		return this;
+	}
+	getMeshoptDecoder() {
+		return this._meshoptDecoder;
+	}
+
+	setKTX2Loader(ktx2Loader) {
+		this._ktx2Loader = ktx2Loader;
+		return this;
+	}
+	getKTX2Loader() {
+		return this._ktx2Loader;
 	}
 
 	loadFile(url, type = 'json') {
