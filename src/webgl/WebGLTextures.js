@@ -1,20 +1,24 @@
 import { TEXTURE_FILTER, TEXTURE_WRAP } from '../const.js';
 import { isPowerOfTwo, nearestPowerOfTwo } from '../base.js';
+import { WebGLProperties } from './WebGLProperties.js';
 
-class WebGLTextures {
+class WebGLTextures extends WebGLProperties {
 
-	constructor(gl, state, properties, capabilities, constants) {
-		this.gl = gl;
-		this.state = state;
-		this.properties = properties;
-		this.capabilities = capabilities;
-		this.constants = constants;
+	constructor(passId, gl, state, capabilities, constants) {
+		super(passId);
+
+		this._gl = gl;
+		this._state = state;
+		this._capabilities = capabilities;
+		this._constants = constants;
 
 		this._usedTextureUnits = 0;
 
+		const that = this;
+
 		function onTextureDispose(event) {
 			const texture = event.target;
-			const textureProperties = properties.get(texture);
+			const textureProperties = that.get(texture);
 
 			texture.removeEventListener('dispose', onTextureDispose);
 
@@ -22,7 +26,7 @@ class WebGLTextures {
 				gl.deleteTexture(textureProperties.__webglTexture);
 			}
 
-			properties.delete(texture);
+			that.delete(texture);
 		}
 
 		this._onTextureDispose = onTextureDispose;
@@ -46,8 +50,8 @@ class WebGLTextures {
 	allocTexUnit() {
 		const textureUnit = this._usedTextureUnits++;
 
-		if (textureUnit >= this.capabilities.maxTextures) {
-			console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.capabilities.maxTextures);
+		if (textureUnit >= this._capabilities.maxTextures) {
+			console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this._capabilities.maxTextures);
 		}
 
 		return textureUnit;
@@ -58,16 +62,16 @@ class WebGLTextures {
 	}
 
 	setTexture2D(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (slot !== undefined) {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && (!texture.image.rtt || slot === undefined) && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -152,16 +156,16 @@ class WebGLTextures {
 	}
 
 	setTextureCube(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (slot !== undefined) {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.images.length === 6 && textureProperties.__version !== texture.version && (!texture.images[0].rtt || slot === undefined) && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -262,10 +266,10 @@ class WebGLTextures {
 	}
 
 	setTexture3D(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (capabilities.version < 2) {
 			console.warn("Try to use Texture3D but browser not support WebGL2.0");
@@ -276,7 +280,7 @@ class WebGLTextures {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -318,9 +322,9 @@ class WebGLTextures {
 	}
 
 	setTextureExternal(texture, webglTexture) {
-		const gl = this.gl;
+		const gl = this._gl;
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (!textureProperties.__external) {
 			if (textureProperties.__webglTexture) {
@@ -335,8 +339,8 @@ class WebGLTextures {
 	}
 
 	_setTextureParameters(texture, needFallback) {
-		const gl = this.gl;
-		const capabilities = this.capabilities;
+		const gl = this._gl;
+		const capabilities = this._capabilities;
 
 		const wrappingToGL = this._wrappingToGL;
 		const filterToGL = this._filterToGL;
@@ -374,11 +378,11 @@ class WebGLTextures {
 	}
 
 	_generateMipmap(target, texture, width, height) {
-		const gl = this.gl;
+		const gl = this._gl;
 
 		gl.generateMipmap(target);
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 		// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
 		textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
 	}

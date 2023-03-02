@@ -1,24 +1,31 @@
 class WebGLProperties {
 
-	constructor() {
-		this._map = new WeakMap();
+	constructor(passId) {
+		this._key = '__webgl$' + passId;
+		this._count = 0;
 	}
 
 	get(object) {
-		let properties = this._map.get(object);
+		const key = this._key;
+		let properties = object[key];
 		if (properties === undefined) {
 			properties = {};
-			this._map.set(object, properties);
+			object[key] = properties;
+			this._count++;
 		}
 		return properties;
 	}
 
 	delete(object) {
-		this._map.delete(object);
+		const properties = object[key];
+		if (properties) {
+			this._count--;
+			delete object[key];
+		}
 	}
 
-	clear() {
-		this._map = new WeakMap();
+	size() {
+		return this._count;
 	}
 
 }

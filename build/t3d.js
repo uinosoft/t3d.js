@@ -6910,19 +6910,16 @@
 		return light.shadow && light.castShadow;
 	}
 
-	function sortFrontToBack(a, b) {
+	function defaultOpaqueSortCompare(a, b) {
 		if (a.renderOrder !== b.renderOrder) {
 			return a.renderOrder - b.renderOrder;
 		} else if (a.material.id !== b.material.id) {
-			// batch
 			return a.material.id - b.material.id;
-		} else if (a.z !== b.z) {
-			return a.z - b.z;
 		} else {
 			return a.id - b.id;
 		}
 	}
-	function sortBackToFront(a, b) {
+	function defaultTransparentSortCompare(a, b) {
 		if (a.renderOrder !== b.renderOrder) {
 			return a.renderOrder - b.renderOrder;
 		} else if (a.z !== b.z) {
@@ -6954,6 +6951,8 @@
 			this._cache = [];
 			this._cacheIndex = 0;
 			this._lastCacheIndex = 0;
+			this.opaqueSortCompareFn = defaultOpaqueSortCompare;
+			this.transparentSortCompareFn = defaultTransparentSortCompare;
 		}
 		var _proto = RenderQueueLayer.prototype;
 		_proto.begin = function begin() {
@@ -7011,8 +7010,8 @@
 			this._cacheIndex++;
 		};
 		_proto.sort = function sort() {
-			this.opaque.sort(sortFrontToBack);
-			this.transparent.sort(sortBackToFront);
+			this.opaque.sort(this.opaqueSortCompareFn);
+			this.transparent.sort(this.transparentSortCompareFn);
 		};
 		return RenderQueueLayer;
 	}();
@@ -9176,7 +9175,7 @@
 			camera.lookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1));
 			camera.setOrtho(-1, 1, -1, 1, 0.1, 2);
 			scene.add(camera);
-			var geometry = new PlaneGeometry(2, 2, 1, 1);
+			var geometry = this.geometry = new PlaneGeometry(2, 2, 1, 1);
 			var material = this.material = new ShaderMaterial(shader);
 			this.uniforms = material.uniforms;
 			var plane = new Mesh(geometry, material);
@@ -9199,6 +9198,14 @@
 		var _proto = ShaderPostPass.prototype;
 		_proto.render = function render(renderer) {
 			renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
+		}
+
+		/**
+		 * Dispose the post pass.
+		 */;
+		_proto.dispose = function dispose() {
+			this.geometry.dispose();
+			this.material.dispose();
 		};
 		return ShaderPostPass;
 	}();
@@ -9792,151 +9799,158 @@
 	var internalUniforms = {
 		'u_Model': [1, null],
 		'u_Projection': [2, function (cameraData) {
-			return this.set(cameraData.projectionMatrix.elements);
+			this.set(cameraData.projectionMatrix.elements);
 		}],
 		'u_View': [2, function (cameraData) {
-			return this.set(cameraData.viewMatrix.elements);
+			this.set(cameraData.viewMatrix.elements);
 		}],
 		'u_ProjectionView': [2, function (cameraData) {
-			return this.set(cameraData.projectionViewMatrix.elements);
+			this.set(cameraData.projectionViewMatrix.elements);
 		}],
 		'u_CameraPosition': [2, function (cameraData) {
-			return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z);
+			this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z);
 		}],
 		'logDepthBufFC': [2, function (cameraData) {
-			return this.set(cameraData.logDepthBufFC);
+			this.set(cameraData.logDepthBufFC);
 		}],
 		'logDepthCameraNear': [2, function (cameraData) {
-			return this.set(cameraData.logDepthCameraNear);
+			this.set(cameraData.logDepthCameraNear);
 		}],
 		'u_EnvMapLight_Intensity': [3, function (sceneData) {
-			return this.set(sceneData.environmentLightIntensity);
+			this.set(sceneData.environmentLightIntensity);
 		}],
 		'u_FogColor': [3, function (sceneData) {
 			var color = sceneData.fog.color;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'u_FogDensity': [3, function (sceneData) {
-			return this.set(sceneData.fog.density);
+			this.set(sceneData.fog.density);
 		}],
 		'u_FogNear': [3, function (sceneData) {
-			return this.set(sceneData.fog.near);
+			this.set(sceneData.fog.near);
 		}],
 		'u_FogFar': [3, function (sceneData) {
-			return this.set(sceneData.fog.far);
+			this.set(sceneData.fog.far);
 		}],
 		'u_Color': [4, function (material, textures) {
 			var color = material.diffuse;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'u_Opacity': [4, function (material, textures) {
-			return this.set(material.opacity);
+			this.set(material.opacity);
 		}],
 		'diffuseMap': [4, function (material, textures) {
-			return this.set(material.diffuseMap, textures);
+			this.set(material.diffuseMap, textures);
 		}],
 		'alphaMap': [4, function (material, textures) {
-			return this.set(material.alphaMap, textures);
+			this.set(material.alphaMap, textures);
 		}],
 		'alphaMapUVTransform': [4, function (material, textures) {
-			return this.set(material.alphaMapTransform.elements);
+			this.set(material.alphaMapTransform.elements);
 		}],
 		'normalMap': [4, function (material, textures) {
-			return this.set(material.normalMap, textures);
+			this.set(material.normalMap, textures);
 		}],
 		'normalScale': [4, function (material, textures) {
-			return this.setValue(material.normalScale.x, material.normalScale.y);
+			this.setValue(material.normalScale.x, material.normalScale.y);
 		}],
 		'bumpMap': [4, function (material, textures) {
-			return this.set(material.bumpMap, textures);
+			this.set(material.bumpMap, textures);
 		}],
 		'bumpScale': [4, function (material, textures) {
-			return this.set(material.bumpScale);
+			this.set(material.bumpScale);
 		}],
 		'cubeMap': [4, function (material, textures) {
-			return this.set(material.cubeMap, textures);
+			this.set(material.cubeMap, textures);
 		}],
 		'u_EnvMap_Intensity': [4, function (material, textures) {
-			return this.set(material.envMapIntensity);
+			this.set(material.envMapIntensity);
 		}],
 		'u_Specular': [4, function (material, textures) {
-			return this.set(material.shininess);
+			this.set(material.shininess);
 		}],
 		'u_SpecularColor': [4, function (material, textures) {
 			var color = material.specular;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'specularMap': [4, function (material, textures) {
-			return this.set(material.specularMap, textures);
+			this.set(material.specularMap, textures);
 		}],
 		'aoMap': [4, function (material, textures) {
-			return this.set(material.aoMap, textures);
+			this.set(material.aoMap, textures);
 		}],
 		'aoMapIntensity': [4, function (material, textures) {
-			return this.set(material.aoMapIntensity);
+			this.set(material.aoMapIntensity);
 		}],
 		'aoMapUVTransform': [4, function (material, textures) {
-			return this.set(material.aoMapTransform.elements);
+			this.set(material.aoMapTransform.elements);
 		}],
 		'u_Roughness': [4, function (material, textures) {
-			return this.set(material.roughness);
+			this.set(material.roughness);
 		}],
 		'roughnessMap': [4, function (material, textures) {
-			return this.set(material.roughnessMap, textures);
+			this.set(material.roughnessMap, textures);
 		}],
 		'u_Metalness': [4, function (material, textures) {
-			return this.set(material.metalness);
+			this.set(material.metalness);
 		}],
 		'metalnessMap': [4, function (material, textures) {
-			return this.set(material.metalnessMap, textures);
+			this.set(material.metalnessMap, textures);
 		}],
 		'u_Clearcoat': [4, function (material, textures) {
-			return this.set(material.clearcoat);
+			this.set(material.clearcoat);
 		}],
 		'u_ClearcoatRoughness': [4, function (material, textures) {
-			return this.set(material.clearcoatRoughness);
+			this.set(material.clearcoatRoughness);
 		}],
 		'clearcoatMap': [4, function (material, textures) {
-			return this.set(material.clearcoatMap, textures);
+			this.set(material.clearcoatMap, textures);
 		}],
 		'clearcoatRoughnessMap': [4, function (material, textures) {
-			return this.set(material.clearcoatRoughnessMap, textures);
+			this.set(material.clearcoatRoughnessMap, textures);
 		}],
 		'clearcoatNormalMap': [4, function (material, textures) {
-			return this.set(material.clearcoatNormalMap, textures);
+			this.set(material.clearcoatNormalMap, textures);
 		}],
 		'clearcoatNormalScale': [4, function (material, textures) {
-			return this.setValue(material.clearcoatNormalScale.x, material.clearcoatNormalScale.y);
+			this.setValue(material.clearcoatNormalScale.x, material.clearcoatNormalScale.y);
 		}],
 		'glossiness': [4, function (material, textures) {
-			return this.set(material.glossiness);
+			this.set(material.glossiness);
 		}],
 		'glossinessMap': [4, function (material, textures) {
-			return this.set(material.glossinessMap, textures);
+			this.set(material.glossinessMap, textures);
 		}],
 		'emissive': [4, function (material, textures) {
 			var color = material.emissive;
-			return this.setValue(color.r, color.g, color.b);
+			this.setValue(color.r, color.g, color.b);
 		}],
 		'emissiveMap': [4, function (material, textures) {
-			return this.set(material.emissiveMap, textures);
+			this.set(material.emissiveMap, textures);
 		}],
 		'emissiveMapUVTransform': [4, function (material, textures) {
-			return this.set(material.emissiveMapTransform.elements);
+			this.set(material.emissiveMapTransform.elements);
 		}],
 		'matcap': [4, function (material, textures) {
-			return this.set(material.matcap, textures);
+			this.set(material.matcap, textures);
 		}],
 		'uvTransform': [4, function (material, textures) {
-			return this.set(material.diffuseMapTransform.elements);
+			this.set(material.diffuseMapTransform.elements);
 		}],
 		'u_PointSize': [4, function (material, textures) {
-			return this.set(material.size);
+			this.set(material.size);
 		}],
 		'u_PointScale': [5, null],
-		'maxMipLevel': [5, null],
-		'envMap': [5, null],
-		'u_EnvMap_Flip': [5, null]
+		'maxMipLevel': [5, function (envMap, textures) {
+			this.set(textures.get(envMap).__maxMipLevel || 8);
+		}],
+		// TODO replace 8 with real mip level
+		'envMap': [5, function (envMap, textures) {
+			this.set(envMap, textures);
+		}],
+		'u_EnvMap_Flip': [5, function (envMap, textures) {
+			this.set(envMap.images[0] && envMap.images[0].rtt ? 1 : -1);
+		}]
 	};
 
 	// Empty textures
@@ -10685,9 +10699,9 @@
 
 	var shadowMap_frag = "#ifdef USE_SHADOW\n#endif";
 
-	var shadowMap_pars_frag = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform sampler2DShadow directionalShadowMap[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D directionalDepthMap[NUM_DIR_SHADOWS];\n\t\t#endif\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform samplerCube pointShadowMap[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_LIGHTS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform sampler2DShadow spotShadowMap[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D spotDepthMap[NUM_SPOT_SHADOWS];\n\t\t#endif\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_LIGHTS];\n\t#endif\n\t#include <packing>\n\t#include <shadow>\n#endif";
+	var shadowMap_pars_frag = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform sampler2DShadow directionalShadowMap[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D directionalDepthMap[NUM_DIR_SHADOWS];\n\t\t#endif\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform samplerCube pointShadowMap[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_SHADOWS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform sampler2DShadow spotShadowMap[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D spotDepthMap[NUM_SPOT_SHADOWS];\n\t\t#endif\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_SHADOWS];\n\t#endif\n\t#include <packing>\n\t#include <shadow>\n#endif";
 
-	var shadowMap_pars_vert = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform mat4 directionalShadowMatrix[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform mat4 pointShadowMatrix[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_LIGHTS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform mat4 spotShadowMatrix[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_LIGHTS];\n\t#endif\n#endif";
+	var shadowMap_pars_vert = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform mat4 directionalShadowMatrix[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform mat4 pointShadowMatrix[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_SHADOWS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform mat4 spotShadowMatrix[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_SHADOWS];\n\t#endif\n#endif";
 
 	var shadowMap_vert = "\n#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0 || NUM_POINT_SHADOWS > 0 || NUM_SPOT_SHADOWS > 0\n\t\tvec3 shadowWorldNormal = (transposeMat4(inverseMat4(u_Model)) * vec4(objectNormal, 0.0)).xyz;\n\t\tshadowWorldNormal = normalize(shadowWorldNormal);\n\t\tvec4 shadowWorldPosition;\n\t#endif\n\t#if NUM_DIR_SHADOWS > 0\n\t\t#pragma unroll_loop_start\n\t\tfor (int i = 0; i < NUM_DIR_SHADOWS; i++) {\n\t\t\tshadowWorldPosition = worldPosition + vec4(shadowWorldNormal * u_DirectionalShadow[i].shadowBias[1], 0);\n\t\t\tvDirectionalShadowCoord[i] = directionalShadowMatrix[i] * shadowWorldPosition;\n\t\t}\n\t\t#pragma unroll_loop_end\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\t#pragma unroll_loop_start\n\t\tfor (int i = 0; i < NUM_POINT_SHADOWS; i++) {\n\t\t\tshadowWorldPosition = worldPosition + vec4(shadowWorldNormal * u_PointShadow[i].shadowBias[1], 0);\n\t\t\tvPointShadowCoord[i] = pointShadowMatrix[i] * shadowWorldPosition;\n\t\t}\n\t\t#pragma unroll_loop_end\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\t#pragma unroll_loop_start\n\t\tfor (int i = 0; i < NUM_SPOT_SHADOWS; i++) {\n\t\t\tshadowWorldPosition = worldPosition + vec4(shadowWorldNormal * u_SpotShadow[i].shadowBias[1], 0);\n\t\t\tvSpotShadowCoord[i] = spotShadowMatrix[i] * shadowWorldPosition;\n\t\t}\n\t\t#pragma unroll_loop_end\n\t#endif\n#endif";
 
@@ -11160,28 +11174,6 @@
 	function unrollLoops(string) {
 		return string.replace(unrollLoopPattern, loopReplacer);
 	}
-
-	var WebGLProperties = /*#__PURE__*/function () {
-		function WebGLProperties() {
-			this._map = new WeakMap();
-		}
-		var _proto = WebGLProperties.prototype;
-		_proto.get = function get(object) {
-			var properties = this._map.get(object);
-			if (properties === undefined) {
-				properties = {};
-				this._map.set(object, properties);
-			}
-			return properties;
-		};
-		_proto.delete = function _delete(object) {
-			this._map.delete(object);
-		};
-		_proto.clear = function clear() {
-			this._map = new WeakMap();
-		};
-		return WebGLProperties;
-	}();
 
 	var WebGLCapabilities = /*#__PURE__*/function () {
 		function WebGLCapabilities(gl) {
@@ -11970,33 +11962,66 @@
 		return WebGLState;
 	}();
 
-	var WebGLTextures = /*#__PURE__*/function () {
-		function WebGLTextures(gl, state, properties, capabilities, constants) {
+	var WebGLProperties = /*#__PURE__*/function () {
+		function WebGLProperties(passId) {
+			this._key = '__webgl$' + passId;
+			this._count = 0;
+		}
+		var _proto = WebGLProperties.prototype;
+		_proto.get = function get(object) {
+			var key = this._key;
+			var properties = object[key];
+			if (properties === undefined) {
+				properties = {};
+				object[key] = properties;
+				this._count++;
+			}
+			return properties;
+		};
+		_proto.delete = function _delete(object) {
+			var properties = object[key];
+			if (properties) {
+				this._count--;
+				delete object[key];
+			}
+		};
+		_proto.size = function size() {
+			return this._count;
+		};
+		return WebGLProperties;
+	}();
+
+	var WebGLTextures = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLTextures, _WebGLProperties);
+		function WebGLTextures(passId, gl, state, capabilities, constants) {
 			var _this$_wrappingToGL, _this$_filterToGL;
-			this.gl = gl;
-			this.state = state;
-			this.properties = properties;
-			this.capabilities = capabilities;
-			this.constants = constants;
-			this._usedTextureUnits = 0;
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._state = state;
+			_this._capabilities = capabilities;
+			_this._constants = constants;
+			_this._usedTextureUnits = 0;
+			var that = _assertThisInitialized(_this);
 			function onTextureDispose(event) {
 				var texture = event.target;
-				var textureProperties = properties.get(texture);
+				var textureProperties = that.get(texture);
 				texture.removeEventListener('dispose', onTextureDispose);
 				if (textureProperties.__webglTexture && !textureProperties.__external) {
 					gl.deleteTexture(textureProperties.__webglTexture);
 				}
-				properties.delete(texture);
+				that.delete(texture);
 			}
-			this._onTextureDispose = onTextureDispose;
-			this._wrappingToGL = (_this$_wrappingToGL = {}, _this$_wrappingToGL[TEXTURE_WRAP.REPEAT] = gl.REPEAT, _this$_wrappingToGL[TEXTURE_WRAP.CLAMP_TO_EDGE] = gl.CLAMP_TO_EDGE, _this$_wrappingToGL[TEXTURE_WRAP.MIRRORED_REPEAT] = gl.MIRRORED_REPEAT, _this$_wrappingToGL);
-			this._filterToGL = (_this$_filterToGL = {}, _this$_filterToGL[TEXTURE_FILTER.NEAREST] = gl.NEAREST, _this$_filterToGL[TEXTURE_FILTER.LINEAR] = gl.LINEAR, _this$_filterToGL[TEXTURE_FILTER.NEAREST_MIPMAP_NEAREST] = gl.NEAREST_MIPMAP_NEAREST, _this$_filterToGL[TEXTURE_FILTER.LINEAR_MIPMAP_NEAREST] = gl.LINEAR_MIPMAP_NEAREST, _this$_filterToGL[TEXTURE_FILTER.NEAREST_MIPMAP_LINEAR] = gl.NEAREST_MIPMAP_LINEAR, _this$_filterToGL[TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR] = gl.LINEAR_MIPMAP_LINEAR, _this$_filterToGL);
+			_this._onTextureDispose = onTextureDispose;
+			_this._wrappingToGL = (_this$_wrappingToGL = {}, _this$_wrappingToGL[TEXTURE_WRAP.REPEAT] = gl.REPEAT, _this$_wrappingToGL[TEXTURE_WRAP.CLAMP_TO_EDGE] = gl.CLAMP_TO_EDGE, _this$_wrappingToGL[TEXTURE_WRAP.MIRRORED_REPEAT] = gl.MIRRORED_REPEAT, _this$_wrappingToGL);
+			_this._filterToGL = (_this$_filterToGL = {}, _this$_filterToGL[TEXTURE_FILTER.NEAREST] = gl.NEAREST, _this$_filterToGL[TEXTURE_FILTER.LINEAR] = gl.LINEAR, _this$_filterToGL[TEXTURE_FILTER.NEAREST_MIPMAP_NEAREST] = gl.NEAREST_MIPMAP_NEAREST, _this$_filterToGL[TEXTURE_FILTER.LINEAR_MIPMAP_NEAREST] = gl.LINEAR_MIPMAP_NEAREST, _this$_filterToGL[TEXTURE_FILTER.NEAREST_MIPMAP_LINEAR] = gl.NEAREST_MIPMAP_LINEAR, _this$_filterToGL[TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR] = gl.LINEAR_MIPMAP_LINEAR, _this$_filterToGL);
+			return _this;
 		}
 		var _proto = WebGLTextures.prototype;
 		_proto.allocTexUnit = function allocTexUnit() {
 			var textureUnit = this._usedTextureUnits++;
-			if (textureUnit >= this.capabilities.maxTextures) {
-				console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.capabilities.maxTextures);
+			if (textureUnit >= this._capabilities.maxTextures) {
+				console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this._capabilities.maxTextures);
 			}
 			return textureUnit;
 		};
@@ -12004,14 +12029,14 @@
 			this._usedTextureUnits = 0;
 		};
 		_proto.setTexture2D = function setTexture2D(texture, slot) {
-			var gl = this.gl;
-			var state = this.state;
-			var capabilities = this.capabilities;
-			var constants = this.constants;
+			var gl = this._gl;
+			var state = this._state;
+			var capabilities = this._capabilities;
+			var constants = this._constants;
 			if (slot !== undefined) {
 				slot = gl.TEXTURE0 + slot;
 			}
-			var textureProperties = this.properties.get(texture);
+			var textureProperties = this.get(texture);
 			if (texture.image && textureProperties.__version !== texture.version && (!texture.image.rtt || slot === undefined) && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
@@ -12075,14 +12100,14 @@
 			return textureProperties;
 		};
 		_proto.setTextureCube = function setTextureCube(texture, slot) {
-			var gl = this.gl;
-			var state = this.state;
-			var capabilities = this.capabilities;
-			var constants = this.constants;
+			var gl = this._gl;
+			var state = this._state;
+			var capabilities = this._capabilities;
+			var constants = this._constants;
 			if (slot !== undefined) {
 				slot = gl.TEXTURE0 + slot;
 			}
-			var textureProperties = this.properties.get(texture);
+			var textureProperties = this.get(texture);
 			if (texture.images.length === 6 && textureProperties.__version !== texture.version && (!texture.images[0].rtt || slot === undefined) && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
@@ -12158,10 +12183,10 @@
 			return textureProperties;
 		};
 		_proto.setTexture3D = function setTexture3D(texture, slot) {
-			var gl = this.gl;
-			var state = this.state;
-			var capabilities = this.capabilities;
-			var constants = this.constants;
+			var gl = this._gl;
+			var state = this._state;
+			var capabilities = this._capabilities;
+			var constants = this._constants;
 			if (capabilities.version < 2) {
 				console.warn("Try to use Texture3D but browser not support WebGL2.0");
 				return;
@@ -12169,7 +12194,7 @@
 			if (slot !== undefined) {
 				slot = gl.TEXTURE0 + slot;
 			}
-			var textureProperties = this.properties.get(texture);
+			var textureProperties = this.get(texture);
 			if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
@@ -12198,8 +12223,8 @@
 			return textureProperties;
 		};
 		_proto.setTextureExternal = function setTextureExternal(texture, webglTexture) {
-			var gl = this.gl;
-			var textureProperties = this.properties.get(texture);
+			var gl = this._gl;
+			var textureProperties = this.get(texture);
 			if (!textureProperties.__external) {
 				if (textureProperties.__webglTexture) {
 					gl.deleteTexture(textureProperties.__webglTexture);
@@ -12211,8 +12236,8 @@
 			textureProperties.__external = true;
 		};
 		_proto._setTextureParameters = function _setTextureParameters(texture, needFallback) {
-			var gl = this.gl;
-			var capabilities = this.capabilities;
+			var gl = this._gl;
+			var capabilities = this._capabilities;
 			var wrappingToGL = this._wrappingToGL;
 			var filterToGL = this._filterToGL;
 			var textureType = gl.TEXTURE_2D;
@@ -12242,14 +12267,14 @@
 			}
 		};
 		_proto._generateMipmap = function _generateMipmap(target, texture, width, height) {
-			var gl = this.gl;
+			var gl = this._gl;
 			gl.generateMipmap(target);
-			var textureProperties = this.properties.get(texture);
+			var textureProperties = this.get(texture);
 			// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
 			textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
 		};
 		return WebGLTextures;
-	}();
+	}(WebGLProperties);
 	function textureNeedsPowerOfTwo(texture) {
 		return texture.wrapS !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.wrapT !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR;
 	}
@@ -12362,29 +12387,33 @@
 		return typeof HTMLImageElement !== 'undefined' && image instanceof HTMLImageElement || typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement || typeof HTMLVideoElement !== 'undefined' && image instanceof HTMLVideoElement || typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap;
 	}
 
-	var WebGLRenderBuffers = /*#__PURE__*/function () {
-		function WebGLRenderBuffers(gl, properties, capabilities, constants) {
-			this.gl = gl;
-			this.properties = properties;
-			this.capabilities = capabilities;
-			this.constants = constants;
+	var WebGLRenderBuffers = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLRenderBuffers, _WebGLProperties);
+		function WebGLRenderBuffers(passId, gl, capabilities, constants) {
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._capabilities = capabilities;
+			_this._constants = constants;
+			var that = _assertThisInitialized(_this);
 			function onRenderBufferDispose(event) {
 				var renderBuffer = event.target;
 				renderBuffer.removeEventListener('dispose', onRenderBufferDispose);
-				var renderBufferProperties = properties.get(renderBuffer);
+				var renderBufferProperties = that.get(renderBuffer);
 				if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 					gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
 				}
-				properties.delete(renderBuffer);
+				that.delete(renderBuffer);
 			}
-			this._onRenderBufferDispose = onRenderBufferDispose;
+			_this._onRenderBufferDispose = onRenderBufferDispose;
+			return _this;
 		}
 		var _proto = WebGLRenderBuffers.prototype;
 		_proto.setRenderBuffer = function setRenderBuffer(renderBuffer) {
-			var gl = this.gl;
-			var capabilities = this.capabilities;
-			var constants = this.constants;
-			var renderBufferProperties = this.properties.get(renderBuffer);
+			var gl = this._gl;
+			var capabilities = this._capabilities;
+			var constants = this._constants;
+			var renderBufferProperties = this.get(renderBuffer);
 			if (renderBufferProperties.__webglRenderbuffer === undefined) {
 				renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
 				renderBufferProperties.__webglRenderbuffer = gl.createRenderbuffer();
@@ -12404,8 +12433,8 @@
 			return renderBufferProperties;
 		};
 		_proto.setRenderBufferExternal = function setRenderBufferExternal(renderBuffer, webglRenderbuffer) {
-			var gl = this.gl;
-			var renderBufferProperties = this.properties.get(renderBuffer);
+			var gl = this._gl;
+			var renderBufferProperties = this.get(renderBuffer);
 			if (!renderBufferProperties.__external) {
 				if (renderBufferProperties.__webglRenderbuffer) {
 					gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
@@ -12417,31 +12446,35 @@
 			renderBufferProperties.__external = true;
 		};
 		return WebGLRenderBuffers;
-	}();
+	}(WebGLProperties);
 
 	var _attachTargetToGL;
-	var WebGLRenderTargets = /*#__PURE__*/function () {
-		function WebGLRenderTargets(gl, state, textures, renderBuffers, properties, capabilities, constants) {
-			this._gl = gl;
-			this._state = state;
-			this._textures = textures;
-			this._renderBuffers = renderBuffers;
-			this._properties = properties;
-			this._capabilities = capabilities;
-			this._constants = constants;
+	var WebGLRenderTargets = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLRenderTargets, _WebGLProperties);
+		function WebGLRenderTargets(passId, gl, state, capabilities, textures, renderBuffers, constants) {
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._state = state;
+			_this._capabilities = capabilities;
+			_this._textures = textures;
+			_this._renderBuffers = renderBuffers;
+			_this._constants = constants;
+			var that = _assertThisInitialized(_this);
 			function onRenderTargetDispose(event) {
 				var renderTarget = event.target;
 				renderTarget.removeEventListener('dispose', onRenderTargetDispose);
-				var renderTargetProperties = properties.get(renderTarget);
+				var renderTargetProperties = that.get(renderTarget);
 				if (renderTargetProperties.__webglFramebuffer) {
 					gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 				}
-				properties.delete(renderTarget);
+				that.delete(renderTarget);
 				if (state.currentRenderTarget === renderTarget) {
 					state.currentRenderTarget = null;
 				}
 			}
-			this._onRenderTargetDispose = onRenderTargetDispose;
+			_this._onRenderTargetDispose = onRenderTargetDispose;
+			return _this;
 		}
 		var _proto = WebGLRenderTargets.prototype;
 		_proto._setupRenderTarget = function _setupRenderTarget(renderTarget) {
@@ -12450,7 +12483,7 @@
 			var textures = this._textures;
 			var renderBuffers = this._renderBuffers;
 			var capabilities = this._capabilities;
-			var renderTargetProperties = this._properties.get(renderTarget);
+			var renderTargetProperties = this.get(renderTarget);
 			renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
 			var glFrameBuffer = gl.createFramebuffer();
 			var drawBuffers = [];
@@ -12493,13 +12526,13 @@
 		_proto.setRenderTarget = function setRenderTarget(renderTarget) {
 			var gl = this._gl;
 			var state = this._state;
-			var properties = this._properties;
+			var textures = this._textures;
 			var renderTargetProperties;
 			if (state.currentRenderTarget !== renderTarget) {
 				if (renderTarget.isRenderTargetBack) {
 					gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 				} else {
-					renderTargetProperties = properties.get(renderTarget);
+					renderTargetProperties = this.get(renderTarget);
 					if (renderTargetProperties.__webglFramebuffer === undefined) {
 						this._setupRenderTarget(renderTarget);
 					} else {
@@ -12509,13 +12542,13 @@
 				state.currentRenderTarget = renderTarget;
 			}
 			if (renderTarget.isRenderTargetCube) {
-				renderTargetProperties = properties.get(renderTarget);
+				renderTargetProperties = this.get(renderTarget);
 				var activeCubeFace = renderTarget.activeCubeFace;
 				if (renderTargetProperties.__currentActiveCubeFace !== activeCubeFace) {
 					for (var attachTarget in renderTarget._attachments) {
 						var attachment = renderTarget._attachments[attachTarget];
 						if (attachment.isTextureCube) {
-							var textureProperties = properties.get(attachment);
+							var textureProperties = textures.get(attachment);
 							gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_CUBE_MAP_POSITIVE_X + activeCubeFace, textureProperties.__webglTexture, 0);
 						}
 					}
@@ -12534,14 +12567,13 @@
 				stencil = true;
 			}
 			var gl = this._gl;
-			var properties = this._properties;
 			var capabilities = this._capabilities;
 			if (capabilities.version < 2) {
 				console.warn("WebGLRenderTargets: blitFramebuffer not support by WebGL" + capabilities.version);
 				return;
 			}
-			var readBuffer = properties.get(read).__webglFramebuffer;
-			var drawBuffer = properties.get(draw).__webglFramebuffer;
+			var readBuffer = this.get(read).__webglFramebuffer;
+			var drawBuffer = this.get(draw).__webglFramebuffer;
 			gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
 			gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, drawBuffer);
 			var mask = 0;
@@ -12577,14 +12609,14 @@
 				var glTarget = gl.TEXTURE_2D;
 				if (texture.isTextureCube) glTarget = gl.TEXTURE_CUBE_MAP;
 				if (texture.isTexture3D) glTarget = gl.TEXTURE_3D;
-				var webglTexture = this._properties.get(texture).__webglTexture;
+				var webglTexture = this._textures.get(texture).__webglTexture;
 				state.bindTexture(glTarget, webglTexture);
 				gl.generateMipmap(glTarget);
 				state.bindTexture(glTarget, null);
 			}
 		};
 		return WebGLRenderTargets;
-	}();
+	}(WebGLProperties);
 	var attachTargetToGL = (_attachTargetToGL = {}, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT0] = 0x8CE0, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT1] = 0x8CE1, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT2] = 0x8CE2, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT3] = 0x8CE3, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT4] = 0x8CE4, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT5] = 0x8CE5, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT6] = 0x8CE6, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT7] = 0x8CE7, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT8] = 0x8CE8, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT9] = 0x8CE9, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT10] = 0x8CEA, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT11] = 0x8CEB, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT12] = 0x8CEC, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT13] = 0x8CED, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT14] = 0x8CEE, _attachTargetToGL[ATTACHMENT.COLOR_ATTACHMENT15] = 0x8CEF, _attachTargetToGL[ATTACHMENT.DEPTH_ATTACHMENT] = 0x8D00, _attachTargetToGL[ATTACHMENT.STENCIL_ATTACHMENT] = 0x8D20, _attachTargetToGL[ATTACHMENT.DEPTH_STENCIL_ATTACHMENT] = 0x821A, _attachTargetToGL);
 	function drawBufferSort(a, b) {
 		return a - b;
@@ -12593,81 +12625,45 @@
 		return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
 	}
 
-	// This class handles buffer creation and updating for geometries.
-	// When the geometry is released, release the corresponding buffer resources and VAO.
-	var WebGLGeometries = /*#__PURE__*/function () {
-		function WebGLGeometries(gl, properties, capabilities, vertexArrayBindings) {
-			this._gl = gl;
-			this._properties = properties;
-			this._capabilities = capabilities;
-			this._vertexArrayBindings = vertexArrayBindings;
-			function onGeometryDispose(event) {
-				var geometry = event.target;
-				var geometryProperties = properties.get(geometry);
-				geometry.removeEventListener('dispose', onGeometryDispose);
-				if (geometry.index !== null) {
-					removeBuffer(gl, properties, geometry.index.buffer);
-				}
-				for (var name in geometry.attributes) {
-					removeBuffer(gl, properties, geometry.attributes[name].buffer);
-				}
-				for (var _name in geometry.morphAttributes) {
-					var array = geometry.morphAttributes[_name];
-					for (var i = 0, l = array.length; i < l; i++) {
-						removeBuffer(gl, properties, array[i].buffer);
-					}
-				}
-				for (var key in geometryProperties._vaos) {
-					var vao = geometryProperties[key];
-					if (vao) {
-						vertexArrayBindings.disposeVAO(vao.object);
-					}
-				}
-				geometryProperties._vaos = {};
-				geometryProperties.created = false;
-				properties.delete(geometry);
-			}
-			this._onGeometryDispose = onGeometryDispose;
+	var WebGLBuffers = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLBuffers, _WebGLProperties);
+		function WebGLBuffers(passId, gl, capabilities) {
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._capabilities = capabilities;
+			return _this;
 		}
-		var _proto = WebGLGeometries.prototype;
-		_proto.setGeometry = function setGeometry(geometry) {
+		var _proto = WebGLBuffers.prototype;
+		_proto.setBuffer = function setBuffer(buffer, bufferType, vertexArrayBindings) {
+			var bufferProperties = this.get(buffer);
+			var needCreate = bufferProperties.glBuffer === undefined;
+			if (!needCreate && bufferProperties.version === buffer.version) return;
+
+			// Avoid polluting the binding state
+			if (!!vertexArrayBindings) {
+				vertexArrayBindings.reset();
+			}
+			if (needCreate || bufferProperties.__external) {
+				// Because Buffer does not have a dispose interface at present,
+				// when the version increases, the external is automatically closed
+				this._createGLBuffer(bufferProperties, buffer, bufferType);
+			} else {
+				this._updateGLBuffer(bufferProperties.glBuffer, buffer, bufferType);
+				bufferProperties.version = buffer.version;
+			}
+		};
+		_proto.removeBuffer = function removeBuffer(buffer) {
 			var gl = this._gl;
-			var properties = this._properties;
-			var capabilities = this._capabilities;
-			var vertexArrayBindings = this._vertexArrayBindings;
-			var geometryProperties = properties.get(geometry);
-			if (!geometryProperties.created) {
-				geometry.addEventListener('dispose', this._onGeometryDispose);
-				geometryProperties.created = true;
-				geometryProperties._vaos = {};
+			var bufferProperties = this.get(buffer);
+			if (bufferProperties.glBuffer && !bufferProperties.__external) {
+				gl.deleteBuffer(bufferProperties.glBuffer);
 			}
-			if (geometry.index !== null) {
-				var buffer = geometry.index.buffer;
-				var bufferProperties = properties.get(buffer);
-				if (bufferProperties.glBuffer === undefined) {
-					vertexArrayBindings.reset(); // Avoid polluting the binding state
-					createGLBuffer(gl, bufferProperties, buffer, gl.ELEMENT_ARRAY_BUFFER);
-				} else if (bufferProperties.version < buffer.version) {
-					vertexArrayBindings.reset(); // Avoid polluting the binding state
-					updateGLBuffer(gl, capabilities, bufferProperties.glBuffer, buffer, gl.ELEMENT_ARRAY_BUFFER);
-					bufferProperties.version = buffer.version;
-				}
-			}
-			for (var name in geometry.attributes) {
-				updateBuffer(gl, properties, capabilities, geometry.attributes[name].buffer, gl.ARRAY_BUFFER);
-			}
-			for (var _name2 in geometry.morphAttributes) {
-				var array = geometry.morphAttributes[_name2];
-				for (var i = 0, l = array.length; i < l; i++) {
-					updateBuffer(gl, properties, capabilities, array[i].buffer, gl.ARRAY_BUFFER);
-				}
-			}
-			return geometryProperties;
+			this.delete(buffer);
 		};
 		_proto.setBufferExternal = function setBufferExternal(buffer, webglBuffer) {
 			var gl = this._gl;
-			var properties = this._properties;
-			var bufferProperties = properties.get(buffer);
+			var bufferProperties = this.get(buffer);
 			if (!bufferProperties.__external) {
 				if (bufferProperties.glBuffer) {
 					gl.deleteBuffer(bufferProperties.glBuffer);
@@ -12680,8 +12676,41 @@
 			bufferProperties.version = buffer.version;
 			bufferProperties.__external = true;
 		};
-		return WebGLGeometries;
-	}();
+		_proto._createGLBuffer = function _createGLBuffer(bufferProperties, buffer, bufferType) {
+			var gl = this._gl;
+			var array = buffer.array;
+			var usage = buffer.usage;
+			var glBuffer = gl.createBuffer();
+			gl.bindBuffer(bufferType, glBuffer);
+			gl.bufferData(bufferType, array, usage);
+			buffer.onUploadCallback();
+			var type = getBufferType(gl, array);
+			bufferProperties.glBuffer = glBuffer;
+			bufferProperties.type = type;
+			bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
+			bufferProperties.version = buffer.version;
+			bufferProperties.__external = false;
+		};
+		_proto._updateGLBuffer = function _updateGLBuffer(glBuffer, buffer, bufferType) {
+			var gl = this._gl;
+			var capabilities = this._capabilities;
+			var array = buffer.array;
+			var updateRange = buffer.updateRange;
+			gl.bindBuffer(bufferType, glBuffer);
+			if (updateRange.count === -1) {
+				// Not using update ranges
+				gl.bufferSubData(bufferType, 0, array);
+			} else {
+				if (capabilities.version >= 2) {
+					gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT, array, updateRange.offset, updateRange.count);
+				} else {
+					gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT, array.subarray(updateRange.offset, updateRange.offset + updateRange.count));
+				}
+				updateRange.count = -1; // reset range
+			}
+		};
+		return WebGLBuffers;
+	}(WebGLProperties);
 	function getBufferType(gl, array) {
 		var type;
 		if (array instanceof Float32Array) {
@@ -12705,86 +12734,134 @@
 		}
 		return type;
 	}
-	function createGLBuffer(gl, properties, buffer, bufferType) {
-		var array = buffer.array;
-		var usage = buffer.usage;
-		var glBuffer = gl.createBuffer();
-		gl.bindBuffer(bufferType, glBuffer);
-		gl.bufferData(bufferType, array, usage);
-		buffer.onUploadCallback();
-		var type = getBufferType(gl, array);
-		properties.glBuffer = glBuffer;
-		properties.type = type;
-		properties.bytesPerElement = array.BYTES_PER_ELEMENT;
-		properties.version = buffer.version;
-	}
-	function updateGLBuffer(gl, capabilities, glBuffer, buffer, bufferType) {
-		var array = buffer.array;
-		var updateRange = buffer.updateRange;
-		gl.bindBuffer(bufferType, glBuffer);
-		if (updateRange.count === -1) {
-			// Not using update ranges
-			gl.bufferSubData(bufferType, 0, array);
-		} else {
-			if (capabilities.version >= 2) {
-				gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT, array, updateRange.offset, updateRange.count);
-			} else {
-				gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT, array.subarray(updateRange.offset, updateRange.offset + updateRange.count));
-			}
-			updateRange.count = -1; // reset range
-		}
-	}
 
-	function updateBuffer(gl, properties, capabilities, buffer, bufferType) {
-		var bufferProperties = properties.get(buffer);
-		if (bufferProperties.glBuffer === undefined) {
-			createGLBuffer(gl, bufferProperties, buffer, bufferType);
-		} else if (bufferProperties.version < buffer.version) {
-			if (!!bufferProperties.__external) {
-				delete bufferProperties.glBuffer;
-				createGLBuffer(gl, bufferProperties, buffer, bufferType);
-			} else {
-				updateGLBuffer(gl, capabilities, bufferProperties.glBuffer, buffer, bufferType);
-				bufferProperties.version = buffer.version;
+	// This class handles buffer creation and updating for geometries.
+	var WebGLGeometries = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLGeometries, _WebGLProperties);
+		function WebGLGeometries(passId, gl, buffers, vertexArrayBindings) {
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._buffers = buffers;
+			_this._vertexArrayBindings = vertexArrayBindings;
+			var that = _assertThisInitialized(_this);
+			function onGeometryDispose(event) {
+				var geometry = event.target;
+				var geometryProperties = that.get(geometry);
+				geometry.removeEventListener('dispose', onGeometryDispose);
+				if (geometry.index !== null) {
+					buffers.removeBuffer(geometry.index.buffer);
+				}
+				for (var name in geometry.attributes) {
+					buffers.removeBuffer(geometry.attributes[name].buffer);
+				}
+				for (var _name in geometry.morphAttributes) {
+					var array = geometry.morphAttributes[_name];
+					for (var i = 0, l = array.length; i < l; i++) {
+						buffers.removeBuffer(array[i].buffer);
+					}
+				}
+				vertexArrayBindings.releaseByGeometry(geometry);
+				geometryProperties.created = false;
+				that.delete(geometry);
 			}
+			_this._onGeometryDispose = onGeometryDispose;
+			return _this;
 		}
-	}
-	function removeBuffer(gl, properties, buffer) {
-		var bufferProperties = properties.get(buffer);
-		if (bufferProperties.glBuffer && !bufferProperties.__external) {
-			gl.deleteBuffer(bufferProperties.glBuffer);
+		var _proto = WebGLGeometries.prototype;
+		_proto.setGeometry = function setGeometry(geometry) {
+			var gl = this._gl;
+			var buffers = this._buffers;
+			var geometryProperties = this.get(geometry);
+			if (!geometryProperties.created) {
+				geometry.addEventListener('dispose', this._onGeometryDispose);
+				geometryProperties.created = true;
+			}
+			if (geometry.index !== null) {
+				buffers.setBuffer(geometry.index.buffer, gl.ELEMENT_ARRAY_BUFFER, this._vertexArrayBindings);
+			}
+			for (var name in geometry.attributes) {
+				buffers.setBuffer(geometry.attributes[name].buffer, gl.ARRAY_BUFFER);
+			}
+			for (var _name2 in geometry.morphAttributes) {
+				var array = geometry.morphAttributes[_name2];
+				for (var i = 0, l = array.length; i < l; i++) {
+					buffers.setBuffer(array[i].buffer, gl.ARRAY_BUFFER);
+				}
+			}
+			return geometryProperties;
+		};
+		return WebGLGeometries;
+	}(WebGLProperties);
+
+	var WebGLMaterials = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLMaterials, _WebGLProperties);
+		function WebGLMaterials(passId, programs) {
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			var that = _assertThisInitialized(_this);
+			function onMaterialDispose(event) {
+				var material = event.target;
+				var materialProperties = that.get(material);
+				material.removeEventListener('dispose', onMaterialDispose);
+				var program = materialProperties.program;
+				if (program !== undefined) {
+					programs.releaseProgram(program);
+					// TODO release vaos
+				}
+
+				that.delete(material);
+			}
+			_this._onMaterialDispose = onMaterialDispose;
+			return _this;
 		}
-		properties.delete(buffer);
-	}
+		var _proto = WebGLMaterials.prototype;
+		_proto.setMaterial = function setMaterial(material) {
+			var materialProperties = this.get(material);
+			if (materialProperties.program === undefined) {
+				material.addEventListener('dispose', this._onMaterialDispose);
+			}
+
+			// Set program in render pass
+
+			return materialProperties;
+		};
+		return WebGLMaterials;
+	}(WebGLProperties);
 
 	var emptyString = "";
-	var WebGLVertexArrayBindings = /*#__PURE__*/function () {
-		function WebGLVertexArrayBindings(gl, properties, capabilities) {
-			this._gl = gl;
-			this._properties = properties;
-			this._capabilities = capabilities;
-			this._isWebGL2 = capabilities.version >= 2;
-			this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
-			this._currentGeometryProgram = "";
-			this._currentVAO = null;
+	var WebGLVertexArrayBindings = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLVertexArrayBindings, _WebGLProperties);
+		function WebGLVertexArrayBindings(passId, gl, capabilities, buffers) {
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._capabilities = capabilities;
+			_this._buffers = buffers;
+			_this._isWebGL2 = capabilities.version >= 2;
+			_this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
+			_this._currentGeometryProgram = "";
+			_this._currentVAO = null;
+			return _this;
 		}
 		var _proto = WebGLVertexArrayBindings.prototype;
 		_proto.setup = function setup(object, geometry, program) {
-			var geometryProperties = this._properties.get(geometry);
 			if (object.morphTargetInfluences) {
 				this.reset();
 				this._setupVertexAttributes(program, geometry);
 				this._currentGeometryProgram = emptyString;
 			} else if (this._isWebGL2 || this._vaoExt) {
 				// use VAO
-				var vao;
-				if (!geometryProperties._vaos[program.id]) {
+				var geometryProperties = this.get(geometry);
+				if (geometryProperties._vaos === undefined) {
+					geometryProperties._vaos = {};
+				}
+				var vao = geometryProperties._vaos[program.id];
+				if (!vao) {
 					vao = geometryProperties._vaos[program.id] = {
 						version: -1,
 						object: this._createVAO()
 					};
-				} else {
-					vao = geometryProperties._vaos[program.id];
 				}
 				this._bindVAO(vao.object);
 				if (vao.version !== geometry.version) {
@@ -12799,11 +12876,16 @@
 				}
 			}
 		};
-		_proto.disposeVAO = function disposeVAO(vao) {
-			if (this._isWebGL2) {
-				this._gl.deleteVertexArray(vao);
-			} else if (this._vaoExt) {
-				this._vaoExt.deleteVertexArrayOES(vao);
+		_proto.releaseByGeometry = function releaseByGeometry(geometry) {
+			var geometryProperties = this.get(geometry);
+			if (geometryProperties._vaos) {
+				for (var key in geometryProperties._vaos) {
+					var vao = geometryProperties[key];
+					if (vao) {
+						this._disposeVAO(vao.object);
+					}
+				}
+				geometryProperties._vaos = {};
 			}
 		};
 		_proto.reset = function reset(force) {
@@ -12837,12 +12919,19 @@
 				this._currentVAO = vao;
 			}
 		};
+		_proto._disposeVAO = function _disposeVAO(vao) {
+			if (this._isWebGL2) {
+				this._gl.deleteVertexArray(vao);
+			} else if (this._vaoExt) {
+				this._vaoExt.deleteVertexArrayOES(vao);
+			}
+		};
 		_proto._setupVertexAttributes = function _setupVertexAttributes(program, geometry) {
 			var gl = this._gl;
 			var isWebGL2 = this._isWebGL2;
 			var attributes = program.getAttributes();
-			var properties = this._properties;
 			var capabilities = this._capabilities;
+			var buffers = this._buffers;
 			for (var key in attributes) {
 				var programAttribute = attributes[key];
 				var geometryAttribute = geometry.getAttribute(key);
@@ -12852,7 +12941,7 @@
 						console.warn("WebGLVertexArrayBindings: attribute " + key + " size not match! " + programAttribute.count + " : " + size);
 					}
 					var buffer = geometryAttribute.buffer;
-					var bufferProperties = properties.get(buffer);
+					var bufferProperties = buffers.get(buffer);
 					var type = bufferProperties.type;
 					if (programAttribute.format !== type) ;
 					for (var i = 0, l = programAttribute.locationSize; i < l; i++) {
@@ -12888,24 +12977,26 @@
 
 			// bind index if could
 			if (geometry.index) {
-				var indexBufferProperties = properties.get(geometry.index.buffer);
+				var indexBufferProperties = buffers.get(geometry.index.buffer);
 				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferProperties.glBuffer);
 			}
 		};
 		return WebGLVertexArrayBindings;
-	}();
+	}(WebGLProperties);
 
-	var WebGLQueries = /*#__PURE__*/function () {
-		function WebGLQueries(gl, capabilities) {
-			var _this = this,
-				_this$_typeToGL;
-			this._gl = gl;
-			this._capabilities = capabilities;
+	var WebGLQueries = /*#__PURE__*/function (_WebGLProperties) {
+		_inheritsLoose(WebGLQueries, _WebGLProperties);
+		function WebGLQueries(passId, gl, capabilities) {
+			var _this$_typeToGL;
+			var _this;
+			_this = _WebGLProperties.call(this, passId) || this;
+			_this._gl = gl;
+			_this._capabilities = capabilities;
 			var timerQuery = capabilities.timerQuery;
-			this._map = new WeakMap();
+			var that = _assertThisInitialized(_this);
 			var onQueryDispose = function onQueryDispose(event) {
 				var query = event.target;
-				var queryProperties = _this._map.get(query);
+				var queryProperties = that.get(query);
 				query.removeEventListener('dispose', onQueryDispose);
 				if (queryProperties._webglQuery) {
 					if (capabilities.version > 1) {
@@ -12914,33 +13005,28 @@
 						timerQuery.deleteQueryEXT(queryProperties._webglQuery);
 					}
 				}
-				_this._map.delete(query);
+				that.delete(query);
 			};
-			this._onQueryDispose = onQueryDispose;
-			this._typeToGL = (_this$_typeToGL = {}, _this$_typeToGL[QUERY_TYPE.ANY_SAMPLES_PASSED] = 0x8C2F, _this$_typeToGL[QUERY_TYPE.ANY_SAMPLES_PASSED_CONSERVATIVE] = 0x8D6A, _this$_typeToGL[QUERY_TYPE.TIME_ELAPSED] = 0x88BF, _this$_typeToGL);
+			_this._onQueryDispose = onQueryDispose;
+			_this._typeToGL = (_this$_typeToGL = {}, _this$_typeToGL[QUERY_TYPE.ANY_SAMPLES_PASSED] = 0x8C2F, _this$_typeToGL[QUERY_TYPE.ANY_SAMPLES_PASSED_CONSERVATIVE] = 0x8D6A, _this$_typeToGL[QUERY_TYPE.TIME_ELAPSED] = 0x88BF, _this$_typeToGL);
+			return _this;
 		}
 		var _proto = WebGLQueries.prototype;
-		_proto.get = function get(query) {
+		_proto._get = function _get(query) {
 			var capabilities = this._capabilities;
-			var map = this._map;
-			var queryProperties = map.get(query);
-			if (queryProperties === undefined) {
-				queryProperties = {};
+			var queryProperties = this.get(query);
+			if (queryProperties._webglQuery === undefined) {
 				query.addEventListener('dispose', this._onQueryDispose);
 				queryProperties._webglQuery = capabilities.version > 1 ? this._gl.createQuery() : capabilities.timerQuery.createQueryEXT();
 				queryProperties._target = null;
 				queryProperties._result = null;
-				map.set(query, queryProperties);
 			}
 			return queryProperties;
-		};
-		_proto.clear = function clear() {
-			this._map = new WeakMap();
 		};
 		_proto.begin = function begin(query, target) {
 			var capabilities = this._capabilities;
 			var typeToGL = this._typeToGL;
-			var queryProperties = this.get(query);
+			var queryProperties = this._get(query);
 			if (capabilities.version > 1) {
 				this._gl.beginQuery(typeToGL[target], queryProperties._webglQuery);
 			} else {
@@ -12952,7 +13038,7 @@
 		_proto.end = function end(query) {
 			var capabilities = this._capabilities;
 			var typeToGL = this._typeToGL;
-			var queryProperties = this.get(query);
+			var queryProperties = this._get(query);
 			if (capabilities.version > 1) {
 				this._gl.endQuery(typeToGL[queryProperties._target]);
 			} else {
@@ -12961,7 +13047,7 @@
 		};
 		_proto.counter = function counter(query) {
 			var timerQuery = this._capabilities.timerQuery;
-			var queryProperties = this.get(query);
+			var queryProperties = this._get(query);
 			timerQuery.queryCounterEXT(queryProperties._webglQuery, timerQuery.TIMESTAMP_EXT);
 			queryProperties._target = timerQuery.TIMESTAMP_EXT;
 			queryProperties._result = null; // clear the last result.
@@ -12970,7 +13056,7 @@
 			var gl = this._gl;
 			var capabilities = this._capabilities;
 			var timerQuery = capabilities.timerQuery;
-			var queryProperties = this.get(query);
+			var queryProperties = this._get(query);
 			var available;
 			if (capabilities.version > 1) {
 				available = gl.getQueryParameter(queryProperties._webglQuery, gl.QUERY_RESULT_AVAILABLE);
@@ -12986,7 +13072,7 @@
 			var gl = this._gl;
 			var capabilities = this._capabilities;
 			var timerQuery = capabilities.timerQuery;
-			var queryProperties = this.get(query);
+			var queryProperties = this._get(query);
 			if (queryProperties._result === null) {
 				if (capabilities.version > 1) {
 					queryProperties._result = gl.getQueryParameter(queryProperties._webglQuery, gl.QUERY_RESULT);
@@ -12997,7 +13083,7 @@
 			return queryProperties._result;
 		};
 		return WebGLQueries;
-	}();
+	}(WebGLProperties);
 
 	var helpVector4 = new Vector4();
 	var helpMatrix4 = new Matrix4();
@@ -13014,17 +13100,7 @@
 		return true;
 	}
 	function noop() {}
-	function onMaterialDispose(event) {
-		var material = event.target;
-		var materialProperties = this._properties.get(material);
-		material.removeEventListener('dispose', onMaterialDispose, this);
-		var program = materialProperties.program;
-		if (program !== undefined) {
-			// release program reference
-			this._programs.releaseProgram(program);
-		}
-		this._properties.delete(material);
-	}
+	var _renderPassId = 0;
 
 	/**
 	 * WebGL Render Pass
@@ -13035,30 +13111,34 @@
 		 * @param {WebGLRenderingContext} gl
 		 */
 		function WebGLRenderPass(gl) {
-			this.gl = gl;
-			var properties = new WebGLProperties();
+			var id = _renderPassId++;
 			var capabilities = new WebGLCapabilities(gl);
 			var constants = new WebGLConstants(gl, capabilities);
 			var state = new WebGLState(gl, capabilities);
-			var vertexArrayBindings = new WebGLVertexArrayBindings(gl, properties, capabilities);
-			var textures = new WebGLTextures(gl, state, properties, capabilities, constants);
-			var renderBuffers = new WebGLRenderBuffers(gl, properties, capabilities, constants);
-			var renderTargets = new WebGLRenderTargets(gl, state, textures, renderBuffers, properties, capabilities, constants);
-			var geometries = new WebGLGeometries(gl, properties, capabilities, vertexArrayBindings);
+			var textures = new WebGLTextures(id, gl, state, capabilities, constants);
+			var renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
+			var renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
+			var buffers = new WebGLBuffers(id, gl, capabilities);
+			var vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
+			var geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 			var programs = new WebGLPrograms(gl, state, capabilities);
-			var queries = new WebGLQueries(gl, capabilities);
+			var materials = new WebGLMaterials(id, programs);
+			var queries = new WebGLQueries(id, gl, capabilities);
+			this.id = id;
+			this.gl = gl;
 
 			/**
 			 * An object containing details about the capabilities of the current RenderingContext.
 			 * @type {t3d.WebGLCapabilities}
 			 */
 			this.capabilities = capabilities;
-			this._properties = properties;
 			this._textures = textures;
 			this._renderBuffers = renderBuffers;
 			this._renderTargets = renderTargets;
+			this._buffers = buffers;
 			this._geometries = geometries;
 			this._programs = programs;
+			this._materials = materials;
 			this._state = state;
 			this._vertexArrayBindings = vertexArrayBindings;
 			this._queries = queries;
@@ -13186,7 +13266,7 @@
 		 * @param {WebGLBuffer} webglBuffer
 		 */;
 		_proto.setBufferExternal = function setBufferExternal(buffer, webglBuffer) {
-			this._geometries.setBufferExternal(buffer, webglBuffer);
+			this._buffers.setBufferExternal(buffer, webglBuffer);
 		}
 
 		/**
@@ -13294,7 +13374,7 @@
 
 			// Check material version
 
-			var materialProperties = this._properties.get(material);
+			var materialProperties = this._materials.setMaterial(material);
 			if (material.needsUpdate === false) {
 				if (materialProperties.program === undefined) {
 					material.needsUpdate = true;
@@ -13325,9 +13405,6 @@
 			// Update program if needed.
 
 			if (material.needsUpdate) {
-				if (materialProperties.program === undefined) {
-					material.addEventListener('dispose', onMaterialDispose, this);
-				}
 				var oldProgram = materialProperties.program;
 				materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 				if (oldProgram) {
@@ -13429,20 +13506,11 @@
 
 				// other internal uniforms
 				if (internalGroup === 5) {
-					switch (key) {
-						case "envMap":
-							uniform.set(envMap, textures);
-							break;
-						case "u_EnvMap_Flip":
-							uniform.set(envMap.images[0] && envMap.images[0].rtt ? 1 : -1);
-							break;
-						case "maxMipLevel":
-							uniform.set(this._properties.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
-							break;
-						case "u_PointScale":
-							var scale = currentRenderTarget.height * 0.5; // three.js do this
-							uniform.set(scale);
-							break;
+					if (key === 'u_PointScale') {
+						var scale = currentRenderTarget.height * 0.5; // three.js do this
+						uniform.set(scale);
+					} else {
+						uniform.internalFun(envMap, textures);
 					}
 					continue;
 				}
@@ -13591,8 +13659,8 @@
 		};
 		_proto._draw = function _draw(geometry, material, group, renderInfo) {
 			var gl = this.gl;
-			var properties = this._properties;
 			var capabilities = this.capabilities;
+			var buffers = this._buffers;
 			var useIndexBuffer = geometry.index !== null;
 			var drawStart = 0;
 			var drawCount = useIndexBuffer ? geometry.index.buffer.count : geometry.getAttribute("a_Position").buffer.count;
@@ -13603,7 +13671,7 @@
 			var instanceCount = geometry.instanceCount;
 			var useInstancing = instanceCount >= 0;
 			if (useIndexBuffer) {
-				var indexBufferProperties = properties.get(geometry.index.buffer);
+				var indexBufferProperties = buffers.get(geometry.index.buffer);
 				var bytesPerElement = indexBufferProperties.bytesPerElement;
 				var type = indexBufferProperties.type;
 				if (type === gl.UNSIGNED_INT) {
@@ -16432,6 +16500,10 @@
 	});
 	WebGLVertexArrayBindings.prototype.resetBinding = function () {
 		console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
+	};
+	WebGLGeometries.prototype.setBufferExternal = function (buffer, webglBuffer) {
+		console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderPass.setBufferExternal instead.");
+		this._buffers.setBufferExternal(buffer, webglBuffer);
 	};
 
 	// Enum for WebGL Texture Type.

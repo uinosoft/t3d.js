@@ -1,12 +1,13 @@
 import { WebGLPrograms } from './WebGLPrograms.js';
-import { WebGLProperties } from './WebGLProperties.js';
 import { WebGLCapabilities } from './WebGLCapabilities.js';
 import { WebGLConstants } from './WebGLConstants.js';
 import { WebGLState } from './WebGLState.js';
 import { WebGLTextures } from './WebGLTextures.js';
 import { WebGLRenderBuffers } from './WebGLRenderBuffers.js';
 import { WebGLRenderTargets } from './WebGLRenderTargets.js';
+import { WebGLBuffers } from './WebGLBuffers.js';
 import { WebGLGeometries } from './WebGLGeometries.js';
+import { WebGLMaterials } from './WebGLMaterials.js';
 import { WebGLVertexArrayBindings } from './WebGLVertexArrayBindings.js';
 import { WebGLQueries } from './WebGLQueries.js';
 import { Vector4 } from '../math/Vector4.js';
@@ -34,21 +35,7 @@ function defaultIfRender(renderable) {
 
 function noop() { }
 
-function onMaterialDispose(event) {
-	const material = event.target;
-	const materialProperties = this._properties.get(material);
-
-	material.removeEventListener('dispose', onMaterialDispose, this);
-
-	const program = materialProperties.program;
-
-	if (program !== undefined) {
-		// release program reference
-		this._programs.releaseProgram(program);
-	}
-
-	this._properties.delete(material);
-}
+let _renderPassId = 0;
 
 /**
  * WebGL Render Pass
@@ -60,19 +47,23 @@ class WebGLRenderPass {
 	 * @param {WebGLRenderingContext} gl
 	 */
 	constructor(gl) {
-		this.gl = gl;
+		const id = _renderPassId++;
 
-		const properties = new WebGLProperties();
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(gl, properties, capabilities);
-		const textures = new WebGLTextures(gl, state, properties, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(gl, properties, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(gl, state, textures, renderBuffers, properties, capabilities, constants);
-		const geometries = new WebGLGeometries(gl, properties, capabilities, vertexArrayBindings);
+		const textures = new WebGLTextures(id, gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(id, gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const queries = new WebGLQueries(gl, capabilities);
+		const materials = new WebGLMaterials(id, programs);
+		const queries = new WebGLQueries(id, gl, capabilities);
+
+		this.id = id;
+		this.gl = gl;
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
@@ -80,12 +71,13 @@ class WebGLRenderPass {
 		 */
 		this.capabilities = capabilities;
 
-		this._properties = properties;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
 		this._renderTargets = renderTargets;
+		this._buffers = buffers;
 		this._geometries = geometries;
 		this._programs = programs;
+		this._materials = materials;
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
 		this._queries = queries;
@@ -205,7 +197,7 @@ class WebGLRenderPass {
 	 * @param {WebGLBuffer} webglBuffer
 	 */
 	setBufferExternal(buffer, webglBuffer) {
-		this._geometries.setBufferExternal(buffer, webglBuffer);
+		this._buffers.setBufferExternal(buffer, webglBuffer);
 	}
 
 	/**
@@ -321,7 +313,7 @@ class WebGLRenderPass {
 
 		// Check material version
 
-		const materialProperties = this._properties.get(material);
+		const materialProperties = this._materials.setMaterial(material);
 		if (material.needsUpdate === false) {
 			if (materialProperties.program === undefined) {
 				material.needsUpdate = true;
@@ -355,10 +347,6 @@ class WebGLRenderPass {
 		// Update program if needed.
 
 		if (material.needsUpdate) {
-			if (materialProperties.program === undefined) {
-				material.addEventListener('dispose', onMaterialDispose, this);
-			}
-
 			const oldProgram = materialProperties.program;
 			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 			if (oldProgram) {
@@ -472,22 +460,11 @@ class WebGLRenderPass {
 
 			// other internal uniforms
 			if (internalGroup === 5) {
-				switch (key) {
-					case "envMap":
-						uniform.set(envMap, textures);
-						break;
-					case "u_EnvMap_Flip":
-						uniform.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1);
-						break;
-					case "maxMipLevel":
-						uniform.set(this._properties.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
-						break;
-					case "u_PointScale":
-						const scale = currentRenderTarget.height * 0.5; // three.js do this
-						uniform.set(scale);
-						break;
-					default:
-						break;
+				if (key === 'u_PointScale') {
+					const scale = currentRenderTarget.height * 0.5; // three.js do this
+					uniform.set(scale);
+				} else {
+					uniform.internalFun(envMap, textures);
 				}
 				continue;
 			}
@@ -681,8 +658,8 @@ class WebGLRenderPass {
 
 	_draw(geometry, material, group, renderInfo) {
 		const gl = this.gl;
-		const properties = this._properties;
 		const capabilities = this.capabilities;
+		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
 
@@ -697,7 +674,7 @@ class WebGLRenderPass {
 		const useInstancing = instanceCount >= 0;
 
 		if (useIndexBuffer) {
-			const indexBufferProperties = properties.get(geometry.index.buffer);
+			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			const bytesPerElement = indexBufferProperties.bytesPerElement;
 			const type = indexBufferProperties.type;
 

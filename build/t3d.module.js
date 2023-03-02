@@ -6908,20 +6908,17 @@ function castShadow(light) {
 	return light.shadow && light.castShadow;
 }
 
-function sortFrontToBack(a, b) {
+function defaultOpaqueSortCompare(a, b) {
 	if (a.renderOrder !== b.renderOrder) {
 		return a.renderOrder - b.renderOrder;
 	} else if (a.material.id !== b.material.id) {
-		// batch
 		return a.material.id - b.material.id;
-	} else if (a.z !== b.z) {
-		return a.z - b.z;
 	} else {
 		return a.id - b.id;
 	}
 }
 
-function sortBackToFront(a, b) {
+function defaultTransparentSortCompare(a, b) {
 	if (a.renderOrder !== b.renderOrder) {
 		return a.renderOrder - b.renderOrder;
 	} else if (a.z !== b.z) {
@@ -6957,6 +6954,9 @@ class RenderQueueLayer {
 		this._cache = [];
 		this._cacheIndex = 0;
 		this._lastCacheIndex = 0;
+
+		this.opaqueSortCompareFn = defaultOpaqueSortCompare;
+		this.transparentSortCompareFn = defaultTransparentSortCompare;
 	}
 
 	begin() {
@@ -7022,8 +7022,8 @@ class RenderQueueLayer {
 	}
 
 	sort() {
-		this.opaque.sort(sortFrontToBack);
-		this.transparent.sort(sortBackToFront);
+		this.opaque.sort(this.opaqueSortCompareFn);
+		this.transparent.sort(this.transparentSortCompareFn);
 	}
 
 }
@@ -9322,7 +9322,7 @@ class ShaderPostPass {
 		camera.setOrtho(-1, 1, -1, 1, 0.1, 2);
 		scene.add(camera);
 
-		const geometry = new PlaneGeometry(2, 2, 1, 1);
+		const geometry = this.geometry = new PlaneGeometry(2, 2, 1, 1);
 		const material = this.material = new ShaderMaterial(shader);
 		this.uniforms = material.uniforms;
 		const plane = new Mesh(geometry, material);
@@ -9347,6 +9347,14 @@ class ShaderPostPass {
 	 */
 	render(renderer) {
 		renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
+	}
+
+	/**
+	 * Dispose the post pass.
+	 */
+	dispose() {
+		this.geometry.dispose();
+		this.material.dispose();
 	}
 
 }
@@ -9963,56 +9971,56 @@ Texture3D.prototype.isTexture3D = true;
 
 const internalUniforms = {
 	'u_Model': [1, null],
-	'u_Projection': [2, function(cameraData) { return this.set(cameraData.projectionMatrix.elements) }],
-	'u_View': [2, function(cameraData) { return this.set(cameraData.viewMatrix.elements) }],
-	'u_ProjectionView': [2, function(cameraData) { return this.set(cameraData.projectionViewMatrix.elements) }],
-	'u_CameraPosition': [2, function(cameraData) { return this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z) }],
-	'logDepthBufFC': [2, function(cameraData) { return this.set(cameraData.logDepthBufFC) }],
-	'logDepthCameraNear': [2, function(cameraData) { return this.set(cameraData.logDepthCameraNear) }],
-	'u_EnvMapLight_Intensity': [3, function(sceneData) { return this.set(sceneData.environmentLightIntensity) }],
-	'u_FogColor': [3, function(sceneData) { const color = sceneData.fog.color; return this.setValue(color.r, color.g, color.b) }],
-	'u_FogDensity': [3, function(sceneData) { return this.set(sceneData.fog.density) }],
-	'u_FogNear': [3, function(sceneData) { return this.set(sceneData.fog.near) }],
-	'u_FogFar': [3, function(sceneData) { return this.set(sceneData.fog.far) }],
-	'u_Color': [4, function(material, textures) { const color = material.diffuse; return this.setValue(color.r, color.g, color.b) }],
-	'u_Opacity': [4, function(material, textures) { return this.set(material.opacity) }],
-	'diffuseMap': [4, function(material, textures) { return this.set(material.diffuseMap, textures) }],
-	'alphaMap': [4, function(material, textures) { return this.set(material.alphaMap, textures) }],
-	'alphaMapUVTransform': [4, function(material, textures) { return this.set(material.alphaMapTransform.elements) }],
-	'normalMap': [4, function(material, textures) { return this.set(material.normalMap, textures) }],
-	'normalScale': [4, function(material, textures) { return this.setValue(material.normalScale.x, material.normalScale.y) }],
-	'bumpMap': [4, function(material, textures) { return this.set(material.bumpMap, textures) }],
-	'bumpScale': [4, function(material, textures) { return this.set(material.bumpScale) }],
-	'cubeMap': [4, function(material, textures) { return this.set(material.cubeMap, textures) }],
-	'u_EnvMap_Intensity': [4, function(material, textures) { return this.set(material.envMapIntensity) }],
-	'u_Specular': [4, function(material, textures) { return this.set(material.shininess) }],
-	'u_SpecularColor': [4, function(material, textures) { const color = material.specular; return this.setValue(color.r, color.g, color.b) }],
-	'specularMap': [4, function(material, textures) { return this.set(material.specularMap, textures) }],
-	'aoMap': [4, function(material, textures) { return this.set(material.aoMap, textures) }],
-	'aoMapIntensity': [4, function(material, textures) { return this.set(material.aoMapIntensity) }],
-	'aoMapUVTransform': [4, function(material, textures) { return this.set(material.aoMapTransform.elements) }],
-	'u_Roughness': [4, function(material, textures) { return this.set(material.roughness) }],
-	'roughnessMap': [4, function(material, textures) { return this.set(material.roughnessMap, textures) }],
-	'u_Metalness': [4, function(material, textures) { return this.set(material.metalness) }],
-	'metalnessMap': [4, function(material, textures) { return this.set(material.metalnessMap, textures) }],
-	'u_Clearcoat': [4, function(material, textures) { return this.set(material.clearcoat) }],
-	'u_ClearcoatRoughness': [4, function(material, textures) { return this.set(material.clearcoatRoughness) }],
-	'clearcoatMap': [4, function(material, textures) { return this.set(material.clearcoatMap, textures) }],
-	'clearcoatRoughnessMap': [4, function(material, textures) { return this.set(material.clearcoatRoughnessMap, textures) }],
-	'clearcoatNormalMap': [4, function(material, textures) { return this.set(material.clearcoatNormalMap, textures) }],
-	'clearcoatNormalScale': [4, function(material, textures) { return this.setValue(material.clearcoatNormalScale.x, material.clearcoatNormalScale.y) }],
-	'glossiness': [4, function(material, textures) { return this.set(material.glossiness) }],
-	'glossinessMap': [4, function(material, textures) { return this.set(material.glossinessMap, textures) }],
-	'emissive': [4, function(material, textures) { const color = material.emissive; return this.setValue(color.r, color.g, color.b) }],
-	'emissiveMap': [4, function(material, textures) { return this.set(material.emissiveMap, textures) }],
-	'emissiveMapUVTransform': [4, function(material, textures) { return this.set(material.emissiveMapTransform.elements) }],
-	'matcap': [4, function(material, textures) { return this.set(material.matcap, textures) }],
-	'uvTransform': [4, function(material, textures) { return this.set(material.diffuseMapTransform.elements) }],
-	'u_PointSize': [4, function(material, textures) { return this.set(material.size) }],
+	'u_Projection': [2, function(cameraData) { this.set(cameraData.projectionMatrix.elements); }],
+	'u_View': [2, function(cameraData) { this.set(cameraData.viewMatrix.elements); }],
+	'u_ProjectionView': [2, function(cameraData) { this.set(cameraData.projectionViewMatrix.elements); }],
+	'u_CameraPosition': [2, function(cameraData) { this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z); }],
+	'logDepthBufFC': [2, function(cameraData) { this.set(cameraData.logDepthBufFC); }],
+	'logDepthCameraNear': [2, function(cameraData) { this.set(cameraData.logDepthCameraNear); }],
+	'u_EnvMapLight_Intensity': [3, function(sceneData) { this.set(sceneData.environmentLightIntensity); }],
+	'u_FogColor': [3, function(sceneData) { const color = sceneData.fog.color; this.setValue(color.r, color.g, color.b); }],
+	'u_FogDensity': [3, function(sceneData) { this.set(sceneData.fog.density); }],
+	'u_FogNear': [3, function(sceneData) { this.set(sceneData.fog.near); }],
+	'u_FogFar': [3, function(sceneData) { this.set(sceneData.fog.far); }],
+	'u_Color': [4, function(material, textures) { const color = material.diffuse; this.setValue(color.r, color.g, color.b); }],
+	'u_Opacity': [4, function(material, textures) { this.set(material.opacity); }],
+	'diffuseMap': [4, function(material, textures) { this.set(material.diffuseMap, textures); }],
+	'alphaMap': [4, function(material, textures) { this.set(material.alphaMap, textures); }],
+	'alphaMapUVTransform': [4, function(material, textures) { this.set(material.alphaMapTransform.elements); }],
+	'normalMap': [4, function(material, textures) { this.set(material.normalMap, textures); }],
+	'normalScale': [4, function(material, textures) { this.setValue(material.normalScale.x, material.normalScale.y); }],
+	'bumpMap': [4, function(material, textures) { this.set(material.bumpMap, textures); }],
+	'bumpScale': [4, function(material, textures) { this.set(material.bumpScale); }],
+	'cubeMap': [4, function(material, textures) { this.set(material.cubeMap, textures); }],
+	'u_EnvMap_Intensity': [4, function(material, textures) { this.set(material.envMapIntensity); }],
+	'u_Specular': [4, function(material, textures) { this.set(material.shininess); }],
+	'u_SpecularColor': [4, function(material, textures) { const color = material.specular; this.setValue(color.r, color.g, color.b); }],
+	'specularMap': [4, function(material, textures) { this.set(material.specularMap, textures); }],
+	'aoMap': [4, function(material, textures) { this.set(material.aoMap, textures); }],
+	'aoMapIntensity': [4, function(material, textures) { this.set(material.aoMapIntensity); }],
+	'aoMapUVTransform': [4, function(material, textures) { this.set(material.aoMapTransform.elements); }],
+	'u_Roughness': [4, function(material, textures) { this.set(material.roughness); }],
+	'roughnessMap': [4, function(material, textures) { this.set(material.roughnessMap, textures); }],
+	'u_Metalness': [4, function(material, textures) { this.set(material.metalness); }],
+	'metalnessMap': [4, function(material, textures) { this.set(material.metalnessMap, textures); }],
+	'u_Clearcoat': [4, function(material, textures) { this.set(material.clearcoat); }],
+	'u_ClearcoatRoughness': [4, function(material, textures) { this.set(material.clearcoatRoughness); }],
+	'clearcoatMap': [4, function(material, textures) { this.set(material.clearcoatMap, textures); }],
+	'clearcoatRoughnessMap': [4, function(material, textures) { this.set(material.clearcoatRoughnessMap, textures); }],
+	'clearcoatNormalMap': [4, function(material, textures) { this.set(material.clearcoatNormalMap, textures); }],
+	'clearcoatNormalScale': [4, function(material, textures) { this.setValue(material.clearcoatNormalScale.x, material.clearcoatNormalScale.y); }],
+	'glossiness': [4, function(material, textures) { this.set(material.glossiness); }],
+	'glossinessMap': [4, function(material, textures) { this.set(material.glossinessMap, textures); }],
+	'emissive': [4, function(material, textures) { const color = material.emissive; this.setValue(color.r, color.g, color.b); }],
+	'emissiveMap': [4, function(material, textures) { this.set(material.emissiveMap, textures); }],
+	'emissiveMapUVTransform': [4, function(material, textures) { this.set(material.emissiveMapTransform.elements); }],
+	'matcap': [4, function(material, textures) { this.set(material.matcap, textures); }],
+	'uvTransform': [4, function(material, textures) { this.set(material.diffuseMapTransform.elements); }],
+	'u_PointSize': [4, function(material, textures) { this.set(material.size); }],
 	'u_PointScale': [5, null],
-	'maxMipLevel': [5, null],
-	'envMap': [5, null],
-	'u_EnvMap_Flip': [5, null]
+	'maxMipLevel': [5, function(envMap, textures) { this.set(textures.get(envMap).__maxMipLevel || 8); }], // TODO replace 8 with real mip level
+	'envMap': [5, function(envMap, textures) { this.set(envMap, textures); }],
+	'u_EnvMap_Flip': [5, function(envMap, textures) { this.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1); }]
 };
 
 // Empty textures
@@ -10850,9 +10858,9 @@ var shadow = "#ifdef USE_SHADOW_SAMPLER\n    float computeShadow(sampler2DShadow
 
 var shadowMap_frag = "#ifdef USE_SHADOW\n#endif";
 
-var shadowMap_pars_frag = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform sampler2DShadow directionalShadowMap[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D directionalDepthMap[NUM_DIR_SHADOWS];\n\t\t#endif\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform samplerCube pointShadowMap[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_LIGHTS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform sampler2DShadow spotShadowMap[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D spotDepthMap[NUM_SPOT_SHADOWS];\n\t\t#endif\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_LIGHTS];\n\t#endif\n\t#include <packing>\n\t#include <shadow>\n#endif";
+var shadowMap_pars_frag = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform sampler2DShadow directionalShadowMap[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D directionalDepthMap[NUM_DIR_SHADOWS];\n\t\t#endif\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform samplerCube pointShadowMap[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_SHADOWS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform sampler2DShadow spotShadowMap[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\t#ifdef USE_PCSS_SOFT_SHADOW\n\t\t\tuniform sampler2D spotDepthMap[NUM_SPOT_SHADOWS];\n\t\t#endif\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_SHADOWS];\n\t#endif\n\t#include <packing>\n\t#include <shadow>\n#endif";
 
-var shadowMap_pars_vert = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform mat4 directionalShadowMatrix[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform mat4 pointShadowMatrix[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_LIGHTS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform mat4 spotShadowMatrix[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_LIGHTS];\n\t#endif\n#endif";
+var shadowMap_pars_vert = "#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0\n\t\tuniform mat4 directionalShadowMatrix[NUM_DIR_SHADOWS];\n\t\tvarying vec4 vDirectionalShadowCoord[NUM_DIR_SHADOWS];\n\t\tstruct DirectLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform DirectLightShadow u_DirectionalShadow[NUM_DIR_SHADOWS];\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\tuniform mat4 pointShadowMatrix[NUM_POINT_SHADOWS];\n\t\tvarying vec4 vPointShadowCoord[NUM_POINT_SHADOWS];\n\t\tstruct PointLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t\tvec2 shadowCameraRange;\n\t\t\tfloat shadowCameraNear;\n\t\t\tfloat shadowCameraFar;\n\t\t};\n\t\tuniform PointLightShadow u_PointShadow[NUM_POINT_SHADOWS];\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\tuniform mat4 spotShadowMatrix[NUM_SPOT_SHADOWS];\n\t\tvarying vec4 vSpotShadowCoord[NUM_SPOT_SHADOWS];\n\t\tstruct SpotLightShadow {\n\t\t\tvec2 shadowBias;\n\t\t\tvec2 shadowMapSize;\n\t\t\tvec2 shadowParams;\n\t\t};\n\t\tuniform SpotLightShadow u_SpotShadow[NUM_SPOT_SHADOWS];\n\t#endif\n#endif";
 
 var shadowMap_vert = "\n#ifdef USE_SHADOW\n\t#if NUM_DIR_SHADOWS > 0 || NUM_POINT_SHADOWS > 0 || NUM_SPOT_SHADOWS > 0\n\t\tvec3 shadowWorldNormal = (transposeMat4(inverseMat4(u_Model)) * vec4(objectNormal, 0.0)).xyz;\n\t\tshadowWorldNormal = normalize(shadowWorldNormal);\n\t\tvec4 shadowWorldPosition;\n\t#endif\n\t#if NUM_DIR_SHADOWS > 0\n\t\t#pragma unroll_loop_start\n\t\tfor (int i = 0; i < NUM_DIR_SHADOWS; i++) {\n\t\t\tshadowWorldPosition = worldPosition + vec4(shadowWorldNormal * u_DirectionalShadow[i].shadowBias[1], 0);\n\t\t\tvDirectionalShadowCoord[i] = directionalShadowMatrix[i] * shadowWorldPosition;\n\t\t}\n\t\t#pragma unroll_loop_end\n\t#endif\n\t#if NUM_POINT_SHADOWS > 0\n\t\t#pragma unroll_loop_start\n\t\tfor (int i = 0; i < NUM_POINT_SHADOWS; i++) {\n\t\t\tshadowWorldPosition = worldPosition + vec4(shadowWorldNormal * u_PointShadow[i].shadowBias[1], 0);\n\t\t\tvPointShadowCoord[i] = pointShadowMatrix[i] * shadowWorldPosition;\n\t\t}\n\t\t#pragma unroll_loop_end\n\t#endif\n\t#if NUM_SPOT_SHADOWS > 0\n\t\t#pragma unroll_loop_start\n\t\tfor (int i = 0; i < NUM_SPOT_SHADOWS; i++) {\n\t\t\tshadowWorldPosition = worldPosition + vec4(shadowWorldNormal * u_SpotShadow[i].shadowBias[1], 0);\n\t\t\tvSpotShadowCoord[i] = spotShadowMatrix[i] * shadowWorldPosition;\n\t\t}\n\t\t#pragma unroll_loop_end\n\t#endif\n#endif";
 
@@ -11544,31 +11552,6 @@ function loopReplacer(match, start, end, snippet) {
 function unrollLoops(string) {
 	return string
 		.replace(unrollLoopPattern, loopReplacer);
-}
-
-class WebGLProperties {
-
-	constructor() {
-		this._map = new WeakMap();
-	}
-
-	get(object) {
-		let properties = this._map.get(object);
-		if (properties === undefined) {
-			properties = {};
-			this._map.set(object, properties);
-		}
-		return properties;
-	}
-
-	delete(object) {
-		this._map.delete(object);
-	}
-
-	clear() {
-		this._map = new WeakMap();
-	}
-
 }
 
 class WebGLCapabilities {
@@ -12544,20 +12527,55 @@ class WebGLState {
 
 }
 
-class WebGLTextures {
+class WebGLProperties {
 
-	constructor(gl, state, properties, capabilities, constants) {
-		this.gl = gl;
-		this.state = state;
-		this.properties = properties;
-		this.capabilities = capabilities;
-		this.constants = constants;
+	constructor(passId) {
+		this._key = '__webgl$' + passId;
+		this._count = 0;
+	}
+
+	get(object) {
+		const key = this._key;
+		let properties = object[key];
+		if (properties === undefined) {
+			properties = {};
+			object[key] = properties;
+			this._count++;
+		}
+		return properties;
+	}
+
+	delete(object) {
+		const properties = object[key];
+		if (properties) {
+			this._count--;
+			delete object[key];
+		}
+	}
+
+	size() {
+		return this._count;
+	}
+
+}
+
+class WebGLTextures extends WebGLProperties {
+
+	constructor(passId, gl, state, capabilities, constants) {
+		super(passId);
+
+		this._gl = gl;
+		this._state = state;
+		this._capabilities = capabilities;
+		this._constants = constants;
 
 		this._usedTextureUnits = 0;
 
+		const that = this;
+
 		function onTextureDispose(event) {
 			const texture = event.target;
-			const textureProperties = properties.get(texture);
+			const textureProperties = that.get(texture);
 
 			texture.removeEventListener('dispose', onTextureDispose);
 
@@ -12565,7 +12583,7 @@ class WebGLTextures {
 				gl.deleteTexture(textureProperties.__webglTexture);
 			}
 
-			properties.delete(texture);
+			that.delete(texture);
 		}
 
 		this._onTextureDispose = onTextureDispose;
@@ -12589,8 +12607,8 @@ class WebGLTextures {
 	allocTexUnit() {
 		const textureUnit = this._usedTextureUnits++;
 
-		if (textureUnit >= this.capabilities.maxTextures) {
-			console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this.capabilities.maxTextures);
+		if (textureUnit >= this._capabilities.maxTextures) {
+			console.warn('trying to use ' + textureUnit + ' texture units while this GPU supports only ' + this._capabilities.maxTextures);
 		}
 
 		return textureUnit;
@@ -12601,16 +12619,16 @@ class WebGLTextures {
 	}
 
 	setTexture2D(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (slot !== undefined) {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && (!texture.image.rtt || slot === undefined) && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -12695,16 +12713,16 @@ class WebGLTextures {
 	}
 
 	setTextureCube(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (slot !== undefined) {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.images.length === 6 && textureProperties.__version !== texture.version && (!texture.images[0].rtt || slot === undefined) && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -12805,10 +12823,10 @@ class WebGLTextures {
 	}
 
 	setTexture3D(texture, slot) {
-		const gl = this.gl;
-		const state = this.state;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
 		if (capabilities.version < 2) {
 			console.warn("Try to use Texture3D but browser not support WebGL2.0");
@@ -12819,7 +12837,7 @@ class WebGLTextures {
 			slot = gl.TEXTURE0 + slot;
 		}
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
 			if (textureProperties.__webglTexture === undefined) {
@@ -12861,9 +12879,9 @@ class WebGLTextures {
 	}
 
 	setTextureExternal(texture, webglTexture) {
-		const gl = this.gl;
+		const gl = this._gl;
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 
 		if (!textureProperties.__external) {
 			if (textureProperties.__webglTexture) {
@@ -12878,8 +12896,8 @@ class WebGLTextures {
 	}
 
 	_setTextureParameters(texture, needFallback) {
-		const gl = this.gl;
-		const capabilities = this.capabilities;
+		const gl = this._gl;
+		const capabilities = this._capabilities;
 
 		const wrappingToGL = this._wrappingToGL;
 		const filterToGL = this._filterToGL;
@@ -12917,11 +12935,11 @@ class WebGLTextures {
 	}
 
 	_generateMipmap(target, texture, width, height) {
-		const gl = this.gl;
+		const gl = this._gl;
 
 		gl.generateMipmap(target);
 
-		const textureProperties = this.properties.get(texture);
+		const textureProperties = this.get(texture);
 		// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
 		textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
 	}
@@ -13082,37 +13100,40 @@ function domCheck(image) {
 		|| (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap);
 }
 
-class WebGLRenderBuffers {
+class WebGLRenderBuffers extends WebGLProperties {
 
-	constructor(gl, properties, capabilities, constants) {
-		this.gl = gl;
-		this.properties = properties;
-		this.capabilities = capabilities;
-		this.constants = constants;
+	constructor(passId, gl, capabilities, constants) {
+		super(passId);
+
+		this._gl = gl;
+		this._capabilities = capabilities;
+		this._constants = constants;
+
+		const that = this;
 
 		function onRenderBufferDispose(event) {
 			const renderBuffer = event.target;
 
 			renderBuffer.removeEventListener('dispose', onRenderBufferDispose);
 
-			const renderBufferProperties = properties.get(renderBuffer);
+			const renderBufferProperties = that.get(renderBuffer);
 
 			if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
 			}
 
-			properties.delete(renderBuffer);
+			that.delete(renderBuffer);
 		}
 
 		this._onRenderBufferDispose = onRenderBufferDispose;
 	}
 
 	setRenderBuffer(renderBuffer) {
-		const gl = this.gl;
-		const capabilities = this.capabilities;
-		const constants = this.constants;
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
 
-		const renderBufferProperties = this.properties.get(renderBuffer);
+		const renderBufferProperties = this.get(renderBuffer);
 
 		if (renderBufferProperties.__webglRenderbuffer === undefined) {
 			renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
@@ -13139,9 +13160,9 @@ class WebGLRenderBuffers {
 	}
 
 	setRenderBufferExternal(renderBuffer, webglRenderbuffer) {
-		const gl = this.gl;
+		const gl = this._gl;
 
-		const renderBufferProperties = this.properties.get(renderBuffer);
+		const renderBufferProperties = this.get(renderBuffer);
 
 		if (!renderBufferProperties.__external) {
 			if (renderBufferProperties.__webglRenderbuffer) {
@@ -13157,29 +13178,32 @@ class WebGLRenderBuffers {
 
 }
 
-class WebGLRenderTargets {
+class WebGLRenderTargets extends WebGLProperties {
 
-	constructor(gl, state, textures, renderBuffers, properties, capabilities, constants) {
+	constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
+		super(passId);
+
 		this._gl = gl;
 		this._state = state;
+		this._capabilities = capabilities;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
-		this._properties = properties;
-		this._capabilities = capabilities;
 		this._constants = constants;
+
+		const that = this;
 
 		function onRenderTargetDispose(event) {
 			const renderTarget = event.target;
 
 			renderTarget.removeEventListener('dispose', onRenderTargetDispose);
 
-			const renderTargetProperties = properties.get(renderTarget);
+			const renderTargetProperties = that.get(renderTarget);
 
 			if (renderTargetProperties.__webglFramebuffer) {
 				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 			}
 
-			properties.delete(renderTarget);
+			that.delete(renderTarget);
 
 			if (state.currentRenderTarget === renderTarget) {
 				state.currentRenderTarget = null;
@@ -13196,7 +13220,7 @@ class WebGLRenderTargets {
 		const renderBuffers = this._renderBuffers;
 		const capabilities = this._capabilities;
 
-		const renderTargetProperties = this._properties.get(renderTarget);
+		const renderTargetProperties = this.get(renderTarget);
 
 		renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
 
@@ -13251,7 +13275,7 @@ class WebGLRenderTargets {
 	setRenderTarget(renderTarget) {
 		const gl = this._gl;
 		const state = this._state;
-		const properties = this._properties;
+		const textures = this._textures;
 
 		let renderTargetProperties;
 
@@ -13259,7 +13283,7 @@ class WebGLRenderTargets {
 			if (renderTarget.isRenderTargetBack) {
 				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			} else {
-				renderTargetProperties = properties.get(renderTarget);
+				renderTargetProperties = this.get(renderTarget);
 
 				if (renderTargetProperties.__webglFramebuffer === undefined) {
 					this._setupRenderTarget(renderTarget);
@@ -13271,13 +13295,13 @@ class WebGLRenderTargets {
 		}
 
 		if (renderTarget.isRenderTargetCube) {
-			renderTargetProperties = properties.get(renderTarget);
+			renderTargetProperties = this.get(renderTarget);
 			const activeCubeFace = renderTarget.activeCubeFace;
 			if (renderTargetProperties.__currentActiveCubeFace !== activeCubeFace) {
 				for (const attachTarget in renderTarget._attachments) {
 					const attachment = renderTarget._attachments[attachTarget];
 					if (attachment.isTextureCube) {
-						const textureProperties = properties.get(attachment);
+						const textureProperties = textures.get(attachment);
 						gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_CUBE_MAP_POSITIVE_X + activeCubeFace, textureProperties.__webglTexture, 0);
 					}
 				}
@@ -13288,7 +13312,6 @@ class WebGLRenderTargets {
 
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 		const gl = this._gl;
-		const properties = this._properties;
 		const capabilities = this._capabilities;
 
 		if (capabilities.version < 2) {
@@ -13296,8 +13319,8 @@ class WebGLRenderTargets {
 			return;
 		}
 
-		const readBuffer = properties.get(read).__webglFramebuffer;
-		const drawBuffer = properties.get(draw).__webglFramebuffer;
+		const readBuffer = this.get(read).__webglFramebuffer;
+		const drawBuffer = this.get(draw).__webglFramebuffer;
 		gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
 		gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, drawBuffer);
 
@@ -13346,7 +13369,7 @@ class WebGLRenderTargets {
 			if (texture.isTextureCube) glTarget = gl.TEXTURE_CUBE_MAP;
 			if (texture.isTexture3D) glTarget = gl.TEXTURE_3D;
 
-			const webglTexture = this._properties.get(texture).__webglTexture;
+			const webglTexture = this._textures.get(texture).__webglTexture;
 
 			state.bindTexture(glTarget, webglTexture);
 			gl.generateMipmap(glTarget);
@@ -13386,100 +13409,53 @@ function _isPowerOfTwo(renderTarget) {
 	return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
 }
 
-// This class handles buffer creation and updating for geometries.
-// When the geometry is released, release the corresponding buffer resources and VAO.
-class WebGLGeometries {
+class WebGLBuffers extends WebGLProperties {
 
-	constructor(gl, properties, capabilities, vertexArrayBindings) {
+	constructor(passId, gl, capabilities) {
+		super(passId);
+
 		this._gl = gl;
-		this._properties = properties;
 		this._capabilities = capabilities;
-		this._vertexArrayBindings = vertexArrayBindings;
-
-		function onGeometryDispose(event) {
-			const geometry = event.target;
-			const geometryProperties = properties.get(geometry);
-
-			geometry.removeEventListener('dispose', onGeometryDispose);
-
-			if (geometry.index !== null) {
-				removeBuffer(gl, properties, geometry.index.buffer);
-			}
-
-			for (const name in geometry.attributes) {
-				removeBuffer(gl, properties, geometry.attributes[name].buffer);
-			}
-
-			for (const name in geometry.morphAttributes) {
-				const array = geometry.morphAttributes[name];
-				for (let i = 0, l = array.length; i < l; i++) {
-					removeBuffer(gl, properties, array[i].buffer);
-				}
-			}
-
-			for (const key in geometryProperties._vaos) {
-				const vao = geometryProperties[key];
-				if (vao) {
-					vertexArrayBindings.disposeVAO(vao.object);
-				}
-			}
-
-			geometryProperties._vaos = {};
-			geometryProperties.created = false;
-
-			properties.delete(geometry);
-		}
-
-		this._onGeometryDispose = onGeometryDispose;
 	}
 
-	setGeometry(geometry) {
+	setBuffer(buffer, bufferType, vertexArrayBindings) {
+		const bufferProperties = this.get(buffer);
+
+		const needCreate = bufferProperties.glBuffer === undefined;
+
+		if (!needCreate && bufferProperties.version === buffer.version) return;
+
+		// Avoid polluting the binding state
+		if (!!vertexArrayBindings) {
+			vertexArrayBindings.reset();
+		}
+
+		if (needCreate || bufferProperties.__external) {
+			// Because Buffer does not have a dispose interface at present,
+			// when the version increases, the external is automatically closed
+			this._createGLBuffer(bufferProperties, buffer, bufferType);
+		} else {
+			this._updateGLBuffer(bufferProperties.glBuffer, buffer, bufferType);
+			bufferProperties.version = buffer.version;
+		}
+	}
+
+	removeBuffer(buffer) {
 		const gl = this._gl;
-		const properties = this._properties;
-		const capabilities = this._capabilities;
-		const vertexArrayBindings = this._vertexArrayBindings;
 
-		const geometryProperties = properties.get(geometry);
+		const bufferProperties = this.get(buffer);
 
-		if (!geometryProperties.created) {
-			geometry.addEventListener('dispose', this._onGeometryDispose);
-			geometryProperties.created = true;
-			geometryProperties._vaos = {};
+		if (bufferProperties.glBuffer && !bufferProperties.__external) {
+			gl.deleteBuffer(bufferProperties.glBuffer);
 		}
 
-		if (geometry.index !== null) {
-			const buffer = geometry.index.buffer;
-			const bufferProperties = properties.get(buffer);
-
-			if (bufferProperties.glBuffer === undefined) {
-				vertexArrayBindings.reset(); // Avoid polluting the binding state
-				createGLBuffer(gl, bufferProperties, buffer, gl.ELEMENT_ARRAY_BUFFER);
-			} else if (bufferProperties.version < buffer.version) {
-				vertexArrayBindings.reset(); // Avoid polluting the binding state
-				updateGLBuffer(gl, capabilities, bufferProperties.glBuffer, buffer, gl.ELEMENT_ARRAY_BUFFER);
-				bufferProperties.version = buffer.version;
-			}
-		}
-
-		for (const name in geometry.attributes) {
-			updateBuffer(gl, properties, capabilities, geometry.attributes[name].buffer, gl.ARRAY_BUFFER);
-		}
-
-		for (const name in geometry.morphAttributes) {
-			const array = geometry.morphAttributes[name];
-			for (let i = 0, l = array.length; i < l; i++) {
-				updateBuffer(gl, properties, capabilities, array[i].buffer, gl.ARRAY_BUFFER);
-			}
-		}
-
-		return geometryProperties;
+		this.delete(buffer);
 	}
 
 	setBufferExternal(buffer, webglBuffer) {
 		const gl = this._gl;
-		const properties = this._properties;
 
-		const bufferProperties = properties.get(buffer);
+		const bufferProperties = this.get(buffer);
 
 		if (!bufferProperties.__external) {
 			if (bufferProperties.glBuffer) {
@@ -13495,6 +13471,54 @@ class WebGLGeometries {
 		bufferProperties.version = buffer.version;
 
 		bufferProperties.__external = true;
+	}
+
+	_createGLBuffer(bufferProperties, buffer, bufferType) {
+		const gl = this._gl;
+
+		const array = buffer.array;
+		const usage = buffer.usage;
+
+		const glBuffer = gl.createBuffer();
+
+		gl.bindBuffer(bufferType, glBuffer);
+		gl.bufferData(bufferType, array, usage);
+
+		buffer.onUploadCallback();
+
+		const type = getBufferType(gl, array);
+
+		bufferProperties.glBuffer = glBuffer;
+		bufferProperties.type = type;
+		bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
+		bufferProperties.version = buffer.version;
+
+		bufferProperties.__external = false;
+	}
+
+	_updateGLBuffer(glBuffer, buffer, bufferType) {
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+
+		const array = buffer.array;
+		const updateRange = buffer.updateRange;
+
+		gl.bindBuffer(bufferType, glBuffer);
+
+		if (updateRange.count === -1) {
+			// Not using update ranges
+			gl.bufferSubData(bufferType, 0, array);
+		} else {
+			if (capabilities.version >= 2) {
+				gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
+					array, updateRange.offset, updateRange.count);
+			} else {
+				gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
+					array.subarray(updateRange.offset, updateRange.offset + updateRange.count));
+			}
+
+			updateRange.count = -1; // reset range
+		}
 	}
 
 }
@@ -13525,81 +13549,130 @@ function getBufferType(gl, array) {
 	return type;
 }
 
-function createGLBuffer(gl, properties, buffer, bufferType) {
-	const array = buffer.array;
-	const usage = buffer.usage;
+// This class handles buffer creation and updating for geometries.
+class WebGLGeometries extends WebGLProperties {
 
-	const glBuffer = gl.createBuffer();
+	constructor(passId, gl, buffers, vertexArrayBindings) {
+		super(passId);
 
-	gl.bindBuffer(bufferType, glBuffer);
-	gl.bufferData(bufferType, array, usage);
+		this._gl = gl;
+		this._buffers = buffers;
+		this._vertexArrayBindings = vertexArrayBindings;
 
-	buffer.onUploadCallback();
+		const that = this;
 
-	const type = getBufferType(gl, array);
+		function onGeometryDispose(event) {
+			const geometry = event.target;
+			const geometryProperties = that.get(geometry);
 
-	properties.glBuffer = glBuffer;
-	properties.type = type;
-	properties.bytesPerElement = array.BYTES_PER_ELEMENT;
-	properties.version = buffer.version;
-}
+			geometry.removeEventListener('dispose', onGeometryDispose);
 
-function updateGLBuffer(gl, capabilities, glBuffer, buffer, bufferType) {
-	const array = buffer.array;
-	const updateRange = buffer.updateRange;
+			if (geometry.index !== null) {
+				buffers.removeBuffer(geometry.index.buffer);
+			}
 
-	gl.bindBuffer(bufferType, glBuffer);
+			for (const name in geometry.attributes) {
+				buffers.removeBuffer(geometry.attributes[name].buffer);
+			}
 
-	if (updateRange.count === -1) {
-		// Not using update ranges
-		gl.bufferSubData(bufferType, 0, array);
-	} else {
-		if (capabilities.version >= 2) {
-			gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
-				array, updateRange.offset, updateRange.count);
-		} else {
-			gl.bufferSubData(bufferType, updateRange.offset * array.BYTES_PER_ELEMENT,
-				array.subarray(updateRange.offset, updateRange.offset + updateRange.count));
+			for (const name in geometry.morphAttributes) {
+				const array = geometry.morphAttributes[name];
+				for (let i = 0, l = array.length; i < l; i++) {
+					buffers.removeBuffer(array[i].buffer);
+				}
+			}
+
+			vertexArrayBindings.releaseByGeometry(geometry);
+
+			geometryProperties.created = false;
+
+			that.delete(geometry);
 		}
 
-		updateRange.count = -1; // reset range
+		this._onGeometryDispose = onGeometryDispose;
 	}
-}
 
-function updateBuffer(gl, properties, capabilities, buffer, bufferType) {
-	const bufferProperties = properties.get(buffer);
+	setGeometry(geometry) {
+		const gl = this._gl;
+		const buffers = this._buffers;
 
-	if (bufferProperties.glBuffer === undefined) {
-		createGLBuffer(gl, bufferProperties, buffer, bufferType);
-	} else if (bufferProperties.version < buffer.version) {
-		if (!!bufferProperties.__external) {
-			delete bufferProperties.glBuffer;
-			createGLBuffer(gl, bufferProperties, buffer, bufferType);
-		} else {
-			updateGLBuffer(gl, capabilities, bufferProperties.glBuffer, buffer, bufferType);
-			bufferProperties.version = buffer.version;
+		const geometryProperties = this.get(geometry);
+
+		if (!geometryProperties.created) {
+			geometry.addEventListener('dispose', this._onGeometryDispose);
+			geometryProperties.created = true;
 		}
+
+		if (geometry.index !== null) {
+			buffers.setBuffer(geometry.index.buffer, gl.ELEMENT_ARRAY_BUFFER, this._vertexArrayBindings);
+		}
+
+		for (const name in geometry.attributes) {
+			buffers.setBuffer(geometry.attributes[name].buffer, gl.ARRAY_BUFFER);
+		}
+
+		for (const name in geometry.morphAttributes) {
+			const array = geometry.morphAttributes[name];
+			for (let i = 0, l = array.length; i < l; i++) {
+				buffers.setBuffer(array[i].buffer, gl.ARRAY_BUFFER);
+			}
+		}
+
+		return geometryProperties;
 	}
+
 }
 
-function removeBuffer(gl, properties, buffer) {
-	const bufferProperties = properties.get(buffer);
+class WebGLMaterials extends WebGLProperties {
 
-	if (bufferProperties.glBuffer && !bufferProperties.__external) {
-		gl.deleteBuffer(bufferProperties.glBuffer);
+	constructor(passId, programs) {
+		super(passId);
+
+		const that = this;
+
+		function onMaterialDispose(event) {
+			const material = event.target;
+			const materialProperties = that.get(material);
+
+			material.removeEventListener('dispose', onMaterialDispose);
+
+			const program = materialProperties.program;
+
+			if (program !== undefined) {
+				programs.releaseProgram(program);
+				// TODO release vaos
+			}
+
+			that.delete(material);
+		}
+
+		this._onMaterialDispose = onMaterialDispose;
 	}
 
-	properties.delete(buffer);
+	setMaterial(material) {
+		const materialProperties = this.get(material);
+
+		if (materialProperties.program === undefined) {
+			material.addEventListener('dispose', this._onMaterialDispose);
+		}
+
+		// Set program in render pass
+
+		return materialProperties;
+	}
+
 }
 
 const emptyString = "";
 
-class WebGLVertexArrayBindings {
+class WebGLVertexArrayBindings extends WebGLProperties {
 
-	constructor(gl, properties, capabilities) {
+	constructor(passId, gl, capabilities, buffers) {
+		super(passId);
+
 		this._gl = gl;
-		this._properties = properties;
 		this._capabilities = capabilities;
+		this._buffers = buffers;
 
 		this._isWebGL2 = capabilities.version >= 2;
 		this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
@@ -13609,18 +13682,20 @@ class WebGLVertexArrayBindings {
 	}
 
 	setup(object, geometry, program) {
-		const geometryProperties = this._properties.get(geometry);
-
 		if (object.morphTargetInfluences) {
 			this.reset();
 			this._setupVertexAttributes(program, geometry);
 			this._currentGeometryProgram = emptyString;
 		} else if (this._isWebGL2 || this._vaoExt) { // use VAO
-			let vao;
-			if (!geometryProperties._vaos[program.id]) {
+			const geometryProperties = this.get(geometry);
+
+			if (geometryProperties._vaos === undefined) {
+				geometryProperties._vaos = {};
+			}
+
+			let vao = geometryProperties._vaos[program.id];
+			if (!vao) {
 				vao = geometryProperties._vaos[program.id] = { version: -1, object: this._createVAO() };
-			} else {
-				vao = geometryProperties._vaos[program.id];
 			}
 
 			this._bindVAO(vao.object);
@@ -13638,11 +13713,18 @@ class WebGLVertexArrayBindings {
 		}
 	}
 
-	disposeVAO(vao) {
-		if (this._isWebGL2) {
-			this._gl.deleteVertexArray(vao);
-		} else if (this._vaoExt) {
-			this._vaoExt.deleteVertexArrayOES(vao);
+	releaseByGeometry(geometry) {
+		const geometryProperties = this.get(geometry);
+
+		if (geometryProperties._vaos) {
+			for (const key in geometryProperties._vaos) {
+				const vao = geometryProperties[key];
+				if (vao) {
+					this._disposeVAO(vao.object);
+				}
+			}
+
+			geometryProperties._vaos = {};
 		}
 	}
 
@@ -13683,12 +13765,20 @@ class WebGLVertexArrayBindings {
 		}
 	}
 
+	_disposeVAO(vao) {
+		if (this._isWebGL2) {
+			this._gl.deleteVertexArray(vao);
+		} else if (this._vaoExt) {
+			this._vaoExt.deleteVertexArrayOES(vao);
+		}
+	}
+
 	_setupVertexAttributes(program, geometry) {
 		const gl = this._gl;
 		const isWebGL2 = this._isWebGL2;
 		const attributes = program.getAttributes();
-		const properties = this._properties;
 		const capabilities = this._capabilities;
+		const buffers = this._buffers;
 
 		for (const key in attributes) {
 			const programAttribute = attributes[key];
@@ -13701,7 +13791,7 @@ class WebGLVertexArrayBindings {
 				}
 
 				const buffer = geometryAttribute.buffer;
-				const bufferProperties = properties.get(buffer);
+				const bufferProperties = buffers.get(buffer);
 
 				const type = bufferProperties.type;
 				if (programAttribute.format !== type) ;
@@ -13749,27 +13839,27 @@ class WebGLVertexArrayBindings {
 
 		// bind index if could
 		if (geometry.index) {
-			const indexBufferProperties = properties.get(geometry.index.buffer);
+			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferProperties.glBuffer);
 		}
 	}
 
 }
 
-class WebGLQueries {
+class WebGLQueries extends WebGLProperties {
 
-	constructor(gl, capabilities) {
+	constructor(passId, gl, capabilities) {
+		super(passId);
+
 		this._gl = gl;
 		this._capabilities = capabilities;
 
 		const timerQuery = capabilities.timerQuery;
-
-		this._map = new WeakMap();
+		const that = this;
 
 		const onQueryDispose = (event) => {
 			const query = event.target;
-
-			const queryProperties = this._map.get(query);
+			const queryProperties = that.get(query);
 
 			query.removeEventListener('dispose', onQueryDispose);
 
@@ -13781,7 +13871,7 @@ class WebGLQueries {
 				}
 			}
 
-			this._map.delete(query);
+			that.delete(query);
 		};
 
 		this._onQueryDispose = onQueryDispose;
@@ -13793,35 +13883,27 @@ class WebGLQueries {
 		};
 	}
 
-	get(query) {
+	_get(query) {
 		const capabilities = this._capabilities;
-		const map = this._map;
 
-		let queryProperties = map.get(query);
+		const queryProperties = this.get(query);
 
-		if (queryProperties === undefined) {
-			queryProperties = {};
+		if (queryProperties._webglQuery === undefined) {
 			query.addEventListener('dispose', this._onQueryDispose);
 
 			queryProperties._webglQuery = capabilities.version > 1 ? this._gl.createQuery() : capabilities.timerQuery.createQueryEXT();
 			queryProperties._target = null;
 			queryProperties._result = null;
-
-			map.set(query, queryProperties);
 		}
 
 		return queryProperties;
-	}
-
-	clear() {
-		this._map = new WeakMap();
 	}
 
 	begin(query, target) {
 		const capabilities = this._capabilities;
 		const typeToGL = this._typeToGL;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (capabilities.version > 1) {
 			this._gl.beginQuery(typeToGL[target], queryProperties._webglQuery);
@@ -13837,7 +13919,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const typeToGL = this._typeToGL;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (capabilities.version > 1) {
 			this._gl.endQuery(typeToGL[queryProperties._target]);
@@ -13849,7 +13931,7 @@ class WebGLQueries {
 	counter(query) {
 		const timerQuery = this._capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		timerQuery.queryCounterEXT(queryProperties._webglQuery, timerQuery.TIMESTAMP_EXT);
 
@@ -13862,7 +13944,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const timerQuery = capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		let available;
 		if (capabilities.version > 1) {
@@ -13883,7 +13965,7 @@ class WebGLQueries {
 		const capabilities = this._capabilities;
 		const timerQuery = capabilities.timerQuery;
 
-		const queryProperties = this.get(query);
+		const queryProperties = this._get(query);
 
 		if (queryProperties._result === null) {
 			if (capabilities.version > 1) {
@@ -13920,21 +14002,7 @@ function defaultIfRender(renderable) {
 
 function noop() { }
 
-function onMaterialDispose(event) {
-	const material = event.target;
-	const materialProperties = this._properties.get(material);
-
-	material.removeEventListener('dispose', onMaterialDispose, this);
-
-	const program = materialProperties.program;
-
-	if (program !== undefined) {
-		// release program reference
-		this._programs.releaseProgram(program);
-	}
-
-	this._properties.delete(material);
-}
+let _renderPassId = 0;
 
 /**
  * WebGL Render Pass
@@ -13946,19 +14014,23 @@ class WebGLRenderPass {
 	 * @param {WebGLRenderingContext} gl
 	 */
 	constructor(gl) {
-		this.gl = gl;
+		const id = _renderPassId++;
 
-		const properties = new WebGLProperties();
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(gl, properties, capabilities);
-		const textures = new WebGLTextures(gl, state, properties, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(gl, properties, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(gl, state, textures, renderBuffers, properties, capabilities, constants);
-		const geometries = new WebGLGeometries(gl, properties, capabilities, vertexArrayBindings);
+		const textures = new WebGLTextures(id, gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(id, gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const queries = new WebGLQueries(gl, capabilities);
+		const materials = new WebGLMaterials(id, programs);
+		const queries = new WebGLQueries(id, gl, capabilities);
+
+		this.id = id;
+		this.gl = gl;
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
@@ -13966,12 +14038,13 @@ class WebGLRenderPass {
 		 */
 		this.capabilities = capabilities;
 
-		this._properties = properties;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
 		this._renderTargets = renderTargets;
+		this._buffers = buffers;
 		this._geometries = geometries;
 		this._programs = programs;
+		this._materials = materials;
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
 		this._queries = queries;
@@ -14091,7 +14164,7 @@ class WebGLRenderPass {
 	 * @param {WebGLBuffer} webglBuffer
 	 */
 	setBufferExternal(buffer, webglBuffer) {
-		this._geometries.setBufferExternal(buffer, webglBuffer);
+		this._buffers.setBufferExternal(buffer, webglBuffer);
 	}
 
 	/**
@@ -14207,7 +14280,7 @@ class WebGLRenderPass {
 
 		// Check material version
 
-		const materialProperties = this._properties.get(material);
+		const materialProperties = this._materials.setMaterial(material);
 		if (material.needsUpdate === false) {
 			if (materialProperties.program === undefined) {
 				material.needsUpdate = true;
@@ -14241,10 +14314,6 @@ class WebGLRenderPass {
 		// Update program if needed.
 
 		if (material.needsUpdate) {
-			if (materialProperties.program === undefined) {
-				material.addEventListener('dispose', onMaterialDispose, this);
-			}
-
 			const oldProgram = materialProperties.program;
 			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 			if (oldProgram) {
@@ -14358,20 +14427,11 @@ class WebGLRenderPass {
 
 			// other internal uniforms
 			if (internalGroup === 5) {
-				switch (key) {
-					case "envMap":
-						uniform.set(envMap, textures);
-						break;
-					case "u_EnvMap_Flip":
-						uniform.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1);
-						break;
-					case "maxMipLevel":
-						uniform.set(this._properties.get(envMap).__maxMipLevel || 8); // TODO replace 8 with real mip level
-						break;
-					case "u_PointScale":
-						const scale = currentRenderTarget.height * 0.5; // three.js do this
-						uniform.set(scale);
-						break;
+				if (key === 'u_PointScale') {
+					const scale = currentRenderTarget.height * 0.5; // three.js do this
+					uniform.set(scale);
+				} else {
+					uniform.internalFun(envMap, textures);
 				}
 				continue;
 			}
@@ -14565,8 +14625,8 @@ class WebGLRenderPass {
 
 	_draw(geometry, material, group, renderInfo) {
 		const gl = this.gl;
-		const properties = this._properties;
 		const capabilities = this.capabilities;
+		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
 
@@ -14581,7 +14641,7 @@ class WebGLRenderPass {
 		const useInstancing = instanceCount >= 0;
 
 		if (useIndexBuffer) {
-			const indexBufferProperties = properties.get(geometry.index.buffer);
+			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			const bytesPerElement = indexBufferProperties.bytesPerElement;
 			const type = indexBufferProperties.type;
 
@@ -17449,6 +17509,11 @@ Object.defineProperties(WebGLRenderPass.prototype, {
 
 WebGLVertexArrayBindings.prototype.resetBinding = function() {
 	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
+};
+
+WebGLGeometries.prototype.setBufferExternal = function(buffer, webglBuffer) {
+	console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderPass.setBufferExternal instead.");
+	this._buffers.setBufferExternal(buffer, webglBuffer);
 };
 
 // Enum for WebGL Texture Type.
