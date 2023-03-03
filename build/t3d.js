@@ -11979,6 +11979,7 @@
 			return properties;
 		};
 		_proto.delete = function _delete(object) {
+			var key = this._key;
 			var properties = object[key];
 			if (properties) {
 				this._count--;

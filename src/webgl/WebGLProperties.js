@@ -17,6 +17,7 @@ class WebGLProperties {
 	}
 
 	delete(object) {
+		const key = this._key;
 		const properties = object[key];
 		if (properties) {
 			this._count--;
