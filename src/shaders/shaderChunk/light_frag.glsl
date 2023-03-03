@@ -21,6 +21,21 @@
     roughness += geometryRoughness;
 
     roughness = min(roughness, 1.0);
+
+    #ifdef USE_CLEARCOAT
+        float clearcoat = u_Clearcoat;
+        float clearcoatRoughness = u_ClearcoatRoughness;
+        #ifdef USE_CLEARCOATMAP
+		    clearcoat *= texture2D(clearcoatMap, v_Uv).x;
+        #endif
+        #ifdef USE_CLEARCOAT_ROUGHNESSMAP
+		    clearcoatRoughness *= texture2D(clearcoatRoughnessMap, v_Uv).y;
+	    #endif
+        clearcoat = saturate(clearcoat);
+        clearcoatRoughness = max(clearcoatRoughness, 0.0525);
+	    clearcoatRoughness += geometryRoughness;
+	    clearcoatRoughness = min(clearcoatRoughness, 1.0);
+    #endif
 #else
     vec3 diffuseColor = outColor.xyz;
     #ifdef USE_PHONG
@@ -34,6 +49,13 @@
     float falloff;
     float dotNL;
     vec3 irradiance;
+
+    float clearcoatDHR;
+
+    #ifdef USE_CLEARCOAT
+        float ccDotNL;
+        vec3 ccIrradiance;
+    #endif
 
     #if NUM_DIR_LIGHTS > 0
 
@@ -53,14 +75,23 @@
             dotNL = saturate(dot(N, L));
             irradiance = u_Directional[i].color * falloff * dotNL * PI;
 
-            reflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert(diffuseColor);
+            #ifdef USE_CLEARCOAT        
+                ccDotNL = saturate(dot(clearcoatNormal, L));
+                ccIrradiance = ccDotNL * u_Directional[i].color * falloff  * PI;
+                clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);
+                reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);
+            #else
+		        clearcoatDHR = 0.0;
+	        #endif
+
+            reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);
 
             #ifdef USE_PHONG
                 reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;
             #endif
 
             #ifdef USE_PBR
-                reflectedLight.directSpecular += irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
+                reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
             #endif
         }
         #pragma unroll_loop_end
@@ -84,14 +115,23 @@
             dotNL = saturate(dot(N, L));
             irradiance = u_Point[i].color * falloff * dotNL * PI;
 
-            reflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert(diffuseColor);
+            #ifdef USE_CLEARCOAT        
+                ccDotNL = saturate(dot(clearcoatNormal, L));
+                ccIrradiance = ccDotNL *  u_Point[i].color * falloff  * PI;
+                clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);
+                reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);
+            #else
+		        clearcoatDHR = 0.0;
+	        #endif
+
+            reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);
 
             #ifdef USE_PHONG
                 reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;
             #endif
 
             #ifdef USE_PBR
-                reflectedLight.directSpecular += irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
+                reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
             #endif
         }
         #pragma unroll_loop_end
@@ -122,14 +162,23 @@
             dotNL = saturate(dot(N, L));
             irradiance = u_Spot[i].color * falloff * dotNL * PI;
 
-            reflectedLight.directDiffuse += irradiance * BRDF_Diffuse_Lambert(diffuseColor);
+            #ifdef USE_CLEARCOAT        
+                ccDotNL = saturate(dot(clearcoatNormal, L));
+                ccIrradiance = ccDotNL *  u_Spot[i].color * falloff  * PI;
+                clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);
+                reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);
+            #else
+		        clearcoatDHR = 0.0;
+	        #endif
+
+            reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);
 
             #ifdef USE_PHONG
                 reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;
             #endif
 
             #ifdef USE_PBR
-                reflectedLight.directSpecular += irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
+                reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
             #endif
         }
         #pragma unroll_loop_end
@@ -138,6 +187,8 @@
     vec3 iblIrradiance = vec3(0., 0., 0.);
     vec3 indirectIrradiance = vec3(0., 0., 0.);
     vec3 indirectRadiance = vec3(0., 0., 0.);
+
+    vec3 clearcoatRadiance = vec3(0., 0., 0.);
 
     #ifdef USE_AMBIENT_LIGHT
         indirectIrradiance += u_AmbientLightColor * PI;
@@ -169,6 +220,11 @@
         #endif
         iblIrradiance += getLightProbeIndirectIrradiance(maxMipLevel, N);
         indirectRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(roughness), maxMipLevel, envDir);
+
+        #ifdef USE_CLEARCOAT
+            vec3 clearcoatDir = reflect(normalize(v_modelPos - u_CameraPosition), clearcoatNormal);
+		    clearcoatRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(clearcoatRoughness), maxMipLevel, clearcoatDir);
+	    #endif
     #endif
 
     reflectedLight.indirectDiffuse += indirectIrradiance * BRDF_Diffuse_Lambert(diffuseColor);
@@ -176,7 +232,14 @@
     #if defined(USE_ENV_MAP) && defined(USE_PBR)
         // reflectedLight.indirectSpecular += indirectRadiance * BRDF_Specular_GGX_Environment(N, V, specularColor, roughness);
 
-        float clearcoatDHR = 0.0; // TODO for clearcoat
+        #ifdef USE_CLEARCOAT
+            float ccDotNV = saturate(dot(clearcoatNormal, V));
+            reflectedLight.indirectSpecular += clearcoatRadiance * clearcoat * BRDF_Specular_GGX_Environment(clearcoatNormal, V, specularColor, clearcoatRoughness);
+            ccDotNL = ccDotNV;
+            clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);
+        #else
+            clearcoatDHR = 0.0;
+        #endif
 
         float clearcoatInv = 1.0 - clearcoatDHR;
 
@@ -196,5 +259,4 @@
 
         reflectedLight.indirectDiffuse += diffuse * cosineWeightedIrradiance;
     #endif
-
 #endif
