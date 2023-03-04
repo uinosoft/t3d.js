@@ -1,0 +1,11 @@
+Model Information:
+* title:	Gilberto A Robot Arm
+* source:	https://sketchfab.com/3d-models/gilberto-a-robot-arm-362d32e0b32945ae8174ebf71dae97f0
+* author:	GilbertoA (https://sketchfab.com/GilbertoA)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Gilberto A Robot Arm" (https://sketchfab.com/3d-models/gilberto-a-robot-arm-362d32e0b32945ae8174ebf71dae97f0) by GilbertoA (https://sketchfab.com/GilbertoA) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
