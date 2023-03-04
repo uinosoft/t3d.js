@@ -16940,6 +16940,4 @@
 	exports.nearestPowerOfTwo = nearestPowerOfTwo;
 	exports.nextPowerOfTwo = nextPowerOfTwo;
 
-	Object.defineProperty(exports, '__esModule', { value: true });
-
 }));

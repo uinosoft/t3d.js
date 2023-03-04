@@ -1,5 +1,5 @@
-import babel from '@rollup/plugin-babel';
-import { terser } from 'rollup-plugin-terser';
+import { babel } from '@rollup/plugin-babel';
+import terser from '@rollup/plugin-terser';
 
 const babelrc = {
 	presets: [
