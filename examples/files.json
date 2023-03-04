@@ -176,6 +176,7 @@
 		"lab_earth",
 		"lab_ocean",
 		"lab_ground",
-		"lab_texture_variation"
+		"lab_texture_variation",
+		"lab_ik"
 	]
 }
