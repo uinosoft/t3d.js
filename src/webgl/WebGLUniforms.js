@@ -239,11 +239,9 @@ function generateSetter(uniform, pureArray) {
 				}
 			}
 			uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1]) {
-					gl.uniform2fv(location, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-				}
+				if (arraysEqual(cache, value)) return;
+				gl.uniform2fv(location, value);
+				copyArray(cache, value);
 			}
 			break;
 		case gl.BOOL_VEC2:
@@ -256,11 +254,9 @@ function generateSetter(uniform, pureArray) {
 				}
 			}
 			uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1]) {
-					gl.uniform2iv(location, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-				}
+				if (arraysEqual(cache, value)) return;
+				gl.uniform2iv(location, value);
+				copyArray(cache, value);
 			}
 			break;
 		case gl.FLOAT_VEC3:
@@ -273,12 +269,9 @@ function generateSetter(uniform, pureArray) {
 				}
 			}
 			uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2]) {
-					gl.uniform3fv(location, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-				}
+				if (arraysEqual(cache, value)) return;
+				gl.uniform3fv(location, value);
+				copyArray(cache, value);
 			}
 			break;
 		case gl.BOOL_VEC3:
@@ -292,12 +285,9 @@ function generateSetter(uniform, pureArray) {
 				}
 			}
 			uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2]) {
-					gl.uniform3iv(location, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-				}
+				if (arraysEqual(cache, value)) return;
+				gl.uniform3iv(location, value);
+				copyArray(cache, value);
 			}
 			break;
 		case gl.FLOAT_VEC4:
@@ -311,13 +301,9 @@ function generateSetter(uniform, pureArray) {
 				}
 			}
 			uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]) {
-					gl.uniform4fv(location, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-					cache[3] = value[3];
-				}
+				if (arraysEqual(cache, value)) return;
+				gl.uniform4fv(location, value);
+				copyArray(cache, value);
 			}
 			break;
 		case gl.BOOL_VEC4:
@@ -332,68 +318,88 @@ function generateSetter(uniform, pureArray) {
 				}
 			}
 			uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]) {
-					gl.uniform4iv(location, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-					cache[3] = value[3];
-				}
+				if (arraysEqual(cache, value)) return;
+				gl.uniform4iv(location, value);
+				copyArray(cache, value);
 			}
 			break;
 
 		case gl.FLOAT_MAT2:
-			uniform.setValue = uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]) {
+			if (pureArray) {
+				uniform.setValue = uniform.set = function(value) {
+					if (arraysEqual(cache, value)) return;
 					gl.uniformMatrix2fv(location, false, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-					cache[3] = value[3];
+					copyArray(cache, value);
+				}
+			} else {
+				uniform.setValue = uniform.set = function(value) {
+					if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]) {
+						gl.uniformMatrix2fv(location, false, value);
+						cache[0] = value[0];
+						cache[1] = value[1];
+						cache[2] = value[2];
+						cache[3] = value[3];
+					}
 				}
 			}
 			break;
 		case gl.FLOAT_MAT3:
-			uniform.setValue = uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2]
-					|| cache[3] !== value[3] || cache[4] !== value[4] || cache[5] !== value[5]
-					|| cache[6] !== value[6] || cache[7] !== value[7] || cache[8] !== value[8]) {
+			if (pureArray) {
+				uniform.setValue = uniform.set = function(value) {
+					if (arraysEqual(cache, value)) return;
 					gl.uniformMatrix3fv(location, false, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-					cache[3] = value[3];
-					cache[4] = value[4];
-					cache[5] = value[5];
-					cache[6] = value[6];
-					cache[7] = value[7];
-					cache[8] = value[8];
+					copyArray(cache, value);
+				}
+			} else {
+				uniform.setValue = uniform.set = function(value) {
+					if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2]
+						|| cache[3] !== value[3] || cache[4] !== value[4] || cache[5] !== value[5]
+						|| cache[6] !== value[6] || cache[7] !== value[7] || cache[8] !== value[8]) {
+						gl.uniformMatrix3fv(location, false, value);
+						cache[0] = value[0];
+						cache[1] = value[1];
+						cache[2] = value[2];
+						cache[3] = value[3];
+						cache[4] = value[4];
+						cache[5] = value[5];
+						cache[6] = value[6];
+						cache[7] = value[7];
+						cache[8] = value[8];
+					}
 				}
 			}
 			break;
 		case gl.FLOAT_MAT4:
-			uniform.setValue = uniform.set = function(value) {
-				if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]
-					|| cache[4] !== value[4] || cache[5] !== value[5] || cache[6] !== value[6] || cache[7] !== value[7]
-					|| cache[8] !== value[8] || cache[9] !== value[9] || cache[10] !== value[10] || cache[11] !== value[11]
-					|| cache[12] !== value[12] || cache[13] !== value[13] || cache[14] !== value[14] || cache[15] !== value[15]) {
+			if (pureArray) {
+				uniform.setValue = uniform.set = function(value) {
+					if (arraysEqual(cache, value)) return;
 					gl.uniformMatrix4fv(location, false, value);
-					cache[0] = value[0];
-					cache[1] = value[1];
-					cache[2] = value[2];
-					cache[3] = value[3];
-					cache[4] = value[4];
-					cache[5] = value[5];
-					cache[6] = value[6];
-					cache[7] = value[7];
-					cache[8] = value[8];
-					cache[9] = value[9];
-					cache[10] = value[10];
-					cache[11] = value[11];
-					cache[12] = value[12];
-					cache[13] = value[13];
-					cache[14] = value[14];
-					cache[15] = value[15];
+					copyArray(cache, value);
+				}
+			} else {
+				uniform.setValue = uniform.set = function(value) {
+					if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]
+						|| cache[4] !== value[4] || cache[5] !== value[5] || cache[6] !== value[6] || cache[7] !== value[7]
+						|| cache[8] !== value[8] || cache[9] !== value[9] || cache[10] !== value[10] || cache[11] !== value[11]
+						|| cache[12] !== value[12] || cache[13] !== value[13] || cache[14] !== value[14] || cache[15] !== value[15]) {
+						gl.uniformMatrix4fv(location, false, value);
+						cache[0] = value[0];
+						cache[1] = value[1];
+						cache[2] = value[2];
+						cache[3] = value[3];
+						cache[4] = value[4];
+						cache[5] = value[5];
+						cache[6] = value[6];
+						cache[7] = value[7];
+						cache[8] = value[8];
+						cache[9] = value[9];
+						cache[10] = value[10];
+						cache[11] = value[11];
+						cache[12] = value[12];
+						cache[13] = value[13];
+						cache[14] = value[14];
+						cache[15] = value[15];
+					}
 				}
 			}
 			break;
