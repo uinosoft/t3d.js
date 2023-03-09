@@ -94,6 +94,7 @@ class BoxHelper extends Mesh {
 BoxHelper.prototype.isBoxHelper = true;
 
 const _box3_1 = new Box3();
+const _box3_2 = new Box3();
 const _mat4_1 = new Matrix4();
 
 function setFromObject(box, object) {
@@ -110,10 +111,10 @@ function expandByObject(box, object, root) {
 
 		getMatrixFromRoot(object, root, _mat4_1);
 
-		box.copy(geometry.boundingBox);
-		box.applyMatrix4(_mat4_1);
+		_box3_2.copy(geometry.boundingBox);
+		_box3_2.applyMatrix4(_mat4_1);
 
-		box.expandByBox3(box);
+		box.expandByBox3(_box3_2);
 	}
 
 	const children = object.children;
