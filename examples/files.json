@@ -66,6 +66,7 @@
 		"material_shadermaterial",
 		"material_shader_sky",
 		"material_shader_water",
+		"material_shader_water_pbr",
 		"material_shader_xray",
 		"material_shader_extend",
 		"material_flatshading",

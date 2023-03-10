@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - pbr water</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - pbr water
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
+		import { Clock } from './jsm/Clock.js';
+		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const params = {
+			scroll: [1.2, 0],
+			timeScaler: 100,
+			strength: 1,
+			debug: false,
+
+			phi: 60,
+			theta: 0
+		};
+
+		function updateSpherePosition() {
+			spherical.radius = 1;
+			spherical.phi = params.phi / 180 * Math.PI;
+			spherical.theta = params.theta / 180 * Math.PI;
+			directionalLight.position.setFromSpherical(spherical);
+			directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		}
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const renderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		const fog = new t3d.Fog(0xd7cbb1, 500, 1000);
+		const fogExp2 = new t3d.FogExp2(0xd7cbb1, 0.0008);
+		scene.fog = fog;
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 150;
+		directionalLight.shadow.mapSize.set(1024, 1024);
+		directionalLight.shadow.bias = -0.001;
+		directionalLight.shadow.normalBias = 0.2;
+		directionalLight.shadow.cameraNear = 10;
+		scene.add(directionalLight);
+
+		// add light for the specular of the top view
+		const directionalLight2 = new t3d.DirectionalLight(0xffffff, 0.2);
+		directionalLight2.position.set(0, 100, 0);
+		directionalLight2.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight2);
+
+		const spherical = new t3d.Spherical();
+		updateSpherePosition();
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/skyboxsun25deg/px.jpg",
+			"resources/skybox/skyboxsun25deg/nx.jpg",
+			"resources/skybox/skyboxsun25deg/py.jpg",
+			"resources/skybox/skyboxsun25deg/ny.jpg",
+			"resources/skybox/skyboxsun25deg/pz.jpg",
+			"resources/skybox/skyboxsun25deg/nz.jpg"
+		]);
+		const sky_box = new SkyBox(cube_texture);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 140, -300);
+		camera.lookAt(new t3d.Vector3(-0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
+		controller.enablePan = false;
+		controller.maxPolarAngle = Math.PI / 2 - Math.PI / 9;
+		controller.maxDistance = 700;
+		controller.minDistance = 100;
+		window.camera = camera;
+		camera.add(sky_box);
+		scene.add(camera);
+
+		const texture = new Texture2DLoader().load('./resources/waternormals.jpg');
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		texture.anisotropy = 16;
+
+		let vertexShader = t3d.ShaderLib.pbr_vert;
+		let fragmentShader = t3d.ShaderLib.pbr_frag;
+
+		// pars
+		fragmentShader = fragmentShader.replace(`#include <clippingPlanes_pars_frag>`, `
+			#include <clippingPlanes_pars_frag>
+
+			#ifdef USE_NORMAL_MAP
+				uniform float time;
+				uniform vec4 flow1;	// .xy is x-direction, y-direction velocity; .z is uv scale size; .w is normal specific gravity.
+				uniform vec4 flow2;
+				uniform vec4 flow3;
+				uniform vec4 flow4;
+
+				vec4 getNoise(vec2 uv) {
+					vec2 uv1 = (uv + time * flow1.xy) * flow1.z;
+					vec2 uv2 = (uv + time * flow2.xy) * flow2.z;
+					vec2 uv3 = (uv + time * flow3.xy) * flow3.z;
+					vec2 uv4 = (uv + time * flow4.xy) * flow4.z;
+					vec4 noise = texture2D(normalMap, uv1) * flow1 .w
+					+ texture2D(normalMap, uv2) * flow2.w
+					+ texture2D(normalMap, uv3) * flow3.w
+					+ texture2D(normalMap, uv4) * flow4.w;
+
+					return noise;
+				}
+			#endif
+		`);
+
+		// frag code
+		fragmentShader = fragmentShader.replace(`#include <normal_frag>`, `
+			// Use v_modelPos from modelPos_pars_frag
+
+			#ifdef FLAT_SHADED
+				vec3 fdx = dFdx(v_modelPos);
+				vec3 fdy = dFdy(v_modelPos);
+				vec3 N = normalize(cross(fdx, fdy));
+			#else
+				vec3 N = normalize(v_Normal);
+				#ifdef DOUBLE_SIDED
+					N = N * (float(gl_FrontFacing) * 2.0 - 1.0);
+				#endif
+			#endif
+
+			#ifdef USE_TBN
+				vec3 tangent = normalize(v_Tangent);
+				vec3 bitangent = normalize(v_Bitangent);
+				#ifdef DOUBLE_SIDED
+					tangent = tangent * (float(gl_FrontFacing) * 2.0 - 1.0);
+					bitangent = bitangent * (float(gl_FrontFacing) * 2.0 - 1.0);
+				#endif
+				mat3 tspace = mat3(tangent, bitangent, N);
+			#endif
+
+			// non perturbed normal
+			vec3 geometryNormal = N;
+
+			#ifdef USE_NORMAL_MAP
+				vec3 mapN = getNoise(v_Uv).rgb * 2.0 - 1.0;	// @water-modify
+				mapN.xy *= normalScale;
+				#ifdef USE_TBN
+					N = normalize(tspace * mapN);
+				#else
+					mapN.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);
+					N = normalize(tsn(N, v_modelPos, v_Uv) * mapN);
+				#endif
+			#elif defined(USE_BUMPMAP)
+				N = perturbNormalArb(v_modelPos, N, dHdxy_fwd(v_Uv));
+			#endif
+
+			#ifdef USE_CLEARCOAT
+				vec3 clearcoatNormal = geometryNormal;
+			#endif
+
+			#ifdef USE_CLEARCOAT_NORMALMAP
+				vec3 clearcoatMapN = texture2D(clearcoatNormalMap, v_Uv).xyz * 2.0 - 1.0;
+				clearcoatMapN.xy *= clearcoatNormalScale;
+
+				#ifdef USE_TBN
+					clearcoatNormal = normalize(tspace * clearcoatMapN);
+				#else
+					clearcoatMapN.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);
+					clearcoatNormal = normalize(tsn(clearcoatNormal, v_modelPos, v_Uv) * clearcoatMapN);
+				#endif
+			#endif
+		`);
+
+		fragmentShader = fragmentShader.replace(`#include <dithering_frag>`, `
+			#include <dithering_frag>
+
+			#ifdef USE_DEBUG
+				gl_FragColor = vec4(N, 1.0);
+			#endif
+		`);
+
+		const waterMaterial = new t3d.PBRMaterial();
+		waterMaterial.type = t3d.MATERIAL_TYPE.SHADER;
+		waterMaterial.uniforms = {
+			'time': 0.0,
+			'flow1': [0.059, 0.034, 0.0097, 1 / 4],
+			'flow2': [0.053, -0.032, 0.0093, 1 / 4],
+			'flow3': [0.01, 0.011, 0.0001, 1 / 4],
+			'flow4': [-0.009, 0.009, 0.0053, 1 / 4],
+		};
+		waterMaterial.shaderName = "waterShader";
+		waterMaterial.vertexShader = vertexShader;
+		waterMaterial.fragmentShader = fragmentShader;
+		waterMaterial.clearcoat = 0.103;
+		waterMaterial.clearcoatRoughness = 0.35;
+		waterMaterial.metalness = 0;
+		waterMaterial.roughness = 0.1;
+		waterMaterial.envMap = cube_texture;
+		waterMaterial.normalMap = texture;
+		waterMaterial.diffuse.setHex(0x064569);
+		waterMaterial.transparent = true;
+
+		const waterGeometry = new t3d.PlaneGeometry(1000, 1000);
+		const uvArray = waterGeometry.getAttribute('a_Uv').buffer.array;
+		for (let i = 0; i < uvArray.length; i++) {
+			uvArray[i] *= 1000;
+		}
+		const water = new t3d.Mesh(waterGeometry, waterMaterial);
+		water.position.set(0, 0, 0);
+		water.scale.set(3, 3, 3);
+		water.receiveShadow = true;
+		scene.add(water);
+
+		const gui = new GUI();
+		gui.close();
+		
+		const waterFolder = gui.addFolder('water');
+		waterFolder.addColor(waterMaterial, 'diffuse');
+		waterFolder.add(waterMaterial, 'clearcoat', 0, 1, .001).onChange(() => waterMaterial.needsUpdate = true);
+		waterFolder.add(waterMaterial, 'clearcoatRoughness', 0, 1, .001);
+		waterFolder.add(waterMaterial, 'metalness', 0, 1, .001);
+		waterFolder.add(waterMaterial, 'roughness', 0, 1, .001);
+		waterFolder.add(waterMaterial, 'opacity', 0, 1, .001);
+		waterFolder.add(params, 'strength', 0, 1, .001).onChange((value) => {
+			waterMaterial.normalScale.set(value, value);
+		});
+
+		const uniforms = waterMaterial.uniforms;
+		waterFolder.add(uniforms.flow1, 2, 0.0001, 0.1, 0.0001).name('size1');
+		waterFolder.add(uniforms.flow2, 2, 0.0001, 0.1, 0.0001).name('size2');
+		waterFolder.add(uniforms.flow3, 2, 0.0001, 0.1, 0.0001).name('size3');
+		waterFolder.add(uniforms.flow4, 2, 0.0001, 0.1, 0.0001).name('size4');
+		waterFolder.add(params, 'debug').onChange((value) => {
+			if (value) {
+				waterMaterial.defines.USE_DEBUG = true;
+				waterMaterial.needsUpdate = true;
+			} else {
+				waterMaterial.defines.USE_DEBUG = false;
+				waterMaterial.needsUpdate = true;
+			}
+		});
+
+		const flowFolder = gui.addFolder('flow');
+		flowFolder.add(uniforms.flow1, 0, -1, 1., 0.001).name("flowSpeed1_X");
+		flowFolder.add(uniforms.flow1, 1, -1, 1, 0.001).name("flowSpeed1_Y");
+		flowFolder.add(uniforms.flow2, 0, -1, 1, 0.001).name("flowSpeed2_X");
+		flowFolder.add(uniforms.flow2, 1, -1, 1, 0.001).name("flowSpeed2_Y");
+		flowFolder.add(uniforms.flow3, 0, -1, 1, 0.001).name("flowSpeed3_X");
+		flowFolder.add(uniforms.flow3, 1, -1, 1, 0.001).name("flowSpeed3_Y");
+		flowFolder.add(uniforms.flow4, 0, -1, 1, 0.001).name("flowSpeed4_X");
+		flowFolder.add(uniforms.flow4, 1, -1, 1, 0.001).name("flowSpeed4_Y");
+		flowFolder.add(params, 'timeScaler', -1000, 1000, 1).name("timeScaler");
+
+		const fogFolder = gui.addFolder('fog');
+		fogFolder.add({ type: "linear" }, "type", ["linear", "exp", "none"]).onChange(value => {
+			switch (value) {
+				case "linear":
+					scene.fog = fog;
+					break;
+				case "exp":
+					scene.fog = fogExp2;
+					break;
+				default:
+					scene.fog = null;
+			}
+		});
+		fogFolder.add(fogExp2, "density", 0, 0.01);
+		fogFolder.add(fog, "near", 1, 500);
+		fogFolder.add(fog, "far", 500, 2000);
+
+		const lightFolder = gui.addFolder('light');
+		lightFolder.add(params, 'phi', 10, 89, 0.001).onChange(updateSpherePosition);
+		lightFolder.add(params, 'theta', 0, 360, 0.001).onChange(updateSpherePosition);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+			waterMaterial.uniforms.time += clock.getDelta() * params.timeScaler;
+			controller.update();
+			renderer.render(scene, camera);
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 3000);
+
+			renderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>
