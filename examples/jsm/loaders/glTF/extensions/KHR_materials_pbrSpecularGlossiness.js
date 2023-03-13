@@ -37,8 +37,9 @@ export class KHR_materials_pbrSpecularGlossiness {
 		if (specularGlossinessTexture) {
 			material.glossinessMap = textures[specularGlossinessTexture.index];
 			material.specularMap = textures[specularGlossinessTexture.index];
-			parseTextureTransform(material, 'glossinessMap', specularGlossinessTexture.extensions);
-			parseTextureTransform(material, 'specularMap', specularGlossinessTexture.extensions);
+			// material does not yet support the transform of glossinessMap and specularMap.
+			// parseTextureTransform(material, 'glossinessMap', specularGlossinessTexture.extensions);
+			// parseTextureTransform(material, 'specularMap', specularGlossinessTexture.extensions);
 		}
 	}
 
@@ -47,6 +48,6 @@ export class KHR_materials_pbrSpecularGlossiness {
 function parseTextureTransform(material, key, extensions = {}) {
 	const extension = extensions.KHR_texture_transform;
 	if (extension) {
-		material[key] = KHR_texture_transform.transform(material[key], extension);
+		material[key] = KHR_texture_transform.transform(material[key + 'Transform'], extension);
 	}
 }
