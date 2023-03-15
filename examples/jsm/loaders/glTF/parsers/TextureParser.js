@@ -3,7 +3,7 @@ import {
 	TEXTURE_FILTER,
 	TEXTURE_WRAP,
 } from 't3d';
-import { WEBGL_WRAPPINGS, WEBGL_FILTERS } from "../Constants.js";
+import { WEBGL_WRAPPINGS, WEBGL_FILTERS } from '../Constants.js';
 
 export class TextureParser {
 
@@ -35,6 +35,8 @@ export class TextureParser {
 						texture.generateMipmaps = generateMipmaps;
 						texture.encoding = encoding;
 						texture.premultiplyAlpha = premultiplyAlpha;
+					} else if (Object.values(params.extensions).length && Object.values(params.extensions)[0].hasOwnProperty('source')) {
+						texture.image = images[Object.values(params.extensions)[0].source];
 					} else {
 						console.error('GLTFLoader: Couldn\'t load texture');
 						return null;
