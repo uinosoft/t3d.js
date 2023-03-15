@@ -26,6 +26,7 @@
 		"geometry_loader_gltf_draco",
 		"geometry_loader_gltf_meshopt",
 		"geometry_loader_gltf_camera",
+		"geometry_loader_gltf_avif",
 		"geometry_builder_shapes",
 		"geometry_builder_lines",
 		"geometry_builder_edges",

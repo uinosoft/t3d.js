@@ -1,4 +1,5 @@
-import { GLTFUtils } from "../GLTFUtils.js";
+import { ImageLoader } from 't3d';
+import { GLTFUtils } from '../GLTFUtils.js';
 import { KHR_texture_basisu as _KHR_texture_basisu } from '../extensions/KHR_texture_basisu.js';
 
 export class ImageParser {
@@ -26,7 +27,7 @@ export class ImageParser {
 					loadItems.delete(imageUrl);
 				}
 				let promise;
-				if (mimeType === 'image/ktx2') {
+				if (mimeType && mimeType.includes('ktx2')) {
 					promise = _KHR_texture_basisu.loadTextureData(imageUrl, loader.getKTX2Loader()).then(transcodeResult => {
 						if (loader.detailLoadProgress) {
 							if (isObjectURL) {
@@ -38,20 +39,15 @@ export class ImageParser {
 						return transcodeResult;
 					});
 				} else {
-					promise = loader.loadImage(imageUrl).then(image => {
-						image.__name = imageName;
-						if (isObjectURL === true) {
-							URL.revokeObjectURL(sourceUrl);
-						}
-						if (loader.detailLoadProgress) {
-							if (isObjectURL) {
-								loader.manager.itemEnd(GLTFUtils.resolveURL('blob<' + index + '>', path));
-							} else {
-								loader.manager.itemEnd(imageUrl);
-							}
-						}
-						return image;
-					});
+					const param = { loader, imageUrl, imageName, isObjectURL, sourceUrl, index, path };
+					if (mimeType && (mimeType.includes('avif') || mimeType.includes('webp'))) {
+						promise = detectSupport(mimeType).then((isSupported) => {
+							if (isSupported) return loadImage(param);
+							throw new Error('GLTFLoader: WebP or AVIF required by asset but unsupported.');
+						});
+					} else {
+						return loadImage(param);
+					}
 				}
 				if (loader.detailLoadProgress) {
 					promise.catch(() => loader.manager.itemEnd(imageUrl));
@@ -63,4 +59,41 @@ export class ImageParser {
 		});
 	}
 
+}
+
+function detectSupport(mimeType) {
+	const isSupported = new Promise((resolve) => {
+		// Lossy test image.
+		const imageLoader = new ImageLoader();
+		let src;
+		if (mimeType.includes('avif')) {
+			src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAABcAAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAEAAAABAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAMAAAAABNjb2xybmNseAACAAIABoAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAAB9tZGF0EgAKCBgABogQEDQgMgkQAAAAB8dSLfI=';
+		} else {
+			src = 'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
+		}
+		imageLoader.load(src, function (image) {
+			resolve(image.height === 1);
+		});
+	});
+
+	return isSupported;
+}
+
+function loadImage(param) {
+	const { loader, imageUrl, imageName, isObjectURL, sourceUrl, index, path } = param;
+	const promise = loader.loadImage(imageUrl).then(image => {
+		image.__name = imageName;
+		if (isObjectURL === true) {
+			URL.revokeObjectURL(sourceUrl);
+		}
+		if (loader.detailLoadProgress) {
+			if (isObjectURL) {
+				loader.manager.itemEnd(GLTFUtils.resolveURL('blob<' + index + '>', path));
+			} else {
+				loader.manager.itemEnd(imageUrl);
+			}
+		}
+		return image;
+	});
+	return promise;
 }
