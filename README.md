@@ -1,4 +1,4 @@
-t3d.js
+ThingJS 3D Engine
 ========
 
 [![NPM Package][npm]][npm-url]
@@ -6,9 +6,9 @@ t3d.js
 [![Issues][issues-badge]][issues-badge-url]
 [![DeepScan grade][deepscan]][deepscan-url]
 
-t3d.js is a web-first, light weight, extendable 3D rendering library.
+ThingJS 3D Engine (t3d) is a web-first, light weight, extendable 3D rendering library.
 
-Mostly inspired by three.js, but with improvements in the renderer and many implementation details.
+Used by ThingJS for web3d rendering, but also available standalone.
 
 [Examples](https://uinosoft.github.io/t3d.js/examples/) &mdash;
 [Documentation](https://uinosoft.github.io/t3d.js/docs/) &mdash;
