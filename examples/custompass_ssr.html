@@ -127,8 +127,6 @@
 		const shadowMapPass = new t3d.ShadowMapPass();
 
 		const ssrPass = new t3d.ShaderPostPass(SSRShader);
-		ssrPass.uniforms.maxRayDistance = 10;
-		ssrPass.uniforms.pixelStrideZCutoff = 50;
 
 		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
@@ -158,6 +156,7 @@
 		ssrPass.uniforms["gBufferTexture2"] = gBuffer.getDepthTexture();
 		ssrPass.uniforms["viewportSize"][0] = width;
 		ssrPass.uniforms["viewportSize"][1] = height;
+		ssrPass.uniforms["nearZ"] = 1;
 
 		const blurPass = new t3d.ShaderPostPass(BlurShader);
 		blurPass.uniforms["projection"] = projection.elements;
@@ -178,7 +177,6 @@
 		const blendPass = new t3d.ShaderPostPass(BlendShader);
 		blendPass.uniforms["tDiffuse1"] = tempRenderTarget.texture;
 		blendPass.uniforms["tDiffuse2"] = tempRenderTarget3.texture;
-		blendPass.uniforms["opacity2"] = 1;
 
 		const gui = new GUI();
 		gui.add(material, 'roughness', 0, 1, 0.01);
