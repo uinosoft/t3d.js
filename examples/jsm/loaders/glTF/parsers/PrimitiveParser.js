@@ -34,7 +34,7 @@ export class PrimitiveParser {
 					geometryPromise = geometryPromiseCache.get(geometryKey);
 				} else {
 					if (KHR_draco_mesh_compression) {
-						geometryPromise = _KHR_draco_mesh_compression.getGeometry(KHR_draco_mesh_compression, bufferViews, loader.getDRACOLoader());
+						geometryPromise = _KHR_draco_mesh_compression.getGeometry(KHR_draco_mesh_compression, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getDRACOLoader());
 					} else {
 						geometryPromise = Promise.resolve(new Geometry());
 					}
