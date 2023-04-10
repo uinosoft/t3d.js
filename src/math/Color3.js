@@ -133,6 +133,28 @@ class Color3 {
 	}
 
 	/**
+	 * Converts this color from sRGB space to linear space.
+	 * @return {t3d.Color3}
+	 */
+	convertSRGBToLinear() {
+		this.r = SRGBToLinear(this.r);
+		this.g = SRGBToLinear(this.g);
+		this.b = SRGBToLinear(this.b);
+		return this;
+	}
+
+	/**
+	 * Converts this color from linear space to sRGB space.
+	 * @return {t3d.Color3}
+	 */
+	convertLinearToSRGB() {
+		this.r = LinearToSRGB(this.r);
+		this.g = LinearToSRGB(this.g);
+		this.b = LinearToSRGB(this.b);
+		return this;
+	}
+
+	/**
 	 * Sets this color's components based on an array formatted like [ r, g, b ].
      * @param {Number[]} array - Array of floats in the form [ r, g, b ].
 	 * @param {Number} [offset=0] - An offset into the array.
@@ -177,6 +199,14 @@ function hue2rgb(p, q, t) {
 
 function clamp(value, min, max) {
 	return Math.max(min, Math.min(max, value));
+}
+
+function SRGBToLinear(c) {
+	return (c < 0.04045) ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
+}
+
+function LinearToSRGB(c) {
+	return (c < 0.0031308) ? c * 12.92 : 1.055 * (Math.pow(c, 0.41666)) - 0.055;
 }
 
 export { Color3 };

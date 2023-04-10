@@ -77,12 +77,12 @@
 			}
 		});
 
-		DRACOLoader.setDecoderPath('libs/draco/gltf/');
-
+		const dracoLoader = new DRACOLoader();
+		dracoLoader.setDecoderPath('libs/draco/');
 		let animation;
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.setDRACOLoader(new DRACOLoader());
+		loader.setDRACOLoader(dracoLoader);
 		console.time('GLTFLoader');
 
 		loader.load(file).then(function(result) {
