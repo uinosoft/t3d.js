@@ -25,12 +25,6 @@ class ShadowMapPass {
 		this.getDistanceMaterial = _getDistanceMaterial;
 
 		/**
-		 * Get geometry function for shadow render options.
-		 * @type {Null|Function}
-		 */
-		this.getGeometry = null;
-
-		/**
 		 * Define which render layers will produce shadows.
 		 * If the value is Null, it means that all render layers will produce shadows.
 		 * @type {Null|Array}
@@ -44,6 +38,50 @@ class ShadowMapPass {
 		 * @default false
 		 */
 		this.transparentShadow = false;
+
+		const state = { isPointLight: false, light: null };
+		this._state = state;
+
+		const that = this;
+		this._renderOptions = {
+			getGeometry: null,
+			getMaterial: function(renderable) {
+				return state.isPointLight ? that.getDistanceMaterial(renderable, state.light) : that.getDepthMaterial(renderable, state.light);
+			},
+			ifRender: function(renderable) {
+				return renderable.object.castShadow;
+			}
+		};
+	}
+
+	/**
+	 * Get geometry function for shadow render options.
+	 * @type {Null|Function}
+	 */
+	set getGeometry(func) {
+		if (!!func) {
+			this._renderOptions.getGeometry = func;
+		} else {
+			delete this._renderOptions.getGeometry;
+		}
+	}
+	get getGeometry() {
+		return this._renderOptions.getGeometry;
+	}
+
+	/**
+	 * The if render function for shadow render options.
+	 * @type {Function}
+	 */
+	set ifRender(func) {
+		if (!!func) {
+			this._renderOptions.ifRender = func;
+		} else {
+			delete this._renderOptions.ifRender;
+		}
+	}
+	get ifRender() {
+		return this._renderOptions.ifRender;
 	}
 
 	/**
@@ -53,10 +91,6 @@ class ShadowMapPass {
 	 */
 	render(renderer, scene) {
 		const renderPass = renderer.renderPass;
-
-		const getGeometry = this.getGeometry;
-		const getDepthMaterial = this.getDepthMaterial;
-		const getDistanceMaterial = this.getDistanceMaterial;
 
 		oldClearColor.copy(renderPass.getClearColor());
 		renderPass.setClearColor(1, 1, 1, 1);
@@ -74,6 +108,10 @@ class ShadowMapPass {
 			const shadowTarget = shadow.renderTarget;
 			const isPointLight = light.isPointLight;
 			const faces = isPointLight ? 6 : 1;
+
+			this._state.isPointLight = isPointLight;
+			this._state.light = light;
+			const renderOptions = this._renderOptions;
 
 			shadow.prepareDepthMap(!scene.disableShadowSampler, renderPass.capabilities);
 
@@ -93,16 +131,6 @@ class ShadowMapPass {
 					const renderQueueLayer = renderQueue.layerList[k];
 
 					if (this.shadowLayers !== null && this.shadowLayers.indexOf(renderQueueLayer.id) === -1) continue;
-
-					const renderOptions = {
-						getGeometry: getGeometry,
-						getMaterial: function(renderable) {
-							return isPointLight ? getDistanceMaterial(renderable, light) : getDepthMaterial(renderable, light);
-						},
-						ifRender: function(renderable) {
-							return renderable.object.castShadow;
-						}
-					};
 
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, renderOptions);
 
