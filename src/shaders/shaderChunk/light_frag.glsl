@@ -16,11 +16,7 @@
         float roughness = max(roughnessFactor, 0.0525);
     #endif
 
-    vec3 dxy = max(abs(dFdx(geometryNormal)), abs(dFdy(geometryNormal)));
-    float geometryRoughness = max(max(dxy.x, dxy.y), dxy.z);
-    roughness += geometryRoughness;
-
-    roughness = min(roughness, 1.0);
+    roughness = min(max(roughness, getAARoughnessFactor(N)), 1.0);
 
     #ifdef USE_CLEARCOAT
         float clearcoat = u_Clearcoat;
@@ -33,8 +29,7 @@
 	    #endif
         clearcoat = saturate(clearcoat);
         clearcoatRoughness = max(clearcoatRoughness, 0.0525);
-	    clearcoatRoughness += geometryRoughness;
-	    clearcoatRoughness = min(clearcoatRoughness, 1.0);
+	    clearcoatRoughness = min(max(clearcoatRoughness, getAARoughnessFactor(geometryNormal)), 1.0);
     #endif
 #else
     vec3 diffuseColor = outColor.xyz;

@@ -1,0 +1,8 @@
+Model Information:
+* title:	Colt-type revolver
+* source:	https://sketchfab.com/3d-models/colt-type-revolver-d0c9d2c989134fefb623c62b25a51daf
+* author:	Virtual Museums of Małopolska (https://sketchfab.com/WirtualneMuzeaMalopolski)
+
+Model License:
+* license type:	CC0-1.0 (http://creativecommons.org/publicdomain/zero/1.0/)
+* requirements:	Credit is not mandatory. Commercial use is allowed.

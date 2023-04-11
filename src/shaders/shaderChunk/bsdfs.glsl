@@ -167,3 +167,17 @@ float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
 float BlinnExponentToGGXRoughness( const in float blinnExponent ) {
 	return sqrt( 2.0 / ( blinnExponent + 2.0 ) );
 }
+
+float getAARoughnessFactor(vec3 normal) {
+    // Kaplanyan 2016, "Stable specular highlights"
+    // Tokuyoshi 2017, "Error Reduction and Simplification for Shading Anti-Aliasing"
+    // Tokuyoshi and Kaplanyan 2019, "Improved Geometric Specular Antialiasing"
+
+	// This implementation is meant for deferred rendering in the original paper but
+    // we use it in forward rendering as well (as discussed in Tokuyoshi and Kaplanyan
+    // 2019). The main reason is that the forward version requires an expensive transform
+    // of the half vector by the tangent frame for every light.
+
+	vec3 dxy = max( abs(dFdx(normal)), abs(dFdy(normal)) );
+	return 0.04 + max( max(dxy.x, dxy.y), dxy.z );
+}
