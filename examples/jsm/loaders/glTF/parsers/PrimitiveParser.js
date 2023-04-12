@@ -1,4 +1,4 @@
-import { Geometry, PBRMaterial, VERTEX_COLOR, SHADING_TYPE, PointsMaterial, Material, LineMaterial } from 't3d';
+import { Geometry, PBRMaterial, VERTEX_COLOR, SHADING_TYPE, PointsMaterial, Material, BasicMaterial } from 't3d';
 import { GLTFUtils } from "../GLTFUtils.js";
 import { ATTRIBUTES, ACCESSOR_COMPONENT_TYPES, WEBGL_DRAW_MODES } from "../Constants.js";
 import { KHR_draco_mesh_compression as _KHR_draco_mesh_compression } from '../extensions/KHR_draco_mesh_compression.js';
@@ -184,17 +184,17 @@ function assignFinalMaterial(primitive, materialCache) {
 		}
 		material = pointsMaterial;
 	} else if (mode === WEBGL_DRAW_MODES.LINES || mode === WEBGL_DRAW_MODES.LINE_STRIP || mode === WEBGL_DRAW_MODES.LINE_LOOP) {
-		const cacheKey = 'LineMaterial:' + material.id;
-		let lineMaterial = materialCache.get(cacheKey);
-		if (!lineMaterial) {
-			lineMaterial = new LineMaterial();
-			lineMaterial.lineWidth = material.lineWidth;
-			lineMaterial.diffuse.copy(material.diffuse);
-			lineMaterial.diffuseMap = material.diffuseMap;
-			lineMaterial.lights = false; // LineMaterial doesn't support lights
-			lineMaterial.drawMode = mode;
-			materialCache.set(cacheKey, lineMaterial);
+		const cacheKey = 'BasicMaterial:' + material.id;
+		let basicMaterial = materialCache.get(cacheKey);
+		if (!basicMaterial) {
+			basicMaterial = new BasicMaterial();
+			basicMaterial.envMap = undefined; // force close env map
+			basicMaterial.diffuse.copy(material.diffuse);
+			basicMaterial.diffuseMap = material.diffuseMap;
+			basicMaterial.drawMode = mode;
+			materialCache.set(cacheKey, basicMaterial);
 		}
+		material = basicMaterial;
 	} else if (mode === WEBGL_DRAW_MODES.TRIANGLE_STRIP) {
 		// TODO
 		console.warn('TRIANGLE_STRIP will be removed later.');
