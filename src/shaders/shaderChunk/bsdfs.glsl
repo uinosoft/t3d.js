@@ -42,9 +42,8 @@ vec3 F_Schlick_RoughnessDependent(const in vec3 F0, const in float dotNV, const 
 	return Fr * fresnel + F0;
 }
 
-// use blinn phong instead of phong
 float D_BlinnPhong( const in float shininess, const in float dotNH ) {
-    // ( shininess * 0.5 + 1.0 ), three.js do this, but why ???
+    // normalized Blinn-Phong
 	return RECIPROCAL_PI * ( shininess * 0.5 + 1.0 ) * pow( dotNH, shininess );
 }
 
