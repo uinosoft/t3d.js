@@ -74,9 +74,12 @@ class WebGLTextures extends WebGLProperties {
 		const textureProperties = this.get(texture);
 
 		if (texture.image && textureProperties.__version !== texture.version && (!texture.image.rtt || slot === undefined) && !textureProperties.__external) {
+			let forceUpload = false;
+
 			if (textureProperties.__webglTexture === undefined) {
 				texture.addEventListener('dispose', this._onTextureDispose);
 				textureProperties.__webglTexture = gl.createTexture();
+				forceUpload = true;
 			}
 
 			state.activeTexture(slot);
@@ -109,33 +112,72 @@ class WebGLTextures extends WebGLProperties {
 			const mipmaps = texture.mipmaps;
 			let mipmap;
 
+			const levels = getMipLevels(texture, image, !needFallback);
+
+			const useTexStorage = (capabilities.version >= 2 && !(typeof HTMLVideoElement !== 'undefined' && image instanceof HTMLVideoElement));
+			const allocateMemory = (textureProperties.__version  === undefined) || (forceUpload === true);
+
 			if (isDom) {
 				if (mipmaps.length > 0 && !needFallback) {
+					if (useTexStorage && allocateMemory) {
+						gl.texStorage2D(gl.TEXTURE_2D, levels, glInternalFormat, mipmaps[0].width, mipmaps[0].height);		// TODO levels
+					}
+
 					for (let i = 0, il = mipmaps.length; i < il; i++) {
 						mipmap = mipmaps[i];
-						gl.texImage2D(gl.TEXTURE_2D, i, glInternalFormat, glFormat, glType, mipmap);
+						if (useTexStorage) {
+							gl.texSubImage2D(gl.TEXTURE_2D, i, 0, 0, glFormat, glType, mipmap);
+						} else {
+							gl.texImage2D(gl.TEXTURE_2D, i, glInternalFormat, glFormat, glType, mipmap);
+						}
 					}
 
 					texture.generateMipmaps = false;
 					textureProperties.__maxMipLevel = mipmaps.length - 1;
 				} else {
-					gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, glFormat, glType, image);
+					if (useTexStorage) {
+						if (allocateMemory) {
+							gl.texStorage2D(gl.TEXTURE_2D, levels, glInternalFormat, image.width, image.height);
+						}
+						gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, glFormat, glType, image);
+					} else {
+						gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, glFormat, glType, image);
+					}
 					textureProperties.__maxMipLevel = 0;
 				}
 			} else {
 				if (mipmaps.length > 0 && !needFallback) {
 					const isCompressed = image.isCompressed;
 
+					if (useTexStorage && allocateMemory) {
+						gl.texStorage2D(gl.TEXTURE_2D, levels, glInternalFormat, mipmaps[0].width, mipmaps[0].height);
+					}
+
 					for (let i = 0, il = mipmaps.length; i < il; i++) {
 						mipmap = mipmaps[i];
-						isCompressed ? gl.compressedTexImage2D(gl.TEXTURE_2D, i, glInternalFormat, mipmap.width, mipmap.height, 0, mipmap.data)
-							: gl.texImage2D(gl.TEXTURE_2D, i, glInternalFormat, mipmap.width, mipmap.height, texture.border, glFormat, glType, mipmap.data);
+
+						if (isCompressed) {
+							useTexStorage ? gl.compressedTexSubImage2D(gl.TEXTURE_2D, i, 0, 0, mipmap.width, mipmap.height, glFormat, mipmap.data)
+								: gl.compressedTexImage2D(gl.TEXTURE_2D, i, glInternalFormat, mipmap.width, mipmap.height, 0, mipmap.data);
+						} else {
+							useTexStorage ? gl.texSubImage2D(gl.TEXTURE_2D, i, 0, 0, mipmap.width, mipmap.height, glFormat, glType, mipmap.data)
+								: gl.texImage2D(gl.TEXTURE_2D, i, glInternalFormat, mipmap.width, mipmap.height, texture.border, glFormat, glType, mipmap.data);
+						}
 					}
 
 					texture.generateMipmaps = false;
 					textureProperties.__maxMipLevel = mipmaps.length - 1;
 				} else {
-					gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
+					if (useTexStorage) {
+						if (allocateMemory) {
+							gl.texStorage2D(gl.TEXTURE_2D, levels, glInternalFormat, image.width, image.height);
+						}
+						if (!!image.data) {		// incase rtt set data is null
+							gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, image.width, image.height, glFormat, glType, image.data);
+						}
+					} else {
+						gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
+					}
 					textureProperties.__maxMipLevel = 0;
 				}
 			}
@@ -168,9 +210,11 @@ class WebGLTextures extends WebGLProperties {
 		const textureProperties = this.get(texture);
 
 		if (texture.images.length === 6 && textureProperties.__version !== texture.version && (!texture.images[0].rtt || slot === undefined) && !textureProperties.__external) {
+			let forceUpload = false;
 			if (textureProperties.__webglTexture === undefined) {
 				texture.addEventListener('dispose', this._onTextureDispose);
 				textureProperties.__webglTexture = gl.createTexture();
+				forceUpload = true;
 			}
 
 			state.activeTexture(slot);
@@ -210,41 +254,92 @@ class WebGLTextures extends WebGLProperties {
 				glInternalFormat = (texture.internalformat !== null) ? constants.getGLInternalFormat(texture.internalformat) :
 					getGLInternalFormat(gl, capabilities, glFormat, glType);
 
+			const useTexStorage = (capabilities.version >= 2 && !(typeof HTMLVideoElement !== 'undefined' && images[0] instanceof HTMLVideoElement));		// 这里
+			const allocateMemory = (textureProperties.__version  === undefined) || (forceUpload === true);
+
+			let levels = getMipLevels(texture, images[0], !needFallback);
+
 			const mipmaps = texture.mipmaps;
 			let mipmap;
 
-			for (let i = 0; i < 6; i++) {
-				const image = images[i];
-				const isDom = image.__isDom;
+			if (images[0].isCompressed) {
+				if (useTexStorage && allocateMemory) {
+					gl.texStorage2D(gl.TEXTURE_CUBE_MAP, levels, glInternalFormat, images[0].width, images[0].height);
+				}
 
-				if (isDom) {
+				for (let i = 0; i < 6; i++) {
+					for (let j = 0, jl = mipmaps.length; j < jl; j++) {
+						mipmap = mipmaps[j][i];
+						useTexStorage ? gl.compressedTexSubImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, 0, 0, mipmap.width, mipmap.height, glFormat, mipmap.data)
+							: gl.compressedTexImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, mipmap.width, mipmap.height, 0, mipmap.data)
+					}
+
+					textureProperties.__maxMipLevel = mipmaps.length - 1;
+					texture.generateMipmaps = false;
+				}
+			} else if (images[0].__isDom) {
+				if (useTexStorage && allocateMemory) {
+					gl.texStorage2D(gl.TEXTURE_CUBE_MAP, levels, glInternalFormat, images[0].width, images[0].height);
+				}
+
+				for (let i = 0; i < 6; i++) {
+					const image = images[i];
+
 					if (mipmaps.length > 0 && !needFallback) {
 						for (let j = 0, jl = mipmaps.length; j < jl; j++) {
 							mipmap = mipmaps[j][i];
-							gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, glFormat, glType, mipmap);
+							useTexStorage ? gl.texSubImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, 0, 0, glFormat, glType, mipmap)
+								: gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, glFormat, glType, mipmap);
 						}
-
 						textureProperties.__maxMipLevel = mipmaps.length - 1;
 						texture.generateMipmaps = false;
 					} else {
-						gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, glFormat, glType, image);
+						if (useTexStorage) {
+							gl.texSubImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, glFormat, glType, image);
+						} else {
+							gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, glFormat, glType, image);
+						}
+
 						textureProperties.__maxMipLevel = 0;
 					}
-				} else {
+				}
+			} else if (images[0].rtt) {
+				for (let i = 0; i < 6; i++) {
+					const image = images[i];
 					if (mipmaps.length > 0 && !needFallback) {
-						const isCompressed = image.isCompressed;
-
 						for (let j = 0, jl = mipmaps.length; j < jl; j++) {
 							mipmap = mipmaps[j][i];
-
-							isCompressed ? gl.compressedTexImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, mipmap.width, mipmap.height, 0, mipmap.data)
-								: gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, mipmap.width, mipmap.height, texture.border, glFormat, glType, mipmap.data);
+							gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, mipmap.width, mipmap.height, texture.border, glFormat, glType, mipmap.data);
 						}
 
 						textureProperties.__maxMipLevel = mipmaps.length - 1;
 						texture.generateMipmaps = false;
 					} else {
 						gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
+						textureProperties.__maxMipLevel = 0;
+					}
+				}
+			} else {
+				if (useTexStorage && allocateMemory) {
+					gl.texStorage2D(gl.TEXTURE_CUBE_MAP, levels, glInternalFormat, images[0].width, images[0].height);
+				}
+
+				for (let i = 0; i < 6; i++) {
+					const image = images[i];
+					if (mipmaps.length > 0 && !needFallback) {
+						for (let j = 0, jl = mipmaps.length; j < jl; j++) {
+							mipmap = mipmaps[j][i];
+							useTexStorage ? gl.texSubImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, 0, 0, mipmap.width, mipmap.height, glFormat, glType, mipmap.data)
+								: gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, mipmap.width, mipmap.height, 0, glFormat, glType, mipmap.data);
+						}
+						textureProperties.__maxMipLevel = mipmaps.length - 1;
+						texture.generateMipmaps = false;
+					} else {
+						if (useTexStorage) {
+							gl.texSubImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, image.width, image.height, glFormat, glType, image.data);
+						} else {
+							gl.texImage2D(_gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, image.width, image.height, 0, glFormat, glType, image.data);
+						}
 						textureProperties.__maxMipLevel = 0;
 					}
 				}
@@ -421,6 +516,27 @@ function makePowerOf2(image) {
 	}
 
 	return image;
+}
+
+function getMipLevels(texture, image, supportMips) {
+	if (texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR) {
+		if ((texture.generateMipmaps && supportMips) || !domCheck(image)) {
+			return Math.log2(Math.max(image.width, image.height)) + 1;
+		}
+	}
+
+	if (texture.mipmaps !== undefined && texture.mipmaps.length > 0) {
+		// user-defined mipmaps
+
+		return texture.mipmaps.length;
+	}
+
+	if (image.isCompressed) {
+		return texture.mipmaps.length;
+	}
+
+	// texture without mipmaps (only base level)
+	return 1;
 }
 
 function clampToMaxSize(image, maxSize) {
