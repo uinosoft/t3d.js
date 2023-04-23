@@ -16,7 +16,21 @@
         float roughness = max(roughnessFactor, 0.0525);
     #endif
 
-    roughness = min(max(roughness, getAARoughnessFactor(N)), 1.0);
+    float aaroughnessFactor = 0.0;
+    #ifdef SPECULAR_AA
+        aaroughnessFactor = getAARoughnessFactor(N);
+    #endif
+    #ifdef SPECULAR_AA1_0
+        aaroughnessFactor = getAARoughnessFactor1(N);
+    #endif
+    #ifdef SPECULAR_AA1_1
+        aaroughnessFactor = getAARoughnessFactor1(N);
+    #endif
+    #ifdef SPECULAR_AA2
+        aaroughnessFactor = getAARoughnessFactor2(roughness, N);
+    #endif
+
+    roughness = min(max(roughness, aaroughnessFactor), 1.0);
 
     #ifdef USE_CLEARCOAT
         float clearcoat = u_Clearcoat;

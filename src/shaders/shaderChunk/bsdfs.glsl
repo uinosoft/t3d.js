@@ -181,3 +181,50 @@ float getAARoughnessFactor(vec3 normal) {
 	vec3 dxy = max( abs(dFdx(normal)), abs(dFdy(normal)) );
 	return 0.04 + max( max(dxy.x, dxy.y), dxy.z );
 }
+
+float getAARoughnessFactor1(vec3 normalVector) {
+        vec3 nDfdx = dFdx(normalVector.xyz);
+        vec3 nDfdy = dFdy(normalVector.xyz);
+        float slopeSquare = max(dot(nDfdx, nDfdx), dot(nDfdy, nDfdy));
+
+        // Vive analytical lights roughness factor.
+        float geometricRoughnessFactor = pow(saturate(slopeSquare), 0.333);
+
+        // Adapt linear roughness (alphaG) to geometric curvature of the current pixel.
+        float geometricAlphaGFactor = sqrt(slopeSquare);
+        // BJS factor.
+        geometricAlphaGFactor *= 0.75;
+
+    #ifdef SPECULAR_AA1_0
+        return geometricRoughnessFactor;
+    #endif
+
+    #ifdef SPECULAR_AA1_1
+        return geometricAlphaGFactor;
+	#endif
+
+	return 0.;
+}
+
+uniform float specularAntiAliasingVariance;
+uniform float specularAntiAliasingThreshold;
+float getAARoughnessFactor2(float roughness, vec3 normal) {
+        // Kaplanyan 2016, "Stable specular highlights"
+		// Tokuyoshi 2017, "Error Reduction and Simplification for Shading Anti-Aliasing"
+		// Tokuyoshi and Kaplanyan 2019, "Improved Geometric Specular Antialiasing"
+        // Tokuyoshi and Kaplanyan 2021, "Stable Geometric Specular Antialiasing with Projected-Space NDF Filtering"
+
+        // This implementation is meant for deferred rendering in the original paper but
+		// we use it in forward rendering as well (as discussed in Tokuyoshi and Kaplanyan
+		// 2019). The main reason is that the forward version requires an expensive transform
+		// of the half vector by the tangent frame for every light.
+
+		// float specularAntiAliasingVariance = 0.5915494;
+		// float specularAntiAliasingThreshold = 0.2;
+		vec3 ddxN = dFdx(normal);
+		vec3 ddyN = dFdy(normal);
+		float variance =  specularAntiAliasingVariance * (dot(ddxN, ddxN) + dot(ddyN, ddyN));
+		float kernelRoughness = min(variance, specularAntiAliasingThreshold);
+		float squareRoughness = saturate(roughness * roughness + kernelRoughness);
+		return sqrt(squareRoughness);
+}

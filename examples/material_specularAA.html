@@ -30,9 +30,11 @@
 		import * as t3d from 't3d';
 		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { SkyBox } from './jsm/objects/SkyBox.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -46,8 +48,6 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		const file = "resources/models/gltf/colt-type_revolver/scene.gltf";
-
 		const cube_texture = new TextureCubeLoader().load([
 			"resources/skybox/Bridge2/posx.jpg",
 			"resources/skybox/Bridge2/negx.jpg",
@@ -58,10 +58,10 @@
 		]);
 
 		const scene = new t3d.Scene();
-		scene.environment = cube_texture;
+		// scene.environment = cube_texture;
 
-		const sky_box = new SkyBox(cube_texture);
-		sky_box.level = 0;
+		// const sky_box = new SkyBox(cube_texture);
+		// sky_box.level = 0;
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = "gray";
@@ -75,15 +75,50 @@
 			}
 		});
 
-		const loader = new GLTFLoader(loadingManager);
-		loader.autoLogError = false;
+		// const gemoetry = new t3d.PlaneGeometry();
+		const gemoetry = new t3d.SphereGeometry(.75, 64, 64);
+		const material = new t3d.PBRMaterial();
+		material.metalness = 0.7;
+		material.roughness = 0.3;
+		material.normalMap = new Texture2DLoader().load('./resources/MAT_Mech1.003_normal.png');
+		// material.normalMap = textureLoader.load('./resources/7898-normal.jpg');
+		// material.normalMap = textureLoader.load('./resources/NormalMap.png');
+		// material.normalScale.set(10, 10);
+		material.defines = {
+			SPECULAR_AA: false,		// three、oasis
+			SPECULAR_AA1_0: false,	// babylon geometricRoughnessFactor
+			SPECULAR_AA1_1: false,	// babylon geometricAlphaGFactor
+			SPECULAR_AA2: false		// Tokuyoshi and Kaplanyan 2021
+		};
+		material.diffuse.setHex(0x292929);
+		// material.side = t3d.DRAW_SIDE.DOUBLE;
+		const mesh = new t3d.Mesh(gemoetry, material);
+		scene.add(mesh);
 
-		console.time('GLTFLoader');
-		loader.load(file).then(function (result) {
-			console.timeEnd('GLTFLoader');
-			result.root.position.set(0, 0, 0);
-			scene.add(result.root);
-		}).catch(e => console.error(e));
+		// const loader = new GLTFLoader(loadingManager);
+		// loader.autoLogError = false;
+
+		// const file = "resources/models/gltf/dreadroamer/scene.gltf";
+		let materials = [];
+		// console.time('GLTFLoader');
+		// loader.load(file).then(function (result) {
+		// 	console.timeEnd('GLTFLoader');
+		// 	result.root.position.set(0, 0, 0);
+		// 	result.root.traverse(m => {
+		// 		if (m.material) {
+		// 			m.material.defines = {
+		// 				SPECULAR_AA: false,		// three、oasis
+		// 				SPECULAR_AA1_0: false,	// babylon geometricRoughnessFactor
+		// 				SPECULAR_AA1_1: false,	// babylon geometricAlphaGFactor
+		// 				SPECULAR_AA2: false		// Tokuyoshi and Kaplanyan 2021
+		// 			};
+		// 			m.material.uniforms.specularAntiAliasingVariance = 0.5915494;
+		// 			m.material.uniforms.specularAntiAliasingThreshold = 0.2;
+		// 			materials.push(m.material);
+		// 		}
+		// 	})
+		// 	scene.add(result.root);
+		// }).catch(e => console.error(e));
 
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
 		scene.add(ambientLight);
@@ -99,9 +134,71 @@
 		camera.position.set(-0.19411062129111564, 0.32686243457525144, 0.5551263776367967);
 		camera.lookAt(new t3d.Vector3(-0.16641960623619168, -0.057168775531497344, 0.03323746859828566), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 800);
-		camera.add(sky_box);
+		// camera.add(sky_box);
 		scene.add(camera);
 		window.camera = camera;
+
+		const params = {
+			SPECULAR_AA: false,
+			SPECULAR_AA1_0: false,	// babylon geometricRoughnessFactor
+			SPECULAR_AA1_1: false,	// babylon geometricAlphaGFactor
+			SPECULAR_AA2: false,		// Tokuyoshi and Kaplanyan 2021
+			specularAntiAliasingVariance: 0.5915494,
+			specularAntiAliasingThreshold: 0.2
+		}
+		const gui = new GUI();
+		gui.add(params, 'SPECULAR_AA').onChange((value) => {
+			materials.forEach(m => {
+				m.defines.SPECULAR_AA = value;
+				m.needsUpdate = true;
+			});
+			mesh.material.defines.SPECULAR_AA = value;
+			mesh.material.needsUpdate = true;
+		});
+		gui.add(params, 'SPECULAR_AA1_0').onChange((value) => {
+			materials.forEach(m => {
+				m.defines.SPECULAR_AA1_0 = value;
+				m.needsUpdate = true;
+			});
+			mesh.material.defines.SPECULAR_AA1_0 = value;
+			mesh.material.needsUpdate = true;
+		});
+		gui.add(params, 'SPECULAR_AA1_1').onChange((value) => {
+			materials.forEach(m => {
+				m.defines.SPECULAR_AA1_1 = value;
+				m.needsUpdate = true;
+			});
+			mesh.material.defines.SPECULAR_AA1_1 = value;
+			mesh.material.needsUpdate = true;
+		});
+		gui.add(params, 'SPECULAR_AA2').onChange((value) => {
+			materials.forEach(m => {
+				m.defines.SPECULAR_AA2 = value;
+				m.needsUpdate = true;
+			});
+			mesh.material.defines.SPECULAR_AA2 = value;
+			mesh.material.needsUpdate = true;
+
+			if (value) {
+				specularAntiAliasingVariance.enable();
+				specularAntiAliasingThreshold.enable();
+			} else {
+				specularAntiAliasingVariance.disable();
+				specularAntiAliasingThreshold.disable();
+			}
+		});
+		const specularAntiAliasingVariance = gui.add(params, 'specularAntiAliasingVariance', 0, 2, 0.001).onChange((value) => {
+			materials.forEach(m => {
+				m.uniforms.specularAntiAliasingVariance = value;
+			})
+			mesh.material.uniforms.specularAntiAliasingVariance = value;
+		});
+		const specularAntiAliasingThreshold = gui.add(params, 'specularAntiAliasingThreshold', 0, 1, 0.001).onChange((value) => {
+			materials.forEach(m => {
+				m.uniforms.specularAntiAliasingThreshold = value;
+			})
+			mesh.material.uniforms.specularAntiAliasingThreshold = value;
+		});
 
 		const controller = new OrbitControls(camera, canvas);
 		controller.target.set(-0.16641960623619168, -0.057168775531497344, 0.03323746859828566);
