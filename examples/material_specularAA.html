@@ -131,8 +131,8 @@
 		const camera = new t3d.Camera();
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
 		camera.gammaFactor = 2;
-		camera.position.set(-0.19411062129111564, 0.32686243457525144, 0.5551263776367967);
-		camera.lookAt(new t3d.Vector3(-0.16641960623619168, -0.057168775531497344, 0.03323746859828566), new t3d.Vector3(0, 1, 0));
+		camera.position.set(0, 0, 3);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 800);
 		// camera.add(sky_box);
 		scene.add(camera);
@@ -201,7 +201,7 @@
 		});
 
 		const controller = new OrbitControls(camera, canvas);
-		controller.target.set(-0.16641960623619168, -0.057168775531497344, 0.03323746859828566);
+		controller.target.set(0, 0, 0);
 		window.controller = controller;
 
 		function loop(count) {
