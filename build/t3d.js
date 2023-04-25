@@ -1202,6 +1202,20 @@
 		}
 
 		/**
+		 * Return true if this matrix and m are equal.
+		 * @param {t3d.Matrix4} m
+		 * @return {Boolean}
+		 */
+		equals(m) {
+			const te = this.elements;
+			const me = m.elements;
+			for (let i = 0; i < 16; i++) {
+				if (te[i] !== me[i]) return false;
+			}
+			return true;
+		}
+
+		/**
 		 * Writes the elements of this matrix to an array in column-major format.
 		 * @param {Number[]} [array]
 		 * @param {Number} [offset=0]
