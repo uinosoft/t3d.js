@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - anaglyph</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - anaglyph
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { StereoCamera } from './jsm/stereo/StereoCamera.js';
+		import { AnaglyphRenderer } from './jsm/stereo/AnaglyphRenderer.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const anaglyphRenderer = new AnaglyphRenderer(canvas);
+		anaglyphRenderer.shadowAutoUpdate = false;
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/pisa/px.png",
+			"resources/skybox/pisa/nx.png",
+			"resources/skybox/pisa/py.png",
+			"resources/skybox/pisa/ny.png",
+			"resources/skybox/pisa/pz.png",
+			"resources/skybox/pisa/nz.png"
+		]);
+
+		const scene = new t3d.Scene();
+		scene.environment = cube_texture;
+
+		const spheres = [];
+
+		const geometry = new t3d.SphereGeometry(0.1, 32, 16);
+		const material = new t3d.BasicMaterial();
+
+		for (let i = 0; i < 200; i++) {
+			const mesh = new t3d.Mesh(geometry, material);
+			mesh.position.x = Math.random() * 10 - 5;
+			mesh.position.y = Math.random() * 10 - 5;
+			mesh.position.z = Math.random() * 10 - 5;
+			mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
+
+			scene.add(mesh);
+			spheres.push(mesh);
+		}
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 3);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
+		scene.add(camera);
+		
+		const stereoCamera = new StereoCamera();
+		scene.add(stereoCamera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1, 0);
+
+		const gui = new GUI();
+		gui.add(anaglyphRenderer, 'eyeSep', 0.06, 0.075, 0.001);
+		gui.add(anaglyphRenderer, 'focus', 5, 100, 0.01);
+		
+		requestAnimationFrame(loop);
+		
+		function loop(count) {
+			requestAnimationFrame(loop);
+		
+			controller.update();
+
+			const timer = 0.0001 * Date.now();
+			for (let i = 0, il = spheres.length; i < il; i++) {
+				const sphere = spheres[i];
+
+				sphere.position.x = 5 * Math.cos(timer + i);
+				sphere.position.y = 5 * Math.sin(timer + i * 1.1);
+			}
+		
+			anaglyphRenderer.renderPass.setClearColor(0.01, 0.01, 0.01, 1);
+			anaglyphRenderer.render(scene, camera, stereoCamera);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
+			camera.aspect = width / height;
+
+			anaglyphRenderer.backRenderTarget.resize(width, height);
+			anaglyphRenderer.resize(width, height);
+		}
+
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+</html>

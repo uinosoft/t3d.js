@@ -118,6 +118,7 @@
 		"raycast_raycaster"
 	],
 	"stereo": [
+		"stereo_anaglyph",
 		"stereo_webvr_car",
 		"stereo_webxr_vr_car"
 	],
