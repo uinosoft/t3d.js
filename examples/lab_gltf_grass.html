@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d grass - gltf</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> gltf grass </br>
+		Inspired by <a href="https://github.com/robertlong/three-instanced-grass" target="_blank">robertlong/three-instanced-grass</a>
+	</div>
+
+	<script id="vs" type="x-shader/x-vertex">
+		attribute vec3 a_Position;
+		attribute vec2 a_Uv;
+
+		uniform mat4 u_View;
+		uniform mat4 u_Model;
+		uniform mat4 u_Projection;
+
+		attribute mat4 instanceMatrix;
+
+        uniform vec2 windDirection;
+        uniform float windSpeed;
+        uniform float windStrength;
+        uniform float noiseScale;
+        uniform sampler2D noise;
+        uniform float time;
+
+        attribute float timeOffset;
+
+        varying vec2 v_Uv;
+        varying float vHeight;
+        varying float vColor;
+
+        void main() {
+          vHeight = a_Position.y;
+          v_Uv = a_Uv;
+
+          float adjustedTime = time + timeOffset;
+
+		  vec4 transformed = vec4(a_Position, 1.0);
+		  transformed = instanceMatrix * transformed;
+
+          vec4 worldPosition = u_Model * transformed;
+
+          float influence = smoothstep(0.0, 1.0, vHeight / 2.0);
+          vec2 uv = worldPosition.xz / (noiseScale + 1e-2);
+          vec2 panningUv = uv + fract(adjustedTime * windDirection * windSpeed);
+          float wind = texture2D(noise, panningUv).r * 2.0 - 0.4;
+
+          vColor = texture2D(noise, a_Uv).r;
+          
+          vec2 windOffset = -windDirection * windStrength * influence * wind;
+          worldPosition.xz += windOffset;
+          worldPosition.y -= wind * influence * smoothstep(0.0, vHeight, windStrength);
+
+          worldPosition.x += influence * cos(adjustedTime * 1.0) / 8.0;
+          worldPosition.z += influence * sin(adjustedTime * 1.5) / 8.0;
+
+		  gl_Position = u_Projection * u_View *u_Model * worldPosition;
+        }
+    </script>
+
+	<script id="fs" type="x-shader/x-fragment">
+		uniform sampler2D map;
+
+        varying vec2 v_Uv;
+        varying float vHeight;
+        varying float vColor;
+
+        void main() {
+          vec4 color = texture2D(map, v_Uv);
+
+          if (color.a < 0.5) {
+             discard;
+          }
+
+          gl_FragColor = vec4(color.rgb, 1.0);
+          
+        }
+    </script>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + "px";
+		canvas.style.height = height + "px";
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const file = "resources/models/gltf/grass/grass.gltf";
+
+		const cube_texture = new TextureCubeLoader().load([
+			"resources/skybox/skyboxsun25deg/px.jpg",
+			"resources/skybox/skyboxsun25deg/nx.jpg",
+			"resources/skybox/skyboxsun25deg/py.jpg",
+			"resources/skybox/skyboxsun25deg/ny.jpg",
+			"resources/skybox/skyboxsun25deg/pz.jpg",
+			"resources/skybox/skyboxsun25deg/nz.jpg"
+		]);
+
+		const scene = new t3d.Scene();
+
+		window.scene = scene;
+
+		const sky_box = new SkyBox(cube_texture);
+		sky_box.level = 0;
+
+		const textureLoader = new Texture2DLoader();
+		const noiseTexture = textureLoader.load('./resources/grass/noise.png');
+		noiseTexture.flipY = true;
+
+		const grassTexture = textureLoader.load('./resources/grass/grass01.png');
+		grassTexture.flipY = false;
+
+		const flowerTexture = textureLoader.load('./resources/grass/flowers02.png');
+		flowerTexture.flipY = false;
+
+		const flowerTexture2 = textureLoader.load('./resources/grass/flowers01.png');
+		flowerTexture2.flipY = false;
+
+		const groundTexture = textureLoader.load('./resources/grass/grasslight-small.jpg');
+		groundTexture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
+		groundTexture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
+
+		const loadingManager = new t3d.LoadingManager(function () {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function (url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const GRASS_COUNT = 10000;
+		const FLOWER1_COUNT = 5000;
+		const FLOWER2_COUNT = 2500;
+
+		const windDirection = [1, 0]
+
+		const grassMaterial = createGrassMaterial(noiseTexture, grassTexture);		// grass
+
+		const flowerMaterial = createGrassMaterial(noiseTexture, flowerTexture);	// white flower
+
+		const flowerMaterial2 = createGrassMaterial(noiseTexture, flowerTexture2);	// pink flower
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.autoLogError = false;
+
+		console.time('GLTFLoader');
+		loader.load(file).then(function (result) {
+			console.timeEnd('GLTFLoader');
+
+			const object = result.root;
+
+			object.traverse(node => {
+				if (node.isMesh) {
+					const instancedGeometry = createInstancedGeometry(node, GRASS_COUNT);
+					const instancedGeometry2 = createInstancedGeometry(node, FLOWER1_COUNT);
+					const instancedGeometry3 = createInstancedGeometry(node, FLOWER2_COUNT);
+
+					instancedGeometry.instanceCount = GRASS_COUNT;
+					instancedGeometry2.instanceCount = FLOWER1_COUNT;
+					instancedGeometry3.instanceCount = FLOWER2_COUNT;
+
+					const mesh = new t3d.Mesh(instancedGeometry, grassMaterial);
+					const mesh2 = new t3d.Mesh(instancedGeometry2, flowerMaterial);
+					const mesh3 = new t3d.Mesh(instancedGeometry3, flowerMaterial2);
+
+					scene.add(mesh);
+					scene.add(mesh2);
+					scene.add(mesh3);
+				}
+			});
+
+			const params = {
+				windSpeed: 0.1,
+				windStrength: 1,
+				noiseScale: 20,
+			}
+
+			const gui = new GUI();
+
+			gui.add({ version: 'WebGL ' + forwardRenderer.renderPass.capabilities.version }, 'version').disable();
+
+			gui.add({ angle: 90 }, 'angle', 0, 360, 0.01).onChange(setWindDirection);
+
+			gui.add(params, 'windSpeed', 0, 1, 0.1).onChange(value => {
+				grassMaterial.uniforms.windSpeed = value;
+				flowerMaterial.uniforms.windSpeed = value;
+				flowerMaterial2.uniforms.windSpeed = value;
+			});
+			gui.add(params, 'windStrength', -2, 2, 0.1).onChange(value => {
+				grassMaterial.uniforms.windStrength = value;
+				flowerMaterial.uniforms.windStrength = value;
+				flowerMaterial2.uniforms.windStrength = value;
+			});
+			gui.add(params, 'noiseScale', 0, 40, 1).onChange(value => {
+				grassMaterial.uniforms.noiseScale = value;
+				flowerMaterial.uniforms.noiseScale = value;
+				flowerMaterial2.uniforms.noiseScale = value;
+			});
+		}).catch(e => console.error(e));
+
+		function setWindDirection(angle) {
+			windDirection[0] = Math.sin(angle / 180 * Math.PI);
+			windDirection[1] = Math.cos(angle / 180 * Math.PI);
+
+			grassMaterial.uniforms.windDirection = windDirection;
+			flowerMaterial.uniforms.windDirection = windDirection;
+			flowerMaterial2.uniforms.windDirection = windDirection;
+		}
+
+		function createInstancedGeometry(node, count) {
+			const geometry = node.geometry;
+
+			const instancedGeometry = geometry.clone();
+
+			const matrices = [];
+
+			const position = new t3d.Vector3();
+			const scale = new t3d.Vector3();
+			const matrix = new t3d.Matrix4();
+
+			const timeOffsetArray = new Float32Array(count);
+			const tempQuat = new t3d.Quaternion();
+			const rotAxis = new t3d.Vector3(0, 1, 0);
+			const width = 100;
+			const depth = 100;
+
+			for (let i = 0; i < count; i++) {
+				position.x = Math.random() * width - width / 2;
+				position.y = 0;
+				position.z = Math.random() * depth - depth / 2;
+
+				const angle = Math.PI - Math.random() * (2 * Math.PI);
+				tempQuat.setFromAxisAngle(rotAxis, angle);
+				tempQuat.normalize();
+
+				scale.set(1, 1, 1);
+
+				matrix.transform(position, scale, tempQuat);
+				matrix.toArray(matrices, i * 16);
+
+				timeOffsetArray[i] = Math.random() * 1000;
+			}
+
+			const timeOffset = new t3d.Attribute(new t3d.Buffer(timeOffsetArray, 1));
+			timeOffset.divisor = 1;
+			instancedGeometry.addAttribute('timeOffset', timeOffset);
+
+			const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(matrices), 16));
+			instanceMatrixAttribute.divisor = 1;
+			instancedGeometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
+
+			return instancedGeometry;
+		}
+
+		function createGrassMaterial(noiseTexture, grassTexture) {
+			const grassMaterial = new t3d.ShaderMaterial({
+				uniforms: {
+					time: 0,
+					windDirection: windDirection,
+					windSpeed: 0.1,
+					windStrength: 1,
+					noiseScale: 20,
+					noise: noiseTexture,
+					map: grassTexture,
+				},
+				vertexShader: document.getElementById('vs').textContent,
+				fragmentShader: document.getElementById('fs').textContent
+			});
+
+			grassMaterial.transparent = true;
+
+			return grassMaterial;
+		}
+
+		const planeGeometry = new t3d.PlaneGeometry(100, 100);
+		const planeMaterial = new t3d.BasicMaterial();
+		planeMaterial.diffuseMap = groundTexture;
+		planeMaterial.diffuseMapTransform.setUvTransform(0, 0, 10, 10, 0, 0.5, 0.5);
+
+		const plane = new t3d.Mesh(planeGeometry, planeMaterial);
+
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(0, 10, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(22, 0.6, 32);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		camera.add(sky_box);
+		scene.add(camera);
+
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = false;
+		controller.maxDistance = 50;
+		controller.minPolarAngle = 85 / 180 * Math.PI;
+		controller.maxPolarAngle = 89 / 180 * Math.PI;
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+			grassMaterial.uniforms.time = count / 1000;
+			flowerMaterial.uniforms.time = count / 1000;
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+			stats.end();
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+
+</html>

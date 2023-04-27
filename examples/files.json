@@ -182,6 +182,8 @@
 		"lab_ocean",
 		"lab_ground",
 		"lab_texture_variation",
-		"lab_ik"
+		"lab_ik",
+		"lab_gltf_grass",
+		"lab_geometry_grass"
 	]
 }
