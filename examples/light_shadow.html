@@ -45,7 +45,7 @@
 		forwardRenderer.shadowAutoUpdate = false;
 
 		const scene = new t3d.Scene();
-		scene.fog = new t3d.Fog(0x000000, 10, 100);
+		scene.fog = new t3d.Fog(0x000000, 50, 1000);
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -59,68 +59,96 @@
 			}
 		});
 
-		const loader = new GLTFLoader(loadingManager);
-		loader.load('./resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
-			const object = result.root.children[0];
-			object.castShadow = true;
-			object.position.y = 0.2;
-			scene.add(object);
+		console.time('Load glTF');
+		const gltfUri = './resources/models/gltf/bust_of_woman/glTF-Binary/bust_of_woman.glb';
+		new GLTFLoader(loadingManager).load(gltfUri).then(function(result) {
+			console.timeEnd('Load glTF');
+
+			const model = result.root;
+
+			model.traverse(node => {
+				if (node.isMesh) {
+					node.castShadow = true;
+					node.receiveShadow = true;
+				}
+			});
+
+			scene.add(model);
 
 			forwardRenderer.shadowNeedsUpdate = true;
-		});
+		}).catch(function(e) { console.error(e) });
 
-		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_geometry = new t3d.PlaneGeometry(2000, 2000);
 		const plane_material = new t3d.LambertMaterial();
-		plane_material.diffuse.setHex(0xffffff);
+		plane_material.diffuse.setHex(0x999999);
 		plane_material.dithering = true;
 		const plane = new t3d.Mesh(plane_geometry, plane_material);
-		plane.position.y = -1;
+		plane.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const pointLight = new t3d.PointLight(0x00ff00, 0.3, 100);
-		pointLight.position.set(3, 1.5, -3);
+		const bg_geometry = new t3d.PlaneGeometry(150, 150);
+		const bg_material = new t3d.PBRMaterial();
+		bg_material.roughness = 0.8;
+		bg_material.metalness = 0;
+		bg_material.diffuse.setHex(0xffffff);
+		bg_material.dithering = true;
+		bg_material.side = t3d.DRAW_SIDE.DOUBLE;
+		const bg = new t3d.Mesh(bg_geometry, bg_material);
+		bg.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		bg.receiveShadow = true;
+		bg.castShadow = true;
+		bg.euler.x = Math.PI / 2;
+		bg.position.z = -25;
+		scene.add(bg);
+
+		const pointLight = new t3d.PointLight(0x0000ff, 0.7, 80);
+		pointLight.position.set(30, 30, 20);
 		pointLight.shadow.cameraNear = 0.1;
-		pointLight.shadow.cameraFar = 30;
+		pointLight.shadow.cameraFar = 100;
 		pointLight.shadow.mapSize.set(1024, 1024);
+		pointLight.shadow.bias = -0.003;
 		pointLight.castShadow = true;
 		scene.add(pointLight);
 		
-		const pointLightHelper = new PointLightHelper(pointLight, 0.5);
+		const pointLightHelper = new PointLightHelper(pointLight, 1);
 		pointLight.add(pointLightHelper);
 
-		const pointLight2 = new t3d.PointLight(0xff0000, 0.3, 100);
-		pointLight2.position.set(3, 1.5, 3);
+		const pointLight2 = new t3d.PointLight(0xff0000, 0.7, 80);
+		pointLight2.position.set(-30, 30, 20);
 		pointLight2.shadow.cameraNear = 0.1;
-		pointLight2.shadow.cameraFar = 30;
+		pointLight2.shadow.cameraFar = 100;
 		pointLight2.shadow.mapSize.set(1024, 1024);
+		pointLight2.shadow.bias = -0.003;
 		pointLight2.castShadow = true;
 		scene.add(pointLight2);
 		
-		const pointLightHelper2 = new PointLightHelper(pointLight2,  0.5);
+		const pointLightHelper2 = new PointLightHelper(pointLight2,  1);
 		pointLight2.add(pointLightHelper2);
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.4);
-		directionalLight.position.set(-3, 1.5, 0);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		directionalLight.shadow.windowSize = 10;
-		directionalLight.shadow.cameraFar = 30;
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
+		directionalLight.position.set(10, 35, 30);
+		directionalLight.lookAt(new t3d.Vector3(0, 30, 0), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 100;
+		directionalLight.shadow.cameraFar = 300;
 		directionalLight.shadow.mapSize.set(1024, 1024);
+		directionalLight.shadow.bias = -0.003;
 		directionalLight.castShadow = true;
 		scene.add(directionalLight);
 		
-		const directionalLightHelper = new DirectionalLightHelper(directionalLight,  0.5);
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight,  1);
 		directionalLight.add(directionalLightHelper);
 
 		const camera = new t3d.Camera();
 		camera.gammaFactor = 1.5;
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
-		camera.position.set(0, 2, 10);
+		camera.position.set(0, 24, 130);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 26, 0);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
