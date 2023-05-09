@@ -2,6 +2,10 @@
     uniform vec3 u_AmbientLightColor;
 #endif
 
+#ifdef USE_SPHERICALHARMONICS_LIGHT
+    uniform vec3 u_SphericalHarmonicsLightData[9];
+#endif
+
 #ifdef USE_CLEARCOAT
     // Clear coat directional hemishperical reflectance (this approximation should be improved)
     float clearcoatDHRApprox(const in float roughness, const in float dotNL) {
@@ -99,5 +103,26 @@
     // ref: https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
     float computeSpecularOcclusion(const in float dotNV, const in float ambientOcclusion, const in float roughness) {
     	return saturate(pow(dotNV + ambientOcclusion, exp2(-16.0 * roughness - 1.0)) - 1.0 + ambientOcclusion);
+    }
+#endif
+
+#ifdef USE_SPHERICALHARMONICS_LIGHT
+    vec3 shGetIrradianceAt(in vec3 normal, in vec3 shCoefficients[9]) {
+        float x = normal.x, y = normal.y, z = normal.z;
+        vec3 result = shCoefficients[0] * 0.886227;
+        result += shCoefficients[1] * 2.0 * 0.511664 * y;
+        result += shCoefficients[2] * 2.0 * 0.511664 * z;
+        result += shCoefficients[3] * 2.0 * 0.511664 * x;
+        result += shCoefficients[4] * 2.0 * 0.429043 * x * y;
+        result += shCoefficients[5] * 2.0 * 0.429043 * y * z;
+        result += shCoefficients[6] * (0.743125 * z * z - 0.247708);
+        result += shCoefficients[7] * 2.0 * 0.429043 * x * z;
+        result += shCoefficients[8] * 0.429043 * (x * x - y * y);
+        return result;
+    }
+
+    vec3 getLightProbeIrradiance(const in vec3 lightProbe[9], const in vec3 normal) {
+        vec3 irradiance = shGetIrradianceAt(normal, lightProbe);
+        return irradiance;
     }
 #endif

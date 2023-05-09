@@ -4,6 +4,7 @@
 		"light_pointlight",
 		"light_spotlight",
 		"light_hemispherelight",
+		"light_sphericalharmonicslight",
 		"light_shadow",
 		"light_shadow_adapter",
 		"light_softshadow"

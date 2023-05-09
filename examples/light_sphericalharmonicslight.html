@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>t3d - sphericalharmonicslight</title>
+		<meta
+			name="viewport"
+			content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+		/>
+		<link type="text/css" rel="stylesheet" href="main.css" />
+	</head>
+	<body>
+		<div id="info"><a href="" target="_blank">t3d</a> - pbr</div>
+
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="./libs/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"t3d": "../build/t3d.module.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+			import * as t3d from "t3d";
+			import { GUI } from "./libs/lil-gui.esm.min.js";
+			import { SkyBox } from "./jsm/objects/SkyBox.js";
+			import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+			import { ForwardRenderer } from "./jsm/render/ForwardRenderer.js";
+			import { TextureCubeLoader } from "./jsm/loaders/TextureCubeLoader.js";
+			import { PMREM } from "./jsm/PMREM.js";
+			// import { SHGenerator } from "./jsm/SHGenerator.js";
+
+			let useDevicePixelRatio = true;
+			const devicePixelRatio = window.devicePixelRatio;
+
+			let width = window.innerWidth || 2;
+			let height = window.innerHeight || 2;
+
+			const canvas = document.createElement("canvas");
+			canvas.width = useDevicePixelRatio ? width * devicePixelRatio : width;
+			canvas.height = useDevicePixelRatio ? height * devicePixelRatio : height;
+			canvas.style.width = width + "px";
+			canvas.style.height = height + "px";
+			document.body.appendChild(canvas);
+
+			const forwardRenderer = new ForwardRenderer(canvas);
+
+			const scene = new t3d.Scene();
+
+			const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
+			directionalLight.position.set(10, 10, 10);
+			directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+			scene.add(directionalLight);
+
+			const camera = new t3d.Camera();
+			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+			camera.position.set(0, 0, 30);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.setPerspective((40 / 180) * Math.PI, width / height, 1, 1000);
+			scene.add(camera);
+
+			const shData = [
+				0.46473264481252535, 0.4236897533417428, 0.45701205619485963,
+				0.3082483306011903, 0.27957493334994027, 0.35204972217190333,
+				0.031559873309940596, 0.05869524291220626, 0.07546942518474699,
+				0.0783877292004041, -0.12536110355589788, -0.29476339800614265,
+				0.1023572930696087, -0.12603253904914027, -0.32909081046315386,
+				0.0333243263361059, 0.0673778529179098, 0.08473670022869158,
+				-0.04482904299350188, -0.040847638305410224, -0.06280256304709063,
+				0.06313178648937207, -0.029214406490743174, -0.07707942563681561,
+				0.03484167978594885, 0.03851877222487137, 0.002600994399406049
+			];
+
+			const sphere_geometry = new t3d.SphereGeometry(5, 64, 32);
+			const pbr_mat = new t3d.PBRMaterial();
+			pbr_mat.diffuse.setHSL(1.0, 1.0, 1.0);
+			pbr_mat.metalness = 0;
+			pbr_mat.roughness = 1;
+			const sphere = new t3d.Mesh(sphere_geometry, pbr_mat);
+			scene.add(sphere);
+
+			let cube_texture = new TextureCubeLoader().load(
+				[
+					"resources/skybox/pisa/px.png",
+					"resources/skybox/pisa/nx.png",
+					"resources/skybox/pisa/py.png",
+					"resources/skybox/pisa/ny.png",
+					"resources/skybox/pisa/pz.png",
+					"resources/skybox/pisa/nz.png",
+				],
+				function () {
+					const sphericalHarmonicsLight = new t3d.SphericalHarmonicsLight();
+					scene.add(sphericalHarmonicsLight);
+			
+					cube_texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+					// SHGenerator.fromCubeTexture(forwardRenderer, cube_texture, sphericalHarmonicsLight.sh);
+					sphericalHarmonicsLight.sh.fromArray(shData);
+			
+					cube_texture = PMREM.prefilterEnvironmentMap(
+						forwardRenderer,
+						cube_texture,
+						{
+							width: cube_texture.images[0].width,
+							height: cube_texture.images[0].height,
+							sampleSize: 128,
+						}
+					);
+
+					const sky_box = new SkyBox(cube_texture);
+					sky_box.material.defines.GAMMA = true;
+					camera.add(sky_box);
+
+					scene.environment = cube_texture;
+					scene.environmentLightIntensity = 0;
+
+					const gui = new GUI();
+					gui.add(sphericalHarmonicsLight, "intensity", 0, 1, 0.01).name('sphericalHarmonicsLight');
+					gui.add(scene, "environmentLightIntensity", 0, 1, 0.01).name('environmentLight');
+				}
+			);
+
+			// add a hover controller
+			const controller = new OrbitControls(camera, canvas);
+
+			function loop(count) {
+				requestAnimationFrame(loop);
+
+				controller.update();
+				scene.updateMatrix();
+				scene.updateRenderStates(camera);
+				scene.updateRenderQueue(camera);
+				forwardRenderer.render(scene, camera);
+			}
+			requestAnimationFrame(loop);
+
+			function onWindowResize() {
+				width = window.innerWidth || 2;
+				height = window.innerHeight || 2;
+
+				camera.setPerspective((40 / 180) * Math.PI, width / height, 1, 1000);
+
+				forwardRenderer.backRenderTarget.resize(
+					useDevicePixelRatio ? width * devicePixelRatio : width,
+					useDevicePixelRatio ? height * devicePixelRatio : height
+				);
+				canvas.style.width = width + "px";
+				canvas.style.height = height + "px";
+			}
+			window.addEventListener("resize", onWindowResize, false);
+		</script>
+	</body>
+</html>

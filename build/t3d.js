@@ -5691,6 +5691,268 @@
 		return Spherical;
 	}();
 
+	/**
+	 * Primary reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
+	 * Secondary reference: https://www.ppsloan.org/publications/StupidSH36.pdf
+	 * 3-band SH defined by 9 coefficients.
+	 * @memberof t3d
+	 */
+	var SphericalHarmonics3 = /*#__PURE__*/function () {
+		/**
+		 * Creates a new instance of SphericalHarmonics3.
+		 */
+		function SphericalHarmonics3() {
+			/**
+			 * An array holding the (9) SH coefficients.
+			 * A single coefficient is represented as an instance of Vector3.
+			 * @type {Array}
+			 */
+			this.coefficients = [];
+			for (var i = 0; i < 9; i++) {
+				this.coefficients.push(new Vector3());
+			}
+		}
+
+		/**
+		 * Set this sphericalHarmonics3 value.
+		 * @param {t3d.Vector3[]} coefficients An array of SH coefficients.
+		 * @return {t3d.SphericalHarmonics3}
+		 */
+		var _proto = SphericalHarmonics3.prototype;
+		_proto.set = function set(coefficients) {
+			for (var i = 0; i < 9; i++) {
+				this.coefficients[i].copy(coefficients[i]);
+			}
+			return this;
+		}
+
+		/**
+		 * Sets all SH coefficients to 0.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.zero = function zero() {
+			for (var i = 0; i < 9; i++) {
+				this.coefficients[i].set(0, 0, 0);
+			}
+			return this;
+		}
+
+		/**
+		 * Returns the radiance in the direction of the given normal.
+		 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
+		 * @param {t3d.Vector3} target - The result vector.
+		 * @return {t3d.Vector3}
+		 */;
+		_proto.getAt = function getAt(normal, target) {
+			// normal is assumed to be unit length
+
+			var x = normal.x,
+				y = normal.y,
+				z = normal.z;
+			var coeff = this.coefficients;
+
+			// band 0
+			target.copy(coeff[0]).multiplyScalar(0.282095);
+
+			// band 1
+			target.addScaledVector(coeff[1], 0.488603 * y);
+			target.addScaledVector(coeff[2], 0.488603 * z);
+			target.addScaledVector(coeff[3], 0.488603 * x);
+
+			// band 2
+			target.addScaledVector(coeff[4], 1.092548 * (x * y));
+			target.addScaledVector(coeff[5], 1.092548 * (y * z));
+			target.addScaledVector(coeff[6], 0.315392 * (3.0 * z * z - 1.0));
+			target.addScaledVector(coeff[7], 1.092548 * (x * z));
+			target.addScaledVector(coeff[8], 0.546274 * (x * x - y * y));
+			return target;
+		}
+
+		/**
+		 * Reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
+		 * Returns the irradiance (radiance convolved with cosine lobe) in the direction of the given normal.
+		 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
+		 * @param {t3d.Vector3} target - The result vector.
+		 * @return {t3d.Vector3}
+		 */;
+		_proto.getIrradianceAt = function getIrradianceAt(normal, target) {
+			// normal is assumed to be unit length
+
+			var x = normal.x,
+				y = normal.y,
+				z = normal.z;
+			var coeff = this.coefficients;
+
+			// band 0
+			target.copy(coeff[0]).multiplyScalar(0.886227); // π * 0.282095
+
+			// band 1
+			target.addScaledVector(coeff[1], 2.0 * 0.511664 * y); // ( 2 * π / 3 ) * 0.488603
+			target.addScaledVector(coeff[2], 2.0 * 0.511664 * z);
+			target.addScaledVector(coeff[3], 2.0 * 0.511664 * x);
+
+			// band 2
+			target.addScaledVector(coeff[4], 2.0 * 0.429043 * x * y); // ( π / 4 ) * 1.092548
+			target.addScaledVector(coeff[5], 2.0 * 0.429043 * y * z);
+			target.addScaledVector(coeff[6], 0.743125 * z * z - 0.247708); // ( π / 4 ) * 0.315392 * 3
+			target.addScaledVector(coeff[7], 2.0 * 0.429043 * x * z);
+			target.addScaledVector(coeff[8], 0.429043 * (x * x - y * y)); // ( π / 4 ) * 0.546274
+
+			return target;
+		}
+
+		/**
+		 * Adds the given SH to this instance.
+		 * @param {t3d.SphericalHarmonics3} sh - The SH to add.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.add = function add(sh) {
+			for (var i = 0; i < 9; i++) {
+				this.coefficients[i].add(sh.coefficients[i]);
+			}
+			return this;
+		}
+
+		/**
+		 * A convenience method for performing .add() and .scale() at once.
+		 * @param {t3d.SphericalHarmonics3} sh - The SH to add.
+		 * @param {t3d.Vector3} s - The scale factor.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.addScaledSH = function addScaledSH(sh, s) {
+			for (var i = 0; i < 9; i++) {
+				this.coefficients[i].addScaledVector(sh.coefficients[i], s);
+			}
+			return this;
+		}
+
+		/**
+		 * Multiply the s to this SphericalHarmonics3.
+		 * @param {Number} s - The scale factor.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.scale = function scale(s) {
+			for (var i = 0; i < 9; i++) {
+				this.coefficients[i].multiplyScalar(s);
+			}
+			return this;
+		}
+
+		/**
+		 * Linear interpolates between the given SH and this instance by the given alpha factor.
+		 * Sets this coefficients vector to be the vector linearly interpolated between v1 and v2
+		 * where alpha is the percent distance along the line connecting the two vectors
+		 * - alpha = 0 will be v1, and alpha = 1 will be v2.
+		 * @param {t3d.SphericalHarmonics3} sh - The SH to interpolate with.
+		 * @param {Number} alpha - The alpha factor.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.lerp = function lerp(sh, alpha) {
+			for (var i = 0; i < 9; i++) {
+				this.coefficients[i].lerpVectors(this.coefficients[i], sh.coefficients[i], alpha);
+			}
+			return this;
+		}
+
+		/**
+		 * Returns true if the given SH and this instance have equal coefficients.
+		 * @param {t3d.SphericalHarmonics3} sh - The SH to compare with.
+		 * @return {Boolean}
+		 */;
+		_proto.equals = function equals(sh) {
+			for (var i = 0; i < 9; i++) {
+				if (!this.coefficients[i].equals(sh.coefficients[i])) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * Copies the given SH to this instance.
+		 * @param {t3d.SphericalHarmonics3} sh - The SH to compare with.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.copy = function copy(sh) {
+			return this.set(sh.coefficients);
+		}
+
+		/**
+		 * Returns a new instance of SphericalHarmonics3 with equal coefficients.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.clone = function clone() {
+			return new this.constructor().copy(this);
+		}
+
+		/**
+		 * Sets the coefficients of this instance from the given array.
+		 * @param {Number[]} array - The array holding the numbers of the SH coefficients.
+		 * @param {Number} [offset=0] - The array offset.
+		 * @return {t3d.SphericalHarmonics3}
+		 */;
+		_proto.fromArray = function fromArray(array, offset) {
+			if (offset === void 0) {
+				offset = 0;
+			}
+			var coefficients = this.coefficients;
+			for (var i = 0; i < 9; i++) {
+				coefficients[i].fromArray(array, offset + i * 3);
+			}
+			return this;
+		}
+
+		/**
+		 * Returns an array with the coefficients, or copies them into the provided array.
+		 * The coefficients are represented as numbers.
+		 * @param {Number[]} [array] - The target array.
+		 * @param {Number} [offset=0] - The array offset.
+		 * @return {Number[]}
+		 */;
+		_proto.toArray = function toArray(array, offset) {
+			if (array === void 0) {
+				array = [];
+			}
+			if (offset === void 0) {
+				offset = 0;
+			}
+			var coefficients = this.coefficients;
+			for (var i = 0; i < 9; i++) {
+				coefficients[i].toArray(array, offset + i * 3);
+			}
+			return array;
+		}
+
+		/**
+		 * Computes the SH basis for the given normal vector.
+		 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
+		 * @param {Number[]} array - The resulting SH basis.
+		 */;
+		SphericalHarmonics3.getBasisAt = function getBasisAt(normal, shBasis) {
+			// normal is assumed to be unit length
+
+			var x = normal.x,
+				y = normal.y,
+				z = normal.z;
+
+			// band 0
+			shBasis[0] = 0.282095;
+
+			// band 1
+			shBasis[1] = 0.488603 * y;
+			shBasis[2] = 0.488603 * z;
+			shBasis[3] = 0.488603 * x;
+
+			// band 2
+			shBasis[4] = 1.092548 * x * y;
+			shBasis[5] = 1.092548 * y * z;
+			shBasis[6] = 0.315392 * (3 * z * z - 1);
+			shBasis[7] = 1.092548 * x * z;
+			shBasis[8] = 0.546274 * (x * x - y * y);
+		};
+		return SphericalHarmonics3;
+	}();
+
 	var _v0 = new Vector3();
 	var _v1 = new Vector3();
 	var _v2 = new Vector3();
@@ -6560,6 +6822,7 @@
 			// Data caches
 
 			this.ambient = new Float32Array([0, 0, 0]);
+			this.sh = new Float32Array(27);
 			this.hemisphere = [];
 			this.directional = [];
 			this.directionalShadow = [];
@@ -6579,6 +6842,7 @@
 			// Status
 
 			this.useAmbient = false;
+			this.useSphericalHarmonics = false;
 			this.hemisNum = 0;
 			this.directsNum = 0;
 			this.pointsNum = 0;
@@ -6615,7 +6879,11 @@
 			for (var i = 0; i < 3; i++) {
 				this.ambient[i] = 0;
 			}
+			for (var _i = 0; _i < this.sh.length; _i++) {
+				this.sh[_i] = 0;
+			}
 			this.useAmbient = false;
+			this.useSphericalHarmonics = false;
 			this.hemisNum = 0;
 			this.directsNum = 0;
 			this.pointsNum = 0;
@@ -6626,8 +6894,8 @@
 
 			// Setup Uniforms
 
-			for (var _i = 0, l = this.lights.length; _i < l; _i++) {
-				var light = this.lights[_i];
+			for (var _i2 = 0, l = this.lights.length; _i2 < l; _i2++) {
+				var light = this.lights[_i2];
 				if (light.isAmbientLight) {
 					this._doAddAmbientLight(light);
 				} else if (light.isHemisphereLight) {
@@ -6638,6 +6906,8 @@
 					this._doAddPointLight(light, sceneData);
 				} else if (light.isSpotLight) {
 					this._doAddSpotLight(light, sceneData);
+				} else if (light.isSphericalHarmonicsLight) {
+					this._doAddSphericalHarmonicsLight(light);
 				}
 			}
 			var directShadowNum = this.directShadowNum;
@@ -6648,8 +6918,8 @@
 				if (this.directionalShadowMatrix.length !== directShadowNum * 16) {
 					this.directionalShadowMatrix = new Float32Array(directShadowNum * 16);
 				}
-				for (var _i2 = 0; _i2 < directShadowNum; _i2++) {
-					tempDirectionalShadowMatrices[_i2].toArray(this.directionalShadowMatrix, _i2 * 16);
+				for (var _i3 = 0; _i3 < directShadowNum; _i3++) {
+					tempDirectionalShadowMatrices[_i3].toArray(this.directionalShadowMatrix, _i3 * 16);
 				}
 			}
 			var pointShadowNum = this.pointShadowNum;
@@ -6659,8 +6929,8 @@
 				if (this.pointShadowMatrix.length !== pointShadowNum * 16) {
 					this.pointShadowMatrix = new Float32Array(pointShadowNum * 16);
 				}
-				for (var _i3 = 0; _i3 < pointShadowNum; _i3++) {
-					tempPointShadowMatrices[_i3].toArray(this.pointShadowMatrix, _i3 * 16);
+				for (var _i4 = 0; _i4 < pointShadowNum; _i4++) {
+					tempPointShadowMatrices[_i4].toArray(this.pointShadowMatrix, _i4 * 16);
 				}
 			}
 			var spotShadowNum = this.spotShadowNum;
@@ -6671,8 +6941,8 @@
 				if (this.spotShadowMatrix.length !== spotShadowNum * 16) {
 					this.spotShadowMatrix = new Float32Array(spotShadowNum * 16);
 				}
-				for (var _i4 = 0; _i4 < spotShadowNum; _i4++) {
-					tempSpotShadowMatrices[_i4].toArray(this.spotShadowMatrix, _i4 * 16);
+				for (var _i5 = 0; _i5 < spotShadowNum; _i5++) {
+					tempSpotShadowMatrices[_i5].toArray(this.spotShadowMatrix, _i5 * 16);
 				}
 			}
 		};
@@ -6683,6 +6953,16 @@
 			this.ambient[1] += color.g * intensity;
 			this.ambient[2] += color.b * intensity;
 			this.useAmbient = true;
+		};
+		_proto._doAddSphericalHarmonicsLight = function _doAddSphericalHarmonicsLight(object) {
+			var intensity = object.intensity;
+			var sh = object.sh.coefficients;
+			for (var i = 0; i < sh.length; i += 1) {
+				this.sh[i * 3] += sh[i].x * intensity;
+				this.sh[i * 3 + 1] += sh[i].y * intensity;
+				this.sh[i * 3 + 2] += sh[i].z * intensity;
+			}
+			this.useSphericalHarmonics = true;
 		};
 		_proto._doAddHemisphereLight = function _doAddHemisphereLight(object, sceneData) {
 			var intensity = object.intensity;
@@ -6910,18 +7190,19 @@
 	// Light hash
 	var LightHash = /*#__PURE__*/function () {
 		function LightHash() {
-			this._factor = new Uint16Array(8);
+			this._factor = new Uint16Array(9);
 		}
 		var _proto2 = LightHash.prototype;
 		_proto2.update = function update(lights) {
 			this._factor[0] = lights.useAmbient ? 1 : 0;
-			this._factor[1] = lights.hemisNum;
-			this._factor[2] = lights.directsNum;
-			this._factor[3] = lights.pointsNum;
-			this._factor[4] = lights.spotsNum;
-			this._factor[5] = lights.directShadowNum;
-			this._factor[6] = lights.pointShadowNum;
-			this._factor[7] = lights.spotShadowNum;
+			this._factor[1] = lights.useSphericalHarmonics ? 1 : 0;
+			this._factor[2] = lights.hemisNum;
+			this._factor[3] = lights.directsNum;
+			this._factor[4] = lights.pointsNum;
+			this._factor[5] = lights.spotsNum;
+			this._factor[6] = lights.directShadowNum;
+			this._factor[7] = lights.pointShadowNum;
+			this._factor[8] = lights.spotShadowNum;
 		};
 		_proto2.compare = function compare(factor) {
 			if (!factor) {
@@ -10848,9 +11129,9 @@
 
 	var inverse = "mat4 inverseMat4(mat4 m) {\n		float\n		a00 = m[0][0], a01 = m[0][1], a02 = m[0][2], a03 = m[0][3],\n		a10 = m[1][0], a11 = m[1][1], a12 = m[1][2], a13 = m[1][3],\n		a20 = m[2][0], a21 = m[2][1], a22 = m[2][2], a23 = m[2][3],\n		a30 = m[3][0], a31 = m[3][1], a32 = m[3][2], a33 = m[3][3],\n		b00 = a00 * a11 - a01 * a10,\n		b01 = a00 * a12 - a02 * a10,\n		b02 = a00 * a13 - a03 * a10,\n		b03 = a01 * a12 - a02 * a11,\n		b04 = a01 * a13 - a03 * a11,\n		b05 = a02 * a13 - a03 * a12,\n		b06 = a20 * a31 - a21 * a30,\n		b07 = a20 * a32 - a22 * a30,\n		b08 = a20 * a33 - a23 * a30,\n		b09 = a21 * a32 - a22 * a31,\n		b10 = a21 * a33 - a23 * a31,\n		b11 = a22 * a33 - a23 * a32,\n		det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n		return mat4(\n				a11 * b11 - a12 * b10 + a13 * b09,\n				a02 * b10 - a01 * b11 - a03 * b09,\n				a31 * b05 - a32 * b04 + a33 * b03,\n				a22 * b04 - a21 * b05 - a23 * b03,\n				a12 * b08 - a10 * b11 - a13 * b07,\n				a00 * b11 - a02 * b08 + a03 * b07,\n				a32 * b02 - a30 * b05 - a33 * b01,\n				a20 * b05 - a22 * b02 + a23 * b01,\n				a10 * b10 - a11 * b08 + a13 * b06,\n				a01 * b08 - a00 * b10 - a03 * b06,\n				a30 * b04 - a31 * b02 + a33 * b00,\n				a21 * b02 - a20 * b04 - a23 * b00,\n				a11 * b07 - a10 * b09 - a12 * b06,\n				a00 * b09 - a01 * b07 + a02 * b06,\n				a31 * b01 - a30 * b03 - a32 * b00,\n				a20 * b03 - a21 * b01 + a22 * b00) / det;\n}";
 
-	var light_frag = "\n#if (defined(USE_PHONG) || defined(USE_PBR))\n		vec3 V = normalize(u_CameraPosition - v_modelPos);\n#endif\n#ifdef USE_PBR\n		#ifdef USE_PBR2\n				vec3 diffuseColor = outColor.xyz;\n				vec3 specularColor = specularFactor.xyz;\n				float roughness = max(1.0 - glossinessFactor, 0.0525);\n		#else\n				vec3 diffuseColor = outColor.xyz * (1.0 - metalnessFactor);\n				vec3 specularColor = mix(vec3(0.04), outColor.xyz, metalnessFactor);\n				float roughness = max(roughnessFactor, 0.0525);\n		#endif\n		vec3 dxy = max(abs(dFdx(geometryNormal)), abs(dFdy(geometryNormal)));\n		float geometryRoughness = max(max(dxy.x, dxy.y), dxy.z);\n		roughness += geometryRoughness;\n		roughness = min(roughness, 1.0);\n		#ifdef USE_CLEARCOAT\n				float clearcoat = u_Clearcoat;\n				float clearcoatRoughness = u_ClearcoatRoughness;\n				#ifdef USE_CLEARCOATMAP\n\t\t		clearcoat *= texture2D(clearcoatMap, v_Uv).x;\n				#endif\n				#ifdef USE_CLEARCOAT_ROUGHNESSMAP\n\t\t		clearcoatRoughness *= texture2D(clearcoatRoughnessMap, v_Uv).y;\n\t		#endif\n				clearcoat = saturate(clearcoat);\n				clearcoatRoughness = max(clearcoatRoughness, 0.0525);\n\t		clearcoatRoughness += geometryRoughness;\n\t		clearcoatRoughness = min(clearcoatRoughness, 1.0);\n		#endif\n#else\n		vec3 diffuseColor = outColor.xyz;\n		#ifdef USE_PHONG\n				vec3 specularColor = u_SpecularColor.xyz;\n				float shininess = u_Specular;\n		#endif\n#endif\n#ifdef USE_LIGHT\n		vec3 L;\n		float falloff;\n		float dotNL;\n		vec3 irradiance;\n		float clearcoatDHR;\n		#ifdef USE_CLEARCOAT\n				float ccDotNL;\n				vec3 ccIrradiance;\n		#endif\n		#if NUM_DIR_LIGHTS > 0\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_DIR_LIGHTS; i++) {\n						L = normalize(-u_Directional[i].direction);\n						falloff = 1.0;\n						#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_DIR_SHADOWS)\n								#ifdef USE_PCSS_SOFT_SHADOW\n										falloff *= getShadowWithPCSS(directionalDepthMap[i], directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n								#else\n										falloff *= getShadow(directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n								#endif\n						#endif\n						dotNL = saturate(dot(N, L));\n						irradiance = u_Directional[i].color * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT				\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL * u_Directional[i].color * falloff	* PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n\t\t				clearcoatDHR = 0.0;\n\t				#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n				#pragma unroll_loop_end\n		#endif\n		#if NUM_POINT_LIGHTS > 0\n				vec3 worldV;\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_POINT_LIGHTS; i++) {\n						worldV = v_modelPos - u_Point[i].position;\n						L = -worldV;\n						falloff = pow(clamp(1. - length(L) / u_Point[i].distance, 0.0, 1.0), u_Point[i].decay);\n						L = normalize(L);\n						#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_POINT_SHADOWS)\n								falloff *= getPointShadow(pointShadowMap[i], vPointShadowCoord[i], u_PointShadow[i].shadowMapSize, u_PointShadow[i].shadowBias, u_PointShadow[i].shadowParams, u_PointShadow[i].shadowCameraRange);\n						#endif\n						dotNL = saturate(dot(N, L));\n						irradiance = u_Point[i].color * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT				\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL *	u_Point[i].color * falloff	* PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n\t\t				clearcoatDHR = 0.0;\n\t				#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n				#pragma unroll_loop_end\n		#endif\n		#if NUM_SPOT_LIGHTS > 0\n				float lightDistance;\n				float angleCos;\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {\n						L = u_Spot[i].position - v_modelPos;\n						lightDistance = length(L);\n						L = normalize(L);\n						angleCos = dot(L, -normalize(u_Spot[i].direction));\n						falloff = smoothstep(u_Spot[i].coneCos, u_Spot[i].penumbraCos, angleCos);\n						falloff *= pow(clamp(1. - lightDistance / u_Spot[i].distance, 0.0, 1.0), u_Spot[i].decay);\n						#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_SPOT_SHADOWS)\n								#ifdef USE_PCSS_SOFT_SHADOW\n										falloff *= getShadowWithPCSS(spotDepthMap[i], spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n								#else\n										falloff *= getShadow(spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n								#endif\n						#endif\n						dotNL = saturate(dot(N, L));\n						irradiance = u_Spot[i].color * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT				\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL *	u_Spot[i].color * falloff	* PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n\t\t				clearcoatDHR = 0.0;\n\t				#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n				#pragma unroll_loop_end\n		#endif\n		vec3 iblIrradiance = vec3(0., 0., 0.);\n		vec3 indirectIrradiance = vec3(0., 0., 0.);\n		vec3 indirectRadiance = vec3(0., 0., 0.);\n		vec3 clearcoatRadiance = vec3(0., 0., 0.);\n		#ifdef USE_AMBIENT_LIGHT\n				indirectIrradiance += u_AmbientLightColor * PI;\n		#endif\n		#if NUM_HEMI_LIGHTS > 0\n				float hemiDiffuseWeight;\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_HEMI_LIGHTS; i++) {\n						L = normalize(u_Hemi[i].direction);\n						dotNL = dot(N, L);\n						hemiDiffuseWeight = 0.5 * dotNL + 0.5;\n						indirectIrradiance += mix(u_Hemi[i].groundColor, u_Hemi[i].skyColor, hemiDiffuseWeight) * PI;\n				}\n				#pragma unroll_loop_end\n		#endif\n		#if defined(USE_ENV_MAP) && defined(USE_PBR)\n				vec3 envDir;\n				#ifdef USE_VERTEX_ENVDIR\n						envDir = v_EnvDir;\n				#else\n						envDir = reflect(normalize(v_modelPos - u_CameraPosition), N);\n				#endif\n				iblIrradiance += getLightProbeIndirectIrradiance(maxMipLevel, N);\n				indirectRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(roughness), maxMipLevel, envDir);\n				#ifdef USE_CLEARCOAT\n						vec3 clearcoatDir = reflect(normalize(v_modelPos - u_CameraPosition), clearcoatNormal);\n\t\t		clearcoatRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(clearcoatRoughness), maxMipLevel, clearcoatDir);\n\t		#endif\n		#endif\n		reflectedLight.indirectDiffuse += indirectIrradiance * BRDF_Diffuse_Lambert(diffuseColor);\n		#if defined(USE_ENV_MAP) && defined(USE_PBR)\n				#ifdef USE_CLEARCOAT\n						float ccDotNV = saturate(dot(clearcoatNormal, V));\n						reflectedLight.indirectSpecular += clearcoatRadiance * clearcoat * BRDF_Specular_GGX_Environment(clearcoatNormal, V, specularColor, clearcoatRoughness);\n						ccDotNL = ccDotNV;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				float clearcoatInv = 1.0 - clearcoatDHR;\n				vec3 singleScattering = vec3(0.0);\n\t		vec3 multiScattering = vec3(0.0);\n				vec3 cosineWeightedIrradiance = iblIrradiance * RECIPROCAL_PI;\n				BRDF_Specular_Multiscattering_Environment(N, V, specularColor, roughness, singleScattering, multiScattering);\n				vec3 diffuse = diffuseColor * (1.0 - (singleScattering + multiScattering));\n				reflectedLight.indirectSpecular += clearcoatInv * indirectRadiance * singleScattering;\n				reflectedLight.indirectSpecular += multiScattering * cosineWeightedIrradiance;\n				reflectedLight.indirectDiffuse += diffuse * cosineWeightedIrradiance;\n		#endif\n#endif";
+	var light_frag = "\n#if (defined(USE_PHONG) || defined(USE_PBR))\n		vec3 V = normalize(u_CameraPosition - v_modelPos);\n#endif\n#ifdef USE_PBR\n		#ifdef USE_PBR2\n				vec3 diffuseColor = outColor.xyz;\n				vec3 specularColor = specularFactor.xyz;\n				float roughness = max(1.0 - glossinessFactor, 0.0525);\n		#else\n				vec3 diffuseColor = outColor.xyz * (1.0 - metalnessFactor);\n				vec3 specularColor = mix(vec3(0.04), outColor.xyz, metalnessFactor);\n				float roughness = max(roughnessFactor, 0.0525);\n		#endif\n		vec3 dxy = max(abs(dFdx(geometryNormal)), abs(dFdy(geometryNormal)));\n		float geometryRoughness = max(max(dxy.x, dxy.y), dxy.z);\n		roughness += geometryRoughness;\n		roughness = min(roughness, 1.0);\n		#ifdef USE_CLEARCOAT\n				float clearcoat = u_Clearcoat;\n				float clearcoatRoughness = u_ClearcoatRoughness;\n				#ifdef USE_CLEARCOATMAP\n\t\t		clearcoat *= texture2D(clearcoatMap, v_Uv).x;\n				#endif\n				#ifdef USE_CLEARCOAT_ROUGHNESSMAP\n\t\t		clearcoatRoughness *= texture2D(clearcoatRoughnessMap, v_Uv).y;\n\t		#endif\n				clearcoat = saturate(clearcoat);\n				clearcoatRoughness = max(clearcoatRoughness, 0.0525);\n\t		clearcoatRoughness += geometryRoughness;\n\t		clearcoatRoughness = min(clearcoatRoughness, 1.0);\n		#endif\n#else\n		vec3 diffuseColor = outColor.xyz;\n		#ifdef USE_PHONG\n				vec3 specularColor = u_SpecularColor.xyz;\n				float shininess = u_Specular;\n		#endif\n#endif\n#ifdef USE_LIGHT\n		vec3 L;\n		float falloff;\n		float dotNL;\n		vec3 irradiance;\n		float clearcoatDHR;\n		#ifdef USE_CLEARCOAT\n				float ccDotNL;\n				vec3 ccIrradiance;\n		#endif\n		#if NUM_DIR_LIGHTS > 0\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_DIR_LIGHTS; i++) {\n						L = normalize(-u_Directional[i].direction);\n						falloff = 1.0;\n						#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_DIR_SHADOWS)\n								#ifdef USE_PCSS_SOFT_SHADOW\n										falloff *= getShadowWithPCSS(directionalDepthMap[i], directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n								#else\n										falloff *= getShadow(directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n								#endif\n						#endif\n						dotNL = saturate(dot(N, L));\n						irradiance = u_Directional[i].color * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT				\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL * u_Directional[i].color * falloff	* PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n\t\t				clearcoatDHR = 0.0;\n\t				#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n				#pragma unroll_loop_end\n		#endif\n		#if NUM_POINT_LIGHTS > 0\n				vec3 worldV;\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_POINT_LIGHTS; i++) {\n						worldV = v_modelPos - u_Point[i].position;\n						L = -worldV;\n						falloff = pow(clamp(1. - length(L) / u_Point[i].distance, 0.0, 1.0), u_Point[i].decay);\n						L = normalize(L);\n						#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_POINT_SHADOWS)\n								falloff *= getPointShadow(pointShadowMap[i], vPointShadowCoord[i], u_PointShadow[i].shadowMapSize, u_PointShadow[i].shadowBias, u_PointShadow[i].shadowParams, u_PointShadow[i].shadowCameraRange);\n						#endif\n						dotNL = saturate(dot(N, L));\n						irradiance = u_Point[i].color * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT				\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL *	u_Point[i].color * falloff	* PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n\t\t				clearcoatDHR = 0.0;\n\t				#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n				#pragma unroll_loop_end\n		#endif\n		#if NUM_SPOT_LIGHTS > 0\n				float lightDistance;\n				float angleCos;\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {\n						L = u_Spot[i].position - v_modelPos;\n						lightDistance = length(L);\n						L = normalize(L);\n						angleCos = dot(L, -normalize(u_Spot[i].direction));\n						falloff = smoothstep(u_Spot[i].coneCos, u_Spot[i].penumbraCos, angleCos);\n						falloff *= pow(clamp(1. - lightDistance / u_Spot[i].distance, 0.0, 1.0), u_Spot[i].decay);\n						#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_SPOT_SHADOWS)\n								#ifdef USE_PCSS_SOFT_SHADOW\n										falloff *= getShadowWithPCSS(spotDepthMap[i], spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n								#else\n										falloff *= getShadow(spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n								#endif\n						#endif\n						dotNL = saturate(dot(N, L));\n						irradiance = u_Spot[i].color * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT				\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL *	u_Spot[i].color * falloff	* PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n\t\t				clearcoatDHR = 0.0;\n\t				#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n				#pragma unroll_loop_end\n		#endif\n		vec3 iblIrradiance = vec3(0., 0., 0.);\n		vec3 indirectIrradiance = vec3(0., 0., 0.);\n		vec3 indirectRadiance = vec3(0., 0., 0.);\n		vec3 clearcoatRadiance = vec3(0., 0., 0.);\n		#ifdef USE_AMBIENT_LIGHT\n				indirectIrradiance += u_AmbientLightColor * PI;\n		#endif\n		\n		#ifdef USE_SPHERICALHARMONICS_LIGHT\n				indirectIrradiance += getLightProbeIrradiance(u_SphericalHarmonicsLightData, N);\n		#endif\n		#if NUM_HEMI_LIGHTS > 0\n				float hemiDiffuseWeight;\n				#pragma unroll_loop_start\n				for (int i = 0; i < NUM_HEMI_LIGHTS; i++) {\n						L = normalize(u_Hemi[i].direction);\n						dotNL = dot(N, L);\n						hemiDiffuseWeight = 0.5 * dotNL + 0.5;\n						indirectIrradiance += mix(u_Hemi[i].groundColor, u_Hemi[i].skyColor, hemiDiffuseWeight) * PI;\n				}\n				#pragma unroll_loop_end\n		#endif\n		#if defined(USE_ENV_MAP) && defined(USE_PBR)\n				vec3 envDir;\n				#ifdef USE_VERTEX_ENVDIR\n						envDir = v_EnvDir;\n				#else\n						envDir = reflect(normalize(v_modelPos - u_CameraPosition), N);\n				#endif\n				iblIrradiance += getLightProbeIndirectIrradiance(maxMipLevel, N);\n				indirectRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(roughness), maxMipLevel, envDir);\n				#ifdef USE_CLEARCOAT\n						vec3 clearcoatDir = reflect(normalize(v_modelPos - u_CameraPosition), clearcoatNormal);\n\t\t		clearcoatRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(clearcoatRoughness), maxMipLevel, clearcoatDir);\n\t		#endif\n		#endif\n		reflectedLight.indirectDiffuse += indirectIrradiance * BRDF_Diffuse_Lambert(diffuseColor);\n		#if defined(USE_ENV_MAP) && defined(USE_PBR)\n				#ifdef USE_CLEARCOAT\n						float ccDotNV = saturate(dot(clearcoatNormal, V));\n						reflectedLight.indirectSpecular += clearcoatRadiance * clearcoat * BRDF_Specular_GGX_Environment(clearcoatNormal, V, specularColor, clearcoatRoughness);\n						ccDotNL = ccDotNV;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				float clearcoatInv = 1.0 - clearcoatDHR;\n				vec3 singleScattering = vec3(0.0);\n\t		vec3 multiScattering = vec3(0.0);\n				vec3 cosineWeightedIrradiance = iblIrradiance * RECIPROCAL_PI;\n				BRDF_Specular_Multiscattering_Environment(N, V, specularColor, roughness, singleScattering, multiScattering);\n				vec3 diffuse = diffuseColor * (1.0 - (singleScattering + multiScattering));\n				reflectedLight.indirectSpecular += clearcoatInv * indirectRadiance * singleScattering;\n				reflectedLight.indirectSpecular += multiScattering * cosineWeightedIrradiance;\n				reflectedLight.indirectDiffuse += diffuse * cosineWeightedIrradiance;\n		#endif\n#endif";
 
-	var light_pars_frag = "#ifdef USE_AMBIENT_LIGHT\n		uniform vec3 u_AmbientLightColor;\n#endif\n#ifdef USE_CLEARCOAT\n		float clearcoatDHRApprox(const in float roughness, const in float dotNL) {\n				return 0.04 + (1.0 - 0.16) * (pow(1.0 - dotNL, 5.0) * pow(1.0 - roughness, 2.0));\n		}\n#endif\n#if NUM_HEMI_LIGHTS > 0\n		struct HemisphereLight {\n				vec3 direction;\n				vec3 skyColor;\n\t\tvec3 groundColor;\n		};\n		uniform HemisphereLight u_Hemi[NUM_HEMI_LIGHTS];\n#endif\n#if NUM_DIR_LIGHTS > 0\n		struct DirectLight {\n				vec3 direction;\n				vec3 color;\n		};\n		uniform DirectLight u_Directional[NUM_DIR_LIGHTS];\n#endif\n#if NUM_POINT_LIGHTS > 0\n		struct PointLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n		};\n		uniform PointLight u_Point[NUM_POINT_LIGHTS];\n#endif\n#if NUM_SPOT_LIGHTS > 0\n		struct SpotLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n				float coneCos;\n				float penumbraCos;\n				vec3 direction;\n		};\n		uniform SpotLight u_Spot[NUM_SPOT_LIGHTS];\n#endif\n#if defined(USE_PBR) && defined(USE_ENV_MAP)\n		vec3 getLightProbeIndirectIrradiance(const in int maxMIPLevel, const in vec3 N) {\n				vec3 coordVec = vec3(u_EnvMap_Flip * N.x, N.yz);\n		\t#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, float(maxMIPLevel));\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, float(maxMIPLevel));\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return PI * envMapColor.rgb * u_EnvMap_Intensity * u_EnvMapLight_Intensity;\n		}\n		float getSpecularMIPLevel(const in float blinnShininessExponent, const in int maxMIPLevel) {\n		\tfloat maxMIPLevelScalar = float(maxMIPLevel);\n		\tfloat desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2(pow2(blinnShininessExponent) + 1.0);\n		\treturn clamp(desiredMIPLevel, 0.0, maxMIPLevelScalar);\n		}\n		vec3 getLightProbeIndirectRadiance(const in float blinnShininessExponent, const in int maxMIPLevel, const in vec3 envDir) {\n				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent, maxMIPLevel);\n				vec3 coordVec = vec3(u_EnvMap_Flip * envDir.x, envDir.yz);\n				#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, specularMIPLevel);\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, specularMIPLevel);\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return envMapColor.rgb * u_EnvMap_Intensity;\n		}\n		float computeSpecularOcclusion(const in float dotNV, const in float ambientOcclusion, const in float roughness) {\n		\treturn saturate(pow(dotNV + ambientOcclusion, exp2(-16.0 * roughness - 1.0)) - 1.0 + ambientOcclusion);\n		}\n#endif";
+	var light_pars_frag = "#ifdef USE_AMBIENT_LIGHT\n		uniform vec3 u_AmbientLightColor;\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		uniform vec3 u_SphericalHarmonicsLightData[9];\n#endif\n#ifdef USE_CLEARCOAT\n		float clearcoatDHRApprox(const in float roughness, const in float dotNL) {\n				return 0.04 + (1.0 - 0.16) * (pow(1.0 - dotNL, 5.0) * pow(1.0 - roughness, 2.0));\n		}\n#endif\n#if NUM_HEMI_LIGHTS > 0\n		struct HemisphereLight {\n				vec3 direction;\n				vec3 skyColor;\n\t\tvec3 groundColor;\n		};\n		uniform HemisphereLight u_Hemi[NUM_HEMI_LIGHTS];\n#endif\n#if NUM_DIR_LIGHTS > 0\n		struct DirectLight {\n				vec3 direction;\n				vec3 color;\n		};\n		uniform DirectLight u_Directional[NUM_DIR_LIGHTS];\n#endif\n#if NUM_POINT_LIGHTS > 0\n		struct PointLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n		};\n		uniform PointLight u_Point[NUM_POINT_LIGHTS];\n#endif\n#if NUM_SPOT_LIGHTS > 0\n		struct SpotLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n				float coneCos;\n				float penumbraCos;\n				vec3 direction;\n		};\n		uniform SpotLight u_Spot[NUM_SPOT_LIGHTS];\n#endif\n#if defined(USE_PBR) && defined(USE_ENV_MAP)\n		vec3 getLightProbeIndirectIrradiance(const in int maxMIPLevel, const in vec3 N) {\n				vec3 coordVec = vec3(u_EnvMap_Flip * N.x, N.yz);\n		\t#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, float(maxMIPLevel));\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, float(maxMIPLevel));\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return PI * envMapColor.rgb * u_EnvMap_Intensity * u_EnvMapLight_Intensity;\n		}\n		float getSpecularMIPLevel(const in float blinnShininessExponent, const in int maxMIPLevel) {\n		\tfloat maxMIPLevelScalar = float(maxMIPLevel);\n		\tfloat desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2(pow2(blinnShininessExponent) + 1.0);\n		\treturn clamp(desiredMIPLevel, 0.0, maxMIPLevelScalar);\n		}\n		vec3 getLightProbeIndirectRadiance(const in float blinnShininessExponent, const in int maxMIPLevel, const in vec3 envDir) {\n				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent, maxMIPLevel);\n				vec3 coordVec = vec3(u_EnvMap_Flip * envDir.x, envDir.yz);\n				#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, specularMIPLevel);\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, specularMIPLevel);\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return envMapColor.rgb * u_EnvMap_Intensity;\n		}\n		float computeSpecularOcclusion(const in float dotNV, const in float ambientOcclusion, const in float roughness) {\n		\treturn saturate(pow(dotNV + ambientOcclusion, exp2(-16.0 * roughness - 1.0)) - 1.0 + ambientOcclusion);\n		}\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		vec3 shGetIrradianceAt(in vec3 normal, in vec3 shCoefficients[9]) {\n				float x = normal.x, y = normal.y, z = normal.z;\n				vec3 result = shCoefficients[0] * 0.886227;\n				result += shCoefficients[1] * 2.0 * 0.511664 * y;\n				result += shCoefficients[2] * 2.0 * 0.511664 * z;\n				result += shCoefficients[3] * 2.0 * 0.511664 * x;\n				result += shCoefficients[4] * 2.0 * 0.429043 * x * y;\n				result += shCoefficients[5] * 2.0 * 0.429043 * y * z;\n				result += shCoefficients[6] * (0.743125 * z * z - 0.247708);\n				result += shCoefficients[7] * 2.0 * 0.429043 * x * z;\n				result += shCoefficients[8] * 0.429043 * (x * x - y * y);\n				return result;\n		}\n		vec3 getLightProbeIrradiance(const in vec3 lightProbe[9], const in vec3 normal) {\n				vec3 irradiance = shGetIrradianceAt(normal, lightProbe);\n				return irradiance;\n		}\n#endif";
 
 	var alphamap_pars_frag = "#ifdef USE_ALPHA_MAP\n\tuniform sampler2D alphaMap;\n\tvarying vec2 vAlphaMapUV;\n#endif";
 
@@ -11184,6 +11465,7 @@
 		// props.useVertexEnvDir = false;
 		// lights
 		props.useAmbientLight = !!lights && lights.useAmbient;
+		props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
 		props.hemisphereLightNum = !!lights ? lights.hemisNum : 0;
 		props.directLightNum = !!lights ? lights.directsNum : 0;
 		props.pointLightNum = !!lights ? lights.pointsNum : 0;
@@ -11283,7 +11565,7 @@
 	function createProgram(gl, defines, props, vertex, fragment) {
 		var prefixVertex = ['precision ' + props.precision + ' float;', 'precision ' + props.precision + ' int;',
 		// depth texture may have precision problem on iOS device.
-		'precision ' + props.precision + ' sampler2D;', '#define SHADER_NAME ' + props.shaderName, defines, props.version >= 2 ? '#define WEBGL2' : '', props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '', props.useMetalnessMap ? '#define USE_METALNESSMAP' : '', props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '', props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '', props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0 ? '#define USE_LIGHT' : '', props.useNormalMap ? '#define USE_NORMAL_MAP' : '', props.useBumpMap ? '#define USE_BUMPMAP' : '', props.useSpecularMap ? '#define USE_SPECULARMAP' : '', props.useEmissiveMap ? '#define USE_EMISSIVEMAP ' + props.useEmissiveMap : '', props.useShadow ? '#define USE_SHADOW' : '', props.flatShading ? '#define FLAT_SHADED' : '', props.flipSided ? '#define FLIP_SIDED' : '', props.useDiffuseMap ? '#define USE_DIFFUSE_MAP ' + props.useDiffuseMap : '', props.useAlphaMap ? '#define USE_ALPHA_MAP ' + props.useAlphaMap : '', props.useEnvMap ? '#define USE_ENV_MAP' : '', props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '', props.useAOMap ? '#define USE_AOMAP ' + props.useAOMap : '', props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '', props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '', props.useVertexTangents ? '#define USE_TANGENT' : '', props.useUv1 ? '#define USE_UV1' : '', props.useUv2 ? '#define USE_UV2' : '',
+		'precision ' + props.precision + ' sampler2D;', '#define SHADER_NAME ' + props.shaderName, defines, props.version >= 2 ? '#define WEBGL2' : '', props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '', props.useMetalnessMap ? '#define USE_METALNESSMAP' : '', props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '', props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '', props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '', props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.useSphericalHarmonicsLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0 ? '#define USE_LIGHT' : '', props.useNormalMap ? '#define USE_NORMAL_MAP' : '', props.useBumpMap ? '#define USE_BUMPMAP' : '', props.useSpecularMap ? '#define USE_SPECULARMAP' : '', props.useEmissiveMap ? '#define USE_EMISSIVEMAP ' + props.useEmissiveMap : '', props.useShadow ? '#define USE_SHADOW' : '', props.flatShading ? '#define FLAT_SHADED' : '', props.flipSided ? '#define FLIP_SIDED' : '', props.useDiffuseMap ? '#define USE_DIFFUSE_MAP ' + props.useDiffuseMap : '', props.useAlphaMap ? '#define USE_ALPHA_MAP ' + props.useAlphaMap : '', props.useEnvMap ? '#define USE_ENV_MAP' : '', props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '', props.useAOMap ? '#define USE_AOMAP ' + props.useAOMap : '', props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '', props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '', props.useVertexTangents ? '#define USE_TANGENT' : '', props.useUv1 ? '#define USE_UV1' : '', props.useUv2 ? '#define USE_UV2' : '',
 		// (props.useVertexEnvDir && !props.useNormalMap && !props.useBumpMap) ? '#define USE_VERTEX_ENVDIR' : '',
 
 		props.fog ? '#define USE_FOG' : '', props.morphTargets ? '#define USE_MORPHTARGETS' : '', props.morphNormals && props.flatShading === false ? '#define USE_MORPHNORMALS' : '', props.useSkinning ? '#define USE_SKINNING' : '', props.bonesNum > 0 ? '#define MAX_BONES ' + props.bonesNum : '', props.useVertexTexture ? '#define BONE_TEXTURE' : '', props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '', props.logarithmicDepthBuffer && props.rendererExtensionFragDepth ? '#define USE_LOGDEPTHBUF_EXT' : '', '\n'].filter(filterEmptyLine).join("\n");
@@ -11294,7 +11576,7 @@
 		'precision ' + props.precision + ' sampler2D;', props.version >= 2 ? 'precision ' + props.precision + ' sampler2DShadow;' : '', props.version >= 2 ? 'precision ' + props.precision + ' samplerCubeShadow;' : '', '#define SHADER_NAME ' + props.shaderName, '#define PI 3.14159265359', '#define EPSILON 1e-6', 'float pow2(const in float x) { return x * x; }', '#define LOG2 1.442695', '#define RECIPROCAL_PI 0.31830988618', '#define saturate(a) clamp(a, 0.0, 1.0)', '#define whiteCompliment(a) (1.0 - saturate(a))',
 		// expects values in the range of [0,1] x [0,1], returns values in the [0,1] range.
 		// do not collapse into a single function per: http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
-		'highp float rand(const in vec2 uv) {', '	const highp float a = 12.9898, b = 78.233, c = 43758.5453;', '	highp float dt = dot(uv.xy, vec2(a, b)), sn = mod(dt, PI);', '	return fract(sin(sn) * c);', '}', defines, props.version >= 2 ? '#define WEBGL2' : '', props.useShadowSampler ? '#define USE_SHADOW_SAMPLER' : '#define sampler2DShadow sampler2D', props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '', props.useMetalnessMap ? '#define USE_METALNESSMAP' : '', props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '', props.useClearcoat ? '#define USE_CLEARCOAT' : '', props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '', props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '', props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '', props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '', props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0 ? '#define USE_LIGHT' : '', props.useNormalMap ? '#define USE_NORMAL_MAP' : '', props.useBumpMap ? '#define USE_BUMPMAP' : '', props.useSpecularMap ? '#define USE_SPECULARMAP' : '', props.useEmissiveMap ? '#define USE_EMISSIVEMAP ' + props.useEmissiveMap : '', props.useShadow ? '#define USE_SHADOW' : '', props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '', props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF3_SOFT ? '#define USE_PCF3_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF5_SOFT ? '#define USE_PCF5_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT ? '#define USE_PCSS16_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS_SOFT_SHADOW' : '', props.flatShading ? '#define FLAT_SHADED' : '', props.doubleSided ? '#define DOUBLE_SIDED' : '', props.useShaderTextureLOD ? '#define TEXTURE_LOD_EXT' : '', props.useDiffuseMap ? '#define USE_DIFFUSE_MAP ' + props.useDiffuseMap : '', props.useAlphaMap ? '#define USE_ALPHA_MAP ' + props.useAlphaMap : '', props.useEnvMap ? '#define USE_ENV_MAP' : '', props.useAOMap ? '#define USE_AOMAP ' + props.useAOMap : '', props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '', props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '', props.useVertexTangents ? '#define USE_TANGENT' : '', props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '', props.fog ? '#define USE_FOG' : '', props.fogExp2 ? '#define USE_EXP2_FOG' : '', props.alphaTest ? '#define ALPHATEST ' + props.alphaTest : '', props.useEnvMap ? '#define ' + props.envMapCombine : '', '#define GAMMA_FACTOR ' + props.gammaFactor, props.useMatcap ? '#define USE_MATCAP' : '', props.useUv1 ? '#define USE_UV1' : '', props.useUv2 ? '#define USE_UV2' : '',
+		'highp float rand(const in vec2 uv) {', '	const highp float a = 12.9898, b = 78.233, c = 43758.5453;', '	highp float dt = dot(uv.xy, vec2(a, b)), sn = mod(dt, PI);', '	return fract(sin(sn) * c);', '}', defines, props.version >= 2 ? '#define WEBGL2' : '', props.useShadowSampler ? '#define USE_SHADOW_SAMPLER' : '#define sampler2DShadow sampler2D', props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '', props.useMetalnessMap ? '#define USE_METALNESSMAP' : '', props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '', props.useClearcoat ? '#define USE_CLEARCOAT' : '', props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '', props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '', props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '', props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '', props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '', props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.useSphericalHarmonicsLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0 ? '#define USE_LIGHT' : '', props.useNormalMap ? '#define USE_NORMAL_MAP' : '', props.useBumpMap ? '#define USE_BUMPMAP' : '', props.useSpecularMap ? '#define USE_SPECULARMAP' : '', props.useEmissiveMap ? '#define USE_EMISSIVEMAP ' + props.useEmissiveMap : '', props.useShadow ? '#define USE_SHADOW' : '', props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '', props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF3_SOFT ? '#define USE_PCF3_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF5_SOFT ? '#define USE_PCF5_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT ? '#define USE_PCSS16_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS_SOFT_SHADOW' : '', props.flatShading ? '#define FLAT_SHADED' : '', props.doubleSided ? '#define DOUBLE_SIDED' : '', props.useShaderTextureLOD ? '#define TEXTURE_LOD_EXT' : '', props.useDiffuseMap ? '#define USE_DIFFUSE_MAP ' + props.useDiffuseMap : '', props.useAlphaMap ? '#define USE_ALPHA_MAP ' + props.useAlphaMap : '', props.useEnvMap ? '#define USE_ENV_MAP' : '', props.useAOMap ? '#define USE_AOMAP ' + props.useAOMap : '', props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '', props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '', props.useVertexTangents ? '#define USE_TANGENT' : '', props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '', props.fog ? '#define USE_FOG' : '', props.fogExp2 ? '#define USE_EXP2_FOG' : '', props.alphaTest ? '#define ALPHATEST ' + props.alphaTest : '', props.useEnvMap ? '#define ' + props.envMapCombine : '', '#define GAMMA_FACTOR ' + props.gammaFactor, props.useMatcap ? '#define USE_MATCAP' : '', props.useUv1 ? '#define USE_UV1' : '', props.useUv2 ? '#define USE_UV2' : '',
 		// (props.useVertexEnvDir && !props.useNormalMap && !props.useBumpMap) ? '#define USE_VERTEX_ENVDIR' : '',
 
 		props.dithering ? '#define DITHERING' : '', ShaderChunk["encodings_pars_frag"], getTexelDecodingFunction("mapTexelToLinear", props.diffuseMapEncoding), props.useEnvMap ? getTexelDecodingFunction("envMapTexelToLinear", props.envMapEncoding) : '', props.useEmissiveMap ? getTexelDecodingFunction("emissiveMapTexelToLinear", props.emissiveMapEncoding) : '', props.useMatcap ? getTexelDecodingFunction("matcapTexelToLinear", props.matcapEncoding) : '', getTexelEncodingFunction("linearToOutputTexel", props.outputEncoding), props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '', props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '', props.logarithmicDepthBuffer && props.rendererExtensionFragDepth ? '#define USE_LOGDEPTHBUF_EXT' : '', '\n'].filter(filterEmptyLine).join("\n");
@@ -13729,6 +14011,9 @@
 			var textures = this._textures;
 			if (lights.useAmbient && refresh) {
 				uniforms.set("u_AmbientLightColor", lights.ambient);
+			}
+			if (lights.useSphericalHarmonics && refresh) {
+				uniforms.set("u_SphericalHarmonicsLightData", lights.sh);
 			}
 			if (lights.hemisNum > 0 && refresh) {
 				uniforms.set("u_Hemi", lights.hemisphere);
@@ -16335,6 +16620,51 @@
 	PointLight.prototype.isPointLight = true;
 
 	/**
+	 * This light globally all objects in the scene equally.
+	 * This light depends on spherical harmonics.
+	 * @memberof t3d
+	 * @extends t3d.Light
+	 */
+	var SphericalHarmonicsLight = /*#__PURE__*/function (_Light) {
+		_inheritsLoose(SphericalHarmonicsLight, _Light);
+		/**
+		 * Creates a new SphericalHarmonicsLight.
+				* @param {SphericalHarmonics3} [sh =	new SphericalHarmonics3()]
+				* @param {Number} [intensity = 1]
+				*/
+		function SphericalHarmonicsLight(sh, intensity) {
+			var _this;
+			if (sh === void 0) {
+				sh = new SphericalHarmonics3();
+			}
+			if (intensity === void 0) {
+				intensity = 1;
+			}
+			_this = _Light.call(this, undefined, intensity) || this;
+
+			/**
+			 * An instance of SphericalHarmonics3.
+			 * @type {SphericalHarmonics3}
+			 */
+			_this.sh = sh;
+			return _this;
+		}
+		var _proto = SphericalHarmonicsLight.prototype;
+		_proto.copy = function copy(source) {
+			_Light.prototype.copy.call(this, source);
+			this.sh.copy(source.sh);
+			return this;
+		};
+		return SphericalHarmonicsLight;
+	}(Light);
+	/**
+	* Read-only flag to check if a given object is of type SphericalHarmonicsLight.
+	* @type {Boolean}
+	* @default true
+	*/
+	SphericalHarmonicsLight.prototype.isSphericalHarmonicsLight = true;
+
+	/**
 	 * This is used internally by SpotLights for calculating shadows.
 	 * @memberof t3d
 	 * @extends t3d.LightShadow
@@ -17082,6 +17412,8 @@
 	exports.Sphere = Sphere;
 	exports.SphereGeometry = SphereGeometry;
 	exports.Spherical = Spherical;
+	exports.SphericalHarmonics3 = SphericalHarmonics3;
+	exports.SphericalHarmonicsLight = SphericalHarmonicsLight;
 	exports.SpotLight = SpotLight;
 	exports.SpotLightShadow = SpotLightShadow;
 	exports.StringKeyframeTrack = StringKeyframeTrack;

@@ -32,6 +32,7 @@ export { Quaternion } from './math/Quaternion.js';
 export { Ray } from './math/Ray.js';
 export { Sphere } from './math/Sphere.js';
 export { Spherical } from './math/Spherical.js';
+export { SphericalHarmonics3 } from './math/SphericalHarmonics3.js';
 export { Triangle } from './math/Triangle.js';
 export { Vector2 } from './math/Vector2.js';
 export { Vector3 } from './math/Vector3.js';
@@ -94,6 +95,7 @@ export { HemisphereLight } from './scenes/lights/HemisphereLight.js';
 export { LightShadow } from './scenes/lights/LightShadow.js';
 export { PointLight } from './scenes/lights/PointLight.js';
 export { PointLightShadow } from './scenes/lights/PointLightShadow.js';
+export { SphericalHarmonicsLight } from './scenes/lights/SphericalHarmonicsLight.js';
 export { SpotLight } from './scenes/lights/SpotLight.js';
 export { SpotLightShadow } from './scenes/lights/SpotLightShadow.js';
 

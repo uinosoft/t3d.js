@@ -27,6 +27,8 @@ class LightData {
 
 		this.ambient = new Float32Array([0, 0, 0]);
 
+		this.sh = new Float32Array(27);
+
 		this.hemisphere = [];
 
 		this.directional = [];
@@ -49,6 +51,7 @@ class LightData {
 		// Status
 
 		this.useAmbient = false;
+		this.useSphericalHarmonics = false;
 		this.hemisNum = 0;
 		this.directsNum = 0;
 		this.pointsNum = 0;
@@ -93,8 +96,11 @@ class LightData {
 		for (let i = 0; i < 3; i++) {
 			this.ambient[i] = 0;
 		}
-
+		for (let i = 0; i < this.sh.length; i++) {
+			this.sh[i] = 0;
+		}
 		this.useAmbient = false;
+		this.useSphericalHarmonics = false;
 		this.hemisNum = 0;
 		this.directsNum = 0;
 		this.pointsNum = 0;
@@ -117,6 +123,8 @@ class LightData {
 				this._doAddPointLight(light, sceneData);
 			} else if (light.isSpotLight) {
 				this._doAddSpotLight(light, sceneData);
+			} else if (light.isSphericalHarmonicsLight) {
+				this._doAddSphericalHarmonicsLight(light);
 			}
 		}
 
@@ -168,6 +176,18 @@ class LightData {
 		this.ambient[2] += color.b * intensity;
 
 		this.useAmbient = true;
+	}
+
+	_doAddSphericalHarmonicsLight(object) {
+		const intensity = object.intensity;
+		const sh = object.sh.coefficients;
+		for (let i = 0; i < sh.length; i += 1) {
+			this.sh[i * 3] += sh[i].x * intensity;
+			this.sh[i * 3 + 1] += sh[i].y * intensity;
+			this.sh[i * 3 + 2] += sh[i].z * intensity;
+		}
+
+		this.useSphericalHarmonics = true;
 	}
 
 	_doAddHemisphereLight(object, sceneData) {
@@ -451,18 +471,19 @@ function getShadowCache(light) {
 class LightHash {
 
 	constructor() {
-		this._factor = new Uint16Array(8);
+		this._factor = new Uint16Array(9);
 	}
 
 	update(lights) {
 		this._factor[0] = lights.useAmbient ? 1 : 0;
-		this._factor[1] = lights.hemisNum;
-		this._factor[2] = lights.directsNum;
-		this._factor[3] = lights.pointsNum;
-		this._factor[4] = lights.spotsNum;
-		this._factor[5] = lights.directShadowNum;
-		this._factor[6] = lights.pointShadowNum;
-		this._factor[7] = lights.spotShadowNum;
+		this._factor[1] = lights.useSphericalHarmonics ? 1 : 0;
+		this._factor[2] = lights.hemisNum;
+		this._factor[3] = lights.directsNum;
+		this._factor[4] = lights.pointsNum;
+		this._factor[5] = lights.spotsNum;
+		this._factor[6] = lights.directShadowNum;
+		this._factor[7] = lights.pointShadowNum;
+		this._factor[8] = lights.spotShadowNum;
 	}
 
 	compare(factor) {

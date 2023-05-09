@@ -514,7 +514,9 @@ class WebGLRenderPass {
 		if (lights.useAmbient && refresh) {
 			uniforms.set("u_AmbientLightColor", lights.ambient);
 		}
-
+		if (lights.useSphericalHarmonics && refresh) {
+			uniforms.set("u_SphericalHarmonicsLightData", lights.sh);
+		}
 		if (lights.hemisNum > 0 && refresh) {
 			uniforms.set("u_Hemi", lights.hemisphere);
 		}

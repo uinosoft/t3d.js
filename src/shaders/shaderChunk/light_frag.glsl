@@ -193,6 +193,10 @@
     #ifdef USE_AMBIENT_LIGHT
         indirectIrradiance += u_AmbientLightColor * PI;
     #endif
+    
+    #ifdef USE_SPHERICALHARMONICS_LIGHT
+        indirectIrradiance += getLightProbeIrradiance(u_SphericalHarmonicsLightData, N);
+    #endif
 
     #if NUM_HEMI_LIGHTS > 0
         float hemiDiffuseWeight;

@@ -139,6 +139,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	// props.useVertexEnvDir = false;
 	// lights
 	props.useAmbientLight = !!lights && lights.useAmbient;
+	props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
 	props.hemisphereLightNum = !!lights ? lights.hemisNum : 0;
 	props.directLightNum = !!lights ? lights.directsNum : 0;
 	props.pointLightNum = !!lights ? lights.pointsNum : 0;
@@ -260,7 +261,8 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
 
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
-		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
+		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
+		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.useSphericalHarmonicsLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
 		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
 		props.useBumpMap ? '#define USE_BUMPMAP' : '',
 		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
@@ -342,7 +344,8 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
 
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
-		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
+		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
+		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.useSphericalHarmonicsLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
 		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
 		props.useBumpMap ? '#define USE_BUMPMAP' : '',
 		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
