@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shader grid material</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - shader grid
+		<br/>
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support Frag Depth</div>
+	</div>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { InfiniteGridShader } from './jsm/shaders/InfiniteGridShader.js';
+		import { Clock } from './jsm/Clock.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+		
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const renderer = new t3d.Renderer(gl);
+
+		const capabilities = renderer.renderPass.capabilities;
+
+		if (capabilities.version < 2 && !capabilities.getExtension('EXT_frag_depth')) {
+			document.getElementById('notSupported').style.display = '';
+			throw Error('Sorry, your graphics card + browser does not support Frag Depth.');
+		}
+		if (capabilities.version < 2 && capabilities.getExtension('EXT_frag_depth')) {
+			InfiniteGridShader.fragmentShader = '#extension GL_EXT_frag_depth : enable \n' + InfiniteGridShader.fragmentShader;
+		}
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const scene = new t3d.Scene();
+
+		const textureLoader = new Texture2DLoader();
+		const texture = textureLoader.load('./resources/logo.jpg');
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+
+		const boxGeometry = new t3d.BoxGeometry(1, 1, 1);
+		const boxMaterial = new t3d.PBRMaterial();
+		boxMaterial.diffuseMap = texture;
+		boxMaterial.roughness = 1;
+		boxMaterial.metalness = 0;
+		const box = new t3d.Mesh(boxGeometry, boxMaterial);
+		scene.add(box);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
+		directionalLight.position.set(-30, 30, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(5, 3, 5);
+		camera.lookAt(new t3d.Vector3(6, 1, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const geometryData = {
+			positions: [
+				1, 1, 0,
+				-1, -1, 0,
+				-1, 1, 0,
+				-1, -1, 0,
+				1, 1, 0,
+				1, -1, 0
+			],
+			normals: [
+				0, 0, 1,
+				0, 0, 1,
+				0, 0, 1,
+				0, 0, 1,
+				0, 0, 1,
+				0, 0, 1
+			]
+		}
+
+		const gridmaterial = new t3d.ShaderMaterial(InfiniteGridShader);
+		gridmaterial.transparent = true;
+		gridmaterial.defines.USE_LINEARFADE = true;
+		const gridgeometry = new t3d.Geometry();
+		gridgeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData.positions), 3)));
+		gridgeometry.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData.normals), 3)));
+		gridgeometry.setIndex(new t3d.Attribute(new t3d.Buffer(new Uint16Array([2, 1, 0, 5, 4, 3]), 1)));
+
+		const grid = new t3d.Mesh(gridgeometry, gridmaterial);
+		grid.frustumCulled = false;
+		scene.add(grid);
+
+		const param = { d2: false, fade: true };
+		let progress;
+		
+		const gui = new GUI();
+		gui.add(param, "d2").onChange(value => {
+			param.d2 = value;
+			progress = 0.01;
+		}).name("2d grid");
+		const styleFolder = gui.addFolder('style');
+		styleFolder.add(gridmaterial.uniforms, "axisIntensity", 0, 1, 0.01);
+		styleFolder.add(gridmaterial.uniforms, "gridIntensity", 0, 1, 0.01);
+		styleFolder.add(gridmaterial.uniforms, "primaryScale", 0, 10, 0.1);
+		styleFolder.add(gridmaterial.uniforms, "secondaryScale", 0, 10, 0.1);
+		styleFolder.add(gridmaterial.uniforms, "primaryFade", 0, 1, 0.1);
+		styleFolder.add(gridmaterial.uniforms, "secondaryFade", 0, 1, 0.1);
+		styleFolder.close();
+		const linearFadeFolder = gui.addFolder('fade');
+		linearFadeFolder.add(param, "fade").onChange(value => {
+			grid.material.defines.USE_LINEARFADE = value;
+			grid.material.needsUpdate = true;
+		});
+		linearFadeFolder.add(gridmaterial.uniforms, "start", 0, 49, 0.01);
+		linearFadeFolder.add(gridmaterial.uniforms, "end", 50, 200, 0.01);
+		linearFadeFolder.close();
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			let delta = clock.getDelta();
+			if (progress > 0 && progress < 1) {
+				progress += delta * 10.0;
+				progress = Math.min(1, progress);
+				gridmaterial.uniforms.flipProgress = param.d2 ? progress : (1 - progress);
+			}
+
+			controller.update();
+		
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderPass.setRenderTarget(backRenderTarget);
+
+			renderer.renderPass.setClearColor(0, 0, 0, 1);
+			renderer.renderPass.clear(true, true, false);
+			renderer.renderScene(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+
+</html>
