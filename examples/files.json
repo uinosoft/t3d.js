@@ -69,6 +69,7 @@
 		"material_shader_water",
 		"material_shader_water_pbr",
 		"material_shader_xray",
+		"material_shader_grid",
 		"material_shader_extend",
 		"material_flatshading",
 		"material_vertexcolors",
