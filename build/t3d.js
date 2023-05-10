@@ -7880,9 +7880,15 @@
 	 */
 	Mesh.prototype.isMesh = true;
 	function checkGeometryIntersection(object, ray, _ray, position, morphPosition, uv, a, b, c) {
-		_vA.fromArray(position.buffer.array, a * 3);
-		_vB.fromArray(position.buffer.array, b * 3);
-		_vC.fromArray(position.buffer.array, c * 3);
+		var array;
+		var bufferStride;
+		var attributeOffset;
+		array = position.buffer.array;
+		bufferStride = position.buffer.stride;
+		attributeOffset = position.offset;
+		_vA.fromArray(array, a * bufferStride + attributeOffset);
+		_vB.fromArray(array, b * bufferStride + attributeOffset);
+		_vC.fromArray(array, c * bufferStride + attributeOffset);
 		var morphInfluences = object.morphTargetInfluences;
 		if (morphPosition && morphInfluences) {
 			_morphA.set(0, 0, 0);
@@ -7892,9 +7898,12 @@
 				var influence = morphInfluences[i];
 				var morphAttribute = morphPosition[i];
 				if (influence === 0) continue;
-				_tempA.fromArray(morphAttribute.buffer.array, a * 3);
-				_tempB.fromArray(morphAttribute.buffer.array, b * 3);
-				_tempC.fromArray(morphAttribute.buffer.array, c * 3);
+				array = morphAttribute.buffer.array;
+				bufferStride = morphAttribute.buffer.stride;
+				attributeOffset = morphAttribute.offset;
+				_tempA.fromArray(array, a * bufferStride + attributeOffset);
+				_tempB.fromArray(array, b * bufferStride + attributeOffset);
+				_tempC.fromArray(array, c * bufferStride + attributeOffset);
 				_morphA.addScaledVector(_tempA, influence);
 				_morphB.addScaledVector(_tempB, influence);
 				_morphC.addScaledVector(_tempC, influence);
@@ -7914,9 +7923,12 @@
 		var intersection = checkIntersection(object, ray, _ray, _vA, _vB, _vC, _intersectionPoint);
 		if (intersection) {
 			if (uv) {
-				_uvA.fromArray(uv.buffer.array, a * 2);
-				_uvB.fromArray(uv.buffer.array, b * 2);
-				_uvC.fromArray(uv.buffer.array, c * 2);
+				array = uv.buffer.array;
+				bufferStride = uv.buffer.stride;
+				attributeOffset = uv.offset;
+				_uvA.fromArray(uv.buffer.array, a * bufferStride + attributeOffset);
+				_uvB.fromArray(uv.buffer.array, b * bufferStride + attributeOffset);
+				_uvC.fromArray(uv.buffer.array, c * bufferStride + attributeOffset);
 				intersection.uv = uvIntersection(_intersectionPoint, _vA, _vB, _vC, _uvA, _uvB, _uvC);
 			}
 			var face = {

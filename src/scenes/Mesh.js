@@ -152,9 +152,16 @@ class Mesh extends Object3D {
 Mesh.prototype.isMesh = true;
 
 function checkGeometryIntersection(object, ray, _ray, position, morphPosition, uv, a, b, c) {
-	_vA.fromArray(position.buffer.array, a * 3);
-	_vB.fromArray(position.buffer.array, b * 3);
-	_vC.fromArray(position.buffer.array, c * 3);
+	let array;
+	let bufferStride;
+	let attributeOffset;
+
+	array = position.buffer.array;
+	bufferStride = position.buffer.stride;
+	attributeOffset = position.offset;
+	_vA.fromArray(array, a * bufferStride + attributeOffset);
+	_vB.fromArray(array, b * bufferStride + attributeOffset);
+	_vC.fromArray(array, c * bufferStride + attributeOffset);
 
 	const morphInfluences = object.morphTargetInfluences;
 
@@ -169,9 +176,12 @@ function checkGeometryIntersection(object, ray, _ray, position, morphPosition, u
 
 			if (influence === 0) continue;
 
-			_tempA.fromArray(morphAttribute.buffer.array, a * 3);
-			_tempB.fromArray(morphAttribute.buffer.array, b * 3);
-			_tempC.fromArray(morphAttribute.buffer.array, c * 3);
+			array = morphAttribute.buffer.array;
+			bufferStride = morphAttribute.buffer.stride;
+			attributeOffset = morphAttribute.offset;
+			_tempA.fromArray(array, a * bufferStride + attributeOffset);
+			_tempB.fromArray(array, b * bufferStride + attributeOffset);
+			_tempC.fromArray(array, c * bufferStride + attributeOffset);
 
 			_morphA.addScaledVector(_tempA, influence);
 			_morphB.addScaledVector(_tempB, influence);
@@ -195,9 +205,12 @@ function checkGeometryIntersection(object, ray, _ray, position, morphPosition, u
 
 	if (intersection) {
 		if (uv) {
-			_uvA.fromArray(uv.buffer.array, a * 2);
-			_uvB.fromArray(uv.buffer.array, b * 2);
-			_uvC.fromArray(uv.buffer.array, c * 2);
+			array = uv.buffer.array;
+			bufferStride = uv.buffer.stride;
+			attributeOffset = uv.offset;
+			_uvA.fromArray(uv.buffer.array, a * bufferStride + attributeOffset);
+			_uvB.fromArray(uv.buffer.array, b * bufferStride + attributeOffset);
+			_uvC.fromArray(uv.buffer.array, c * bufferStride + attributeOffset);
 
 			intersection.uv = uvIntersection(_intersectionPoint, _vA, _vB, _vC, _uvA, _uvB, _uvC);
 		}
