@@ -52,6 +52,7 @@
 			"resources/skybox/Park2/negz.jpg"
 		]);
 		const sky_box = new SkyBox(cube_texture);
+		scene.add(sky_box);
 
 		const plane_geometry = new t3d.PlaneGeometry(60, 60);
 		const sphere_geometry = new t3d.SphereGeometry(20, 20, 20);
@@ -78,7 +79,6 @@
 		camera.position.set(0, 50, 150);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
-		camera.add(sky_box);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);

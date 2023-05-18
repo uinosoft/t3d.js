@@ -64,6 +64,7 @@
 
 		const sky_box = new SkyBox(cube_texture);
 		sky_box.level = 4;
+		scene.add(sky_box);
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = "gray";
@@ -110,7 +111,6 @@
 		camera.position.set(-200, 100, 1000);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 10, 5000);
-		camera.add(sky_box);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);

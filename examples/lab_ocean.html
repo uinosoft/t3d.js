@@ -106,10 +106,11 @@
 		const camera = new t3d.Camera();
 		camera.position.set(30, 30, 100);
 		camera.setPerspective(55 / 180 * Math.PI, width / height, 1, 20000);
+		scene.add(camera);
+
 		const skyBox = new SkyBox();
 		skyBox.texture = reflectionProbe.renderTexture;
-		camera.add(skyBox);
-		scene.add(camera);
+		scene.add(skyBox);
 
 		// add a hover controller
 
@@ -198,9 +199,8 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			water.updateReflect(forwardRenderer, scene, camera, skyBox); // need pass skyBox for now
+			water.updateReflect(forwardRenderer, scene, camera);
 
-			skyBox.updateMatrix();
 			forwardRenderer.render(scene, camera);
 		}
 		requestAnimationFrame(loop);

@@ -139,6 +139,7 @@
 
 		const sky_box = new SkyBox(cube_texture);
 		sky_box.level = 0;
+		scene.add(sky_box);
 
 		const textureLoader = new Texture2DLoader();
 		const noiseTexture = textureLoader.load('./resources/grass/noise.png');
@@ -335,7 +336,6 @@
 		camera.position.set(22, 0.6, 32);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
-		camera.add(sky_box);
 		scene.add(camera);
 
 		// stats

@@ -52,7 +52,7 @@
         scene.add(camera);
 
         const sky_box = new SkyBox(forwardRenderer.texture);
-        camera.add(sky_box);
+        scene.add(sky_box);
 
         const controller = new OrbitControls(camera, canvas);
 

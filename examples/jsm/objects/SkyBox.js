@@ -65,77 +65,83 @@ SkyBox.SkyBoxShader = {
 	name: 'skybox',
 
 	defines: {
-		"GAMMA": false,
-		"PANORAMA": false
+		'GAMMA': false,
+		'PANORAMA': false
 	},
 
 	uniforms: {
-		"level": 0.,
-		"flip": -1
+		'level': 0,
+		'flip': -1
 	},
 
-	vertexShader: [
-		"#include <common_vert>",
-		"varying vec3 vDir;",
-		"void main() {",
-		"	vDir = (u_Model * vec4(a_Position, 0.0)).xyz;",
-		"	gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);",
-		"	gl_Position.z = gl_Position.w;", // set z to camera.far
-		"}"
-	].join("\n"),
+	vertexShader: `
+		#include <common_vert>
 
-	fragmentShader: [
-		"#include <common_frag>",
+		varying vec3 vDir;
 
-		"#ifdef PANORAMA",
-		"	uniform sampler2D diffuseMap;",
-		"#else",
-		"	uniform samplerCube cubeMap;",
-		"#endif",
+		mat4 clearMat4Translate(mat4 m) {
+			mat4 outMatrix = m;
+			outMatrix[3].xyz = vec3(0., 0., 0.);
+			return outMatrix;
+		}
 
-		"uniform float flip;",
-		"uniform float level;",
-		"varying vec3 vDir;",
+		void main() {
+			mat4 modelMatrix = clearMat4Translate(u_Model);
+			mat4 viewMatrix = clearMat4Translate(u_View);
 
-		"void main() {",
+			vDir = normalize((modelMatrix * vec4(a_Position, 0.0)).xyz);
 
-		"	#include <begin_frag>",
+			gl_Position = u_Projection * viewMatrix * modelMatrix * vec4(a_Position, 1.0);
+			gl_Position.z = gl_Position.w;
+		}
+	`,
 
-		"	vec3 V = normalize(vDir);",
+	fragmentShader: `
+		#include <common_frag>
 
-		"	#ifdef PANORAMA",
+		#ifdef PANORAMA
+			uniform sampler2D diffuseMap;
+		#else
+			uniform samplerCube cubeMap;
+		#endif
 
-		"		float phi = acos(V.y);",
-		// consistent with cubemap.
-		// atan(y, x) is same with atan2 ?
-		"		float theta = flip * atan(V.x, V.z) + PI * 0.5;",
-		"		vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);",
+		uniform float flip;
+		uniform float level;
 
-		"		#ifdef TEXTURE_LOD_EXT",
-		"			outColor *= mapTexelToLinear(texture2DLodEXT(diffuseMap, fract(uv), level));",
-		"		#else",
-		"			outColor *= mapTexelToLinear(texture2D(diffuseMap, fract(uv), level));",
-		"		#endif",
+		varying vec3 vDir;
 
-		"	#else",
+		void main() {
+			#include <begin_frag>
 
-		"		vec3 coordVec = vec3(flip * V.x, V.yz);",
+			vec3 V = normalize(vDir);
 
-		"		#ifdef TEXTURE_LOD_EXT",
-		"			outColor *= mapTexelToLinear(textureCubeLodEXT(cubeMap, coordVec, level));",
-		"		#else",
-		"			outColor *= mapTexelToLinear(textureCube(cubeMap, coordVec, level));",
-		"		#endif",
+			#ifdef PANORAMA
+				float phi = acos(V.y);
+				// consistent with cubemap.
+				// atan(y, x) is same with atan2 ?
+				float theta = flip * atan(V.x, V.z) + PI * 0.5;
+				vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);
+				#ifdef TEXTURE_LOD_EXT
+					outColor *= mapTexelToLinear(texture2DLodEXT(diffuseMap, fract(uv), level));
+				#else
+					outColor *= mapTexelToLinear(texture2D(diffuseMap, fract(uv), level));
+				#endif
+			#else
+				vec3 coordVec = vec3(flip * V.x, V.yz);
+				#ifdef TEXTURE_LOD_EXT
+					outColor *= mapTexelToLinear(textureCubeLodEXT(cubeMap, coordVec, level));
+				#else
+					outColor *= mapTexelToLinear(textureCube(cubeMap, coordVec, level));
+				#endif
+			#endif
 
-		"	#endif",
+			#include <end_frag>
+			#ifdef GAMMA
+				#include <encodings_frag>
+			#endif
+		}
+	`
 
-		"	#include <end_frag>",
-		"	#ifdef GAMMA",
-		"		#include <encodings_frag>",
-		"	#endif",
-		"}"
-	].join("\n")
-
-};
+}
 
 export { SkyBox };

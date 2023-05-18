@@ -55,11 +55,11 @@
 		sunSphere.position.y = -700000;
 
 		const sky = new Sky();
+		scene.add(sky);
 
 		const camera = new t3d.Camera();
 		camera.position.set(0, 0, 100);
-		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 2000000);
-		camera.add(sky);
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 10000);
 		scene.add(camera);
 
 		// add a hover controller
@@ -130,7 +130,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 2000000);
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 10000);
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}

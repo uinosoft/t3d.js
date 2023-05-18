@@ -38,7 +38,7 @@ class SHGenerator {
 		const dummyScene = new Scene();
 		const skyEnv = new SkyBox(envMap);
 		const reflectionProbe = new ReflectionProbe(cubeRenderTarget);
-		reflectionProbe.camera.add(skyEnv);
+		dummyScene.add(skyEnv);
 		dummyScene.add(reflectionProbe.camera);
 
 		let totalWeight = 0;

@@ -95,7 +95,7 @@ class PMREM {
 			material.defines.PANORAMA = true;
 		}
 		material.uniforms.normalDistribution = normalDistributionTexture;
-		reflectionProbe.camera.add(skyEnv);
+		dummyScene.add(skyEnv);
 		dummyScene.add(reflectionProbe.camera);
 
 		for (let i = 0; i < mipmapNum + 1; i++) {
