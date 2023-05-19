@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - geometry heightMap terrain</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - HeightMap Terrain
+    </div>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+		attribute vec3 a_Position;
+		attribute vec2 a_Uv;
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+
+		attribute mat4 instanceMatrix;
+
+		varying vec2 vUv;
+
+		void main(){
+			vUv = a_Uv;
+			vec4 transformed = vec4(a_Position, 1.0);
+			transformed = instanceMatrix * transformed;
+			gl_Position = u_ProjectionView * u_Model * transformed;
+		}
+	</script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+		varying vec2 vUv;
+		uniform vec4 color;
+        #ifdef USE_FOG
+            uniform vec3 u_FogColor;
+            #ifdef USE_EXP2_FOG
+                uniform float u_FogDensity;
+            #else
+                uniform float u_FogNear;
+                uniform float u_FogFar;
+            #endif
+        #endif
+
+		void main() {
+			gl_FragColor = color;
+            #ifdef USE_FOG
+                float depth = gl_FragCoord.z / gl_FragCoord.w;
+
+                #ifdef USE_EXP2_FOG
+                float fogFactor = 1.0 - exp(-u_FogDensity * u_FogDensity * depth * depth);
+                #else
+                float fogFactor = smoothstep(u_FogNear, u_FogFar, depth);
+                #endif
+
+            gl_FragColor.rgb = mix(gl_FragColor.rgb, u_FogColor, fogFactor);
+            #endif
+		}
+	</script>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { Terrain } from './jsm/objects/Terrain.js';
+        import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+        import { SkyBox } from './jsm/objects/SkyBox.js';
+        import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+        import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        let controls;
+        const instances = 100;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+        forwardRenderer.renderPass.setClearColor(0.4, 0.9, 0.9, 1);
+
+        const scene = new t3d.Scene();
+
+        scene.fog = new t3d.Fog(undefined, 10, 1200);
+        scene.fog.color.setRGB(0.83, 0.78, 0.68);
+
+        const cube_texture = new TextureCubeLoader().load([
+        	"resources/skybox/skyboxsun25deg/px.jpg",
+        	"resources/skybox/skyboxsun25deg/nx.jpg",
+        	"resources/skybox/skyboxsun25deg/py.jpg",
+        	"resources/skybox/skyboxsun25deg/ny.jpg",
+        	"resources/skybox/skyboxsun25deg/pz.jpg",
+        	"resources/skybox/skyboxsun25deg/nz.jpg"
+        ]);
+
+        const sky_box = new SkyBox(cube_texture);
+
+        const texture2DLoader = new Texture2DLoader();
+
+        const texture = texture2DLoader.load('./resources/logo.jpg');
+        texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+        texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+        const terrainTex = texture2DLoader.load('./resources/terrain/texture.png');
+        const snow = texture2DLoader.load('./resources/terrain/snow1.jpg');
+        const grass = texture2DLoader.load('./resources/terrain/grass1.jpg');
+        const sand = texture2DLoader.load('./resources/terrain/sand1.jpg');
+        const stone = texture2DLoader.load('./resources/terrain/stone1.jpg');
+
+        var heightmapImage = new Image();
+        heightmapImage.src = './resources/terrain/heightmap.png';
+        // heightmapImage.src = './resources/heightmap/terrain.png';
+        heightmapImage.onload = function () {
+        	// another material
+        	const material = new t3d.BasicMaterial();
+        	material.diffuseMap = terrainTex;
+
+        	const options = {
+        		width: 1024,
+        		height: 1024,
+        		heightmap: heightmapImage,
+        		// material: material,
+        		maxHeight: 100,
+        		minHeight: -100
+        	}
+        	const terrain = new Terrain(options);
+
+        	terrain.material.uniforms.texture_0 = sand;
+        	terrain.material.uniforms.texture_1 = grass;
+        	terrain.material.uniforms.texture_2 = stone;
+        	terrain.material.uniforms.texture_3 = snow;
+        	terrain.material.uniforms.texture_4 = stone;
+
+        	scene.add(terrain);
+
+        	// build random position tree
+        	buildTree(terrain);
+
+        	controls = new FirstPersonControls(terrain, camera);
+
+        	const water = createWater();
+        	scene.add(water);
+
+        	// const gui = new GUI();
+
+        	// const params = {
+        	// 	debug: false
+        	// }
+
+        	// gui.add(params, 'debug').onChange(value => {
+        	// 	if (value) {
+        	// 		terrain.material.drawMode = t3d.DRAW_MODE.LINES;
+        	// 	} else {
+        	// 		terrain.material.drawMode = t3d.DRAW_MODE.TRIANGLES;
+        	// 	}
+        	// })
+        }
+
+        const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(-10, 20, 30);
+        directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+        directionalLight.castShadow = true;
+        directionalLight.shadow.windowSize = 15;
+        scene.add(directionalLight);
+
+        const camera = new t3d.Camera();
+        camera.position.set(450, 300, 370);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
+        camera.add(sky_box);
+        scene.add(camera);
+
+        function createWater() {
+        	const geo = new t3d.PlaneGeometry(1024, 1024, 16, 16);
+        	const mat = new t3d.LambertMaterial();
+        	mat.diffuse.setHex(0x006ba0);
+        	mat.transparent = true;
+        	mat.opacity = 0.6;
+
+        	const water = new t3d.Mesh(geo, mat);
+
+        	water.position.y = -67;
+
+        	return water;
+        }
+
+        function buildTree(terrain) {
+        	const chunkMat = [], bottomMat = [], midMat = [], topMat = [];
+
+        	const position = new t3d.Vector3();
+        	const orientation = new t3d.Quaternion();
+        	const scale = new t3d.Vector3(0.5, 0.5, 0.5);
+        	const matrix = new t3d.Matrix4();
+
+        	const chunkMaterial = new t3d.ShaderMaterial({
+        		vertexShader: document.getElementById('vertexShader').textContent,
+        		fragmentShader: document.getElementById('fragmentShader').textContent,
+        		uniforms: {
+        			color: [0.24, 0.15, 0.09, 1]
+        		}
+        	});
+
+        	const treeMaterial = new t3d.ShaderMaterial({
+        		vertexShader: document.getElementById('vertexShader').textContent,
+        		fragmentShader: document.getElementById('fragmentShader').textContent,
+        		uniforms: {
+        			color: [0.176, 0.298, 0.117, 1]
+        		}
+        	});
+
+        	for (let i = 0; i < instances; i++) {
+        		const x = Math.random() * 1023 - 512;
+        		const z = Math.random() * 1023 - 512;
+
+        		const y = terrain.getHeightAt(x, z);
+
+        		if (y < -67) {      // water
+        			continue;
+        		}
+
+        		position.x = x;
+        		position.y = y + 3;
+        		position.z = z;
+
+        		matrix.transform(position, scale, orientation);
+        		matrix.toArray(chunkMat, i * 16);
+
+        		position.y = y + 9;
+
+        		matrix.transform(position, scale, orientation);
+        		matrix.toArray(bottomMat, i * 16);
+
+        		position.y = y + 12.5;
+
+        		matrix.transform(position, scale, orientation);
+        		matrix.toArray(midMat, i * 16);
+
+        		position.y = y + 16;
+
+        		matrix.transform(position, scale, orientation);
+        		matrix.toArray(topMat, i * 16);
+        	}
+
+        	const chunkGeometry = new t3d.CylinderGeometry(2, 2, 12, 6, 1, true);
+        	const bottomTreeGeometry = new t3d.CylinderGeometry(0, 10, 14, 8);
+        	const MidTreeGeometry = new t3d.CylinderGeometry(0, 9, 13, 8);
+        	const topTreeGeometry = new t3d.CylinderGeometry(0, 8, 12, 8);
+
+        	const chunk = createInstanceMesh(chunkGeometry, chunkMat, chunkMaterial)
+        	const bottom = createInstanceMesh(bottomTreeGeometry, bottomMat, treeMaterial)
+        	const mid = createInstanceMesh(MidTreeGeometry, midMat, treeMaterial)
+        	const top = createInstanceMesh(topTreeGeometry, topMat, treeMaterial)
+
+        	scene.add(chunk);
+        	scene.add(bottom);
+        	scene.add(mid);
+        	scene.add(top);
+        }
+
+        function createInstanceMesh(geometry, instanceMatrix, material) {
+        	const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(instanceMatrix), 16));
+        	instanceMatrixAttribute.divisor = 1;
+        	geometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
+
+        	geometry.instanceCount = instances;
+
+        	const instanceMesh = new t3d.Mesh(geometry, material);
+        	instanceMesh.frustumCulled = false;
+        	return instanceMesh;
+        }
+
+        let lastUpdate = 0;
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	let time = new Date().getTime() / 1000;
+        	let delta = 0.0;
+
+        	delta = time - lastUpdate;
+
+
+        	controls && controls.update(delta);
+
+        	lastUpdate = time;
+
+        	forwardRenderer.render(scene, camera);
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+        	forwardRenderer.backRenderTarget.resize(width, height);
+        }
+        window.addEventListener("resize", onWindowResize, false);
+
+        const K_FORWARD = 'KeyW';
+        const K_BACKWARD = 'KeyS';
+        const K_STRAFE_LEFT = 'KeyA';
+        const K_STRAFE_RIGHT = 'KeyD';
+
+        const K_UP = 'ArrowUp';
+        const K_DOWN = 'ArrowDown';
+        const K_LEFT = 'ArrowLeft';
+        const K_RIGHT = 'ArrowRight';
+        const K_SPACE = 'Space';
+        const K_SHIFT = 'ShiftLeft';
+
+        const q1 = new t3d.Quaternion();
+        const _xAxis = new t3d.Vector3(1, 0, 0);
+        const _yAxis = new t3d.Vector3(0, 1, 0);
+        const rotation = new t3d.Matrix4();
+        const motion = new t3d.Vector3(0, 0, 0);
+
+        //* Reference and modified from https://github.com/wybiral/terrain
+
+        class FirstPersonControls {
+
+        	constructor(terrain, camera) {
+        		this.terrain = terrain;
+        		this.camera = camera;
+        		this.onGround = true;
+        		this.position = new t3d.Vector3(0, 0, 0);
+        		this.rotation = new t3d.Vector3(0, 0, 0);
+        		this.velocity = new t3d.Vector3(0, 0, 0);
+        		this.keystate = {};
+        		this.bindEvents();
+        	}
+
+        	bindEvents() {
+        		// You can only request pointer lock from a user triggered event
+        		let el = document.querySelector('canvas');
+        		document.body.addEventListener('mousedown', function () {
+        			if (!el.requestPointerLock) {
+        				el.requestPointerLock = el.mozRequestPointerLock;
+        			}
+        			el.requestPointerLock()
+        		}, false);
+
+        		// mouse move
+        		document.body.addEventListener('mousemove', (evt) => {
+        			let sensitivity = 0.002
+        			this.rotation.x -= evt.movementY * sensitivity;
+        			this.rotation.y -= evt.movementX * sensitivity;
+        			// Constrain viewing angle
+        			if (this.rotation.x < -Math.PI / 2) {
+        				this.rotation.x = -Math.PI / 2;
+        			}
+        			if (this.rotation.x > Math.PI / 2) {
+        				this.rotation.x = Math.PI / 2;
+        			}
+        		}, false);
+
+        		// keyboard
+        		window.addEventListener('keydown', (evt) => {
+        			this.keystate[evt.code] = true;
+        		}, false);
+        		window.addEventListener('keyup', (evt) => {
+        			this.keystate[evt.code] = false;
+        		}, false);
+        	}
+
+        	update(delta) {
+        		let speed = delta * 2.0;
+        		motion.set(0, 0, 0);
+        		if (this.keystate[K_SHIFT]) {
+        			// Holding shift increases speed
+        			speed *= 1.5;
+        		}
+        		if (this.keystate[K_FORWARD]) {
+        			motion.z -= speed;
+        		}
+        		if (this.keystate[K_BACKWARD]) {
+        			motion.z += speed;
+        		}
+        		if (this.keystate[K_STRAFE_LEFT]) {
+        			motion.x -= speed;
+        		}
+        		if (this.keystate[K_STRAFE_RIGHT]) {
+        			motion.x += speed;
+        		}
+        		if (this.keystate[K_UP]) {
+        			this.rotation.x += speed * 0.5;
+        		}
+        		if (this.keystate[K_DOWN]) {
+        			this.rotation.x -= speed * 0.5;
+        		}
+        		if (this.keystate[K_LEFT]) {
+        			this.rotation.y += speed * 0.5;
+        		}
+        		if (this.keystate[K_RIGHT]) {
+        			this.rotation.y -= speed * 0.5;
+        		}
+        		if (this.keystate[K_SPACE] && this.onGround) {
+        			motion.y = delta * 60;
+        			this.onGround = false;
+        		}
+
+        		// rotation
+        		const c = Math.cos(this.rotation.y), s = Math.sin(this.rotation.y);
+
+        		rotation.set(
+        			c, 0, s, 0,
+        			0, 1, 0, 0,
+        			-s, 0, c, 0,
+        			0, 0, 0, 1
+        		);
+
+        		motion.applyMatrix4(rotation);
+        		this.velocity.add(motion);
+        		const nextPosition = this.position.clone();
+        		nextPosition.add(this.velocity);
+        		if (this.onGround) {
+        			this.velocity.x *= 0.95;
+        			this.velocity.z *= 0.95;
+        		} else {
+        			// Less friction in air
+        			this.velocity.x *= 0.97;
+        			this.velocity.z *= 0.97;
+        			// Gravity
+        			this.velocity.y -= delta * 3;
+        		}
+        		let x = nextPosition.x;
+        		let y = nextPosition.y;
+        		let z = nextPosition.z;
+        		const terrain = this.terrain;
+        		// Constrain position to terrain bounds
+        		if (x < -terrain.width / 2 + 1 || x >= terrain.width / 2 - 1) {
+        			x = this.position.x;
+        		}
+        		if (z < -terrain.height / 2 + 1 || z >= terrain.height / 2 - 1) {
+        			z = this.position.z;
+        		}
+        		this.position.x = x;
+        		this.position.z = z;
+        		const scale = terrain.scale.y;
+        		const ground = 7 + terrain.getHeightAt(x, z) * scale;
+        		if (this.onGround || y <= ground) {
+        			y = ground;
+        			this.velocity.y = 0;
+        			this.onGround = true;
+        		}
+        		this.position.y = y;
+        		// Apply current transformations to camera
+        		const camera = this.camera;
+        		camera.position.copy(this.position);
+        		camera.euler.set(0, 0, 0);
+
+        		q1.setFromAxisAngle(_yAxis, this.rotation.y);
+        		camera.quaternion.multiply(q1);
+
+        		q1.setFromAxisAngle(_xAxis, this.rotation.x);
+        		camera.quaternion.multiply(q1);
+        	}
+
+        }
+
+    </script>
+</body>
+
+</html>
