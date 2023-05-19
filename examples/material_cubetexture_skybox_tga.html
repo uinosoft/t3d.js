@@ -68,10 +68,10 @@
 		});
 
 		const sky_box = new SkyBox(cube_texture);
+		scene.add(sky_box);
 
 		const camera = new t3d.Camera();
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 10000);
-		camera.add(sky_box);
 		scene.add(camera);
 		
 		const gui = new GUI();

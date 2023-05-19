@@ -101,11 +101,10 @@
         	});
 
         	const sky_box = new SkyBox(texture);
+        	sky_box.gamma = true;
+        	scene.add(sky_box);
 
         	scene.environment = texture;
-
-        	sky_box.gamma = true;
-        	camera.add(sky_box);
         })
 
         const sphere_geometry = new t3d.SphereGeometry(80, 64, 32);

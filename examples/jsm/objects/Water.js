@@ -77,7 +77,7 @@ class Water extends Mesh {
 
 		const scope = this;
 
-		scope.updateReflect = function(renderer, scene, camera, sky) {
+		scope.updateReflect = function(renderer, scene, camera) {
 			mirrorWorldPosition.setFromMatrixPosition(scope.worldMatrix);
 			cameraWorldPosition.setFromMatrixPosition(camera.worldMatrix);
 
@@ -153,14 +153,6 @@ class Water extends Mesh {
 			scope.visible = false;
 			scene.add(mirrorCamera);
 
-			let skyParent;
-
-			if (sky) {
-				skyParent = sky.parent;
-				skyParent.remove(sky);
-				mirrorCamera.add(sky);
-			}
-
 			mirrorCamera.updateMatrix();
 			scene.updateRenderStates(mirrorCamera, false);
 			scene.updateRenderQueue(mirrorCamera, false, false);
@@ -174,11 +166,6 @@ class Water extends Mesh {
 
 			scope.visible = true;
 			scene.remove(mirrorCamera);
-
-			if (sky) {
-				mirrorCamera.remove(sky);
-				skyParent.add(sky);
-			}
 		};
 	}
 

@@ -25,6 +25,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
 		import { StereoCamera } from './jsm/stereo/StereoCamera.js';
 		import { AnaglyphRenderer } from './jsm/stereo/AnaglyphRenderer.js';
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
@@ -53,6 +54,9 @@
 
 		const scene = new t3d.Scene();
 		scene.environment = cube_texture;
+
+		const sky_box = new SkyBox(cube_texture);
+		scene.add(sky_box);
 
 		const spheres = [];
 

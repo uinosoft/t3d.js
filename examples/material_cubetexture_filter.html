@@ -55,7 +55,7 @@
 			});
 		
 			const sky_box = new SkyBox(cube_texture);
-			camera.add(sky_box);
+			scene.add(sky_box);
 
 			const gui = new GUI();
 			gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();

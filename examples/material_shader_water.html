@@ -64,18 +64,19 @@
 			"resources/skybox/Bridge2/negz.jpg"
 		]);
 		const sky_box = new SkyBox(cube_texture);
+		scene.add(sky_box);
 
 		const camera = new t3d.Camera();
 		camera.position.set(0, 150, 350);
 		camera.lookAt(new t3d.Vector3(-0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.01, 3000);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 3000);
+		scene.add(camera);
+
 		const controller = new OrbitControls(camera, canvas);
 		controller.target.set(0, 0, 0);
 		controller.maxDistance = 900;
 		controller.enablePan = false;
 		controller.maxPolarAngle = Math.PI / 2 - 0.001;
-		camera.add(sky_box);
-		scene.add(camera);
 
 		const texture = new Texture2DLoader().load('./resources/waternormals.jpg');
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
@@ -157,7 +158,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 3000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 3000);
 
 			renderer.backRenderTarget.resize(width, height);
 		}

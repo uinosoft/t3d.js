@@ -58,7 +58,6 @@
 
 			const camera = new t3d.Camera();
 			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-
 			camera.position.set(0, 0, 30);
 			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 			camera.setPerspective((40 / 180) * Math.PI, width / height, 1, 1000);
@@ -113,7 +112,7 @@
 
 					const sky_box = new SkyBox(cube_texture);
 					sky_box.material.defines.GAMMA = true;
-					camera.add(sky_box);
+					scene.add(sky_box);
 
 					scene.environment = cube_texture;
 					scene.environmentLightIntensity = 0;
