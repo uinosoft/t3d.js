@@ -187,6 +187,7 @@
 		"lab_texture_variation",
 		"lab_ik",
 		"lab_gltf_grass",
-		"lab_geometry_grass"
+		"lab_geometry_grass",
+		"lab_terrain"
 	]
 }
