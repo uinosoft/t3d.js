@@ -7,6 +7,7 @@ import {
 	ShaderMaterial,
 	Texture2D,
 	TextureCube,
+	Quaternion,
 	PIXEL_FORMAT,
 	PIXEL_TYPE,
 	TEXTURE_FILTER
@@ -23,11 +24,12 @@ import { ReflectionProbe } from './probes/ReflectionProbe.js';
 class PMREM {
 
 	/**
-	 * @param {t3d.Renderer} renderer
-	 * @param {t3d.TextureCube|t3d.Texture2D} envMap
+	 * @param {Renderer} renderer
+	 * @param {TextureCube|Texture2D} envMap
 	 * @param {Object} [textureOpts]
 	 * @param {Number} [textureOpts.sampleSize=1024]
-	 * @param {t3d.TextureCube} [textureOpts.outputTexture]
+	 * @param {Euler} [textureOpts.rotation]
+	 * @param {TextureCube} [textureOpts.outputTexture]
 	 * @return {TextureCube}
 	 */
 	static prefilterEnvironmentMap(renderer, envMap, textureOpts = {}) {
@@ -80,6 +82,11 @@ class PMREM {
 
 		const dummyScene = new Scene();
 
+		if (textureOpts.rotation) {
+			_quaterion.setFromEuler(textureOpts.rotation);
+			_quaterion.toMatrix4(dummyScene.anchorMatrix);
+		}
+
 		const geometry = new BoxGeometry(1, 1, 1);
 		const material = new ShaderMaterial(prefilterShader);
 		material.side = DRAW_SIDE.BACK;
@@ -97,6 +104,10 @@ class PMREM {
 		material.uniforms.normalDistribution = normalDistributionTexture;
 		dummyScene.add(skyEnv);
 		dummyScene.add(reflectionProbe.camera);
+
+		if (textureOpts.rotation) { // update render states for anchor matrix
+			dummyScene.updateRenderStates(reflectionProbe.camera);
+		}
 
 		for (let i = 0; i < mipmapNum + 1; i++) {
 			material.uniforms.roughness = Math.max(i - 1, 0) / mipmapNum;
@@ -128,6 +139,8 @@ class PMREM {
 	}
 
 }
+
+const _quaterion = new Quaternion();
 
 const prefilterShader = {
 
