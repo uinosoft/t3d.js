@@ -1,5 +1,6 @@
 import { PlaneGeometry, Mesh, LambertMaterial, MATERIAL_TYPE } from 't3d';
 
+//* Reference and modified from https://github.com/IceCreamYou/THREE.Terrain
 class Terrain extends Mesh {
 
 	constructor(options = {}) {
