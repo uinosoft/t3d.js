@@ -32,7 +32,6 @@
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { SkyBox } from './jsm/objects/SkyBox.js';
-		import { SkeletonHelper } from './jsm/objects/SkeletonHelper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -97,24 +96,16 @@
 
 			scene.add(object);
 
-			const skeletonHelper = new SkeletonHelper(scene);
-			// scene.add(skeletonHelper);
-
 			const gui = new GUI();
 			gui.add(params, 'anchor').onChange(updateAnchor);
 			gui.add(params, 'offset', 0, 10000000, 1000).onChange(updateAnchor);
-			gui.add(params, "skeleton").onChange(value => {
-				if (value) {
-					scene.add(skeletonHelper);
-				} else {
-					scene.remove(skeletonHelper);
-				}
-			});
+			gui.add(params, 'rotation', 0, 180, 0.1).onChange(updateAnchor);
 		}).catch(e => console.error(e));
 
 		const plane_geometry = new t3d.PlaneGeometry(10, 10);
 		const plane_material = new t3d.PBRMaterial();
-		plane_material.roughness = 1;
+		plane_material.roughness = 0.3;
+		plane_material.metalness = 0.7;
 		plane_material.diffuse.setHex(0x888888);
 		const plane = new t3d.Mesh(plane_geometry, plane_material);
 		plane.receiveShadow = true;
@@ -137,17 +128,22 @@
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
-		const offset = new t3d.Vector3();
-		const params = { skeleton: false, offset: 880000, anchor: true };
+		const anchorOffset = new t3d.Vector3();
+		const anchorRotation = new t3d.Euler();
+		const anchorQuaternion = new t3d.Quaternion();
+		const anchorScale = new t3d.Vector3(1, 1, 1);
+
+		const params = { anchor: true, offset: 880000, rotation: 0 };
 
 		function updateAnchor() {
-			offset.set(1, 1, 1).multiplyScalar(params.offset);
+			anchorOffset.set(1, 1, 1).multiplyScalar(params.offset);
+			anchorRotation.y = params.rotation / 180 * Math.PI;
+			anchorQuaternion.setFromEuler(anchorRotation);
 
-			scene.position.copy(offset);
-			scene.updateMatrix();
+			scene.position.copy(anchorOffset);
 
 			if (params.anchor) {
-				scene.anchorMatrix.copy(scene.matrix);
+				scene.anchorMatrix.transform(anchorOffset, anchorScale, anchorQuaternion);
 			} else {
 				scene.anchorMatrix.identity();
 			}

@@ -28,8 +28,10 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { SkyBox } from './jsm/objects/SkyBox.js';
 		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
 		import { ReflectionProbe } from './jsm/probes/ReflectionProbe.js';
 
 		let width = window.innerWidth || 2;
@@ -47,8 +49,17 @@
 		forwardRenderer.renderPass.setClearColor(0.1, 0.2, 0.3, 1);
 
 		const scene = new t3d.Scene();
-		scene.fog = new t3d.Fog(undefined, 50, 500);
-		scene.fog.color.setRGB(0.1, 0.2, 0.3);
+
+		const cube_texture = new TextureCubeLoader().load([
+			"./resources/skybox/right.jpg",
+			"./resources/skybox/left.jpg",
+			"./resources/skybox/up.jpg",
+			"./resources/skybox/down.jpg",
+			"./resources/skybox/back.jpg",
+			"./resources/skybox/front.jpg"
+		]);
+		const sky_box = new SkyBox(cube_texture);
+		scene.add(sky_box);
 
 		// small ball
 		const ball_geometry = new t3d.SphereGeometry(2, 32, 16);
