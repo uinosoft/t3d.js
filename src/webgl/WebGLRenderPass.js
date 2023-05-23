@@ -665,13 +665,21 @@ class WebGLRenderPass {
 		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
+		const position = geometry.getAttribute("a_Position");
 
 		let drawStart = 0;
-		let drawCount = useIndexBuffer ? geometry.index.buffer.count : geometry.getAttribute("a_Position").buffer.count;
+		let drawCount = Infinity;
+		if (useIndexBuffer) {
+			drawCount = geometry.index.buffer.count;
+		} else if (position) {
+			drawCount = position.buffer.count;
+		}
 		const groupStart = group ? group.start : 0;
 		const groupCount = group ? group.count : Infinity;
 		drawStart = Math.max(drawStart, groupStart);
 		drawCount = Math.min(drawCount, groupCount);
+
+		if (drawCount < 0 || drawCount === Infinity) return;
 
 		const instanceCount = geometry.instanceCount;
 		const useInstancing = instanceCount >= 0;

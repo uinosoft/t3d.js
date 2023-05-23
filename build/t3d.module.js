@@ -8204,6 +8204,11 @@ class Mesh extends Object3D {
 		}
 
 		const position = geometry.getAttribute("a_Position");
+
+		if (!position) {
+			return;
+		}
+
 		const uv = geometry.getAttribute("a_Uv");
 
 		const morphPosition = geometry.morphAttributes.position;
@@ -8751,9 +8756,12 @@ class Geometry extends EventDispatcher {
 	 */
 	computeBoundingBox() {
 		const position = this.attributes["a_Position"] || this.attributes["position"];
-		const morphAttributesPosition = this.morphAttributes.position;
 
-		this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+		if (position) {
+			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+		}
+
+		const morphAttributesPosition = this.morphAttributes.position;
 
 		if (morphAttributesPosition) {
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
@@ -8777,6 +8785,10 @@ class Geometry extends EventDispatcher {
 	computeBoundingSphere() {
 		const position = this.attributes["a_Position"] || this.attributes["position"];
 		const morphAttributesPosition = this.morphAttributes.position;
+
+		if (!position) {
+			return;
+		}
 
 		if (morphAttributesPosition) {
 			_box3.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
@@ -15118,13 +15130,21 @@ class WebGLRenderPass {
 		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
+		const position = geometry.getAttribute("a_Position");
 
 		let drawStart = 0;
-		let drawCount = useIndexBuffer ? geometry.index.buffer.count : geometry.getAttribute("a_Position").buffer.count;
+		let drawCount = Infinity;
+		if (useIndexBuffer) {
+			drawCount = geometry.index.buffer.count;
+		} else if (position) {
+			drawCount = position.buffer.count;
+		}
 		const groupStart = group ? group.start : 0;
 		const groupCount = group ? group.count : Infinity;
 		drawStart = Math.max(drawStart, groupStart);
 		drawCount = Math.min(drawCount, groupCount);
+
+		if (drawCount < 0 || drawCount === Infinity) return;
 
 		const instanceCount = geometry.instanceCount;
 		const useInstancing = instanceCount >= 0;

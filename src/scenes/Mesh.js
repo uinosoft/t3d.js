@@ -93,6 +93,11 @@ class Mesh extends Object3D {
 		}
 
 		const position = geometry.getAttribute("a_Position");
+
+		if (!position) {
+			return;
+		}
+
 		const uv = geometry.getAttribute("a_Uv");
 
 		const morphPosition = geometry.morphAttributes.position;

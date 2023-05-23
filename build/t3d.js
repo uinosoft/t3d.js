@@ -8114,6 +8114,9 @@
 				return;
 			}
 			var position = geometry.getAttribute("a_Position");
+			if (!position) {
+				return;
+			}
 			var uv = geometry.getAttribute("a_Uv");
 			var morphPosition = geometry.morphAttributes.position;
 			var intersection;
@@ -8633,8 +8636,10 @@
 		 */;
 		_proto.computeBoundingBox = function computeBoundingBox() {
 			var position = this.attributes["a_Position"] || this.attributes["position"];
+			if (position) {
+				this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+			}
 			var morphAttributesPosition = this.morphAttributes.position;
-			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
 			if (morphAttributesPosition) {
 				for (var i = 0; i < morphAttributesPosition.length; i++) {
 					var morphAttribute = morphAttributesPosition[i];
@@ -8654,6 +8659,9 @@
 		_proto.computeBoundingSphere = function computeBoundingSphere() {
 			var position = this.attributes["a_Position"] || this.attributes["position"];
 			var morphAttributesPosition = this.morphAttributes.position;
+			if (!position) {
+				return;
+			}
 			if (morphAttributesPosition) {
 				_box3.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
 				for (var i = 0; i < morphAttributesPosition.length; i++) {
@@ -14147,12 +14155,19 @@
 			var capabilities = this.capabilities;
 			var buffers = this._buffers;
 			var useIndexBuffer = geometry.index !== null;
+			var position = geometry.getAttribute("a_Position");
 			var drawStart = 0;
-			var drawCount = useIndexBuffer ? geometry.index.buffer.count : geometry.getAttribute("a_Position").buffer.count;
+			var drawCount = Infinity;
+			if (useIndexBuffer) {
+				drawCount = geometry.index.buffer.count;
+			} else if (position) {
+				drawCount = position.buffer.count;
+			}
 			var groupStart = group ? group.start : 0;
 			var groupCount = group ? group.count : Infinity;
 			drawStart = Math.max(drawStart, groupStart);
 			drawCount = Math.min(drawCount, groupCount);
+			if (drawCount < 0 || drawCount === Infinity) return;
 			var instanceCount = geometry.instanceCount;
 			var useInstancing = instanceCount >= 0;
 			if (useIndexBuffer) {

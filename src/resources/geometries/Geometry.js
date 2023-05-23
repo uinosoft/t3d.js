@@ -169,9 +169,12 @@ class Geometry extends EventDispatcher {
 	 */
 	computeBoundingBox() {
 		const position = this.attributes["a_Position"] || this.attributes["position"];
-		const morphAttributesPosition = this.morphAttributes.position;
 
-		this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+		if (position) {
+			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+		}
+
+		const morphAttributesPosition = this.morphAttributes.position;
 
 		if (morphAttributesPosition) {
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
@@ -195,6 +198,10 @@ class Geometry extends EventDispatcher {
 	computeBoundingSphere() {
 		const position = this.attributes["a_Position"] || this.attributes["position"];
 		const morphAttributesPosition = this.morphAttributes.position;
+
+		if (!position) {
+			return;
+		}
 
 		if (morphAttributesPosition) {
 			_box3.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
