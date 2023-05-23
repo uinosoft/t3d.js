@@ -59,7 +59,7 @@ class WebGLRenderPass {
 		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
 		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const materials = new WebGLMaterials(id, programs);
+		const materials = new WebGLMaterials(id, programs, vertexArrayBindings);
 		const queries = new WebGLQueries(id, gl, capabilities);
 
 		this.id = id;
@@ -349,8 +349,9 @@ class WebGLRenderPass {
 		if (material.needsUpdate) {
 			const oldProgram = materialProperties.program;
 			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
-			if (oldProgram) {
-				this._programs.releaseProgram(oldProgram); // release after new program is created.
+			if (oldProgram) { // release after new program is created.
+				vertexArrayBindings.releaseByProgram(oldProgram);
+				this._programs.releaseProgram(oldProgram);
 			}
 
 			materialProperties.fog = fog;

@@ -2,7 +2,7 @@ import { WebGLProperties } from './WebGLProperties.js';
 
 class WebGLMaterials extends WebGLProperties {
 
-	constructor(passId, programs) {
+	constructor(passId, programs, vertexArrayBindings) {
 		super(passId);
 
 		const that = this;
@@ -16,8 +16,8 @@ class WebGLMaterials extends WebGLProperties {
 			const program = materialProperties.program;
 
 			if (program !== undefined) {
+				vertexArrayBindings.releaseByProgram(program);
 				programs.releaseProgram(program);
-				// TODO release vaos
 			}
 
 			that.delete(material);

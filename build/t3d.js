@@ -13264,7 +13264,7 @@
 
 	var WebGLMaterials = /*#__PURE__*/function (_WebGLProperties) {
 		_inheritsLoose(WebGLMaterials, _WebGLProperties);
-		function WebGLMaterials(passId, programs) {
+		function WebGLMaterials(passId, programs, vertexArrayBindings) {
 			var _this;
 			_this = _WebGLProperties.call(this, passId) || this;
 			var that = _assertThisInitialized(_this);
@@ -13274,10 +13274,9 @@
 				material.removeEventListener('dispose', onMaterialDispose);
 				var program = materialProperties.program;
 				if (program !== undefined) {
+					vertexArrayBindings.releaseByProgram(program);
 					programs.releaseProgram(program);
-					// TODO release vaos
 				}
-
 				that.delete(material);
 			}
 			_this._onMaterialDispose = onMaterialDispose;
@@ -13308,6 +13307,7 @@
 			_this._buffers = buffers;
 			_this._isWebGL2 = capabilities.version >= 2;
 			_this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
+			_this._vaoCache = {}; // save vao cache here for releaseByProgram() method
 			_this._currentGeometryProgram = "";
 			_this._currentVAO = null;
 			return _this;
@@ -13323,6 +13323,7 @@
 				var geometryProperties = this.get(geometry);
 				if (geometryProperties._vaos === undefined) {
 					geometryProperties._vaos = {};
+					this._vaoCache[geometry.id] = geometryProperties._vaos;
 				}
 				var vao = geometryProperties._vaos[program.id];
 				if (!vao) {
@@ -13346,14 +13347,26 @@
 		};
 		_proto.releaseByGeometry = function releaseByGeometry(geometry) {
 			var geometryProperties = this.get(geometry);
-			if (geometryProperties._vaos) {
-				for (var key in geometryProperties._vaos) {
-					var vao = geometryProperties[key];
-					if (vao) {
-						this._disposeVAO(vao.object);
-					}
+			var vaos = geometryProperties._vaos;
+			if (vaos) {
+				for (var programId in vaos) {
+					var vao = vaos[programId];
+					if (!vao) continue;
+					this._disposeVAO(vao.object);
 				}
-				geometryProperties._vaos = {};
+				delete geometryProperties._vaos;
+				delete this._vaoCache[geometry.id];
+			}
+		};
+		_proto.releaseByProgram = function releaseByProgram(program) {
+			for (var geometryId in this._vaoCache) {
+				var vaos = this._vaoCache[geometryId];
+				if (vaos) {
+					var vao = vaos[program.id];
+					if (!vao) continue;
+					this._disposeVAO(vao.object);
+					delete vaos[program.id];
+				}
 			}
 		};
 		_proto.reset = function reset(force) {
@@ -13590,7 +13603,7 @@
 			var vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
 			var geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
 			var programs = new WebGLPrograms(gl, state, capabilities);
-			var materials = new WebGLMaterials(id, programs);
+			var materials = new WebGLMaterials(id, programs, vertexArrayBindings);
 			var queries = new WebGLQueries(id, gl, capabilities);
 			this.id = id;
 			this.gl = gl;
@@ -13876,9 +13889,10 @@
 				var oldProgram = materialProperties.program;
 				materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
 				if (oldProgram) {
-					this._programs.releaseProgram(oldProgram); // release after new program is created.
+					// release after new program is created.
+					vertexArrayBindings.releaseByProgram(oldProgram);
+					this._programs.releaseProgram(oldProgram);
 				}
-
 				materialProperties.fog = fog;
 				materialProperties.envMap = envMap;
 				materialProperties.logarithmicDepthBuffer = sceneData.logarithmicDepthBuffer;

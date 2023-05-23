@@ -14,6 +14,7 @@ export class WebGLVertexArrayBindings extends WebGLProperties {
 		this._isWebGL2 = capabilities.version >= 2;
 		this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
 
+		this._vaoCache = {}; // save vao cache here for releaseByProgram() method
 		this._currentGeometryProgram = "";
 		this._currentVAO = null;
 	}
@@ -28,6 +29,7 @@ export class WebGLVertexArrayBindings extends WebGLProperties {
 
 			if (geometryProperties._vaos === undefined) {
 				geometryProperties._vaos = {};
+				this._vaoCache[geometry.id] = geometryProperties._vaos;
 			}
 
 			let vao = geometryProperties._vaos[program.id];
@@ -53,15 +55,28 @@ export class WebGLVertexArrayBindings extends WebGLProperties {
 	releaseByGeometry(geometry) {
 		const geometryProperties = this.get(geometry);
 
-		if (geometryProperties._vaos) {
-			for (const key in geometryProperties._vaos) {
-				const vao = geometryProperties[key];
-				if (vao) {
-					this._disposeVAO(vao.object);
-				}
+		const vaos = geometryProperties._vaos;
+		if (vaos) {
+			for (const programId in vaos) {
+				const vao = vaos[programId];
+				if (!vao) continue;
+				this._disposeVAO(vao.object);
 			}
 
-			geometryProperties._vaos = {};
+			delete geometryProperties._vaos;
+			delete this._vaoCache[geometry.id];
+		}
+	}
+
+	releaseByProgram(program) {
+		for (const geometryId in this._vaoCache) {
+			const vaos = this._vaoCache[geometryId];
+			if (vaos) {
+				const vao = vaos[program.id];
+				if (!vao) continue;
+				this._disposeVAO(vao.object);
+				delete vaos[program.id];
+			}
 		}
 	}
 
