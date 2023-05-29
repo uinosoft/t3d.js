@@ -17987,6 +17987,7 @@ Vector3.prototype.applyProjection = function(_m) {
 
 Object.defineProperties(Camera.prototype, {
 	gammaInput: {
+		configurable: true,
 		get: function() {
 			console.warn("t3d.Camera: .gammaInput has been removed. Use texture.encoding instead.");
 			return false;
@@ -17996,6 +17997,7 @@ Object.defineProperties(Camera.prototype, {
 		}
 	},
 	gammaOutput: {
+		configurable: true,
 		get: function() {
 			console.warn("t3d.Camera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.");
 			return this.outputEncoding == TEXEL_ENCODING_TYPE.GAMMA;
@@ -18013,6 +18015,7 @@ Object.defineProperties(Camera.prototype, {
 
 Object.defineProperties(Material.prototype, {
 	emissiveIntensity: {
+		configurable: true,
 		get: function() {
 			console.warn("t3d.Material: .emissiveIntensity has been removed. Use material.emissive instead.");
 			return false;
@@ -18025,30 +18028,35 @@ Object.defineProperties(Material.prototype, {
 
 Object.defineProperties(WebGLRenderPass.prototype, {
 	textures: {
+		configurable: true,
 		get: function() {
 			console.warn("WebGLRenderPass: .textures has been deprecated. All methods are moved to WebGLRenderPass.");
 			return this._textures;
 		}
 	},
 	renderBuffers: {
+		configurable: true,
 		get: function() {
 			console.warn("WebGLRenderPass: .renderBuffers has been deprecated. All methods are moved to WebGLRenderPass.");
 			return this._renderBuffers;
 		}
 	},
 	renderTarget: {
+		configurable: true,
 		get: function() {
 			// console.warn("WebGLRenderPass: .renderTarget has been deprecated. All methods are moved to WebGLRenderPass.");
 			return this._renderTargets;
 		}
 	},
 	state: {
+		configurable: true,
 		get: function() {
 			// console.warn("WebGLRenderPass: .state has been deprecated. All methods are moved to WebGLRenderPass.");
 			return this._state;
 		}
 	},
 	vertexArrayBindings: {
+		configurable: true,
 		get: function() {
 			console.warn("WebGLRenderPass: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderPass.");
 			return this._vertexArrayBindings;
@@ -18075,6 +18083,7 @@ const WEBGL_TEXTURE_TYPE = {
 
 Object.defineProperties(TextureBase.prototype, {
 	textureType: {
+		configurable: true,
 		get: function() {
 			console.warn("TextureBase: .textureType has been removed.");
 			return "";
@@ -18087,6 +18096,7 @@ Object.defineProperties(TextureBase.prototype, {
 
 Object.defineProperties(Texture2D, {
 	textureType: {
+		configurable: true,
 		get: function() {
 			console.warn("Texture2D: .textureType has been removed.");
 			return WEBGL_TEXTURE_TYPE.TEXTURE_2D;
@@ -18099,6 +18109,7 @@ Object.defineProperties(Texture2D, {
 
 Object.defineProperties(Texture3D, {
 	textureType: {
+		configurable: true,
 		get: function() {
 			console.warn("Texture3D: .textureType has been removed.");
 			return WEBGL_TEXTURE_TYPE.TEXTURE_3D;
@@ -18111,6 +18122,7 @@ Object.defineProperties(Texture3D, {
 
 Object.defineProperties(TextureCube, {
 	textureType: {
+		configurable: true,
 		get: function() {
 			console.warn("TextureCube: .textureType has been removed.");
 			return WEBGL_TEXTURE_TYPE.TEXTURE_CUBE_MAP;
@@ -18132,6 +18144,7 @@ const LIGHT_TYPE = {
 
 Object.defineProperties(Light.prototype, {
 	lightType: {
+		configurable: true,
 		get: function() {
 			console.warn("Light: .lightType has been removed.");
 			return "";
@@ -18145,6 +18158,7 @@ Object.defineProperties(Light.prototype, {
 
 Object.defineProperties(AmbientLight.prototype, {
 	lightType: {
+		configurable: true,
 		get: function() {
 			console.warn("AmbientLight: .lightType has been removed.");
 			return LIGHT_TYPE.AMBIENT;
@@ -18157,6 +18171,7 @@ Object.defineProperties(AmbientLight.prototype, {
 
 Object.defineProperties(DirectionalLight.prototype, {
 	lightType: {
+		configurable: true,
 		get: function() {
 			console.warn("DirectionalLight: .lightType has been removed.");
 			return LIGHT_TYPE.DIRECT;
@@ -18170,6 +18185,7 @@ Object.defineProperties(DirectionalLight.prototype, {
 
 Object.defineProperties(HemisphereLight.prototype, {
 	lightType: {
+		configurable: true,
 		get: function() {
 			console.warn("HemisphereLight: .lightType has been removed.");
 			return LIGHT_TYPE.HEMISPHERE;
@@ -18182,6 +18198,7 @@ Object.defineProperties(HemisphereLight.prototype, {
 
 Object.defineProperties(PointLight.prototype, {
 	lightType: {
+		configurable: true,
 		get: function() {
 			console.warn("PointLight: .lightType has been removed.");
 			return LIGHT_TYPE.POINT;
@@ -18194,6 +18211,7 @@ Object.defineProperties(PointLight.prototype, {
 
 Object.defineProperties(SpotLight.prototype, {
 	lightType: {
+		configurable: true,
 		get: function() {
 			console.warn("SpotLight: .lightType has been removed.");
 			return LIGHT_TYPE.SPOT;
@@ -18216,6 +18234,7 @@ const OBJECT_TYPE = {
 
 Object.defineProperties(Mesh.prototype, {
 	type: {
+		configurable: true,
 		get: function() {
 			console.warn("Mesh: .type has been removed, use .isMesh instead.");
 			return OBJECT_TYPE.MESH;
@@ -18228,6 +18247,7 @@ Object.defineProperties(Mesh.prototype, {
 
 Object.defineProperties(SkinnedMesh.prototype, {
 	type: {
+		configurable: true,
 		get: function() {
 			console.warn("SkinnedMesh: .type has been removed, use .isSkinnedMesh instead.");
 			return OBJECT_TYPE.SKINNED_MESH;
@@ -18240,6 +18260,7 @@ Object.defineProperties(SkinnedMesh.prototype, {
 
 Object.defineProperties(Light.prototype, {
 	type: {
+		configurable: true,
 		get: function() {
 			console.warn("Light: .type has been removed, use .isLight instead.");
 			return OBJECT_TYPE.LIGHT;
@@ -18252,6 +18273,7 @@ Object.defineProperties(Light.prototype, {
 
 Object.defineProperties(Camera.prototype, {
 	type: {
+		configurable: true,
 		get: function() {
 			console.warn("Camera: .type has been removed, use .isCamera instead.");
 			return OBJECT_TYPE.CAMERA;
@@ -18264,6 +18286,7 @@ Object.defineProperties(Camera.prototype, {
 
 Object.defineProperties(Scene.prototype, {
 	type: {
+		configurable: true,
 		get: function() {
 			console.warn("Scene: .type has been removed, use .isScene instead.");
 			return OBJECT_TYPE.SCENE;
@@ -18276,6 +18299,7 @@ Object.defineProperties(Scene.prototype, {
 
 Object.defineProperties(Group.prototype, {
 	type: {
+		configurable: true,
 		get: function() {
 			console.warn("Group: .type has been removed, use .isGroup instead.");
 			return OBJECT_TYPE.GROUP;
@@ -18294,6 +18318,7 @@ const FOG_TYPE = {
 
 Object.defineProperties(Fog.prototype, {
 	fogType: {
+		configurable: true,
 		get: function() {
 			console.warn("Fog: .fogType has been removed, use .isFog instead.");
 			return FOG_TYPE.NORMAL;
@@ -18306,6 +18331,7 @@ Object.defineProperties(Fog.prototype, {
 
 Object.defineProperties(FogExp2.prototype, {
 	fogType: {
+		configurable: true,
 		get: function() {
 			console.warn("FogExp2: .fogType has been removed, use .isFogExp2 instead.");
 			return FOG_TYPE.EXP2;

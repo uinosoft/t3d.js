@@ -29,6 +29,7 @@ Object.defineProperties(StereoCamera.prototype, {
 		}
 	},
 	gammaInput: {
+		configurable: true,
 		get: function() {
 			console.warn("StereoCamera: .gammaInput has been removed. Use texture.encoding instead.");
 			return false;
@@ -38,6 +39,7 @@ Object.defineProperties(StereoCamera.prototype, {
 		}
 	},
 	gammaOutput: {
+		configurable: true,
 		get: function() {
 			console.warn("StereoCamera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.");
 			return this.cameraL.outputEncoding == TEXEL_ENCODING_TYPE.GAMMA;
