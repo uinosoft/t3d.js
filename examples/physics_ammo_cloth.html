@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - ammo softbody cloth</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - physics ammo cloth 
+		<br/>
+        use <a href="https://github.com/kripken/ammo.js/" target="_blank">ammo.js</a>
+		<br/>
+		Press Q or A to move the arm.
+    </div>
+
+	<script src="./libs/ammo.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { Clock } from './jsm/Clock.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import Stats from './libs/stats.module.js';
+		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+		import { AxisHelper } from './jsm/objects/AxisHelper.js';
+
+		let hinge;
+		let cloth, cloth2;
+
+		let armMovement = 0;
+
+		Ammo().then(Ammo => {
+			// - Global variables -
+
+			// Graphics variables
+			let canvas, stats;
+			let camera, controls, scene, forwardRenderer;
+			const clock = new Clock();
+			const ballMaterial = new t3d.PhongMaterial();
+			ballMaterial.diffuse.setHex(0x202020);
+			const pos = new t3d.Vector3();
+			const quat = new t3d.Quaternion();
+			const textureLoader = new Texture2DLoader();
+		
+			// Physics variables
+			const gravityConstant = -9.8;
+			let physicsWorld;
+			const rigidBodies = [];
+			const margin = 0.05;
+			const transformAux1 = new Ammo.btTransform();
+
+			let width = window.innerWidth || 2;
+			let height = window.innerHeight || 2;
+
+			init();
+			animate();
+
+			function init() {
+				initGraphics();
+
+				initPhysics();
+
+				createObjects();
+
+				initInput();
+			}
+
+			function initGraphics() {
+				canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+				document.body.appendChild(canvas);
+
+				camera = new t3d.Camera();
+				camera.setPerspective(60 / 180 * Math.PI, width / height, 0.2, 2000);
+
+				scene = new t3d.Scene();
+
+				camera.position.set(-7, 5, 8);
+				scene.add(camera);
+
+				controls = new OrbitControls(camera, canvas);
+				controls.target.set(0, 2, 0);
+
+				forwardRenderer = new ForwardRenderer(canvas);
+				forwardRenderer.renderPass.setClearColor(0.75, 0.82, 0.9, 1);
+
+				const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+				scene.add(ambientLight);
+
+				const light = new t3d.DirectionalLight(0xffffff, 0.7);
+				light.position.set(-20, 20, 10);
+				light.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+				light.castShadow = true;
+				light.shadow.windowSize = 20;
+				light.shadow.cameraNear = 2;
+				light.shadow.cameraFar = 100;
+				light.shadow.normalBias = 0.1;
+				light.shadow.mapSize.set(1024, 1024);
+
+				scene.add(light);
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				canvas.parentElement.appendChild(stats.domElement);
+		
+				const axis = new AxisHelper(100);
+				scene.add(axis);
+
+				window.addEventListener('resize', onWindowResize, false);
+			}
+
+			function initPhysics() {
+				// Physics configuration
+
+				const collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
+				const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+				const broadphase = new Ammo.btDbvtBroadphase();
+				const solver = new Ammo.btSequentialImpulseConstraintSolver();
+				const softBodySolver = new Ammo.btDefaultSoftBodySolver();
+				physicsWorld = new Ammo.btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
+				physicsWorld.setGravity(new Ammo.btVector3(0, gravityConstant, 0));
+				// physicsWorld.getWorldInfo().set_m_gravity(new Ammo.btVector3(0, gravityConstant, 0));
+			}
+
+			function createObjects() {
+				// Ground
+				pos.set(0, -0.5, 0);
+				quat.set(0, 0, 0, 1);
+				const ground = createParalellepiped(40, 1, 40, 0, pos, quat, new t3d.PhongMaterial());
+				ground.receiveShadow = true;
+				ground.material.diffuse.setRGB(1, 1, 1);
+				ground.material.diffuseMap = textureLoader.load('./resources/grid.png');
+				ground.material.diffuseMap.anisotropy = 16;
+				ground.material.diffuseMap.wrapS = ground.material.diffuseMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+				ground.material.diffuseMapTransform.setUvTransform(0, 0, 40, 40, 0, 0.5, 0.5);
+
+				// The cloth
+				// Cloth graphic object
+				const clothWidth = 2;
+				const clothHeight = 3;
+				const clothNumSegmentsZ = clothWidth * 10;
+				const clothNumSegmentsY = clothHeight * 10;
+				const clothPos = new t3d.Vector3(0, 3, 1);
+				const clothPos2 = new t3d.Vector3(0, 3, -1);
+
+				const clothGeometry = new t3d.PlaneGeometry(clothWidth, clothHeight, clothNumSegmentsZ, clothNumSegmentsY);
+				const clothGeometry2 = new t3d.PlaneGeometry(clothWidth, clothHeight, clothNumSegmentsZ, clothNumSegmentsY);
+
+				const clothMaterial = new t3d.PhongMaterial();
+				clothMaterial.diffuse.setRGB(1, 1, 1);
+				clothMaterial.diffuseMap = textureLoader.load('./resources/logo.jpg');
+				clothMaterial.diffuseMapTransform.setUvTransform(0, 0, 1, 3 / 2, 0, 0.5, 0.5);
+				clothMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+				cloth = new t3d.Mesh(clothGeometry, clothMaterial);
+				cloth.castShadow = true;
+				cloth2 = new t3d.Mesh(clothGeometry2, clothMaterial);
+				cloth2.castShadow = true;
+				scene.add(cloth);
+				scene.add(cloth2);
+
+				// Cloth physic object
+				const softBodyHelpers = new Ammo.btSoftBodyHelpers();
+				const clothCorner00 = new Ammo.btVector3(clothPos.x, clothPos.y + clothHeight, clothPos.z + clothWidth / 2);
+				const clothCorner01 = new Ammo.btVector3(clothPos.x, clothPos.y + clothHeight, clothPos.z - clothWidth / 2);
+				const clothCorner10 = new Ammo.btVector3(clothPos.x, clothPos.y, clothPos.z + clothWidth / 2);
+				const clothCorner11 = new Ammo.btVector3(clothPos.x, clothPos.y, clothPos.z - clothWidth / 2);
+				const clothSoftBody = softBodyHelpers.CreatePatch(physicsWorld.getWorldInfo(), clothCorner00, clothCorner01, clothCorner10, clothCorner11, clothNumSegmentsZ + 1, clothNumSegmentsY + 1, 0, true);
+				const sbConfig = clothSoftBody.get_m_cfg();
+				sbConfig.set_viterations(10);
+				sbConfig.set_piterations(10);
+
+				const softBodyHelpers2 = new Ammo.btSoftBodyHelpers();
+				const clothCorner002 = new Ammo.btVector3(clothPos2.x, clothPos2.y + clothHeight, clothPos2.z + clothWidth / 2);
+				const clothCorner012 = new Ammo.btVector3(clothPos2.x, clothPos2.y + clothHeight, clothPos2.z - clothWidth / 2);
+				const clothCorner102 = new Ammo.btVector3(clothPos2.x, clothPos2.y, clothPos2.z + clothWidth / 2);
+				const clothCorner112 = new Ammo.btVector3(clothPos2.x, clothPos2.y, clothPos2.z - clothWidth / 2);
+				const clothSoftBody2 = softBodyHelpers2.CreatePatch(physicsWorld.getWorldInfo(), clothCorner002, clothCorner012, clothCorner102, clothCorner112, clothNumSegmentsZ + 1, clothNumSegmentsY + 1, 0, true);
+				const sbConfig2 = clothSoftBody2.get_m_cfg();
+				sbConfig2.set_viterations(10);
+				sbConfig2.set_piterations(10);
+
+				// const friction = 0.5;
+				// const rollingFriction = 0.5;
+				// const linearDamping = 0.01;
+				// const angularDamping = 0.01;
+				// clothSoftBody.setFriction(friction);
+				// clothSoftBody.setRollingFriction(rollingFriction);
+
+				clothSoftBody.setTotalMass(0.5, false);
+				Ammo.castObject(clothSoftBody, Ammo.btCollisionObject).getCollisionShape().setMargin(margin * 3);
+				physicsWorld.addSoftBody(clothSoftBody, 1, -1);
+				cloth.userData.physicsBody = clothSoftBody;
+				// Disable deactivation
+				clothSoftBody.setActivationState(4);
+
+				clothSoftBody2.setTotalMass(0.5, false);
+				Ammo.castObject(clothSoftBody2, Ammo.btCollisionObject).getCollisionShape().setMargin(margin * 3);
+				physicsWorld.addSoftBody(clothSoftBody2, 1, -1);
+				cloth2.userData.physicsBody = clothSoftBody2;
+				// Disable deactivation
+				clothSoftBody2.setActivationState(4);
+
+				// The base
+				const armMass = 2;
+				const armLength = clothWidth * 2;
+				const pylonHeight = clothPos.y + clothHeight;
+				const baseMaterial = new t3d.PhongMaterial();
+				baseMaterial.diffuse.setHex(0xffffff);
+				pos.set(clothPos.x, 0.1, 0);// - armLength
+				quat.set(0, 0, 0, 1);
+				pos.set(clothPos.x, 0.5 * pylonHeight, 0);// - armLength
+				const pylon = createParalellepiped(0.4, pylonHeight, 0.4, 0, pos, quat, baseMaterial);
+				pylon.castShadow = true;
+				pylon.receiveShadow = true;
+				pos.set(clothPos.x, pylonHeight + 0.2,   0);
+				const arm = createParalellepiped(0.4, 0.4, armLength + 0.4, armMass, pos, quat, baseMaterial);
+				arm.castShadow = true;
+				arm.receiveShadow = true;
+
+				// Glue the cloth to the arm
+				const influence = 0.5;
+				clothSoftBody.appendAnchor(0, arm.userData.physicsBody, false, influence);
+				clothSoftBody.appendAnchor(clothNumSegmentsZ, arm.userData.physicsBody, false, influence);
+
+				clothSoftBody2.appendAnchor(0, arm.userData.physicsBody, false, influence);
+				clothSoftBody2.appendAnchor(clothNumSegmentsZ, arm.userData.physicsBody, false, influence);
+
+				// Hinge constraint to move the arm
+				const pivotA = new Ammo.btVector3(0, pylonHeight * 0.5, 0);
+				const pivotB = new Ammo.btVector3(0, -0.2,  0);
+				const axis = new Ammo.btVector3(0, 1, 0);
+				hinge = new Ammo.btHingeConstraint(pylon.userData.physicsBody, arm.userData.physicsBody, pivotA, pivotB, axis, axis, true);
+				physicsWorld.addConstraint(hinge, true);
+			}
+
+			function createParalellepiped(sx, sy, sz, mass, pos, quat, material) {
+				const tObject = new t3d.Mesh(new t3d.BoxGeometry(sx, sy, sz, 1, 1, 1), material);
+				const shape = new Ammo.btBoxShape(new Ammo.btVector3(sx * 0.5, sy * 0.5, sz * 0.5));
+				shape.setMargin(margin);
+
+				createRigidBody(tObject, shape, mass, pos, quat);
+
+				return tObject;
+			}
+
+			function createRigidBody(tObject, physicsShape, mass, pos, quat) {
+				tObject.position.copy(pos);
+				tObject.quaternion.copy(quat);
+
+				const transform = new Ammo.btTransform();
+				transform.setIdentity();
+				transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
+				transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+				const motionState = new Ammo.btDefaultMotionState(transform);
+
+				const localInertia = new Ammo.btVector3(0, 0, 0);
+				physicsShape.calculateLocalInertia(mass, localInertia);
+
+				const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
+				const body = new Ammo.btRigidBody(rbInfo);
+
+				tObject.userData.physicsBody = body;
+
+				scene.add(tObject);
+
+				if (mass > 0) {
+					rigidBodies.push(tObject);
+
+					// Disable deactivation
+					body.setActivationState(4);
+				}
+
+				physicsWorld.addRigidBody(body);
+
+				return body;
+			}
+
+			function initInput() {
+				window.addEventListener('keydown', function (event) {
+					switch (event.keyCode) {
+						// Q
+						case 81:
+							armMovement = 1;
+							break;
+						// A
+						case 65:
+							armMovement = -1;
+							break;
+					}
+				});
+
+				window.addEventListener('keyup', function () {
+					armMovement = 0;
+				});
+			}
+
+			function onWindowResize() {
+				width = window.innerWidth || 2;
+				height = window.innerHeight || 2;
+
+				camera.setPerspective(60 / 180 * Math.PI, window.innerWidth / window.innerHeight, 0.2, 2000);
+
+				forwardRenderer.backRenderTarget.resize(width, height);
+			}
+
+			function animate() {
+				requestAnimationFrame(animate);
+
+				stats.begin();
+				render();
+				stats.end();
+			}
+
+			function render() {
+				let deltaTime = clock.getDelta();
+
+				controls.update();
+
+				updatePhysics(deltaTime);
+
+				forwardRenderer.render(scene, camera);
+			}
+
+			function updatePhysics(deltaTime) {
+				// Hinge control
+				hinge.enableAngularMotor(true, armMovement, 1);
+
+				// Step
+				physicsWorld.stepSimulation(deltaTime, 10);
+
+				// Update cloth
+				const softBody = cloth.userData.physicsBody;
+				const clothPositions = cloth.geometry.attributes.a_Position.buffer.array;
+				const numVerts = clothPositions.length / 3;
+				const nodes = softBody.get_m_nodes();
+				let indexFloat = 0;
+
+				for (let i = 0; i < numVerts; i++) {
+					const node = nodes.at(i);
+					const nodePos = node.get_m_x();
+					clothPositions[indexFloat++] = nodePos.x();
+					clothPositions[indexFloat++] = nodePos.y();
+					clothPositions[indexFloat++] = nodePos.z();
+				}
+
+				const softBody2 = cloth2.userData.physicsBody;
+				const clothPositions2 = cloth2.geometry.attributes.a_Position.buffer.array;
+				const numVerts2 = clothPositions2.length / 3;
+				const nodes2 = softBody2.get_m_nodes();
+				indexFloat = 0;
+
+				for (let i = 0; i < numVerts2; i++) {
+					const node = nodes2.at(i);
+					const nodePos = node.get_m_x();
+					clothPositions2[indexFloat++] = nodePos.x();
+					clothPositions2[indexFloat++] = nodePos.y();
+					clothPositions2[indexFloat++] = nodePos.z();
+				}
+
+				GeometryUtils.computeNormals(cloth.geometry);
+				cloth.geometry.attributes.a_Position.buffer.version++;
+				cloth.geometry.attributes.a_Normal.buffer.version++;
+
+				GeometryUtils.computeNormals(cloth2.geometry);
+				cloth2.geometry.attributes.a_Position.buffer.version++;
+				cloth2.geometry.attributes.a_Normal.buffer.version++;
+
+				// Update rigid bodies
+				for (let i = 0, il = rigidBodies.length; i < il; i++) {
+					const objThree = rigidBodies[i];
+					const objPhys = objThree.userData.physicsBody;
+					const ms = objPhys.getMotionState();
+					if (ms) {
+						ms.getWorldTransform(transformAux1);
+						const p = transformAux1.getOrigin();
+						const q = transformAux1.getRotation();
+						objThree.position.set(p.x(), p.y(), p.z());
+						objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+					}
+				}
+			}
+		});
+	</script>
+</body>
+</html>

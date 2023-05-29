@@ -128,6 +128,7 @@
 	"physics": [
 		"physics_cannon",
 		"physics_ammo",
+		"physics_ammo_cloth",
 		"physics_ammo_softbody_volume"
 	],
 	"particle": [
