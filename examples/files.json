@@ -7,6 +7,7 @@
 		"light_sphericalharmonicslight",
 		"light_shadow",
 		"light_shadow_adapter",
+		"light_shadow_csm",
 		"light_softshadow"
 	],
 	"geometry": [

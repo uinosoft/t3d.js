@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>t3d - shadow adapter</title>
+		<meta
+			name="viewport"
+			content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+		/>
+		<link type="text/css" rel="stylesheet" href="main.css" />
+	</head>
+	<body>
+		<div id="info"><a href="" target="_blank">t3d</a> - shadow adapter</div>
+
+		<script src="./libs/nanobar.js"></script>
+
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="./libs/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"t3d": "../build/t3d.module.js"
+				}
+			}
+		</script>
+
+		<script type="module">
+			import * as t3d from "t3d";
+			import { ForwardRenderer } from "./jsm/render/ForwardRenderer.js";
+			import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+			import { GeometryUtils } from "./jsm/geometries/GeometryUtils.js";
+			import { CSM } from "./jsm/CSM/CSM.js";
+			import { CSMHelper } from "./jsm/CSM/CSMHelper.js";
+			import { GUI } from "./libs/lil-gui.esm.min.js";
+
+			let csmHelper;
+			let width = window.innerWidth || 2;
+			let height = window.innerHeight || 2;
+
+			const canvas = document.createElement("canvas");
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			const forwardRenderer = new ForwardRenderer(canvas);
+			const scene = new t3d.Scene();
+
+			const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+			scene.add(ambientLight);
+
+			const camera = new t3d.Camera();
+			camera.position.set(60, 60, 0);
+			camera.setPerspective((70 / 180) * Math.PI, width / height, 0.1, 5000);
+			camera.far = 5000;
+			camera.near = 0.1;
+			scene.add(camera);
+			const params = {
+				orthographic: true,
+				fade: false,
+				far: 1000,
+				mode: "practical",
+				lightX: -1,
+				lightY: -1,
+				lightZ: -1,
+				margin: 1000,
+				lightFar: 5000,
+				lightNear: 1,
+				lightIntensity: 0.6,
+				autoUpdateHelper: true,
+				updateHelper: function () {
+					csmHelper.update();
+				},
+			};
+			let csm = new CSM({
+				maxFar: params.far,
+				cascades: 4,
+				fade: params.fade,
+				mode: params.mode,
+				parent: scene,
+				shadowMapSize: 1024,
+				lightDirection: new t3d.Vector3(
+					params.lightX,
+					params.lightY,
+					params.lightZ
+				).normalize(),
+				camera: camera,
+				lightIntensity: params.lightIntensity,
+			});
+			csmHelper = new CSMHelper(csm);
+			csmHelper.visible = false;
+			scene.add(csmHelper);
+
+			const controller = new OrbitControls(camera, canvas);
+			controller.enablePan = true;
+			controller.target = new t3d.Vector3(-100, 10, 0);
+			controller.update();
+			const geometry = new t3d.SphereGeometry(8, 32, 16);
+
+			const material1 = new t3d.PhongMaterial();
+			material1.diffuse.setHex(0xFF0000);
+			csm.setupMaterial(material1);
+			const material2 = new t3d.PhongMaterial();
+			material2.diffuse.setHex(0x00FF00);
+			csm.setupMaterial(material2);
+			for (let i = 0; i < 100; i++) {
+				const cube1 = new t3d.Mesh(
+					geometry,
+					i % 2 === 0 ? material1 : material2
+				);
+				cube1.castShadow = true;
+				cube1.receiveShadow = true;
+				scene.add(cube1);
+				cube1.position.set(-i * 25, 20, 30);
+
+				const cube2 = new t3d.Mesh(
+					geometry,
+					i % 2 === 0 ? material2 : material1
+				);
+				cube2.castShadow = true;
+				cube2.receiveShadow = true;
+				scene.add(cube2);
+				cube2.position.set(-i * 25, 20, -30);
+			}
+			const floorMaterial = new t3d.PhongMaterial();
+
+			csm.setupMaterial(floorMaterial);
+			floorMaterial.diffuse.setHex(0x00FF00);
+
+			const plane = new t3d.Mesh(
+				new t3d.PlaneGeometry(10000, 10000),
+				floorMaterial
+			);
+			plane.material.diffuse.setHex(0x999999);
+			plane.receiveShadow = true;
+			scene.add(plane);
+
+
+			const gui = new GUI();
+			const adapterFolder = gui.addFolder("ShadowAdapter");
+			adapterFolder.add(csmHelper, "visible").onChange((value) => {
+				csmHelper.update();
+			});
+			adapterFolder.add(csm, "debug").onChange((value) => {
+				csm.debug = Number(value)
+				csm.updateUniforms();
+			});
+			adapterFolder.add(csm, "maxFar",  1, 2000, 0.001).onChange((value) => {
+				csm.updateFrustums();
+			});
+			adapterFolder.add(csm, "fade").onChange((value) => {
+				csm.updateUniforms();
+			});
+			csmHelper.update();
+			function loop(count) {
+				requestAnimationFrame(loop);
+
+				controller.update();
+			
+
+				camera.updateMatrix();
+				csm.update();
+				//
+
+				forwardRenderer.render(scene, camera);
+			}
+			requestAnimationFrame(loop);
+
+			function onWindowResize() {
+				width = window.innerWidth || 2;
+				height = window.innerHeight || 2;
+
+				camera.setPerspective((45 / 180) * Math.PI, width / height, 1, 50000);
+
+				forwardRenderer.backRenderTarget.resize(width, height);
+			}
+			window.addEventListener("resize", onWindowResize, false);
+		</script>
+	</body>
+</html>
