@@ -19,7 +19,7 @@ export class SceneParser {
 		});
 
 		context.roots = roots;
-		context.root = roots[gltf.scene];
+		context.root = roots[gltf.scene || 0];
 	}
 
 }
