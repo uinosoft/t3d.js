@@ -30,7 +30,6 @@
 			import * as t3d from "t3d";
 			import { ForwardRenderer } from "./jsm/render/ForwardRenderer.js";
 			import { OrbitControls } from "./jsm/controls/OrbitControls.js";
-			import { GeometryUtils } from "./jsm/geometries/GeometryUtils.js";
 			import { CSM } from "./jsm/CSM/CSM.js";
 			import { CSMHelper } from "./jsm/CSM/CSMHelper.js";
 			import { GUI } from "./libs/lil-gui.esm.min.js";
@@ -53,8 +52,6 @@
 			const camera = new t3d.Camera();
 			camera.position.set(60, 60, 0);
 			camera.setPerspective((70 / 180) * Math.PI, width / height, 0.1, 5000);
-			camera.far = 5000;
-			camera.near = 0.1;
 			scene.add(camera);
 			const params = {
 				orthographic: true,
@@ -101,9 +98,11 @@
 			const material1 = new t3d.PhongMaterial();
 			material1.diffuse.setHex(0xFF0000);
 			csm.setupMaterial(material1);
+
 			const material2 = new t3d.PhongMaterial();
 			material2.diffuse.setHex(0x00FF00);
 			csm.setupMaterial(material2);
+
 			for (let i = 0; i < 100; i++) {
 				const cube1 = new t3d.Mesh(
 					geometry,
@@ -142,27 +141,30 @@
 			adapterFolder.add(csmHelper, "visible").onChange((value) => {
 				csmHelper.update();
 			});
+
 			adapterFolder.add(csm, "debug").onChange((value) => {
 				csm.debug = Number(value)
 				csm.updateUniforms();
 			});
+
 			adapterFolder.add(csm, "maxFar",  1, 2000, 0.001).onChange((value) => {
 				csm.updateFrustums();
 			});
+			
 			adapterFolder.add(csm, "fade").onChange((value) => {
 				csm.updateUniforms();
 			});
+
 			csmHelper.update();
+
 			function loop(count) {
 				requestAnimationFrame(loop);
 
 				controller.update();
-			
 
 				camera.updateMatrix();
 				csm.update();
-				//
-
+			
 				forwardRenderer.render(scene, camera);
 			}
 			requestAnimationFrame(loop);
