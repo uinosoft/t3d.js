@@ -54,6 +54,13 @@ After v0.1.2, the js files in `examples/jsm` can be imported like this:
 import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
 ````
 
+### CDN ###
+
+* https://cdn.jsdelivr.net/npm/t3d@0.1.4/build/t3d.min.js
+* https://cdn.jsdelivr.net/npm/t3d@0.1.4/build/t3d.module.min.js
+
+More information: https://www.jsdelivr.com/package/npm/t3d
+
 ### Usage ###
 
 Draw a simple cube:
