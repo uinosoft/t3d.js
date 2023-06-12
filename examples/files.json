@@ -97,7 +97,8 @@
 	],
 	"math": [
 		"math_frustumtest",
-		"math_curve"
+		"math_curve",
+		"math_octree"
 	],
 	"sprite": [
 		"sprite_sprites"

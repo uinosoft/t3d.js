@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - octree</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - octree
+    </div>
+
+    <script src="./libs/nanobar.js"></script>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+        import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+        import { OrbitControls } from './jsm/controls/OrbitControls.js';
+        import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+        import { Octree } from './jsm/math/Octree.js';
+        import { OctreeHelper } from './jsm/objects/OctreeHelper.js';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+        import Stats from './libs/stats.module.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width * window.devicePixelRatio;
+        canvas.height = height * window.devicePixelRatio;
+        canvas.style.width = width + "px";
+        canvas.style.height = height + "px";
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+        forwardRenderer.renderPass.setClearColor(0.6, 0.7, 0.8, 1);
+
+        // const file = "resources/models/gltf/school/school.gltf";
+        const file = "./resources/models/gltf/bust_of_woman/glTF/bust_of_woman.gltf";
+
+        const cube_texture = new TextureCubeLoader().load([
+        	"resources/skybox/Bridge2/posx.jpg",
+        	"resources/skybox/Bridge2/negx.jpg",
+        	"resources/skybox/Bridge2/posy.jpg",
+        	"resources/skybox/Bridge2/negy.jpg",
+        	"resources/skybox/Bridge2/posz.jpg",
+        	"resources/skybox/Bridge2/negz.jpg"
+        ]);
+
+        const scene = new t3d.Scene();
+        scene.environment = cube_texture;
+
+        scene.fog = new t3d.Fog(undefined, 10, 500);
+        scene.fog.color.setRGB(0.6, 0.7, 0.8);
+        scene.environmentLightIntensity = 0.8;
+
+        const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+        scene.add(ambientLight);
+
+        const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(-10, 10, 10);
+        directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+        scene.add(directionalLight);
+
+        const camera = new t3d.Camera();
+        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+        camera.gammaFactor = 2;
+        camera.position.set(-80, 50, 80);
+        camera.lookAt(new t3d.Vector3(0, 20, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+        scene.add(camera);
+
+        const nanobar = new Nanobar();
+        nanobar.el.style.background = "gray";
+
+        const loadingManager = new t3d.LoadingManager(function () {
+        	nanobar.go(100);
+        	nanobar.el.style.background = "transparent";
+        }, function (url, itemsLoaded, itemsTotal) {
+        	if (itemsLoaded < itemsTotal) {
+        		nanobar.go(itemsLoaded / itemsTotal * 100);
+        	}
+        });
+
+        const loader = new GLTFLoader(loadingManager);
+        loader.autoLogError = false;
+
+        console.time('GLTFLoader');
+        loader.load(file).then(function (result) {
+        	console.timeEnd('GLTFLoader');
+
+        	const object = result.root;
+        	scene.add(object);
+
+        	scene.updateMatrix();
+        
+        	console.time('generate-octree');
+        	let worldOctree = Octree.generateOctreeFromNode(object, 3);
+        	console.timeEnd('generate-octree');
+
+        	const helper = new OctreeHelper();
+        	helper.frustumCulled = false;
+        	console.time('helper-update');
+        	helper.update(worldOctree, false);
+        	console.timeEnd('helper-update');
+        	scene.add(helper);
+
+        	const gui = new GUI();
+        	gui.add({ maxDepth: 3 }, 'maxDepth', [0, 1, 2, 3, 4]).onChange(value => {
+        		console.time('generate-octree');
+        		worldOctree = Octree.generateOctreeFromNode(object, value);
+        		console.timeEnd('generate-octree');
+        		console.time('helper-update');
+        		helper.update(worldOctree, false);
+        		console.timeEnd('helper-update');
+        	});
+        	gui.add(helper, 'visible').name('debugger');
+        }).catch(e => console.error(e));
+
+        const controller = new OrbitControls(camera, canvas);
+        controller.target.set(0, 20, 0);
+
+        // stats
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.body.appendChild(stats.dom);
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	stats.begin();
+
+        	controller.update();
+
+        	forwardRenderer.render(scene, camera);
+        	stats.end();
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+
+        	forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+        	canvas.style.width = width + "px";
+        	canvas.style.height = height + "px";
+        }
+        window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+
+</html>
