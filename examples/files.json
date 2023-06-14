@@ -157,6 +157,7 @@
 		"custompass_blur",
 		"custompass_msaa",
 		"custompass_motion_blur",
+		"custompass_motion_blur2",
 		"custompass_depth_texture_share",
 		"custompass_depth_buffer_share",
 		"custompass_gpupick",

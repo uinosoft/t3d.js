@@ -44,7 +44,8 @@ var GBuffer = (function() {
 			result.useSkinning = renderable.object.isSkinnedMesh && renderable.object.skeleton;
 			result.morphTargets = !!renderable.object.morphTargetInfluences;
 			result.morphNormals = !!renderable.object.morphTargetInfluences && renderable.object.geometry.morphAttributes.normal;
-
+			result.drawMode = renderable.material.drawMode;
+			result.isSkyBox = renderable.material.shaderName == 'skybox';
 			var maxBones = 0;
 			if (result.useSkinning) {
 				if (renderable.object.skeleton.boneTexture) {
@@ -145,17 +146,25 @@ var GBuffer = (function() {
 			var material;
 			var code = state.useSkinning +
 				"_" + state.maxBones +
-				"_" + state.morphTargets;
+				"_" + state.morphTargets +
+				"_" + state.drawMode +
+				"_" + state.isSkyBox;
 			if (!motionMaterials.has(code)) {
 				material = new ShaderMaterial(GBufferShader.motion);
+				material.side = renderable.material.side;
+				material.drawMode = renderable.material.drawMode;
+				if (state.isSkyBox) {
+					material.defines['IS_SKY'] = true;
+				}
 				motionMaterials.set(code, material);
 			} else {
 				material = motionMaterials.get(code);
 			}
 
-			if (renderable.object.userData['prevModel'] && renderable.object.userData['prevViewProjection']) {
+			if (renderable.object.userData['prevModel'] && renderable.object.userData['prevView'] && renderable.object.userData['prevProjection']) {
 				helpMatrix4.fromArray(renderable.object.userData['prevModel']).toArray(material.uniforms['prevModel']);
-				helpMatrix4.fromArray(renderable.object.userData['prevViewProjection']).toArray(material.uniforms['prevViewProjection']);
+				helpMatrix4.fromArray(renderable.object.userData['prevView']).toArray(material.uniforms['prevView']);
+				helpMatrix4.fromArray(renderable.object.userData['prevProjection']).toArray(material.uniforms['prevProjection']);
 				material.uniforms['firstRender'] = false;
 
 				if (renderable.object.userData['prevBoneTexture']) {
@@ -247,7 +256,7 @@ var GBuffer = (function() {
 			var renderQueueLayer = scene.getRenderQueue(camera).layerList[0]; // now just render layer 0
 
 			// Use MRT if support
-			if (renderPass.capabilities.version >= 2 || renderPass.capabilities.getExtension('WEBGL_draw_buffers')) {
+			if (renderPass.capabilities.version >= 2) { // renderPass.capabilities.getExtension('WEBGL_draw_buffers') has bug here
 				if (!this._useMRT) {
 					this._useMRT = true;
 
@@ -337,10 +346,15 @@ var GBuffer = (function() {
 						}
 						renderable.object.worldMatrix.toArray(renderable.object.userData['prevModel']);
 
-						if (!renderable.object.userData['prevViewProjection']) {
-							renderable.object.userData['prevViewProjection'] = new Float32Array(16);
+						if (!renderable.object.userData['prevProjection']) {
+							renderable.object.userData['prevProjection'] = new Float32Array(16);
 						}
-						helpMatrix4.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).toArray(renderable.object.userData['prevViewProjection']);
+						helpMatrix4.copy(camera.viewMatrix).toArray(renderable.object.userData['prevView']);
+
+						if (!renderable.object.userData['prevView']) {
+							renderable.object.userData['prevView'] = new Float32Array(16);
+						}
+						helpMatrix4.copy(camera.projectionMatrix).toArray(renderable.object.userData['prevProjection']);
 
 						if (renderable.object.skeleton) {
 							if (renderable.object.skeleton.boneTexture) {
@@ -600,11 +614,11 @@ var GBuffer = (function() {
 		},
 
 		motion: {
-
 			uniforms: {
 
 				prevModel: new Float32Array(16),
-				prevViewProjection: new Float32Array(16),
+				prevView: new Float32Array(16),
+				prevProjection: new Float32Array(16),
 
 				prevBoneTexture: null,
 				prevBoneTextureSize: 256,
@@ -620,7 +634,8 @@ var GBuffer = (function() {
 				"#include <skinning_pars_vert>",
 
 				"uniform mat4 prevModel;",
-				"uniform mat4 prevViewProjection;",
+				"uniform mat4 prevView;",
+				"uniform mat4 prevProjection;",
 
 				"varying vec4 v_ScreenPosition;",
 				"varying vec4 v_PrevScreenPosition;",
@@ -656,7 +671,13 @@ var GBuffer = (function() {
 				"		}",
 				"	#endif",
 				"#endif",
-
+				"#ifdef IS_SKY",
+				"	mat4 clearMat4Translate(mat4 m) {",
+				"		mat4 outMatrix = m;",
+				"		outMatrix[3].xyz = vec3(0., 0., 0.);",
+				"		return outMatrix;",
+				"	}",
+				"#endif",
 				"void main() {",
 				"	#include <begin_vert>",
 
@@ -683,9 +704,15 @@ var GBuffer = (function() {
 
 				"		prevTransformed = prevSkinned.xyz / prevSkinned.w;",
 				"	#endif",
-
-				"	v_ScreenPosition = u_ProjectionView * u_Model * vec4(transformed, 1.0);",
-				"	v_PrevScreenPosition = prevViewProjection * prevModel * vec4(prevTransformed, 1.0);",
+				"	#ifdef IS_SKY",
+				"		v_ScreenPosition = u_Projection * clearMat4Translate(u_View) * u_Model * vec4(transformed, 1.0);",
+				"		v_PrevScreenPosition = prevProjection * clearMat4Translate(prevView) * prevModel * vec4(prevTransformed, 1.0);",
+				"		gl_Position = u_Projection * clearMat4Translate(u_View) * u_Model * vec4(transformed, 1.0);",
+				"		gl_Position.z = gl_Position.w;",
+				"	#else",
+				"		v_ScreenPosition = u_ProjectionView * u_Model * vec4(transformed, 1.0);",
+				"		v_PrevScreenPosition = prevProjection * prevView * prevModel * vec4(prevTransformed, 1.0);",
+				"	#endif",
 				"}"
 			].join("\n"),
 
@@ -858,11 +885,6 @@ var GBuffer = (function() {
 				"	vec4 texel1 = texture2D(normalGlossinessTexture, texCoord);",
 				"	vec4 texel3 = texture2D(albedoMetalnessTexture, texCoord);",
 
-				// Is empty
-				"	if (dot(texel1.rgb, vec3(1.0)) == 0.0) {",
-				"		discard;",
-				"	}",
-
 				"	float glossiness = texel1.a;",
 				"	float metalness = texel3.a;",
 
@@ -886,8 +908,14 @@ var GBuffer = (function() {
 				"	if (debug == 0) {",
 				"		gl_FragColor = vec4(N, 1.0);",
 				"	} else if (debug == 1) {",
+				"		if (dot(texel1.rgb, vec3(1.0)) == 0.0) {",
+				"			discard;",
+				"		}",
 				"		gl_FragColor = vec4(vec3(z), 1.0);",
 				"	} else if (debug == 2) {",
+				"		if (dot(texel1.rgb, vec3(1.0)) == 0.0) {",
+				"			discard;",
+				"		}",
 				"		gl_FragColor = vec4(position, 1.0);",
 				"	} else if (debug == 3) {",
 				"		gl_FragColor = vec4(vec3(glossiness), 1.0);",

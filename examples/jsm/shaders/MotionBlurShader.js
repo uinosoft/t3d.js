@@ -1,10 +1,6 @@
-/**
- * MotionBlur Shader
- */
-
-
-
 var MotionBlurShader = {
+
+	name: 'motion_blur',
 
 	uniforms: {
 
