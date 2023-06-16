@@ -287,11 +287,14 @@ function boneTransform(object, index, target) {
 	for (let i = 0; i < 4; i++) {
 		const weight = getComponent(_skinWeight, i);
 
-		if (weight !== 0) {
-			const boneIndex = getComponent(_skinIndex, i);
-			_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
-			target.addScaledVector(_vector.copy(_basePosition).applyMatrix4(_matrix), weight);
-		}
+		if (weight < Number.EPSILON) continue;
+
+		const boneIndex = getComponent(_skinIndex, i);
+
+		if (!skeleton.bones[boneIndex]) continue;
+
+		_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
+		target.addScaledVector(_vector.copy(_basePosition).applyMatrix4(_matrix), weight);
 	}
 
 	return target.applyMatrix4(object.bindMatrixInverse);

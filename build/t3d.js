@@ -8262,11 +8262,11 @@
 		target.set(0, 0, 0);
 		for (var i = 0; i < 4; i++) {
 			var weight = getComponent(_skinWeight, i);
-			if (weight !== 0) {
-				var boneIndex = getComponent(_skinIndex, i);
-				_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
-				target.addScaledVector(_vector$1.copy(_basePosition).applyMatrix4(_matrix), weight);
-			}
+			if (weight < Number.EPSILON) continue;
+			var boneIndex = getComponent(_skinIndex, i);
+			if (!skeleton.bones[boneIndex]) continue;
+			_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
+			target.addScaledVector(_vector$1.copy(_basePosition).applyMatrix4(_matrix), weight);
 		}
 		return target.applyMatrix4(object.bindMatrixInverse);
 	}
