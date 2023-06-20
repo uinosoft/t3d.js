@@ -8738,8 +8738,10 @@
 			if (!position) {
 				return;
 			}
+			var bufferStride = position.buffer.stride;
+			var positionOffset = position.offset;
 			if (morphAttributesPosition) {
-				_box3.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+				_box3.setFromArray(position.buffer.array, bufferStride, positionOffset);
 				for (var i = 0; i < morphAttributesPosition.length; i++) {
 					var morphAttribute = morphAttributesPosition[i];
 					_boxMorphTargets.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
@@ -8752,11 +8754,11 @@
 				_box3.getCenter(center);
 				var maxRadiusSq = 0;
 				for (var _i = 0; _i < position.buffer.count; _i++) {
-					_offset.fromArray(position.buffer.array, _i * 3);
+					_offset.fromArray(position.buffer.array, _i * bufferStride + positionOffset);
 					maxRadiusSq = center.distanceToSquared(_offset);
 					for (var j = 0; j < morphAttributesPosition.length; j++) {
 						var _morphAttribute = morphAttributesPosition[j];
-						_vector.fromArray(_morphAttribute.buffer.array, _i * 3);
+						_vector.fromArray(_morphAttribute.buffer.array, _i * _morphAttribute.buffer.stride + _morphAttribute.offset);
 						_sum.addVectors(_offset, _vector);
 						var offsetLengthSq = center.distanceToSquared(_sum);
 
@@ -8769,7 +8771,7 @@
 				}
 				this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
 			} else {
-				this.boundingSphere.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+				this.boundingSphere.setFromArray(position.buffer.array, bufferStride, positionOffset);
 			}
 		}
 

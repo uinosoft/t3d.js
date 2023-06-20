@@ -8880,8 +8880,11 @@ class Geometry extends EventDispatcher {
 			return;
 		}
 
+		const bufferStride = position.buffer.stride;
+		const positionOffset = position.offset;
+
 		if (morphAttributesPosition) {
-			_box3.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+			_box3.setFromArray(position.buffer.array, bufferStride, positionOffset);
 
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
 				const morphAttribute = morphAttributesPosition[i];
@@ -8901,14 +8904,14 @@ class Geometry extends EventDispatcher {
 			let maxRadiusSq = 0;
 
 			for (let i = 0; i < position.buffer.count; i++) {
-				_offset.fromArray(position.buffer.array, i * 3);
+				_offset.fromArray(position.buffer.array, i * bufferStride + positionOffset);
 
 				maxRadiusSq = center.distanceToSquared(_offset);
 
 				for (let j = 0; j < morphAttributesPosition.length; j++) {
 					const morphAttribute = morphAttributesPosition[j];
 
-					_vector.fromArray(morphAttribute.buffer.array, i * 3);
+					_vector.fromArray(morphAttribute.buffer.array, i * morphAttribute.buffer.stride + morphAttribute.offset);
 
 					_sum.addVectors(_offset, _vector);
 
@@ -8924,7 +8927,7 @@ class Geometry extends EventDispatcher {
 
 			this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
 		} else {
-			this.boundingSphere.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+			this.boundingSphere.setFromArray(position.buffer.array, bufferStride, positionOffset);
 		}
 	}
 
