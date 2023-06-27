@@ -52,7 +52,7 @@ class Renderer {
 	renderRenderableList(renderables, renderStates, options = {}) {
 		const renderPass = this.renderPass;
 		for (let i = 0, l = renderables.length; i < l; i++) {
-			renderPass.render(renderables[i], renderStates, options);
+			renderPass.renderRenderableItem(renderables[i], renderStates, options);
 		}
 	}
 

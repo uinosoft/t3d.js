@@ -135,6 +135,12 @@ Object.defineProperties(WebGLRenderPass.prototype, {
 	}
 });
 
+// since 0.1.6
+WebGLRenderPass.prototype.render = function(renderable, renderStates, options) {
+	console.warn('WebGLRenderPass: .render() has been renamed to .renderRenderableItem().');
+	this.renderRenderableItem(renderable, renderStates, options);
+}
+
 WebGLVertexArrayBindings.prototype.resetBinding = function() {
 	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
 }

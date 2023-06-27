@@ -13902,8 +13902,15 @@
 		 */;
 		_proto.getQueryResult = function getQueryResult(query) {
 			return this._queries.getResult(query);
-		};
-		_proto.render = function render(renderable, renderStates, options) {
+		}
+
+		/**
+		 * Get the query result.
+		 * @param {Object} renderable - The renderable item.
+		 * @param {t3d.RenderStates} renderStates - The render states.
+		 * @param {Object} [options=] - The render options.
+		 */;
+		_proto.renderRenderableItem = function renderRenderableItem(renderable, renderStates, options) {
 			var state = this._state;
 			var capabilities = this.capabilities;
 			var vertexArrayBindings = this._vertexArrayBindings;
@@ -14347,7 +14354,7 @@
 			}
 			var renderPass = this.renderPass;
 			for (var i = 0, l = renderables.length; i < l; i++) {
-				renderPass.render(renderables[i], renderStates, options);
+				renderPass.renderRenderableItem(renderables[i], renderStates, options);
 			}
 		};
 		return Renderer;
@@ -17129,6 +17136,12 @@
 			}
 		}
 	});
+
+	// since 0.1.6
+	WebGLRenderPass.prototype.render = function (renderable, renderStates, options) {
+		console.warn('WebGLRenderPass: .render() has been renamed to .renderRenderableItem().');
+		this.renderRenderableItem(renderable, renderStates, options);
+	};
 	WebGLVertexArrayBindings.prototype.resetBinding = function () {
 		console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
 	};

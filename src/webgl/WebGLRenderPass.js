@@ -268,7 +268,13 @@ class WebGLRenderPass {
 		return this._queries.getResult(query);
 	}
 
-	render(renderable, renderStates, options) {
+	/**
+	 * Get the query result.
+	 * @param {Object} renderable - The renderable item.
+	 * @param {t3d.RenderStates} renderStates - The render states.
+	 * @param {Object} [options=] - The render options.
+	 */
+	renderRenderableItem(renderable, renderStates, options) {
 		const state = this._state;
 		const capabilities = this.capabilities;
 		const vertexArrayBindings = this._vertexArrayBindings;

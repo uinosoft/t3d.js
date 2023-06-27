@@ -14826,7 +14826,13 @@ class WebGLRenderPass {
 		return this._queries.getResult(query);
 	}
 
-	render(renderable, renderStates, options) {
+	/**
+	 * Get the query result.
+	 * @param {Object} renderable - The renderable item.
+	 * @param {t3d.RenderStates} renderStates - The render states.
+	 * @param {Object} [options=] - The render options.
+	 */
+	renderRenderableItem(renderable, renderStates, options) {
 		const state = this._state;
 		const capabilities = this.capabilities;
 		const vertexArrayBindings = this._vertexArrayBindings;
@@ -15343,7 +15349,7 @@ class Renderer {
 	renderRenderableList(renderables, renderStates, options = {}) {
 		const renderPass = this.renderPass;
 		for (let i = 0, l = renderables.length; i < l; i++) {
-			renderPass.render(renderables[i], renderStates, options);
+			renderPass.renderRenderableItem(renderables[i], renderStates, options);
 		}
 	}
 
@@ -18156,6 +18162,12 @@ Object.defineProperties(WebGLRenderPass.prototype, {
 		}
 	}
 });
+
+// since 0.1.6
+WebGLRenderPass.prototype.render = function(renderable, renderStates, options) {
+	console.warn('WebGLRenderPass: .render() has been renamed to .renderRenderableItem().');
+	this.renderRenderableItem(renderable, renderStates, options);
+};
 
 WebGLVertexArrayBindings.prototype.resetBinding = function() {
 	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
