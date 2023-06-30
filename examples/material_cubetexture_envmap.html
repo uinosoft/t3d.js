@@ -30,6 +30,7 @@
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -82,6 +83,10 @@
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
+
+		const gui = new GUI();
+		gui.add(material, 'roughness', 0, 1, 0.01);
+		gui.add(material, 'metalness', 0, 1, 0.01);
 
 		function loop(count) {
 			requestAnimationFrame(loop);

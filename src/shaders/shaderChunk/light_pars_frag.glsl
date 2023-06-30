@@ -72,22 +72,24 @@
         return PI * envMapColor.rgb * u_EnvMap_Intensity * u_EnvMapLight_Intensity;
     }
 
-    // taken from here: http://casual-effects.blogspot.ca/2011/08/plausible-environment-lighting-in-two.html
-    float getSpecularMIPLevel(const in float blinnShininessExponent, const in int maxMIPLevel) {
-    	//float envMapWidth = pow(2.0, maxMIPLevelScalar);
-    	//float desiredMIPLevel = log2(envMapWidth * sqrt(3.0)) - 0.5 * log2(pow2(blinnShininessExponent) + 1.0);
-
+    // Trowbridge-Reitz distribution to Mip level, following the logic of http://casual-effects.blogspot.ca/2011/08/plausible-environment-lighting-in-two.html
+    float getSpecularMIPLevel(const in float roughness, const in int maxMIPLevel) {
     	float maxMIPLevelScalar = float(maxMIPLevel);
-    	float desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2(pow2(blinnShininessExponent) + 1.0);
+
+        float sigma = PI * roughness * roughness / (1.0 + roughness);
+        float desiredMIPLevel = maxMIPLevelScalar + log2(sigma);
 
     	// clamp to allowable LOD ranges.
     	return clamp(desiredMIPLevel, 0.0, maxMIPLevelScalar);
     }
 
-    vec3 getLightProbeIndirectRadiance(const in float blinnShininessExponent, const in int maxMIPLevel, const in vec3 envDir) {
-        float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent, maxMIPLevel);
+    vec3 getLightProbeIndirectRadiance(const in float roughness, const in int maxMIPLevel, const in vec3 normal, const in vec3 envDir) {
+        float specularMIPLevel = getSpecularMIPLevel(roughness, maxMIPLevel);
 
-        vec3 coordVec = vec3(u_EnvMap_Flip * envDir.x, envDir.yz);
+        // Mixing the reflection with the normal is more accurate and keeps rough objects from gathering light from behind their tangent plane.
+        vec3 coordVec = normalize(mix(envDir, normal, roughness * roughness));
+
+        coordVec.x *= u_EnvMap_Flip;
 
         #ifdef TEXTURE_LOD_EXT
     		vec4 envMapColor = textureCubeLodEXT(envMap, coordVec, specularMIPLevel);

@@ -223,11 +223,11 @@
             envDir = reflect(normalize(v_modelPos - u_CameraPosition), N);
         #endif
         iblIrradiance += getLightProbeIndirectIrradiance(maxMipLevel, N);
-        indirectRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(roughness), maxMipLevel, envDir);
+        indirectRadiance += getLightProbeIndirectRadiance(roughness, maxMipLevel, N, envDir);
 
         #ifdef USE_CLEARCOAT
             vec3 clearcoatDir = reflect(normalize(v_modelPos - u_CameraPosition), clearcoatNormal);
-		    clearcoatRadiance += getLightProbeIndirectRadiance(GGXRoughnessToBlinnExponent(clearcoatRoughness), maxMipLevel, clearcoatDir);
+		    clearcoatRadiance += getLightProbeIndirectRadiance(clearcoatRoughness, maxMipLevel, clearcoatNormal, clearcoatDir);
 	    #endif
     #endif
 
