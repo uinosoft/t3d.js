@@ -123,6 +123,7 @@
 	],
 	"text": [
 		"text_sdf",
+		"text_sdf_dynamic",
 		"text_typeface",
 		"text_bitmap"
 	],

@@ -33,58 +33,18 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { SDFTextShader } from 't3d/addons/shaders/SDFTextShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
 
 		// Font Shaders
 		// SDF https://github.com/mapbox/tiny-sdf
 		// MSDF https://github.com/leochocolat/three-msdf-text
-
-		const SDFShader = {
-			name: 'sdf_text',
-
-			defines: { SDF_DEBUG: false },
-		
-			uniforms: {},
-
-			vertexShader: `
-				#include <common_vert>
-
-				attribute vec2 a_Uv;
-				varying vec2 v_Uv;
-
-				uniform mat3 uvTransform;
-
-				void main() {
-					gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
-					v_Uv = (uvTransform * vec3(a_Uv, 1.)).xy;
-				}
-			`,
-
-			fragmentShader: `
-				uniform vec3 u_Color;
-				uniform float u_Opacity;
-
-				uniform sampler2D diffuseMap;
-
-				varying vec2 v_Uv;
-
-				void main() {
-					float dist = texture2D(diffuseMap, v_Uv).r;
-					float alpha = smoothstep(0.727903125, 0.772096875, dist);
-					gl_FragColor = vec4(u_Color, alpha * u_Opacity);
-
-					#ifdef SDF_DEBUG
-						gl_FragColor = texture2D(diffuseMap, v_Uv);
-					#endif
-				}
-			`
-		};
 		
 		const MSDFShader = {
 			name: 'msdf_text',
 
-			defines: { SDF_DEBUG: false },
+			defines: { DEBUG: false },
 		
 			uniforms: {},
 
@@ -120,7 +80,7 @@
 					float alpha = clamp(sd / fwidth(sd) + 0.5, 0.0, 1.0);
 					gl_FragColor = vec4(u_Color, alpha * u_Opacity);
 
-					#ifdef SDF_DEBUG
+					#ifdef DEBUG
 						gl_FragColor = texture2D(diffuseMap, v_Uv);
 					#endif
 				}
@@ -245,7 +205,7 @@
 		imageMaterial.diffuseMap = raw_texture;
 		imageMaterial.side = t3d.DRAW_SIDE.DOUBLE;
 
-		const sdfMaterial = new t3d.ShaderMaterial(SDFShader);
+		const sdfMaterial = new t3d.ShaderMaterial(SDFTextShader);
 		sdfMaterial.transparent = true;
 		sdfMaterial.diffuse.setRGB(0, 0, 0);
 		sdfMaterial.diffuseMap = sdf_texture;
@@ -307,8 +267,8 @@
 			}
 		});
 		gui.add(params, 'debug').onChange(function(value) {
-			materialInfos[2].material.defines['SDF_DEBUG'] = value;
-			materialInfos[3].material.defines['SDF_DEBUG'] = value;
+			materialInfos[2].material.defines['DEBUG'] = value;
+			materialInfos[3].material.defines['DEBUG'] = value;
 			materialInfos[2].material.needsUpdate = true;
 			materialInfos[3].material.needsUpdate = true;
 		});

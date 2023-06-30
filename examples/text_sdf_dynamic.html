@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>t3d - text sdf dynamic</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+	<link type="text/css" rel="stylesheet" href="main.css" />
+</head>
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> - dynamic sdf text<br/>
+	</div>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/"
+			}
+		}
+	</script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { DistanceTransform } from 't3d/addons/math/DistanceTransform.js';
+		import { SDFTextShader } from 't3d/addons/shaders/SDFTextShader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.9, 0.9, 0.9, 1);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 400);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective((45 / 180) * Math.PI, width / height, 10, 10000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.maxDistance = 9000;
+
+		// A Canvas to draw the text and generate the grayscale image data
+		class TextCanvas {
+
+			constructor(width, height) {
+				this.canvas = document.createElement('canvas');
+				this.canvas.width = width;
+				this.canvas.height = height;
+				this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+				this.ctx.fillStyle = 'black';
+				this.ctx.textAlign = 'center';
+				this.ctx.textBaseline = 'middle';
+			}
+
+			draw(text, size = 64, padding = 8) {
+				const canvas = this.canvas;
+				const ctx = this.ctx;
+
+				ctx.font = size + 'px Arial';
+				const metrics = ctx.measureText(text);
+
+				const textAreaWidth = metrics.width + padding * 2;
+				const textAreaHeight = this._getFontHeight(metrics, size) + padding * 2;
+
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				ctx.fillText(text, textAreaWidth / 2, textAreaHeight / 2);
+
+				const dataWidth = Math.min(textAreaWidth, canvas.width);
+				const dataHeight = Math.min(textAreaHeight, canvas.height);
+
+				return ctx.getImageData(0, 0, dataWidth, dataHeight);
+			}
+
+			_getFontHeight(metrics, size) {
+				if (metrics.actualBoundingBoxAscent !== undefined && metrics.actualBoundingBoxDescent !== undefined) {
+					return metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+				} else {
+					return size;
+				}
+			}
+
+		}
+
+		const imageTexture = new t3d.Texture2D();
+
+		const sdfTexture = new t3d.Texture2D();
+		sdfTexture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		sdfTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		sdfTexture.format = t3d.PIXEL_FORMAT.RED;
+		sdfTexture.generateMipmaps = false;
+		sdfTexture.unpackAlignment = 1;
+
+		const geometry = new t3d.PlaneGeometry(1, 1);
+
+		const imageMaterial = new t3d.BasicMaterial();
+		imageMaterial.transparent = true;
+		imageMaterial.diffuseMap = imageTexture;
+		imageMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const sdfMaterial = new t3d.ShaderMaterial(SDFTextShader);
+		sdfMaterial.transparent = true;
+		sdfMaterial.diffuseMap = sdfTexture;
+		sdfMaterial.diffuse.setRGB(0, 0, 0);
+		sdfMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const imageMesh = new t3d.Mesh(geometry, imageMaterial);
+		imageMesh.euler.x = Math.PI * 0.5;
+		imageMesh.position.set(0, 40, 0);
+		scene.add(imageMesh);
+
+		const sdfMesh = new t3d.Mesh(geometry, sdfMaterial);
+		sdfMesh.euler.x = Math.PI * 0.5;
+		sdfMesh.position.set(0, -40, 0);
+		scene.add(sdfMesh);
+
+		const textCanvas = new TextCanvas(1024, 128);
+		const distanceTransform = new DistanceTransform(1024 * 128, 1024);
+
+		function updateText(text) {
+			console.time('process text');
+		
+			const imageData = textCanvas.draw(text);
+
+			imageTexture.image = imageData;
+			imageTexture.version++;
+			sdfTexture.image = {
+				data: distanceTransform.transform(imageData),
+				width: imageData.width,
+				height: imageData.height
+			};
+			sdfTexture.version++;
+
+			console.timeEnd('process text');
+
+			imageMesh.scale.set(imageData.width, 1, imageData.height);
+			sdfMesh.scale.set(imageData.width, 1, imageData.height);
+		}
+
+		const params = { chars: '你好', debug: false };
+
+		updateText(params.chars);
+
+		const gui = new GUI();
+		gui.add(params, 'chars').onChange(function(value) {
+			updateText(value.slice(-10)); // show lastest 10 characters
+		});
+		gui.add(params, 'debug').onChange(function(value) {
+			sdfMaterial.defines['DEBUG'] = value;
+			sdfMaterial.needsUpdate = true;
+		});
+		gui.add(sdfMaterial.uniforms, 'gamma', 0, 10, 0.01);
+		gui.add(sdfMaterial.uniforms, 'halo', 0.4, 0.9, 0.01);
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective((45 / 180) * Math.PI, width / height, 10, 10000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
