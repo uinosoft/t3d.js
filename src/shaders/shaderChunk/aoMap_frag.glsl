@@ -9,6 +9,6 @@
 
     #if defined(USE_ENV_MAP) && defined(USE_PBR)
         float dotNV = saturate(dot(N, V));
-        reflectedLight.indirectSpecular *= computeSpecularOcclusion(dotNV, ambientOcclusion, GGXRoughnessToBlinnExponent(roughness));
+        reflectedLight.indirectSpecular *= computeSpecularOcclusion(dotNV, ambientOcclusion, roughness);
     #endif
 #endif

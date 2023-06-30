@@ -157,12 +157,3 @@ void BRDF_Specular_Multiscattering_Environment(const in vec3 N, const in vec3 V,
 	singleScatter += FssEss;
 	multiScatter += Fms * Ems;
 }
-
-// source: http://simonstechblog.blogspot.ca/2011/12/microfacet-brdf.html
-float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
-	return ( 2.0 / pow2( ggxRoughness + 0.0001 ) - 2.0 );
-}
-
-float BlinnExponentToGGXRoughness( const in float blinnExponent ) {
-	return sqrt( 2.0 / ( blinnExponent + 2.0 ) );
-}
