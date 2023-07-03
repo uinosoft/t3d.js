@@ -148,6 +148,7 @@
 		"custompass_deferred",
 		"custompass_gbuffer",
 		"custompass_ssao",
+		"custompass_ssgi",
 		"custompass_sketch",
 		"custompass_ssr",
 		"custompass_dof",

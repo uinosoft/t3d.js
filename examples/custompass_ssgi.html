@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - custom pass ssgi</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - custom pass ssao
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+        import { OrbitControls } from './jsm/controls/OrbitControls.js';
+        import { GBuffer } from './jsm/GBuffer.js';
+        import { SSGIPass } from './jsm/pass/SSGIPass.js';
+        import { SSGIBlurShader } from './jsm/shaders/SSGIBlurShader.js';
+        import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const scene = new t3d.Scene();
+
+        // planes
+
+        const planeGeometry = new t3d.PlaneGeometry(100, 100);
+
+        const planeTopMaterial = new t3d.PhongMaterial();
+        planeTopMaterial.diffuse.setHex(0xffffff);
+
+        const planeBottomMaterial = new t3d.PhongMaterial();
+        const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+        planeBottomMaterial.diffuseMap = texture;
+
+        const planeBackMaterial = new t3d.PhongMaterial();
+        planeBackMaterial.diffuse.setHex(0x7f7fff);
+
+        const planeRightMaterial = new t3d.PhongMaterial();
+        planeRightMaterial.diffuse.setHex(0xffff00);
+
+        const planeTop = new t3d.Mesh(planeGeometry, planeTopMaterial);
+        planeTop.euler.set(Math.PI, 0, 0);
+        planeTop.position.y = 100;
+        scene.add(planeTop);
+
+        const planeBottom = new t3d.Mesh(planeGeometry, planeBottomMaterial);
+        scene.add(planeBottom);
+
+        const planeBack = new t3d.Mesh(planeGeometry, planeBackMaterial);
+        planeBack.euler.set(90 / 180 * Math.PI, 0, 0);
+        planeBack.position.z = -50;
+        planeBack.position.y = 50;
+        scene.add(planeBack);
+
+        const planeFront = new t3d.Mesh(planeGeometry, planeBackMaterial);
+        planeFront.euler.set(-90 / 180 * Math.PI, 0, 0);
+        planeFront.position.z = 50;
+        planeFront.position.y = 50;
+        scene.add(planeFront);
+
+        const planeRight = new t3d.Mesh(planeGeometry, planeRightMaterial);
+        planeRight.position.x = 50;
+        planeRight.position.y = 50;
+        planeRight.euler.set(0, 0, 90 / 180 * Math.PI);
+        scene.add(planeRight);
+
+        const planeLeft = new t3d.Mesh(planeGeometry, planeRightMaterial);
+        planeLeft.position.x = -50;
+        planeLeft.position.y = 50;
+        planeLeft.euler.set(0, 0, -90 / 180 * Math.PI);
+        scene.add(planeLeft);
+
+        const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const camera = new t3d.Camera();
+        camera.position.set(-359, 80, 251);
+        camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+        scene.add(camera);
+
+        const controller = new OrbitControls(camera, canvas);
+        controller.target.set(0, 50, 0);
+
+        const phong = new t3d.PhongMaterial();
+
+        const boxGeometry = new t3d.BoxGeometry(10, 50, 30);
+
+        const cube = new t3d.Mesh(boxGeometry, phong);
+        cube.position.y = 25.1;
+        scene.add(cube)
+        // custom pass
+        const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+        const contextParams = { antialias: true, alpha: false };
+
+        const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+        const renderer = new t3d.Renderer(gl);
+
+        const gBuffer = new GBuffer(width, height);
+        gBuffer.enableAlbedoMetalness = false;
+
+        const ssgiPass = new SSGIPass();
+        const blurPass = new t3d.ShaderPostPass(SSGIBlurShader);
+
+        const gui = new GUI();
+        gui.add(blurPass.uniforms, "blur", 0, 30, 1);
+        gui.add(blurPass.uniforms, "strength", 0, 5, 1);
+        gui.add(ssgiPass.uniforms, "samples", 8, 64, 1);
+        gui.add(blurPass.uniforms, "quality", 1, 12, 1);
+        gui.add({ debug: false }, 'debug').onChange(function(value) {
+        	blurPass.material.defines['DEBUG'] = value;
+        	blurPass.material.needsUpdate = true;
+        });
+        const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+        tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+        tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+        tempRenderTarget2.texture.generateMipmaps = false;
+
+        const tempRenderTarget3 = new t3d.RenderTarget2D(width, height);
+        tempRenderTarget3.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+        tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+        tempRenderTarget3.texture.generateMipmaps = false;
+
+        let projMat = new t3d.Matrix4();
+        let viewMat = new t3d.Matrix4();
+        let projViewMat = new t3d.Matrix4();
+        let projectionMatrixInv = new t3d.Matrix4();
+        let viewMatrixInv = new t3d.Matrix4();
+
+
+        ssgiPass.uniforms["projMat"] = projMat.elements;
+        ssgiPass.uniforms["viewMat"] = viewMat.elements;
+        ssgiPass.uniforms["projViewMat"] = projViewMat.elements;
+        ssgiPass.uniforms["projectionMatrixInv"] = projectionMatrixInv.elements;
+        ssgiPass.uniforms["viewMatrixInv"] = viewMatrixInv.elements;
+
+        ssgiPass.uniforms["sceneDepth"] = gBuffer.getDepthTexture();
+        ssgiPass.uniforms["resolution"][0] = width;
+        ssgiPass.uniforms["resolution"][1] = height;
+
+        blurPass.uniforms["projMat"] = projMat.elements;
+        blurPass.uniforms["viewMat"] = viewMat.elements;
+        blurPass.uniforms["projViewMat"] = projViewMat.elements;
+        blurPass.uniforms["projectionMatrixInv"] = projectionMatrixInv.elements;
+        blurPass.uniforms["viewMatrixInv"] = viewMatrixInv.elements;
+
+        blurPass.uniforms["sceneDepth"] = gBuffer.getDepthTexture();
+        blurPass.uniforms["resolution"][0] = width;
+        blurPass.uniforms["resolution"][1] = height;
+
+
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	controller.update();
+
+        	scene.updateMatrix();
+        	scene.updateRenderStates(camera);
+        	scene.updateRenderQueue(camera);
+
+        	gBuffer.update(renderer, scene, camera);
+
+        	renderer.renderPass.setRenderTarget(tempRenderTarget2);
+
+        	renderer.renderPass.setClearColor(1, 1, 1, 1);
+        	renderer.renderPass.clear(true, true, true);
+        	renderer.renderScene(scene, camera);
+        	renderer.renderPass.setRenderTarget(tempRenderTarget3);
+        
+        	projMat.copy(camera.projectionMatrix);
+        	viewMat.copy(camera.viewMatrix);
+        	projViewMat.copy(camera.projectionMatrix).multiply(camera.viewMatrix);
+        	projectionMatrixInv.copy(camera.projectionMatrix).inverse();
+        	viewMatrixInv.copy(camera.worldMatrix);
+        
+        	ssgiPass.uniforms['time'] = performance.now() / 1000;
+
+	        ssgiPass.uniforms["sceneDiffuse"] = tempRenderTarget2.texture;
+	        ssgiPass.uniforms["cameraPos"] = [camera.position.x, camera.position.y, camera.position.z];
+
+        	ssgiPass.render(renderer)
+        	renderer.renderPass.setRenderTarget(backRenderTarget);
+
+        	blurPass.uniforms['time'] = performance.now() / 1000;
+
+        	blurPass.uniforms["sceneDiffuse"] = tempRenderTarget2.texture;
+        	blurPass.uniforms["tDiffuse"] = tempRenderTarget3.texture;
+
+        	blurPass.uniforms["cameraPos"] = [camera.position.x, camera.position.y, camera.position.z];
+        	blurPass.render(renderer);
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+
+        	backRenderTarget.resize(width, height);
+        	gBuffer.resize(width, height);
+
+        	tempRenderTarget2.resize(width, height);
+        	tempRenderTarget3.resize(width, height);
+
+        	ssgiPass.uniforms["resolution"][0] = width;
+        	ssgiPass.uniforms["resolution"][1] = height;
+        	blurPass.uniforms["resolution"][0] = width;
+        	blurPass.uniforms["resolution"][1] = height;
+        }
+        window.addEventListener("resize", onWindowResize, false);
+    </script>
+</body>
+
+</html>
