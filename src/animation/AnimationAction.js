@@ -53,6 +53,11 @@ class AnimationAction extends EventDispatcher {
 
 		const endTime = this.clip.duration;
 
+		if (endTime === 0) {
+			this.time = 0;
+			return;
+		}
+
 		if (this.time > endTime) {
 			this.time = this.time % endTime;
 		}
