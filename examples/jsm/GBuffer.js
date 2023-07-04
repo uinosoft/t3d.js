@@ -825,6 +825,10 @@ var GBuffer = (function() {
 
 		debug: {
 
+			defines: {
+				ARROW_TILE_SIZE: '32.0'
+			},
+
 			uniforms: {
 
 				normalGlossinessTexture: null,
@@ -836,6 +840,9 @@ var GBuffer = (function() {
 
 				viewWidth: 800,
 				viewHeight: 600,
+
+				velocityThreshold: 0.01,
+				arrowScale: 4.8,
 
 				matProjViewInverse: new Float32Array(16)
 
@@ -875,8 +882,56 @@ var GBuffer = (function() {
 
 				"uniform float viewHeight;",
 				"uniform float viewWidth;",
-
 				"uniform mat4 matProjViewInverse;",
+
+				"uniform float velocityThreshold;",
+				"uniform float arrowScale;",
+
+				// 2D vector field visualization by Matthias Reitinger, @mreitinger
+				// Based on "2D vector field visualization by Morgan McGuire, http://casual-effects.com", shadertoy.com/view/4s23DG
+
+				// Computes the center pixel of the tile containing pixel pos
+				"vec2 arrowTileCenterCoord(vec2 pos) {",
+				"	return (floor(pos / ARROW_TILE_SIZE) + 0.5) * ARROW_TILE_SIZE;",
+				"}",
+
+				// Computes the signed distance from a line segment
+				"float line(vec2 p, vec2 p1, vec2 p2) {",
+				"	vec2 center = (p1 + p2) * 0.5;",
+				"	float len = length(p2 - p1);",
+				"	vec2 dir = (p2 - p1) / len;",
+				"	vec2 rel_p = p - center;",
+				"	float dist1 = abs(dot(rel_p, vec2(dir.y, -dir.x)));",
+				"	float dist2 = abs(dot(rel_p, dir)) - 0.5 * len;",
+				"	return max(dist1, dist2);",
+				"}",
+
+				// v = field sampled at arrowTileCenterCoord(p), scaled by the length
+				// desired in pixels for arrows
+				// Returns a signed distance from the arrow
+				"float arrow(vec2 p, vec2 v) {",
+				// Make everything relative to the center, which may be fractional
+				"	p -= arrowTileCenterCoord(p);",
+				"	float mag_v = length(v), mag_p = length(p);",
+				"	if (mag_v > 0.0) {",
+				// Non-zero velocity case
+				"		vec2 dir_v = v / mag_v;",
+				// We can't draw arrows larger than the tile radius, so clamp magnitude.
+				// Enforce a minimum length to help see direction
+				"		mag_v = clamp(mag_v, 0.0, ARROW_TILE_SIZE * 0.5);",
+				// Arrow tip location
+				"		v = dir_v * mag_v;",
+				// Signed distance from shaft
+				"		float shaft = line(p, v, -v);",
+				// Signed distance from head
+				"		float head = min(line(p, v, 0.4 * v + 0.2 * vec2(-v.y, v.x)),",
+				"						line(p, v, 0.4 * v + 0.2 * vec2(v.y, -v.x)));",
+				"		return min(shaft, head);",
+				"	} else {",
+				// Signed distance from the center point
+				"		return mag_p;",
+				"	}",
+				"}",
 
 				"void main() {",
 
@@ -925,11 +980,19 @@ var GBuffer = (function() {
 				"		gl_FragColor = vec4(albedo, 1.0);",
 				"	} else {",
 				"		vec4 texel4 = texture2D(motionTexture, texCoord);",
-				"		texel4.rg -= 0.5;",
-				"		texel4.rg *= 2.0;",
-				"		gl_FragColor = texel4;",
+				"		if(texel4.r == 0.){",
+				"		  discard;",
+				"		}",
+				// shadertoy.com/view/ls2GWG
+				"		float arrow_dist = arrow(gl_FragCoord.xy, (texel4.rg - 0.5) * ARROW_TILE_SIZE * arrowScale);",
+				"		vec4 arrow_col = vec4(0, 0, 0, clamp(arrow_dist, 0.0, 1.0));",
+				"		vec4 field_col = vec4(texel4.rg , 0.5, 1.0);",
+				"		vec4 fColor = mix(vec4(1.0), field_col, arrow_col.a);",
+				"		gl_FragColor = fColor;",
+				"		if(length(texel4.rg - 0.5) < velocityThreshold){",
+				"		  gl_FragColor = field_col;",
+				"		}",
 				"	}",
-
 				"}"
 
 			].join('\n')

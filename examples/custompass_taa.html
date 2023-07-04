@@ -141,6 +141,9 @@
 
 		const gBuffer = new GBuffer(width, height);
 		gBuffer.enableMotion = true;
+		gBuffer._debugPass.material.defines.ARROW_TILE_SIZE = '16.0';
+		gBuffer._debugPass.material.uniforms.velocityThreshold = 0.001;
+		gBuffer._debugPass.material.uniforms.arrowScale = 20;
 
 		const superSampling = new SuperSampling(width, height);
 
@@ -148,7 +151,7 @@
 
 		let sceneChange = false;
 
-		const params = { taa: window.devicePixelRatio == 1, dynamic: true }; // taa works bad on android and ios
+		const params = { taa: window.devicePixelRatio == 1, dynamic: true, debug: false }; // taa works bad on android and ios
 		const gui = new GUI();
 		gui.add(params, 'taa').onChange(() => {
 			superSampling.start();
@@ -156,6 +159,9 @@
 		gui.add(params, 'dynamic').onChange(() => {
 			superSampling.start();
 		});
+		gui.add(params, 'debug').onChange(() => {
+			superSampling.start();
+		})
 
 		const clock = new Clock();
 
@@ -165,6 +171,23 @@
 			animation && animation.update(clock.getDelta() * 1.3);
 
 			let change = controller.update() || sceneChange;
+
+			if (params.debug) {
+				scene.updateMatrix();
+				scene.updateRenderStates(camera);
+				scene.updateRenderQueue(camera);
+
+				gBuffer.update(renderer, scene, camera);
+
+				renderer.renderPass.setRenderTarget(backRenderTarget);
+
+				renderer.renderPass.setClearColor(0, 0, 0, 1);
+				renderer.renderPass.clear(true, true, true);
+
+				gBuffer.renderDebug(renderer, camera, 'velocity');
+
+				return;
+			}
 
 			if (!params.taa) {
 				scene.updateMatrix();
