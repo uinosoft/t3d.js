@@ -57,8 +57,8 @@ class WebGLCapabilities {
 		}
 
 		let ext = null;
-		for (let i in vendorPrefixes) {
-			ext = gl.getExtension(vendorPrefixes[i] + name);
+		for (const prefix of vendorPrefixes) {
+			ext = gl.getExtension(prefix + name);
 			if (ext) {
 				break;
 			}

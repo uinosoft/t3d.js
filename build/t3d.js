@@ -8290,9 +8290,9 @@
 				array = uv.buffer.array;
 				bufferStride = uv.buffer.stride;
 				attributeOffset = uv.offset;
-				_uvA.fromArray(uv.buffer.array, a * bufferStride + attributeOffset);
-				_uvB.fromArray(uv.buffer.array, b * bufferStride + attributeOffset);
-				_uvC.fromArray(uv.buffer.array, c * bufferStride + attributeOffset);
+				_uvA.fromArray(array, a * bufferStride + attributeOffset);
+				_uvB.fromArray(array, b * bufferStride + attributeOffset);
+				_uvC.fromArray(array, c * bufferStride + attributeOffset);
 				intersection.uv = uvIntersection(_intersectionPoint, _vA, _vB, _vC, _uvA, _uvB, _uvC);
 			}
 			var face = {
@@ -11791,8 +11791,9 @@
 				return extensions[name];
 			}
 			var ext = null;
-			for (var i in vendorPrefixes) {
-				ext = gl.getExtension(vendorPrefixes[i] + name);
+			for (var _iterator = _createForOfIteratorHelperLoose(vendorPrefixes), _step; !(_step = _iterator()).done;) {
+				var prefix = _step.value;
+				ext = gl.getExtension(prefix + name);
 				if (ext) {
 					break;
 				}

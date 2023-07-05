@@ -260,16 +260,16 @@ var GBuffer = (function() {
 				if (!this._useMRT) {
 					this._useMRT = true;
 
-					if (renderPass.capabilities.version >= 2) {
-						var ext = renderPass.capabilities.getExtension("EXT_color_buffer_float");
-						if (ext) {
-							this._renderTarget1.texture.type = PIXEL_TYPE.HALF_FLOAT; // FLOAT ?
-						} else {
-							this._renderTarget1.texture.type = PIXEL_TYPE.UNSIGNED_BYTE;
-						}
-
-						this._depthTexture.type = PIXEL_TYPE.UNSIGNED_INT_24_8; // FLOAT_32_UNSIGNED_INT_24_8_REV
+					// if (renderPass.capabilities.version >= 2) {
+					var ext = renderPass.capabilities.getExtension("EXT_color_buffer_float");
+					if (ext) {
+						this._renderTarget1.texture.type = PIXEL_TYPE.HALF_FLOAT; // FLOAT ?
+					} else {
+						this._renderTarget1.texture.type = PIXEL_TYPE.UNSIGNED_BYTE;
 					}
+
+					this._depthTexture.type = PIXEL_TYPE.UNSIGNED_INT_24_8; // FLOAT_32_UNSIGNED_INT_24_8_REV
+					// }
 
 					this._renderTarget1.attach(
 						this._texture2,

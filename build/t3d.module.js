@@ -8416,9 +8416,9 @@ function checkGeometryIntersection(object, ray, _ray, position, morphPosition, u
 			array = uv.buffer.array;
 			bufferStride = uv.buffer.stride;
 			attributeOffset = uv.offset;
-			_uvA.fromArray(uv.buffer.array, a * bufferStride + attributeOffset);
-			_uvB.fromArray(uv.buffer.array, b * bufferStride + attributeOffset);
-			_uvC.fromArray(uv.buffer.array, c * bufferStride + attributeOffset);
+			_uvA.fromArray(array, a * bufferStride + attributeOffset);
+			_uvB.fromArray(array, b * bufferStride + attributeOffset);
+			_uvC.fromArray(array, c * bufferStride + attributeOffset);
 
 			intersection.uv = uvIntersection(_intersectionPoint, _vA, _vB, _vC, _uvA, _uvB, _uvC);
 		}
@@ -12193,8 +12193,8 @@ class WebGLCapabilities {
 		}
 
 		let ext = null;
-		for (let i in vendorPrefixes) {
-			ext = gl.getExtension(vendorPrefixes[i] + name);
+		for (const prefix of vendorPrefixes) {
+			ext = gl.getExtension(prefix + name);
 			if (ext) {
 				break;
 			}
