@@ -29,6 +29,7 @@
         import * as t3d from 't3d';
         import { GUI } from './libs/lil-gui.esm.min.js';
         import { OrbitControls } from './jsm/controls/OrbitControls.js';
+        import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 
         let width = window.innerWidth || 2;
         let height = window.innerHeight || 2;
@@ -56,6 +57,14 @@
         	5, -5, 0,
         	5, 5, 0
         ]), 3));
+        const uvAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array([
+        	0, 0,
+        	0, 1,
+        	0.5, 0,
+        	0.5, 1,
+        	1, 0,
+        	1, 1
+        ]), 2));
 
         const drawModes = ['LINES', 'LINE_STRIP', 'LINE_LOOP', 'TRIANGLES', 'TRIANGLE_STRIP', 'TRIANGLE_FAN', 'POINTS'];
 
@@ -63,11 +72,14 @@
         	drawMode: 'LINES'
         }
 
+        const texture = new Texture2DLoader().load('./resources/UV_Grid_Sm.jpg');
         const geometry = new t3d.Geometry();
         geometry.addAttribute('a_Position', positionAttribute);
+        geometry.addAttribute('a_Uv', uvAttribute);
         const material = new t3d.BasicMaterial();
         material.side = t3d.DRAW_SIDE.DOUBLE;
         material.drawMode = t3d.DRAW_MODE.LINES;
+        material.diffuseMap = texture;
         const mesh = new t3d.Mesh(geometry, material);
         scene.add(mesh);
 
@@ -99,6 +111,8 @@
         gui.add(renderInfo.render, "triangles").disable().listen();
         gui.add(renderInfo.render, "lines").disable().listen();
         gui.add(renderInfo.render, "points").disable().listen();
+        gui.add(renderInfo.render, "uploadedTextures").disable().listen();
+        gui.add(renderInfo.render, "compiledShaders").disable().listen();
 
         function loop(count) {
         	requestAnimationFrame(loop);

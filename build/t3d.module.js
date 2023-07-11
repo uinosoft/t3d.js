@@ -11632,7 +11632,7 @@ class WebGLPrograms {
 		this._programs = [];
 	}
 
-	getProgram(material, object, renderStates, checkErrors) {
+	getProgram(material, object, renderStates, checkErrors, renderInfo) {
 		const programs = this._programs;
 
 		const props = generateProps(this._state, this._capabilities, material, object, renderStates);
@@ -11657,6 +11657,10 @@ class WebGLPrograms {
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
 			program.compile(checkErrors);
 			program.code = code;
+
+			if (!!renderInfo) {
+				renderInfo.updateCompiledShaders();
+			}
 
 			programs.push(program);
 		}
@@ -13145,6 +13149,8 @@ class WebGLTextures extends WebGLProperties {
 	constructor(passId, gl, state, capabilities, constants) {
 		super(passId);
 
+		this.renderInfo = null;
+
 		this._gl = gl;
 		this._state = state;
 		this._capabilities = capabilities;
@@ -13276,6 +13282,10 @@ class WebGLTextures extends WebGLProperties {
 					gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
 					textureProperties.__maxMipLevel = 0;
 				}
+			}
+
+			if (!!this.renderInfo) {
+				this.renderInfo.updateUploadedTextures();
 			}
 
 			if (texture.generateMipmaps && !needFallback) {
@@ -14849,6 +14859,11 @@ class WebGLRenderPass {
 		const afterRender = options.afterRender || noop;
 		const ifRender = options.ifRender || defaultIfRender;
 		const renderInfo = options.renderInfo;
+		if (!!renderInfo) {
+			textures.renderInfo = renderInfo;
+		} else {
+			textures.renderInfo = null;
+		}
 
 		const sceneData = renderStates.scene;
 		const lightData = renderStates.lights;
@@ -14917,7 +14932,7 @@ class WebGLRenderPass {
 
 		if (material.needsUpdate) {
 			const oldProgram = materialProperties.program;
-			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
+			materialProperties.program = this._programs.getProgram(material, object, renderStates, true, renderInfo);
 			if (oldProgram) { // release after new program is created.
 				vertexArrayBindings.releaseByProgram(oldProgram);
 				this._programs.releaseProgram(oldProgram);
@@ -15373,7 +15388,9 @@ class RenderInfo {
 			calls: 0,
 			triangles: 0,
 			lines: 0,
-			points: 0
+			points: 0,
+			uploadedTextures: 0,
+			compiledShaders: 0
 		};
 
 		// A series of function use for collect information.
@@ -15430,6 +15447,20 @@ class RenderInfo {
          * @type {Object}
          */
 		this.render = render;
+	}
+
+	/**
+	 * The function collect the count of uploaded textures.
+	 */
+	updateUploadedTextures() {
+		this.render.uploadedTextures++;
+	}
+
+	/**
+	 * The function collect the count of compiled shaders.
+	 */
+	updateCompiledShaders() {
+		this.render.compiledShaders++;
 	}
 
 }

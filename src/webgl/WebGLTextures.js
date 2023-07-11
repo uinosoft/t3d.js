@@ -7,6 +7,8 @@ class WebGLTextures extends WebGLProperties {
 	constructor(passId, gl, state, capabilities, constants) {
 		super(passId);
 
+		this.renderInfo = null;
+
 		this._gl = gl;
 		this._state = state;
 		this._capabilities = capabilities;
@@ -138,6 +140,10 @@ class WebGLTextures extends WebGLProperties {
 					gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
 					textureProperties.__maxMipLevel = 0;
 				}
+			}
+
+			if (!!this.renderInfo) {
+				this.renderInfo.updateUploadedTextures();
 			}
 
 			if (texture.generateMipmaps && !needFallback) {

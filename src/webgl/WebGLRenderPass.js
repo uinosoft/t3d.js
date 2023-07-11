@@ -286,6 +286,11 @@ class WebGLRenderPass {
 		const afterRender = options.afterRender || noop;
 		const ifRender = options.ifRender || defaultIfRender;
 		const renderInfo = options.renderInfo;
+		if (!!renderInfo) {
+			textures.renderInfo = renderInfo;
+		} else {
+			textures.renderInfo = null;
+		}
 
 		const sceneData = renderStates.scene;
 		const lightData = renderStates.lights;
@@ -354,7 +359,7 @@ class WebGLRenderPass {
 
 		if (material.needsUpdate) {
 			const oldProgram = materialProperties.program;
-			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
+			materialProperties.program = this._programs.getProgram(material, object, renderStates, true, renderInfo);
 			if (oldProgram) { // release after new program is created.
 				vertexArrayBindings.releaseByProgram(oldProgram);
 				this._programs.releaseProgram(oldProgram);

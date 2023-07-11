@@ -11,7 +11,9 @@ class RenderInfo {
 			calls: 0,
 			triangles: 0,
 			lines: 0,
-			points: 0
+			points: 0,
+			uploadedTextures: 0,
+			compiledShaders: 0
 		};
 
 		// A series of function use for collect information.
@@ -68,6 +70,20 @@ class RenderInfo {
          * @type {Object}
          */
 		this.render = render;
+	}
+
+	/**
+	 * The function collect the count of uploaded textures.
+	 */
+	updateUploadedTextures() {
+		this.render.uploadedTextures++;
+	}
+
+	/**
+	 * The function collect the count of compiled shaders.
+	 */
+	updateCompiledShaders() {
+		this.render.compiledShaders++;
 	}
 
 }
