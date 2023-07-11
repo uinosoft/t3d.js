@@ -3189,13 +3189,12 @@
 										controller.close();
 									} else {
 										loaded += value.byteLength;
-										const event = new ProgressEvent('progress', {
-											lengthComputable,
-											loaded,
-											total
-										});
 										if (onProgress !== undefined) {
-											onProgress(event);
+											onProgress(new ProgressEvent('progress', {
+												lengthComputable,
+												loaded,
+												total
+											}));
 										}
 										controller.enqueue(value);
 										readData();
