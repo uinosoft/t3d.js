@@ -180,7 +180,8 @@
 		"webgl_renderinfo",
 		"webgl_query_occlusion",
 		"webgl_query_timer",
-		"webgl_helpers"
+		"webgl_helpers",
+		"webgl_contextlost"
 	],
 	"lab": [
 		"lab_clouds",

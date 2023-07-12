@@ -13069,6 +13069,34 @@
 		 * @param {WebGLRenderingContext} gl
 		 */
 		constructor(gl) {
+			this.gl = gl;
+			this.id = 0;
+
+			/**
+			 * An object containing details about the capabilities of the current RenderingContext.
+			 * @type {t3d.WebGLCapabilities}
+			 */
+			this.capabilities = null;
+			this._textures = null;
+			this._renderBuffers = null;
+			this._renderTargets = null;
+			this._buffers = null;
+			this._geometries = null;
+			this._programs = null;
+			this._materials = null;
+			this._state = null;
+			this._vertexArrayBindings = null;
+			this._queries = null;
+			this.init();
+		}
+
+		/**
+		 * Initialize the render pass.
+		 * This method will be called automatically by the constructor.
+		 * In the case of context lost, you can call this function to restart the render pass.
+		 */
+		init() {
+			const gl = this.gl;
 			const id = _renderPassId++;
 			const capabilities = new WebGLCapabilities(gl);
 			const constants = new WebGLConstants(gl, capabilities);
@@ -13083,12 +13111,6 @@
 			const materials = new WebGLMaterials(id, programs, vertexArrayBindings);
 			const queries = new WebGLQueries(id, gl, capabilities);
 			this.id = id;
-			this.gl = gl;
-
-			/**
-			 * An object containing details about the capabilities of the current RenderingContext.
-			 * @type {t3d.WebGLCapabilities}
-			 */
 			this.capabilities = capabilities;
 			this._textures = textures;
 			this._renderBuffers = renderBuffers;
