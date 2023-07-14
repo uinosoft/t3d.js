@@ -36,6 +36,10 @@ class WebGLCapabilities {
 		this.timerQuery = timerQuery;
 		this.canUseTimestamp = canUseTimestamp;
 
+		// parallel_shader_compile
+
+		this.parallelShaderCompileExt = this.getExtension('KHR_parallel_shader_compile');
+
 		// others
 
 		this.maxPrecision = getMaxPrecision(gl, 'highp');

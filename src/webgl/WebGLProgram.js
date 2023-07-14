@@ -24,15 +24,18 @@ class WebGLProgram {
 
 		this.program;
 
+		this._checkErrors = true;
+		this._compileAsynchronously = false;
+		this._status = 0;
+
+		let program, vertexShader, fragmentShader;
+
 		// compile program
-
-		let program;
-
-		this.compile = function(checkErrors) {
+		this.compile = function(options) {
 			// create shaders
 
-			const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
-			const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
+			vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
+			fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
 
 			// create a program object
 
@@ -41,13 +44,49 @@ class WebGLProgram {
 			gl.attachShader(program, fragmentShader);
 			gl.linkProgram(program);
 
-			// check errors
+			this.program = program;
 
-			if (checkErrors && gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
+			// set properties
+
+			this._checkErrors = options.checkErrors;
+			this._compileAsynchronously = options.compileAsynchronously;
+			this._status = 1;
+
+			// here we can delete shaders,
+			// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
+
+			gl.deleteShader(vertexShader);
+			gl.deleteShader(fragmentShader);
+		}
+
+		// check if program is ready to be used
+		this.isReady = function (parallelShaderCompileExt) {
+			if (this._status === 1) {
+				if (this._compileAsynchronously && parallelShaderCompileExt) {
+					if (gl.getProgramParameter(program, parallelShaderCompileExt.COMPLETION_STATUS_KHR)) {
+						this._status = 2;
+						this._tryCheckErrors();
+					}
+				} else {
+					this._status = 2;
+					this._tryCheckErrors();
+				}
+			}
+
+			return this._status === 2;
+		}
+
+		this._tryCheckErrors = function () {
+			if (!this._checkErrors) return;
+
+			if (gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
 				const programLog = gl.getProgramInfoLog(program).trim();
 
 				const vertexErrors = getShaderErrors(gl, vertexShader, 'VERTEX');
 				const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
+
+				this.program = undefined;
+				this._status = 0;
 
 				console.error(
 					'Shader Error ' + gl.getError() + ' - ' +
@@ -55,16 +94,8 @@ class WebGLProgram {
 					'Program Info Log: ' + programLog + '\n' +
 					vertexErrors + '\n' +
 					fragmentErrors
-				)
-			} else {
-				this.program = program;
+				);
 			}
-
-			// here we can delete shaders,
-			// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
-
-			gl.deleteShader(vertexShader);
-			gl.deleteShader(fragmentShader);
 		}
 
 		// set up caching for uniforms
@@ -94,6 +125,7 @@ class WebGLProgram {
 		this.dispose = function () {
 			gl.deleteProgram(program);
 			this.program = undefined;
+			this._status = 0;
 		}
 	}
 

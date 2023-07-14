@@ -57,6 +57,17 @@ class WebGLRenderPass {
 		 */
 		this.capabilities = null;
 
+		/**
+		 * The shader compiler options.
+		 * @type {Object}
+		 * @property {Boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
+		 * @property {Boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
+		 */
+		this.shaderCompileOptions = {
+			checkErrors: true,
+			compileAsynchronously: false
+		};
+
 		this._textures = null;
 		this._renderBuffers = null;
 		this._renderTargets = null;
@@ -304,6 +315,7 @@ class WebGLRenderPass {
 		const capabilities = this.capabilities;
 		const vertexArrayBindings = this._vertexArrayBindings;
 		const textures = this._textures;
+		const programs = this._programs;
 
 		const getGeometry = options.getGeometry || defaultGetGeometry;
 		const getMaterial = options.getMaterial || defaultGetMaterial;
@@ -379,10 +391,10 @@ class WebGLRenderPass {
 
 		if (material.needsUpdate) {
 			const oldProgram = materialProperties.program;
-			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
+			materialProperties.program = programs.getProgram(material, object, renderStates, this.shaderCompileOptions);
 			if (oldProgram) { // release after new program is created.
 				vertexArrayBindings.releaseByProgram(oldProgram);
-				this._programs.releaseProgram(oldProgram);
+				programs.releaseProgram(oldProgram);
 			}
 
 			materialProperties.fog = fog;
@@ -404,7 +416,7 @@ class WebGLRenderPass {
 
 		const program = materialProperties.program;
 
-		if (program.program === undefined) return;
+		if (!program.isReady(capabilities.parallelShaderCompileExt)) return;
 
 		state.setProgram(program);
 

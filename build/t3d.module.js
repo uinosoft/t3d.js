@@ -11201,15 +11201,18 @@ class WebGLProgram {
 
 		this.program;
 
+		this._checkErrors = true;
+		this._compileAsynchronously = false;
+		this._status = 0;
+
+		let program, vertexShader, fragmentShader;
+
 		// compile program
-
-		let program;
-
-		this.compile = function(checkErrors) {
+		this.compile = function(options) {
 			// create shaders
 
-			const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
-			const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
+			vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
+			fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
 
 			// create a program object
 
@@ -11218,13 +11221,49 @@ class WebGLProgram {
 			gl.attachShader(program, fragmentShader);
 			gl.linkProgram(program);
 
-			// check errors
+			this.program = program;
 
-			if (checkErrors && gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
+			// set properties
+
+			this._checkErrors = options.checkErrors;
+			this._compileAsynchronously = options.compileAsynchronously;
+			this._status = 1;
+
+			// here we can delete shaders,
+			// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
+
+			gl.deleteShader(vertexShader);
+			gl.deleteShader(fragmentShader);
+		};
+
+		// check if program is ready to be used
+		this.isReady = function (parallelShaderCompileExt) {
+			if (this._status === 1) {
+				if (this._compileAsynchronously && parallelShaderCompileExt) {
+					if (gl.getProgramParameter(program, parallelShaderCompileExt.COMPLETION_STATUS_KHR)) {
+						this._status = 2;
+						this._tryCheckErrors();
+					}
+				} else {
+					this._status = 2;
+					this._tryCheckErrors();
+				}
+			}
+
+			return this._status === 2;
+		};
+
+		this._tryCheckErrors = function () {
+			if (!this._checkErrors) return;
+
+			if (gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
 				const programLog = gl.getProgramInfoLog(program).trim();
 
 				const vertexErrors = getShaderErrors(gl, vertexShader, 'VERTEX');
 				const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
+
+				this.program = undefined;
+				this._status = 0;
 
 				console.error(
 					'Shader Error ' + gl.getError() + ' - ' +
@@ -11233,15 +11272,7 @@ class WebGLProgram {
 					vertexErrors + '\n' +
 					fragmentErrors
 				);
-			} else {
-				this.program = program;
 			}
-
-			// here we can delete shaders,
-			// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
-
-			gl.deleteShader(vertexShader);
-			gl.deleteShader(fragmentShader);
 		};
 
 		// set up caching for uniforms
@@ -11271,6 +11302,7 @@ class WebGLProgram {
 		this.dispose = function () {
 			gl.deleteProgram(program);
 			this.program = undefined;
+			this._status = 0;
 		};
 	}
 
@@ -11630,7 +11662,7 @@ class WebGLPrograms {
 		this._programs = [];
 	}
 
-	getProgram(material, object, renderStates, checkErrors) {
+	getProgram(material, object, renderStates, compileOptions) {
 		const programs = this._programs;
 
 		const props = generateProps(this._state, this._capabilities, material, object, renderStates);
@@ -11653,7 +11685,7 @@ class WebGLPrograms {
 			const fragmentShader = ShaderLib[material.type + "_frag"] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
-			program.compile(checkErrors);
+			program.compile(compileOptions);
 			program.code = code;
 
 			programs.push(program);
@@ -12169,6 +12201,10 @@ class WebGLCapabilities {
 		}
 		this.timerQuery = timerQuery;
 		this.canUseTimestamp = canUseTimestamp;
+
+		// parallel_shader_compile
+
+		this.parallelShaderCompileExt = this.getExtension('KHR_parallel_shader_compile');
 
 		// others
 
@@ -14618,6 +14654,17 @@ class WebGLRenderPass {
 		 */
 		this.capabilities = null;
 
+		/**
+		 * The shader compiler options.
+		 * @type {Object}
+		 * @property {Boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
+		 * @property {Boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
+		 */
+		this.shaderCompileOptions = {
+			checkErrors: true,
+			compileAsynchronously: false
+		};
+
 		this._textures = null;
 		this._renderBuffers = null;
 		this._renderTargets = null;
@@ -14865,6 +14912,7 @@ class WebGLRenderPass {
 		const capabilities = this.capabilities;
 		const vertexArrayBindings = this._vertexArrayBindings;
 		const textures = this._textures;
+		const programs = this._programs;
 
 		const getGeometry = options.getGeometry || defaultGetGeometry;
 		const getMaterial = options.getMaterial || defaultGetMaterial;
@@ -14940,10 +14988,10 @@ class WebGLRenderPass {
 
 		if (material.needsUpdate) {
 			const oldProgram = materialProperties.program;
-			materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
+			materialProperties.program = programs.getProgram(material, object, renderStates, this.shaderCompileOptions);
 			if (oldProgram) { // release after new program is created.
 				vertexArrayBindings.releaseByProgram(oldProgram);
-				this._programs.releaseProgram(oldProgram);
+				programs.releaseProgram(oldProgram);
 			}
 
 			materialProperties.fog = fog;
@@ -14965,7 +15013,7 @@ class WebGLRenderPass {
 
 		const program = materialProperties.program;
 
-		if (program.program === undefined) return;
+		if (!program.isReady(capabilities.parallelShaderCompileExt)) return;
 
 		state.setProgram(program);
 

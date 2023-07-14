@@ -10439,15 +10439,17 @@
 			this.sceneId = -1;
 			this.sceneVersion = -1;
 			this.program;
+			this._checkErrors = true;
+			this._compileAsynchronously = false;
+			this._status = 0;
+			let program, vertexShader, fragmentShader;
 
 			// compile program
-
-			let program;
-			this.compile = function (checkErrors) {
+			this.compile = function (options) {
 				// create shaders
 
-				const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
-				const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
+				vertexShader = loadShader(gl, gl.VERTEX_SHADER, vshader);
+				fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fshader);
 
 				// create a program object
 
@@ -10455,23 +10457,46 @@
 				gl.attachShader(program, vertexShader);
 				gl.attachShader(program, fragmentShader);
 				gl.linkProgram(program);
+				this.program = program;
 
-				// check errors
+				// set properties
 
-				if (checkErrors && gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
-					const programLog = gl.getProgramInfoLog(program).trim();
-					const vertexErrors = getShaderErrors(gl, vertexShader, 'VERTEX');
-					const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
-					console.error('Shader Error ' + gl.getError() + ' - ' + 'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' + 'Program Info Log: ' + programLog + '\n' + vertexErrors + '\n' + fragmentErrors);
-				} else {
-					this.program = program;
-				}
+				this._checkErrors = options.checkErrors;
+				this._compileAsynchronously = options.compileAsynchronously;
+				this._status = 1;
 
 				// here we can delete shaders,
 				// according to the documentation: https://www.opengl.org/sdk/docs/man/html/glLinkProgram.xhtml
 
 				gl.deleteShader(vertexShader);
 				gl.deleteShader(fragmentShader);
+			};
+
+			// check if program is ready to be used
+			this.isReady = function (parallelShaderCompileExt) {
+				if (this._status === 1) {
+					if (this._compileAsynchronously && parallelShaderCompileExt) {
+						if (gl.getProgramParameter(program, parallelShaderCompileExt.COMPLETION_STATUS_KHR)) {
+							this._status = 2;
+							this._tryCheckErrors();
+						}
+					} else {
+						this._status = 2;
+						this._tryCheckErrors();
+					}
+				}
+				return this._status === 2;
+			};
+			this._tryCheckErrors = function () {
+				if (!this._checkErrors) return;
+				if (gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
+					const programLog = gl.getProgramInfoLog(program).trim();
+					const vertexErrors = getShaderErrors(gl, vertexShader, 'VERTEX');
+					const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
+					this.program = undefined;
+					this._status = 0;
+					console.error('Shader Error ' + gl.getError() + ' - ' + 'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' + 'Program Info Log: ' + programLog + '\n' + vertexErrors + '\n' + fragmentErrors);
+				}
 			};
 
 			// set up caching for uniforms
@@ -10499,6 +10524,7 @@
 			this.dispose = function () {
 				gl.deleteProgram(program);
 				this.program = undefined;
+				this._status = 0;
 			};
 		}
 	}
@@ -10842,7 +10868,7 @@
 			this._capabilities = capabilities;
 			this._programs = [];
 		}
-		getProgram(material, object, renderStates, checkErrors) {
+		getProgram(material, object, renderStates, compileOptions) {
 			const programs = this._programs;
 			const props = generateProps(this._state, this._capabilities, material, object, renderStates);
 			const code = generateProgramCode(props, material);
@@ -10860,7 +10886,7 @@
 				const vertexShader = ShaderLib[material.type + "_vert"] || material.vertexShader || ShaderLib.basic_vert;
 				const fragmentShader = ShaderLib[material.type + "_frag"] || material.fragmentShader || ShaderLib.basic_frag;
 				program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
-				program.compile(checkErrors);
+				program.compile(compileOptions);
 				program.code = code;
 				programs.push(program);
 			}
@@ -11165,6 +11191,10 @@
 			}
 			this.timerQuery = timerQuery;
 			this.canUseTimestamp = canUseTimestamp;
+
+			// parallel_shader_compile
+
+			this.parallelShaderCompileExt = this.getExtension('KHR_parallel_shader_compile');
 
 			// others
 
@@ -13077,6 +13107,17 @@
 			 * @type {t3d.WebGLCapabilities}
 			 */
 			this.capabilities = null;
+
+			/**
+			 * The shader compiler options.
+			 * @type {Object}
+			 * @property {Boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
+			 * @property {Boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
+			 */
+			this.shaderCompileOptions = {
+				checkErrors: true,
+				compileAsynchronously: false
+			};
 			this._textures = null;
 			this._renderBuffers = null;
 			this._renderTargets = null;
@@ -13318,6 +13359,7 @@
 			const capabilities = this.capabilities;
 			const vertexArrayBindings = this._vertexArrayBindings;
 			const textures = this._textures;
+			const programs = this._programs;
 			const getGeometry = options.getGeometry || defaultGetGeometry;
 			const getMaterial = options.getMaterial || defaultGetMaterial;
 			const beforeRender = options.beforeRender || noop;
@@ -13383,11 +13425,11 @@
 
 			if (material.needsUpdate) {
 				const oldProgram = materialProperties.program;
-				materialProperties.program = this._programs.getProgram(material, object, renderStates, true);
+				materialProperties.program = programs.getProgram(material, object, renderStates, this.shaderCompileOptions);
 				if (oldProgram) {
 					// release after new program is created.
 					vertexArrayBindings.releaseByProgram(oldProgram);
-					this._programs.releaseProgram(oldProgram);
+					programs.releaseProgram(oldProgram);
 				}
 				materialProperties.fog = fog;
 				materialProperties.envMap = envMap;
@@ -13403,7 +13445,7 @@
 				material.needsUpdate = false;
 			}
 			const program = materialProperties.program;
-			if (program.program === undefined) return;
+			if (!program.isReady(capabilities.parallelShaderCompileExt)) return;
 			state.setProgram(program);
 			this._geometries.setGeometry(geometry);
 
