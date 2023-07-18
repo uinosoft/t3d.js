@@ -56,10 +56,11 @@ import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
 
 ### CDN ###
 
-* https://cdn.jsdelivr.net/npm/t3d@0.1.4/build/t3d.min.js
-* https://cdn.jsdelivr.net/npm/t3d@0.1.4/build/t3d.module.min.js
+* https://unpkg.com/t3d@latest/build/t3d.min.js
+* https://unpkg.com/t3d@latest/build/t3d.module.js
 
-More information: https://www.jsdelivr.com/package/npm/t3d
+* https://cdn.jsdelivr.net/npm/t3d@latest/build/t3d.min.js
+* https://cdn.jsdelivr.net/npm/t3d@latest/build/t3d.module.min.js
 
 ### Usage ###
 
