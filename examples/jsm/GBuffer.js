@@ -281,6 +281,7 @@ var GBuffer = (function() {
 				renderer.setClearColor(0, 0, 0, 0);
 				renderer.clear(true, true, true);
 
+				renderer.beginRender();
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
 						return materialCache.getMrtMaterial(renderable);
@@ -289,6 +290,7 @@ var GBuffer = (function() {
 						return !!renderable.geometry.getAttribute("a_Normal");
 					}
 				});
+				renderer.endRender();
 			} else {
 				// render normalDepthRenderTarget
 
@@ -298,6 +300,7 @@ var GBuffer = (function() {
 					renderer.setClearColor(0, 0, 0, 0);
 					renderer.clear(true, true, true);
 
+					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
 							return materialCache.getNormalGlossinessMaterial(renderable);
@@ -306,6 +309,7 @@ var GBuffer = (function() {
 							return !!renderable.geometry.getAttribute("a_Normal");
 						}
 					});
+					renderer.endRender();
 				}
 
 				// render albedoMetalnessRenderTarget
@@ -316,6 +320,7 @@ var GBuffer = (function() {
 					renderer.setClearColor(0, 0, 0, 0);
 					renderer.clear(true, true, true);
 
+					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
 							return materialCache.getAlbedoMetalnessMaterial(renderable);
@@ -324,6 +329,7 @@ var GBuffer = (function() {
 							return !!renderable.geometry.getAttribute("a_Normal");
 						}
 					});
+					renderer.endRender();
 				}
 			}
 
@@ -382,8 +388,10 @@ var GBuffer = (function() {
 					}
 				};
 
+				renderer.beginRender();
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, renderConfig);
 				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, renderConfig);
+				renderer.endRender();
 			}
 		},
 

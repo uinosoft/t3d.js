@@ -169,7 +169,10 @@ class HeatmapGenerator {
 		renderer.setRenderTarget(this._grayRenderTarget);
 		renderer.setClearColor(0, 0, 0, 1);
 		renderer.clear(true, true, true);
+
+		renderer.beginRender();
 		renderer.renderRenderableList(this._renderQueueLayer.transparent, this._renderStates);
+		renderer.endRender();
 
 		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
 

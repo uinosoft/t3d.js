@@ -59,13 +59,16 @@ class ReflectionProbe {
 			const renderStates = scene.updateRenderStates(this.camera, false);
 			const renderQueue = scene.updateRenderQueue(this.camera, false, false);
 
-			let renderQueueLayer;
+			renderer.beginRender();
 
+			let renderQueueLayer;
 			for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {
 				renderQueueLayer = renderQueue.layerList[i];
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, this.renderOption);
 				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, this.renderOption);
 			}
+
+			renderer.endRender();
 
 			renderer.updateRenderTargetMipmap(this.renderTarget);
 		}

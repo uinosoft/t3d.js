@@ -582,6 +582,14 @@ class Material extends EventDispatcher {
 		this.drawMode = DRAW_MODE.TRIANGLES;
 
 		/**
+		 * Whether the material uniforms need to be updated every draw call.
+		 * If set false, the material uniforms are only updated once per frame , this can help optimize performance.
+		 * @type {Boolean}
+		 * @default true
+		 */
+		this.forceUpdateUniforms = true;
+
+		/**
 		 * Specifies that the material needs to be recompiled.
 		 * This property is automatically set to true when instancing a new material.
 		 * @type {Boolean}

@@ -337,8 +337,10 @@
 
 			const renderQueueLayer = renderQueue.layerList[id];
 
+			renderer.beginRender();
 			renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
 			renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
+			renderer.endRender();
 		}
 
 		const screenPosition = new t3d.Vector3();

@@ -125,6 +125,8 @@ class ShadowMapPass {
 				const renderStates = scene.updateRenderStates(camera, j === 0);
 				const renderQueue = scene.updateRenderQueue(camera, false, false);
 
+				renderer.beginRender();
+
 				for (let k = 0; k < renderQueue.layerList.length; k++) {
 					const renderQueueLayer = renderQueue.layerList[k];
 
@@ -136,6 +138,8 @@ class ShadowMapPass {
 						renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, renderOptions);
 					}
 				}
+
+				renderer.endRender();
 			}
 
 			// set generateMipmaps false

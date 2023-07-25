@@ -153,6 +153,8 @@
 			const mainLayer = renderQueue.getLayer(0);
 			const uiLayer = renderQueue.getLayer(1);
 
+			renderer.beginRender();
+		
 			renderer.renderRenderableList(mainLayer.opaque, renderStates);
 
 			let arrayCount = 0;
@@ -192,6 +194,8 @@
 					}
 				});
 			}
+
+			renderer.endRender();
 		}
 		requestAnimationFrame(loop);
 

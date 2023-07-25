@@ -255,9 +255,10 @@
 				renderer.setClearColor(0, 0, 0, 1);
 				renderer.clear(true, true, true);
 
+				renderer.beginRender();
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
-
 				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
+				renderer.endRender();
 			} else {
 				// render normalDepth texture
 
@@ -266,6 +267,7 @@
 				renderer.setClearColor(0, 0, 0, 0);
 				renderer.clear(true, true, true);
 
+				renderer.beginRender();
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
 						if (params.render == "prelight-deferred") {
@@ -295,6 +297,7 @@
 						return !!renderable.geometry.getAttribute("a_Normal");
 					}
 				});
+				renderer.endRender();
 
 				if (params.render == "deferred") {
 					// render color texture
@@ -304,6 +307,7 @@
 					renderer.setClearColor(0, 0, 0, 0);
 					renderer.clear(true, true, true);
 
+					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
 							colorMaterial.diffuse.copy(renderable.material.diffuse);
@@ -334,6 +338,7 @@
 							return !!renderable.geometry.getAttribute("a_Normal");
 						}
 					});
+					renderer.endRender();
 				}
 
 
@@ -512,6 +517,8 @@
 					reconstructionMaterial.uniforms["viewWidth"] = width;
 					reconstructionMaterial.uniforms["viewHeight"] = height;
 					reconstructionMaterial.uniforms["samplerLight"] = colorRenderTarget.texture;
+
+					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
 							if (renderable.material.acceptLight) {
@@ -543,12 +550,15 @@
 							}
 						}
 					});
+					renderer.endRender();
 				}
 
 				// prelight-deferred support transparent objects
 				if (params.render == "prelight-deferred") {
 					// render transparent objects forward
+					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
+					renderer.endRender();
 				}
 
 				// output

@@ -125,8 +125,10 @@
         		renderer.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);
         	}
 
+        	renderer.beginRender();
         	renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
         	renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
+        	renderer.endRender();
 
         	if (!queryInProgress) {
         		renderer.endQuery(timerElapsedQuery);

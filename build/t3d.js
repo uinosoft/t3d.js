@@ -8959,6 +8959,14 @@
 			this.drawMode = DRAW_MODE.TRIANGLES;
 
 			/**
+			 * Whether the material uniforms need to be updated every draw call.
+			 * If set false, the material uniforms are only updated once per frame , this can help optimize performance.
+			 * @type {Boolean}
+			 * @default true
+			 */
+			this.forceUpdateUniforms = true;
+
+			/**
 			 * Specifies that the material needs to be recompiled.
 			 * This property is automatically set to true when instancing a new material.
 			 * @type {Boolean}
@@ -9136,7 +9144,9 @@
 		 * @param {t3d.ThinRenderer} renderer
 		 */
 		render(renderer) {
+			renderer.beginRender();
 			renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
+			renderer.endRender();
 		}
 
 		/**
@@ -9298,6 +9308,7 @@
 					renderer.clear(true, true);
 					const renderStates = scene.updateRenderStates(camera, j === 0);
 					const renderQueue = scene.updateRenderQueue(camera, false, false);
+					renderer.beginRender();
 					for (let k = 0; k < renderQueue.layerList.length; k++) {
 						const renderQueueLayer = renderQueue.layerList[k];
 						if (this.shadowLayers !== null && this.shadowLayers.indexOf(renderQueueLayer.id) === -1) continue;
@@ -9306,6 +9317,7 @@
 							renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, renderOptions);
 						}
 					}
+					renderer.endRender();
 				}
 
 				// set generateMipmaps false
@@ -9520,6 +9532,28 @@
 				checkErrors: true,
 				compileAsynchronously: false
 			};
+			this._passInfo = {
+				// Whether the renderer is in the process of pass rendering.
+				// If true, means that the beginRender method has been called but the endRender method has not been called.
+				enabled: false,
+				// The pass rendering count
+				count: 0
+			};
+		}
+
+		/**
+		 * Begin rendering.
+		 */
+		beginRender() {
+			this._passInfo.enabled = true;
+		}
+
+		/**
+		 * End rendering.
+		 */
+		endRender() {
+			this._passInfo.enabled = false;
+			this._passInfo.count++;
 		}
 
 		/**
@@ -9558,16 +9592,19 @@
 		 * If you need a customized rendering process, it is recommended to use renderRenderableList method.
 		 * @param {t3d.Scene} scene - The scene to render.
 		 * @param {t3d.Camera} camera - The camera used to render the scene.
+		 * @param {t3d.RenderOptions} [options=] - The render options for this scene render task.
 		 */
-		renderScene(scene, camera) {
+		renderScene(scene, camera, options = {}) {
 			const renderStates = scene.getRenderStates(camera);
 			const renderQueue = scene.getRenderQueue(camera);
+			this.beginRender();
 			let renderQueueLayer;
 			for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {
 				renderQueueLayer = renderQueue.layerList[i];
-				this.renderRenderableList(renderQueueLayer.opaque, renderStates);
-				this.renderRenderableList(renderQueueLayer.transparent, renderStates);
+				this.renderRenderableList(renderQueueLayer.opaque, renderStates, options);
+				this.renderRenderableList(renderQueueLayer.transparent, renderStates, options);
 			}
+			this.endRender();
 		}
 
 		/**
@@ -12912,10 +12949,18 @@
 			}
 			this._onGeometryDispose = onGeometryDispose;
 		}
-		setGeometry(geometry) {
+		setGeometry(geometry, passInfo) {
 			const gl = this._gl;
 			const buffers = this._buffers;
 			const geometryProperties = this.get(geometry);
+
+			// If in pass rendering, skip the geometry if it has been set in this pass.
+			if (passInfo.enabled) {
+				if (geometryProperties.pass === passInfo.count) {
+					return;
+				}
+				geometryProperties.pass = passInfo.count;
+			}
 			if (!geometryProperties.created) {
 				geometry.addEventListener('dispose', this._onGeometryDispose);
 				geometryProperties.created = true;
@@ -15805,6 +15850,9 @@
 			this._vertexArrayBindings = null;
 			this._queries = null;
 			this.init();
+
+			// Cache current material if beginRender is called.
+			this._currentMaterial = null;
 		}
 
 		/**
@@ -15838,6 +15886,10 @@
 			this._state = state;
 			this._vertexArrayBindings = vertexArrayBindings;
 			this._queries = queries;
+		}
+		endRender() {
+			super.endRender();
+			this._currentMaterial = null;
 		}
 		clear(color, depth, stencil) {
 			const gl = this.gl;
@@ -15910,6 +15962,7 @@
 			const vertexArrayBindings = this._vertexArrayBindings;
 			const textures = this._textures;
 			const programs = this._programs;
+			const passInfo = this._passInfo;
 			const getGeometry = options.getGeometry || defaultGetGeometry;
 			const getMaterial = options.getMaterial || defaultGetMaterial;
 			const beforeRender = options.beforeRender || noop;
@@ -15997,7 +16050,7 @@
 			const program = materialProperties.program;
 			if (!program.isReady(capabilities.parallelShaderCompileExt)) return;
 			state.setProgram(program);
-			this._geometries.setGeometry(geometry);
+			this._geometries.setGeometry(geometry, passInfo);
 
 			// update morph targets
 			if (object.morphTargetInfluences) {
@@ -16021,6 +16074,17 @@
 				refreshScene = true;
 				program.sceneId = sceneData.id;
 				program.sceneVersion = sceneData.version;
+			}
+			let refreshMaterial = true;
+			if (passInfo.enabled) {
+				if (!material.forceUpdateUniforms) {
+					if (materialProperties.pass !== passInfo.count) {
+						materialProperties.pass = passInfo.count;
+					} else {
+						refreshMaterial = this._currentMaterial !== material;
+					}
+				}
+				this._currentMaterial = material;
 			}
 			const uniforms = program.getUniforms();
 
@@ -16069,7 +16133,7 @@
 				}
 
 				// uniforms about material
-				if (internalGroup === 4) {
+				if (internalGroup === 4 && refreshMaterial) {
 					uniform.internalFun(material, textures);
 					continue;
 				}

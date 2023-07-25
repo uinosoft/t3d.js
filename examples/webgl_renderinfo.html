@@ -114,8 +114,10 @@
 
         	renderInfo.reset();
 
+        	renderer.beginRender();
         	renderer.renderRenderableList(mainLayer.opaque, renderStates, { renderInfo: renderInfo });
         	renderer.renderRenderableList(mainLayer.transparent, renderStates, { renderInfo: renderInfo });
+        	renderer.endRender();
         }
         requestAnimationFrame(loop);
 

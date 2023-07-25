@@ -43,11 +43,19 @@ class WebGLGeometries extends PropertyMap {
 		this._onGeometryDispose = onGeometryDispose;
 	}
 
-	setGeometry(geometry) {
+	setGeometry(geometry, passInfo) {
 		const gl = this._gl;
 		const buffers = this._buffers;
 
 		const geometryProperties = this.get(geometry);
+
+		// If in pass rendering, skip the geometry if it has been set in this pass.
+		if (passInfo.enabled) {
+			if (geometryProperties.pass === passInfo.count) {
+				return;
+			}
+			geometryProperties.pass = passInfo.count;
+		}
 
 		if (!geometryProperties.created) {
 			geometry.addEventListener('dispose', this._onGeometryDispose);

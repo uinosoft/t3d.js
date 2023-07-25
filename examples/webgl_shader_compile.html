@@ -178,7 +178,9 @@
 				console.time('cost');
 			}
 
+			renderer.beginRender();
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
+			renderer.endRender();
 
 			if (compling) {
 				console.log('---first frame cost after shaders changed---');

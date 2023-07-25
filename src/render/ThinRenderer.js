@@ -29,6 +29,29 @@ class ThinRenderer {
 			checkErrors: true,
 			compileAsynchronously: false
 		};
+
+		this._passInfo = {
+			// Whether the renderer is in the process of pass rendering.
+			// If true, means that the beginRender method has been called but the endRender method has not been called.
+			enabled: false,
+			// The pass rendering count
+			count: 0
+		};
+	}
+
+	/**
+	 * Begin rendering.
+	 */
+	beginRender() {
+		this._passInfo.enabled = true;
+	}
+
+	/**
+	 * End rendering.
+	 */
+	endRender() {
+		this._passInfo.enabled = false;
+		this._passInfo.count++;
 	}
 
 	/**
@@ -67,18 +90,22 @@ class ThinRenderer {
 	 * If you need a customized rendering process, it is recommended to use renderRenderableList method.
 	 * @param {t3d.Scene} scene - The scene to render.
 	 * @param {t3d.Camera} camera - The camera used to render the scene.
+	 * @param {t3d.RenderOptions} [options=] - The render options for this scene render task.
 	 */
-	renderScene(scene, camera) {
+	renderScene(scene, camera, options = {}) {
 		const renderStates = scene.getRenderStates(camera);
 		const renderQueue = scene.getRenderQueue(camera);
 
-		let renderQueueLayer;
+		this.beginRender();
 
+		let renderQueueLayer;
 		for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {
 			renderQueueLayer = renderQueue.layerList[i];
-			this.renderRenderableList(renderQueueLayer.opaque, renderStates);
-			this.renderRenderableList(renderQueueLayer.transparent, renderStates);
+			this.renderRenderableList(renderQueueLayer.opaque, renderStates, options);
+			this.renderRenderableList(renderQueueLayer.transparent, renderStates, options);
 		}
+
+		this.endRender();
 	}
 
 	/**

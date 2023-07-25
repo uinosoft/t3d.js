@@ -69,6 +69,9 @@ class WebGLRenderer extends ThinRenderer {
 		this._queries = null;
 
 		this.init();
+
+		// Cache current material if beginRender is called.
+		this._currentMaterial = null;
 	}
 
 	/**
@@ -105,6 +108,11 @@ class WebGLRenderer extends ThinRenderer {
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
 		this._queries = queries;
+	}
+
+	endRender() {
+		super.endRender();
+		this._currentMaterial = null;
 	}
 
 	clear(color, depth, stencil) {
@@ -199,6 +207,7 @@ class WebGLRenderer extends ThinRenderer {
 		const vertexArrayBindings = this._vertexArrayBindings;
 		const textures = this._textures;
 		const programs = this._programs;
+		const passInfo = this._passInfo;
 
 		const getGeometry = options.getGeometry || defaultGetGeometry;
 		const getMaterial = options.getMaterial || defaultGetMaterial;
@@ -303,7 +312,7 @@ class WebGLRenderer extends ThinRenderer {
 
 		state.setProgram(program);
 
-		this._geometries.setGeometry(geometry);
+		this._geometries.setGeometry(geometry, passInfo);
 
 		// update morph targets
 		if (object.morphTargetInfluences) {
@@ -331,6 +340,18 @@ class WebGLRenderer extends ThinRenderer {
 			refreshScene = true;
 			program.sceneId = sceneData.id;
 			program.sceneVersion = sceneData.version;
+		}
+
+		let refreshMaterial = true;
+		if (passInfo.enabled) {
+			if (!material.forceUpdateUniforms) {
+				if (materialProperties.pass !== passInfo.count) {
+					materialProperties.pass = passInfo.count;
+				} else {
+					refreshMaterial = this._currentMaterial !== material;
+				}
+			}
+			this._currentMaterial = material;
 		}
 
 		const uniforms = program.getUniforms();
@@ -380,7 +401,7 @@ class WebGLRenderer extends ThinRenderer {
 			}
 
 			// uniforms about material
-			if (internalGroup === 4) {
+			if (internalGroup === 4 && refreshMaterial) {
 				uniform.internalFun(material, textures);
 				continue;
 			}
