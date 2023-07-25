@@ -86,14 +86,12 @@ class ShadowMapPass {
 
 	/**
 	 * Render shadow map.
-	 * @param {t3d.Renderer} renderer
+	 * @param {t3d.ThinRenderer} renderer
 	 * @param {t3d.Scene} scene
 	 */
 	render(renderer, scene) {
-		const renderPass = renderer.renderPass;
-
-		oldClearColor.copy(renderPass.getClearColor());
-		renderPass.setClearColor(1, 1, 1, 1);
+		oldClearColor.copy(renderer.getClearColor());
+		renderer.setClearColor(1, 1, 1, 1);
 
 		const lights = scene._lightData.lights;
 		const shadowsNum = scene._lightData.shadowsNum;
@@ -113,7 +111,7 @@ class ShadowMapPass {
 			this._state.light = light;
 			const renderOptions = this._renderOptions;
 
-			shadow.prepareDepthMap(!scene.disableShadowSampler, renderPass.capabilities);
+			shadow.prepareDepthMap(!scene.disableShadowSampler, renderer.capabilities);
 
 			for (let j = 0; j < faces; j++) {
 				if (isPointLight) {
@@ -121,8 +119,8 @@ class ShadowMapPass {
 					shadowTarget.activeCubeFace = j;
 				}
 
-				renderPass.setRenderTarget(shadowTarget);
-				renderPass.clear(true, true);
+				renderer.setRenderTarget(shadowTarget);
+				renderer.clear(true, true);
 
 				const renderStates = scene.updateRenderStates(camera, j === 0);
 				const renderQueue = scene.updateRenderQueue(camera, false, false);
@@ -141,12 +139,12 @@ class ShadowMapPass {
 			}
 
 			// set generateMipmaps false
-			// renderPass.updateRenderTargetMipmap(shadowTarget);
+			// renderer.updateRenderTargetMipmap(shadowTarget);
 
 			shadow.needsUpdate = false;
 		}
 
-		renderPass.setClearColor(oldClearColor.x, oldClearColor.y, oldClearColor.z, oldClearColor.w);
+		renderer.setClearColor(oldClearColor.x, oldClearColor.y, oldClearColor.z, oldClearColor.w);
 	}
 
 }

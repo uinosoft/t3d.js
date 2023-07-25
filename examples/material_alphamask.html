@@ -48,7 +48,7 @@
 		const forwardRenderer = new ForwardRenderer(canvas, {
 			antialias: true
 		});
-		forwardRenderer.renderPass.setClearColor(251 / 255, 243 / 255, 228 / 255, 1);
+		forwardRenderer.setClearColor(251 / 255, 243 / 255, 228 / 255, 1);
 
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(undefined, 18, 25);
@@ -56,7 +56,7 @@
 		
 		const texture = new Texture2DLoader().load('./resources/flower.png');
 		texture.wrapT = texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 
 		const file = "resources/models/gltf/LeePerrySmith/LeePerrySmith.glb";
 
@@ -131,7 +131,7 @@
 		updateUvTransform();
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add(controller, 'autoRotate');
 		gui.add({ type: 'alphaToCoverage' }, "type", ['transparent', 'alphaTest', 'alphaToCoverage']).onChange(value => {
 			materials.forEach(material => {

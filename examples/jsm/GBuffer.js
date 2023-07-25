@@ -251,17 +251,16 @@ var GBuffer = (function() {
 		},
 
 		update: function(renderer, scene, camera) {
-			var renderPass = renderer.renderPass;
 			var renderStates = scene.getRenderStates(camera);
 			var renderQueueLayer = scene.getRenderQueue(camera).layerList[0]; // now just render layer 0
 
 			// Use MRT if support
-			if (renderPass.capabilities.version >= 2) { // renderPass.capabilities.getExtension('WEBGL_draw_buffers') has bug here
+			if (renderer.capabilities.version >= 2) { // renderer.capabilities.getExtension('WEBGL_draw_buffers') has bug here
 				if (!this._useMRT) {
 					this._useMRT = true;
 
-					// if (renderPass.capabilities.version >= 2) {
-					var ext = renderPass.capabilities.getExtension("EXT_color_buffer_float");
+					// if (renderer.capabilities.version >= 2) {
+					var ext = renderer.capabilities.getExtension("EXT_color_buffer_float");
 					if (ext) {
 						this._renderTarget1.texture.type = PIXEL_TYPE.HALF_FLOAT; // FLOAT ?
 					} else {
@@ -277,10 +276,10 @@ var GBuffer = (function() {
 					);
 				}
 
-				renderPass.setRenderTarget(this._renderTarget1);
+				renderer.setRenderTarget(this._renderTarget1);
 
-				renderPass.setClearColor(0, 0, 0, 0);
-				renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 0);
+				renderer.clear(true, true, true);
 
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
@@ -294,10 +293,10 @@ var GBuffer = (function() {
 				// render normalDepthRenderTarget
 
 				if (this.enableNormalGlossiness) {
-					renderPass.setRenderTarget(this._renderTarget1);
+					renderer.setRenderTarget(this._renderTarget1);
 
-					renderPass.setClearColor(0, 0, 0, 0);
-					renderPass.clear(true, true, true);
+					renderer.setClearColor(0, 0, 0, 0);
+					renderer.clear(true, true, true);
 
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
@@ -312,10 +311,10 @@ var GBuffer = (function() {
 				// render albedoMetalnessRenderTarget
 
 				if (this.enableAlbedoMetalness) {
-					renderPass.setRenderTarget(this._renderTarget2);
+					renderer.setRenderTarget(this._renderTarget2);
 
-					renderPass.setClearColor(0, 0, 0, 0);
-					renderPass.clear(true, true, true);
+					renderer.setClearColor(0, 0, 0, 0);
+					renderer.clear(true, true, true);
 
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
@@ -331,10 +330,10 @@ var GBuffer = (function() {
 			// render motionRenderTarget
 
 			if (this.enableMotion) {
-				renderPass.setRenderTarget(this._renderTarget3);
+				renderer.setRenderTarget(this._renderTarget3);
 
-				renderPass.setClearColor(0, 0, 0, 0);
-				renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 0);
+				renderer.clear(true, true, true);
 
 				var renderConfig = {
 					getMaterial: function(renderable) {
@@ -399,13 +398,12 @@ var GBuffer = (function() {
          * + 'albedo'
 		 * + 'velocity'
          *
-         * @param {t3d.Renderer} renderer
+         * @param {t3d.ThinRenderer} renderer
          * @param {t3d.Camera} camera
          * @param {String} [type='normal']
          */
 		renderDebug: function(renderer, camera, type) {
-			var renderPass = renderer.renderPass;
-			var currentRenderTarget = renderPass.getRenderTarget();
+			var currentRenderTarget = renderer.getRenderTarget();
 
 			this._debugPass.uniforms["normalGlossinessTexture"] = this.getNormalGlossinessTexture();
 			this._debugPass.uniforms["depthTexture"] = this.getDepthTexture();

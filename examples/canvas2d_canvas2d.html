@@ -41,7 +41,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
@@ -144,10 +144,10 @@
 			scene.updateMatrix();
 			const renderStates = scene.updateRenderStates(camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			const renderQueue = scene.updateRenderQueue(camera);
 			const mainLayer = renderQueue.getLayer(0);

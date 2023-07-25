@@ -106,7 +106,7 @@ class IDWMapGenerator {
 	/**
 	 * To render a grayscale idwmap.
 	 * This method needs to be executed before executing colorize to generate the final idwmap.
-	 * @param {Renderer} renderer
+	 * @param {ThinRenderer} renderer
 	 * @param {Array} data [[x0, y0, value0], [x1, y1, value1], ...]
 	 * @param {Object} options
 	 * @param {Array} options.size Dimensions in the data coordinate system with the origin at the center.
@@ -115,7 +115,7 @@ class IDWMapGenerator {
 	 * @return this
 	 */
 	render(renderer, data, options = {}) {
-		this._checkCapabilities(renderer.renderPass.capabilities);
+		this._checkCapabilities(renderer.capabilities);
 
 		const size = options.size;
 
@@ -165,11 +165,11 @@ class IDWMapGenerator {
 
 		// Render gray texture
 
-		renderer.renderPass.getClearColor().toArray(_tempClearColor); // save clear color
+		renderer.getClearColor().toArray(_tempClearColor); // save clear color
 
-		renderer.renderPass.setRenderTarget(this._grayRenderTarget);
-		renderer.renderPass.setClearColor(0, 0, 0, 1);
-		renderer.renderPass.clear(true, true, true);
+		renderer.setRenderTarget(this._grayRenderTarget);
+		renderer.setClearColor(0, 0, 0, 1);
+		renderer.clear(true, true, true);
 
 		if (this._grayPass.material.defines.POINTS_NUM !== dataLength) {
 			this._grayPass.material.defines.POINTS_NUM = dataLength;
@@ -181,26 +181,26 @@ class IDWMapGenerator {
 
 		this._grayPass.render(renderer);
 
-		renderer.renderPass.updateRenderTargetMipmap(this._grayRenderTarget);
+		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
 
-		renderer.renderPass.setClearColor(..._tempClearColor);
+		renderer.setClearColor(..._tempClearColor);
 
 		return this;
 	}
 
 	/**
 	 * Colorize the grayscale texture according to the color gradient ribbon map.
-	 * @param {Renderer} renderer
+	 * @param {ThinRenderer} renderer
 	 * @param {Texture2D} gradientTexture
 	 * @param {Object} options (Optional)
 	 * @param {Boolean} options.isoline (Optional) Whether to show isoline, default is false.
 	 */
 	colorize(renderer, gradientTexture, options = {}) {
-		renderer.renderPass.getClearColor().toArray(_tempClearColor); // save clear color
+		renderer.getClearColor().toArray(_tempClearColor); // save clear color
 
-		renderer.renderPass.setRenderTarget(this._colorizeRenderTarget);
-		renderer.renderPass.setClearColor(0, 0, 0, 0);
-		renderer.renderPass.clear(true, false, false);
+		renderer.setRenderTarget(this._colorizeRenderTarget);
+		renderer.setClearColor(0, 0, 0, 0);
+		renderer.clear(true, false, false);
 
 		if (this._colorizePass.material.defines.ISOLINE !== !!options.isoline) {
 			this._colorizePass.material.defines.ISOLINE = !!options.isoline;
@@ -209,9 +209,9 @@ class IDWMapGenerator {
 		this._colorizePass.material.uniforms.colormap = gradientTexture;
 		this._colorizePass.render(renderer);
 
-		renderer.renderPass.updateRenderTargetMipmap(this._colorizeRenderTarget);
+		renderer.updateRenderTargetMipmap(this._colorizeRenderTarget);
 
-		renderer.renderPass.setClearColor(..._tempClearColor);
+		renderer.setClearColor(..._tempClearColor);
 
 		return this;
 	}

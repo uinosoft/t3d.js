@@ -86,7 +86,7 @@ class HeatmapGenerator {
 	/**
 	 * To render a grayscale heatmap.
 	 * This method needs to be executed before executing colorize to generate the final heatmap.
-	 * @param {Renderer} renderer
+	 * @param {ThinRenderer} renderer
 	 * @param {Array} data [[x0, y0, value0], [x1, y1, value1], ...]
 	 * @param {Object} options
 	 * @param {Array} options.size Dimensions in the data coordinate system with the origin at the center.
@@ -164,41 +164,41 @@ class HeatmapGenerator {
 
 		// Render gray texture
 
-		renderer.renderPass.getClearColor().toArray(_tempClearColor); // save clear color
+		renderer.getClearColor().toArray(_tempClearColor); // save clear color
 
-		renderer.renderPass.setRenderTarget(this._grayRenderTarget);
-		renderer.renderPass.setClearColor(0, 0, 0, 1);
-		renderer.renderPass.clear(true, true, true);
+		renderer.setRenderTarget(this._grayRenderTarget);
+		renderer.setClearColor(0, 0, 0, 1);
+		renderer.clear(true, true, true);
 		renderer.renderRenderableList(this._renderQueueLayer.transparent, this._renderStates);
 
-		renderer.renderPass.updateRenderTargetMipmap(this._grayRenderTarget);
+		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
 
-		renderer.renderPass.setClearColor(..._tempClearColor);
+		renderer.setClearColor(..._tempClearColor);
 
 		return this;
 	}
 
 	/**
 	 * Colorize the grayscale texture according to the color gradient ribbon map.
-	 * @param {Renderer} renderer
+	 * @param {ThinRenderer} renderer
 	 * @param {Texture2D} gradientTexture
 	 * @param {Object} options (Optional)
 	 * @param {Boolean} options.alpha (Optional) Whether to generate images with alpha gradients, default is false.
 	 */
 	colorize(renderer, gradientTexture, options = {}) {
-		renderer.renderPass.getClearColor().toArray(_tempClearColor); // save clear color
+		renderer.getClearColor().toArray(_tempClearColor); // save clear color
 
-		renderer.renderPass.setRenderTarget(this._colorizeRenderTarget);
-		renderer.renderPass.setClearColor(0, 0, 0, 0);
-		renderer.renderPass.clear(true, false, false);
+		renderer.setRenderTarget(this._colorizeRenderTarget);
+		renderer.setClearColor(0, 0, 0, 0);
+		renderer.clear(true, false, false);
 
 		this._colorizePass.material.uniforms.colormap = gradientTexture;
 		this._colorizePass.material.uniforms.alphaLerp = options.alpha ? 1 : 0;
 		this._colorizePass.render(renderer);
 
-		renderer.renderPass.updateRenderTargetMipmap(this._colorizeRenderTarget);
+		renderer.updateRenderTargetMipmap(this._colorizeRenderTarget);
 
-		renderer.renderPass.setClearColor(..._tempClearColor);
+		renderer.setClearColor(..._tempClearColor);
 
 		return this;
 	}

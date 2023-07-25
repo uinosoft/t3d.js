@@ -42,7 +42,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.renderPass.setClearColor(0.05, 0.05, 0.05, 1);
+		forwardRenderer.setClearColor(0.05, 0.05, 0.05, 1);
 
 		const cube_texture = new TextureCubeLoader().load([
 			"resources/skybox/Bridge2/posx.jpg",
@@ -166,7 +166,7 @@
 		controller.autoRotateSpeed = 0.1;
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add(uniforms, "power", 0, 2, 0.01);
 		gui.add(uniforms, "glowInverse");
 		gui.addColor(uniforms, "glowColor");

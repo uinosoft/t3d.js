@@ -63,8 +63,8 @@
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
 
-		const renderer = new t3d.Renderer(gl);
-		renderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(0.1, 0.1, 0.1, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const scene = new t3d.Scene();
@@ -123,11 +123,11 @@
 		const renderOption = {};
 
 		// gui
-		const supportParallelCompile = !!renderer.renderPass.capabilities.parallelShaderCompileExt;
+		const supportParallelCompile = !!renderer.capabilities.parallelShaderCompileExt;
 
 		let counter = 0, color = new t3d.Color3(), compling = false;
 		function compileShader(compileAsynchronously) {
-			renderer.renderPass.shaderCompileOptions.compileAsynchronously = compileAsynchronously;
+			renderer.shaderCompileOptions.compileAsynchronously = compileAsynchronously;
 
 			color.setHSL(Math.random(), Math.random(), 0.5);
 		
@@ -171,8 +171,8 @@
 			const renderStates = scene.updateRenderStates(camera);
 			const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.clear(true, true, false);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
 
 			if (compling) {
 				console.time('cost');

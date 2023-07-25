@@ -12,6 +12,7 @@ import { WebGLVertexArrayBindings } from './WebGLVertexArrayBindings.js';
 import { WebGLQueries } from './WebGLQueries.js';
 import { Vector4 } from '../math/Vector4.js';
 import { Matrix4 } from '../math/Matrix4.js';
+import { ThinRenderer } from '../render/ThinRenderer.js';
 
 const helpVector4 = new Vector4();
 const helpMatrix4 = new Matrix4();
@@ -35,38 +36,26 @@ function defaultIfRender(renderable) {
 
 function noop() { }
 
-let _renderPassId = 0;
-
 /**
- * WebGL Render Pass
+ * The WebGL renderer.
  * @memberof t3d
+ * @extends t3d.ThinRenderer
  */
-class WebGLRenderPass {
+class WebGLRenderer extends ThinRenderer {
 
 	/**
 	 * @param {WebGLRenderingContext} gl
 	 */
 	constructor(gl) {
-		this.gl = gl;
+		super(gl);
 
-		this.id = 0;
+		this.gl = gl;
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
 		 * @type {t3d.WebGLCapabilities}
 		 */
-		this.capabilities = null;
-
-		/**
-		 * The shader compiler options.
-		 * @type {Object}
-		 * @property {Boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
-		 * @property {Boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
-		 */
-		this.shaderCompileOptions = {
-			checkErrors: true,
-			compileAsynchronously: false
-		};
+		this.capabilities = {};
 
 		this._textures = null;
 		this._renderBuffers = null;
@@ -83,13 +72,13 @@ class WebGLRenderPass {
 	}
 
 	/**
-	 * Initialize the render pass.
+	 * Initialize the renderer.
 	 * This method will be called automatically by the constructor.
-	 * In the case of context lost, you can call this function to restart the render pass.
+	 * In the case of context lost, you can call this function to restart the renderer.
 	 */
 	init() {
 		const gl = this.gl;
-		const id = _renderPassId++;
+		const id = this.increaseId();
 
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
@@ -104,7 +93,6 @@ class WebGLRenderPass {
 		const materials = new WebGLMaterials(id, programs, vertexArrayBindings);
 		const queries = new WebGLQueries(id, gl, capabilities);
 
-		this.id = id;
 		this.capabilities = capabilities;
 
 		this._textures = textures;
@@ -119,12 +107,6 @@ class WebGLRenderPass {
 		this._queries = queries;
 	}
 
-	/**
-	 * Clear buffers.
-	 * @param {Boolean} [color=false]
-	 * @param {Boolean} [depth=false]
-	 * @param {Boolean} [stencil=false]
-	 */
 	clear(color, depth, stencil) {
 		const gl = this.gl;
 
@@ -139,177 +121,78 @@ class WebGLRenderPass {
 		}
 	}
 
-	/**
-	 * Sets the clear color and opacity.
-	 * @param {Number} r
-	 * @param {Number} g
-	 * @param {Number} b
-	 * @param {Number} a
-	 * @param {Number} premultipliedAlpha
-	 */
 	setClearColor(r, g, b, a, premultipliedAlpha) {
 		this._state.colorBuffer.setClear(r, g, b, a, premultipliedAlpha);
 	}
 
-	/**
-	 * Returns a Vector4 instance with the current clear color and alpha.
-	 * Note: Do not modify the value of Vector4, it is read-only.
-	 * @return {t3d.Vector4}
-	 */
 	getClearColor() {
 		return this._state.colorBuffer.getClear();
 	}
 
-	/**
-	 * This method sets the active rendertarget.
-	 * @param {t3d.RenderTargetBase} renderTarget The renderTarget that needs to be activated.
-	 */
 	setRenderTarget(renderTarget) {
 		this._renderTargets.setRenderTarget(renderTarget);
 	}
 
-	/**
-	 * Returns the current RenderTarget if there are; returns null otherwise.
-	 * @return {t3d.RenderTargetBase|Null}
-	 */
 	getRenderTarget() {
 		return this._state.currentRenderTarget;
 	}
 
-	/**
-	 * Copy a frame buffer to another.
-	 * This copy process can be used to perform multi-sampling (MSAA).
-	 * @param {t3d.RenderTargetBase} read
-	 * @param {t3d.RenderTargetBase} draw
-	 * @param {Boolean} [color=true]
-	 * @param {Boolean} [depth=true]
-	 * @param {Boolean} [stencil=true]
-	 */
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 		this._renderTargets.blitRenderTarget(read, draw, color, depth, stencil);
 	}
 
-	/**
-	 * Reads the pixel data from the current renderTarget into the buffer you pass in.
-	 * @param {Number} x
-	 * @param {Number} y
-	 * @param {Number} width
-	 * @param {Number} height
-	 * @param {TypedArray} buffer Uint8Array is the only destination type supported in all cases, other types are renderTarget and platform dependent.
-	 */
 	readRenderTargetPixels(x, y, width, height, buffer) {
 		this._renderTargets.readRenderTargetPixels(x, y, width, height, buffer);
 	}
 
-	/**
-	 * Generate mipmaps for the render target you pass in.
-	 * @param {t3d.RenderTargetBase} renderTarget
-	 */
 	updateRenderTargetMipmap(renderTarget) {
 		this._renderTargets.updateRenderTargetMipmap(renderTarget);
 	}
 
-	/**
-	 * Bind webglTexture to t3d's texture.
-	 * @param {t3d.TextureBase} texture
-	 * @param {WebGLTexture} webglTexture
-	 */
 	setTextureExternal(texture, webglTexture) {
 		this._textures.setTextureExternal(texture, webglTexture);
 	}
 
-	/**
-	 * Bind webglRenderbuffer to t3d's renderBuffer.
-	 * @param {t3d.RenderBuffer} renderBuffer
-	 * @param {WebGLRenderbuffer} webglRenderbuffer
-	 */
 	setRenderBufferExternal(renderBuffer, webglRenderbuffer) {
 		this._renderBuffers.setRenderBufferExternal(renderBuffer, webglRenderbuffer);
 	}
 
-	/**
-	 * Bind webglBuffer to t3d's buffer.
-	 * @param {t3d.Buffer} buffer
-	 * @param {WebGLBuffer} webglBuffer
-	 */
 	setBufferExternal(buffer, webglBuffer) {
 		this._buffers.setBufferExternal(buffer, webglBuffer);
 	}
 
-	/**
-	 * Reset vertex array object bindings.
-	 * @param {Boolean} [force=false]
-	 */
 	resetVertexArrayBindings(force) {
 		this._vertexArrayBindings.reset(force);
 	}
 
-	/**
-	 * Reset all render states.
-	 */
 	resetState() {
 		this._state.reset();
 	}
 
-	/**
-	 * Begin a query instance.
-	 * @param {t3d.Query} query
-	 * @param {t3d.QUERY_TYPE} target
-	 */
 	beginQuery(query, target) {
 		this._queries.begin(query, target);
 	}
 
-	/**
-	 * End a query instance.
-	 * @param {t3d.Query} query
-	 */
 	endQuery(query) {
 		this._queries.end(query);
 	}
 
-	/**
-	 * Records the current time into the corresponding query object.
-	 * @param {t3d.Query} query
-	 */
 	queryCounter(query) {
 		this._queries.counter(query);
 	}
 
-	/**
-	 * Returns true if the timer query was disjoint, indicating that timing results are invalid.
-	 * This is rare and might occur, for example, if the GPU was throttled while timing.
-	 * @param {t3d.Query} query
-	 * @return {Boolean} Returns true if the timer query was disjoint.
-	 */
 	isTimerQueryDisjoint(query) {
 		return this._queries.isTimerDisjoint(query);
 	}
 
-	/**
-	 * Check if the query result is available.
-	 * @param {t3d.Query} query
-	 * @return {Boolean} If query result is available.
-	 */
 	isQueryResultAvailable(query) {
 		return this._queries.isResultAvailable(query);
 	}
 
-	/**
-	 * Get the query result.
-	 * @param {t3d.Query} query
-	 * @return {Number} The query result.
-	 */
 	getQueryResult(query) {
 		return this._queries.getResult(query);
 	}
 
-	/**
-	 * Get the query result.
-	 * @param {Object} renderable - The renderable item.
-	 * @param {t3d.RenderStates} renderStates - The render states.
-	 * @param {Object} [options=] - The render options.
-	 */
 	renderRenderableItem(renderable, renderStates, options) {
 		const state = this._state;
 		const capabilities = this.capabilities;
@@ -776,4 +659,4 @@ class WebGLRenderPass {
 
 }
 
-export { WebGLRenderPass };
+export { WebGLRenderer };

@@ -43,7 +43,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
 		
@@ -63,7 +63,7 @@
 
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = renderer.capabilities.maxAnisotropy;
 
 		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
 		const material = new t3d.BasicMaterial();
@@ -125,7 +125,7 @@
 
 		const params = { "fps": 60 };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
 		gui.add(motionBlurPass.uniforms, "velocityFactor", 0, 2, 0.01);
 		gui.add(params, 'fps', 1, 60, 1);
 
@@ -146,10 +146,10 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget1);
+			renderer.setRenderTarget(tempRenderTarget1);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, true);
 
 			viewProjectionMatrix.copy(camera.viewMatrix).premultiply(camera.projectionMatrix);
 			viewProjectionMatrixInverse.copy(viewProjectionMatrix).inverse();
@@ -163,10 +163,10 @@
 
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, true);
 
 			motionBlurPass.render(renderer);
 		}

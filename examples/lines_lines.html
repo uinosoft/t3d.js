@@ -45,7 +45,7 @@
 		scene.fog = new t3d.Fog(0x000000, 50, 60);
 		
 		const texture = new Texture2DLoader().load('./resources/light1.png');
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
 		const linesMaterial = new t3d.BasicMaterial();

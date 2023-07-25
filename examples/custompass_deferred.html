@@ -159,7 +159,7 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext("webgl", contextParams); // this demo not support webgl2 yet (shadow)
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const shadowMapPass = new t3d.ShadowMapPass();
 
@@ -250,10 +250,10 @@
 			shadowMapPass.render(renderer, scene);
 
 			if (params.render === "forward") {
-				renderer.renderPass.setRenderTarget(backRenderTarget);
+				renderer.setRenderTarget(backRenderTarget);
 
-				renderer.renderPass.setClearColor(0, 0, 0, 1);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 1);
+				renderer.clear(true, true, true);
 
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
 
@@ -261,10 +261,10 @@
 			} else {
 				// render normalDepth texture
 
-				renderer.renderPass.setRenderTarget(normalDepthRenderTarget);
+				renderer.setRenderTarget(normalDepthRenderTarget);
 
-				renderer.renderPass.setClearColor(0, 0, 0, 0);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 0);
+				renderer.clear(true, true, true);
 
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
@@ -299,10 +299,10 @@
 				if (params.render == "deferred") {
 					// render color texture
 
-					renderer.renderPass.setRenderTarget(colorRenderTarget);
+					renderer.setRenderTarget(colorRenderTarget);
 
-					renderer.renderPass.setClearColor(0, 0, 0, 0);
-					renderer.renderPass.clear(true, true, true);
+					renderer.setClearColor(0, 0, 0, 0);
+					renderer.clear(true, true, true);
 
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
@@ -340,10 +340,10 @@
 				if (params.render == "deferred") {
 					// render emissive light
 
-					renderer.renderPass.setRenderTarget(resultRenderTarget);
+					renderer.setRenderTarget(resultRenderTarget);
 
-					renderer.renderPass.setClearColor(0, 0, 0, 0);
-					renderer.renderPass.clear(true, true, true);
+					renderer.setClearColor(0, 0, 0, 0);
+					renderer.clear(true, true, true);
 
 					emissiveLightPass.uniforms["samplerColor"] = colorRenderTarget.texture;
 					emissiveLightPass.uniforms["viewWidth"] = width;
@@ -357,10 +357,10 @@
 				// render lights
 
 				if (params.render == "prelight-deferred") {
-					renderer.renderPass.setRenderTarget(colorRenderTarget);
+					renderer.setRenderTarget(colorRenderTarget);
 
-					renderer.renderPass.setClearColor(0, 0, 0, 0);
-					renderer.renderPass.clear(true, true, true);
+					renderer.setClearColor(0, 0, 0, 0);
+					renderer.clear(true, true, true);
 				}
 
 				matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).inverse();
@@ -399,7 +399,7 @@
 						d_Pass.uniforms["shadowMapSize"][0] = directionalShadow.shadowMapSize[0];
 						d_Pass.uniforms["shadowMapSize"][1] = directionalShadow.shadowMapSize[1];
 
-						d_Pass.uniforms["shadowMap"] = renderer.renderPass.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
+						d_Pass.uniforms["shadowMap"] = renderer.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
 						d_Pass.uniforms["shadowMatrix"].set(renderStates.lights.directionalShadowMatrix, i * 16);
 					} else {
 						d_Pass.material.defines["SHADOW"] = 0;
@@ -492,7 +492,7 @@
 						s_Pass.uniforms["shadowMapSize"][0] = spotShadow.shadowMapSize[0];
 						s_Pass.uniforms["shadowMapSize"][1] = spotShadow.shadowMapSize[1];
 
-						s_Pass.uniforms["shadowMap"] = renderer.renderPass.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
+						s_Pass.uniforms["shadowMap"] = renderer.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
 						s_Pass.uniforms["shadowMatrix"].set(renderStates.lights.spotShadowMatrix, i * 16);
 					} else {
 						s_Pass.material.defines["SHADOW"] = 0;
@@ -504,10 +504,10 @@
 				if (params.render == "prelight-deferred") {
 					// reconstruction
 
-					renderer.renderPass.setRenderTarget(resultRenderTarget);
+					renderer.setRenderTarget(resultRenderTarget);
 
-					renderer.renderPass.setClearColor(0, 0, 0, 1);
-					renderer.renderPass.clear(true, true, true);
+					renderer.setClearColor(0, 0, 0, 1);
+					renderer.clear(true, true, true);
 
 					reconstructionMaterial.uniforms["viewWidth"] = width;
 					reconstructionMaterial.uniforms["viewHeight"] = height;
@@ -553,10 +553,10 @@
 
 				// output
 
-				renderer.renderPass.setRenderTarget(backRenderTarget);
+				renderer.setRenderTarget(backRenderTarget);
 
-				renderer.renderPass.setClearColor(0, 0, 0, 1);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 1);
+				renderer.clear(true, true, true);
 
 				const pass = params.fxaa ? fxaaPass : copyPass;
 

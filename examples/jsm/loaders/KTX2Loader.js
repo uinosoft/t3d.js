@@ -52,7 +52,7 @@ class KTX2Loader extends Loader {
 	}
 
 	detectSupport(renderer) {
-		const capabilities = renderer.renderPass.capabilities;
+		const capabilities = renderer.capabilities;
 
 		this.workerConfig = {
 			astcSupported: capabilities.getExtension('WEBGL_compressed_texture_astc') ? true : false,

@@ -113,7 +113,7 @@
 			const skeletonHelper = new SkeletonHelper(scene);
 
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+			gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 			gui.add(params, "skeleton").onChange(value => {
 				if (value) {
 					scene.add(skeletonHelper);

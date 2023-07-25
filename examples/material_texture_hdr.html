@@ -48,7 +48,7 @@
 		
 		const loader = new RGBELoader();
 
-		const capabilities = forwardRenderer.renderPass.capabilities;
+		const capabilities = forwardRenderer.capabilities;
 		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
 			!!capabilities.getExtension('OES_texture_float_linear')) {
 			loader.type = t3d.PIXEL_TYPE.FLOAT;

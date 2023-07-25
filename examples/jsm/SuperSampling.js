@@ -99,7 +99,7 @@ SuperSampling.prototype = Object.assign(SuperSampling.prototype, {
 	},
 
 	/**
-	 * @param {t3d.Renderer} renderer
+	 * @param {t3d.ThinRenderer} renderer
 	 * @param {t3d.TextureBase} texture input texture
 	 * @param {t3d.TextureBase} velocityTexture velocity texture
 	 * @param {t3d.TextureBase} depthTexture depth texture
@@ -122,10 +122,10 @@ SuperSampling.prototype = Object.assign(SuperSampling.prototype, {
 		this._taaPass.uniforms["stillBlending"] = first ? 0 : 0.9;
 		this._taaPass.uniforms["motionBlending"] = first ? 0 : 0.2;
 
-		renderer.renderPass.setRenderTarget(this._output);
+		renderer.setRenderTarget(this._output);
 
-		renderer.renderPass.setClearColor(0, 0, 0, 0);
-		renderer.renderPass.clear(true, true, true);
+		renderer.setClearColor(0, 0, 0, 0);
+		renderer.clear(true, true, true);
 
 		this._taaPass.render(renderer);
 

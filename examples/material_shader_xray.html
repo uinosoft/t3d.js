@@ -140,7 +140,7 @@
 		controller.autoRotateSpeed = 0.5;
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add(material.uniforms, "power", 0, 2, 0.01);
 		gui.add(material.uniforms, "glowInverse");
 		gui.addColor(material.uniforms, "glowColor");

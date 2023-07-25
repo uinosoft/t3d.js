@@ -95,7 +95,7 @@
 		scene.add(camera);
 		
 		const webxrControl = new WebXRControl(camera);
-		webxrControl.enter(stereoRenderer.renderPass.gl).then(function(context) {
+		webxrControl.enter(stereoRenderer.gl).then(function(context) {
 			context.requestAnimationFrame(loop);
 		}).catch(function(e) {
 			document.getElementById('notSupported').style.display = '';

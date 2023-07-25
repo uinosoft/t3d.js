@@ -219,7 +219,7 @@
 
 			const gui = new GUI();
 
-			gui.add({ version: 'WebGL ' + forwardRenderer.renderPass.capabilities.version }, 'version').disable();
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 
 			gui.add({ angle: 90 }, 'angle', 0, 360, 0.01).onChange(setWindDirection);
 

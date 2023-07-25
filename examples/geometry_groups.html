@@ -41,7 +41,7 @@
 		const scene = new t3d.Scene();
 
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 
 		const plane_geometry = new t3d.PlaneGeometry(100, 100);
 		const lambert = new t3d.LambertMaterial();

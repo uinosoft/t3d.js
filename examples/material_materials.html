@@ -48,7 +48,7 @@
 		const textureLoader = new Texture2DLoader();
 
 		const texture = textureLoader.load('./resources/hardwood2_diffuse.jpg');
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 
 		const ao_texture = textureLoader.load('./resources/ao.png');
 

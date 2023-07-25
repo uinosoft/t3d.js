@@ -85,13 +85,13 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
 		gBuffer.enableMotion = true;
 
 		// gui
-		const params = { version: "WebGL " + renderer.renderPass.capabilities.version, debug: "normal" };
+		const params = { version: "WebGL " + renderer.capabilities.version, debug: "normal" };
 		const gui = new GUI();
 		gui.add(params, "version").disable();
 		gui.add(params, "debug", ['normal', 'depth', 'position', 'glossiness', 'metalness', 'albedo', 'velocity']);
@@ -107,10 +107,10 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, true);
 
 			gBuffer.renderDebug(renderer, camera, params.debug);
 		}

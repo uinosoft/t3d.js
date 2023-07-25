@@ -44,7 +44,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		// Create an geometry object.
 
@@ -68,7 +68,7 @@
 
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = renderer.capabilities.maxAnisotropy;
 
 		const material = new t3d.BasicMaterial();
 		material.diffuseMap = texture;
@@ -118,7 +118,7 @@
 		);
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
 		gui.add(cube0.position, "z", -10, 10, 1);
 
 		function loop(count) {
@@ -136,30 +136,30 @@
 			depthScene.updateRenderStates(camera);
 			depthScene.updateRenderQueue(camera, false, false);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget);
+			renderer.setRenderTarget(tempRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			renderer.renderScene(depthScene, camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+			renderer.setRenderTarget(tempRenderTarget2);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, false, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, false, true);
 		
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 		
 			copyPass.uniforms.tDiffuse = tempRenderTarget2.texture;
 			copyPass.render(renderer);
 		}
 		
-		if (renderer.renderPass.capabilities.version < 2) {
+		if (renderer.capabilities.version < 2) {
 			document.getElementById('notSupported').style.display = '';
 		} else {
 			requestAnimationFrame(loop);

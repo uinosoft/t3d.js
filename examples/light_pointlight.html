@@ -145,7 +145,7 @@
 		setLightPosition(90);
 
 		const gui = new GUI();
-		gui.add({ version: 'WebGL ' + forwardRenderer.renderPass.capabilities.version }, 'version').disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(pointLight, 'intensity', 0, 2, 0.01);
 		gui.addColor(pointLight, 'color');
 		gui.add({ angle: 90 }, 'angle', 0, 360, 0.01).onChange(setLightPosition);

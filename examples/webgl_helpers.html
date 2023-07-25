@@ -56,7 +56,7 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const cube_texture = new TextureCubeLoader().load([
 			"resources/skybox/Bridge2/posx.jpg",
@@ -147,10 +147,10 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, false);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, false);
 			renderer.renderScene(scene, camera);
 		}
 		requestAnimationFrame(loop);

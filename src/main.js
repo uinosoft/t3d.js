@@ -43,12 +43,12 @@ export { ShadowMapPass } from './render/passes/ShadowMapPass.js';
 
 export { LightData } from './render/LightData.js';
 export { PropertyMap } from './render/PropertyMap.js';
-export { Renderer } from './render/Renderer.js';
 export { RenderInfo } from './render/RenderInfo.js';
 export { RenderQueue } from './render/RenderQueue.js';
 export { RenderQueueLayer } from './render/RenderQueueLayer.js';
 export { RenderStates } from './render/RenderStates.js';
 export { SceneData } from './render/SceneData.js';
+export { ThinRenderer } from './render/ThinRenderer.js';
 
 export { Fog } from './resources/fogs/Fog.js';
 export { FogExp2 } from './resources/fogs/FogExp2.js';
@@ -117,7 +117,7 @@ export { WebGLGeometries } from './webgl/WebGLGeometries.js';
 export { WebGLProgram } from './webgl/WebGLProgram.js';
 export { WebGLPrograms } from './webgl/WebGLPrograms.js';
 export { WebGLQueries } from './webgl/WebGLQueries.js';
-export { WebGLRenderPass } from './webgl/WebGLRenderPass.js';
+export { WebGLRenderer } from './webgl/WebGLRenderer.js';
 export { WebGLState } from './webgl/WebGLState.js';
 export { WebGLTextures } from './webgl/WebGLTextures.js';
 export { WebGLRenderBuffers } from './webgl/WebGLRenderBuffers.js';

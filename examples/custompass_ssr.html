@@ -119,7 +119,7 @@
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
 		gBuffer.enableAlbedoMetalness = false;
@@ -202,17 +202,17 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget);
+			renderer.setRenderTarget(tempRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+			renderer.setRenderTarget(tempRenderTarget2);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			projection.copy(camera.projectionMatrix);
 			projectionInv.copy(camera.projectionMatrix).inverse();
@@ -220,28 +220,28 @@
 
 			ssrPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget3);
+			renderer.setRenderTarget(tempRenderTarget3);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			blurPass.uniforms["tDiffuse"] = tempRenderTarget2.texture;
 			blurPass.uniforms["direction"] = 0;
 			blurPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+			renderer.setRenderTarget(tempRenderTarget2);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			blurPass.uniforms["tDiffuse"] = tempRenderTarget3.texture;
 			blurPass.uniforms["direction"] = 1;
 			blurPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, true);
 
 			blendPass.render(renderer);
 		}

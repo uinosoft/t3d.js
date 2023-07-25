@@ -44,14 +44,14 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.renderPass.setClearColor(0.9, 0.9, 0.9, 1);
+		forwardRenderer.setClearColor(0.9, 0.9, 0.9, 1);
 
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(undefined, 50, 100);
 		scene.fog.color.setRGB(0.9, 0.9, 0.9);
 
 		const texture = new Texture2DLoader().load('./resources/logo.jpg');
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
 		const lambertMaterial = new t3d.LambertMaterial();

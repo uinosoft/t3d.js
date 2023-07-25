@@ -14,7 +14,7 @@ class SHGenerator {
 
 	static fromCubeTexture(renderer, envMap, out = new SphericalHarmonics3()) {
 		const imageWidth = 256;
-		const capabilities = renderer.renderPass.capabilities;
+		const capabilities = renderer.capabilities;
 		const isWebGL2 = capabilities.version > 1;
 
 		if (isWebGL2) {
@@ -57,8 +57,8 @@ class SHGenerator {
 		for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
 			const data = new ArrayCtor(cubeRenderTarget.width * cubeRenderTarget.height * 4);
 			cubeRenderTarget.activeCubeFace = faceIndex;
-			renderer.renderPass.setRenderTarget(cubeRenderTarget);
-			renderer.renderPass.readRenderTargetPixels(0, 0, cubeRenderTarget.width, cubeRenderTarget.height, data);
+			renderer.setRenderTarget(cubeRenderTarget);
+			renderer.readRenderTargetPixels(0, 0, cubeRenderTarget.width, cubeRenderTarget.height, data);
 			const pixelSize = 2 / imageWidth;
 
 			for (let i = 0, il = data.length; i < il; i += 4) { // RGBA assumed

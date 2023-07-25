@@ -137,7 +137,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.renderPass.setClearColor(0.9, 0.9, 0.9, 1);
+		forwardRenderer.setClearColor(0.9, 0.9, 0.9, 1);
 
 		const scene = new t3d.Scene();
 
@@ -279,7 +279,7 @@
 
 		const minFilters = ['LINEAR', 'NEAREST', 'NEAREST_MIPMAP_NEAREST', 'LINEAR_MIPMAP_LINEAR', 'LINEAR_MIPMAP_NEAREST', 'NEAREST_MIPMAP_LINEAR'];
 		const magFilters = ['LINEAR', 'NEAREST'];
-		const maxAnisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		const maxAnisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		const params = { alpha: 1, anisotropy: 1, minFilter: 'LINEAR_MIPMAP_LINEAR', magFilter: 'LINEAR', debug: false };
 		const gui = new GUI();
 		gui.add(params, 'alpha', 0, 1, 0.01).onChange(function(value) {

@@ -89,9 +89,9 @@
 
         	controller.update();
 
-        	forwardRenderer.renderPass.setRenderTarget(tempRenderTarget);
-        	forwardRenderer.renderPass.setClearColor(0, 0, 0, 0);
-        	forwardRenderer.renderPass.clear(true, true, true);
+        	forwardRenderer.setRenderTarget(tempRenderTarget);
+        	forwardRenderer.setClearColor(0, 0, 0, 0);
+        	forwardRenderer.clear(true, true, true);
         	skyPass.render(forwardRenderer);
         
         	forwardRenderer.render(scene, camera);

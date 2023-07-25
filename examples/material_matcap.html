@@ -96,7 +96,7 @@
 		controller.maxDistance = 200;
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add({ matcap: 'darkgreymetal' }, "matcap", ['collor', 'darkgreymetal']).onChange(value => {
 			root.traverse(node => {
 				if (node.material) {

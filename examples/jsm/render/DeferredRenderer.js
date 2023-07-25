@@ -1,7 +1,3 @@
-/**
- * Deferred Renderer
- */
-
 import {
 	BLEND_TYPE,
 	Matrix4,
@@ -9,14 +5,17 @@ import {
 	ShaderPostPass,
 	ShadowMapPass,
 	Vector3,
-	Renderer
+	WebGLRenderer
 } from 't3d';
 import { GBuffer } from "../GBuffer.js";
 
 var matProjViewInverse = new Matrix4();
 var eyePosition = new Vector3();
 
-class DeferredRenderer extends Renderer {
+/**
+ * Deferred WebGL Renderer
+ */
+class DeferredRenderer extends WebGLRenderer {
 
 	constructor(view, options) {
 		var defaultContextParams = {
@@ -30,7 +29,7 @@ class DeferredRenderer extends Renderer {
 
 		super(gl);
 
-		console.info("DeferredRenderer use WebGL Version: " + this.renderPass.capabilities.version);
+		console.info("DeferredRenderer use WebGL Version: " + this.capabilities.version);
 
 		this.shadowMapPass = new ShadowMapPass();
 
@@ -103,7 +102,6 @@ class DeferredRenderer extends Renderer {
 	}
 
 	render(scene, camera, renderTarget) {
-		var renderPass = this.renderPass;
 		var gBuffer = this.gBuffer;
 		var width = this.backRenderTarget.width;
 		var height = this.backRenderTarget.height;
@@ -119,10 +117,10 @@ class DeferredRenderer extends Renderer {
 
 		// Step 2: light accum
 
-		renderPass.setRenderTarget(renderTarget || this.backRenderTarget);
+		this.setRenderTarget(renderTarget || this.backRenderTarget);
 
-		renderPass.setClearColor(0, 0, 0, 0);
-		renderPass.clear(true, true, true);
+		this.setClearColor(0, 0, 0, 0);
+		this.clear(true, true, true);
 
 		matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).inverse();
 		eyePosition.copy(renderStates.camera.position);
@@ -165,7 +163,7 @@ class DeferredRenderer extends Renderer {
 				pass.uniforms["shadowMapSize"][0] = shadow.shadowMapSize[0];
 				pass.uniforms["shadowMapSize"][1] = shadow.shadowMapSize[1];
 
-				pass.uniforms["shadowMap"] = renderPass.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
+				pass.uniforms["shadowMap"] = this.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
 				pass.uniforms["shadowMatrix"].set(renderStates.lights.directionalShadowMatrix, i * 16);
 			}
 
@@ -240,7 +238,7 @@ class DeferredRenderer extends Renderer {
 				pass.uniforms["shadowMapSize"][0] = shadow.shadowMapSize[0];
 				pass.uniforms["shadowMapSize"][1] = shadow.shadowMapSize[1];
 
-				pass.uniforms["shadowMap"] = renderPass.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
+				pass.uniforms["shadowMap"] = this.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
 				pass.uniforms["shadowMatrix"].set(renderStates.lights.spotShadowMatrix, i * 16);
 			}
 

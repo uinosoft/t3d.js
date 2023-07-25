@@ -44,7 +44,7 @@
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
 		// texture.minFilter = texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		texture.wrapT = texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
@@ -67,9 +67,9 @@
 		// input
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
-		gui.add(forwardRenderer.renderPass.capabilities, "maxAnisotropy").disable();
-		gui.add(texture, "anisotropy", 1, forwardRenderer.renderPass.capabilities.maxAnisotropy, 1).onChange(() => {
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add(forwardRenderer.capabilities, "maxAnisotropy").disable();
+		gui.add(texture, "anisotropy", 1, forwardRenderer.capabilities.maxAnisotropy, 1).onChange(() => {
 			texture.version++;
 		});
 

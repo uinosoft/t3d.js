@@ -58,8 +58,8 @@
 
         const params = { enabled: true };
 
-        const renderer = new t3d.Renderer(gl);
-        renderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+        const renderer = new t3d.WebGLRenderer(gl);
+        renderer.setClearColor(0.1, 0.1, 0.1, 1);
         const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
         const scene = new t3d.Scene();
@@ -172,14 +172,14 @@
         	beforeRender: renderable => {
         		if (renderable.object.userData.isSphere) {
         			if (params.enabled && !queryInProgress) {
-        				renderer.renderPass.beginQuery(occlusionQuery, t3d.QUERY_TYPE.ANY_SAMPLES_PASSED)
+        				renderer.beginQuery(occlusionQuery, t3d.QUERY_TYPE.ANY_SAMPLES_PASSED)
         			}
         		}
         	},
         	afterRender: renderable => {
         		if (renderable.object.userData.isSphere) {
         			if (params.enabled && !queryInProgress) {
-        				renderer.renderPass.endQuery(occlusionQuery);
+        				renderer.endQuery(occlusionQuery);
         				queryInProgress = true;
         			}
         		}
@@ -198,16 +198,16 @@
         	const renderStates = scene.updateRenderStates(camera);
         	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 
-        	renderer.renderPass.setRenderTarget(backRenderTarget);
-        	renderer.renderPass.clear(true, true, false);
+        	renderer.setRenderTarget(backRenderTarget);
+        	renderer.clear(true, true, false);
 
         	renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
         	renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
 
         	if (params.enabled) {
         		if (queryInProgress) {
-        			if (renderer.renderPass.isQueryResultAvailable(occlusionQuery)) {
-        				sphereIsOccluded = !renderer.renderPass.getQueryResult(occlusionQuery);
+        			if (renderer.isQueryResultAvailable(occlusionQuery)) {
+        				sphereIsOccluded = !renderer.getQueryResult(occlusionQuery);
         				queryInProgress = false;
         			}
         		}

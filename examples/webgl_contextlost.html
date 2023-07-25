@@ -100,9 +100,9 @@
 		controller.target.set(0, 26, 0);
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 
-		const loseContextExtension = forwardRenderer.renderPass.capabilities.getExtension('WEBGL_lose_context');
+		const loseContextExtension = forwardRenderer.capabilities.getExtension('WEBGL_lose_context');
 
 		if (!loseContextExtension) {
 			document.getElementById('notSupported').style.display = '';
@@ -131,7 +131,7 @@
 
 		const onContextRestored = function () {
 			console.log('Context restored');
-			forwardRenderer.renderPass.init();
+			forwardRenderer.init();
 			isContextLost = false;
 		};
 

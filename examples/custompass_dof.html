@@ -116,7 +116,7 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
 		gBuffer.enableAlbedoMetalness = false;
@@ -178,17 +178,17 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget);
+			renderer.setRenderTarget(tempRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, true);
 
 			dofPass.uniforms["tColor"] = tempRenderTarget.texture;
 			dofPass.uniforms["tDepth"] = gBuffer.getDepthTexture();

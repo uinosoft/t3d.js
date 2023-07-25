@@ -85,7 +85,7 @@
 
 		const texture = new t3d.Texture2D();
 		texture.image = bgCanvas;
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
 		const bg_geometry = new t3d.BoxGeometry(50, 50, 50);

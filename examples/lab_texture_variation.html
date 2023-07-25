@@ -40,7 +40,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.renderPass.setClearColor(0.1, 0.8, 0.9, 1);
+		forwardRenderer.setClearColor(0.1, 0.8, 0.9, 1);
 
 		const scene = new t3d.Scene();
 
@@ -48,7 +48,7 @@
 
 		const grassTexture = loader.load('./resources/grass.jpg');
 		grassTexture.wrapT = grassTexture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
-		grassTexture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		grassTexture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		grassTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const randomTexture = loader.load('./resources/noise.png');

@@ -135,7 +135,7 @@
 		}
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add(instancedGeometry, 'instanceCount', 0, instances, 1);
 
 		let lastTime = 0;

@@ -98,7 +98,7 @@
 
 		// gui
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add(shaderMaterial.uniforms, 'uAlphaCorrection', 0, 0.1, 0.001);
 
 		function loop(count) {

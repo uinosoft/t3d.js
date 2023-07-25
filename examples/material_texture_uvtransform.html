@@ -42,7 +42,7 @@
 		const scene = new t3d.Scene();
 
 		const texture = new Texture2DLoader().load('./resources/UV_Grid_Sm.jpg');
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
 		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);

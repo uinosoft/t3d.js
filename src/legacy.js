@@ -7,7 +7,7 @@ import { Texture3D } from './resources/textures/Texture3D.js';
 import { TextureCube } from './resources/textures/TextureCube.js';
 import { Material } from './resources/materials/Material.js';
 import { Vector3 } from './math/Vector3.js';
-import { WebGLRenderPass } from './webgl/WebGLRenderPass.js';
+import { WebGLRenderer } from './webgl/WebGLRenderer.js';
 import { WebGLVertexArrayBindings } from './webgl/WebGLVertexArrayBindings.js';
 import { WebGLGeometries } from './webgl/WebGLGeometries.js';
 import { Camera } from './scenes/Camera.js';
@@ -97,56 +97,72 @@ Object.defineProperties(Material.prototype, {
 	}
 });
 
-Object.defineProperties(WebGLRenderPass.prototype, {
+Object.defineProperties(WebGLRenderer.prototype, {
 	textures: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderPass: .textures has been deprecated. All methods are moved to WebGLRenderPass.");
+			console.warn("WebGLRenderer: .textures has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._textures;
 		}
 	},
 	renderBuffers: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderPass: .renderBuffers has been deprecated. All methods are moved to WebGLRenderPass.");
+			console.warn("WebGLRenderer: .renderBuffers has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._renderBuffers;
 		}
 	},
 	renderTarget: {
 		configurable: true,
 		get: function() {
-			// console.warn("WebGLRenderPass: .renderTarget has been deprecated. All methods are moved to WebGLRenderPass.");
+			// console.warn("WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._renderTargets;
 		}
 	},
 	state: {
 		configurable: true,
 		get: function() {
-			// console.warn("WebGLRenderPass: .state has been deprecated. All methods are moved to WebGLRenderPass.");
+			// console.warn("WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._state;
 		}
 	},
 	vertexArrayBindings: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderPass: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderPass.");
+			console.warn("WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._vertexArrayBindings;
 		}
 	}
 });
 
 // since 0.1.6
-WebGLRenderPass.prototype.render = function(renderable, renderStates, options) {
-	// console.warn('WebGLRenderPass: .render() has been renamed to .renderRenderableItem().');
+WebGLRenderer.prototype.render = function(renderable, renderStates, options) {
+	// console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
 	this.renderRenderableItem(renderable, renderStates, options);
 }
 
+// since 0.1.6
+// WebGLRenderPass is renamed to WebGLRenderer.
+export const WebGLRenderPass = WebGLRenderer;
+
+// Renderer, as an alias of WebGLRenderer, will exist for a long time.
+// When the compatibility of renderPass is removed, it can be moved to main.js
+export class Renderer extends WebGLRenderer {
+
+	// since 0.1.6
+	// renderer.renderPass is deprecated, use WebGLRenderer instead.
+	get renderPass() {
+		return this;
+	}
+
+}
+
 WebGLVertexArrayBindings.prototype.resetBinding = function() {
-	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderPass.resetVertexArrayBindings() instead.");
+	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderer.resetVertexArrayBindings() instead.");
 }
 
 WebGLGeometries.prototype.setBufferExternal = function(buffer, webglBuffer) {
-	console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderPass.setBufferExternal instead.");
+	console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderer.setBufferExternal instead.");
 	this._buffers.setBufferExternal(buffer, webglBuffer);
 }
 

@@ -44,9 +44,9 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
-		const capabilities = renderer.renderPass.capabilities;
+		const capabilities = renderer.capabilities;
 
 		if (capabilities.version < 2 && !capabilities.getExtension('EXT_frag_depth')) {
 			document.getElementById('notSupported').style.display = '';
@@ -63,7 +63,7 @@
 		const textureLoader = new Texture2DLoader();
 		const texture = textureLoader.load('./resources/logo.jpg');
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = renderer.capabilities.maxAnisotropy;
 
 		const boxGeometry = new t3d.BoxGeometry(1, 1, 1);
 		const boxMaterial = new t3d.PBRMaterial();
@@ -163,10 +163,10 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 1);
-			renderer.renderPass.clear(true, true, false);
+			renderer.setClearColor(0, 0, 0, 1);
+			renderer.clear(true, true, false);
 			renderer.renderScene(scene, camera);
 		}
 		requestAnimationFrame(loop);

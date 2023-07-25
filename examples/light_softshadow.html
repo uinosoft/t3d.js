@@ -69,7 +69,7 @@
 		lambert.dithering = true;
 		const plane = new t3d.Mesh(plane_geometry, lambert);
 		plane.receiveShadow = true;
-		plane.shadowType = forwardRenderer.renderPass.capabilities.version >= 2 ? t3d.SHADOW_TYPE.PCSS32_SOFT : t3d.SHADOW_TYPE.POISSON_SOFT;
+		plane.shadowType = forwardRenderer.capabilities.version >= 2 ? t3d.SHADOW_TYPE.PCSS32_SOFT : t3d.SHADOW_TYPE.POISSON_SOFT;
 		scene.add(plane);
 
 		const sphere_geometry = new t3d.SphereGeometry(3, 10, 10);
@@ -106,7 +106,7 @@
 		controller.target.set(0, 20, 0);
 
 		const gui = new GUI();
-		gui.add({ version: 'WebGL ' + forwardRenderer.renderPass.capabilities.version }, 'version').disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(scene, 'disableShadowSampler');
 		const shadowTypes = ['hard', 'poisson_soft', 'pcf3_soft', 'pcf5_soft', 'pcss16_soft', 'pcss32_soft', 'pcss64_soft'];
 		gui.add(plane, 'shadowType', shadowTypes);

@@ -94,7 +94,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
@@ -136,7 +136,7 @@
 		// gui
 		const bloomParams = { enable: true, intensity: 0.8, kernelSize: 13 };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
 		gui.add(bloomParams, "enable");
 		gui.add(highLightPass.uniforms, "luminosityThreshold", 0, 1, 0.01);
 		gui.add(blurXPass.uniforms, "blurSize", 0, 10, 0.01);
@@ -158,38 +158,38 @@
 
 			shadowMapPass.render(renderer, scene);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(tempRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget1);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(tempRenderTarget1);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			highLightPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget2);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(tempRenderTarget2);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			blurXPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget1);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(tempRenderTarget1);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			blurYPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			copyPass.material.transparent = false;
 			copyPass.uniforms.tDiffuse = tempRenderTarget.texture;
 			copyPass.uniforms.opacity = 1;
 			copyPass.render(renderer);
 
 			if (bloomParams.enable) {
-				renderer.renderPass.setRenderTarget(backRenderTarget);
-				// renderer.renderPass.setClearColor(0, 0, 0, 0);
-				// renderer.renderPass.clear(true, true, true);
+				renderer.setRenderTarget(backRenderTarget);
+				// renderer.setClearColor(0, 0, 0, 0);
+				// renderer.clear(true, true, true);
 				copyPass.material.transparent = true;
 				copyPass.material.blending = t3d.BLEND_TYPE.ADD;
 				copyPass.uniforms.tDiffuse = tempRenderTarget1.texture;

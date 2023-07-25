@@ -40,7 +40,7 @@
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
 
@@ -99,17 +99,17 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget);
+			renderer.setRenderTarget(tempRenderTarget);
 
-			renderer.renderPass.setClearColor(0.2, 0.2, 0.2, 1);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0.2, 0.2, 0.2, 1);
+			renderer.clear(true, true, true);
 
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			depthLinearPass.render(renderer, scene);
 		}

@@ -43,7 +43,7 @@
 
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 
 		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
 		const material = new t3d.BasicMaterial();

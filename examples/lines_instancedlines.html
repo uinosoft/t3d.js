@@ -48,7 +48,7 @@
 		scene.fog = new t3d.Fog(0x000000, 150, 500);
 
 		const texture = new Texture2DLoader().load('./resources/platte.png');
-		texture.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
 		const params = { lineWidth: 5, cornerThreshold: 0.3 };

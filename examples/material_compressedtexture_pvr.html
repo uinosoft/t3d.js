@@ -51,7 +51,7 @@
         camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
         scene.add(camera);
 
-        const capabilities = forwardRenderer.renderPass.capabilities;
+        const capabilities = forwardRenderer.capabilities;
         if ((!capabilities.getExtension('WEBGL_compressed_texture_pvrtc'))) {
         	document.getElementById('notSupported').style.display = '';
         	console.error('Not supported pvr!');
@@ -227,7 +227,7 @@
         meshes.push(cube8);
 
         const gui = new GUI();
-        gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+        gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 
         function loop(count) {
         	requestAnimationFrame(loop);

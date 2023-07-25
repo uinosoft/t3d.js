@@ -41,8 +41,8 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
-		const renderer = new t3d.Renderer(gl);
-		renderer.renderPass.setClearColor(0.6, 0.6, 0.6, 1);
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(0.6, 0.6, 0.6, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const scene = new t3d.Scene();
@@ -146,7 +146,7 @@
 			`
 		}
 
-		const supportVertexTextures = renderer.renderPass.capabilities.maxVertexTextures > 0;
+		const supportVertexTextures = renderer.capabilities.maxVertexTextures > 0;
 
 		if (supportVertexTextures) {
 			new Texture2DLoader().load('./resources/platte.png', function(texture) {
@@ -184,8 +184,8 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 		
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, true);
 			renderer.renderScene(scene, camera);
 		}
 

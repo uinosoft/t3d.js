@@ -90,7 +90,7 @@
 		const loader = new Texture2DLoader();
 
 		const diff_tex = loader.load('./resources/earth4.jpg');
-		// diff_tex.anisotropy = forwardRenderer.renderPass.capabilities.maxAnisotropy;
+		// diff_tex.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		const bump_tex = loader.load('./resources/earth_bump.jpg');
 		const spec_tex = loader.load('./resources/earth_spec.jpg');
 		const cloud_tex = loader.load('./resources/earth_cloud.png');

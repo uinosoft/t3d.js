@@ -119,8 +119,8 @@
 
 			mask.position.z = 30 * Math.cos(count / 1000);
 
-			forwardRenderer.renderPass.setClearColor(0, 0, 0, 0);
-			forwardRenderer.renderPass.clear(true, true, true);
+			forwardRenderer.setClearColor(0, 0, 0, 0);
+			forwardRenderer.clear(true, true, true);
 
 			directionalLight.color.setHex(0xffffff);
 			directionalLightHelper.update();
@@ -133,10 +133,10 @@
 			sphere.visible = true;
 
 			forwardRenderer.render(scene, camera);
-			forwardRenderer.renderPass.clear(false, true, false);
+			forwardRenderer.clear(false, true, false);
 
 			forwardRenderer.render(stencilScene, camera);
-			forwardRenderer.renderPass.clear(false, true, false);
+			forwardRenderer.clear(false, true, false);
 
 			directionalLight.color.setHex(0xffaaaa);
 			directionalLightHelper.visible = false;

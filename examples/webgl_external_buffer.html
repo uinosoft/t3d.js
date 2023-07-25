@@ -39,7 +39,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+		forwardRenderer.setClearColor(0.1, 0.1, 0.1, 1);
 
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(0x050505, 2000, 3500);
@@ -66,7 +66,7 @@
 			array2.push(z * 0.3, x * 0.3, y * 0.3);
 		}
 
-		const gl = forwardRenderer.renderPass.gl;
+		const gl = forwardRenderer.gl;
 
 		const glBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
@@ -99,7 +99,7 @@
 				geometry.version++; // refresh vao
 			},
 			setExternalBuffer: function() {
-				forwardRenderer.renderPass.setBufferExternal(buffer, glBuffer);
+				forwardRenderer.setBufferExternal(buffer, glBuffer);
 				geometry.version++; // refresh vao
 			}
 		};

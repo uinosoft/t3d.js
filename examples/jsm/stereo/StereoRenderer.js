@@ -25,15 +25,15 @@ class StereoRenderer extends ForwardRenderer {
 			if (renderTarget === undefined || renderTarget === null) {
 				renderTarget = this.backRenderTarget;
 			}
-			this.renderPass.setRenderTarget(renderTarget);
+			this.setRenderTarget(renderTarget);
 		} else {
 			// TODO remove this
-			this.renderPass.gl.bindFramebuffer(this.renderPass.gl.FRAMEBUFFER, renderTarget);
-			this.renderPass._state.currentRenderTarget = null;
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, renderTarget);
+			this._state.currentRenderTarget = null;
 		}
 
 		if (this.autoClear || forceClear) {
-			this.renderPass.clear(true, true, true);
+			this.clear(true, true, true);
 		}
 
 		this.renderScene(scene, cameraL);
@@ -43,7 +43,7 @@ class StereoRenderer extends ForwardRenderer {
 		this.renderScene(scene, cameraR);
 
 		if (!!renderTarget.texture) {
-			this.renderPass.updateRenderTargetMipmap(renderTarget);
+			this.updateRenderTargetMipmap(renderTarget);
 		}
 	}
 

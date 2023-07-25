@@ -42,8 +42,8 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
-		const maxSamples = renderer.renderPass.capabilities.maxSamples;
+		const renderer = new t3d.WebGLRenderer(gl);
+		const maxSamples = renderer.capabilities.maxSamples;
 		const multipleSampling = maxSamples > 1 ? Math.min(4, maxSamples) : 0;
 
 		// Create scene
@@ -205,7 +205,7 @@
 
 		const texture = textureLoader.load('./resources/logo.jpg');
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = renderer.capabilities.maxAnisotropy;
 
 		for (let i = 0; i < 3; i++) {
 			const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
@@ -319,7 +319,7 @@
 		const params = { position: 0.25, color: [255, 255, 255], scale: 1, occlusionScale: 0.02, debug: false };
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
 		gui.add(params, "position", 0, 1, 0.01).onChange(value => {
 			lensflareGroup.position.x = -10 + 20 * value;
 			lensflareGroup.position.y = Math.sin(value * Math.PI) * 5;
@@ -374,26 +374,26 @@
 
 			// Render main scene, write depth buffer.
 
-			renderer.renderPass.setRenderTarget(sceneRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(sceneRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			renderLayer(0);
 
 			// Render lens flare occlusion mesh, test depth.
 
-			renderer.renderPass.setRenderTarget(occlusionRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, false, true);
+			renderer.setRenderTarget(occlusionRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, false, true);
 			renderLayer(1);
 
 			// Render and Clip occlusion map.
 
-			renderer.renderPass.setRenderTarget(resultRenderTarget);
-			renderer.renderPass.blitRenderTarget(occlusionRenderTarget, resultRenderTarget, true, true, true);
+			renderer.setRenderTarget(resultRenderTarget);
+			renderer.blitRenderTarget(occlusionRenderTarget, resultRenderTarget, true, true, true);
 
-			renderer.renderPass.setRenderTarget(clippedOcclusionRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(clippedOcclusionRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			clipPass.uniforms.tDiffuse = resultRenderTarget.texture;
 			clipPass.uniforms.clipRect[0] = ((screenPosition.x - params.occlusionScale * height / width)  * 0.5 + 0.5);
 			clipPass.uniforms.clipRect[1] = ((screenPosition.y - params.occlusionScale) * 0.5 + 0.5);
@@ -408,29 +408,29 @@
 
 			// Render lens flares overlay resultRenderTarget
 
-			renderer.renderPass.setRenderTarget(sceneRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(false, true, true);
+			renderer.setRenderTarget(sceneRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(false, true, true);
 			renderLayer(2);
 
 			// Blit color buffer to resultRenderTarget
 
-			renderer.renderPass.setRenderTarget(resultRenderTarget);
-			renderer.renderPass.blitRenderTarget(sceneRenderTarget, resultRenderTarget);
+			renderer.setRenderTarget(resultRenderTarget);
+			renderer.blitRenderTarget(sceneRenderTarget, resultRenderTarget);
 
 			// Copy resultRenderTarget to screen
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 			copyPass.uniforms.tDiffuse = resultRenderTarget.texture;
 			copyPass.render(renderer);
 
 			if (params.debug) {
 				// Copy clipped occlusion map to left bottom corner (1/25) of the screen
-				renderer.renderPass.setRenderTarget(backRenderTarget);
-				renderer.renderPass.setClearColor(0, 0, 0, 0);
-				renderer.renderPass.clear(false, true, true);
+				renderer.setRenderTarget(backRenderTarget);
+				renderer.setClearColor(0, 0, 0, 0);
+				renderer.clear(false, true, true);
 				copyPass.uniforms.tDiffuse = clippedOcclusionRenderTarget.texture;
 				copyPass.renderStates.camera.rect.set(0, 0, 0.2, 0.2);
 				copyPass.render(renderer);

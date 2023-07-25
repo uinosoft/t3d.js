@@ -91,7 +91,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const shadowMapPass = new t3d.ShadowMapPass();
 		const colorAdjustPass = new t3d.ShaderPostPass(ColorAdjustShader);
@@ -109,7 +109,7 @@
 
 		// gui
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
 		gui.add(colorAdjustPass.uniforms, "brightness", 0, 0.5, 0.01);
 		gui.add(colorAdjustPass.uniforms, "contrast", 1, 1.5, 0.01);
 		gui.add(colorAdjustPass.uniforms, "exposure", 0, 1, 0.1);
@@ -135,31 +135,31 @@
 
 			shadowMapPass.render(renderer, scene);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget1);
+			renderer.setRenderTarget(tempRenderTarget1);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			renderer.renderScene(scene, camera);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget2);
+			renderer.setRenderTarget(tempRenderTarget2);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			colorAdjustPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(tempRenderTarget1);
+			renderer.setRenderTarget(tempRenderTarget1);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			filmPass.render(renderer);
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 		
 			fxaaPass.render(renderer);
 		}

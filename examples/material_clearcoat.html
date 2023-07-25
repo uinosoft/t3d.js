@@ -51,7 +51,7 @@
 
         const textureLoader = new Texture2DLoader();
 
-        const capabilities = forwardRenderer.renderPass.capabilities;
+        const capabilities = forwardRenderer.capabilities;
         if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
             !!capabilities.getExtension('OES_texture_float_linear')) {
         	rgbeLoader.type = t3d.PIXEL_TYPE.FLOAT;

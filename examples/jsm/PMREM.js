@@ -24,7 +24,7 @@ import { ReflectionProbe } from './probes/ReflectionProbe.js';
 class PMREM {
 
 	/**
-	 * @param {Renderer} renderer
+	 * @param {ThinRenderer} renderer
 	 * @param {TextureCube|Texture2D} envMap
 	 * @param {Object} [textureOpts]
 	 * @param {Number} [textureOpts.sampleSize=1024]
@@ -47,7 +47,7 @@ class PMREM {
 		const mipmapNum = Math.floor(Math.log2(cubeSize));
 		cubeSize = Math.pow(2, mipmapNum);
 
-		const capabilities = renderer.renderPass.capabilities;
+		const capabilities = renderer.capabilities;
 		const isWebGL2 = capabilities.version > 1;
 
 		if (isWebGL2) {
@@ -117,8 +117,8 @@ class PMREM {
 			for (let j = 0; j < 6; j++) {
 				const pixels = new ArrayCtor(target.width * target.height * 4);
 				target.activeCubeFace = j;
-				renderer.renderPass.setRenderTarget(target);
-				renderer.renderPass.readRenderTargetPixels(0, 0, target.width, target.height, pixels);
+				renderer.setRenderTarget(target);
+				renderer.readRenderTargetPixels(0, 0, target.width, target.height, pixels);
 				if (i === 0) {
 					prefilteredCubeMap.images[j] = { width: target.width, height: target.height, data: pixels };
 				}

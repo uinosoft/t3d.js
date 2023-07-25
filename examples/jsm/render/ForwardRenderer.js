@@ -1,14 +1,14 @@
 import {
 	RenderTargetBack,
 	ShadowMapPass,
-	Renderer
+	WebGLRenderer
 } from 't3d';
 
 /**
- * A simple Forward Renderer.
+ * A simple Forward WebGL Renderer.
  * @memberof t3d
  */
-class ForwardRenderer extends Renderer {
+class ForwardRenderer extends WebGLRenderer {
 
 	/**
 	 * @param {HTMLCanvasElement} view - The canvas elements.
@@ -26,7 +26,7 @@ class ForwardRenderer extends Renderer {
 
 		super(gl);
 
-		console.info("ForwardRenderer use WebGL Version: " + this.renderPass.capabilities.version);
+		console.info("ForwardRenderer use WebGL Version: " + this.capabilities.version);
 
 		this.backRenderTarget = new RenderTargetBack(view);
 
@@ -98,16 +98,16 @@ class ForwardRenderer extends Renderer {
 		if (renderTarget === undefined) {
 			renderTarget = this.backRenderTarget;
 		}
-		this.renderPass.setRenderTarget(renderTarget);
+		this.setRenderTarget(renderTarget);
 
 		if (this.autoClear || forceClear) {
-			this.renderPass.clear(true, true, true);
+			this.clear(true, true, true);
 		}
 
 		this.renderScene(scene, camera);
 
 		if (!!renderTarget.texture) {
-			this.renderPass.updateRenderTargetMipmap(renderTarget);
+			this.updateRenderTargetMipmap(renderTarget);
 		}
 	}
 

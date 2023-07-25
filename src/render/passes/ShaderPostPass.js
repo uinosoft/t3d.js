@@ -50,7 +50,7 @@ class ShaderPostPass {
 
 	/**
 	 * Render the post pass.
-	 * @param {t3d.Renderer} renderer
+	 * @param {t3d.ThinRenderer} renderer
 	 */
 	render(renderer) {
 		renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);

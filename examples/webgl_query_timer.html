@@ -45,11 +45,11 @@
         const contextParams = { antialias: true, alpha: false };
         const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
 
-        const renderer = new t3d.Renderer(gl);
-        renderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+        const renderer = new t3d.WebGLRenderer(gl);
+        renderer.setClearColor(0.1, 0.1, 0.1, 1);
         const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-        if (!renderer.renderPass.capabilities.timerQuery) {
+        if (!renderer.capabilities.timerQuery) {
         	document.getElementById('notSupported').style.display = '';
         }
 
@@ -99,7 +99,7 @@
 
         const gui = new GUI();
 
-        const capabilities = renderer.renderPass.capabilities;
+        const capabilities = renderer.capabilities;
         gui.add({ version: "WebGL " + capabilities.version }, "version").disable();
         gui.add(capabilities, 'canUseTimestamp').disable();
 
@@ -118,24 +118,24 @@
         	const renderStates = scene.updateRenderStates(camera);
         	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 
-        	renderer.renderPass.setRenderTarget(backRenderTarget);
-        	renderer.renderPass.clear(true, true, false);
+        	renderer.setRenderTarget(backRenderTarget);
+        	renderer.clear(true, true, false);
 
         	if (!queryInProgress) {
-        		renderer.renderPass.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);
+        		renderer.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);
         	}
 
         	renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
         	renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
 
         	if (!queryInProgress) {
-        		renderer.renderPass.endQuery(timerElapsedQuery);
+        		renderer.endQuery(timerElapsedQuery);
         		queryInProgress = true;
         	}
 
         	if (queryInProgress) {
-        		if (renderer.renderPass.isQueryResultAvailable(timerElapsedQuery)) {
-        			timer = renderer.renderPass.getQueryResult(timerElapsedQuery);
+        		if (renderer.isQueryResultAvailable(timerElapsedQuery)) {
+        			timer = renderer.getQueryResult(timerElapsedQuery);
         			queryInProgress = false;
         		}
         	}

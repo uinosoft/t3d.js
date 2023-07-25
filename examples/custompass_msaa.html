@@ -43,7 +43,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
 
@@ -52,7 +52,7 @@
 
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
 		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = renderer.capabilities.maxAnisotropy;
 
 		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
 		const material = new t3d.BasicMaterial();
@@ -103,12 +103,12 @@
 			return renderTargets[value];
 		}
 
-		const params = { "msaa": true, "samplers": Math.min(5, renderer.renderPass.capabilities.maxSamples) };
+		const params = { "msaa": true, "samplers": Math.min(5, renderer.capabilities.maxSamples) };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.renderPass.capabilities.version }, "version").disable();
-		gui.add(renderer.renderPass.capabilities, "maxSamples").disable();
+		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
+		gui.add(renderer.capabilities, "maxSamples").disable();
 		gui.add(params, "msaa");
-		gui.add(params, "samplers", 1, renderer.renderPass.capabilities.maxSamples, 1);
+		gui.add(params, "samplers", 1, renderer.capabilities.maxSamples, 1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -120,26 +120,26 @@
 			scene.updateRenderQueue(camera);
 
 			if (params.msaa) {
-				renderer.renderPass.setRenderTarget(getMultipleSamplingRenderTarget(params.samplers));
+				renderer.setRenderTarget(getMultipleSamplingRenderTarget(params.samplers));
 
-				renderer.renderPass.setClearColor(0, 0, 0, 0);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 0);
+				renderer.clear(true, true, true);
 
 				renderer.renderScene(scene, camera);
 
-				renderer.renderPass.setRenderTarget(tempRenderTarget);
+				renderer.setRenderTarget(tempRenderTarget);
 
-				if (renderer.renderPass.capabilities.version < 2) {
+				if (renderer.capabilities.version < 2) {
 					document.getElementById('notSupported').style.display = '';
 				} else {
-					renderer.renderPass.blitRenderTarget(getMultipleSamplingRenderTarget(params.samplers), tempRenderTarget, true, true, false);
+					renderer.blitRenderTarget(getMultipleSamplingRenderTarget(params.samplers), tempRenderTarget, true, true, false);
 				}
 			}
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			if (params.msaa) {
 				copyPass.uniforms.tDiffuse = tempRenderTarget.texture;

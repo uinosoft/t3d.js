@@ -157,10 +157,10 @@ class Water extends Mesh {
 			scene.updateRenderStates(mirrorCamera, false);
 			scene.updateRenderQueue(mirrorCamera, false, false);
 
-			renderer.renderPass.setRenderTarget(renderTarget);
+			renderer.setRenderTarget(renderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 
 			renderer.renderScene(scene, mirrorCamera);
 

@@ -47,7 +47,7 @@
 
         const contextParams = { antialias: true, alpha: false };
         const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-        const renderer = new t3d.Renderer(gl);
+        const renderer = new t3d.WebGLRenderer(gl);
 
         // Create scene.
         const scene = new t3d.Scene();
@@ -133,8 +133,8 @@
         		timer = 0;
         	}
         
-        	renderer.renderPass.setRenderTarget(pickBuffer._rt);
-        	renderer.renderPass.readRenderTargetPixels(e.clientX, height - e.clientY, 1, 1, pixels);
+        	renderer.setRenderTarget(pickBuffer._rt);
+        	renderer.readRenderTargetPixels(e.clientX, height - e.clientY, 1, 1, pixels);
 
         	if (pixels[2] < 0.001) {
         		return;
@@ -178,15 +178,15 @@
         	scene.updateRenderStates(camera);
         	scene.updateRenderQueue(camera);
         
-        	renderer.renderPass.setRenderTarget(backRenderTarget);
-        	renderer.renderPass.setClearColor(0, 0, 0, 0);
-        	renderer.renderPass.clear(true, true, true);
+        	renderer.setRenderTarget(backRenderTarget);
+        	renderer.setClearColor(0, 0, 0, 0);
+        	renderer.clear(true, true, true);
         	renderer.renderScene(scene, camera);
         
         	stats.end();
         }
 
-        if (renderer.renderPass.capabilities.version < 2) {
+        if (renderer.capabilities.version < 2) {
         	document.getElementById('notSupported').style.display = '';
         } else {
         	requestAnimationFrame(loop);

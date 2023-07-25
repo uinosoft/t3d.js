@@ -93,7 +93,7 @@
 		controller.target.set(0, 26, 0);
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
 		gui.add(hemisphereLight, "intensity", 0, 2, 0.01);
 		gui.addColor(hemisphereLight, "color").name('skyColor').onChange(function() {
 			hemisphereLightHelper.update();

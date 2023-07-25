@@ -50,7 +50,7 @@
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-		const renderer = new t3d.Renderer(gl);
+		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
 		scene.disableShadowSampler = true;
@@ -58,7 +58,7 @@
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg', function() {
 			sceneChange = true;
 		});
-		texture.anisotropy = renderer.renderPass.capabilities.maxAnisotropy;
+		texture.anisotropy = renderer.capabilities.maxAnisotropy;
 		texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
@@ -179,10 +179,10 @@
 
 				gBuffer.update(renderer, scene, camera);
 
-				renderer.renderPass.setRenderTarget(backRenderTarget);
+				renderer.setRenderTarget(backRenderTarget);
 
-				renderer.renderPass.setClearColor(0, 0, 0, 1);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0, 0, 0, 1);
+				renderer.clear(true, true, true);
 
 				gBuffer.renderDebug(renderer, camera, 'velocity');
 
@@ -196,10 +196,10 @@
 
 				shadowMapPass.render(renderer, scene);
 
-				renderer.renderPass.setRenderTarget(backRenderTarget);
+				renderer.setRenderTarget(backRenderTarget);
 
-				renderer.renderPass.setClearColor(0.3, 0.3, 0.3, 1);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0.3, 0.3, 0.3, 1);
+				renderer.clear(true, true, true);
 		
 				renderer.renderScene(scene, camera);
 				return;
@@ -226,10 +226,10 @@
 					gBuffer.update(renderer, scene, camera);
 				}
 
-				renderer.renderPass.setRenderTarget(tempRenderTarget);
+				renderer.setRenderTarget(tempRenderTarget);
 
-				renderer.renderPass.setClearColor(0.3, 0.3, 0.3, 1);
-				renderer.renderPass.clear(true, true, true);
+				renderer.setClearColor(0.3, 0.3, 0.3, 1);
+				renderer.clear(true, true, true);
 
 				if (params.dynamic) {
 					if (superSampling.finished()) {
@@ -252,10 +252,10 @@
 
 			copyPass.uniforms["tDiffuse"] = tex;
 
-			renderer.renderPass.setRenderTarget(backRenderTarget);
+			renderer.setRenderTarget(backRenderTarget);
 
-			renderer.renderPass.setClearColor(0, 0, 0, 0);
-			renderer.renderPass.clear(true, true, true);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
 		
 			copyPass.material.transparent = true;
 			copyPass.render(renderer);

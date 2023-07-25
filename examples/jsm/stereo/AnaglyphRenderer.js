@@ -72,26 +72,26 @@ class AnaglyphRenderer extends ForwardRenderer {
 			this.shadowNeedsUpdate = false;
 		}
 
-		this.renderPass.setRenderTarget(this._renderTargetL);
-		this.renderPass.clear(true, true, true);
+		this.setRenderTarget(this._renderTargetL);
+		this.clear(true, true, true);
 		this.renderScene(scene, cameraL);
 
 		scene.updateRenderStates(cameraR, false);
 		scene.updateRenderQueue(cameraR, false, false);
 
-		this.renderPass.setRenderTarget(this._renderTargetR);
-		this.renderPass.clear(true, true, true);
+		this.setRenderTarget(this._renderTargetR);
+		this.clear(true, true, true);
 		this.renderScene(scene, cameraR);
 
 		if (!!this._renderTargetL.texture) {
-			this.renderPass.updateRenderTargetMipmap(this._renderTargetL);
+			this.updateRenderTargetMipmap(this._renderTargetL);
 		}
 		if (!!this._renderTargetR.texture) {
-			this.renderPass.updateRenderTargetMipmap(this._renderTargetR);
+			this.updateRenderTargetMipmap(this._renderTargetR);
 		}
 
-		this.renderPass.setRenderTarget(this.backRenderTarget);
-		this.renderPass.clear(true, true, true);
+		this.setRenderTarget(this.backRenderTarget);
+		this.clear(true, true, true);
 		this._shaderPostPass.render(this);
 	}
 

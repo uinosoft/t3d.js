@@ -141,7 +141,7 @@
 
 		const params = { fxaa: true };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + deferredRenderer.renderPass.capabilities.version }, "version").disable();
+		gui.add({ version: "WebGL " + deferredRenderer.capabilities.version }, "version").disable();
 		gui.add(params, "fxaa");
 
 		function loop(count) {
@@ -155,7 +155,7 @@
 
 			if (params.fxaa) {
 				deferredRenderer.render(scene, camera, tempRenderTarget);
-				deferredRenderer.renderPass.setRenderTarget(deferredRenderer.backRenderTarget);
+				deferredRenderer.setRenderTarget(deferredRenderer.backRenderTarget);
 				fxaaPass.render(deferredRenderer);
 			} else {
 				deferredRenderer.render(scene, camera);

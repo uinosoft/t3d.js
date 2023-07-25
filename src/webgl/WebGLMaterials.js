@@ -33,7 +33,7 @@ class WebGLMaterials extends PropertyMap {
 			material.addEventListener('dispose', this._onMaterialDispose);
 		}
 
-		// Set program in render pass
+		// Set program in renderer
 
 		return materialProperties;
 	}

@@ -42,8 +42,8 @@
         	antialias: true
         });
 
-        const renderer = new t3d.Renderer(gl);
-        renderer.renderPass.setClearColor(0.1, 0.1, 0.1, 1);
+        const renderer = new t3d.WebGLRenderer(gl);
+        renderer.setClearColor(0.1, 0.1, 0.1, 1);
         const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
         const scene = new t3d.Scene();
@@ -109,8 +109,8 @@
         	const renderStates = scene.updateRenderStates(camera);
         	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 
-        	renderer.renderPass.setRenderTarget(backRenderTarget);
-        	renderer.renderPass.clear(true, true, false);
+        	renderer.setRenderTarget(backRenderTarget);
+        	renderer.clear(true, true, false);
 
         	renderInfo.reset();
 
