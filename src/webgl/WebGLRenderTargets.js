@@ -1,11 +1,11 @@
 import { ATTACHMENT, TEXTURE_FILTER } from '../const.js';
 import { isPowerOfTwo } from '../base.js';
-import { WebGLProperties } from './WebGLProperties.js';
+import { PropertyMap } from '../render/PropertyMap.js';
 
-class WebGLRenderTargets extends WebGLProperties {
+class WebGLRenderTargets extends PropertyMap {
 
 	constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._state = state;

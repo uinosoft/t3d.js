@@ -42,6 +42,7 @@ export { ShaderPostPass } from './render/passes/ShaderPostPass.js';
 export { ShadowMapPass } from './render/passes/ShadowMapPass.js';
 
 export { LightData } from './render/LightData.js';
+export { PropertyMap } from './render/PropertyMap.js';
 export { Renderer } from './render/Renderer.js';
 export { RenderInfo } from './render/RenderInfo.js';
 export { RenderQueue } from './render/RenderQueue.js';
@@ -115,7 +116,6 @@ export { WebGLCapabilities } from './webgl/WebGLCapabilities.js';
 export { WebGLGeometries } from './webgl/WebGLGeometries.js';
 export { WebGLProgram } from './webgl/WebGLProgram.js';
 export { WebGLPrograms } from './webgl/WebGLPrograms.js';
-export { WebGLProperties } from './webgl/WebGLProperties.js';
 export { WebGLQueries } from './webgl/WebGLQueries.js';
 export { WebGLRenderPass } from './webgl/WebGLRenderPass.js';
 export { WebGLState } from './webgl/WebGLState.js';

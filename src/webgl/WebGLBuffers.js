@@ -1,9 +1,9 @@
-import { WebGLProperties } from './WebGLProperties.js';
+import { PropertyMap } from '../render/PropertyMap.js';
 
-class WebGLBuffers extends WebGLProperties {
+class WebGLBuffers extends PropertyMap {
 
 	constructor(passId, gl, capabilities) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._capabilities = capabilities;

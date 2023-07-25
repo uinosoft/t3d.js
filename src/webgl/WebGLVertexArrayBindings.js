@@ -1,11 +1,11 @@
-import { WebGLProperties } from './WebGLProperties.js';
+import { PropertyMap } from '../render/PropertyMap.js';
 
 const emptyString = "";
 
-export class WebGLVertexArrayBindings extends WebGLProperties {
+export class WebGLVertexArrayBindings extends PropertyMap {
 
 	constructor(passId, gl, capabilities, buffers) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._capabilities = capabilities;

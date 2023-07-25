@@ -1,11 +1,11 @@
 import { TEXTURE_FILTER, TEXTURE_WRAP } from '../const.js';
 import { isPowerOfTwo, nearestPowerOfTwo } from '../base.js';
-import { WebGLProperties } from './WebGLProperties.js';
+import { PropertyMap } from '../render/PropertyMap.js';
 
-class WebGLTextures extends WebGLProperties {
+class WebGLTextures extends PropertyMap {
 
 	constructor(passId, gl, state, capabilities, constants) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._state = state;

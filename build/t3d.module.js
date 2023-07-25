@@ -10165,6 +10165,64 @@ function _getDistanceMaterial(renderable, light) {
 	return material;
 }
 
+/**
+ * PropertyMap is a helper class for storing properties on objects.
+ * Instead of using a Map, we store the property map directly on the object itself,
+ * which provides better lookup performance.
+ * This is generally used to store the gpu resources corresponding to objects.
+ * @memberof t3d
+ */
+class PropertyMap {
+
+	/**
+     * Create a new PropertyMap.
+     * @param {String} prefix - The prefix of the properties name.
+     */
+	constructor(prefix) {
+		this._key = prefix + "$";
+		this._count = 0;
+	}
+
+	/**
+     * Get the properties of the object.
+     * If the object does not have properties, create a new one.
+     * @param {Object} object - The object to get properties.
+     * @returns {Object} - The properties of the object.
+     */
+	get(object) {
+		const key = this._key;
+		let properties = object[key];
+		if (properties === undefined) {
+			properties = {};
+			object[key] = properties;
+			this._count++;
+		}
+		return properties;
+	}
+
+	/**
+     * Delete the properties of the object.
+     * @param {Object} object - The object to delete properties.
+     */
+	delete(object) {
+		const key = this._key;
+		const properties = object[key];
+		if (properties) {
+			this._count--;
+			delete object[key];
+		}
+	}
+
+	/**
+     * Get the number of objects that have properties.
+     * @returns {Number} - The number of objects that have properties.
+     */
+	size() {
+		return this._count;
+	}
+
+}
+
 let _textureId = 0;
 
 /**
@@ -13141,43 +13199,10 @@ class WebGLState {
 
 }
 
-class WebGLProperties {
-
-	constructor(passId) {
-		this._key = '__webgl$' + passId;
-		this._count = 0;
-	}
-
-	get(object) {
-		const key = this._key;
-		let properties = object[key];
-		if (properties === undefined) {
-			properties = {};
-			object[key] = properties;
-			this._count++;
-		}
-		return properties;
-	}
-
-	delete(object) {
-		const key = this._key;
-		const properties = object[key];
-		if (properties) {
-			this._count--;
-			delete object[key];
-		}
-	}
-
-	size() {
-		return this._count;
-	}
-
-}
-
-class WebGLTextures extends WebGLProperties {
+class WebGLTextures extends PropertyMap {
 
 	constructor(passId, gl, state, capabilities, constants) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._state = state;
@@ -13715,10 +13740,10 @@ function domCheck(image) {
 		|| (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap);
 }
 
-class WebGLRenderBuffers extends WebGLProperties {
+class WebGLRenderBuffers extends PropertyMap {
 
 	constructor(passId, gl, capabilities, constants) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -13793,10 +13818,10 @@ class WebGLRenderBuffers extends WebGLProperties {
 
 }
 
-class WebGLRenderTargets extends WebGLProperties {
+class WebGLRenderTargets extends PropertyMap {
 
 	constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._state = state;
@@ -14024,10 +14049,10 @@ function _isPowerOfTwo(renderTarget) {
 	return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
 }
 
-class WebGLBuffers extends WebGLProperties {
+class WebGLBuffers extends PropertyMap {
 
 	constructor(passId, gl, capabilities) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -14165,10 +14190,10 @@ function getBufferType(gl, array) {
 }
 
 // This class handles buffer creation and updating for geometries.
-class WebGLGeometries extends WebGLProperties {
+class WebGLGeometries extends PropertyMap {
 
 	constructor(passId, gl, buffers, vertexArrayBindings) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._buffers = buffers;
@@ -14238,10 +14263,10 @@ class WebGLGeometries extends WebGLProperties {
 
 }
 
-class WebGLMaterials extends WebGLProperties {
+class WebGLMaterials extends PropertyMap {
 
 	constructor(passId, programs, vertexArrayBindings) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		const that = this;
 
@@ -14280,10 +14305,10 @@ class WebGLMaterials extends WebGLProperties {
 
 const emptyString = "";
 
-class WebGLVertexArrayBindings extends WebGLProperties {
+class WebGLVertexArrayBindings extends PropertyMap {
 
 	constructor(passId, gl, capabilities, buffers) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -14476,10 +14501,10 @@ class WebGLVertexArrayBindings extends WebGLProperties {
 
 }
 
-class WebGLQueries extends WebGLProperties {
+class WebGLQueries extends PropertyMap {
 
 	constructor(passId, gl, capabilities) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -18595,4 +18620,38 @@ TextureCube.fromSrc = function(srcArray) {
 	return texture;
 };
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, EnvironmentMapPass, Euler, EventDispatcher, FOG_TYPE, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeTrack, LIGHT_TYPE, LambertMaterial, Light, LightData, LightShadow, LineMaterial, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OBJECT_TYPE, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, QUERY_TYPE, Quaternion, QuaternionKeyframeTrack, Query, Ray, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, WEBGL_TEXTURE_TYPE, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+// since 0.1.6
+class WebGLProperties {
+
+	constructor(passId) {
+		this._key = '__webgl$' + passId;
+		this._count = 0;
+	}
+
+	get(object) {
+		const key = this._key;
+		let properties = object[key];
+		if (properties === undefined) {
+			properties = {};
+			object[key] = properties;
+			this._count++;
+		}
+		return properties;
+	}
+
+	delete(object) {
+		const key = this._key;
+		const properties = object[key];
+		if (properties) {
+			this._count--;
+			delete object[key];
+		}
+	}
+
+	size() {
+		return this._count;
+	}
+
+}
+
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, EnvironmentMapPass, Euler, EventDispatcher, FOG_TYPE, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeTrack, LIGHT_TYPE, LambertMaterial, Light, LightData, LightShadow, LineMaterial, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OBJECT_TYPE, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionKeyframeTrack, Query, Ray, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, WEBGL_TEXTURE_TYPE, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

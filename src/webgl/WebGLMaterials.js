@@ -1,9 +1,9 @@
-import { WebGLProperties } from './WebGLProperties.js';
+import { PropertyMap } from '../render/PropertyMap.js';
 
-class WebGLMaterials extends WebGLProperties {
+class WebGLMaterials extends PropertyMap {
 
 	constructor(passId, programs, vertexArrayBindings) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		const that = this;
 

@@ -1,10 +1,10 @@
-import { WebGLProperties } from './WebGLProperties.js';
+import { PropertyMap } from '../render/PropertyMap.js';
 
 // This class handles buffer creation and updating for geometries.
-class WebGLGeometries extends WebGLProperties {
+class WebGLGeometries extends PropertyMap {
 
 	constructor(passId, gl, buffers, vertexArrayBindings) {
-		super(passId);
+		super(`__webgl$${passId}`);
 
 		this._gl = gl;
 		this._buffers = buffers;

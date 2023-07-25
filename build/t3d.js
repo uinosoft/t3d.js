@@ -9371,6 +9371,62 @@
 		return material;
 	}
 
+	/**
+	 * PropertyMap is a helper class for storing properties on objects.
+	 * Instead of using a Map, we store the property map directly on the object itself,
+	 * which provides better lookup performance.
+	 * This is generally used to store the gpu resources corresponding to objects.
+	 * @memberof t3d
+	 */
+	class PropertyMap {
+		/**
+				* Create a new PropertyMap.
+				* @param {String} prefix - The prefix of the properties name.
+				*/
+		constructor(prefix) {
+			this._key = prefix + "$";
+			this._count = 0;
+		}
+
+		/**
+				* Get the properties of the object.
+				* If the object does not have properties, create a new one.
+				* @param {Object} object - The object to get properties.
+				* @returns {Object} - The properties of the object.
+				*/
+		get(object) {
+			const key = this._key;
+			let properties = object[key];
+			if (properties === undefined) {
+				properties = {};
+				object[key] = properties;
+				this._count++;
+			}
+			return properties;
+		}
+
+		/**
+				* Delete the properties of the object.
+				* @param {Object} object - The object to delete properties.
+				*/
+		delete(object) {
+			const key = this._key;
+			const properties = object[key];
+			if (properties) {
+				this._count--;
+				delete object[key];
+			}
+		}
+
+		/**
+				* Get the number of objects that have properties.
+				* @returns {Number} - The number of objects that have properties.
+				*/
+		size() {
+			return this._count;
+		}
+	}
+
 	let _textureId = 0;
 
 	/**
@@ -11952,37 +12008,9 @@
 		}
 	}
 
-	class WebGLProperties {
-		constructor(passId) {
-			this._key = '__webgl$' + passId;
-			this._count = 0;
-		}
-		get(object) {
-			const key = this._key;
-			let properties = object[key];
-			if (properties === undefined) {
-				properties = {};
-				object[key] = properties;
-				this._count++;
-			}
-			return properties;
-		}
-		delete(object) {
-			const key = this._key;
-			const properties = object[key];
-			if (properties) {
-				this._count--;
-				delete object[key];
-			}
-		}
-		size() {
-			return this._count;
-		}
-	}
-
-	class WebGLTextures extends WebGLProperties {
+	class WebGLTextures extends PropertyMap {
 		constructor(passId, gl, state, capabilities, constants) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._state = state;
 			this._capabilities = capabilities;
@@ -12381,9 +12409,9 @@
 		return typeof HTMLImageElement !== 'undefined' && image instanceof HTMLImageElement || typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement || typeof HTMLVideoElement !== 'undefined' && image instanceof HTMLVideoElement || typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap;
 	}
 
-	class WebGLRenderBuffers extends WebGLProperties {
+	class WebGLRenderBuffers extends PropertyMap {
 		constructor(passId, gl, capabilities, constants) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._capabilities = capabilities;
 			this._constants = constants;
@@ -12437,9 +12465,9 @@
 		}
 	}
 
-	class WebGLRenderTargets extends WebGLProperties {
+	class WebGLRenderTargets extends PropertyMap {
 		constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._state = state;
 			this._capabilities = capabilities;
@@ -12619,9 +12647,9 @@
 		return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
 	}
 
-	class WebGLBuffers extends WebGLProperties {
+	class WebGLBuffers extends PropertyMap {
 		constructor(passId, gl, capabilities) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._capabilities = capabilities;
 		}
@@ -12726,9 +12754,9 @@
 	}
 
 	// This class handles buffer creation and updating for geometries.
-	class WebGLGeometries extends WebGLProperties {
+	class WebGLGeometries extends PropertyMap {
 		constructor(passId, gl, buffers, vertexArrayBindings) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._buffers = buffers;
 			this._vertexArrayBindings = vertexArrayBindings;
@@ -12779,9 +12807,9 @@
 		}
 	}
 
-	class WebGLMaterials extends WebGLProperties {
+	class WebGLMaterials extends PropertyMap {
 		constructor(passId, programs, vertexArrayBindings) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			const that = this;
 			function onMaterialDispose(event) {
 				const material = event.target;
@@ -12809,9 +12837,9 @@
 	}
 
 	const emptyString = "";
-	class WebGLVertexArrayBindings extends WebGLProperties {
+	class WebGLVertexArrayBindings extends PropertyMap {
 		constructor(passId, gl, capabilities, buffers) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._capabilities = capabilities;
 			this._buffers = buffers;
@@ -12972,9 +13000,9 @@
 		}
 	}
 
-	class WebGLQueries extends WebGLProperties {
+	class WebGLQueries extends PropertyMap {
 		constructor(passId, gl, capabilities) {
-			super(passId);
+			super(`__webgl$${passId}`);
 			this._gl = gl;
 			this._capabilities = capabilities;
 			const timerQuery = capabilities.timerQuery;
@@ -16642,6 +16670,35 @@
 		return texture;
 	};
 
+	// since 0.1.6
+	class WebGLProperties {
+		constructor(passId) {
+			this._key = '__webgl$' + passId;
+			this._count = 0;
+		}
+		get(object) {
+			const key = this._key;
+			let properties = object[key];
+			if (properties === undefined) {
+				properties = {};
+				object[key] = properties;
+				this._count++;
+			}
+			return properties;
+		}
+		delete(object) {
+			const key = this._key;
+			const properties = object[key];
+			if (properties) {
+				this._count--;
+				delete object[key];
+			}
+		}
+		size() {
+			return this._count;
+		}
+	}
+
 	exports.ATTACHMENT = ATTACHMENT;
 	exports.AmbientLight = AmbientLight;
 	exports.AnimationAction = AnimationAction;
@@ -16716,6 +16773,7 @@
 	exports.PointLightShadow = PointLightShadow;
 	exports.PointsMaterial = PointsMaterial;
 	exports.PropertyBindingMixer = PropertyBindingMixer;
+	exports.PropertyMap = PropertyMap;
 	exports.QUERY_TYPE = QUERY_TYPE;
 	exports.Quaternion = Quaternion;
 	exports.QuaternionKeyframeTrack = QuaternionKeyframeTrack;
