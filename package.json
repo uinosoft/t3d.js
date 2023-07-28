@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/UINOSOFT/t3d.js"
+    "url": "https://github.com/uinosoft/t3d.js"
   },
   "files": [
     "build/t3d.js",
@@ -49,7 +49,7 @@
   "author": "uino",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/UINOSOFT/t3d.js/issues"
+    "url": "https://github.com/uinosoft/t3d.js/issues"
   },
   "devDependencies": {
     "@babel/core": "^7.19.1",

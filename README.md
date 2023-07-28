@@ -122,11 +122,11 @@ requestAnimationFrame(loop);
 
 ### Extensions ###
 
-* [t3d-effect-composer](https://github.com/UINOSOFT/t3d-effect-composer) - Post Effects extension for t3d.js.
-* [t3d-particle](https://github.com/UINOSOFT/t3d-particle) - This is a particle system developed based on t3d.js.
-* [t3d-pano](https://github.com/UINOSOFT/t3d-pano) - Panorama extension for t3d.
-* [t3d-3dtiles](https://github.com/UINOSOFT/t3d-3dtiles) - A 3dtile extension based on t3d.js.
-* [t3d-dynamic-sky](https://github.com/UINOSOFT/t3d-dynamic-sky) - Dynamic sky addon for t3d.
+* [t3d-effect-composer](https://github.com/uinosoft/t3d-effect-composer) - Post Effects extension for t3d.js.
+* [t3d-particle](https://github.com/uinosoft/t3d-particle) - This is a particle system developed based on t3d.js.
+* [t3d-pano](https://github.com/uinosoft/t3d-pano) - Panorama extension for t3d.
+* [t3d-3dtiles](https://github.com/uinosoft/t3d-3dtiles) - A 3dtile extension based on t3d.js.
+* [t3d-dynamic-sky](https://github.com/uinosoft/t3d-dynamic-sky) - Dynamic sky addon for t3d.
 
 ### Build ###
 
