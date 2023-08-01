@@ -81,20 +81,21 @@ class WebGLRenderer extends ThinRenderer {
 	 */
 	init() {
 		const gl = this.gl;
-		const id = this.increaseId();
+
+		const prefix = `_gl${this.increaseId()}`;
 
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const textures = new WebGLTextures(id, gl, state, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
-		const buffers = new WebGLBuffers(id, gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
-		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
+		const textures = new WebGLTextures(prefix, gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(prefix, gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(prefix, gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(prefix, gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(prefix, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const materials = new WebGLMaterials(id, programs, vertexArrayBindings);
-		const queries = new WebGLQueries(id, gl, capabilities);
+		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
+		const queries = new WebGLQueries(prefix, gl, capabilities);
 
 		this.capabilities = capabilities;
 

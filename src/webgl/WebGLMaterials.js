@@ -2,8 +2,8 @@ import { PropertyMap } from '../render/PropertyMap.js';
 
 class WebGLMaterials extends PropertyMap {
 
-	constructor(passId, programs, vertexArrayBindings) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, programs, vertexArrayBindings) {
+		super(prefix);
 
 		const that = this;
 

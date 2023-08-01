@@ -4,8 +4,8 @@ import { PropertyMap } from '../render/PropertyMap.js';
 
 class WebGLTextures extends PropertyMap {
 
-	constructor(passId, gl, state, capabilities, constants) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, state, capabilities, constants) {
+		super(prefix);
 
 		this._gl = gl;
 		this._state = state;

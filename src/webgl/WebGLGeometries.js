@@ -3,8 +3,8 @@ import { PropertyMap } from '../render/PropertyMap.js';
 // This class handles buffer creation and updating for geometries.
 class WebGLGeometries extends PropertyMap {
 
-	constructor(passId, gl, buffers, vertexArrayBindings) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, buffers, vertexArrayBindings) {
+		super(prefix);
 
 		this._gl = gl;
 		this._buffers = buffers;

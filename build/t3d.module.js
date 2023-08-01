@@ -14029,8 +14029,8 @@ function getMaxPrecision(gl, precision) {
 // This class handles buffer creation and updating for geometries.
 class WebGLGeometries extends PropertyMap {
 
-	constructor(passId, gl, buffers, vertexArrayBindings) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, buffers, vertexArrayBindings) {
+		super(prefix);
 
 		this._gl = gl;
 		this._buffers = buffers;
@@ -15379,8 +15379,8 @@ function unrollLoops(string) {
 
 class WebGLQueries extends PropertyMap {
 
-	constructor(passId, gl, capabilities) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, capabilities) {
+		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -16394,8 +16394,8 @@ class WebGLState {
 
 class WebGLTextures extends PropertyMap {
 
-	constructor(passId, gl, state, capabilities, constants) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, state, capabilities, constants) {
+		super(prefix);
 
 		this._gl = gl;
 		this._state = state;
@@ -16935,8 +16935,8 @@ function domCheck(image) {
 
 class WebGLRenderBuffers extends PropertyMap {
 
-	constructor(passId, gl, capabilities, constants) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, capabilities, constants) {
+		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -17013,8 +17013,8 @@ class WebGLRenderBuffers extends PropertyMap {
 
 class WebGLRenderTargets extends PropertyMap {
 
-	constructor(passId, gl, state, capabilities, textures, renderBuffers, constants) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, state, capabilities, textures, renderBuffers, constants) {
+		super(prefix);
 
 		this._gl = gl;
 		this._state = state;
@@ -17244,8 +17244,8 @@ function _isPowerOfTwo(renderTarget) {
 
 class WebGLBuffers extends PropertyMap {
 
-	constructor(passId, gl, capabilities) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, capabilities) {
+		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -17384,8 +17384,8 @@ function getBufferType(gl, array) {
 
 class WebGLMaterials extends PropertyMap {
 
-	constructor(passId, programs, vertexArrayBindings) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, programs, vertexArrayBindings) {
+		super(prefix);
 
 		const that = this;
 
@@ -17426,8 +17426,8 @@ const emptyString = "";
 
 class WebGLVertexArrayBindings extends PropertyMap {
 
-	constructor(passId, gl, capabilities, buffers) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, capabilities, buffers) {
+		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
@@ -17687,20 +17687,21 @@ class WebGLRenderer extends ThinRenderer {
 	 */
 	init() {
 		const gl = this.gl;
-		const id = this.increaseId();
+
+		const prefix = `_gl${this.increaseId()}`;
 
 		const capabilities = new WebGLCapabilities(gl);
 		const constants = new WebGLConstants(gl, capabilities);
 		const state = new WebGLState(gl, capabilities);
-		const textures = new WebGLTextures(id, gl, state, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(id, gl, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(id, gl, state, capabilities, textures, renderBuffers, constants);
-		const buffers = new WebGLBuffers(id, gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(id, gl, capabilities, buffers);
-		const geometries = new WebGLGeometries(id, gl, buffers, vertexArrayBindings);
+		const textures = new WebGLTextures(prefix, gl, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(prefix, gl, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(prefix, gl, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(prefix, gl, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, gl, capabilities, buffers);
+		const geometries = new WebGLGeometries(prefix, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
-		const materials = new WebGLMaterials(id, programs, vertexArrayBindings);
-		const queries = new WebGLQueries(id, gl, capabilities);
+		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
+		const queries = new WebGLQueries(prefix, gl, capabilities);
 
 		this.capabilities = capabilities;
 

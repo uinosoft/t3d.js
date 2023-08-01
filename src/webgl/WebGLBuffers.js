@@ -2,8 +2,8 @@ import { PropertyMap } from '../render/PropertyMap.js';
 
 class WebGLBuffers extends PropertyMap {
 
-	constructor(passId, gl, capabilities) {
-		super(`__webgl$${passId}`);
+	constructor(prefix, gl, capabilities) {
+		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
