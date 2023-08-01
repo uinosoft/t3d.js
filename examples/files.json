@@ -154,6 +154,7 @@
 		"custompass_dof",
 		"custompass_taa",
 		"custompass_bloom",
+		"custompass_unrealbloom",
 		"custompass_blur",
 		"custompass_msaa",
 		"custompass_motion_blur",
