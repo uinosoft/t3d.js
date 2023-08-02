@@ -9514,6 +9514,11 @@
 		 */
 		constructor(context) {
 			this.id = _rendererId++;
+
+			/**
+			 * The Rendering Context privided by canvas.
+			 * @type {WebGLRenderingContext|WebGPURenderingContext}
+			 */
 			this.context = context;
 
 			/**
@@ -15828,11 +15833,11 @@
 	 */
 	class WebGLRenderer extends ThinRenderer {
 		/**
-		 * @param {WebGLRenderingContext} gl
+		 * Create a WebGL renderer.
+		 * @param {WebGLRenderingContext} context - The Rendering Context privided by canvas.
 		 */
-		constructor(gl) {
-			super(gl);
-			this.gl = gl;
+		constructor(context) {
+			super(context);
 
 			/**
 			 * An object containing details about the capabilities of the current RenderingContext.
@@ -15861,7 +15866,7 @@
 		 * In the case of context lost, you can call this function to restart the renderer.
 		 */
 		init() {
-			const gl = this.gl;
+			const gl = this.context;
 			const prefix = `_gl${this.increaseId()}`;
 			const capabilities = new WebGLCapabilities(gl);
 			const constants = new WebGLConstants(gl, capabilities);
@@ -15892,7 +15897,7 @@
 			this._currentMaterial = null;
 		}
 		clear(color, depth, stencil) {
-			const gl = this.gl;
+			const gl = this.context;
 			let bits = 0;
 			if (color === undefined || color) bits |= gl.COLOR_BUFFER_BIT;
 			if (depth === undefined || depth) bits |= gl.DEPTH_BUFFER_BIT;
@@ -16295,7 +16300,7 @@
 			program.getUniforms().set('morphTargetInfluences', morphInfluences);
 		}
 		_draw(geometry, material, group, renderInfo) {
-			const gl = this.gl;
+			const gl = this.context;
 			const capabilities = this.capabilities;
 			const buffers = this._buffers;
 			const useIndexBuffer = geometry.index !== null;
@@ -16415,6 +16420,15 @@
 		}
 	});
 	Object.defineProperties(WebGLRenderer.prototype, {
+		// since 0.2.0
+		gl: {
+			configurable: true,
+			get: function () {
+				console.warn("WebGLRenderer: .gl has been deprecated, use .context instead.");
+				debugger;
+				return this.context;
+			}
+		},
 		textures: {
 			configurable: true,
 			get: function () {
@@ -16458,14 +16472,14 @@
 		this.renderRenderableItem(renderable, renderStates, options);
 	};
 
-	// since 0.1.6
+	// since 0.2.0
 	// WebGLRenderPass is renamed to WebGLRenderer.
 	const WebGLRenderPass = WebGLRenderer;
 
 	// Renderer, as an alias of WebGLRenderer, will exist for a long time.
 	// When the compatibility of renderPass is removed, it can be moved to main.js
 	class Renderer extends WebGLRenderer {
-		// since 0.1.6
+		// since 0.2.0
 		// renderer.renderPass is deprecated, use WebGLRenderer instead.
 		get renderPass() {
 			return this;
@@ -16784,7 +16798,7 @@
 		return texture;
 	};
 
-	// since 0.1.6
+	// since 0.2.0
 	class WebGLProperties {
 		constructor(passId) {
 			this._key = '__webgl$' + passId;

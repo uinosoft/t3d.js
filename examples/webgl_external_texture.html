@@ -66,7 +66,7 @@
 		const image = new Image();
 		image.src = "./resources/logo.jpg";
 
-		const gl = forwardRenderer.gl;
+		const gl = forwardRenderer.context;
 		const glTexture = createTexture(gl, gl.TEXTURE_2D, gl.TEXTURE_2D, 1);
 
 		const texture = new t3d.Texture2D();

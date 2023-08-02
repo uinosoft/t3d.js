@@ -11,6 +11,11 @@ class ThinRenderer {
 	 */
 	constructor(context) {
 		this.id = _rendererId++;
+
+		/**
+		 * The Rendering Context privided by canvas.
+		 * @type {WebGLRenderingContext|WebGPURenderingContext}
+		 */
 		this.context = context;
 
 		/**

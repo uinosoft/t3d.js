@@ -66,7 +66,7 @@
 			array2.push(z * 0.3, x * 0.3, y * 0.3);
 		}
 
-		const gl = forwardRenderer.gl;
+		const gl = forwardRenderer.context;
 
 		const glBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);

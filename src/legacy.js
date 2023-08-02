@@ -98,6 +98,15 @@ Object.defineProperties(Material.prototype, {
 });
 
 Object.defineProperties(WebGLRenderer.prototype, {
+	// since 0.2.0
+	gl: {
+		configurable: true,
+		get: function() {
+			console.warn("WebGLRenderer: .gl has been deprecated, use .context instead.");
+			debugger;
+			return this.context;
+		}
+	},
 	textures: {
 		configurable: true,
 		get: function() {
@@ -141,7 +150,7 @@ WebGLRenderer.prototype.render = function(renderable, renderStates, options) {
 	this.renderRenderableItem(renderable, renderStates, options);
 }
 
-// since 0.1.6
+// since 0.2.0
 // WebGLRenderPass is renamed to WebGLRenderer.
 export const WebGLRenderPass = WebGLRenderer;
 
@@ -149,7 +158,7 @@ export const WebGLRenderPass = WebGLRenderer;
 // When the compatibility of renderPass is removed, it can be moved to main.js
 export class Renderer extends WebGLRenderer {
 
-	// since 0.1.6
+	// since 0.2.0
 	// renderer.renderPass is deprecated, use WebGLRenderer instead.
 	get renderPass() {
 		return this;
@@ -507,7 +516,7 @@ TextureCube.fromSrc = function(srcArray) {
 	return texture;
 }
 
-// since 0.1.6
+// since 0.2.0
 export class WebGLProperties {
 
 	constructor(passId) {

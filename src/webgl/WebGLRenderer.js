@@ -44,12 +44,11 @@ function noop() { }
 class WebGLRenderer extends ThinRenderer {
 
 	/**
-	 * @param {WebGLRenderingContext} gl
+	 * Create a WebGL renderer.
+	 * @param {WebGLRenderingContext} context - The Rendering Context privided by canvas.
 	 */
-	constructor(gl) {
-		super(gl);
-
-		this.gl = gl;
+	constructor(context) {
+		super(context);
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
@@ -80,7 +79,7 @@ class WebGLRenderer extends ThinRenderer {
 	 * In the case of context lost, you can call this function to restart the renderer.
 	 */
 	init() {
-		const gl = this.gl;
+		const gl = this.context;
 
 		const prefix = `_gl${this.increaseId()}`;
 
@@ -117,7 +116,7 @@ class WebGLRenderer extends ThinRenderer {
 	}
 
 	clear(color, depth, stencil) {
-		const gl = this.gl;
+		const gl = this.context;
 
 		let bits = 0;
 
@@ -608,7 +607,7 @@ class WebGLRenderer extends ThinRenderer {
 	}
 
 	_draw(geometry, material, group, renderInfo) {
-		const gl = this.gl;
+		const gl = this.context;
 		const capabilities = this.capabilities;
 		const buffers = this._buffers;
 

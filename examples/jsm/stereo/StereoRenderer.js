@@ -28,7 +28,7 @@ class StereoRenderer extends ForwardRenderer {
 			this.setRenderTarget(renderTarget);
 		} else {
 			// TODO remove this
-			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, renderTarget);
+			this.context.bindFramebuffer(this.context.FRAMEBUFFER, renderTarget);
 			this._state.currentRenderTarget = null;
 		}
 
