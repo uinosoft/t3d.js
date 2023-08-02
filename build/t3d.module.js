@@ -18360,8 +18360,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	gl: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .gl has been deprecated, use .context instead.");
-			debugger;
+			// console.warn("WebGLRenderer: .gl has been deprecated, use .context instead.");
 			return this.context;
 		}
 	},
