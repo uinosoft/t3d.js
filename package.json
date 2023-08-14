@@ -8,16 +8,15 @@
   "exports": {
     ".": "./build/t3d.module.js",
     "./src/*": "./src/*",
-    "./examples/jsm/*": "./examples/jsm/*"
+    "./examples/jsm/*": "./examples/jsm/*",
+    "./addons/*": "./examples/jsm/*"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/uinosoft/t3d.js"
   },
   "files": [
-    "build/t3d.js",
-    "build/t3d.min.js",
-    "build/t3d.module.js",
+    "build",
     "examples/jsm",
     "LICENSE",
     "package.json",
@@ -26,13 +25,13 @@
   ],
   "keywords": [
     "t3d",
+    "t3d.js",
     "javascript",
     "3d",
     "virtual-reality",
     "augmented-reality",
     "webgl",
     "webgl2",
-    "webvr",
     "webxr",
     "canvas",
     "html5"

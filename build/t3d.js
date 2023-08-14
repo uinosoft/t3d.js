@@ -12860,14 +12860,12 @@
 				if (this.version > 1) {
 					timerQuery = this.getExtension('EXT_disjoint_timer_query_webgl2');
 					if (timerQuery) {
-						var _gl$getQuery;
-						canUseTimestamp = ((_gl$getQuery = gl.getQuery(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT)) != null ? _gl$getQuery : 0) > 0;
+						canUseTimestamp = (gl.getQuery(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT) ?? 0) > 0;
 					}
 				} else {
 					timerQuery = this.getExtension('EXT_disjoint_timer_query');
 					if (timerQuery) {
-						var _timerQuery$getQueryE;
-						canUseTimestamp = ((_timerQuery$getQueryE = timerQuery.getQueryEXT(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT)) != null ? _timerQuery$getQueryE : 0) > 0;
+						canUseTimestamp = (timerQuery.getQueryEXT(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT) ?? 0) > 0;
 					}
 				}
 			} catch (err) {
