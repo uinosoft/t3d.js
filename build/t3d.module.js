@@ -18291,6 +18291,7 @@ class WebGLRenderer extends ThinRenderer {
 
 }
 
+// since 0.1.2
 class Group extends Object3D {
 
 	constructor() {
@@ -18302,59 +18303,6 @@ class Group extends Object3D {
 
 Group.prototype.isGroup = true;
 
-class EnvironmentMapPass {
-
-	constructor() {
-		console.error("EnvironmentMapPass has been removed, use ReflectionProbe(jsm) instead.");
-	}
-
-}
-
-Vector3.prototype.applyProjection = function(_m) {
-	console.error("t3d.Vector3: .applyProjection has been removed. Use .applyMatrix4 instead.");
-};
-
-Object.defineProperties(Camera.prototype, {
-	gammaInput: {
-		configurable: true,
-		get: function() {
-			console.warn("t3d.Camera: .gammaInput has been removed. Use texture.encoding instead.");
-			return false;
-		},
-		set: function(_value) {
-			console.warn("t3d.Camera: .gammaInput has been removed. Use texture.encoding instead.");
-		}
-	},
-	gammaOutput: {
-		configurable: true,
-		get: function() {
-			console.warn("t3d.Camera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.");
-			return this.outputEncoding == TEXEL_ENCODING_TYPE.GAMMA;
-		},
-		set: function(value) {
-			console.warn("t3d.Camera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.");
-			if (value) {
-				this.outputEncoding = TEXEL_ENCODING_TYPE.GAMMA;
-			} else {
-				this.outputEncoding = TEXEL_ENCODING_TYPE.LINEAR;
-			}
-		}
-	}
-});
-
-Object.defineProperties(Material.prototype, {
-	emissiveIntensity: {
-		configurable: true,
-		get: function() {
-			console.warn("t3d.Material: .emissiveIntensity has been removed. Use material.emissive instead.");
-			return false;
-		},
-		set: function(_value) {
-			console.warn("t3d.Material: .emissiveIntensity has been removed. Use material.emissive instead.");
-		}
-	}
-});
-
 Object.defineProperties(WebGLRenderer.prototype, {
 	// since 0.2.0
 	gl: {
@@ -18364,34 +18312,23 @@ Object.defineProperties(WebGLRenderer.prototype, {
 			return this.context;
 		}
 	},
-	textures: {
-		configurable: true,
-		get: function() {
-			console.warn("WebGLRenderer: .textures has been deprecated. All methods are moved to WebGLRenderer.");
-			return this._textures;
-		}
-	},
-	renderBuffers: {
-		configurable: true,
-		get: function() {
-			console.warn("WebGLRenderer: .renderBuffers has been deprecated. All methods are moved to WebGLRenderer.");
-			return this._renderBuffers;
-		}
-	},
+	// since 0.1.2
 	renderTarget: {
 		configurable: true,
 		get: function() {
-			// console.warn("WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn("WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._renderTargets;
 		}
 	},
+	// since 0.1.2
 	state: {
 		configurable: true,
 		get: function() {
-			// console.warn("WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn("WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.");
 			return this._state;
 		}
 	},
+	// since 0.1.2
 	vertexArrayBindings: {
 		configurable: true,
 		get: function() {
@@ -18422,356 +18359,6 @@ class Renderer extends WebGLRenderer {
 	}
 
 }
-
-WebGLVertexArrayBindings.prototype.resetBinding = function() {
-	console.error("WebGLVertexArrayBindings: .resetBinding() has been removed. Use WebGLRenderer.resetVertexArrayBindings() instead.");
-};
-
-WebGLGeometries.prototype.setBufferExternal = function(buffer, webglBuffer) {
-	console.warn("WebGLGeometries: .setBufferExternal has been removed. Use WebGLRenderer.setBufferExternal instead.");
-	this._buffers.setBufferExternal(buffer, webglBuffer);
-};
-
-// Enum for WebGL Texture Type.
-const WEBGL_TEXTURE_TYPE = {
-	TEXTURE_2D: 0x0DE1,
-	TEXTURE_CUBE_MAP: 0x8513,
-	/** Only webgl2 */
-	TEXTURE_3D: 0x806F
-};
-
-Object.defineProperties(TextureBase.prototype, {
-	textureType: {
-		configurable: true,
-		get: function() {
-			console.warn("TextureBase: .textureType has been removed.");
-			return "";
-		},
-		set: function(_value) {
-			console.warn("TextureBase: .textureType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(Texture2D, {
-	textureType: {
-		configurable: true,
-		get: function() {
-			console.warn("Texture2D: .textureType has been removed.");
-			return WEBGL_TEXTURE_TYPE.TEXTURE_2D;
-		},
-		set: function(_value) {
-			console.warn("Texture2D: .textureType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(Texture3D, {
-	textureType: {
-		configurable: true,
-		get: function() {
-			console.warn("Texture3D: .textureType has been removed.");
-			return WEBGL_TEXTURE_TYPE.TEXTURE_3D;
-		},
-		set: function(_value) {
-			console.warn("Texture3D: .textureType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(TextureCube, {
-	textureType: {
-		configurable: true,
-		get: function() {
-			console.warn("TextureCube: .textureType has been removed.");
-			return WEBGL_TEXTURE_TYPE.TEXTURE_CUBE_MAP;
-		},
-		set: function(_value) {
-			console.warn("TextureCube: .textureType has been removed.");
-		}
-	}
-});
-
-// Enum for light Type.
-const LIGHT_TYPE = {
-	AMBIENT: "ambient",
-	HEMISPHERE: "hemisphere",
-	DIRECT: "direct",
-	POINT: "point",
-	SPOT: "spot"
-};
-
-Object.defineProperties(Light.prototype, {
-	lightType: {
-		configurable: true,
-		get: function() {
-			console.warn("Light: .lightType has been removed.");
-			return "";
-		},
-		set: function(_value) {
-			console.warn("Light: .lightType has been removed.");
-		}
-	}
-});
-
-
-Object.defineProperties(AmbientLight.prototype, {
-	lightType: {
-		configurable: true,
-		get: function() {
-			console.warn("AmbientLight: .lightType has been removed.");
-			return LIGHT_TYPE.AMBIENT;
-		},
-		set: function(_value) {
-			console.warn("AmbientLight: .lightType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(DirectionalLight.prototype, {
-	lightType: {
-		configurable: true,
-		get: function() {
-			console.warn("DirectionalLight: .lightType has been removed.");
-			return LIGHT_TYPE.DIRECT;
-		},
-		set: function(_value) {
-			console.warn("DirectionalLight: .lightType has been removed.");
-		}
-	}
-});
-
-
-Object.defineProperties(HemisphereLight.prototype, {
-	lightType: {
-		configurable: true,
-		get: function() {
-			console.warn("HemisphereLight: .lightType has been removed.");
-			return LIGHT_TYPE.HEMISPHERE;
-		},
-		set: function(_value) {
-			console.warn("HemisphereLight: .lightType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(PointLight.prototype, {
-	lightType: {
-		configurable: true,
-		get: function() {
-			console.warn("PointLight: .lightType has been removed.");
-			return LIGHT_TYPE.POINT;
-		},
-		set: function(_value) {
-			console.warn("PointLight: .lightType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(SpotLight.prototype, {
-	lightType: {
-		configurable: true,
-		get: function() {
-			console.warn("SpotLight: .lightType has been removed.");
-			return LIGHT_TYPE.SPOT;
-		},
-		set: function(_value) {
-			console.warn("SpotLight: .lightType has been removed.");
-		}
-	}
-});
-
-// Enum for object Type.
-const OBJECT_TYPE = {
-	MESH: "mesh",
-	SKINNED_MESH: "skinned_mesh",
-	LIGHT: "light",
-	CAMERA: "camera",
-	SCENE: "scene",
-	GROUP: "group"
-};
-
-Object.defineProperties(Mesh.prototype, {
-	type: {
-		configurable: true,
-		get: function() {
-			console.warn("Mesh: .type has been removed, use .isMesh instead.");
-			return OBJECT_TYPE.MESH;
-		},
-		set: function(_value) {
-			console.warn("Mesh: .type has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(SkinnedMesh.prototype, {
-	type: {
-		configurable: true,
-		get: function() {
-			console.warn("SkinnedMesh: .type has been removed, use .isSkinnedMesh instead.");
-			return OBJECT_TYPE.SKINNED_MESH;
-		},
-		set: function(_value) {
-			console.warn("SkinnedMesh: .type has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(Light.prototype, {
-	type: {
-		configurable: true,
-		get: function() {
-			console.warn("Light: .type has been removed, use .isLight instead.");
-			return OBJECT_TYPE.LIGHT;
-		},
-		set: function(_value) {
-			console.warn("Light: .type has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(Camera.prototype, {
-	type: {
-		configurable: true,
-		get: function() {
-			console.warn("Camera: .type has been removed, use .isCamera instead.");
-			return OBJECT_TYPE.CAMERA;
-		},
-		set: function(_value) {
-			console.warn("Camera: .type has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(Scene.prototype, {
-	type: {
-		configurable: true,
-		get: function() {
-			console.warn("Scene: .type has been removed, use .isScene instead.");
-			return OBJECT_TYPE.SCENE;
-		},
-		set: function(_value) {
-			console.warn("Scene: .type has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(Group.prototype, {
-	type: {
-		configurable: true,
-		get: function() {
-			console.warn("Group: .type has been removed, use .isGroup instead.");
-			return OBJECT_TYPE.GROUP;
-		},
-		set: function(_value) {
-			console.warn("Group: .type has been removed.");
-		}
-	}
-});
-
-// Enum for fog Type.
-const FOG_TYPE = {
-	NORMAL: "normal",
-	EXP2: "exp2"
-};
-
-Object.defineProperties(Fog.prototype, {
-	fogType: {
-		configurable: true,
-		get: function() {
-			console.warn("Fog: .fogType has been removed, use .isFog instead.");
-			return FOG_TYPE.NORMAL;
-		},
-		set: function(_value) {
-			console.warn("Fog: .fogType has been removed.");
-		}
-	}
-});
-
-Object.defineProperties(FogExp2.prototype, {
-	fogType: {
-		configurable: true,
-		get: function() {
-			console.warn("FogExp2: .fogType has been removed, use .isFogExp2 instead.");
-			return FOG_TYPE.EXP2;
-		},
-		set: function(_value) {
-			console.warn("FogExp2: .fogType has been removed.");
-		}
-	}
-});
-
-Texture2D.fromImage = function(image) {
-	console.warn("Texture2D.fromImage has been removed.");
-
-	const texture = new Texture2D();
-
-	texture.image = image;
-	texture.version++;
-
-	return texture;
-};
-
-Texture2D.fromSrc = function(src) {
-	console.warn("Texture2D.fromSrc has been removed, use Texture2DLoader(jsm) instead.");
-
-	const texture = new Texture2D();
-
-	const loader = new ImageLoader();
-
-	loader.load(src, function(image) {
-		texture.image = image;
-		texture.version++;
-		texture.dispatchEvent({ type: 'onload' });
-	});
-
-	return texture;
-};
-
-TextureCube.fromImage = function(imageArray) {
-	console.warn("TextureCube.fromImage has been removed.");
-
-	const texture = new TextureCube();
-	const images = texture.images;
-
-	for (let i = 0; i < 6; i++) {
-		images[i] = imageArray[i];
-	}
-
-	texture.version++;
-
-	return texture;
-};
-
-TextureCube.fromSrc = function(srcArray) {
-	console.warn("TextureCube.fromSrc has been removed, use TextureCubeLoader(jsm) instead.");
-
-	const texture = new TextureCube();
-	const images = texture.images;
-
-	const loader = new ImageLoader();
-
-	let count = 0;
-	function next(image) {
-		if (image) {
-			images.push(image);
-			count++;
-		}
-		if (count >= 6) {
-			loaded();
-			return;
-		}
-		loader.load(srcArray[count], next);
-	}
-	next();
-
-	function loaded() {
-		texture.version++;
-		texture.dispatchEvent({ type: 'onload' });
-	}
-
-	return texture;
-};
 
 // since 0.2.0
 class WebGLProperties {
@@ -18807,4 +18394,4 @@ class WebGLProperties {
 
 }
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, EnvironmentMapPass, Euler, EventDispatcher, FOG_TYPE, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeTrack, LIGHT_TYPE, LambertMaterial, Light, LightData, LightShadow, LineMaterial, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OBJECT_TYPE, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionKeyframeTrack, Query, Ray, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, WEBGL_TEXTURE_TYPE, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionKeyframeTrack, Query, Ray, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
