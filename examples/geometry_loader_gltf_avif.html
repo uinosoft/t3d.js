@@ -6,8 +6,9 @@
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 <body>
-    <div id="info">
-        <a href="" target="_blank">t3d</a> - gltf avif
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - gltf avif<br/>
+		Forest House by <a href="https://sketchfab.com/peachyroyalty" target="_blank" rel="noopener">peachyroyalty</a>
     </div>
 
 	<script src="./libs/nanobar.js"></script>
@@ -26,10 +27,9 @@
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
 		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
-		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
 		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { SkyBox } from './jsm/objects/SkyBox.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 
 		let width = window.innerWidth || 2;
@@ -43,24 +43,9 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-
-		const file = "resources/models/gltf/DamagedHelmetAVIF.glb";
-
-		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
-		]);
+		forwardRenderer.setClearColor(246 / 255, 238 / 255, 220 / 255, 1);
 
 		const scene = new t3d.Scene();
-		scene.environment = cube_texture;
-
-		const sky_box = new SkyBox(cube_texture);
-		sky_box.level = 0;
-		scene.add(sky_box);
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = "gray";
@@ -74,41 +59,26 @@
 			}
 		});
 
+		const dracoLoader = new DRACOLoader();
+		dracoLoader.setDecoderPath('libs/draco/');
+
 		const loader = new GLTFLoader(loadingManager);
+		loader.setDRACOLoader(dracoLoader);
 		loader.autoLogError = false;
 		
-		console.time('GLTFLoader');
-		loader.load(file).then(function(result) {
-			console.timeEnd('GLTFLoader');
-		
-			const object = result.root;
-			object.scale.set(10, 10, 10);
-			scene.add(object);
+		loader.load('resources/models/gltf/forest_house.glb').then(function(result) {
+			scene.add(result.root);
 		}).catch(e => console.error(e));
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
-		scene.add(ambientLight);
-
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
-		directionalLight.position.set(0, 10, 30);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		directionalLight.shadow.cameraNear = 1;
-		directionalLight.shadow.cameraFar = 100;
-		directionalLight.shadow.mapSize.set(1024, 1024);
-		directionalLight.shadow.windowSize = 50;
-		directionalLight.castShadow = true;
-		scene.add(directionalLight);
-
 		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
-		camera.gammaFactor = 2;
-		camera.position.set(22, 5, 32);
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(1.5, 4, 9);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
-		controller.enablePan = false;
+		controller.target.set(0, 2, 0);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -123,7 +93,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 

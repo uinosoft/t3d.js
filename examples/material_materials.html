@@ -41,7 +41,7 @@
 		const forwardRenderer = new ForwardRenderer(canvas);
 
 		const scene = new t3d.Scene();
-		scene.environmentLightIntensity = 0.5;
+		scene.environmentLightIntensity = 1;
 
 		const sphere_geometry = new t3d.SphereGeometry(9, 20, 20);
 
@@ -97,13 +97,6 @@
 			}
 		}
 
-		const plane_geometry = new t3d.PlaneGeometry(100, 100);
-		const plane_lambert = new t3d.LambertMaterial();
-		plane_lambert.diffuse.setHex(0xf0f0f0);
-		const plane = new t3d.Mesh(plane_geometry, plane_lambert);
-		plane.position.y = -10;
-		scene.add(plane);
-
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
 		scene.add(ambientLight);
 
@@ -122,8 +115,8 @@
 			requestAnimationFrame(loop);
 
 			// rotate camera
-			camera.position.x = 120 * Math.sin(count / 1000 * .5);
-			camera.position.z = 120 * Math.cos(count / 1000 * .5);
+			camera.position.x = 120 * Math.sin(count / 1000 * .3);
+			camera.position.z = 120 * Math.cos(count / 1000 * .3);
 			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 
 			forwardRenderer.render(scene, camera);
