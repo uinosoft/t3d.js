@@ -1,5 +1,8 @@
-// t3d
-
+/**
+ * @license
+ * Copyright 2021-present uino
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :

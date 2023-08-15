@@ -20,7 +20,7 @@ function glsl() {
 		transform(code, id) {
 			if (/\.glsl$/.test(id) === false) return;
 
-			var transformedCode = 'export default ' + JSON.stringify(
+			const transformedCode = 'export default ' + JSON.stringify(
 				code
 					.trim()
 					.replace(/\r/g, '')
@@ -28,6 +28,7 @@ function glsl() {
 					.replace(/[ \t]*\/\*[\s\S]*?\*\//g, '') // remove /* */
 					.replace(/\n{2,}/g, '\n') // # \n+ to \n
 			) + ';';
+
 			return {
 				code: transformedCode,
 				map: { mappings: '' }
@@ -49,10 +50,16 @@ function babelCleanup() {
 	};
 }
 
+const headerString = `/**
+ * @license
+ * Copyright 2021-present uino
+ * SPDX-License-Identifier: BSD-3-Clause
+ */\n`;
+
 function header() {
 	return {
 		renderChunk(code) {
-			return '// t3d\n\n' + code;
+			return headerString + code;
 		}
 	};
 }

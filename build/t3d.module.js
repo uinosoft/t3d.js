@@ -1,5 +1,8 @@
-// t3d
-
+/**
+ * @license
+ * Copyright 2021-present uino
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 /**
  * Base class for property track.
  * @memberof t3d
