@@ -100,7 +100,7 @@
 
         const contextParams = { antialias: false, alpha: false };
         const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
-        const renderer = new t3d.Renderer(gl);
+        const renderer = new t3d.WebGLRenderer(gl);
 
         if (renderer.capabilities.version < 2) {
         	renderer.capabilities.getExtension('OES_texture_half_float');
@@ -135,9 +135,9 @@
         	scene.updateRenderStates(camera);
         	scene.updateRenderQueue(camera);
         
-        	renderer.renderPass.setRenderTarget(tempRenderTarget);
-        	renderer.renderPass.setClearColor(0, 0, 0, 0);
-        	renderer.renderPass.clear(true, true, true);
+        	renderer.setRenderTarget(tempRenderTarget);
+        	renderer.setClearColor(0, 0, 0, 0);
+        	renderer.clear(true, true, true);
         	renderer.renderScene(scene, camera);
         
         	bloomPass.update(renderer, tempRenderTarget, backRenderTarget);
