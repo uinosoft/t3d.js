@@ -1,5 +1,4 @@
 import { Bone, Camera, Object3D, Mesh, SkinnedMesh, Vector4 } from 't3d';
-import { GLTFUtils } from "../GLTFUtils.js";
 import { KHR_lights_punctual as _KHR_lights_punctual } from '../extensions/KHR_lights_punctual.js';
 
 export class NodeParser {
@@ -10,8 +9,6 @@ export class NodeParser {
 		} = context;
 
 		if (!gltfNodes) return;
-
-		const nameCache = new Set();
 
 		const cameras = [];
 		const lights = [];
@@ -42,12 +39,10 @@ export class NodeParser {
 				node = new Object3D();
 			}
 
-			if (gltfNode.name !== undefined) {
-				node.name = createUniqueName(gltfNode.name, nameCache);
-				if (node.children.length > 0) {
-					for (let i = 0; i < node.children.length; i++) {
-						node.children[i].name = node.name + '_' + i;
-					}
+			node.name = gltfNode.name || '';
+			if (!!node.name && node.children.length > 0) {
+				for (let i = 0; i < node.children.length; i++) {
+					node.children[i].name = node.name + '_' + i;
 				}
 			}
 
@@ -71,27 +66,11 @@ export class NodeParser {
 			return node;
 		});
 
-		nameCache.clear();
-
 		context.nodes = nodes;
 		context.cameras = cameras;
 		context.lights = lights;
 	}
 
-}
-
-function createUniqueName(originalName, set) {
-	const sanitizedName = GLTFUtils.sanitizeNodeName(originalName || '');
-
-	let name = sanitizedName;
-
-	for (let i = 1; set.has(name); ++i) {
-		name = sanitizedName + '-' + i;
-	}
-
-	set.add(name);
-
-	return name;
 }
 
 function createCamera(cameraDef) {

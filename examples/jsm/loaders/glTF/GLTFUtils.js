@@ -6,6 +6,7 @@ export class GLTFUtils {
 
 	constructor() {}
 
+	// deprecated since v0.2.0
 	static sanitizeNodeName(name) {
 		return name.replace(/\s/g, '_').replace(reservedRe, '');
 	}
