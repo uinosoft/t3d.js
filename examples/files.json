@@ -51,6 +51,7 @@
 		"material_texture_anisotropic",
 		"material_texture_blending",
 		"material_texture_hdr",
+		"material_texture_exr",
 		"material_texture_video",
 		"material_texture_heatmap",
 		"material_texture_idwmap",

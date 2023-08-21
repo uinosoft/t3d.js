@@ -2,13 +2,13 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>t3d - hdr</title>
+	<title>t3d - exr</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
     <div id="info">
-        <a href="" target="_blank">t3d</a> - hdr texture loader example<br/>
+        <a href="" target="_blank">t3d</a> - exr texture loader example<br/>
 		Image courtesy of <a href="http://www.pauldebevec.com/Research/HDR/" target="_blank" rel="noopener">Paul Debevec</a>.
     </div>
 
@@ -26,7 +26,8 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+		import { EXRLoader } from './jsm/loaders/EXRLoader.js';
+		import * as fflate from './libs/fflate.module.js';
 		import { OutputShader } from './jsm/shaders/OutputShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
@@ -61,7 +62,8 @@
 		camera.setOrtho(-aspect, aspect, -1, 1, 0, 1);
 		scene.add(camera);
 		
-		const loader = new RGBELoader();
+		const loader = new EXRLoader();
+		EXRLoader.setfflate(fflate);
 		const capabilities = renderer.capabilities;
 		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
 			!!capabilities.getExtension('OES_texture_float_linear')) {
@@ -78,7 +80,7 @@
 		capabilities.getExtension('OES_texture_float_linear');
 		capabilities.getExtension('EXT_color_buffer_half_float');
 
-		const file = './resources/hdr/memorial.hdr';
+		const file = './resources/hdr/memorial.exr';
 		loader.load(file, function(textureData) {
 			const texture = new t3d.Texture2D();
 			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };

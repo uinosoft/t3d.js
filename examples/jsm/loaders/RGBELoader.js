@@ -5,11 +5,6 @@ class RGBELoader extends Loader {
 	constructor(manager) {
 		super(manager);
 
-		/**
-		 * The loadingManager for the loader to use.
-		 * @type {t3d.PIXEL_TYPE}
-		 * @default t3d.PIXEL_TYPE.HALF_FLOAT
-		 */
 		this.type = PIXEL_TYPE.HALF_FLOAT;
 	}
 
