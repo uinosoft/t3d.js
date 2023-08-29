@@ -96,13 +96,15 @@
 
 		const plane_geometry = new t3d.PlaneGeometry(100, 100);
 		const plane_material = new t3d.BasicMaterial();
+		plane_material.opacity = 0.5;
+		plane_material.transparent = true;
 		plane_material.diffuse.setRGB(255 / 255, 248 / 255, 238 / 255);
 		const plane = new t3d.Mesh(plane_geometry, plane_material);
 		plane.position.y -= 4;
 		scene.add(plane);
 
 		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(0, 2, 11);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);

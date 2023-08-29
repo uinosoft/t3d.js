@@ -71,9 +71,6 @@
 		const fogExp2 = new t3d.FogExp2(0xd7cbb1, 0.0008);
 		scene.fog = fog;
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
-		scene.add(ambientLight);
-
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
 		directionalLight.castShadow = true;
 		directionalLight.shadow.windowSize = 150;
@@ -103,7 +100,11 @@
 		const sky_box = new SkyBox(cube_texture);
 		scene.add(sky_box);
 
+		scene.environment = cube_texture;
+		scene.environmentLightIntensity = 1;
+
 		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(0, 140, -300);
 		camera.lookAt(new t3d.Vector3(-0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
@@ -227,11 +228,10 @@
 		waterMaterial.shaderName = "waterShader";
 		waterMaterial.vertexShader = vertexShader;
 		waterMaterial.fragmentShader = fragmentShader;
-		waterMaterial.clearcoat = 0.103;
+		waterMaterial.clearcoat = 0.05;
 		waterMaterial.clearcoatRoughness = 0.35;
-		waterMaterial.metalness = 0;
+		waterMaterial.metalness = 0.5;
 		waterMaterial.roughness = 0.1;
-		waterMaterial.envMap = cube_texture;
 		waterMaterial.normalMap = texture;
 		waterMaterial.diffuse.setHex(0x064569);
 		waterMaterial.transparent = true;

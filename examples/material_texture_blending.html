@@ -54,6 +54,7 @@
 			ctx.fillText(text, 64, 22);
 
 			const map = new t3d.Texture2D();
+			map.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 			map.image = canvas;
 			map.version++;
 
@@ -72,13 +73,17 @@
 			{ constant: t3d.BLEND_TYPE.MUL, labelMaterial: generateLabelMaterial('Mul') }
 		];
 
+		const assignSRGB = (texture) => {
+			texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		};
+
 		const loader = new Texture2DLoader();
 
-		const map0 = loader.load('./resources/UV_Grid_Sm.jpg');
-		const map1 = loader.load('./resources/sprites/sprite0.jpg');
-		const map2 = loader.load('./resources/sprites/sprite0.png');
-		const map3 = loader.load('./resources/lensflare/lensflare0.png');
-		const map4 = loader.load('./resources/lensflare/lensflare0_alpha.png');
+		const map0 = loader.load('./resources/UV_Grid_Sm.jpg', assignSRGB);
+		const map1 = loader.load('./resources/sprites/sprite0.jpg', assignSRGB);
+		const map2 = loader.load('./resources/sprites/sprite0.png', assignSRGB);
+		const map3 = loader.load('./resources/lensflare/lensflare0.png', assignSRGB);
+		const map4 = loader.load('./resources/lensflare/lensflare0_alpha.png', assignSRGB);
 
 		const geo1 = new t3d.PlaneGeometry(100, 100);
 		const geo2 = new t3d.PlaneGeometry(100, 25);
@@ -129,6 +134,7 @@
 		texture.image = bgCanvas;
 		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const bg_geometry = new t3d.PlaneGeometry(2000, 2000);
 		const bg_material = new t3d.BasicMaterial();
@@ -140,6 +146,7 @@
 		scene.add(background);
 
 		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(0, 0, 600);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);

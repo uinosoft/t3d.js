@@ -52,16 +52,11 @@
 			scene.add(result.root);
 			camera = result.cameras[0];
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
+			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 			controller = new OrbitControls(camera, canvas);
 			controller.target.set(0, 1, 0);
 		}).catch(e => console.error(e));
-
-		const plane_geometry = new t3d.PlaneGeometry(100, 100);
-		const lambert = new t3d.BasicMaterial();
-		lambert.diffuse.setHex(0x888888);
-		const plane = new t3d.Mesh(plane_geometry, lambert);
-		scene.add(plane);
 		
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
 		scene.add(ambientLight);

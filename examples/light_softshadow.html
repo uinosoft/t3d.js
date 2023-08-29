@@ -79,7 +79,7 @@
 		lightSphere.position.set(50, 50, 50);
 		scene.add(lightSphere);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.05);
 		scene.add(ambientLight);
 
 		const spotLight = new t3d.SpotLight(0xffffff, 0.9, 400, Math.PI / 5, 0.2);
@@ -95,8 +95,7 @@
 		spotLight.add(spotLightHelper);
 
 		const camera = new t3d.Camera();
-		camera.gammaFactor = 1.5;
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(80, 130, 150);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);

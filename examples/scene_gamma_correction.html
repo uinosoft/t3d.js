@@ -82,10 +82,14 @@
 		plane.receiveShadow = true;
 		pointLight.castShadow = true;
 
+		const encodingOptions = {
+			"Linear": t3d.TEXEL_ENCODING_TYPE.LINEAR,
+			"Gamma": t3d.TEXEL_ENCODING_TYPE.GAMMA,
+			"SRGB": t3d.TEXEL_ENCODING_TYPE.SRGB
+		};
+
 		const gui = new GUI();
-		gui.add({ gammaOutput: true }, "gammaOutput").onChange(value => {
-			camera.outputEncoding = value ? t3d.TEXEL_ENCODING_TYPE.GAMMA : t3d.TEXEL_ENCODING_TYPE.LINEAR;
-		});
+		gui.add(camera, "outputEncoding", encodingOptions);
 		gui.add(camera, "gammaFactor", 0, 2, 0.1);
 
 		function loop(count) {

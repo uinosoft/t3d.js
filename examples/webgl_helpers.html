@@ -123,7 +123,7 @@
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.gammaFactor = 1.5;
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(10, 10, 80);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);

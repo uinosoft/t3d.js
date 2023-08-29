@@ -44,7 +44,6 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		// NormalTangentMirrorTest NormalTangentTest
 		const file = "resources/models/gltf/GlamVelvetSofa/glTF-Binary/GlamVelvetSofa.glb";
 
 		const cube_texture = new TextureCubeLoader().load([
@@ -76,17 +75,17 @@
 			scene.add(result.root);
 		}).catch(e => console.error(e));
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 1);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 2);
 		scene.add(ambientLight);
 
 		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
-		camera.position.set(2, 2, 4);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 2, 4);
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0.5, 0);
 		controller.enablePan = false;
 
 		function loop(count) {

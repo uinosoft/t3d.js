@@ -63,17 +63,16 @@
 			scene.add(object);
 		});
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
 		scene.add(ambientLight);
 
-		const spotLight = new t3d.SpotLight(0xffffff, 0.5, 30, Math.PI / 5, 0.3);
+		const spotLight = new t3d.SpotLight(0xffffff, 0.5, 30, Math.PI / 5, 0.4);
 		spotLight.position.set(0, 10, 0);
 		spotLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		spotLight.castShadow = true;
 		scene.add(spotLight);
 
 		const camera = new t3d.Camera();
-		camera.gammaFactor = 1.3;
 		camera.position.set(0, 4, 10);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
@@ -84,7 +83,7 @@
 		const tempRenderTarget1 = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget1.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget1.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
-		tempRenderTarget1.texture.encoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		tempRenderTarget1.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;

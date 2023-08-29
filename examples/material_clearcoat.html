@@ -141,7 +141,7 @@
         particleLight.add(lightBall);
 
         const camera = new t3d.Camera();
-        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
         camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 10000);
         camera.position.set(0, 0, 500);
         scene.add(camera);

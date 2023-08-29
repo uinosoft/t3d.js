@@ -68,10 +68,10 @@
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
 		scene.add(ambientLight);
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.5);
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
 		directionalLight.position.set(-30, 40, 50);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		directionalLight.shadow.windowSize = 100;
@@ -79,6 +79,7 @@
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(40, 40, 80);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 10, 2000);

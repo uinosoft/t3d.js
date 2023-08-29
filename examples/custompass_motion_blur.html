@@ -72,7 +72,6 @@
 		scene.add(cube);
 
 		const camera = new t3d.Camera();
-		camera.gammaFactor = 1.5;
 		camera.position.set(10, 10, 30);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
@@ -86,7 +85,7 @@
 			const renderTarget = new t3d.RenderTarget2D(width, height);
 			renderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 			renderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
-			renderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+			renderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 			renderTarget.texture.generateMipmaps = false;
 
 			const depthTexture = new t3d.Texture2D();

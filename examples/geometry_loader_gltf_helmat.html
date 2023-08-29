@@ -59,10 +59,7 @@
 		scene.environment = cube_texture;
 
 		const sky_box = new SkyBox(cube_texture);
-		sky_box.level = 0;
 		scene.add(sky_box);
-
-		let objectMaterial;
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = "gray";
@@ -82,34 +79,19 @@
 		console.time('GLTFLoader');
 		loader.load(file).then(function(result) {
 			console.timeEnd('GLTFLoader');
-
-			const object = result.root.children[0];
-
-			objectMaterial = object.material;
-
-			objectMaterial.envMapIntensity = 1;
-
-			object.scale.set(10, 10, 10);
-			object.euler.z = -Math.PI / 6;
-
-			scene.add(object);
+			scene.add(result.root);
 		}).catch(e => console.error(e));
 
-		// top light
-		const directionalLightTop = new t3d.DirectionalLight(0xbbbbff, 0.5);
-		directionalLightTop.euler.set(Math.PI / 2, 0, 0);
-		scene.add(directionalLightTop);
-
-		// bottom light
-		const directionalLightBottom = new t3d.DirectionalLight(0x444422, 0.5);
-		directionalLightBottom.euler.set(-Math.PI / 2, 0, 0);
-		scene.add(directionalLightBottom);
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 2);
+		directionalLight.position.set(-2, 2, 2);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
-		camera.position.set(-15, 10, 45);
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(-1.5, 0.5, 3);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
@@ -128,7 +110,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 

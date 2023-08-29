@@ -78,7 +78,6 @@
 		// Use the same camera.
 
 		const camera = new t3d.Camera();
-		camera.gammaFactor = 1.5;
 		camera.position.set(10, 10, 30);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
@@ -111,7 +110,7 @@
 		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
-		tempRenderTarget2.texture.encoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		tempRenderTarget2.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		tempRenderTarget2.attach(
 			depthTexture,
 			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
