@@ -28,6 +28,14 @@ class RenderTargetCube extends RenderTargetBase {
 		 * @default 0
 		 */
 		this.activeCubeFace = 0;
+
+		/**
+		 * Specifies the active mipmap level.
+		 * This is only available in WebGL2.
+		 * @type {Number}
+		 * @default 0
+		 */
+		this.activeMipmapLevel = 0;
 	}
 
 	/**

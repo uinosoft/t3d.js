@@ -10,7 +10,8 @@ import {
 	Quaternion,
 	PIXEL_FORMAT,
 	PIXEL_TYPE,
-	TEXTURE_FILTER
+	TEXTURE_FILTER,
+	ATTACHMENT
 } from 't3d';
 
 import { ReflectionProbe } from './probes/ReflectionProbe.js';
@@ -20,33 +21,22 @@ import { ReflectionProbe } from './probes/ReflectionProbe.js';
  * (PMREM) from a cubeMap or equirectangular environment texture.
  * Refer to: http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
  * Refer to: https://github.com/mrdoob/three.js/blob/dev/src/extras/PMREMGenerator.js
+ * Refer to: https://threejs.org/examples/?q=mipmap#webgl_materials_cubemap_render_to_mipmaps
  */
 class PMREM {
 
 	/**
-	 * @param {ThinRenderer} renderer
-	 * @param {TextureCube|Texture2D} envMap
-	 * @param {Object} [textureOpts]
-	 * @param {Number} [textureOpts.sampleSize=1024]
-	 * @param {Euler} [textureOpts.rotation]
-	 * @param {TextureCube} [textureOpts.outputTexture]
-	 * @return {TextureCube}
+	 * Generate a PMREM from a cubeMap or equirectangular environment texture.
+	 * @param {ThinRenderer} renderer - The renderer.
+	 * @param {TextureCube|Texture2D} envMap - The environment map.
+	 * @param {Object} [options] - The options for the output texture.
+	 * @param {Number} [options.sampleSize=1024] - The sample size.
+	 * @param {Euler} [options.rotation] - The rotation of the environment map.
+	 * @param {Boolean} [options.legacy] - Use legacy method to generate PMREM.
+	 * @param {TextureCube} [options.outputTexture] - The output texture.
+	 * @return {TextureCube} - The output texture.
 	 */
-	static prefilterEnvironmentMap(renderer, envMap, textureOpts = {}) {
-		const sampleSize = textureOpts.sampleSize || 1024;
-
-		const isCubeMap = envMap.isTextureCube;
-
-		let cubeSize;
-		if (isCubeMap) {
-			cubeSize = envMap.images.length === 0 ? 16 : envMap.images[0].width;
-		} else {
-			cubeSize = envMap.image.width / 4;
-		}
-
-		const mipmapNum = Math.floor(Math.log2(cubeSize));
-		cubeSize = Math.pow(2, mipmapNum);
-
+	static prefilterEnvironmentMap(renderer, envMap, options = {}) {
 		const capabilities = renderer.capabilities;
 		const isWebGL2 = capabilities.version > 1;
 
@@ -60,82 +50,128 @@ class PMREM {
 		capabilities.getExtension('OES_texture_float_linear');
 		capabilities.getExtension('EXT_color_buffer_half_float');
 
-		let textureType = PIXEL_TYPE.HALF_FLOAT,
-			ArrayCtor = Uint16Array,
-			format = PIXEL_FORMAT.RGBA;
+		const legacy = options.legacy !== undefined ? options.legacy : !isWebGL2;
 
-		const prefilteredCubeMap = textureOpts.outputTexture || new TextureCube();
-		prefilteredCubeMap.type = textureType;
-		prefilteredCubeMap.format = format;
-		prefilteredCubeMap.generateMipmaps = false;
+		// Calculate mipmaps number and cube size
+
+		let cubeSize, mipmapNum;
+		if (envMap.isTextureCube) {
+			cubeSize = envMap.images.length === 0 ? 16 : envMap.images[0].width;
+		} else {
+			cubeSize = envMap.image.width / 4;
+		}
+		mipmapNum = Math.floor(Math.log2(cubeSize));
+		cubeSize = Math.pow(2, mipmapNum);
+
+		// Create a prefiltered cubemap and render target
+
+		let outputTexture;
+		if (options.outputTexture) {
+			outputTexture = options.outputTexture;
+		} else {
+			outputTexture = new TextureCube();
+		}
+		outputTexture.type = PIXEL_TYPE.HALF_FLOAT;
+		outputTexture.format = PIXEL_FORMAT.RGBA;
+		outputTexture.generateMipmaps = false;
+
+		// generate empty mipmaps data
+		let mipmapSize = cubeSize;
+		for (let i = 0; i < mipmapNum + 1; i++) {
+			outputTexture.mipmaps[i] = [];
+			for (let j = 0; j < 6; j++) {
+				outputTexture.mipmaps[i].push({ width: mipmapSize, height: mipmapSize, data: null });
+			}
+			mipmapSize = mipmapSize / 2;
+		}
 
 		const target = new RenderTargetCube(cubeSize, cubeSize);
-		target.texture.type = textureType;
-		target.texture.format = format;
-		target.texture.magFilter = TEXTURE_FILTER.LINEAR;
-		target.texture.minFilter = TEXTURE_FILTER.LINEAR;
-		target.texture.generateMipmaps = false;
+		target.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 
-		const normalDistributionTexture = generateNormalDistribution(256, sampleSize);
+		if (legacy) {
+			target.texture.type = PIXEL_TYPE.HALF_FLOAT;
+			target.texture.format = PIXEL_FORMAT.RGBA;
+			target.texture.generateMipmaps = false;
+		} else {
+			target.attach(outputTexture, ATTACHMENT.COLOR_ATTACHMENT0);
+		}
 
+		// Create render stuff
+
+		const normalDistributionTexture = generateNormalDistribution(256, options.sampleSize || 1024);
 		const reflectionProbe = new ReflectionProbe(target);
-
 		const dummyScene = new Scene();
 
-		if (textureOpts.rotation) {
-			_quaterion.setFromEuler(textureOpts.rotation);
+		if (options.rotation) {
+			_quaterion.setFromEuler(options.rotation);
 			_quaterion.toMatrix4(dummyScene.anchorMatrix);
+		}
+
+		let envMapFlip = 1;
+		if (envMap.isTextureCube && envMap.images[0] && envMap.images[0].rtt) {
+			envMapFlip = -1;
+		}
+		if (!legacy) {
+			envMapFlip *= -1;
 		}
 
 		const geometry = new BoxGeometry(1, 1, 1);
 		const material = new ShaderMaterial(prefilterShader);
 		material.side = DRAW_SIDE.BACK;
 		material.cubeMap = envMap;
+		material.uniforms.environmentMap = envMap;
+		material.uniforms.envMapFlip = envMapFlip;
+		material.uniforms.normalDistribution = normalDistributionTexture;
+		material.defines.PANORAMA = !envMap.isTextureCube;
 		const skyEnv = new Mesh(geometry, material);
 		skyEnv.frustumCulled = false;
-		material.uniforms.environmentMap = envMap;
-		if (isCubeMap) {
-			material.uniforms.envMapFlip = (envMap.images[0] && envMap.images[0].rtt) ? -1 : 1;
-			material.defines.PANORAMA = false;
-		} else {
-			material.uniforms.envMapFlip = 1;
-			material.defines.PANORAMA = true;
-		}
-		material.uniforms.normalDistribution = normalDistributionTexture;
+
 		dummyScene.add(skyEnv);
 		dummyScene.add(reflectionProbe.camera);
 
-		if (textureOpts.rotation) { // update render states for anchor matrix
+		if (options.rotation) { // update render states for anchor matrix
 			dummyScene.updateRenderStates(reflectionProbe.camera);
 		}
 
+		// Render mipmap levels
+
 		for (let i = 0; i < mipmapNum + 1; i++) {
 			material.uniforms.roughness = Math.max(i - 1, 0) / mipmapNum;
-			reflectionProbe.render(renderer, dummyScene);
 
-			prefilteredCubeMap.mipmaps[i] = [];
-			for (let j = 0; j < 6; j++) {
-				const pixels = new ArrayCtor(target.width * target.height * 4);
-				target.activeCubeFace = j;
-				renderer.setRenderTarget(target);
-				renderer.readRenderTargetPixels(0, 0, target.width, target.height, pixels);
-				if (i === 0) {
-					prefilteredCubeMap.images[j] = { width: target.width, height: target.height, data: pixels };
+			if (legacy) {
+				reflectionProbe.render(renderer, dummyScene);
+				for (let j = 0; j < 6; j++) {
+					const mipmapData = outputTexture.mipmaps[i][j];
+					mipmapData.data = new Uint16Array(mipmapData.width * mipmapData.height * 4);
+					target.activeCubeFace = j;
+					renderer.setRenderTarget(target);
+					renderer.readRenderTargetPixels(0, 0, mipmapData.width, mipmapData.height, mipmapData.data);
+					if (i === 0) {
+						outputTexture.images[j] = mipmapData;
+					}
 				}
-				prefilteredCubeMap.mipmaps[i].push({ width: target.width, height: target.height, data: pixels });
+				target.resize(target.width / 2, target.height / 2);
+			} else {
+				target.activeMipmapLevel = i;
+				reflectionProbe.render(renderer, dummyScene);
+				reflectionProbe.camera.rect.z /= 2;
+				reflectionProbe.camera.rect.w /= 2;
 			}
-
-			target.resize(target.width / 2, target.height / 2);
 		}
 
+		legacy && outputTexture.version++;
+
+		// Dispose
+
+		!legacy && target.detach(ATTACHMENT.COLOR_ATTACHMENT0);
 		target.dispose();
 		geometry.dispose();
 		material.dispose();
 		normalDistributionTexture.dispose();
 
-		prefilteredCubeMap.version++;
+		//
 
-		return prefilteredCubeMap;
+		return outputTexture;
 	}
 
 }
@@ -143,8 +179,7 @@ class PMREM {
 const _quaterion = new Quaternion();
 
 const prefilterShader = {
-
-	name: 'rmrem',
+	name: 'pmrem',
 
 	defines: {
 		PANORAMA: false,
@@ -221,15 +256,11 @@ const prefilterShader = {
 			#include <encodings_frag>
 		}
 	`
-
 };
 
-function generateNormalDistribution(roughnessLevels, sampleSize) {
-	// GLSL not support bit operation, use lookup instead
-	// V -> i / N, U -> roughness
-	roughnessLevels = roughnessLevels || 256;
-	sampleSize = sampleSize || 1024;
-
+// GLSL not support bit operation, use lookup instead
+// V -> i / N, U -> roughness
+function generateNormalDistribution(roughnessLevels = 256, sampleSize = 1024) {
 	const normalDistribution = new Texture2D();
 
 	const pixels = new Float32Array(sampleSize * roughnessLevels * 4);
@@ -243,10 +274,6 @@ function generateNormalDistribution(roughnessLevels, sampleSize) {
 	normalDistribution.version++;
 
 	const tmp = [];
-
-	// function sortFunc(a, b) {
-	//     return Math.abs(b) - Math.abs(a);
-	// }
 
 	for (let j = 0; j < roughnessLevels; j++) {
 		const roughness = j / roughnessLevels;
