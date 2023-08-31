@@ -58,10 +58,10 @@ export class AnimationParser {
 					}
 
 					const input = new inputAccessor.buffer.array.constructor(inputAccessor.buffer.array);
-					const output = new outputAccessor.buffer.array.constructor(outputAccessor.buffer.array);
+					const output = new Float32Array(outputAccessor.buffer.array);
 
 					if (outputAccessor.normalized) {
-						const scale = GLTFUtils.getNormalizedComponentScale(output.constructor);
+						const scale = GLTFUtils.getNormalizedComponentScale(outputAccessor.buffer.array.constructor);
 						for (let j = 0, jl = output.length; j < jl; j++) {
 							output[j] *= scale;
 						}
