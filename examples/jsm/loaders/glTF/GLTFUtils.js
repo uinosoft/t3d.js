@@ -113,6 +113,7 @@ export class GLTFUtils {
 		return { gltf, buffers };
 	}
 
+	// Reference: github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_mesh_quantization#encoding-quantized-data
 	static getNormalizedComponentScale(constructor) {
 		if (constructor === Int8Array) {
 			return 1 / 127;
