@@ -15027,7 +15027,10 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.spotShadowNum = (object.receiveShadow && !!lights) ? lights.spotShadowNum : 0;
 	props.useShadow = object.receiveShadow && !!lights && lights.shadowsNum > 0;
 	props.useShadowSampler = capabilities.version >= 2 && !disableShadowSampler;
-	props.shadowType = props.useShadowSampler ? object.shadowType : SHADOW_TYPE.POISSON_SOFT;
+	props.shadowType = object.shadowType;
+	if (!props.useShadowSampler && props.shadowType !== SHADOW_TYPE.HARD) {
+		props.shadowType = SHADOW_TYPE.POISSON_SOFT;
+	}
 	props.dithering = material.dithering;
 	// encoding
 	const currentRenderTarget = state.currentRenderTarget;
