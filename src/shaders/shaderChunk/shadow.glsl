@@ -119,7 +119,7 @@ float getShadow(sampler2DShadow shadowMap, vec4 shadowCoord, vec2 shadowMapSize,
                     vec2 shadowMapSizeAndInverse = vec2(shadowMapSize.x, 1. / shadowMapSize.x);
                     shadow = computeShadowWithPCF5(shadowMap, shadowCoord.xyz, shadowMapSizeAndInverse);
                 #else
-                    float texelSize = shadowParams.x / shadowMapSize.x;
+                    float texelSize = shadowParams.x * 0.5 / shadowMapSize.x;
                     shadow = computeShadowWithPoissonSampling(shadowMap, shadowCoord.xyz, texelSize);
                 #endif
             #endif
@@ -146,7 +146,7 @@ float getPointShadow(samplerCube shadowMap, vec4 shadowCoord, vec2 shadowMapSize
     #ifdef USE_HARD_SHADOW
         return textureCubeCompare(shadowMap, normalize(V), depth);
     #else
-        float texelSize = shadowParams.x / shadowMapSize.x;
+        float texelSize = shadowParams.x * 0.5 / shadowMapSize.x;
 
         vec3 poissonDisk[4];
         poissonDisk[0] = vec3(-1.0, 1.0, -1.0);
