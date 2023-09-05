@@ -17,7 +17,8 @@ class PointLightShadow extends LightShadow {
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;
-		map.minFilter = TEXTURE_FILTER.LINEAR;
+		map.minFilter = TEXTURE_FILTER.NEAREST;
+		map.magFilter = TEXTURE_FILTER.NEAREST;
 		this.map = map;
 
 		this._targets = [

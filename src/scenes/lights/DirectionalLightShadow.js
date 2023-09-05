@@ -37,7 +37,8 @@ class DirectionalLightShadow extends LightShadow {
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;
-		map.minFilter = TEXTURE_FILTER.LINEAR;
+		map.minFilter = TEXTURE_FILTER.NEAREST;
+		map.magFilter = TEXTURE_FILTER.NEAREST;
 
 		const depthTexture = new Texture2D();
 		depthTexture.type = PIXEL_TYPE.UNSIGNED_INT;

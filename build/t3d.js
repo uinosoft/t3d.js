@@ -11979,7 +11979,8 @@
 			this.renderTarget = new RenderTarget2D(this.mapSize.x, this.mapSize.y);
 			const map = this.renderTarget.texture;
 			map.generateMipmaps = false;
-			map.minFilter = TEXTURE_FILTER.LINEAR;
+			map.minFilter = TEXTURE_FILTER.NEAREST;
+			map.magFilter = TEXTURE_FILTER.NEAREST;
 			const depthTexture = new Texture2D();
 			depthTexture.type = PIXEL_TYPE.UNSIGNED_INT;
 			depthTexture.format = PIXEL_FORMAT.DEPTH_COMPONENT;
@@ -12127,7 +12128,8 @@
 			this.renderTarget = new RenderTargetCube(this.mapSize.x, this.mapSize.y);
 			const map = this.renderTarget.texture;
 			map.generateMipmaps = false;
-			map.minFilter = TEXTURE_FILTER.LINEAR;
+			map.minFilter = TEXTURE_FILTER.NEAREST;
+			map.magFilter = TEXTURE_FILTER.NEAREST;
 			this.map = map;
 			this._targets = [new Vector3(1, 0, 0), new Vector3(-1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, -1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1)];
 			this._ups = [new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(0, -1, 0), new Vector3(0, -1, 0)];
@@ -12263,7 +12265,8 @@
 			this.renderTarget = new RenderTarget2D(this.mapSize.x, this.mapSize.y);
 			const map = this.renderTarget.texture;
 			map.generateMipmaps = false;
-			map.minFilter = TEXTURE_FILTER.LINEAR;
+			map.minFilter = TEXTURE_FILTER.NEAREST;
+			map.magFilter = TEXTURE_FILTER.NEAREST;
 			const depthTexture = new Texture2D();
 			depthTexture.type = PIXEL_TYPE.UNSIGNED_INT;
 			depthTexture.format = PIXEL_FORMAT.DEPTH_COMPONENT;
