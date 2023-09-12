@@ -76,11 +76,9 @@
 					gui.add(node.geometry, 'instanceCount', 0, instances, 1);
 					const directionalLightFolder = gui.addFolder('Directional Light');
 					directionalLightFolder.close();
-					directionalLightFolder.add(directionalLight, 'intensity', 0, 3, 0.1);
 					directionalLightFolder.addColor(directionalLight, 'color');
 					const pointLightFolder = gui.addFolder('Point Light');
 					pointLightFolder.close();
-					pointLightFolder.add(pointLight, 'intensity', 0, 3, 0.1);
 					pointLightFolder.addColor(pointLight, 'color');
 					pointLightFolder.add(pointLight, 'decay', 0, 2, 0.01);
 				}
@@ -138,7 +136,7 @@
 			_orientation.w = Math.random() * 2 - 1;
 			_orientation.normalize();
 
-			const mainScale = Math.random() * 1.5 + 0.5;
+			const mainScale = Math.random() * 1.9 + 0.1;
 
 			_scale.x = (Math.random() * 0.5 + 0.5) * mainScale;
 			_scale.y = (Math.random() * 0.5 + 0.5) * mainScale;
@@ -152,8 +150,8 @@
 
 		const camera = new t3d.Camera();
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(100, 10, 100);
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		camera.position.set(80, 10, 80);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
@@ -175,6 +173,8 @@
 			controller.update();
 
 			const time = performance.now();
+
+			pointLight.intensity = Math.abs(Math.sin(time / 2000)) * 2.5;
 
 			const delta = (time - lastTime) / 2000;
 			tmpQ.set(moveQ.x * delta, moveQ.y * delta, moveQ.z * delta, 1).normalize();
@@ -203,7 +203,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
