@@ -30,6 +30,7 @@
 		import { Clock } from './jsm/Clock.js';
 		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+		import { InstancedPBRMaterial } from './jsm/materials/InstancedPBRMaterial.js';
 		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import Stats from './libs/stats.module.js';
@@ -64,7 +65,7 @@
 		scene.environmentLightIntensity = 0.8;
 		scene.environment = cube_texture;
 
-		// instanced pbr shader
+		// fix depth material for instancing
 
 		const instancingParsVert = `
 			#ifdef USE_INSTANCING
@@ -79,35 +80,6 @@
 				transformed = (localInstanceMatrix * vec4(transformed, 1.0)).xyz;
 			#endif
 		`;
-
-		const instancingNormalVert = `
-			#ifdef USE_INSTANCING
-				#ifdef USE_INSTANCING
-					objectNormal = (transposeMat4(inverseMat4(localInstanceMatrix)) * vec4(objectNormal, 0.0)).xyz;
-				#endif
-
-				#ifdef USE_TANGENT
-					objectTangent = (transposeMat4(inverseMat4(localInstanceMatrix)) * vec4(objectTangent, 0.0)).xyz;
-				#endif
-			#endif
-		`;
-
-		let vertexShader = t3d.ShaderLib.pbr_vert;
-
-		vertexShader = vertexShader.replace('#include <logdepthbuf_pars_vert>', `
-			#include <logdepthbuf_pars_vert>
-			${instancingParsVert}
-		`);
-		vertexShader = vertexShader.replace('#include <pvm_vert>', `
-			${instancingPositionVert}
-			#include <pvm_vert>
-		`);
-		vertexShader = vertexShader.replace('#include <normal_vert>', `
-			${instancingNormalVert}
-			#include <normal_vert>
-		`);
-
-		// fix depth material for instancing
 
 		let depthVertexShader = `
 			#include <common_vert>
@@ -252,16 +224,7 @@
 					// node.receiveShadow = true;
 					node.frustumCulled = false;
 
-					const material = new t3d.PBRMaterial();
-					material.type = t3d.MATERIAL_TYPE.SHADER;
-
-					material.copy(node.material);
-
-					material.shaderName = "CUSTOM_PBR";
-					material.vertexShader = vertexShader;
-					material.fragmentShader = t3d.ShaderLib.pbr_frag;
-					material.defines.USE_INSTANCING = true;
-					material.uniforms.instanceOffset = new Float32Array(16);
+					const material = new InstancedPBRMaterial(node.material);
 
 					// We should insert instanceMatrix to modelMatrix
 					// So we use < inverseMat4(instanceOffset) * instanceMatrix * instanceOffset > to convert instance matrix to vertex space

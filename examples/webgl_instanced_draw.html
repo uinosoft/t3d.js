@@ -2,42 +2,18 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>t3d - instanced draw</title>
+	<title>t3d - webgl instanced draw</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
     <div id="info">
         <a href="" target="_blank">t3d</a> - instanced draw
+		<br/>Model from <a href="https://sketchfab.com/3d-models/asteroid-aa26af77e2cb40c48e0dc19f16115f72"  target="_blank">"asteroid"</a> 
+		by <a href="https://sketchfab.com/shawn0326"  target="_blank">shawn0326</a>
 	</div>
-	
-	<script id="vertexShader" type="x-shader/x-vertex">
-		attribute vec3 a_Position;
-		attribute vec2 a_Uv;
-		uniform mat4 u_ProjectionView;
-		uniform mat4 u_Model;
 
-		attribute mat4 instanceMatrix;
-
-		varying vec2 vUv;
-
-		void main(){
-			vUv = a_Uv;
-			vec4 transformed = vec4(a_Position, 1.0);
-			transformed = instanceMatrix * transformed;
-			gl_Position = u_ProjectionView * u_Model * transformed;
-		}
-	</script>
-
-	<script id="fragmentShader" type="x-shader/x-fragment">
-		varying vec2 vUv;
-
-		uniform sampler2D map;
-
-		void main() {
-			gl_FragColor = texture2D(map, vUv);
-		}
-	</script>
+	<script src="./libs/nanobar.js"></script>
 
 	<!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
@@ -54,7 +30,9 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-		import { TGALoader } from './jsm/loaders/TGALoader.js';
+		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { InstancedPBRMaterial } from './jsm/materials/InstancedPBRMaterial.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -69,61 +47,64 @@
 
 		const scene = new t3d.Scene();
 
-		const texture = new t3d.Texture2D();
-		texture.anisotropy = 16;
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = "gray";
 
-		const tgaLoader = new TGALoader();
-		tgaLoader.load('resources/crate_color8.tga', function(textureData) {
-			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
-			texture.version++;
-		});
-		
-		const shaderMaterial = new t3d.ShaderMaterial({
-			vertexShader: document.getElementById('vertexShader').textContent,
-			fragmentShader: document.getElementById('fragmentShader').textContent,
-			uniforms: {
-				map: texture
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = "transparent";
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
 		});
 
+		let instancedGeometry;
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load('./resources/models/gltf/asteroid.glb').then(function(result) {
+			result.root.traverse(function(node) {
+				if (node.isMesh) {
+					node.material = new InstancedPBRMaterial(node.material);
+
+					instancedGeometry = createInstancedGeoemtry(node.geometry);
+					node.geometry = instancedGeometry;
+		
+					node.frustumCulled = false;
+
+					const gui = new GUI();
+					gui.add(node.geometry, 'instanceCount', 0, instances, 1);
+					const directionalLightFolder = gui.addFolder('Directional Light');
+					directionalLightFolder.close();
+					directionalLightFolder.add(directionalLight, 'intensity', 0, 3, 0.1);
+					directionalLightFolder.addColor(directionalLight, 'color');
+					const pointLightFolder = gui.addFolder('Point Light');
+					pointLightFolder.close();
+					pointLightFolder.add(pointLight, 'intensity', 0, 3, 0.1);
+					pointLightFolder.addColor(pointLight, 'color');
+					pointLightFolder.add(pointLight, 'decay', 0, 2, 0.01);
+				}
+			});
+			scene.add(result.root);
+		}).catch(e => console.error(e));
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 2);
+		directionalLight.position.set(50, 20, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const pointLight = new t3d.PointLight(0x00d5ff, 2, 150, 1);
+		scene.add(pointLight);
+
+		// instanced geometry
+
 		const instances = 5000;
-
-		const geometry = new t3d.BoxGeometry(3, 3, 3);
-		const instancedGeometry = createInstancedGeoemtry(geometry);
-		instancedGeometry.instanceCount = instances;
-
-		const instancedMesh = new t3d.Mesh(instancedGeometry, shaderMaterial);
-		instancedMesh.frustumCulled = false;
-		scene.add(instancedMesh);
-
-		const camera = new t3d.Camera();
-		camera.position.set(0, 0, 0);
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
 		
 		function createInstancedGeoemtry(geometry) {
 			const matrices = [];
 
-			const position = new t3d.Vector3();
-			const orientation = new t3d.Quaternion();
-			const scale = new t3d.Vector3();
-			const matrix = new t3d.Matrix4();
-
 			for (let i = 0; i < instances; i++) {
-				position.x = Math.random() * 100 - 50;
-				position.y = Math.random() * 100 - 50;
-				position.z = Math.random() * 100 - 50;
-
-				orientation.x = Math.random() * 2 - 1;
-				orientation.y = Math.random() * 2 - 1;
-				orientation.z = Math.random() * 2 - 1;
-				orientation.w = Math.random() * 2 - 1;
-				orientation.normalize();
-
-				scale.set(1, 1, 1);
-
-				matrix.transform(position, scale, orientation);
-				matrix.toArray(matrices, i * 16);
+				randomTransform(matrices, i);
 			}
 
 			const instancedGeometry = geometry.clone();
@@ -131,12 +112,55 @@
 			instanceMatrixAttribute.divisor = 1;
 			instancedGeometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
 
+			instancedGeometry.instanceCount = instances;
+
 			return instancedGeometry;
 		}
 
-		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add(instancedGeometry, 'instanceCount', 0, instances, 1);
+		const _position = new t3d.Vector3();
+		const _orientation = new t3d.Quaternion();
+		const _scale = new t3d.Vector3();
+		const _matrix = new t3d.Matrix4();
+
+		function randomTransform(matrices, index) {
+			const ratio = Math.random();
+			const radiusX = 110 * ratio;
+			const rangeY = (Math.random() > 0.5 ? 1 : -1) * (Math.cos(radiusX / 80 * Math.PI / 2) * 30 + Math.random() * 20 - 10);
+			const theta = Math.random() * Math.PI * 2;
+
+			_position.x = radiusX * Math.cos(theta);
+			_position.z = radiusX * Math.sin(theta);
+			_position.y = rangeY * Math.random();
+
+			_orientation.x = Math.random() * 2 - 1;
+			_orientation.y = Math.random() * 2 - 1;
+			_orientation.z = Math.random() * 2 - 1;
+			_orientation.w = Math.random() * 2 - 1;
+			_orientation.normalize();
+
+			const mainScale = Math.random() * 1.5 + 0.5;
+
+			_scale.x = (Math.random() * 0.5 + 0.5) * mainScale;
+			_scale.y = (Math.random() * 0.5 + 0.5) * mainScale;
+			_scale.z = (Math.random() * 0.5 + 0.5) * mainScale;
+
+			_matrix.transform(_position, _scale, _orientation);
+			_matrix.toArray(matrices, index * 16);
+		}
+
+		//
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(100, 10, 100);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = false;
+		controller.maxDistance = 200;
+		controller.autoRotate = true;
+		controller.autoRotateSpeed = 0.3;
 
 		let lastTime = 0;
 
@@ -148,29 +172,27 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let time = performance.now();
+			controller.update();
 
-			// rotate camera
-			// camera.euler.y = time * 0.00005;
-			camera.position.x = 130 * Math.sin(time / 1000 * .1);
-			camera.position.z = 130 * Math.cos(time / 1000 * .1);
-			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			const time = performance.now();
 
-			let delta = (time - lastTime) / 2000;
+			const delta = (time - lastTime) / 2000;
 			tmpQ.set(moveQ.x * delta, moveQ.y * delta, moveQ.z * delta, 1).normalize();
 			tmpQ.toMatrix4(rotationMatrix);
-			const matricesAttribute = instancedGeometry.getAttribute('instanceMatrix');
 
-			for (let i = 0, il = matricesAttribute.buffer.count; i < il; i++) {
-				const offset = i * 16;
+			if (instancedGeometry) {
+				const matricesAttribute = instancedGeometry.getAttribute('instanceMatrix');
 
-				matrix.fromArray(matricesAttribute.buffer.array, offset);
-				matrix.multiply(rotationMatrix);
+				for (let i = 0, il = matricesAttribute.buffer.count; i < il; i++) {
+					const offset = i * 16;
+					matrix.fromArray(matricesAttribute.buffer.array, offset);
+					matrix.multiply(rotationMatrix);
+					matrix.toArray(matricesAttribute.buffer.array, offset);
+				}
 
-				matrix.toArray(matricesAttribute.buffer.array, offset);
+				matricesAttribute.buffer.version++;
 			}
-
-			matricesAttribute.buffer.version++;
+		
 			lastTime = time;
 
 			forwardRenderer.render(scene, camera);
