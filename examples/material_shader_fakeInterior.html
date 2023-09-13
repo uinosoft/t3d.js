@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - fake interior</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> - fake interior
+		<br />reference: <a href="https://github.com/OBKF/Fake-Interior-Shader-for-GodotEngine" target="_blank">Fake-Interior-Shader-for-GodotEngine</a>
+	</div>
+
+	<script id="vertexShader" type="x-shader/x-vertex">
+		#define USE_TANGENT
+
+		#include <common_vert>
+		#include <normal_pars_vert>
+		#include <uv_pars_vert>
+
+		uniform vec2 atlasGrid;
+		uniform vec2 cellGrid;
+		uniform float depth;
+		
+		varying vec3 v_ViewDirTS;
+		varying vec2 v_UvTS;
+
+		void main() {
+			#include <begin_vert>
+			#include <uv_vert>
+			#include <pvm_vert>
+
+			// Scale the UVs by cellGrid.
+			v_UvTS = vec2(a_Uv.x, 1.0 - a_Uv.y) * cellGrid;
+			
+			// Get the object space view direction.
+			vec3 objSpaceCameraPos = (inverseMat4(u_Model) * vec4(u_CameraPosition, 1.0)).xyz;
+			vec3 viewDirOS = a_Position - objSpaceCameraPos;
+
+			// Get the tangent space view direction.
+			vec3 bitangent = normalize(cross(a_Normal.xyz, a_Tangent.xyz) * a_Tangent.w);
+			v_ViewDirTS = vec3(
+				dot(viewDirOS, a_Tangent.xyz),
+				dot(viewDirOS, bitangent),
+				dot(viewDirOS, a_Normal.xyz));
+		}
+	</script>
+
+	<script id="fragmentShader" type="x-shader/x-fragment">
+		#include <common_frag>
+		#include <uv_pars_frag>
+		#include <diffuseMap_pars_frag>
+
+		#ifdef USE_EMISSIVEMAP
+			uniform sampler2D emissiveMap;
+		#endif
+	
+		uniform sampler2D overlayMap;
+		
+		uniform vec2 atlasGrid;
+		uniform vec2 cellGrid;
+		uniform float depth;
+		uniform float emissionThreshold;
+		uniform float emissionStrength;
+		uniform float textureSeed;
+		uniform float emissionSeed;
+
+		// Random with float input.
+		vec2 f_random(float co){
+			return fract(sin((co + textureSeed) * vec2(12.9898,78.233)) * 43758.5453);
+		}
+
+		// Random with vec2 input.
+		float v_random (vec2 co) {
+			return fract(sin(dot(co + vec2(emissionSeed), vec2(12.9898,78.233))) * 43758.5453123);
+		}
+
+		varying vec3 v_ViewDirTS;
+		varying vec2 v_UvTS;
+
+		void main() {
+			// Get the uv coordinates [0.0 - 1.0] of the current texture atlas.
+			vec2 texture_uv = fract(v_UvTS);
+
+			// Get the uv atlas index.
+			vec2 texture_index_uv = floor(v_UvTS);
+
+			// Randomize the cell grid.
+			vec2 n = floor(f_random(texture_index_uv.x + texture_index_uv.y * (texture_index_uv.x + 1.0)) * atlasGrid);
+			texture_index_uv += n;
+
+			// Get parallax depth from diffuseMap alpha, or use depth uniform.
+			float far_frac = texture(diffuseMap, (texture_index_uv + 0.5) / atlasGrid).a;
+			if (far_frac == 1.0) far_frac = depth;
+
+			// Calculate depth scale.
+			float depth_scale = 1.0 / (1.0 - far_frac) - 1.0;
+
+			// Get the intersection point with the box in tangent space.
+			vec3 pos = vec3(texture_uv * 2.0 - 1.0, -1.0);
+			vec3 _tangent_view_dir = v_ViewDirTS;
+			_tangent_view_dir.z *= -depth_scale;
+			vec3 id = 1.0 / _tangent_view_dir;
+			vec3 k = abs(id) - pos * id;
+			float k_min = min(min(k.x, k.y), k.z);
+			pos += k_min * _tangent_view_dir;
+
+			// Map the depth to [0.0 - 1.0].
+			float interpolate = (pos.z + 1.0) * 0.5;
+
+			// Calculate the real depth.
+			float real_z = clamp(interpolate, 0.0, 1.0) / depth_scale + 1.0;
+			interpolate = 1.0 - (1.0 / real_z);
+			interpolate *= depth_scale + 1.0;
+
+			// Interpolate from far back to near.
+			vec2 interior_uv = pos.xy * mix(1.0, far_frac, interpolate);
+			interior_uv = interior_uv * 0.5 + 0.5;
+
+			// Sampler value from map or map atlas.
+			vec2 uvTemp = texture_index_uv + interior_uv;
+			uvTemp.y = 1.0 - uvTemp.y;	// Flip y.
+			vec2 uv = uvTemp / atlasGrid;
+			vec3 diffuse = texture(diffuseMap, uv).rgb;
+			vec3 emit = texture(emissiveMap, uv).rgb;
+			vec4 overlayColor = texture(overlayMap, v_UvTS);
+			
+			// Use emission map based on threshold parameter.
+			float is_emit = v_random(floor(v_UvTS));
+			is_emit = 1.0 - step(emissionThreshold, is_emit);
+
+			vec3 color = diffuse * (1.0 - is_emit);
+			vec3 emission = emit * is_emit * emissionStrength;
+
+			// Add overlay color.
+			vec4 finalColor = vec4(color + emission, 1.0);
+			finalColor.rgb = mix(finalColor.rgb, overlayColor.rgb, overlayColor.a);
+
+			gl_FragColor = finalColor;
+		}
+	</script>
+
+	<script src="./libs/simplex-noise.js"></script>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 10, 500);
+		scene.fog.color.setRGB(0.6, 0.7, 0.8);
+
+		function createTexture(uri) {
+			const texture = new Texture2DLoader().load('./resources/interior/' + uri);
+			texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
+			texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+			return texture;
+		}
+
+		const glassTexture = createTexture('glass.png');
+
+		const fakeInteriorTextures = {
+			'dir_test': {
+				diffuseDepth: createTexture('interior_2d.png'),
+				emissive: createTexture('interior_2d.png'),
+				atlasGrid: [1, 1]
+			},
+			'single_test': {
+				diffuseDepth: createTexture('t1_depth.png'),
+				emissive: createTexture('t2_emit.png'),
+				atlasGrid: [1, 1]
+			},
+			'multiple_test': {
+				diffuseDepth: createTexture('rooms_depth.png'),
+				emissive: createTexture('rooms_emit.png'),
+				atlasGrid: [3, 2]
+			},
+			'beauty': {
+				diffuseDepth: createTexture('room_3.png'),
+				emissive: createTexture('room_3_E.png'),
+				atlasGrid: [1, 1],
+				depth: 0.5
+			}
+		};
+
+		const shaderMaterial = new t3d.ShaderMaterial({
+			vertexShader: document.getElementById('vertexShader').textContent,
+			fragmentShader: document.getElementById('fragmentShader').textContent,
+			uniforms: {
+				overlayMap: glassTexture,
+				depth: 0.5,
+				atlasGrid: [1, 1],
+				cellGrid: [6, 6],
+				emissionThreshold: 0.3,
+				emissionStrength: 1.0,
+				textureSeed: 0,
+				emissionSeed: 0,
+			}
+		});
+
+		const geometry = new t3d.PlaneGeometry(1, 1, 1, 1);
+		GeometryUtils.computeTangents(geometry);
+		const plane = new t3d.Mesh(geometry, shaderMaterial);
+		plane.scale.set(20, 20, 20);
+		plane.position.set(0, 10, 0);
+		plane.euler.x = Math.PI / 2;
+		plane.frustumCulled = false;
+		scene.add(plane);
+
+		const cylinderGeometry = new t3d.CylinderGeometry(1, 1, 2, 6);
+		GeometryUtils.computeTangents(cylinderGeometry);
+		const sphere = new t3d.Mesh(cylinderGeometry, shaderMaterial);
+		sphere.scale.set(10, 10, 10);
+		sphere.position.set(25, 10, 0);
+		scene.add(sphere);
+
+		const boxGeometry = new t3d.BoxGeometry();
+		GeometryUtils.computeTangents(boxGeometry);
+		const box = new t3d.Mesh(boxGeometry, shaderMaterial);
+		box.scale.set(20, 20, 20);
+		box.position.set(-25, 10, 0);
+		scene.add(box);
+
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.BasicMaterial();
+		plane_material.roughness = 1;
+		plane_material.diffuse.setHex(0x888888);
+		const ground = new t3d.Mesh(plane_geometry, plane_material);
+		scene.add(ground);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 20, 80);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 10, 0);
+
+		function setTextures(data) {
+			shaderMaterial.diffuseMap = data.diffuseDepth;
+			shaderMaterial.emissiveMap = data.emissive;
+			shaderMaterial.uniforms.atlasGrid = data.atlasGrid;
+			shaderMaterial.uniforms.depth = data.depth || 0;
+			shaderMaterial.needsUpdate = true;
+		}
+
+		setTextures(fakeInteriorTextures['beauty']);
+
+		// gui
+		const gui = new GUI();
+		gui.add({ texture: 'beauty' }, 'texture', fakeInteriorTextures).onChange(value => {
+			setTextures(value);
+		});
+		const uniforms = shaderMaterial.uniforms;
+		const emission = gui.addFolder('Emission');
+		emission.add(uniforms, 'emissionThreshold', 0, 1, 0.01).name('threshold');
+		emission.add(uniforms, 'emissionStrength', 0, 2, 0.1).name('strength');
+		const seed = gui.addFolder('Random Seed');
+		seed.add(uniforms, 'textureSeed', 0, 10, 1).name('texture');
+		seed.add(uniforms, 'emissionSeed', 0, 10, 1).name('emission');
+		const cellGrid = gui.addFolder('Cell Grid');
+		cellGrid.add(uniforms.cellGrid, '0', 1, 10, 1).name('x');
+		cellGrid.add(uniforms.cellGrid, '1', 1, 10, 1).name('y');
+		cellGrid.close();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener("resize", onWindowResize, false);
+	</script>
+</body>
+
+</html>

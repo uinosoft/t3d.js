@@ -74,6 +74,7 @@
 		"material_shader_xray",
 		"material_shader_grid",
 		"material_shader_extend",
+		"material_shader_fakeInterior",
 		"material_flatshading",
 		"material_vertexcolors",
 		"material_alphamask",
