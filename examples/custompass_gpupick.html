@@ -39,6 +39,8 @@
 
         let width = window.innerWidth || 2;
         let height = window.innerHeight || 2;
+        const near = 0.1;
+        const far = 1000;
 
         const canvas = document.createElement('canvas');
         canvas.width = width;
@@ -106,7 +108,7 @@
         camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
         camera.position.set(0, 0, 10);
         camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-        camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);
+        camera.setPerspective(70 / 180 * Math.PI, width / height, near, far);
         scene.add(camera);
 
         // stats
@@ -121,30 +123,39 @@
         const pickBuffer = new PickBuffer(width, height);
 
         const clock = new Clock();
+
         let timer = 0;
+        const cameraMatrixCache = {
+        	worldMatrix: new t3d.Matrix4(),
+        	projectionMatrix: new t3d.Matrix4(),
+        	projectionMatrixInverse: new t3d.Matrix4(),
+        };
+
         function updateFocalDepth(e) {
-        	let pixels = new Float32Array(1 * 1 * 4);
+        	const pixels = new Float32Array(1 * 1 * 4);
 
         	const deltaTime = clock.getDelta();
         	timer += deltaTime;
 
         	if (timer > 0.25) {
         		pickBuffer.render(renderer, scene, camera);
+        		cameraMatrixCache.worldMatrix.copy(camera.worldMatrix);
+        		cameraMatrixCache.projectionMatrix.copy(camera.projectionMatrix);
+        		cameraMatrixCache.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
         		timer = 0;
         	}
         
         	renderer.setRenderTarget(pickBuffer._rt);
         	renderer.readRenderTargetPixels(e.clientX, height - e.clientY, 1, 1, pixels);
 
-        	if (pixels[2] < 0.001) {
-        		return;
-        	}
-        
-        	let x = (e.clientX / width) * 2.0 - 1.0;
-        	let y = -(e.clientY / height) * 2.0 + 1.0;
-        	let depth = pixels[2] * 2.0 - 1.0;
-        
-        	position.set(x, y, depth).unproject(camera);
+        	const ndcX = (e.clientX / width) * 2.0 - 1.0;
+        	const ndcY = -(e.clientY / height) * 2.0 + 1.0;
+        	const ndcZ = (new t3d.Vector3(0, 0, pixels[2]).applyMatrix4(cameraMatrixCache.projectionMatrix)).z; // viewZ to ndcZ
+
+        	position.set(ndcX, ndcY, ndcZ)
+        		.applyMatrix4(cameraMatrixCache.projectionMatrixInverse)
+        		.applyMatrix4(cameraMatrixCache.worldMatrix);
+
         	sphericalToVec3([pixels[0], pixels[1]], normal);
         
         	normal_mersh.position.set(0, 0, 0);
@@ -196,7 +207,7 @@
         	width = window.innerWidth || 2;
         	height = window.innerHeight || 2;
 
-        	camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);
+        	camera.setPerspective(70 / 180 * Math.PI, width / height, near, far);
         	backRenderTarget.resize(width, height);
         	pickBuffer.resize(width, height);
         }

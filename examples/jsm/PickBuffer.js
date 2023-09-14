@@ -143,6 +143,7 @@ const pickShader = {
         #include <skinning_pars_vert>
         #include <normal_pars_vert>
 		#include <logdepthbuf_pars_vert>
+		varying float viewZ;
         void main() {
         	#include <begin_vert>
         	#include <morphtarget_vert>
@@ -152,6 +153,7 @@ const pickShader = {
         	#include <normal_vert>
         	#include <pvm_vert>
 			#include <logdepthbuf_vert>
+			viewZ = (u_View * worldPosition).z;
         }
     `,
 	fragmentShader: `
@@ -160,6 +162,7 @@ const pickShader = {
 		#include <logdepthbuf_pars_frag>
 
 		uniform highp float u_pickId;
+		varying float viewZ;
 
 		float atan2(float y, float x) {
 			if (x > 0.0) {
@@ -184,11 +187,10 @@ const pickShader = {
         void main() {
      		#include <logdepthbuf_frag>
             vec3 normal = normalize(v_Normal);
-			float depth = gl_FragCoord.z;
 			vec2 polar = vec2(acos(min(1., max(-1., normal.y))), atan2(normal.x, normal.z));
 			vec4 pickInformation;
             pickInformation.xy = polar;
-            pickInformation.z = depth;
+            pickInformation.z = viewZ;
 			pickInformation.w = round(u_pickId);
             gl_FragColor = pickInformation;
         }
