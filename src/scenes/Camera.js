@@ -130,8 +130,7 @@ class Camera extends Object3D {
 	}
 
 	getWorldDirection(optionalTarget = new Vector3()) {
-		const e = this.worldMatrix.elements;
-		return optionalTarget.set(-e[8], -e[9], -e[10]).normalize();
+		return super.getWorldDirection(optionalTarget).negate();
 	}
 
 	updateMatrix(force) {
