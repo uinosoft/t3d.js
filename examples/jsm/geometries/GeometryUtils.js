@@ -1,7 +1,3 @@
-/**
- * GeometryUtils
- */
-
 import {
 	Attribute,
 	Buffer,
@@ -11,21 +7,22 @@ import {
 	Vector3
 } from 't3d';
 
-var _vec3_1 = new Vector3();
+class GeometryUtils {
 
-var GeometryUtils = {
+	/**
+	 * @param {Geometry} geometry
+	 */
+	static computeNormals(geometry) {
+		const index = geometry.index;
+		const attributes = geometry.attributes;
 
-	computeNormals: function(geometry) {
-		var index = geometry.index;
-		var attributes = geometry.attributes;
-		var positionAttribute = attributes.a_Position;
+		const positionAttribute = attributes.a_Position;
 
 		if (positionAttribute === undefined) {
-			console.warn('t3d.Geometry: Missing required attributes (position) in GeometryUtils.computeNormals()');
 			return;
 		}
 
-		var normalAttribute = attributes.a_Normal;
+		let normalAttribute = attributes.a_Normal;
 
 		if (normalAttribute === undefined) {
 			normalAttribute = new Attribute(new Buffer(new Float32Array(positionAttribute.buffer.count * 3), 3));
@@ -37,16 +34,16 @@ var GeometryUtils = {
 			normalAttribute.buffer.version++;
 		}
 
-		var pA = new Vector3(), pB = new Vector3(), pC = new Vector3();
-		var nA = new Vector3(), nB = new Vector3(), nC = new Vector3();
-		var cb = new Vector3(), ab = new Vector3();
+		const pA = new Vector3(), pB = new Vector3(), pC = new Vector3();
+		const nA = new Vector3(), nB = new Vector3(), nC = new Vector3();
+		const cb = new Vector3(), ab = new Vector3();
 
 		if (index) {
 			// indexed elements
 			for (let i = 0, il = index.buffer.count; i < il; i += 3) {
-				var vA = index.buffer.array[i + 0];
-				var vB = index.buffer.array[i + 1];
-				var vC = index.buffer.array[i + 2];
+				const vA = index.buffer.array[i + 0];
+				const vB = index.buffer.array[i + 1];
+				const vC = index.buffer.array[i + 2];
 
 				pA.fromArray(positionAttribute.buffer.array, vA * 3);
 				pB.fromArray(positionAttribute.buffer.array, vB * 3);
@@ -86,9 +83,12 @@ var GeometryUtils = {
 		}
 
 		this.normalizeNormals(geometry);
-	},
+	}
 
-	normalizeNormals: function(geometry) {
+	/**
+	 * @param {Geometry} geometry
+	 */
+	static normalizeNormals(geometry) {
 		const normals = geometry.attributes.a_Normal.buffer;
 
 		for (let i = 0; i < normals.array.length; i += 3) {
@@ -96,44 +96,47 @@ var GeometryUtils = {
 			_vec3_1.normalize();
 			_vec3_1.toArray(normals.array, i);
 		}
-	},
+	}
 
-	computeTangents: function(geometry) {
-		var index = geometry.index;
-		var attributes = geometry.attributes;
+	/**
+	 * @param {Geometry} geometry
+	 */
+	static computeTangents(geometry) {
+		const index = geometry.index;
+		const attributes = geometry.attributes;
 
 		// based on http://www.terathon.com/code/tangent.html
 		// (per vertex tangents)
 
 		if (index === null ||
-                attributes.a_Position === undefined ||
-                attributes.a_Normal === undefined ||
-                attributes.a_Uv === undefined) {
-			console.warn('t3d.Geometry: Missing required attributes (index, position, normal or uv) in GeometryUtils.computeTangents()');
+			attributes.a_Position === undefined ||
+			attributes.a_Normal === undefined ||
+			attributes.a_Uv === undefined) {
+			console.warn('GeometryUtils: .computeTangents() failed. Missing required attributes (index, a_Position, a_Normal or a_Uv)');
 			return;
 		}
 
-		var indices = index.buffer.array;
-		var positions = attributes.a_Position.buffer.array;
-		var normals = attributes.a_Normal.buffer.array;
-		var uvs = attributes.a_Uv.buffer.array;
+		const indices = index.buffer.array;
+		const positions = attributes.a_Position.buffer.array;
+		const normals = attributes.a_Normal.buffer.array;
+		const uvs = attributes.a_Uv.buffer.array;
 
-		var nVertices = positions.length / 3;
+		const nVertices = positions.length / 3;
 
-		if (attributes.tangent === undefined) {
+		if (attributes.a_Tangent === undefined) {
 			geometry.addAttribute('a_Tangent', new Attribute(new Buffer(new Float32Array(4 * nVertices), 4)));
 		}
 
-		var tangents = attributes.a_Tangent.buffer.array;
+		const tangents = attributes.a_Tangent.buffer.array;
 
-		var tan1 = [], tan2 = [];
+		const tan1 = [], tan2 = [];
 
-		for (var i = 0; i < nVertices; i++) {
+		for (let i = 0; i < nVertices; i++) {
 			tan1[i] = new Vector3();
 			tan2[i] = new Vector3();
 		}
 
-		var vA = new Vector3(),
+		const vA = new Vector3(),
 			vB = new Vector3(),
 			vC = new Vector3(),
 
@@ -159,7 +162,7 @@ var GeometryUtils = {
 			uvB.sub(uvA);
 			uvC.sub(uvA);
 
-			var r = 1.0 / (uvB.x * uvC.y - uvC.x * uvB.y);
+			const r = 1.0 / (uvB.x * uvC.y - uvC.x * uvB.y);
 
 			// silently ignore degenerate uv triangles having coincident or colinear vertices
 
@@ -177,7 +180,7 @@ var GeometryUtils = {
 			tan2[c].add(tdir);
 		}
 
-		var groups = geometry.groups;
+		let groups = geometry.groups;
 
 		if (groups.length === 0) {
 			groups = [{
@@ -186,13 +189,13 @@ var GeometryUtils = {
 			}];
 		}
 
-		for (var i = 0, il = groups.length; i < il; ++i) {
-			var group = groups[i];
+		for (let i = 0, il = groups.length; i < il; i++) {
+			const group = groups[i];
 
-			var start = group.start;
-			var count = group.count;
+			const start = group.start;
+			const count = group.count;
 
-			for (var j = start, jl = start + count; j < jl; j += 3) {
+			for (let j = start, jl = start + count; j < jl; j += 3) {
 				handleTriangle(
 					indices[j + 0],
 					indices[j + 1],
@@ -201,15 +204,14 @@ var GeometryUtils = {
 			}
 		}
 
-		var tmp = new Vector3(), tmp2 = new Vector3();
-		var n = new Vector3(), n2 = new Vector3();
-		var w, t, test;
+		const tmp = new Vector3(), tmp2 = new Vector3();
+		const n = new Vector3(), n2 = new Vector3();
 
 		function handleVertex(v) {
 			n.fromArray(normals, v * 3);
 			n2.copy(n);
 
-			t = tan1[v];
+			const t = tan1[v];
 
 			// Gram-Schmidt orthogonalize
 
@@ -219,8 +221,8 @@ var GeometryUtils = {
 			// Calculate handedness
 
 			tmp2.crossVectors(n2, t);
-			test = tmp2.dot(tan2[v]);
-			w = (test < 0.0) ? -1.0 : 1.0;
+			const test = tmp2.dot(tan2[v]);
+			const w = (test < 0.0) ? -1.0 : 1.0;
 
 			tangents[v * 4] = tmp.x;
 			tangents[v * 4 + 1] = tmp.y;
@@ -228,57 +230,83 @@ var GeometryUtils = {
 			tangents[v * 4 + 3] = -w; // why negative?
 		}
 
-		for (var i = 0, il = groups.length; i < il; ++i) {
-			var group = groups[i];
+		for (let i = 0, il = groups.length; i < il; i++) {
+			const group = groups[i];
 
-			var start = group.start;
-			var count = group.count;
+			const start = group.start;
+			const count = group.count;
 
-			for (var j = start, jl = start + count; j < jl; j += 3) {
+			for (let j = start, jl = start + count; j < jl; j += 3) {
 				handleVertex(indices[j + 0]);
 				handleVertex(indices[j + 1]);
 				handleVertex(indices[j + 2]);
 			}
 		}
-	},
+	}
 
-	// TODO morphTargetAttributes
-	mergeGeometries: function(geometries, useGroups) {
-		var isIndexed = geometries[0].index !== null;
+	/**
+	 * @param {Array<Geometry>} geometries
+	 * @param {Boolean} useGroups
+	 * @return {Geometry}
+	 */
+	static mergeGeometries(geometries, useGroups = false) {
+		const isIndexed = geometries[0].index !== null;
 
-		var attributesUsed = new Set(Object.keys(geometries[0].attributes));
+		const attributesUsed = new Set(Object.keys(geometries[0].attributes));
+		const morphAttributesUsed = new Set(Object.keys(geometries[0].morphAttributes));
 
-		var attributes = {};
+		const attributes = {};
+		const morphAttributes = {};
 
-		var mergedGeometry = new Geometry();
+		const mergedGeometry = new Geometry();
 
-		var offset = 0;
+		let offset = 0;
 
-		for (var i = 0; i < geometries.length; ++i) {
-			var geometry = geometries[i];
+		for (let i = 0; i < geometries.length; i++) {
+			const geometry = geometries[i];
 
 			// ensure that all geometries are indexed, or none
 
-			if (isIndexed !== (geometry.index !== null)) return null;
+			if (isIndexed !== (geometry.index !== null)) {
+				console.error('GeometryUtils: .mergeGeometries() failed with geometry at index ' + i + '. All geometries must have compatible attributes; make sure index attribute exists among all geometries, or in none of them.');
+				return null;
+			}
 
 			// gather attributes, exit early if they're different
 
-			for (var name in geometry.attributes) {
-				if (!attributesUsed.has(name)) return null;
+			for (const name in geometry.attributes) {
+				if (!attributesUsed.has(name)) {
+					console.error('GeometryUtils: .mergeGeometries() failed with geometry at index ' + i + '. All geometries must have compatible attributes; make sure "' + name + '" attribute exists among all geometries, or in none of them.');
+					return null;
+				}
 
 				if (attributes[name] === undefined) attributes[name] = [];
 
 				attributes[name].push(geometry.attributes[name]);
 			}
 
+			// gather morph attributes, exit early they're different
+
+			for (const name in geometry.morphAttributes) {
+				if (!morphAttributesUsed.has(name)) {
+					console.error('GeometryUtils: .mergeGeometries() failed with geometry at index ' + i + '. .morphAttributes must be consistent throughout all geometries.');
+					return null;
+				}
+
+				if (morphAttributes[name] === undefined) morphAttributes[name] = [];
+
+				morphAttributes[name].push(geometry.morphAttributes[name]);
+			}
+
 			if (useGroups) {
-				var count;
+				let count;
 
 				if (isIndexed) {
 					count = geometry.index.buffer.count;
 				} else if (geometry.attributes.a_Position !== undefined) {
 					count = geometry.attributes.a_Position.buffer.count;
 				} else {
+					console.error('GeometryUtils: .mergeGeometries() failed with geometry at index ' + i + '. The geometry must have either an index or an a_Position attribute');
 					return null;
 				}
 
@@ -291,13 +319,13 @@ var GeometryUtils = {
 		// merge indices
 
 		if (isIndexed) {
-			var indexOffset = 0;
-			var mergedIndex = [];
+			let indexOffset = 0;
+			const mergedIndex = [];
 
-			for (var i = 0; i < geometries.length; ++i) {
-				var index = geometries[i].index;
+			for (let i = 0; i < geometries.length; i++) {
+				const index = geometries[i].index;
 
-				for (var j = 0; j < index.buffer.count; ++j) {
+				for (let j = 0; j < index.buffer.count; j++) {
 					mergedIndex.push(index.buffer.array[j] + indexOffset);
 				}
 
@@ -309,111 +337,169 @@ var GeometryUtils = {
 
 		// merge attributes
 
-		for (var name in attributes) {
-			var mergedAttribute = this.mergeBufferAttributes(attributes[name]);
+		for (const name in attributes) {
+			const mergedAttribute = this.mergeBufferAttributes(attributes[name]);
 
-			if (!mergedAttribute) return null;
+			if (!mergedAttribute) {
+				console.error('GeometryUtils: .mergeGeometries() failed while trying to merge the ' + name + ' attribute.');
+				return null;
+			}
 
 			mergedGeometry.addAttribute(name, mergedAttribute);
 		}
 
+		// merge morph attributes
+
+		for (const name in morphAttributes) {
+			const numMorphTargets = morphAttributes[name][0].length;
+
+			if (numMorphTargets === 0) break;
+
+			mergedGeometry.morphAttributes = mergedGeometry.morphAttributes || {};
+			mergedGeometry.morphAttributes[name] = [];
+
+			for (let i = 0; i < numMorphTargets; i++) {
+				const morphAttributesToMerge = [];
+
+				for (let j = 0; j < morphAttributes[name].length; j++) {
+					morphAttributesToMerge.push(morphAttributes[name][j][i]);
+				}
+
+				const mergedMorphAttribute = mergeAttributes(morphAttributesToMerge);
+
+				if (!mergedMorphAttribute) {
+					console.error('GeometryUtils: .mergeGeometries() failed while trying to merge the ' + name + ' morphAttribute.');
+					return null;
+				}
+
+				mergedGeometry.morphAttributes[name].push(mergedMorphAttribute);
+			}
+		}
+
 		return mergedGeometry;
-	},
+	}
 
-	mergeBufferAttributes: function (attributes) {
-		var TypedArray;
-		var size;
-		var normalized;
-		var arrayLength = 0;
+	/**
+	 * @param {Array<Attribute>} attributes
+	 * @return {Attribute}
+	 */
+	static mergeBufferAttributes(attributes) {
+		let TypedArray;
+		let size;
+		let normalized;
+		let arrayLength = 0;
 
-		for (var i = 0; i < attributes.length; ++i) {
-			var attribute = attributes[i];
+		for (let i = 0; i < attributes.length; i++) {
+			const attribute = attributes[i];
 
-			if (attribute.buffer.stride !== attribute.size) return null;
+			if (attribute.buffer.stride !== attribute.size) {
+				console.error('GeometryUtils: .mergeBufferAttributes() failed. Interleaved buffer attributes are not supported.');
+				return null;
+			}
 
 			if (TypedArray === undefined) TypedArray = attribute.buffer.array.constructor;
-			if (TypedArray !== attribute.buffer.array.constructor) return null;
+			if (TypedArray !== attribute.buffer.array.constructor) {
+				console.error('GeometryUtils: .mergeBufferAttributes() failed. Buffer.array must be of consistent array types across matching attributes.');
+				return null;
+			}
 
 			if (size === undefined) size = attribute.size;
-			if (size !== attribute.size) return null;
+			if (size !== attribute.size) {
+				console.error('GeometryUtils: .mergeBufferAttributes() failed. Attribute.size must be consistent across matching attributes.');
+				return null;
+			}
 
 			if (normalized === undefined) normalized = attribute.normalized;
-			if (normalized !== attribute.normalized) return null;
+			if (normalized !== attribute.normalized) {
+				console.error('GeometryUtils: .mergeBufferAttributes() failed. Attribute.normalized must be consistent across matching attributes.');
+				return null;
+			}
 
 			arrayLength += attribute.buffer.array.length;
 		}
 
-		var array = new TypedArray(arrayLength);
-		var offset = 0;
+		const array = new TypedArray(arrayLength);
+		let offset = 0;
 
-		for (var i = 0; i < attributes.length; ++i) {
+		for (let i = 0; i < attributes.length; i++) {
 			array.set(attributes[i].buffer.array, offset);
-
 			offset += attributes[i].buffer.array.length;
 		}
 
 		return new Attribute(new Buffer(array, size), size, 0, normalized);
-	},
+	}
 
-	applyMatrix4: (function() {
-		var _vector3 = new Vector3();
-		var _mat3 = new Matrix3();
+	/**
+	 * @param {Geometry} geometry
+	 * @param {Matrix4} matrix
+	 * @param {Boolean} updateBoundings
+	 * @return {Geometry}
+	 */
+	static applyMatrix4(geometry, matrix, updateBoundings) {
+		let array, count;
 
-		return function(geometry, matrix, updateBoundings) {
-			var array, count;
-
-			var position = geometry.attributes['a_Position'];
-			if (position !== undefined) {
-				array = position.buffer.array;
-				count = position.buffer.count;
-				for (var i = 0; i < count; i++) {
-					_vector3.fromArray(array, i * 3);
-					_vector3.applyMatrix4(matrix);
-					_vector3.toArray(array, i * 3);
-				}
-				position.buffer.version++;
+		const position = geometry.attributes['a_Position'];
+		if (position !== undefined) {
+			array = position.buffer.array;
+			count = position.buffer.count;
+			for (let i = 0; i < count; i++) {
+				_vec3_1.fromArray(array, i * 3);
+				_vec3_1.applyMatrix4(matrix);
+				_vec3_1.toArray(array, i * 3);
 			}
-
-			var normal = geometry.attributes['a_Normal'];
-			if (normal !== undefined) {
-				array = normal.buffer.array;
-				count = normal.buffer.count;
-				var normalMatrix = _mat3.setFromMatrix4(matrix).inverse().transpose();
-				for (var i = 0; i < count; i++) {
-					_vector3.fromArray(array, i * 3);
-					_vector3.applyMatrix3(normalMatrix).normalize();
-					_vector3.toArray(array, i * 3);
-				}
-				normal.buffer.version++;
-			}
-
-			var tangent = geometry.attributes['a_Tangent'];
-			if (tangent !== undefined) {
-				array = tangent.buffer.array;
-				count = tangent.buffer.count;
-				for (var i = 0; i < count; i++) {
-					_vector3.fromArray(array, i * 3);
-					_vector3.transformDirection(matrix);
-					_vector3.toArray(array, i * 3);
-				}
-				tangent.buffer.version++;
-			}
-
-			if (geometry.boundingBox !== null && updateBoundings) {
-				geometry.computeBoundingBox();
-			}
-
-			if (geometry.boundingSphere !== null && updateBoundings) {
-				geometry.computeBoundingSphere();
-			}
+			position.buffer.version++;
 		}
-	})(),
 
-	getWireframeAttribute(geometry) {
+		const normal = geometry.attributes['a_Normal'];
+		if (normal !== undefined) {
+			array = normal.buffer.array;
+			count = normal.buffer.count;
+			const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+			for (let i = 0; i < count; i++) {
+				_vec3_1.fromArray(array, i * 3);
+				_vec3_1.applyMatrix3(normalMatrix).normalize();
+				_vec3_1.toArray(array, i * 3);
+			}
+			normal.buffer.version++;
+		}
+
+		const tangent = geometry.attributes['a_Tangent'];
+		if (tangent !== undefined) {
+			array = tangent.buffer.array;
+			count = tangent.buffer.count;
+			for (let i = 0; i < count; i++) {
+				_vec3_1.fromArray(array, i * 3);
+				_vec3_1.transformDirection(matrix);
+				_vec3_1.toArray(array, i * 3);
+			}
+			tangent.buffer.version++;
+		}
+
+		if (geometry.boundingBox !== null && updateBoundings) {
+			geometry.computeBoundingBox();
+		}
+
+		if (geometry.boundingSphere !== null && updateBoundings) {
+			geometry.computeBoundingSphere();
+		}
+
+		return geometry;
+	}
+
+	/**
+	 * @param {Geometry} geometry
+	 * @return {Attribute}
+	 */
+	static getWireframeAttribute(geometry) {
 		const indices = [];
 
 		const geometryIndex = geometry.index;
 		const geometryPosition = geometry.attributes.a_Position;
+
+		if (!geometryPosition) {
+			console.error('GeometryUtils: .getWireframeAttribute() failed. The geometry must have an a_Position attribute');
+			return null;
+		}
 
 		if (geometryIndex !== null) {
 			const array = geometryIndex.buffer.array;
@@ -439,9 +525,12 @@ var GeometryUtils = {
 		return new Attribute(new Buffer(
 			(geometryPosition.buffer.array.length / 3) > 65536 ? new Uint32Array(indices) : new Uint16Array(indices),
 			1
-		))
+		));
 	}
 
 }
+
+const _vec3_1 = new Vector3();
+const _mat3_1 = new Matrix3();
 
 export { GeometryUtils };
