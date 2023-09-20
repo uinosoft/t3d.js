@@ -338,7 +338,7 @@ class GeometryUtils {
 		// merge attributes
 
 		for (const name in attributes) {
-			const mergedAttribute = this.mergeBufferAttributes(attributes[name]);
+			const mergedAttribute = this.mergeAttributes(attributes[name]);
 
 			if (!mergedAttribute) {
 				console.error('GeometryUtils: .mergeGeometries() failed while trying to merge the ' + name + ' attribute.');
@@ -365,7 +365,7 @@ class GeometryUtils {
 					morphAttributesToMerge.push(morphAttributes[name][j][i]);
 				}
 
-				const mergedMorphAttribute = mergeAttributes(morphAttributesToMerge);
+				const mergedMorphAttribute = this.mergeAttributes(morphAttributesToMerge);
 
 				if (!mergedMorphAttribute) {
 					console.error('GeometryUtils: .mergeGeometries() failed while trying to merge the ' + name + ' morphAttribute.');
@@ -383,7 +383,7 @@ class GeometryUtils {
 	 * @param {Array<Attribute>} attributes
 	 * @return {Attribute}
 	 */
-	static mergeBufferAttributes(attributes) {
+	static mergeAttributes(attributes) {
 		let TypedArray;
 		let size;
 		let normalized;
@@ -393,25 +393,25 @@ class GeometryUtils {
 			const attribute = attributes[i];
 
 			if (attribute.buffer.stride !== attribute.size) {
-				console.error('GeometryUtils: .mergeBufferAttributes() failed. Interleaved buffer attributes are not supported.');
+				console.error('GeometryUtils: .mergeAttributes() failed. Interleaved buffer attributes are not supported.');
 				return null;
 			}
 
 			if (TypedArray === undefined) TypedArray = attribute.buffer.array.constructor;
 			if (TypedArray !== attribute.buffer.array.constructor) {
-				console.error('GeometryUtils: .mergeBufferAttributes() failed. Buffer.array must be of consistent array types across matching attributes.');
+				console.error('GeometryUtils: .mergeAttributes() failed. Buffer.array must be of consistent array types across matching attributes.');
 				return null;
 			}
 
 			if (size === undefined) size = attribute.size;
 			if (size !== attribute.size) {
-				console.error('GeometryUtils: .mergeBufferAttributes() failed. Attribute.size must be consistent across matching attributes.');
+				console.error('GeometryUtils: .mergeAttributes() failed. Attribute.size must be consistent across matching attributes.');
 				return null;
 			}
 
 			if (normalized === undefined) normalized = attribute.normalized;
 			if (normalized !== attribute.normalized) {
-				console.error('GeometryUtils: .mergeBufferAttributes() failed. Attribute.normalized must be consistent across matching attributes.');
+				console.error('GeometryUtils: .mergeAttributes() failed. Attribute.normalized must be consistent across matching attributes.');
 				return null;
 			}
 
@@ -526,6 +526,12 @@ class GeometryUtils {
 			(geometryPosition.buffer.array.length / 3) > 65536 ? new Uint32Array(indices) : new Uint16Array(indices),
 			1
 		));
+	}
+
+	// deprecated since v0.2.0
+	static mergeBufferAttributes(attributes) {
+		// console.warn('GeometryUtils: mergeBufferAttributes() has been renamed to mergeAttributes().');
+		return this.mergeAttributes(attributes);
 	}
 
 }
