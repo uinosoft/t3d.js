@@ -65,7 +65,7 @@
 			].join('\n')
 		};
 
-		let useDevicePixelRatio = true;
+		const useDevicePixelRatio = true;
 		const devicePixelRatio = window.devicePixelRatio;
 
 		let width = window.innerWidth || 2;
@@ -74,8 +74,8 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = useDevicePixelRatio ? width * devicePixelRatio : width;
 		canvas.height = useDevicePixelRatio ? height * devicePixelRatio : height;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
@@ -166,10 +166,10 @@
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
 			forwardRenderer.backRenderTarget.resize(useDevicePixelRatio ? width * devicePixelRatio : width, useDevicePixelRatio ? height * devicePixelRatio : height);
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

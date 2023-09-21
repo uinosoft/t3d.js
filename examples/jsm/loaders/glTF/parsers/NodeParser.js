@@ -5,7 +5,7 @@ export class NodeParser {
 
 	static parse(context) {
 		const {
-			gltf: { nodes: gltfNodes, cameras: gltfCameras, extensions: gltfExtensions },
+			gltf: { nodes: gltfNodes, cameras: gltfCameras, extensions: gltfExtensions }
 		} = context;
 
 		if (!gltfNodes) return;
@@ -78,10 +78,10 @@ function createCamera(cameraDef) {
 
 	const camera = new Camera();
 
-	if (type == "perspective") {
+	if (type == 'perspective') {
 		const { aspectRatio, yfov, zfar, znear } = perspective;
 		camera.setPerspective(yfov, aspectRatio || 1, znear || 1, zfar || 2e6);
-	} else if (type == "orthographic") {
+	} else if (type == 'orthographic') {
 		const { xmag, ymag, zfar, znear } = orthographic;
 		// https:// github.com/KhronosGroup/glTF/issues/1663
 		camera.setOrtho(-xmag, xmag, -ymag, ymag, znear || 1, zfar || 2e6);

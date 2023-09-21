@@ -6,7 +6,7 @@ var WebVRControl = function(camera) {
 
 	this._currentDepthNear = 0;
 	this._currentDepthFar = 0;
-}
+};
 
 Object.assign(WebVRControl.prototype, {
 	enter: function() {

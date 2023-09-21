@@ -35,15 +35,15 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
 		const scene = new t3d.Scene();
 
-		const file = "resources/models/gltf/TextureTransformTest/glTF/TextureTransformTest.gltf";
+		const file = 'resources/models/gltf/TextureTransformTest/glTF/TextureTransformTest.gltf';
 
 		const loader = new GLTFLoader();
 		loader.load(file).then(function(result) {
@@ -91,10 +91,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

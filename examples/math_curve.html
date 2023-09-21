@@ -44,15 +44,15 @@
 		const scene = new t3d.Scene();
 
 		function createLine(points) {
-			let verticesArray = [];
-			let colorsArray = [];
+			const verticesArray = [];
+			const colorsArray = [];
 			points.forEach((point, i) => {
 				verticesArray.push(point.x, point.y, point.z);
 				colorsArray.push(Math.random(), Math.random(), Math.random());
 			});
 			const lineGeometry = new t3d.Geometry();
-			lineGeometry.addAttribute("a_Position", new t3d.Attribute(new t3d.Buffer(new Float32Array(verticesArray), 3)));
-			lineGeometry.addAttribute("a_Color", new t3d.Attribute(new t3d.Buffer(new Float32Array(colorsArray), 3)));
+			lineGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(verticesArray), 3)));
+			lineGeometry.addAttribute('a_Color', new t3d.Attribute(new t3d.Buffer(new Float32Array(colorsArray), 3)));
 			lineGeometry.computeBoundingBox();
 			lineGeometry.computeBoundingSphere();
 			const linesMaterial = new t3d.BasicMaterial();
@@ -122,7 +122,7 @@
 			const hilbert3DPoints = MathUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 50, 1, 0, 1, 2, 3, 4, 5, 6, 7);
 			const curvePath3_1 = new CurvePath3();
 			curvePath3_1.setFromPoints(hilbert3DPoints, { close: false, bevelRadius: params.bevelRadius });
-			let points_1 = curvePath3_1.getPoints(params.sampleNum);
+			const points_1 = curvePath3_1.getPoints(params.sampleNum);
 			line3 = createLine(points_1);
 			line3.position.set(-50, 0, 0);
 			scene.add(line3);
@@ -142,7 +142,7 @@
 
 			const curvePath3_2 = new CurvePath3();
 			curvePath3_2.setFromPoints(rectanglePoints, { close: true, bevelRadius: params.bevelRadius });
-			let points_2 = curvePath3_2.getPoints(params.sampleNum);
+			const points_2 = curvePath3_2.getPoints(params.sampleNum);
 			line4 = createLine(points_2);
 			line4.position.set(50, 0, 0);
 			scene.add(line4);
@@ -153,9 +153,9 @@
 		// gui
 		
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add(params, "bevelRadius", 0, 50, 0.01).onChange(createLines);
-		gui.add(params, "sampleNum", 2, 20, 1).onChange(createLines);
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add(params, 'bevelRadius', 0, 50, 0.01).onChange(createLines);
+		gui.add(params, 'sampleNum', 2, 20, 1).onChange(createLines);
 
 		const controller = new OrbitControls(camera, canvas);
 
@@ -176,7 +176,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

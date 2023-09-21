@@ -67,8 +67,8 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
@@ -76,7 +76,7 @@
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(0xffffff, 1, 5000);
 
-		const file = "resources/models/gltf/Flamingo.glb";
+		const file = 'resources/models/gltf/Flamingo.glb';
 
 		let animation;
 
@@ -92,7 +92,7 @@
 			object.frustumCulled = false;
 
 			animation = new t3d.AnimationMixer();
-			result.animations.forEach(function (clip) {
+			result.animations.forEach(function(clip) {
 				const action = new t3d.AnimationAction(clip);
 				action.weight = 1;
 				animation.addAction(action);
@@ -130,14 +130,14 @@
 		const vertexShader = document.getElementById('vertexShader').textContent;
 		const fragmentShader = document.getElementById('fragmentShader').textContent;
 		const uniforms = {
-			"topColor": new Float32Array([1, 1, 1]),
-			"bottomColor": new Float32Array([1, 1, 1]),
-			"offset": 33,
-			"exponent": 0.6
+			'topColor': new Float32Array([1, 1, 1]),
+			'bottomColor': new Float32Array([1, 1, 1]),
+			'offset': 33,
+			'exponent': 0.6
 		};
-		hemisphereLight.color.toArray(uniforms["topColor"]);
+		hemisphereLight.color.toArray(uniforms['topColor']);
 
-		scene.fog.color.fromArray(uniforms["bottomColor"]);
+		scene.fog.color.fromArray(uniforms['bottomColor']);
 
 		const skyGeo = new t3d.SphereGeometry(4000, 32, 15);
 		const skyMat = new t3d.ShaderMaterial({
@@ -182,10 +182,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -42,8 +42,8 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = devicePixelRatio * width;
 		canvas.height = devicePixelRatio * height;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
@@ -122,14 +122,14 @@
 		
 		// GUI
 
-		const effectController  = {
+		const effectController = {
 			turbidity: 10,
 			rayleigh: 2,
 			mieCoefficient: 0.005,
 			mieDirectionalG: 0.8,
 			luminance: 1,
 			inclination: 0.49, // elevation / inclination
-			azimuth: 0.205, // Facing front
+			azimuth: 0.205 // Facing front
 		};
 
 		const distance = 400;
@@ -170,8 +170,8 @@
 		// skyFolder.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( skyChanged );
 		// skyFolder.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( skyChanged );
 		// skyFolder.add( effectController, "luminance", 0.0, 2 ).onChange( skyChanged );
-		skyFolder.add(effectController, "inclination", 0, 0.5, 0.0001).onChange(skyChanged);
-		skyFolder.add(effectController, "azimuth", 0, 1, 0.0001).onChange(skyChanged);
+		skyFolder.add(effectController, 'inclination', 0, 0.5, 0.0001).onChange(skyChanged);
+		skyFolder.add(effectController, 'azimuth', 0, 1, 0.0001).onChange(skyChanged);
 
 		const uniforms = water.material.uniforms;
 
@@ -185,7 +185,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let time = performance.now() * 0.001;
+			const time = performance.now() * 0.001;
 
 			sphere.position.y = Math.sin(time) * 20 + 5;
 			sphere.euler.x = time * 0.5;
@@ -213,10 +213,10 @@
 
 			forwardRenderer.backRenderTarget.resize(devicePixelRatio * width, devicePixelRatio * height);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

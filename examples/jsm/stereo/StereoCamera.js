@@ -31,21 +31,21 @@ Object.defineProperties(StereoCamera.prototype, {
 	gammaInput: {
 		configurable: true,
 		get: function() {
-			console.warn("StereoCamera: .gammaInput has been removed. Use texture.encoding instead.");
+			console.warn('StereoCamera: .gammaInput has been removed. Use texture.encoding instead.');
 			return false;
 		},
 		set: function(value) {
-			console.warn("StereoCamera: .gammaInput has been removed. Use texture.encoding instead.");
+			console.warn('StereoCamera: .gammaInput has been removed. Use texture.encoding instead.');
 		}
 	},
 	gammaOutput: {
 		configurable: true,
 		get: function() {
-			console.warn("StereoCamera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.");
+			console.warn('StereoCamera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.');
 			return this.cameraL.outputEncoding == TEXEL_ENCODING_TYPE.GAMMA;
 		},
 		set: function(value) {
-			console.warn("StereoCamera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.");
+			console.warn('StereoCamera: .gammaOutput has been removed. Use .outputEncoding or renderTarget.texture.encoding instead.');
 			if (value) {
 				this.cameraL.outputEncoding = TEXEL_ENCODING_TYPE.GAMMA;
 				this.cameraR.outputEncoding = TEXEL_ENCODING_TYPE.GAMMA;

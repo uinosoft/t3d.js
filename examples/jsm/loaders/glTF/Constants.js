@@ -1,6 +1,6 @@
 import {
 	TEXTURE_FILTER,
-	TEXTURE_WRAP,
+	TEXTURE_WRAP
 } from 't3d';
 
 export const ATTRIBUTES = {
@@ -81,5 +81,5 @@ export const WEBGL_DRAW_MODES = {
 	LINE_STRIP: 3,
 	TRIANGLES: 4,
 	TRIANGLE_STRIP: 5,
-	TRIANGLE_FAN: 6,
+	TRIANGLE_FAN: 6
 };

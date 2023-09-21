@@ -1,8 +1,8 @@
 import {
 	Loader,
 	FileLoader,
-	PIXEL_FORMAT,
-} from 't3d'
+	PIXEL_FORMAT
+} from 't3d';
 
 export class DDSLoader extends Loader {
 

@@ -41,12 +41,12 @@
 		const scene = new t3d.Scene();
 		console.log(scene);
 
-		const file = "resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+		const file = 'resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf';
 
 		const loader = new GLTFLoader();
 		loader.load(file).then(function(result) {
 			// add mesh to scene
-			let object = result.root.children[0];
+			const object = result.root.children[0];
 
 			object.position.set(0, 5, 0);
 			object.scale.set(15, 15, 15);
@@ -84,17 +84,17 @@
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
 		gBuffer.enableMotion = true;
 
 		// gui
-		const params = { version: "WebGL " + renderer.capabilities.version, debug: "normal" };
+		const params = { version: 'WebGL ' + renderer.capabilities.version, debug: 'normal' };
 		const gui = new GUI();
-		gui.add(params, "version").disable();
-		gui.add(params, "debug", ['normal', 'depth', 'position', 'glossiness', 'metalness', 'albedo', 'velocity']);
+		gui.add(params, 'version').disable();
+		gui.add(params, 'debug', ['normal', 'depth', 'position', 'glossiness', 'metalness', 'albedo', 'velocity']);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -125,7 +125,7 @@
 			backRenderTarget.resize(width, height);
 			gBuffer.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

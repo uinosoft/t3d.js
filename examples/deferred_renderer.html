@@ -45,12 +45,12 @@
 
 		const scene = new t3d.Scene();
 
-		const file = "resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+		const file = 'resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf';
 
 		const loader = new GLTFLoader();
 		loader.load(file).then(function(result) {
 			// add mesh to scene
-			let object = result.root.children[0];
+			const object = result.root.children[0];
 
 			object.castShadow = true;
 
@@ -122,12 +122,12 @@
 
 		const deferredRenderer = new DeferredRenderer(canvas);
 		deferredRenderer.ambientCubemap = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
+			'resources/skybox/Bridge2/posx.jpg',
+			'resources/skybox/Bridge2/negx.jpg',
+			'resources/skybox/Bridge2/posy.jpg',
+			'resources/skybox/Bridge2/negy.jpg',
+			'resources/skybox/Bridge2/posz.jpg',
+			'resources/skybox/Bridge2/negz.jpg'
 		]);
 		deferredRenderer.ambientCubemapIntensity = 1;
 
@@ -136,13 +136,13 @@
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		
 		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
-		fxaaPass.uniforms["tDiffuse"] = tempRenderTarget.texture;
-		fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+		fxaaPass.uniforms['tDiffuse'] = tempRenderTarget.texture;
+		fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 
 		const params = { fxaa: true };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + deferredRenderer.capabilities.version }, "version").disable();
-		gui.add(params, "fxaa");
+		gui.add({ version: 'WebGL ' + deferredRenderer.capabilities.version }, 'version').disable();
+		gui.add(params, 'fxaa');
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -173,9 +173,9 @@
 			deferredRenderer.resize(width, height);
 			tempRenderTarget.resize(width, height);
 
-			fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+			fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

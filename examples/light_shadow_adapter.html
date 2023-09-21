@@ -120,7 +120,7 @@
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0
 		]);
 		const frustumBuffer = new t3d.Buffer(frustumArray, 3);
 		const frustumHelper = new t3d.Mesh(new t3d.Geometry(), new t3d.BasicMaterial());
@@ -218,7 +218,7 @@
 						point.visible = true;
 						pointIndex++;
 					}
-				})
+				});
 			}
 
 			debugSphere.visible = params.helper;
@@ -245,7 +245,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

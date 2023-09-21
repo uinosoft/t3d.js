@@ -14,7 +14,7 @@ export const SkyShader = {
 		sunRadiance: 10.0, // = 20.0;
 		mieG: 0.96, // = 0.76;
 		mieHeight: 1200, // = 1200;
-		sunBrightness: 1.0, // = 1.0;
+		sunBrightness: 1.0 // = 1.0;
 	},
 	vertexShader: `
 		attribute vec3 a_Position;

@@ -37,7 +37,7 @@ class OctreeHelper extends Mesh {
 
 				traverse(tree[i].subTrees);
 			}
-		}
+		};
 
 		traverse(octree.subTrees);
 

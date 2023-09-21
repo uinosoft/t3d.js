@@ -53,12 +53,12 @@
 		const ao_texture = textureLoader.load('./resources/ao.png');
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/right.jpg",
-			"resources/skybox/left.jpg",
-			"resources/skybox/up.jpg",
-			"resources/skybox/down.jpg",
-			"resources/skybox/back.jpg",
-			"resources/skybox/front.jpg"
+			'resources/skybox/right.jpg',
+			'resources/skybox/left.jpg',
+			'resources/skybox/up.jpg',
+			'resources/skybox/down.jpg',
+			'resources/skybox/back.jpg',
+			'resources/skybox/front.jpg'
 		]);
 		const sky_box = new SkyBox(cube_texture);
 		scene.add(sky_box);
@@ -131,7 +131,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

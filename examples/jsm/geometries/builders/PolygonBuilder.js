@@ -41,6 +41,6 @@ var PolygonBuilder = {
 		};
 	}
 
-}
+};
 
 export { PolygonBuilder };

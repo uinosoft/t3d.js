@@ -9,7 +9,7 @@ export class Validator {
 
 		const gltfVersion = Number(version);
 		if (!(gltfVersion >= 2 && gltfVersion < 3)) {
-			throw "Only support gltf 2.x.";
+			throw 'Only support gltf 2.x.';
 		}
 	}
 

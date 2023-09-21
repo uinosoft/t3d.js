@@ -42,14 +42,14 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
@@ -71,7 +71,7 @@
 		cube.receiveShadow = true;
 		scene.add(cube);
 
-		const file = "resources/models/gltf/CesiumMan/glTF-Binary/CesiumMan.glb";
+		const file = 'resources/models/gltf/CesiumMan/glTF-Binary/CesiumMan.glb';
 
 		let animation, object;
 
@@ -84,7 +84,7 @@
 			object.children[1].frustumCulled = false;
 		
 			animation = new t3d.AnimationMixer();
-			result.animations.forEach(function (clip) {
+			result.animations.forEach(function(clip) {
 				const action = new t3d.AnimationAction(clip);
 				action.weight = 1;
 				animation.addAction(action);
@@ -108,12 +108,12 @@
 		scene.add(directionalLight);
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/right.jpg",
-			"resources/skybox/left.jpg",
-			"resources/skybox/up.jpg",
-			"resources/skybox/down.jpg",
-			"resources/skybox/back.jpg",
-			"resources/skybox/front.jpg"
+			'resources/skybox/right.jpg',
+			'resources/skybox/left.jpg',
+			'resources/skybox/up.jpg',
+			'resources/skybox/down.jpg',
+			'resources/skybox/back.jpg',
+			'resources/skybox/front.jpg'
 		], function() {
 			sceneChange = true;
 		});
@@ -147,7 +147,7 @@
 
 		const superSampling = new SuperSampling(width, height);
 
-		let oldProjectionMatrix = new t3d.Matrix4();
+		const oldProjectionMatrix = new t3d.Matrix4();
 
 		let sceneChange = false;
 
@@ -161,7 +161,7 @@
 		});
 		gui.add(params, 'debug').onChange(() => {
 			superSampling.start();
-		})
+		});
 
 		const clock = new Clock();
 
@@ -170,7 +170,7 @@
 
 			animation && animation.update(clock.getDelta() * 1.3);
 
-			let change = controller.update() || sceneChange;
+			const change = controller.update() || sceneChange;
 
 			if (params.debug) {
 				scene.updateMatrix();
@@ -250,7 +250,7 @@
 				tex = superSampling.output();
 			}
 
-			copyPass.uniforms["tDiffuse"] = tex;
+			copyPass.uniforms['tDiffuse'] = tex;
 
 			renderer.setRenderTarget(backRenderTarget);
 
@@ -275,12 +275,12 @@
 			gBuffer.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 			superSampling.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 
 			sceneChange = true;
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

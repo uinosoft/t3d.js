@@ -25,26 +25,26 @@
 		</script>
 
 		<script type="module">
-			import * as t3d from "t3d";
-			import { GUI } from "./libs/lil-gui.esm.min.js";
-			import { SkyBox } from "./jsm/objects/SkyBox.js";
-			import { OrbitControls } from "./jsm/controls/OrbitControls.js";
-			import { ForwardRenderer } from "./jsm/render/ForwardRenderer.js";
-			import { TextureCubeLoader } from "./jsm/loaders/TextureCubeLoader.js";
-			import { PMREM } from "./jsm/PMREM.js";
+			import * as t3d from 't3d';
+			import { GUI } from './libs/lil-gui.esm.min.js';
+			import { SkyBox } from './jsm/objects/SkyBox.js';
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+			import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+			import { PMREM } from './jsm/PMREM.js';
 			// import { SHGenerator } from "./jsm/SHGenerator.js";
 
-			let useDevicePixelRatio = true;
+			const useDevicePixelRatio = true;
 			const devicePixelRatio = window.devicePixelRatio;
 
 			let width = window.innerWidth || 2;
 			let height = window.innerHeight || 2;
 
-			const canvas = document.createElement("canvas");
+			const canvas = document.createElement('canvas');
 			canvas.width = useDevicePixelRatio ? width * devicePixelRatio : width;
 			canvas.height = useDevicePixelRatio ? height * devicePixelRatio : height;
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 			document.body.appendChild(canvas);
 
 			const forwardRenderer = new ForwardRenderer(canvas);
@@ -85,14 +85,14 @@
 
 			let cube_texture = new TextureCubeLoader().load(
 				[
-					"resources/skybox/pisa/px.png",
-					"resources/skybox/pisa/nx.png",
-					"resources/skybox/pisa/py.png",
-					"resources/skybox/pisa/ny.png",
-					"resources/skybox/pisa/pz.png",
-					"resources/skybox/pisa/nz.png",
+					'resources/skybox/pisa/px.png',
+					'resources/skybox/pisa/nx.png',
+					'resources/skybox/pisa/py.png',
+					'resources/skybox/pisa/ny.png',
+					'resources/skybox/pisa/pz.png',
+					'resources/skybox/pisa/nz.png'
 				],
-				function () {
+				function() {
 					const sphericalHarmonicsLight = new t3d.SphericalHarmonicsLight();
 					scene.add(sphericalHarmonicsLight);
 			
@@ -106,7 +106,7 @@
 						{
 							width: cube_texture.images[0].width,
 							height: cube_texture.images[0].height,
-							sampleSize: 128,
+							sampleSize: 128
 						}
 					);
 
@@ -118,8 +118,8 @@
 					scene.environmentLightIntensity = 0;
 
 					const gui = new GUI();
-					gui.add(sphericalHarmonicsLight, "intensity", 0, 1, 0.01).name('sphericalHarmonicsLight');
-					gui.add(scene, "environmentLightIntensity", 0, 1, 0.01).name('environmentLight');
+					gui.add(sphericalHarmonicsLight, 'intensity', 0, 1, 0.01).name('sphericalHarmonicsLight');
+					gui.add(scene, 'environmentLightIntensity', 0, 1, 0.01).name('environmentLight');
 				}
 			);
 
@@ -147,10 +147,10 @@
 					useDevicePixelRatio ? width * devicePixelRatio : width,
 					useDevicePixelRatio ? height * devicePixelRatio : height
 				);
-				canvas.style.width = width + "px";
-				canvas.style.height = height + "px";
+				canvas.style.width = width + 'px';
+				canvas.style.height = height + 'px';
 			}
-			window.addEventListener("resize", onWindowResize, false);
+			window.addEventListener('resize', onWindowResize, false);
 		</script>
 	</body>
 </html>

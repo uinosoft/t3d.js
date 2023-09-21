@@ -46,14 +46,14 @@
 
 		const scene = new t3d.Scene();
 
-		let objects = [];
+		const objects = [];
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -118,7 +118,7 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
@@ -143,40 +143,40 @@
 		tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget3.texture.generateMipmaps = false;
 
-		let projection = new t3d.Matrix4();
-		let projectionInv = new t3d.Matrix4();
-		let viewInverseTranspose = new t3d.Matrix4();
+		const projection = new t3d.Matrix4();
+		const projectionInv = new t3d.Matrix4();
+		const viewInverseTranspose = new t3d.Matrix4();
 
-		ssrPass.uniforms["projection"] = projection.elements;
-		ssrPass.uniforms["projectionInv"] = projectionInv.elements;
-		ssrPass.uniforms["viewInverseTranspose"] = viewInverseTranspose.elements;
+		ssrPass.uniforms['projection'] = projection.elements;
+		ssrPass.uniforms['projectionInv'] = projectionInv.elements;
+		ssrPass.uniforms['viewInverseTranspose'] = viewInverseTranspose.elements;
 
-		ssrPass.uniforms["colorTex"] = tempRenderTarget.texture;
-		ssrPass.uniforms["gBufferTexture1"] = gBuffer.getNormalGlossinessTexture();
-		ssrPass.uniforms["gBufferTexture2"] = gBuffer.getDepthTexture();
-		ssrPass.uniforms["viewportSize"][0] = width;
-		ssrPass.uniforms["viewportSize"][1] = height;
-		ssrPass.uniforms["nearZ"] = 1;
+		ssrPass.uniforms['colorTex'] = tempRenderTarget.texture;
+		ssrPass.uniforms['gBufferTexture1'] = gBuffer.getNormalGlossinessTexture();
+		ssrPass.uniforms['gBufferTexture2'] = gBuffer.getDepthTexture();
+		ssrPass.uniforms['viewportSize'][0] = width;
+		ssrPass.uniforms['viewportSize'][1] = height;
+		ssrPass.uniforms['nearZ'] = 1;
 
 		const blurPass = new t3d.ShaderPostPass(BlurShader);
-		blurPass.uniforms["projection"] = projection.elements;
-		blurPass.uniforms["viewInverseTranspose"] = viewInverseTranspose.elements;
+		blurPass.uniforms['projection'] = projection.elements;
+		blurPass.uniforms['viewInverseTranspose'] = viewInverseTranspose.elements;
 
-		blurPass.uniforms["normalTex"] = gBuffer.getNormalGlossinessTexture();
-		blurPass.uniforms["depthTex"] = gBuffer.getDepthTexture();
-		blurPass.uniforms["textureSize"][0] = width;
-		blurPass.uniforms["textureSize"][1] = height;
+		blurPass.uniforms['normalTex'] = gBuffer.getNormalGlossinessTexture();
+		blurPass.uniforms['depthTex'] = gBuffer.getDepthTexture();
+		blurPass.uniforms['textureSize'][0] = width;
+		blurPass.uniforms['textureSize'][1] = height;
 
-		blurPass.uniforms["blurSize"] = 2;
-		blurPass.uniforms["depthRange"] = 1;
+		blurPass.uniforms['blurSize'] = 2;
+		blurPass.uniforms['depthRange'] = 1;
 
-		blurPass.material.defines["NORMALTEX_ENABLED"] = 1;
-		blurPass.material.defines["DEPTHTEX_ENABLED"] = 1;
-		blurPass.material.defines["DEPTH_PACKING"] = 0;
+		blurPass.material.defines['NORMALTEX_ENABLED'] = 1;
+		blurPass.material.defines['DEPTHTEX_ENABLED'] = 1;
+		blurPass.material.defines['DEPTH_PACKING'] = 0;
 
 		const blendPass = new t3d.ShaderPostPass(BlendShader);
-		blendPass.uniforms["tDiffuse1"] = tempRenderTarget.texture;
-		blendPass.uniforms["tDiffuse2"] = tempRenderTarget3.texture;
+		blendPass.uniforms['tDiffuse1'] = tempRenderTarget.texture;
+		blendPass.uniforms['tDiffuse2'] = tempRenderTarget3.texture;
 
 		const gui = new GUI();
 		gui.add(material, 'roughness', 0, 1, 0.01);
@@ -187,7 +187,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let elpasedTime = clock.getElapsedTime();
+			const elpasedTime = clock.getElapsedTime();
 			objects.forEach(function(object, idx) {
 				object.position.y = 1 + 0.5 * (Math.sin(elpasedTime * 3 + idx) + 1);
 			});
@@ -225,8 +225,8 @@
 			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, true, true);
 
-			blurPass.uniforms["tDiffuse"] = tempRenderTarget2.texture;
-			blurPass.uniforms["direction"] = 0;
+			blurPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
+			blurPass.uniforms['direction'] = 0;
 			blurPass.render(renderer);
 
 			renderer.setRenderTarget(tempRenderTarget2);
@@ -234,8 +234,8 @@
 			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, true, true);
 
-			blurPass.uniforms["tDiffuse"] = tempRenderTarget3.texture;
-			blurPass.uniforms["direction"] = 1;
+			blurPass.uniforms['tDiffuse'] = tempRenderTarget3.texture;
+			blurPass.uniforms['direction'] = 1;
 			blurPass.render(renderer);
 
 			renderer.setRenderTarget(backRenderTarget);
@@ -259,13 +259,13 @@
 			tempRenderTarget2.resize(width, height);
 			tempRenderTarget3.resize(width, height);
 
-			ssrPass.uniforms["viewportSize"][0] = width;
-			ssrPass.uniforms["viewportSize"][1] = height;
+			ssrPass.uniforms['viewportSize'][0] = width;
+			ssrPass.uniforms['viewportSize'][1] = height;
 
-			blurPass.uniforms["textureSize"][0] = width;
-			blurPass.uniforms["textureSize"][1] = height;
+			blurPass.uniforms['textureSize'][0] = width;
+			blurPass.uniforms['textureSize'][1] = height;
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

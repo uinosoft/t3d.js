@@ -460,66 +460,66 @@ class WebGLRenderer extends ThinRenderer {
 		const textures = this._textures;
 
 		if (lights.useAmbient && refresh) {
-			uniforms.set("u_AmbientLightColor", lights.ambient);
+			uniforms.set('u_AmbientLightColor', lights.ambient);
 		}
 		if (lights.useSphericalHarmonics && refresh) {
-			uniforms.set("u_SphericalHarmonicsLightData", lights.sh);
+			uniforms.set('u_SphericalHarmonicsLightData', lights.sh);
 		}
 		if (lights.hemisNum > 0 && refresh) {
-			uniforms.set("u_Hemi", lights.hemisphere);
+			uniforms.set('u_Hemi', lights.hemisphere);
 		}
 
 		if (lights.directsNum > 0) {
-			if (refresh) uniforms.set("u_Directional", lights.directional);
+			if (refresh) uniforms.set('u_Directional', lights.directional);
 
 			if (lights.directShadowNum > 0) {
-				if (refresh) uniforms.set("u_DirectionalShadow", lights.directionalShadow);
+				if (refresh) uniforms.set('u_DirectionalShadow', lights.directionalShadow);
 
-				if (uniforms.has("directionalShadowMap")) {
+				if (uniforms.has('directionalShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set("directionalShadowMap", lights.directionalShadowDepthMap, textures);
+						uniforms.set('directionalShadowMap', lights.directionalShadowDepthMap, textures);
 					} else {
-						uniforms.set("directionalShadowMap", lights.directionalShadowMap, textures);
+						uniforms.set('directionalShadowMap', lights.directionalShadowMap, textures);
 					}
-					uniforms.set("directionalShadowMatrix", lights.directionalShadowMatrix);
+					uniforms.set('directionalShadowMatrix', lights.directionalShadowMatrix);
 				}
 
-				if (uniforms.has("directionalDepthMap")) {
-					uniforms.set("directionalDepthMap", lights.directionalShadowMap, textures);
+				if (uniforms.has('directionalDepthMap')) {
+					uniforms.set('directionalDepthMap', lights.directionalShadowMap, textures);
 				}
 			}
 		}
 
 		if (lights.pointsNum > 0) {
-			if (refresh) uniforms.set("u_Point", lights.point);
+			if (refresh) uniforms.set('u_Point', lights.point);
 
 			if (lights.pointShadowNum > 0) {
-				if (refresh) uniforms.set("u_PointShadow", lights.pointShadow);
+				if (refresh) uniforms.set('u_PointShadow', lights.pointShadow);
 
-				if (uniforms.has("pointShadowMap")) {
-					uniforms.set("pointShadowMap", lights.pointShadowMap, textures);
-					uniforms.set("pointShadowMatrix", lights.pointShadowMatrix);
+				if (uniforms.has('pointShadowMap')) {
+					uniforms.set('pointShadowMap', lights.pointShadowMap, textures);
+					uniforms.set('pointShadowMatrix', lights.pointShadowMatrix);
 				}
 			}
 		}
 
 		if (lights.spotsNum > 0) {
-			if (refresh) uniforms.set("u_Spot", lights.spot);
+			if (refresh) uniforms.set('u_Spot', lights.spot);
 
 			if (lights.spotShadowNum > 0) {
-				if (refresh) uniforms.set("u_SpotShadow", lights.spotShadow);
+				if (refresh) uniforms.set('u_SpotShadow', lights.spotShadow);
 
-				if (uniforms.has("spotShadowMap")) {
+				if (uniforms.has('spotShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set("spotShadowMap", lights.spotShadowDepthMap, textures);
+						uniforms.set('spotShadowMap', lights.spotShadowDepthMap, textures);
 					} else {
-						uniforms.set("spotShadowMap", lights.spotShadowMap, textures);
+						uniforms.set('spotShadowMap', lights.spotShadowMap, textures);
 					}
-					uniforms.set("spotShadowMatrix", lights.spotShadowMatrix);
+					uniforms.set('spotShadowMatrix', lights.spotShadowMatrix);
 				}
 
-				if (uniforms.has("spotDepthMap")) {
-					uniforms.set("spotDepthMap", lights.spotShadowMap, textures);
+				if (uniforms.has('spotDepthMap')) {
+					uniforms.set('spotDepthMap', lights.spotShadowMap, textures);
 				}
 			}
 		}
@@ -535,19 +535,19 @@ class WebGLRenderer extends ThinRenderer {
 					skeleton.generateBoneTexture(capabilities.version >= 2);
 				}
 
-				uniforms.set("boneTexture", skeleton.boneTexture, this._textures);
-				uniforms.set("boneTextureSize", skeleton.boneTexture.image.width);
+				uniforms.set('boneTexture', skeleton.boneTexture, this._textures);
+				uniforms.set('boneTextureSize', skeleton.boneTexture.image.width);
 			} else {
-				uniforms.set("boneMatrices", skeleton.boneMatrices);
+				uniforms.set('boneMatrices', skeleton.boneMatrices);
 			}
 
-			uniforms.set("bindMatrix", object.bindMatrix.elements);
+			uniforms.set('bindMatrix', object.bindMatrix.elements);
 
 			helpMatrix4.copy(object.bindMatrixInverse);
 			if (sceneData.useAnchorMatrix) {
 				helpMatrix4.multiply(sceneData.anchorMatrix); // convert to anchor space
 			}
-			uniforms.set("bindMatrixInverse", helpMatrix4.elements);
+			uniforms.set('bindMatrixInverse', helpMatrix4.elements);
 		}
 	}
 
@@ -612,7 +612,7 @@ class WebGLRenderer extends ThinRenderer {
 		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
-		const position = geometry.getAttribute("a_Position");
+		const position = geometry.getAttribute('a_Position');
 
 		let drawStart = 0;
 		let drawCount = Infinity;
@@ -638,7 +638,7 @@ class WebGLRenderer extends ThinRenderer {
 
 			if (type === gl.UNSIGNED_INT) {
 				if (capabilities.version < 2 && !capabilities.getExtension('OES_element_index_uint')) {
-					console.warn("draw elements type not support UNSIGNED_INT!");
+					console.warn('draw elements type not support UNSIGNED_INT!');
 				}
 			}
 
@@ -649,7 +649,7 @@ class WebGLRenderer extends ThinRenderer {
 					} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 						capabilities.getExtension('ANGLE_instanced_arrays').drawElementsInstancedANGLE(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
 					} else {
-						console.warn("no support instanced draw.");
+						console.warn('no support instanced draw.');
 						return;
 					}
 				}
@@ -664,7 +664,7 @@ class WebGLRenderer extends ThinRenderer {
 					} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 						capabilities.getExtension('ANGLE_instanced_arrays').drawArraysInstancedANGLE(material.drawMode, drawStart, drawCount, instanceCount);
 					} else {
-						console.warn("no support instanced draw.");
+						console.warn('no support instanced draw.');
 						return;
 					}
 				}

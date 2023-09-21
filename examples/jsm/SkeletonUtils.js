@@ -16,14 +16,14 @@ const SkeletonUtils = {
 			cloneLookup.set(sourceNode, clonedNode);
 		});
 
-		clone.traverse(function (node) {
+		clone.traverse(function(node) {
 			if (!node.skeleton) return;
 			const clonedMesh = node;
 			const sourceMesh = sourceLookup.get(node);
 			const sourceBones = sourceMesh.skeleton.bones;
 			clonedMesh.skeleton = sourceMesh.skeleton.clone();
 			clonedMesh.bindMatrix.copy(sourceMesh.bindMatrix);
-			clonedMesh.skeleton.bones = sourceBones.map(function (bone) {
+			clonedMesh.skeleton.bones = sourceBones.map(function(bone) {
 				return cloneLookup.get(bone);
 			});
 			// clonedMesh.bind(clonedMesh.skeleton, clonedMesh.bindMatrix);
@@ -52,7 +52,7 @@ const SkeletonUtils = {
 		return clone;
 	}
 
-}
+};
 
 function parallelTraverse(a, b, callback) {
 	callback(a, b);

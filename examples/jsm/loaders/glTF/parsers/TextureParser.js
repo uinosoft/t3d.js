@@ -1,7 +1,7 @@
 import {
 	Texture2D,
 	TEXTURE_FILTER,
-	TEXTURE_WRAP,
+	TEXTURE_WRAP
 } from 't3d';
 import { WEBGL_WRAPPINGS, WEBGL_FILTERS } from '../Constants.js';
 

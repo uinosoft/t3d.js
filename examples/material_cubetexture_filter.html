@@ -43,12 +43,12 @@
 		const scene = new t3d.Scene();
 
 		let cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/right.jpg",
-			"resources/skybox/left.jpg",
-			"resources/skybox/up.jpg",
-			"resources/skybox/down.jpg",
-			"resources/skybox/back.jpg",
-			"resources/skybox/front.jpg"
+			'resources/skybox/right.jpg',
+			'resources/skybox/left.jpg',
+			'resources/skybox/up.jpg',
+			'resources/skybox/down.jpg',
+			'resources/skybox/back.jpg',
+			'resources/skybox/front.jpg'
 		], function() {
 			cube_texture = PMREM.prefilterEnvironmentMap(forwardRenderer, cube_texture, {
 				sampleSize: 128
@@ -58,8 +58,8 @@
 			scene.add(sky_box);
 
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-			gui.add(sky_box, "level", 0, 8, 1);
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+			gui.add(sky_box, 'level', 0, 8, 1);
 		});
 
 		const camera = new t3d.Camera();
@@ -84,7 +84,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import { Attribute, Buffer } from 't3d';
-import { ACCESSOR_COMPONENT_TYPES, ACCESSOR_TYPE_SIZES } from "../Constants.js";
+import { ACCESSOR_COMPONENT_TYPES, ACCESSOR_TYPE_SIZES } from '../Constants.js';
 
 export class AccessorParser {
 
@@ -75,7 +75,7 @@ export class AccessorParser {
 				const buffer = attribute.buffer;
 
 				for (let i = 0, il = sparseIndices.length; i < il; i++) {
-					let index = sparseIndices[i];
+					const index = sparseIndices[i];
 
 					buffer.array[index * attribute.size] = sparseValues[i * itemSize];
 					if (itemSize >= 2) buffer.array[index * attribute.size + 1] = sparseValues[i * itemSize + 1];

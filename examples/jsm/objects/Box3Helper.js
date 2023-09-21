@@ -3,7 +3,7 @@ import {
 	Buffer,
 	Geometry,
 	LineMaterial,
-	Mesh,
+	Mesh
 } from 't3d';
 
 class Box3Helper extends Mesh {

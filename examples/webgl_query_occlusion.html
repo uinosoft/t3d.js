@@ -48,7 +48,7 @@
         document.body.appendChild(canvas);
 
         const contextParams = { antialias: true, alpha: false };
-        const gl = canvas.getContext("webgl2", contextParams);
+        const gl = canvas.getContext('webgl2', contextParams);
 
         if (!gl) {
         	document.getElementById('notSupported').style.display = '';
@@ -133,7 +133,7 @@
 
         const cube = new t3d.Mesh(boxGeometry, phong);
         cube.position.y = 25.1;
-        scene.add(cube)
+        scene.add(cube);
 
         const sphereGeometry = new t3d.SphereGeometry(4, 32, 32);
 
@@ -172,7 +172,7 @@
         	beforeRender: renderable => {
         		if (renderable.object.userData.isSphere) {
         			if (params.enabled && !queryInProgress) {
-        				renderer.beginQuery(occlusionQuery, t3d.QUERY_TYPE.ANY_SAMPLES_PASSED)
+        				renderer.beginQuery(occlusionQuery, t3d.QUERY_TYPE.ANY_SAMPLES_PASSED);
         			}
         		}
         	},
@@ -234,7 +234,7 @@
 
         	backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

@@ -1,23 +1,23 @@
 import { DefaultLoadingManager, FileLoader, ImageLoader } from 't3d';
 
-import { ImageBitmapLoader } from "../ImageBitmapLoader.js";
-import { IndexParser } from "./parsers/IndexParser.js";
-import { ReferenceParser } from "./parsers/ReferenceParser.js";
-import { Validator } from "./parsers/Validator.js";
-import { BufferParser } from "./parsers/BufferParser.js";
-import { BufferViewParser } from "./parsers/BufferViewParser.js";
-import { ImageParser } from "./parsers/ImageParser.js";
-import { TextureParser } from "./parsers/TextureParser.js";
-import { MaterialParser } from "./parsers/MaterialParser.js";
-import { AccessorParser } from "./parsers/AccessorParser.js";
-import { PrimitiveParser } from "./parsers/PrimitiveParser.js";
-import { NodeParser } from "./parsers/NodeParser.js";
-import { SkinParser } from "./parsers/SkinParser.js";
-import { SceneParser } from "./parsers/SceneParser.js";
-import { AnimationParser } from "./parsers/AnimationParser.js";
+import { ImageBitmapLoader } from '../ImageBitmapLoader.js';
+import { IndexParser } from './parsers/IndexParser.js';
+import { ReferenceParser } from './parsers/ReferenceParser.js';
+import { Validator } from './parsers/Validator.js';
+import { BufferParser } from './parsers/BufferParser.js';
+import { BufferViewParser } from './parsers/BufferViewParser.js';
+import { ImageParser } from './parsers/ImageParser.js';
+import { TextureParser } from './parsers/TextureParser.js';
+import { MaterialParser } from './parsers/MaterialParser.js';
+import { AccessorParser } from './parsers/AccessorParser.js';
+import { PrimitiveParser } from './parsers/PrimitiveParser.js';
+import { NodeParser } from './parsers/NodeParser.js';
+import { SkinParser } from './parsers/SkinParser.js';
+import { SceneParser } from './parsers/SceneParser.js';
+import { AnimationParser } from './parsers/AnimationParser.js';
 
-import { GLTFResource } from "./GLTFResource.js";
-import { GLTFUtils } from "./GLTFUtils.js";
+import { GLTFResource } from './GLTFResource.js';
+import { GLTFUtils } from './GLTFUtils.js';
 
 const DefaultParsePipeline = [
 	IndexParser,
@@ -87,15 +87,15 @@ export class GLTFLoader {
 					if (this.detailLoadProgress && resource.loadItems) {
 						resource.loadItems.forEach(item => {
 							this.manager.itemEnd(item);
-						})
+						});
 					}
 
 					this.manager.itemError(url);
 					this.manager.itemEnd(url);
 
 					reject(`Error loading glTF model from ${url} .`);
-				})
-		})
+				});
+		});
 	}
 
 	_parse(context) {
@@ -114,7 +114,7 @@ export class GLTFLoader {
 			} else {
 				resolve(context);
 			}
-		})
+		});
 	}
 
 	setDRACOLoader(dracoLoader) {

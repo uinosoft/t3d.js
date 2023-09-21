@@ -4,7 +4,7 @@ import {
 	TEXTURE_FILTER,
 	PIXEL_FORMAT,
 	PIXEL_TYPE,
-	TEXEL_ENCODING_TYPE,
+	TEXEL_ENCODING_TYPE
 } from 't3d';
 import { WorkerPool } from '../WorkerPool.js';
 
@@ -61,7 +61,7 @@ class KTX2Loader extends Loader {
 			dxtSupported: capabilities.getExtension('WEBGL_compressed_texture_s3tc') ? true : false,
 			bptcSupported: capabilities.getExtension('EXT_texture_compression_bptc') ? true : false,
 			pvrtcSupported: capabilities.getExtension('WEBGL_compressed_texture_pvrtc') ? true : false
-				|| capabilities.getExtension('WEBKIT_WEBGL_compressed_texture_pvrtc') ? true : false,
+				|| capabilities.getExtension('WEBKIT_WEBGL_compressed_texture_pvrtc') ? true : false
 		};
 
 		if (capabilities.isWebGL2) {
@@ -138,7 +138,7 @@ class KTX2Loader extends Loader {
 		loader.setResponseType('arraybuffer');
 		loader.setWithCredentials(this.withCredentials);
 
-		loader.load(url, (buffer) => {
+		loader.load(url, buffer => {
 			// Check for an existing task using this buffer. A transferred buffer cannot be transferred
 			// again from this thread.
 			if (_taskCache.has(buffer)) {
@@ -147,7 +147,7 @@ class KTX2Loader extends Loader {
 			}
 
 			this._createTexture(buffer)
-				.then((texture) => onLoad ? onLoad(texture) : null)
+				.then(texture => onLoad ? onLoad(texture) : null)
 				.catch(onError);
 		}, onProgress, onError);
 	}
@@ -167,7 +167,7 @@ class KTX2Loader extends Loader {
 		const taskConfig = config;
 		const texturePending = this.init().then(() => {
 			return this.workerPool.postMessage({ type: 'transcode', buffer, taskConfig: taskConfig }, [buffer]);
-		}).then((e) => {
+		}).then(e => {
 			const { mipmaps, width, height, format, type, error, dfdTransferFn, dfdFlags } = e.data;
 
 			if (type === 'error') return Promise.reject(error);
@@ -210,7 +210,7 @@ class KTX2Loader extends Loader {
 
 KTX2Loader.BasisFormat = {
 	ETC1S: 0,
-	UASTC_4x4: 1,
+	UASTC_4x4: 1
 };
 
 KTX2Loader.TranscoderFormat = {
@@ -230,7 +230,7 @@ KTX2Loader.TranscoderFormat = {
 	RGBA32: 13,
 	RGB565: 14,
 	BGR565: 15,
-	RGBA4444: 16,
+	RGBA4444: 16
 };
 
 KTX2Loader.EngineFormat = {
@@ -243,13 +243,13 @@ KTX2Loader.EngineFormat = {
 	RGB_ETC1_Format: PIXEL_FORMAT.RGB_ETC1,
 	// RGB_ETC2_Format: RGB_ETC2_Format,
 	RGB_PVRTC_4BPPV1_Format: PIXEL_FORMAT.RGB_PVRTC_4BPPV1,
-	RGB_S3TC_DXT1_Format: PIXEL_FORMAT.RGB_S3TC_DXT1,
+	RGB_S3TC_DXT1_Format: PIXEL_FORMAT.RGB_S3TC_DXT1
 };
 
 
 /* WEB WORKER */
 
-KTX2Loader.BasisWorker = function () {
+KTX2Loader.BasisWorker = function() {
 	let config;
 	let transcoderPending;
 	let BasisModule;
@@ -258,7 +258,7 @@ KTX2Loader.BasisWorker = function () {
 	const TranscoderFormat = _TranscoderFormat; // eslint-disable-line no-undef
 	const BasisFormat = _BasisFormat; // eslint-disable-line no-undef
 
-	self.addEventListener('message', function (e) {
+	self.addEventListener('message', function(e) {
 		const message = e.data;
 
 		switch (message.type) {
@@ -290,7 +290,7 @@ KTX2Loader.BasisWorker = function () {
 	});
 
 	function init(wasmBinary) {
-		transcoderPending = new Promise((resolve) => {
+		transcoderPending = new Promise(resolve => {
 			BasisModule = { wasmBinary, onRuntimeInitialized: resolve };
 			BASIS(BasisModule); // eslint-disable-line no-undef
 		}).then(() => {
@@ -356,7 +356,7 @@ KTX2Loader.BasisWorker = function () {
 					transcoderFormat,
 					0,
 					-1,
-					-1,
+					-1
 				);
 
 				if (!status) {
@@ -392,7 +392,7 @@ KTX2Loader.BasisWorker = function () {
 			engineFormat: [EngineFormat.RGBA_ASTC_4x4_Format, EngineFormat.RGBA_ASTC_4x4_Format],
 			priorityETC1S: Infinity,
 			priorityUASTC: 1,
-			needsPowerOfTwo: false,
+			needsPowerOfTwo: false
 		},
 		{
 			if: 'bptcSupported',
@@ -401,7 +401,7 @@ KTX2Loader.BasisWorker = function () {
 			engineFormat: [EngineFormat.RGBA_BPTC_Format, EngineFormat.RGBA_BPTC_Format],
 			priorityETC1S: 3,
 			priorityUASTC: 2,
-			needsPowerOfTwo: false,
+			needsPowerOfTwo: false
 		},
 		{
 			if: 'dxtSupported',
@@ -410,7 +410,7 @@ KTX2Loader.BasisWorker = function () {
 			engineFormat: [EngineFormat.RGB_S3TC_DXT1_Format, EngineFormat.RGBA_S3TC_DXT5_Format],
 			priorityETC1S: 4,
 			priorityUASTC: 5,
-			needsPowerOfTwo: false,
+			needsPowerOfTwo: false
 		},
 		{
 			if: 'etc2Supported',
@@ -419,7 +419,7 @@ KTX2Loader.BasisWorker = function () {
 			engineFormat: [EngineFormat.RGB_ETC2_Format, EngineFormat.RGBA_ETC2_EAC_Format],
 			priorityETC1S: 1,
 			priorityUASTC: 3,
-			needsPowerOfTwo: false,
+			needsPowerOfTwo: false
 		},
 		{
 			if: 'etc1Supported',
@@ -428,7 +428,7 @@ KTX2Loader.BasisWorker = function () {
 			engineFormat: [EngineFormat.RGB_ETC1_Format],
 			priorityETC1S: 2,
 			priorityUASTC: 4,
-			needsPowerOfTwo: false,
+			needsPowerOfTwo: false
 		},
 		{
 			if: 'pvrtcSupported',
@@ -437,14 +437,14 @@ KTX2Loader.BasisWorker = function () {
 			engineFormat: [EngineFormat.RGB_PVRTC_4BPPV1_Format, EngineFormat.RGBA_PVRTC_4BPPV1_Format],
 			priorityETC1S: 5,
 			priorityUASTC: 6,
-			needsPowerOfTwo: true,
-		},
+			needsPowerOfTwo: true
+		}
 	];
 
-	const ETC1S_OPTIONS = FORMAT_OPTIONS.sort(function (a, b) {
+	const ETC1S_OPTIONS = FORMAT_OPTIONS.sort(function(a, b) {
 		return a.priorityETC1S - b.priorityETC1S;
 	});
-	const UASTC_OPTIONS = FORMAT_OPTIONS.sort(function (a, b) {
+	const UASTC_OPTIONS = FORMAT_OPTIONS.sort(function(a, b) {
 		return a.priorityUASTC - b.priorityUASTC;
 	});
 
@@ -520,7 +520,7 @@ function setFORMAT_MAP(ktxParser) {
 		[ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_FORMAT.Red,
 		[ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_FORMAT.Red,
 		[ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_FORMAT.Red,
-		[ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_FORMAT.Red,
+		[ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_FORMAT.Red
 	};
 }
 
@@ -540,7 +540,7 @@ function setTYPE_MAP(ktxParser) {
 		[ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_TYPE.FLOAT,
 		[ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
 		[ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
-		[ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE
 	};
 }
 
@@ -549,7 +549,7 @@ function setENCODING_MAP(ktxParser) {
 	ENCODING_MAP = {
 		[ktxParser.VK_FORMAT_R8G8B8A8_SRGB]: TEXEL_ENCODING_TYPE.SRGB,
 		[ktxParser.VK_FORMAT_R8G8_SRGB]: TEXEL_ENCODING_TYPE.SRGB,
-		[ktxParser.VK_FORMAT_R8_SRGB]: TEXEL_ENCODING_TYPE.SRGB,
+		[ktxParser.VK_FORMAT_R8_SRGB]: TEXEL_ENCODING_TYPE.SRGB
 	};
 }
 
@@ -592,7 +592,7 @@ async function createTextureData(container) {
 		view = levelData;
 	}
 
-	let textureData = {};
+	const textureData = {};
 	let image;
 	if (pixelDepth === 0) {
 		image = { data: view, width: pixelWidth, height: pixelHeight };

@@ -26,7 +26,7 @@ class GradientTextureGenerator {
 		const texture = this._texture;
 
 		const gradient = context.createLinearGradient(0, 0, width, 0);
-		for (let i in gradientData) {
+		for (const i in gradientData) {
 			gradient.addColorStop(+i, gradientData[i]);
 		}
 		context.fillStyle = gradient;

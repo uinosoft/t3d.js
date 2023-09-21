@@ -3,8 +3,8 @@
  */
 
 import { Vector3, Matrix4 } from 't3d';
-import { LineCurve3 } from "./LineCurve3.js";
-import { QuadraticBezierCurve3 } from "./QuadraticBezierCurve3.js";
+import { LineCurve3 } from './LineCurve3.js';
+import { QuadraticBezierCurve3 } from './QuadraticBezierCurve3.js';
 
 const _vec3_1 = new Vector3();
 const _vec3_2 = new Vector3();
@@ -29,7 +29,7 @@ class CurvePath3 {
 		let pointLength = points.length;
 
 		if (pointLength < 2) {
-			console.warn("CurvePath3.setFromPoints: points length less than 2.");
+			console.warn('CurvePath3.setFromPoints: points length less than 2.');
 			return;
 		}
 

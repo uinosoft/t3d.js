@@ -1,6 +1,6 @@
 import { PropertyMap } from '../render/PropertyMap.js';
 
-const emptyString = "";
+const emptyString = '';
 
 export class WebGLVertexArrayBindings extends PropertyMap {
 
@@ -12,10 +12,10 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 		this._buffers = buffers;
 
 		this._isWebGL2 = capabilities.version >= 2;
-		this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
+		this._vaoExt = capabilities.getExtension('OES_vertex_array_object');
 
 		this._vaoCache = {}; // save vao cache here for releaseByProgram() method
-		this._currentGeometryProgram = "";
+		this._currentGeometryProgram = '';
 		this._currentVAO = null;
 	}
 
@@ -44,7 +44,7 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 				vao.version = geometry.version;
 			}
 		} else {
-			const geometryProgram = program.id + "_" + geometry.id + "_" + geometry.version;
+			const geometryProgram = program.id + '_' + geometry.id + '_' + geometry.version;
 			if (geometryProgram !== this._currentGeometryProgram) {
 				this._setupVertexAttributes(program, geometry);
 				this._currentGeometryProgram = geometryProgram;
@@ -139,7 +139,7 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 				const size = geometryAttribute.size;
 
 				if (programAttribute.count !== size) {
-					console.warn("WebGLVertexArrayBindings: attribute " + key + " size not match! " + programAttribute.count + " : " + size);
+					console.warn('WebGLVertexArrayBindings: attribute ' + key + ' size not match! ' + programAttribute.count + ' : ' + size);
 				}
 
 				const buffer = geometryAttribute.buffer;
@@ -161,7 +161,7 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 						} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 							capabilities.getExtension('ANGLE_instanced_arrays').vertexAttribDivisorANGLE(programAttribute.location + i, geometryAttribute.divisor);
 						} else {
-							console.warn("vertexAttribDivisor not supported");
+							console.warn('vertexAttribDivisor not supported');
 						}
 					}
 				}

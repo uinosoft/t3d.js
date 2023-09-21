@@ -39,4 +39,4 @@ export const ShaderLib = {
 	phong_vert: phong_vert,
 	point_frag: point_frag,
 	point_vert: point_vert
-}
+};

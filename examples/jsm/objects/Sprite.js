@@ -18,11 +18,11 @@ class Sprite extends Mesh {
 	}
 
 	set rotation(value) {
-		this.material.uniforms["rotation"] = value;
+		this.material.uniforms['rotation'] = value;
 	}
 
 	get rotation() {
-		return this.material.uniforms["rotation"];
+		return this.material.uniforms['rotation'];
 	}
 
 }
@@ -37,8 +37,8 @@ const array = new Float32Array([
 ]);
 
 const buffer = new Buffer(array, 4);
-sharedGeometry.addAttribute("position", new Attribute(buffer, 2, 0));
-sharedGeometry.addAttribute("uv", new Attribute(buffer, 2, 2));
+sharedGeometry.addAttribute('position', new Attribute(buffer, 2, 0));
+sharedGeometry.addAttribute('uv', new Attribute(buffer, 2, 2));
 sharedGeometry.setIndex(
 	new Attribute(new Buffer(new Uint16Array([
 		0, 1, 2,

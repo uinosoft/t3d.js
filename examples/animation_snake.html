@@ -73,11 +73,11 @@
 		// insert skinIndex & skinWeight
 		const skinIndexArray = [];
 		const skinWeightArray = [];
-		const verticesArray = cylinder_geometry.getAttribute("a_Position").buffer.array;
-		const vertexCount = cylinder_geometry.getAttribute("a_Position").buffer.count;
+		const verticesArray = cylinder_geometry.getAttribute('a_Position').buffer.array;
+		const vertexCount = cylinder_geometry.getAttribute('a_Position').buffer.count;
 		for (let i = 0; i < vertexCount; i++) {
-			let offset = i * 3;
-			let y = verticesArray[offset + 1];
+			const offset = i * 3;
+			const y = verticesArray[offset + 1];
 
 			let boneId = 0;
 			for (let j = 0; j <= numBones; j++) {
@@ -92,9 +92,9 @@
 			skinWeightArray.push(1, 0, 0, 0);
 		}
 
-		cylinder_geometry.removeAttribute("a_Color");
-		cylinder_geometry.addAttribute("skinIndex", new t3d.Attribute(new t3d.Buffer(new Float32Array(skinIndexArray), 4)));
-		cylinder_geometry.addAttribute("skinWeight", new t3d.Attribute(new t3d.Buffer(new Float32Array(skinWeightArray), 4)));
+		cylinder_geometry.removeAttribute('a_Color');
+		cylinder_geometry.addAttribute('skinIndex', new t3d.Attribute(new t3d.Buffer(new Float32Array(skinIndexArray), 4)));
+		cylinder_geometry.addAttribute('skinWeight', new t3d.Attribute(new t3d.Buffer(new Float32Array(skinWeightArray), 4)));
 
 		const phong = new t3d.PhongMaterial();
 		phong.diffuse.setHex(0xffffff);
@@ -158,7 +158,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

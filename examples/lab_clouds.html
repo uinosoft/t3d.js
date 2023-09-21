@@ -78,8 +78,8 @@
 		const context = skyCanvas.getContext('2d');
 
 		const gradient = context.createLinearGradient(0, 0, 0, skyCanvas.height);
-		gradient.addColorStop(0, "#1e4877");
-		gradient.addColorStop(0.5, "#4584b4");
+		gradient.addColorStop(0, '#1e4877');
+		gradient.addColorStop(0.5, '#4584b4');
 
 		context.fillStyle = gradient;
 		context.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
@@ -104,10 +104,10 @@
 
 		const material = new t3d.ShaderMaterial({
 			uniforms: {
-				"tex": texture,
-				"fogColor": new t3d.Color3().setHex(0x4584b4).toArray(),
-				"fogNear": -100,
-				"fogFar": 3000,
+				'tex': texture,
+				'fogColor': new t3d.Color3().setHex(0x4584b4).toArray(),
+				'fogNear': -100,
+				'fogFar': 3000
 			},
 			vertexShader: document.getElementById('vs').textContent,
 			fragmentShader: document.getElementById('fs').textContent
@@ -117,7 +117,7 @@
 		material.transparent = true;
 
 		const plane = new t3d.Mesh(new t3d.PlaneGeometry(64, 64), material);
-		let planeGeometries = [];
+		const planeGeometries = [];
 
 		for (let i = 0; i < 8000; i++) {
 			plane.position.x = Math.random() * 1000 - 500;
@@ -149,7 +149,7 @@
 		scene.add(camera);
 
 		let mouseX = 0, mouseY = 0;
-		let start_time = Date.now();
+		const start_time = Date.now();
 
 		const windowHalfX = window.innerWidth / 2;
 		const windowHalfY = window.innerHeight / 2;
@@ -181,7 +181,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -43,7 +43,7 @@
         document.body.appendChild(canvas);
 
         const contextParams = { antialias: true, alpha: false };
-        const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+        const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 
         const renderer = new t3d.WebGLRenderer(gl);
         renderer.setClearColor(0.1, 0.1, 0.1, 1);
@@ -100,7 +100,7 @@
         const gui = new GUI();
 
         const capabilities = renderer.capabilities;
-        gui.add({ version: "WebGL " + capabilities.version }, "version").disable();
+        gui.add({ version: 'WebGL ' + capabilities.version }, 'version').disable();
         gui.add(capabilities, 'canUseTimestamp').disable();
 
         gui.add(params, 'timer').disable().listen();
@@ -154,7 +154,7 @@
 
         	backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

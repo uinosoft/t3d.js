@@ -74,7 +74,7 @@ class UnrealBloomPass {
 		this.compositePass.uniforms.blurTexture5 = this.renderTargetsVertical[4].texture;
 
 		this.copyPass = new ShaderPostPass(CopyShader);
-		this.copyPass.material.blending =  BLEND_TYPE.ADD;
+		this.copyPass.material.blending = BLEND_TYPE.ADD;
 		this.copyPass.material.transparent = true;
 		this.copyPass.material.premultipliedAlpha = true;
 		this.copyPass.material.depthTest = false;
@@ -112,7 +112,7 @@ class UnrealBloomPass {
 			renderer.setRenderTarget(this.renderTargetsVertical[i]);
 			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, true, false);
-			this.separableBlurPasses[i].render(renderer)
+			this.separableBlurPasses[i].render(renderer);
 			inputRenderTarget = this.renderTargetsVertical[i];
 		}
 
@@ -190,7 +190,7 @@ const seperableBlurShader = {
 		colorTexture: null,
 		invSize: [1 / 512, 1 / 512], // inverse texture size
 		direction: [0.5, 0.5],
-		gaussianCoefficients: [], // precomputed Gaussian Coefficients
+		gaussianCoefficients: [] // precomputed Gaussian Coefficients
 	},
 
 	vertexShader: `
@@ -227,8 +227,8 @@ const seperableBlurShader = {
 			}
 			gl_FragColor = vec4(diffuseSum / weightSum, 0.0);
 		}
-	`,
-}
+	`
+};
 
 const compositeShader = {
 	name: 'composite',
@@ -243,7 +243,7 @@ const compositeShader = {
 		blurTexture5: null,
 		bloomFactors: [1., 0.8, 0.6, 0.4, 0.2],
 		bloomRadius: 0.0,
-		strength: 1,
+		strength: 1
 	},
 
 	vertexShader: `
@@ -291,7 +291,8 @@ const compositeShader = {
 				factor4 * texture2D(blurTexture5, v_Uv));
 		}
 	`
-}
+};
+
 const toneMappingShader = {
 	name: 'toneMapping',
 
@@ -342,5 +343,6 @@ const toneMappingShader = {
 			gl_FragColor = LinearTosRGB(gl_FragColor);
 		}
 	`
-}
+};
+
 export { UnrealBloomPass };

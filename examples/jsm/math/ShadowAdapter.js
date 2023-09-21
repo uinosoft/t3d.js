@@ -86,7 +86,7 @@ class ShadowAdapter {
 			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
 				_box3_1.expandByPoint(polygon.vertices[i]);
 			}
-		})
+		});
 
 		// Calculate the smallest bounding sphere through the bounding box.
 
@@ -97,7 +97,7 @@ class ShadowAdapter {
 			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
 				maxRadiusSq = Math.max(maxRadiusSq, out.center.distanceToSquared(polygon.vertices[i]));
 			}
-		})
+		});
 		out.radius = Math.sqrt(maxRadiusSq);
 
 		polygonIndex = 0;
@@ -140,7 +140,7 @@ class ShadowAdapter {
 		const projectionMatrixInverse = camera.projectionMatrixInverse;
 		const isOrthographic = projectionMatrix.elements[2 * 4 + 3] === 0;
 
-		clipVertices.near.forEach(function (v, i) {
+		clipVertices.near.forEach(function(v, i) {
 			_vec3_1.copy(v);
 			_vec3_1.applyMatrix4(projectionMatrixInverse);
 
@@ -154,7 +154,7 @@ class ShadowAdapter {
 			_vec3_1.toArray(out, i * 3);
 		});
 
-		clipVertices.far.forEach(function (v, i) {
+		clipVertices.far.forEach(function(v, i) {
 			_vec3_1.copy(v);
 			_vec3_1.applyMatrix4(projectionMatrixInverse);
 

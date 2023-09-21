@@ -29,7 +29,7 @@
 
 	<script type="module">
 		import * as t3d from 't3d';
-		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -78,7 +78,7 @@
 					#endif
 				}
 			`
-		}
+		};
 		
 		const MSDFShader = {
 			name: 'msdf_text',
@@ -124,7 +124,7 @@
 					#endif
 				}
 			`
-		}
+		};
 
 		// Init Scene
 
@@ -168,7 +168,7 @@
 
 			ctx.font = fontSize + 'px Arial';
 			ctx.fillStyle = 'white';
-			ctx.textAlign = "center";
+			ctx.textAlign = 'center';
 			ctx.fillText(text, width * 0.5, fontSize);
 
 			const texture = new t3d.Texture2D();
@@ -196,7 +196,7 @@
 			const fontSize = size - padding * 2;
 
 			ctx.font = fontSize + 'px Arial';
-			ctx.textAlign = "center";
+			ctx.textAlign = 'center';
 			ctx.textBaseline = 'middle';
 
 			const metrics = ctx.measureText(text);
@@ -207,7 +207,7 @@
 
 			ctx.fillStyle = 'black';
 			ctx.font = fontSize + 'px Arial';
-			ctx.textAlign = "center";
+			ctx.textAlign = 'center';
 			ctx.textBaseline = 'middle';
 			ctx.fillText(text, canvas.width / 2, padding + height / 2);
 
@@ -261,7 +261,7 @@
 			{ type: 'IMAGE', material: imageMaterial, x: -22, y: -18 },
 			{ type: 'SDF', material: sdfMaterial, x: 22, y: 25 },
 			{ type: 'MSDF', material: msdfMaterial, x: 22, y: -18 }
-		]
+		];
 
 		const geometry = new t3d.PlaneGeometry(30, 30);
 
@@ -341,7 +341,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 

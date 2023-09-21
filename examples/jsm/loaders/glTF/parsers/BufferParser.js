@@ -1,4 +1,4 @@
-import { GLTFUtils } from "../GLTFUtils.js";
+import { GLTFUtils } from '../GLTFUtils.js';
 
 export class BufferParser {
 
@@ -26,7 +26,7 @@ export class BufferParser {
 					}
 					return promise;
 				})
-			).then((buffers) => {
+			).then(buffers => {
 				context.buffers = buffers;
 			});
 		}

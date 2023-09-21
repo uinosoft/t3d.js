@@ -41,8 +41,8 @@
 
 		const scene = new t3d.Scene();
 
-		const jeep = "resources/models/assimp/jeep/jeep.assimp.json";
-		const interior = "resources/models/assimp/interior/interior.assimp.json";
+		const jeep = 'resources/models/assimp/jeep/jeep.assimp.json';
+		const interior = 'resources/models/assimp/interior/interior.assimp.json';
 
 		const loader1 = new AssimpJsonLoader();
 		loader1.load(jeep, function(object) {
@@ -90,31 +90,31 @@
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const shadowMapPass = new t3d.ShadowMapPass();
 		const colorAdjustPass = new t3d.ShaderPostPass(ColorAdjustShader);
-		colorAdjustPass.uniforms["tDiffuse"] = tempRenderTarget1.texture;
-		colorAdjustPass.uniforms["brightness"] = 0.01;
-		colorAdjustPass.uniforms["contrast"] = 1.01;
-		colorAdjustPass.uniforms["exposure"] = 0.6;
-		colorAdjustPass.uniforms["gamma"] = 1;
-		colorAdjustPass.uniforms["saturation"] =  1.6;
+		colorAdjustPass.uniforms['tDiffuse'] = tempRenderTarget1.texture;
+		colorAdjustPass.uniforms['brightness'] = 0.01;
+		colorAdjustPass.uniforms['contrast'] = 1.01;
+		colorAdjustPass.uniforms['exposure'] = 0.6;
+		colorAdjustPass.uniforms['gamma'] = 1;
+		colorAdjustPass.uniforms['saturation'] = 1.6;
 		const filmPass = new t3d.ShaderPostPass(FilmShader);
-		filmPass.uniforms["tDiffuse"] = tempRenderTarget2.texture;
+		filmPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
 		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
-		fxaaPass.uniforms["tDiffuse"] = tempRenderTarget1.texture;
-		fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+		fxaaPass.uniforms['tDiffuse'] = tempRenderTarget1.texture;
+		fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 
 		// gui
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
-		gui.add(colorAdjustPass.uniforms, "brightness", 0, 0.5, 0.01);
-		gui.add(colorAdjustPass.uniforms, "contrast", 1, 1.5, 0.01);
-		gui.add(colorAdjustPass.uniforms, "exposure", 0, 1, 0.1);
-		gui.add(colorAdjustPass.uniforms, "gamma", 0, 1, 0.1);
-		gui.add(colorAdjustPass.uniforms, "saturation", -1, 5, 0.01);
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(colorAdjustPass.uniforms, 'brightness', 0, 0.5, 0.01);
+		gui.add(colorAdjustPass.uniforms, 'contrast', 1, 1.5, 0.01);
+		gui.add(colorAdjustPass.uniforms, 'exposure', 0, 1, 0.1);
+		gui.add(colorAdjustPass.uniforms, 'gamma', 0, 1, 0.1);
+		gui.add(colorAdjustPass.uniforms, 'saturation', -1, 5, 0.01);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -175,7 +175,7 @@
 			tempRenderTarget1.resize(width, height);
 			tempRenderTarget2.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

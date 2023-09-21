@@ -71,7 +71,7 @@ class BoxHelper extends Mesh {
 		return this;
 	}
 
-	updateMatrix() {
+	updateMatrix(force) {
 		// Remove matrix updating
 		// Need decompose worldMatrix to matrix and RST ?
 

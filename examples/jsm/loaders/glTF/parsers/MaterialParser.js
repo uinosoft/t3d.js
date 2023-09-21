@@ -7,7 +7,7 @@ import { KHR_materials_unlit as _KHR_materials_unlit } from '../extensions/KHR_m
 import { KHR_materials_pbrSpecularGlossiness as _KHR_materials_pbrSpecularGlossiness } from '../extensions/KHR_materials_pbrSpecularGlossiness.js';
 import { KHR_materials_clearcoat as _KHR_materials_clearcoat } from '../extensions/KHR_materials_clearcoat.js';
 import { KHR_texture_transform } from '../extensions/KHR_texture_transform.js';
-import { ALPHA_MODES } from "../Constants.js";
+import { ALPHA_MODES } from '../Constants.js';
 
 export class MaterialParser {
 
@@ -28,7 +28,7 @@ export class MaterialParser {
 				alphaMode,
 				alphaCutoff,
 				doubleSided,
-				name = ""
+				name = ''
 			} = gltf.materials[i];
 
 			const { KHR_materials_unlit, KHR_materials_pbrSpecularGlossiness, KHR_materials_clearcoat } = extensions;

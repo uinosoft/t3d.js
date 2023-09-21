@@ -28,7 +28,7 @@
     <script type="module">
         import * as t3d from 't3d';
         import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-        import { ImageBitmapLoader } from './jsm/loaders/ImageBitmapLoader.js'
+        import { ImageBitmapLoader } from './jsm/loaders/ImageBitmapLoader.js';
 
         let width = window.innerWidth || 2;
         let height = window.innerHeight || 2;
@@ -56,7 +56,7 @@
         	new ImageBitmapLoader().
         		setOptions(options).
         		load(url,
-        			(imageBitmap) => {
+        			imageBitmap => {
         				const texture = new t3d.Texture2D();
         				texture.image = imageBitmap;
         				texture.version++;
@@ -75,10 +75,10 @@
         				scene.add(cube);
         				cubes.push(cube);
         			},
-        			(p) => {
+        			p => {
         				console.log(p);
         			},
-        			(e) => {
+        			e => {
         				console.error(e);
         			}
         		);
@@ -109,7 +109,7 @@
 
         	forwardRenderer.backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

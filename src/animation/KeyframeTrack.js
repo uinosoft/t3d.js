@@ -16,7 +16,7 @@ class KeyframeTrack {
 		this.target = target;
 		this.propertyPath = propertyPath;
 
-		this.name = this.target.uuid + "." + propertyPath;
+		this.name = this.target.uuid + '.' + propertyPath;
 
 		this.times = times;
 		this.values = values;

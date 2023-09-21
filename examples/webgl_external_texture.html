@@ -64,7 +64,7 @@
 		}
 
 		const image = new Image();
-		image.src = "./resources/logo.jpg";
+		image.src = './resources/logo.jpg';
 
 		const gl = forwardRenderer.context;
 		const glTexture = createTexture(gl, gl.TEXTURE_2D, gl.TEXTURE_2D, 1);
@@ -122,13 +122,13 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			let aspect = width / height;
+			aspect = width / height;
 
 			camera.setOrtho(-aspect, aspect, -1, 1, 0, 1);
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

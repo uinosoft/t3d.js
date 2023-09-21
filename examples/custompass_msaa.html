@@ -42,7 +42,7 @@
 		document.body.appendChild(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
@@ -102,12 +102,12 @@
 			return renderTargets[value];
 		}
 
-		const params = { "msaa": true, "samplers": Math.min(5, renderer.capabilities.maxSamples) };
+		const params = { 'msaa': true, 'samplers': Math.min(5, renderer.capabilities.maxSamples) };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
-		gui.add(renderer.capabilities, "maxSamples").disable();
-		gui.add(params, "msaa");
-		gui.add(params, "samplers", 1, renderer.capabilities.maxSamples, 1);
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(renderer.capabilities, 'maxSamples').disable();
+		gui.add(params, 'msaa');
+		gui.add(params, 'samplers', 1, renderer.capabilities.maxSamples, 1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -163,7 +163,7 @@
 				renderTarget && renderTarget.resize(width, height);
 			}
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -85,6 +85,6 @@ var TubeBuilder = {
 		};
 	}
 
-}
+};
 
 export { TubeBuilder };

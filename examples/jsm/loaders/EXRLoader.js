@@ -470,7 +470,7 @@ class EXRLoader extends Loader {
 					if (nx & p) {
 						const p10 = px + oy1;
 
-						if (w14) { wdec14(buffer[px + j], buffer[p10 + j]); } else { wdec16(buffer[px + j], buffer[p10 + j]); }
+						if (w14) { wdec14(buffer[px + j], buffer[p10 + j]) } else { wdec16(buffer[px + j], buffer[p10 + j]) }
 
 						i00 = wdec14Return.a;
 						buffer[p10 + j] = wdec14Return.b;
@@ -486,7 +486,7 @@ class EXRLoader extends Loader {
 					for (; px <= ex; px += ox2) {
 						const p01 = px + ox1;
 
-						if (w14) { wdec14(buffer[px + j], buffer[p01 + j]); } else { wdec16(buffer[px + j], buffer[p01 + j]); }
+						if (w14) { wdec14(buffer[px + j], buffer[p01 + j]) } else { wdec16(buffer[px + j], buffer[p01 + j]) }
 
 						i00 = wdec14Return.a;
 						buffer[p01 + j] = wdec14Return.b;
@@ -711,12 +711,12 @@ class EXRLoader extends Loader {
 			for (let blocky = 0; blocky < numBlocksY; ++blocky) {
 				let maxY = 8;
 
-				if (blocky == numBlocksY - 1) { maxY = leftoverY; }
+				if (blocky == numBlocksY - 1) { maxY = leftoverY }
 
 				let maxX = 8;
 
 				for (let blockx = 0; blockx < numBlocksX; ++blockx) {
-					if (blockx == numBlocksX - 1) { maxX = leftoverX; }
+					if (blockx == numBlocksX - 1) { maxX = leftoverX }
 
 					for (let comp = 0; comp < numComp; ++comp) {
 						halfZigBlock[comp].fill(0);
@@ -1199,7 +1199,7 @@ class EXRLoader extends Loader {
 
 			};
 
-			if (dwaHeader.version < 2) { throw new Error('EXRLoader.parse: ' + EXRHeader.compression + ' version ' + dwaHeader.version + ' is unsupported'); }
+			if (dwaHeader.version < 2) { throw new Error('EXRLoader.parse: ' + EXRHeader.compression + ' version ' + dwaHeader.version + ' is unsupported') }
 
 			// Read channel ruleset information
 			const channelRules = new Array();
@@ -1217,7 +1217,7 @@ class EXRLoader extends Loader {
 					name: name,
 					index: index,
 					type: type,
-					compression: compression,
+					compression: compression
 				});
 
 				ruleSize -= name.length + 3;
@@ -1431,7 +1431,7 @@ class EXRLoader extends Loader {
 			return Uint8;
 		}
 
-		const parseInt64 = function (dataView, offset) {
+		const parseInt64 = function(dataView, offset) {
 			let int;
 
 			if ('getBigInt64' in DataView.prototype) {
@@ -1626,7 +1626,7 @@ class EXRLoader extends Loader {
 				singleTile: !!(spec & 2),
 				longName: !!(spec & 4),
 				deepFormat: !!(spec & 8),
-				multiPart: !!(spec & 16),
+				multiPart: !!(spec & 16)
 			};
 
 			// start of header
@@ -1677,7 +1677,7 @@ class EXRLoader extends Loader {
 				uncompress: null,
 				getter: null,
 				format: null,
-				encoding: TEXEL_ENCODING_TYPE.LINEAR,
+				encoding: TEXEL_ENCODING_TYPE.LINEAR
 			};
 
 			switch (EXRHeader.compression) {
@@ -1758,7 +1758,7 @@ class EXRLoader extends Loader {
 
 			EXRDecoder.blockCount = (EXRHeader.dataWindow.yMax + 1) / EXRDecoder.scanlineBlockSize;
 
-			for (let i = 0; i < EXRDecoder.blockCount; i++) { parseInt64(dataView, offset); } // scanlineOffset
+			for (let i = 0; i < EXRDecoder.blockCount; i++) { parseInt64(dataView, offset) } // scanlineOffset
 
 			// we should be passed the scanline offset table, ready to start reading pixel data.
 
@@ -1771,14 +1771,14 @@ class EXRLoader extends Loader {
 					EXRDecoder.byteArray = new Float32Array(size);
 
 					// Fill initially with 1s for the alpha value if the texture is not RGBA, RGB values will be overwritten
-					if (EXRDecoder.channels < EXRDecoder.outputChannels) { EXRDecoder.byteArray.fill(1, 0, size); }
+					if (EXRDecoder.channels < EXRDecoder.outputChannels) { EXRDecoder.byteArray.fill(1, 0, size) }
 
 					break;
 
 				case PIXEL_TYPE.HALF_FLOAT:
 					EXRDecoder.byteArray = new Uint16Array(size);
 
-					if (EXRDecoder.channels < EXRDecoder.outputChannels) { EXRDecoder.byteArray.fill(0x3C00, 0, size); } // Uint16Array holds half float data, 0x3C00 is 1
+					if (EXRDecoder.channels < EXRDecoder.outputChannels) { EXRDecoder.byteArray.fill(0x3C00, 0, size) } // Uint16Array holds half float data, 0x3C00 is 1
 
 					break;
 

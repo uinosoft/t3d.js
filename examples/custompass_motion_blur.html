@@ -42,18 +42,18 @@
 		document.body.appendChild(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
 		
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Park2/posx.jpg",
-			"resources/skybox/Park2/negx.jpg",
-			"resources/skybox/Park2/posy.jpg",
-			"resources/skybox/Park2/negy.jpg",
-			"resources/skybox/Park2/posz.jpg",
-			"resources/skybox/Park2/negz.jpg"
+			'resources/skybox/Park2/posx.jpg',
+			'resources/skybox/Park2/negx.jpg',
+			'resources/skybox/Park2/posy.jpg',
+			'resources/skybox/Park2/negy.jpg',
+			'resources/skybox/Park2/posz.jpg',
+			'resources/skybox/Park2/negz.jpg'
 		]);
 		const sky_box = new SkyBox(cube_texture);
 		scene.add(sky_box);
@@ -113,19 +113,19 @@
 		motionBlurPass.uniforms.tDepth = tempRenderTarget1.depthTexture;
 		motionBlurPass.uniforms.velocityFactor = 0.7;
 
-		let viewProjectionMatrix = new t3d.Matrix4();
-		let viewProjectionMatrixInverse = new t3d.Matrix4();
-		let previousViewProjectionMatrix = new t3d.Matrix4();
-		let cameraMove = new t3d.Vector3();
-		let previousCameraPosition = new t3d.Vector3();
+		const viewProjectionMatrix = new t3d.Matrix4();
+		const viewProjectionMatrixInverse = new t3d.Matrix4();
+		const previousViewProjectionMatrix = new t3d.Matrix4();
+		const cameraMove = new t3d.Vector3();
+		const previousCameraPosition = new t3d.Vector3();
 		camera.updateMatrix();
 		previousViewProjectionMatrix.copy(camera.viewMatrix).premultiply(camera.projectionMatrix);
 		previousCameraPosition.copy(camera.position);
 
-		const params = { "fps": 60 };
+		const params = { 'fps': 60 };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
-		gui.add(motionBlurPass.uniforms, "velocityFactor", 0, 2, 0.01);
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(motionBlurPass.uniforms, 'velocityFactor', 0, 2, 0.01);
 		gui.add(params, 'fps', 1, 60, 1);
 
 		let lastTime = Date.now();
@@ -133,7 +133,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let t = Date.now();
+			const t = Date.now();
 			if (t - lastTime < (1000 / params.fps)) {
 				return;
 			}
@@ -181,7 +181,7 @@
 
 			tempRenderTarget1.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

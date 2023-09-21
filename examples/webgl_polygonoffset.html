@@ -66,7 +66,7 @@
 		const controller = new OrbitControls(camera, canvas);
 		
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(blue_material, 'polygonOffset');
 		gui.add(blue_material, 'polygonOffsetFactor', -10, 10, 0.01);
 		gui.add(blue_material, 'polygonOffsetUnits', -10, 10, 0.01);
@@ -88,7 +88,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

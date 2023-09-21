@@ -36,15 +36,15 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
 		const scene = new t3d.Scene();
 
-		const file = "resources/models/gltf/BotSkinned/glTF-MaterialsUnlit/Bot_Skinned.gltf";
+		const file = 'resources/models/gltf/BotSkinned/glTF-MaterialsUnlit/Bot_Skinned.gltf';
 
 		let animation;
 
@@ -52,7 +52,7 @@
 		loader.load(file).then(function(result) {
 			// add mesh to scene
 			const object = result.root.children[0];
-			object.traverse(function (obj) {
+			object.traverse(function(obj) {
 				if (obj.isSkinnedMesh) {
 					obj.frustumCulled = false;
 				}
@@ -66,7 +66,7 @@
 			scene.add(bones);
 		
 			animation = new t3d.AnimationMixer();
-			result.animations.forEach(function (clip) {
+			result.animations.forEach(function(clip) {
 				const action = new t3d.AnimationAction(clip);
 				action.weight = 1;
 				animation.addAction(action);
@@ -112,10 +112,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -94,9 +94,9 @@
 			}
 
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-			gui.add(sky_box, "level", 0, 8, 1);
-			gui.add(camera, "gammaFactor", 0, 3, 0.01);
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+			gui.add(sky_box, 'level', 0, 8, 1);
+			gui.add(camera, 'gammaFactor', 0, 3, 0.01);
 		});
 
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
@@ -132,7 +132,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

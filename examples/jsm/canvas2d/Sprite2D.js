@@ -1,4 +1,4 @@
-import { Object2D } from "../canvas2d/Object2D.js";
+import { Object2D } from '../canvas2d/Object2D.js';
 
 class Sprite2D extends Object2D {
 

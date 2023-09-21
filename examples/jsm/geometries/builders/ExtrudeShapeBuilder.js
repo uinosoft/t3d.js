@@ -120,7 +120,7 @@ var ExtrudeShapeBuilder = {
 		};
 	}
 
-}
+};
 
 function getLength(x0, y0, x1, y1) {
 	var x = x1 - x0;

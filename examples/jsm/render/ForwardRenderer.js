@@ -22,12 +22,12 @@ class ForwardRenderer extends WebGLRenderer {
 			stencil: true
 		};
 
-		const gl = view.getContext("webgl2", options || defaultContextParams) || view.getContext("webgl", options || defaultContextParams);
+		const gl = view.getContext('webgl2', options || defaultContextParams) || view.getContext('webgl', options || defaultContextParams);
 
 		super(gl);
 
 		if (this.capabilities.version < 2) {
-			console.info("ForwardRenderer use WebGL1 because of your browser not support WebGL2.");
+			console.info('ForwardRenderer use WebGL1 because of your browser not support WebGL2.');
 		}
 
 		this.backRenderTarget = new RenderTargetBack(view);

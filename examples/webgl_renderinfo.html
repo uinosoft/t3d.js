@@ -61,7 +61,7 @@
 
         const type = {
         	drawMode: 'LINES'
-        }
+        };
 
         const geometry = new t3d.Geometry();
         geometry.addAttribute('a_Position', positionAttribute);
@@ -84,9 +84,9 @@
         const renderInfo = new t3d.RenderInfo();
 
         const gui = new GUI();
-        gui.add({ RenderInfo: "Render" }, "RenderInfo").disable();
+        gui.add({ RenderInfo: 'Render' }, 'RenderInfo').disable();
 
-        gui.add(type, 'drawMode', drawModes).onChange((value) => {
+        gui.add(type, 'drawMode', drawModes).onChange(value => {
         	if (value == 'POINTS') {
         		mesh.material = pointsMaterial;
         	} else {
@@ -95,10 +95,10 @@
         	}
         });
 
-        gui.add(renderInfo.render, "calls").disable().listen();
-        gui.add(renderInfo.render, "triangles").disable().listen();
-        gui.add(renderInfo.render, "lines").disable().listen();
-        gui.add(renderInfo.render, "points").disable().listen();
+        gui.add(renderInfo.render, 'calls').disable().listen();
+        gui.add(renderInfo.render, 'triangles').disable().listen();
+        gui.add(renderInfo.render, 'lines').disable().listen();
+        gui.add(renderInfo.render, 'points').disable().listen();
 
         function loop(count) {
         	requestAnimationFrame(loop);
@@ -129,7 +129,7 @@
 
         	backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
 
     </script>
 </body>

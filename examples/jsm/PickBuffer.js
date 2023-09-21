@@ -72,7 +72,7 @@ function createGetMaterialFunction(func = defaultMaterialReplaceFunction) {
 		material.uniforms['u_pickId'] = renderable.object.pickId || 0.0;
 		material.side = renderable.material.side;
 		return material;
-	}
+	};
 }
 
 const materialMap = new Map();

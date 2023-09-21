@@ -25,9 +25,9 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Canvas2D } from "./jsm/canvas2d/Canvas2D.js";
-		import { Sprite2D } from "./jsm/canvas2d/Sprite2D.js";
-		import { Clock } from "./jsm/Clock.js";
+		import { Canvas2D } from './jsm/canvas2d/Canvas2D.js';
+		import { Sprite2D } from './jsm/canvas2d/Sprite2D.js';
+		import { Clock } from './jsm/Clock.js';
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
@@ -40,7 +40,7 @@
 		document.body.appendChild(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
@@ -59,7 +59,7 @@
 		canvas2d.setScreenMatchMode(Canvas2D.SCREEN_MATCH_MODE.SHRINK);
 
 		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
-		let sprites = [];
+		const sprites = [];
 		for (let i = 0; i < 90; i++) {
 			const sprite = new Sprite2D();
 			if (i == 0) {
@@ -135,7 +135,7 @@
 			camera.position.z = 100 * Math.cos(Math.sin(count / 1000));
 			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 
-			let deltaTime = clock.getDelta();
+			const deltaTime = clock.getDelta();
 			//
 			for (let i = 4; i < sprites.length; i++) {
 				sprites[i].rotation += 8 * deltaTime;
@@ -207,7 +207,7 @@
 
 			backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

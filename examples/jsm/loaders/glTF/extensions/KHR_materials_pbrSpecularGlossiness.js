@@ -1,5 +1,5 @@
 import { TEXEL_ENCODING_TYPE, PBR2Material } from 't3d';
-import { KHR_texture_transform } from "./KHR_texture_transform.js";
+import { KHR_texture_transform } from './KHR_texture_transform.js';
 
 /**
  * KHR_materials_pbrSpecularGlossiness extension

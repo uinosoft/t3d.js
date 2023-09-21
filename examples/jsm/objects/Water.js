@@ -63,15 +63,15 @@ class Water extends Mesh {
 		const material = new ShaderMaterial(mirrorShader);
 		material.side = side;
 
-		material.uniforms["mirrorSampler"] = renderTarget.texture;
-		material.uniforms["textureMatrix"] = textureMatrix.elements;
-		material.uniforms["alpha"] = alpha;
-		material.uniforms["time"] = time;
-		material.uniforms["normalSampler"] = normalSampler;
-		material.uniforms["sunColor"] = sunColor.toArray();
-		material.uniforms["waterColor"] = waterColor.toArray();
-		material.uniforms["sunDirection"] = sunDirection.toArray();
-		material.uniforms["distortionScale"] = distortionScale;
+		material.uniforms['mirrorSampler'] = renderTarget.texture;
+		material.uniforms['textureMatrix'] = textureMatrix.elements;
+		material.uniforms['alpha'] = alpha;
+		material.uniforms['time'] = time;
+		material.uniforms['normalSampler'] = normalSampler;
+		material.uniforms['sunColor'] = sunColor.toArray();
+		material.uniforms['waterColor'] = waterColor.toArray();
+		material.uniforms['sunDirection'] = sunDirection.toArray();
+		material.uniforms['distortionScale'] = distortionScale;
 
 		super(geometry, material);
 
@@ -148,7 +148,7 @@ class Water extends Mesh {
 			projectionMatrix.elements[14] = clipPlane.w;
 
 			eye.setFromMatrixPosition(camera.worldMatrix);
-			eye.toArray(material.uniforms["eye"]);
+			eye.toArray(material.uniforms['eye']);
 
 			scope.visible = false;
 			scene.add(mirrorCamera);

@@ -23,39 +23,39 @@
 		</script>
 
 		<script type="module">
-			import * as t3d from "t3d";
-			import { GUI } from "./libs/lil-gui.esm.min.js";
-			import { OrbitControls } from "./jsm/controls/OrbitControls.js";
-			import { GBuffer } from "./jsm/GBuffer.js";
-			import { GLTFLoader } from "./jsm/loaders/glTF/GLTFLoader.js";
-			import { MotionBlur2Shader } from "./jsm/shaders/MotionBlur2Shader.js";
-			import { SkyBox } from "./jsm/objects/SkyBox.js";
+			import * as t3d from 't3d';
+			import { GUI } from './libs/lil-gui.esm.min.js';
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { GBuffer } from './jsm/GBuffer.js';
+			import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+			import { MotionBlur2Shader } from './jsm/shaders/MotionBlur2Shader.js';
+			import { SkyBox } from './jsm/objects/SkyBox.js';
 			import { GridHelper } from './jsm/objects/GridHelper.js';
-			import { TextureCubeLoader } from "./jsm/loaders/TextureCubeLoader.js";
-			import { Texture2DLoader } from "./jsm/loaders/Texture2DLoader.js";
-			import { Clock } from "./jsm/Clock.js";
+			import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
+			import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+			import { Clock } from './jsm/Clock.js';
 
 			let width = window.innerWidth || 2;
 			let height = window.innerHeight || 2;
 
-			const canvas = document.createElement("canvas");
+			const canvas = document.createElement('canvas');
 			canvas.width = width;
 			canvas.height = height;
 			document.body.appendChild(canvas);
 
 			const contextParams = { antialias: false, alpha: false };
-			const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+			const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 			const renderer = new t3d.WebGLRenderer(gl);
 
 			const scene = new t3d.Scene();
 
 			const cube_texture = new TextureCubeLoader().load([
-				"resources/skybox/Park2/posx.jpg",
-				"resources/skybox/Park2/negx.jpg",
-				"resources/skybox/Park2/posy.jpg",
-				"resources/skybox/Park2/negy.jpg",
-				"resources/skybox/Park2/posz.jpg",
-				"resources/skybox/Park2/negz.jpg",
+				'resources/skybox/Park2/posx.jpg',
+				'resources/skybox/Park2/negx.jpg',
+				'resources/skybox/Park2/posy.jpg',
+				'resources/skybox/Park2/negy.jpg',
+				'resources/skybox/Park2/posz.jpg',
+				'resources/skybox/Park2/negz.jpg'
 			]);
 			const sky_box = new SkyBox(cube_texture);
 			scene.add(sky_box);
@@ -93,11 +93,11 @@
 			let animation, object;
 
 			const loader = new GLTFLoader();
-			loader.load(file).then(function (result) {
+			loader.load(file).then(function(result) {
 				object = result.root.children[0];
 
 				animation = new t3d.AnimationMixer();
-				result.animations.forEach(function (clip) {
+				result.animations.forEach(function(clip) {
 					const action = new t3d.AnimationAction(result.animations[2]);
 					action.weight = 1;
 					animation.addAction(action);
@@ -127,14 +127,14 @@
 			motionBlurPass.uniforms.tColor = tempRenderTarget.texture;
 			motionBlurPass.uniforms.tMotion = gBuffer.getMotionTexture();
 			motionBlurPass.uniforms.velocityFactor = 1;
-			motionBlurPass.uniforms["screenSize"][0] = width;
-			motionBlurPass.uniforms["screenSize"][1] = height;
+			motionBlurPass.uniforms['screenSize'][0] = width;
+			motionBlurPass.uniforms['screenSize'][1] = height;
 
 			const params = { motionDebug: false };
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + renderer.capabilities.version }, "version")
-			gui.add(motionBlurPass.uniforms, "velocityFactor", 0, 2, 0.01);
-			gui.add(params, "motionDebug");
+			gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version');
+			gui.add(motionBlurPass.uniforms, 'velocityFactor', 0, 2, 0.01);
+			gui.add(params, 'motionDebug');
 
 			const clock = new Clock();
 
@@ -178,10 +178,10 @@
 				backRenderTarget.resize(width, height);
 				tempRenderTarget.resize(width, height);
 				gBuffer.resize(width, height);
-				motionBlurPass.uniforms["screenSize"][0] = width;
-				motionBlurPass.uniforms["screenSize"][1] = height;
+				motionBlurPass.uniforms['screenSize'][0] = width;
+				motionBlurPass.uniforms['screenSize'][1] = height;
 			}
-			window.addEventListener("resize", onWindowResize, false);
+			window.addEventListener('resize', onWindowResize, false);
 		</script>
 	</body>
 </html>

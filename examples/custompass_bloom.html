@@ -47,11 +47,11 @@
 		const scene = new t3d.Scene();
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -61,17 +61,17 @@
 		let animation;
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.load('./resources/models/gltf/PrimaryIonDrive.glb').then(function (result) {
+		loader.load('./resources/models/gltf/PrimaryIonDrive.glb').then(function(result) {
 			const object = result.root;
 
-			object.traverse(function (obj) {
+			object.traverse(function(obj) {
 				if (obj.material && obj.material.transparent) {
 					obj.material.depthWrite = false;
 				}
 			});
 
 			animation = new t3d.AnimationMixer();
-			result.animations.forEach(function (clip) {
+			result.animations.forEach(function(clip) {
 				const action = new t3d.AnimationAction(clip);
 				action.weight = 1;
 				animation.addAction(action);
@@ -99,7 +99,7 @@
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
@@ -142,13 +142,13 @@
 		// gui
 		const bloomParams = { enable: true, intensity: 2, kernelSize: 13 };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
-		gui.add(bloomParams, "enable");
-		gui.add(highLightPass.uniforms, "luminosityThreshold", 0, 1, 0.01);
-		gui.add(blurXPass.uniforms, "blurSize", 0, 10, 0.01);
-		gui.add(blurYPass.uniforms, "blurSize", 0, 10, 0.01);
-		gui.add(bloomParams, "intensity", 0, 3, 0.01);
-		gui.add(bloomParams, "kernelSize", [5, 9, 13]).onChange(val => {
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(bloomParams, 'enable');
+		gui.add(highLightPass.uniforms, 'luminosityThreshold', 0, 1, 0.01);
+		gui.add(blurXPass.uniforms, 'blurSize', 0, 10, 0.01);
+		gui.add(blurYPass.uniforms, 'blurSize', 0, 10, 0.01);
+		gui.add(bloomParams, 'intensity', 0, 3, 0.01);
+		gui.add(bloomParams, 'kernelSize', [5, 9, 13]).onChange(val => {
 			blurXPass.setKernelSize(val);
 			blurYPass.setKernelSize(val);
 		});
@@ -221,7 +221,7 @@
 			blurXPass.uniforms.textureSize = [width, height];
 			blurYPass.uniforms.textureSize = [width, height];
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

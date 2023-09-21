@@ -52,7 +52,7 @@
 			perlin.image = image;
 			perlin.version++;
 		};
-		image.src = "resources/perlin-512.png";
+		image.src = 'resources/perlin-512.png';
 
 		const particle = new ParticleContainer({
 			maxParticleCount: 25000,
@@ -84,13 +84,13 @@
 
 		// gui
 		const gui = new GUI();
-		gui.add(options, "positionRandomness", 0, 3, 0.01);
-		gui.add(options, "velocityRandomness", 0, 3, 0.01);
-		gui.add(options, "colorRandomness", 0, 1, 0.01);
-		gui.add(options, "turbulence", 0, 1, 0.01);
-		gui.add(options, "lifetime", 0, 25, 0.01);
-		gui.add(options, "size", 0, 10, 0.01);
-		gui.add(options, "sizeRandomness", 0, 25, 0.01);
+		gui.add(options, 'positionRandomness', 0, 3, 0.01);
+		gui.add(options, 'velocityRandomness', 0, 3, 0.01);
+		gui.add(options, 'colorRandomness', 0, 1, 0.01);
+		gui.add(options, 'turbulence', 0, 1, 0.01);
+		gui.add(options, 'lifetime', 0, 25, 0.01);
+		gui.add(options, 'size', 0, 10, 0.01);
+		gui.add(options, 'sizeRandomness', 0, 25, 0.01);
 
 		const clock = new Clock();
 
@@ -126,7 +126,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

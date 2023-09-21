@@ -73,7 +73,7 @@
 		// gui
 		const params = { onlyDepth: true, packToRGBA: false };
 		const gui = new GUI();
-		gui.add(params, "onlyDepth").onChange(value => {
+		gui.add(params, 'onlyDepth').onChange(value => {
 			if (value) {
 				sphere.material = depthMaterial;
 				plane.material = depthMaterial;
@@ -82,7 +82,7 @@
 				plane.material = lambert;
 			}
 		});
-		gui.add(params, "packToRGBA").onChange(value => {
+		gui.add(params, 'packToRGBA').onChange(value => {
 			depthMaterial.packToRGBA = value;
 			depthMaterial.needsUpdate = true;
 		});
@@ -109,7 +109,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

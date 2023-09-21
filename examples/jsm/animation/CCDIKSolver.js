@@ -139,7 +139,7 @@ class CCDIKSolver {
 				}
 
 				if (rotationMax !== undefined) {
-					_vector.set(link.euler.x, link.euler.y, link.euler.z).min(rotationMax)
+					_vector.set(link.euler.x, link.euler.y, link.euler.z).min(rotationMax);
 					link.euler.set(_vector.x, _vector.y, _vector.z);
 				}
 

@@ -168,7 +168,7 @@ class Geometry extends EventDispatcher {
 	 * Bounding boxes aren't computed by default. They need to be explicitly computed.
 	 */
 	computeBoundingBox() {
-		const position = this.attributes["a_Position"] || this.attributes["position"];
+		const position = this.attributes['a_Position'] || this.attributes['position'];
 
 		if (position) {
 			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
@@ -196,7 +196,7 @@ class Geometry extends EventDispatcher {
 	 * Bounding spheres aren't computed by default. They need to be explicitly computed.
 	 */
 	computeBoundingSphere() {
-		const position = this.attributes["a_Position"] || this.attributes["position"];
+		const position = this.attributes['a_Position'] || this.attributes['position'];
 		const morphAttributesPosition = this.morphAttributes.position;
 
 		if (!position) {

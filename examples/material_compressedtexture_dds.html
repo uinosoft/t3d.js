@@ -66,7 +66,7 @@
         const offset = 5;
 
         function createMeshWithCompressedTexMap(url, material) {
-        	loader.load(url, function (texData) {
+        	loader.load(url, function(texData) {
         		const compressedTexture = new t3d.Texture2D();
 
         		// no flipping for cube textures
@@ -79,7 +79,7 @@
 
         		compressedTexture.generateMipmaps = false;
 
-        		compressedTexture.image = { data: texData.mipmaps[0].data, width: texData.width, height: texData.height, isCompressed: (texData.format !== t3d.PIXEL_FORMAT.RGBA) }
+        		compressedTexture.image = { data: texData.mipmaps[0].data, width: texData.width, height: texData.height, isCompressed: (texData.format !== t3d.PIXEL_FORMAT.RGBA) };
         		compressedTexture.version++;
 
         		compressedTexture.mipmaps = texData.mipmaps;
@@ -111,49 +111,49 @@
         const cube_geometry = new t3d.BoxGeometry(2, 2, 2);
 
         const mat1 = new t3d.BasicMaterial();
-        createMeshWithCompressedTexMap(mapUrls[0], mat1)
+        createMeshWithCompressedTexMap(mapUrls[0], mat1);
         const cube1 = new t3d.Mesh(cube_geometry, mat1);
         cube1.position.set(startX, 3, 0);
         scene.add(cube1);
         meshes.push(cube1);
 
         const mat2 = new t3d.BasicMaterial();
-        createMeshWithCompressedTexMap(mapUrls[1], mat2)
+        createMeshWithCompressedTexMap(mapUrls[1], mat2);
         const cube2 = new t3d.Mesh(cube_geometry, mat1);
         cube2.position.set(startX, -3, 0);
         scene.add(cube2);
         meshes.push(cube2);
 
         const mat3 = new t3d.BasicMaterial();
-        createMeshWithCompressedTexMap(mapUrls[2], mat3)
+        createMeshWithCompressedTexMap(mapUrls[2], mat3);
         const cube3 = new t3d.Mesh(cube_geometry, mat3);
         cube3.position.set(startX + offset, 3, 0);
         scene.add(cube3);
         meshes.push(cube3);
 
         const mat4 = new t3d.BasicMaterial();
-        createMeshWithCompressedTexMap(mapUrls[3], mat4)
+        createMeshWithCompressedTexMap(mapUrls[3], mat4);
         const cube4 = new t3d.Mesh(cube_geometry, mat4);
         cube4.position.set(startX + offset, -3, 0);
         scene.add(cube4);
         meshes.push(cube4);
 
         const mat5 = new t3d.BasicMaterial();
-        createMeshWithCompressedTexMap(mapUrls[4], mat5)
+        createMeshWithCompressedTexMap(mapUrls[4], mat5);
         const cube5 = new t3d.Mesh(cube_geometry, mat5);
         cube5.position.set(startX + 2 * offset, 3, 0);
         scene.add(cube5);
         meshes.push(cube5);
 
         const mat6 = new t3d.BasicMaterial();
-        createMeshWithCompressedTexMap(mapUrls[5], mat6)
+        createMeshWithCompressedTexMap(mapUrls[5], mat6);
         const cube6 = new t3d.Mesh(cube_geometry, mat6);
         cube6.position.set(startX + 2 * offset, -3, 0);
         scene.add(cube6);
         meshes.push(cube6);
 
         function createMeshWithCompressedEnvMap(url, material) {
-        	loader.load(url, function (texData) {
+        	loader.load(url, function(texData) {
         		const compressedTexture = new t3d.TextureCube();
 
         		// can't generate mipmaps for compressed textures
@@ -203,32 +203,32 @@
         const envMapUrls = [
         	'resources/compressed/Mountains_argb_mip.dds',
         	'resources/compressed/Mountains_argb_nomip.dds'
-        ]
+        ];
 
         const cubeMat1 = new t3d.BasicMaterial();
-        createMeshWithCompressedEnvMap(envMapUrls[0], cubeMat1)
+        createMeshWithCompressedEnvMap(envMapUrls[0], cubeMat1);
         const cube7 = new t3d.Mesh(cube_geometry, cubeMat1);
         cube7.position.set(startX + 3 * offset, 3, 0);
         scene.add(cube7);
         meshes.push(cube7);
 
         const cubeMat2 = new t3d.BasicMaterial();
-        createMeshWithCompressedEnvMap(envMapUrls[1], cubeMat2)
+        createMeshWithCompressedEnvMap(envMapUrls[1], cubeMat2);
         const cube8 = new t3d.Mesh(cube_geometry, cubeMat2);
         cube8.position.set(startX + 3 * offset, -3, 0);
         scene.add(cube8);
         meshes.push(cube8);
 
         const gui = new GUI();
-        gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+        gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 
         function loop(count) {
         	requestAnimationFrame(loop);
 
         	for (let i = 0; i < meshes.length; i++) {
         		const mesh = meshes[i];
-        		mesh.euler.x =  -count / 1000;
-        		mesh.euler.y =  -count / 1000;
+        		mesh.euler.x = -count / 1000;
+        		mesh.euler.y = -count / 1000;
         	}
 
         	forwardRenderer.render(scene, camera);
@@ -244,7 +244,7 @@
 
         	forwardRenderer.backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

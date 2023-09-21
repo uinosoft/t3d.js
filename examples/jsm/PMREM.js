@@ -54,13 +54,13 @@ class PMREM {
 
 		// Calculate mipmaps number and cube size
 
-		let cubeSize, mipmapNum;
+		let cubeSize;
 		if (envMap.isTextureCube) {
 			cubeSize = envMap.images.length === 0 ? 16 : envMap.images[0].width;
 		} else {
 			cubeSize = envMap.image.width / 4;
 		}
-		mipmapNum = Math.floor(Math.log2(cubeSize));
+		const mipmapNum = Math.floor(Math.log2(cubeSize));
 		cubeSize = Math.pow(2, mipmapNum);
 
 		// Create a prefiltered cubemap and render target

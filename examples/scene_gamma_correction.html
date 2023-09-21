@@ -83,14 +83,14 @@
 		pointLight.castShadow = true;
 
 		const encodingOptions = {
-			"Linear": t3d.TEXEL_ENCODING_TYPE.LINEAR,
-			"Gamma": t3d.TEXEL_ENCODING_TYPE.GAMMA,
-			"SRGB": t3d.TEXEL_ENCODING_TYPE.SRGB
+			'Linear': t3d.TEXEL_ENCODING_TYPE.LINEAR,
+			'Gamma': t3d.TEXEL_ENCODING_TYPE.GAMMA,
+			'SRGB': t3d.TEXEL_ENCODING_TYPE.SRGB
 		};
 
 		const gui = new GUI();
-		gui.add(camera, "outputEncoding", encodingOptions);
-		gui.add(camera, "gammaFactor", 0, 2, 0.1);
+		gui.add(camera, 'outputEncoding', encodingOptions);
+		gui.add(camera, 'gammaFactor', 0, 2, 0.1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -112,7 +112,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

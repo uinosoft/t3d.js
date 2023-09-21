@@ -43,7 +43,7 @@
 		document.body.appendChild(canvas);
 
 		const contextParams = { antialias: true, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const capabilities = renderer.capabilities;
@@ -107,7 +107,7 @@
 				0, 0, 1,
 				0, 0, 1
 			]
-		}
+		};
 
 		const gridmaterial = new t3d.ShaderMaterial(InfiniteGridShader);
 		gridmaterial.transparent = true;
@@ -125,25 +125,25 @@
 		let progress;
 		
 		const gui = new GUI();
-		gui.add(param, "d2").onChange(value => {
+		gui.add(param, 'd2').onChange(value => {
 			param.d2 = value;
 			progress = 0.01;
-		}).name("2d grid");
+		}).name('2d grid');
 		const styleFolder = gui.addFolder('style');
-		styleFolder.add(gridmaterial.uniforms, "axisIntensity", 0, 1, 0.01);
-		styleFolder.add(gridmaterial.uniforms, "gridIntensity", 0, 1, 0.01);
-		styleFolder.add(gridmaterial.uniforms, "primaryScale", 0, 10, 0.1);
-		styleFolder.add(gridmaterial.uniforms, "secondaryScale", 0, 10, 0.1);
-		styleFolder.add(gridmaterial.uniforms, "primaryFade", 0, 1, 0.1);
-		styleFolder.add(gridmaterial.uniforms, "secondaryFade", 0, 1, 0.1);
+		styleFolder.add(gridmaterial.uniforms, 'axisIntensity', 0, 1, 0.01);
+		styleFolder.add(gridmaterial.uniforms, 'gridIntensity', 0, 1, 0.01);
+		styleFolder.add(gridmaterial.uniforms, 'primaryScale', 0, 10, 0.1);
+		styleFolder.add(gridmaterial.uniforms, 'secondaryScale', 0, 10, 0.1);
+		styleFolder.add(gridmaterial.uniforms, 'primaryFade', 0, 1, 0.1);
+		styleFolder.add(gridmaterial.uniforms, 'secondaryFade', 0, 1, 0.1);
 		styleFolder.close();
 		const linearFadeFolder = gui.addFolder('fade');
-		linearFadeFolder.add(param, "fade").onChange(value => {
+		linearFadeFolder.add(param, 'fade').onChange(value => {
 			grid.material.defines.USE_LINEARFADE = value;
 			grid.material.needsUpdate = true;
 		});
-		linearFadeFolder.add(gridmaterial.uniforms, "start", 0, 49, 0.01);
-		linearFadeFolder.add(gridmaterial.uniforms, "end", 50, 200, 0.01);
+		linearFadeFolder.add(gridmaterial.uniforms, 'start', 0, 49, 0.01);
+		linearFadeFolder.add(gridmaterial.uniforms, 'end', 50, 200, 0.01);
 		linearFadeFolder.close();
 
 		const clock = new Clock();
@@ -151,7 +151,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let delta = clock.getDelta();
+			const delta = clock.getDelta();
 			if (progress > 0 && progress < 1) {
 				progress += delta * 10.0;
 				progress = Math.min(1, progress);
@@ -180,7 +180,7 @@
 
 			backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 

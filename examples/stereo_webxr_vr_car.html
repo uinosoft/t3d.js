@@ -50,8 +50,8 @@
 
 		const scene = new t3d.Scene();
 
-		const jeep = "resources/models/assimp/jeep/jeep.assimp.json";
-		const interior = "resources/models/assimp/interior/interior.assimp.json";
+		const jeep = 'resources/models/assimp/jeep/jeep.assimp.json';
+		const interior = 'resources/models/assimp/interior/interior.assimp.json';
 
 		const loader1 = new AssimpJsonLoader();
 		loader1.load(jeep, function(object) {
@@ -116,7 +116,7 @@
 
 			stereoRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -174,6 +174,6 @@ var FreeControls = function(object, domElement) {
 
 	updateMovementVector();
 	updateRotateVector();
-}
+};
 
 export { FreeControls };

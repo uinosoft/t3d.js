@@ -74,15 +74,15 @@
         setSunDirection();
 
         const gui = new GUI();
-        gui.add(params, "sunHorizontal", 0, 360,  0.1).onChange(setSunDirection);
-        gui.add(params, "sunVertical", -90, 90,  0.1).onChange(setSunDirection);
-        gui.add(skyPass.material.uniforms, "eyePos", 0.0, 10000, 1);
-        gui.add(skyPass.material.uniforms, "sunRadiance", 0, 50, 1);
-        gui.add(skyPass.material.uniforms, "mieG", 0, 1, 0.01);
-        gui.add(skyPass.material.uniforms, "mieHeight", 0, 10000, 1);
-        gui.add(skyPass.material.defines, "DISPLAY_SUN").onChange(() => skyPass.material.needsUpdate = true);
-        gui.add(skyPass.material.uniforms, "sunRadius", 0.0, 1000, 1);
-        gui.add(skyPass.material.uniforms, "sunBrightness", 0, 2, 0.1);
+        gui.add(params, 'sunHorizontal', 0, 360, 0.1).onChange(setSunDirection);
+        gui.add(params, 'sunVertical', -90, 90, 0.1).onChange(setSunDirection);
+        gui.add(skyPass.material.uniforms, 'eyePos', 0.0, 10000, 1);
+        gui.add(skyPass.material.uniforms, 'sunRadiance', 0, 50, 1);
+        gui.add(skyPass.material.uniforms, 'mieG', 0, 1, 0.01);
+        gui.add(skyPass.material.uniforms, 'mieHeight', 0, 10000, 1);
+        gui.add(skyPass.material.defines, 'DISPLAY_SUN').onChange(() => skyPass.material.needsUpdate = true);
+        gui.add(skyPass.material.uniforms, 'sunRadius', 0.0, 1000, 1);
+        gui.add(skyPass.material.uniforms, 'sunBrightness', 0, 2, 0.1);
 
         function loop(count) {
         	requestAnimationFrame(loop);
@@ -107,7 +107,7 @@
 
         	forwardRenderer.backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

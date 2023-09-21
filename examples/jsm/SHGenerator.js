@@ -27,7 +27,7 @@ class SHGenerator {
 		capabilities.getExtension('OES_texture_float_linear');
 		capabilities.getExtension('EXT_color_buffer_half_float');
 
-		let textureType = PIXEL_TYPE.UNSIGNED_BYTE,
+		const textureType = PIXEL_TYPE.UNSIGNED_BYTE,
 			ArrayCtor = Uint8Array,
 			format = PIXEL_FORMAT.RGBA;
 

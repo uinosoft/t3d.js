@@ -1,4 +1,4 @@
-import { ATTRIBUTES, ACCESSOR_COMPONENT_TYPES } from "../Constants.js";
+import { ATTRIBUTES, ACCESSOR_COMPONENT_TYPES } from '../Constants.js';
 
 /**
  * KHR_draco_mesh_compression extension
@@ -15,7 +15,7 @@ export class KHR_draco_mesh_compression {
 
 		const attributeMap = {};
 
-		for (let attributeSemantic in gltfAttributeMap) {
+		for (const attributeSemantic in gltfAttributeMap) {
 			const attributeName = ATTRIBUTES[attributeSemantic] === undefined ? attributeSemantic : ATTRIBUTES[attributeSemantic];
 			attributeMap[attributeName] = gltfAttributeMap[attributeSemantic];
 		}
@@ -38,7 +38,7 @@ export class KHR_draco_mesh_compression {
 		const bufferView = bufferViews[bufferViewIndex];
 
 		return new Promise(function(resolve) {
-			dracoLoader.decodeDracoFile(bufferView, function (geometry) {
+			dracoLoader.decodeDracoFile(bufferView, function(geometry) {
 				for (const attributeName in geometry.attributes) {
 					const attribute = geometry.attributes[attributeName];
 					const normalized = attributeNormalizedMap[attributeName];

@@ -99,17 +99,17 @@ const
 	rgbe_error = function(rgbe_error_code, msg) {
 		switch (rgbe_error_code) {
 			case rgbe_read_error:
-				console.error("RGBELoader Read Error: " + (msg || ''));
+				console.error('RGBELoader Read Error: ' + (msg || ''));
 				break;
 			case rgbe_write_error:
-				console.error("RGBELoader Write Error: " + (msg || ''));
+				console.error('RGBELoader Write Error: ' + (msg || ''));
 				break;
 			case rgbe_format_error:
-				console.error("RGBELoader Bad File Format: " + (msg || ''));
+				console.error('RGBELoader Bad File Format: ' + (msg || ''));
 				break;
 			case rgbe_memory_error:
 			default:
-				console.error("RGBELoader: Error: " + (msg || ''));
+				console.error('RGBELoader: Error: ' + (msg || ''));
 		}
 		return RGBE_RETURN_FAILURE;
 	},
@@ -127,7 +127,7 @@ const
 	RGBE_VALID_FORMAT = 2,
 	RGBE_VALID_DIMENSIONS = 4,
 
-	NEWLINE = "\n",
+	NEWLINE = '\n',
 
 	fgets = function(buffer, lineLimit, consume) {
 		const chunkSize = 128;
@@ -156,7 +156,7 @@ const
 	},
 
 	/* minimal header reading.  modify if you want to parse more information */
-	RGBE_ReadHeader = function (buffer) {
+	RGBE_ReadHeader = function(buffer) {
 		// regexes to parse header info fields
 		const magic_token_re = /^#\?(\S+)$/,
 			gamma_re = /^\s*GAMMA\s*=\s*(\d+(\.\d+)?)\s*$/,
@@ -179,23 +179,23 @@ const
 		let line, match;
 
 		if (buffer.pos >= buffer.byteLength || !(line = fgets(buffer))) {
-			return rgbe_error(rgbe_read_error, "no header found");
+			return rgbe_error(rgbe_read_error, 'no header found');
 		}
 		/* if you want to require the magic token then uncomment the next line */
 		if (!(match = line.match(magic_token_re))) {
-			return rgbe_error(rgbe_format_error, "bad initial token");
+			return rgbe_error(rgbe_format_error, 'bad initial token');
 		}
 		header.valid |= RGBE_VALID_PROGRAMTYPE;
 		header.programtype = match[1];
-		header.string += line + "\n";
+		header.string += line + '\n';
 
 		while (true) {
 			line = fgets(buffer);
 			if (false === line) break;
-			header.string += line + "\n";
+			header.string += line + '\n';
 
 			if ('#' === line.charAt(0)) {
-				header.comments += line + "\n";
+				header.comments += line + '\n';
 				continue; // comment line
 			}
 
@@ -219,16 +219,16 @@ const
 		}
 
 		if (!(header.valid & RGBE_VALID_FORMAT)) {
-			return rgbe_error(rgbe_format_error, "missing format specifier");
+			return rgbe_error(rgbe_format_error, 'missing format specifier');
 		}
 		if (!(header.valid & RGBE_VALID_DIMENSIONS)) {
-			return rgbe_error(rgbe_format_error, "missing image size specifier");
+			return rgbe_error(rgbe_format_error, 'missing image size specifier');
 		}
 
 		return header;
 	},
 
-	RGBE_ReadPixels_RLE = function (buffer, w, h) {
+	RGBE_ReadPixels_RLE = function(buffer, w, h) {
 		const scanline_width = w;
 
 		if (
@@ -242,13 +242,13 @@ const
 		}
 
 		if (scanline_width !== ((buffer[2] << 8) | buffer[3])) {
-			return rgbe_error(rgbe_format_error, "wrong scanline width");
+			return rgbe_error(rgbe_format_error, 'wrong scanline width');
 		}
 
 		const data_rgba = new Uint8Array(4 * w * h);
 
 		if (!data_rgba.length) {
-			return rgbe_error(rgbe_memory_error, "unable to allocate buffer space");
+			return rgbe_error(rgbe_memory_error, 'unable to allocate buffer space');
 		}
 
 		let offset = 0, pos = 0;
@@ -270,7 +270,7 @@ const
 			rgbeStart[3] = buffer[pos++];
 
 			if ((2 != rgbeStart[0]) || (2 != rgbeStart[1]) || (((rgbeStart[2] << 8) | rgbeStart[3]) != scanline_width)) {
-				return rgbe_error(rgbe_format_error, "bad rgbe scanline format");
+				return rgbe_error(rgbe_format_error, 'bad rgbe scanline format');
 			}
 
 			// read each of the four channels for the scanline into the buffer
@@ -283,7 +283,7 @@ const
 				if (isEncodedRun) count -= 128;
 
 				if ((0 === count) || (ptr + count > ptr_end)) {
-					return rgbe_error(rgbe_format_error, "bad scanline data");
+					return rgbe_error(rgbe_format_error, 'bad scanline data');
 				}
 
 				if (isEncodedRun) {
@@ -322,7 +322,7 @@ const
 		return data_rgba;
 	};
 
-const RGBEByteToRGBFloat = function (sourceArray, sourceOffset, destArray, destOffset) {
+const RGBEByteToRGBFloat = function(sourceArray, sourceOffset, destArray, destOffset) {
 	const e = sourceArray[sourceOffset + 3];
 	const scale = Math.pow(2.0, e - 128.0) / 255.0;
 
@@ -332,7 +332,7 @@ const RGBEByteToRGBFloat = function (sourceArray, sourceOffset, destArray, destO
 	destArray[destOffset + 3] = 1;
 };
 
-const RGBEByteToRGBHalf = function (sourceArray, sourceOffset, destArray, destOffset) {
+const RGBEByteToRGBHalf = function(sourceArray, sourceOffset, destArray, destOffset) {
 	const e = sourceArray[sourceOffset + 3];
 	const scale = Math.pow(2.0, e - 128.0) / 255.0;
 
@@ -395,4 +395,4 @@ function toHalfFloat(val) {
 	return bits;
 }
 
-export { RGBELoader }
+export { RGBELoader };

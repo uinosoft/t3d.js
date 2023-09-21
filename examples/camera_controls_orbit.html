@@ -26,7 +26,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 
 		let width = window.innerWidth || 2;
@@ -78,7 +78,7 @@
 			const change = controller.update();
 
 			if (change) {
-				console.info("camera changing");
+				console.info('camera changing');
 			}
 
 			forwardRenderer.render(scene, camera);
@@ -93,7 +93,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

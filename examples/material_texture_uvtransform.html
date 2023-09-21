@@ -72,13 +72,13 @@
 			centerY: 0.5
 		};
 		const gui = new GUI();
-		gui.add(API, "offsetX", 0.0, 1.0, 0.01).name("offset.x").onChange(updateUvTransform);
-		gui.add(API, "offsetY", 0.0, 1.0, 0.01).name("offset.y").onChange(updateUvTransform);
-		gui.add(API, "repeatX", 0.25, 2.0, 0.1).name("repeat.x").onChange(updateUvTransform);
-		gui.add(API, "repeatY", 0.25, 2.0, 0.1).name("repeat.y").onChange(updateUvTransform);
-		gui.add(API, "rotation", -2.0, 2.0, 0.1).name('rotation').onChange(updateUvTransform);
-		gui.add(API, "centerX", 0.0, 1.0, 0.01).name("center.x").onChange(updateUvTransform);
-		gui.add(API, "centerY", 0.0, 1.0, 0.01).name("center.y").onChange(updateUvTransform);
+		gui.add(API, 'offsetX', 0.0, 1.0, 0.01).name('offset.x').onChange(updateUvTransform);
+		gui.add(API, 'offsetY', 0.0, 1.0, 0.01).name('offset.y').onChange(updateUvTransform);
+		gui.add(API, 'repeatX', 0.25, 2.0, 0.1).name('repeat.x').onChange(updateUvTransform);
+		gui.add(API, 'repeatY', 0.25, 2.0, 0.1).name('repeat.y').onChange(updateUvTransform);
+		gui.add(API, 'rotation', -2.0, 2.0, 0.1).name('rotation').onChange(updateUvTransform);
+		gui.add(API, 'centerX', 0.0, 1.0, 0.01).name('center.x').onChange(updateUvTransform);
+		gui.add(API, 'centerY', 0.0, 1.0, 0.01).name('center.y').onChange(updateUvTransform);
 		// gui.close();
 
 		updateUvTransform();
@@ -103,7 +103,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

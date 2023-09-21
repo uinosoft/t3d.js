@@ -28,25 +28,25 @@
 		</script>
 
 		<script type="module">
-			import * as t3d from "t3d";
+			import * as t3d from 't3d';
 
-			import { OrbitControls } from "./jsm/controls/OrbitControls.js";
-			import { GLTFLoader } from "./jsm/loaders/glTF/GLTFLoader.js";
-			import { ForwardRenderer } from "./jsm/render/ForwardRenderer.js";
-			import { CCDIKSolver } from "./jsm/animation/CCDIKSolver.js";
-			import Stats from "./libs/stats.module.js";
-			import { GUI } from "./libs/lil-gui.esm.min.js";
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
+			import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+			import { CCDIKSolver } from './jsm/animation/CCDIKSolver.js';
+			import Stats from './libs/stats.module.js';
+			import { GUI } from './libs/lil-gui.esm.min.js';
 
 			const devicePixelRatio = window.devicePixelRatio;
 
 			let width = window.innerWidth || 2;
 			let height = window.innerHeight || 2;
 
-			const canvas = document.createElement("canvas");
+			const canvas = document.createElement('canvas');
 			canvas.width = devicePixelRatio * width;
 			canvas.height = devicePixelRatio * height;
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 			document.body.appendChild(canvas);
 
 			const forwardRenderer = new ForwardRenderer(canvas);
@@ -83,11 +83,11 @@
 			scene.add(directionalLight);
 
 			const nanobar = new Nanobar();
-			nanobar.el.style.background = "gray";
-			const loadingManager = new t3d.LoadingManager(function () {
+			nanobar.el.style.background = 'gray';
+			const loadingManager = new t3d.LoadingManager(function() {
 				nanobar.go(100);
-				nanobar.el.style.background = "transparent";
-			}, function (url, itemsLoaded, itemsTotal) {
+				nanobar.el.style.background = 'transparent';
+			}, function(url, itemsLoaded, itemsTotal) {
 				if (itemsLoaded < itemsTotal) {
 					nanobar.go((itemsLoaded / itemsTotal) * 100);
 				}
@@ -106,55 +106,55 @@
 				links: [{
 					index: 10,
 					rotationMin: new t3d.Vector3(0, 0, 0),
-					rotationMax: new t3d.Vector3(0, 0, 0),
+					rotationMax: new t3d.Vector3(0, 0, 0)
 				}, {
 					index: 9,
 					rotationMin: new t3d.Vector3(3.141, 0, 1.579),
-					rotationMax: new t3d.Vector3(3.141, 0, 1.579),
+					rotationMax: new t3d.Vector3(3.141, 0, 1.579)
 				}, {
 					index: 8,
 					rotationMin: new t3d.Vector3(3.127, 0, 1.721),
-					rotationMax: new t3d.Vector3(3.127, 0, 1.721),
+					rotationMax: new t3d.Vector3(3.127, 0, 1.721)
 				}, {
 					index: 7,
 					rotationMin: new t3d.Vector3(0, 1.554, -1.42),
-					rotationMax: new t3d.Vector3(0, 1.554, -1.42),
+					rotationMax: new t3d.Vector3(0, 1.554, -1.42)
 				}, {
 					index: 6,
 					rotationMin: new t3d.Vector3(-1.578, -Math.PI / 2, 1.578),
-					rotationMax: new t3d.Vector3(-1.578, Math.PI / 2, 1.578),
+					rotationMax: new t3d.Vector3(-1.578, Math.PI / 2, 1.578)
 				}, {
 					index: 5,
 					rotationMin: new t3d.Vector3(0, 0, 0),
-					rotationMax: new t3d.Vector3(0, 0, 0),
+					rotationMax: new t3d.Vector3(0, 0, 0)
 				}, {
 					index: 4,
 					rotationMin: new t3d.Vector3(-1.572, 0, -Math.PI * 2 / 3),
-					rotationMax: new t3d.Vector3(-1.572, 0, Math.PI * 3 / 4),
+					rotationMax: new t3d.Vector3(-1.572, 0, Math.PI * 3 / 4)
 				}, {
 					index: 3,
 					rotationMin: new t3d.Vector3(-0.015, -Math.PI / 2, 0.045),
-					rotationMax: new t3d.Vector3(-0.015, Math.PI / 2, 0.045),
+					rotationMax: new t3d.Vector3(-0.015, Math.PI / 2, 0.045)
 				}, {
 					index: 2,
 					rotationMin: new t3d.Vector3(-Math.PI, 0, 0),
-					rotationMax: new t3d.Vector3(Math.PI, 0, 0),
+					rotationMax: new t3d.Vector3(Math.PI, 0, 0)
 				}]
 			}];
 
 			const gltfLoader = new GLTFLoader(loadingManager);
-			gltfLoader.load("./resources/models/gltf/robot_arm/glTF/scene.gltf").then(function (gltf) {
+			gltfLoader.load('./resources/models/gltf/robot_arm/glTF/scene.gltf').then(function(gltf) {
 				gltf.nodes.forEach(function(n) {
-					if (n.name === "J_Claw_Both_Rot_end_010") {
+					if (n.name === 'J_Claw_Both_Rot_end_010') {
 						n.position.set(125, 0, 2.5); // Modify the bone to catch the ball
 					}
-					if (n.name === "Light_Boi") {
+					if (n.name === 'Light_Boi') {
 						n.visible = false;
 					}
-					if (n.name === "Heavy_Boi") {
+					if (n.name === 'Heavy_Boi') {
 						n.visible = false;
 					}
-					if (n.name === "Object_56") {
+					if (n.name === 'Object_56') {
 						bones = n.skeleton.bones;
 					}
 
@@ -219,10 +219,10 @@
 
 				forwardRenderer.backRenderTarget.resize(devicePixelRatio * width, devicePixelRatio * height);
 
-				canvas.style.width = width + "px";
-				canvas.style.height = height + "px";
+				canvas.style.width = width + 'px';
+				canvas.style.height = height + 'px';
 			}
-			window.addEventListener("resize", onWindowResize, false);
+			window.addEventListener('resize', onWindowResize, false);
 		</script>
 	</body>
 </html>

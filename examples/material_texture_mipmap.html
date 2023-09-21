@@ -59,23 +59,23 @@
 		scene.add(camera);
 
 		// gui
-		const params = { minFilter: "LINEAR" };
+		const params = { minFilter: 'LINEAR' };
 		const gui = new GUI();
-		gui.add(params, "minFilter", ["LINEAR", "NEAREST", "LINEAR_MIPMAP_LINEAR", "NEAREST_MIPMAP_NEAREST"]).onChange(value => {
+		gui.add(params, 'minFilter', ['LINEAR', 'NEAREST', 'LINEAR_MIPMAP_LINEAR', 'NEAREST_MIPMAP_NEAREST']).onChange(value => {
 			switch (value) {
-				case "LINEAR":
+				case 'LINEAR':
 					texture.generateMipMaps = false;
 					texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 					break;
-				case "NEAREST":
+				case 'NEAREST':
 					texture.generateMipMaps = false;
 					texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 					break;
-				case "LINEAR_MIPMAP_LINEAR":
+				case 'LINEAR_MIPMAP_LINEAR':
 					texture.generateMipMaps = true;
 					texture.minFilter = t3d.TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
 					break;
-				case "NEAREST_MIPMAP_NEAREST":
+				case 'NEAREST_MIPMAP_NEAREST':
 					texture.generateMipMaps = true;
 					texture.minFilter = t3d.TEXTURE_FILTER.NEAREST_MIPMAP_NEAREST;
 					break;
@@ -103,7 +103,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

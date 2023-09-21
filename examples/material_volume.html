@@ -72,7 +72,7 @@
 
 		const geometry = new t3d.BoxGeometry(1, 1, 1);
 
-		let invTransform = new t3d.Matrix4();
+		const invTransform = new t3d.Matrix4();
 
 		const shaderMaterial = new t3d.ShaderMaterial(VolumeShader);
 		shaderMaterial.transparent = true;
@@ -98,7 +98,7 @@
 
 		// gui
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(shaderMaterial.uniforms, 'uAlphaCorrection', 0, 0.1, 0.001);
 
 		function loop(count) {
@@ -120,7 +120,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

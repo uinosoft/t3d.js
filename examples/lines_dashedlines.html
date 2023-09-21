@@ -45,15 +45,15 @@
 		const points = MathUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 50, 2, 0, 1, 2, 3, 4, 5, 6, 7);
 
 		const lineGeometry = new t3d.Geometry();
-		let verticesArray = [];
+		const verticesArray = [];
 
 		points.forEach((point, i) => {
 			verticesArray.push(point.x, point.y, point.z, i % 2 === 0 ? 0 : 15);
 		});
 		const buffer = new t3d.Buffer(new Float32Array(verticesArray), 4);
 
-		lineGeometry.addAttribute("a_Position", new t3d.Attribute(buffer, 3, 0));
-		lineGeometry.addAttribute("lineDistance", new t3d.Attribute(buffer, 1, 3));
+		lineGeometry.addAttribute('a_Position', new t3d.Attribute(buffer, 3, 0));
+		lineGeometry.addAttribute('lineDistance', new t3d.Attribute(buffer, 1, 3));
 
 		lineGeometry.computeBoundingBox();
 		lineGeometry.computeBoundingSphere();
@@ -92,7 +92,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -155,7 +155,7 @@ class ShadowMapPass {
 
 const oldClearColor = new Vector4();
 
-const shadowSide = { "front": DRAW_SIDE.BACK, "back": DRAW_SIDE.FRONT, "double": DRAW_SIDE.DOUBLE };
+const shadowSide = { 'front': DRAW_SIDE.BACK, 'back': DRAW_SIDE.FRONT, 'double': DRAW_SIDE.DOUBLE };
 
 const depthMaterials = {};
 const distanceMaterials = {};
@@ -217,8 +217,8 @@ function _getDistanceMaterial(renderable, light) {
 	}
 
 	material.side = shadowSide[renderable.material.side];
-	material.uniforms["nearDistance"] = light.shadow.cameraNear;
-	material.uniforms["farDistance"] = light.shadow.cameraFar;
+	material.uniforms['nearDistance'] = light.shadow.cameraNear;
+	material.uniforms['farDistance'] = light.shadow.cameraFar;
 
 	material.clippingPlanes = renderable.material.clippingPlanes;
 	material.drawMode = renderable.material.drawMode;

@@ -39,7 +39,7 @@
 		// custom pass
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-		const gl = canvas.getContext("webgl", { antialias: false, alpha: false });
+		const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const scene = new t3d.Scene();
@@ -126,7 +126,7 @@
 			backRenderTarget.resize(width, height);
 			tempRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

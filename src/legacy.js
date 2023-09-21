@@ -39,7 +39,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	renderTarget: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn('WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.');
 			return this._renderTargets;
 		}
 	},
@@ -47,7 +47,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	state: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn('WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.');
 			return this._state;
 		}
 	},
@@ -55,7 +55,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	vertexArrayBindings: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn('WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.');
 			return this._vertexArrayBindings;
 		}
 	}
@@ -65,7 +65,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 WebGLRenderer.prototype.render = function(renderable, renderStates, options) {
 	// console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
 	this.renderRenderableItem(renderable, renderStates, options);
-}
+};
 
 // since 0.2.0
 // WebGLRenderPass is renamed to WebGLRenderer.

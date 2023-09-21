@@ -39,6 +39,8 @@
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 		import Stats from './libs/stats.module.js';
 
+		/* eslint-disable new-cap */
+
 		Ammo().then(Ammo => {
 			// - Global variables -
 
@@ -312,7 +314,7 @@
 			}
 
 			function initInput() {
-				window.addEventListener('mousedown', function (event) {
+				window.addEventListener('mousedown', function(event) {
 					if (!clickRequest) {
 						mouseCoords.set(
 							(event.clientX / window.innerWidth) * 2 - 1,
@@ -323,7 +325,7 @@
 					}
 				}, false);
 
-				window.addEventListener('touchstart', function (event) {
+				window.addEventListener('touchstart', function(event) {
 					if (!clickRequest) {
 						mouseCoords.set(
 							(event.touches[0].clientX / window.innerWidth) * 2 - 1,
@@ -380,7 +382,7 @@
 			}
 
 			function render() {
-				let deltaTime = clock.getDelta();
+				const deltaTime = clock.getDelta();
 
 				controls.update();
 

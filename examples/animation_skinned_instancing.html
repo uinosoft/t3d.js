@@ -43,20 +43,20 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = Math.floor(width * devicePixelRatio);
 		canvas.height = Math.floor(height * devicePixelRatio);
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
+			'resources/skybox/Bridge2/posx.jpg',
+			'resources/skybox/Bridge2/negx.jpg',
+			'resources/skybox/Bridge2/posy.jpg',
+			'resources/skybox/Bridge2/negy.jpg',
+			'resources/skybox/Bridge2/posz.jpg',
+			'resources/skybox/Bridge2/negz.jpg'
 		]);
 
 		const scene = new t3d.Scene();
@@ -81,7 +81,7 @@
 			#endif
 		`;
 
-		let depthVertexShader = `
+		const depthVertexShader = `
 			#include <common_vert>
 			#include <morphtarget_pars_vert>
 			#include <skinning_pars_vert>
@@ -102,7 +102,7 @@
 		// override shadowMapPass.getDepthMaterial
 
 		const depthMaterials = [];
-		const shadowSide = { "front": t3d.DRAW_SIDE.BACK, "back": t3d.DRAW_SIDE.FRONT, "double": t3d.DRAW_SIDE.DOUBLE };
+		const shadowSide = { 'front': t3d.DRAW_SIDE.BACK, 'back': t3d.DRAW_SIDE.FRONT, 'double': t3d.DRAW_SIDE.DOUBLE };
 		forwardRenderer.shadowMapPass.getDepthMaterial = function(renderable) {
 			const useSkinning = !!renderable.object.skeleton;
 			const useMorphing = renderable.geometry.morphAttributes.position && renderable.geometry.morphAttributes.position.length > 0;
@@ -115,7 +115,7 @@
 				material = new t3d.DepthMaterial();
 				material.type = t3d.MATERIAL_TYPE.SHADER;
 				material.packToRGBA = true;
-				material.shaderName = "CUSTOM_DEPTH";
+				material.shaderName = 'CUSTOM_DEPTH';
 				material.vertexShader = depthVertexShader;
 				material.fragmentShader = t3d.ShaderLib.depth_frag;
 
@@ -164,7 +164,7 @@
 		const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(matrices), 16));
 		instanceMatrixAttribute.divisor = 1;
 
-		const file = "resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb";
+		const file = 'resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb';
 
 		let mixer;
 
@@ -201,11 +201,11 @@
 		}
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -237,7 +237,7 @@
 						node.onBeforeRender = function() {
 							getMatrixFromRoot(node, object, offsetMatrix);
 							offsetMatrix.toArray(material.uniforms.instanceOffset);
-						}
+						};
 					}
 
 					node.geometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
@@ -318,10 +318,10 @@
 
 			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

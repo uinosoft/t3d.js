@@ -48,7 +48,7 @@
         document.body.appendChild(canvas);
 
         const contextParams = { antialias: true, alpha: false };
-        const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+        const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
         const renderer = new t3d.WebGLRenderer(gl);
 
         // Create scene.
@@ -58,10 +58,10 @@
         const normal_material = new t3d.BasicMaterial();
         normal_material.side = t3d.DRAW_SIDE.DOUBLE;
         const normal_geometry = new t3d.CylinderGeometry(0.2, 0, 1, 20, 1);
-        let mat4_translate = new t3d.Matrix4();
+        const mat4_translate = new t3d.Matrix4();
         mat4_translate.makeTranslation(0, -0.5, 0);
         GeometryUtils.applyMatrix4(normal_geometry, mat4_translate);
-        let mat4_rotateX = new t3d.Matrix4()
+        const mat4_rotateX = new t3d.Matrix4();
         mat4_rotateX.makeRotationAxis(new t3d.Vector3(1, 0, 0), -Math.PI / 2);
         GeometryUtils.applyMatrix4(normal_geometry, mat4_rotateX);
         const normal_mersh = new t3d.Mesh(normal_geometry, normal_material);
@@ -77,11 +77,11 @@
         scene.add(directionalLight);
 
         const nanobar = new Nanobar();
-        nanobar.el.style.background = "gray";
-        const loadingManager = new t3d.LoadingManager(function () {
+        nanobar.el.style.background = 'gray';
+        const loadingManager = new t3d.LoadingManager(function() {
         	nanobar.go(100);
-        	nanobar.el.style.background = "transparent";
-        }, function (url, itemsLoaded, itemsTotal) {
+        	nanobar.el.style.background = 'transparent';
+        }, function(url, itemsLoaded, itemsTotal) {
         	if (itemsLoaded < itemsTotal) {
         		nanobar.go(itemsLoaded / itemsTotal * 100);
         	}
@@ -94,7 +94,7 @@
         		const monkey = object.clone();
         		monkey.material = monkey.material.clone();
         		monkey.material.diffuse.setHSL(Math.random(), 1.0, 0.3);
-        		monkey.position.set(Math.random() * 100 - 50,  Math.random() * 60 - 30,  Math.random() * 80 - 40);
+        		monkey.position.set(Math.random() * 100 - 50, Math.random() * 60 - 30, Math.random() * 80 - 40);
         		monkey.euler.x = Math.PI * 2 * Math.random();
         		monkey.euler.y = Math.PI * 2 * Math.random();
         		monkey.scale.set(2, 2, 2);
@@ -128,7 +128,7 @@
         const cameraMatrixCache = {
         	worldMatrix: new t3d.Matrix4(),
         	projectionMatrix: new t3d.Matrix4(),
-        	projectionMatrixInverse: new t3d.Matrix4(),
+        	projectionMatrixInverse: new t3d.Matrix4()
         };
 
         function updateFocalDepth(e) {
@@ -174,8 +174,8 @@
         const position = new t3d.Vector3();
 
         function sphericalToVec3(sphericalData, out) {
-        	spherical.set(1, sphericalData[0], sphericalData[1])
-        	out.setFromSpherical(spherical)
+        	spherical.set(1, sphericalData[0], sphericalData[1]);
+        	out.setFromSpherical(spherical);
         	return out;
         }
 
@@ -211,7 +211,7 @@
         	backRenderTarget.resize(width, height);
         	pickBuffer.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

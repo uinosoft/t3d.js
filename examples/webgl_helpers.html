@@ -55,36 +55,36 @@
 		document.body.appendChild(canvas);
 
 		const contextParams = { antialias: true, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
+			'resources/skybox/Bridge2/posx.jpg',
+			'resources/skybox/Bridge2/negx.jpg',
+			'resources/skybox/Bridge2/posy.jpg',
+			'resources/skybox/Bridge2/negy.jpg',
+			'resources/skybox/Bridge2/posz.jpg',
+			'resources/skybox/Bridge2/negz.jpg'
 		]);
 
 		const scene = new t3d.Scene();
 
-		const file = "resources/models/gltf/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf";
+		const file = 'resources/models/gltf/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf';
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
-		const loadingManager = new t3d.LoadingManager(function () {
+		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
-		}, function (url, itemsLoaded, itemsTotal) {
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
 		});
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.load(file).then(function (result) {
+		loader.load(file).then(function(result) {
 			root = result.root;
 			root.children[0].material.envMap = cube_texture;
 
@@ -163,7 +163,7 @@
 
 			backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 

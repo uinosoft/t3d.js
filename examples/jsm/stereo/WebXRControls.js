@@ -6,7 +6,7 @@ var WebXRControl = function(camera) {
 
 	this._currentDepthNear = 0;
 	this._currentDepthFar = 0;
-}
+};
 
 Object.assign(WebXRControl.prototype, {
 	enter: function(gl, type) {
@@ -36,6 +36,7 @@ Object.assign(WebXRControl.prototype, {
 						stencil: attributes.stencil,
 						framebufferScaleFactor: 1.0
 					};
+					// eslint-disable-next-line
 					var baseLayer = new XRWebGLLayer(session, gl, layerInit);
 					session.updateRenderState({ baseLayer: baseLayer });
 					return session.requestReferenceSpace('local-floor');

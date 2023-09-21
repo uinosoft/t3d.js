@@ -41,8 +41,8 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas, {
@@ -58,14 +58,14 @@
 		texture.wrapT = texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
 		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 
-		const file = "resources/models/gltf/LeePerrySmith/LeePerrySmith.glb";
+		const file = 'resources/models/gltf/LeePerrySmith/LeePerrySmith.glb';
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -75,7 +75,8 @@
 		const uvTransform = new t3d.Matrix3();
 
 		const loader = new GLTFLoader(loadingManager);
-		let root, materials = [];
+		let root;
+		const materials = [];
 		loader.load(file).then(function(result) {
 			root = result.root;
 
@@ -133,9 +134,9 @@
 		updateUvTransform();
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(controller, 'autoRotate');
-		gui.add({ type: 'alphaToCoverage' }, "type", ['transparent', 'alphaTest', 'alphaToCoverage']).onChange(value => {
+		gui.add({ type: 'alphaToCoverage' }, 'type', ['transparent', 'alphaTest', 'alphaToCoverage']).onChange(value => {
 			materials.forEach(material => {
 				material.transparent = (value === 'transparent') || (value === 'alphaToCoverage');
 				material.alphaTest = (value === 'alphaTest') ? 0.5 : 0;
@@ -144,10 +145,10 @@
 			});
 		});
 		const transformFolder = gui.addFolder('transform');
-		transformFolder.add(API, "offsetX", 0.0, 1.0, 0.01).name("offset.x").onChange(updateUvTransform);
-		transformFolder.add(API, "offsetY", 0.0, 1.0, 0.01).name("offset.y").onChange(updateUvTransform);
-		transformFolder.add(API, "repeat", 0.25, 10.0, 0.1).onChange(updateUvTransform);
-		transformFolder.add(API, "rotation", 0, 180, 0.1).onChange(updateUvTransform);
+		transformFolder.add(API, 'offsetX', 0.0, 1.0, 0.01).name('offset.x').onChange(updateUvTransform);
+		transformFolder.add(API, 'offsetY', 0.0, 1.0, 0.01).name('offset.y').onChange(updateUvTransform);
+		transformFolder.add(API, 'repeat', 0.25, 10.0, 0.1).onChange(updateUvTransform);
+		transformFolder.add(API, 'rotation', 0, 180, 0.1).onChange(updateUvTransform);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -166,10 +167,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

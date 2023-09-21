@@ -98,22 +98,22 @@
 		const material = new t3d.ShaderMaterial(shader);
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
 		});
 
-		const file = "resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf";
+		const file = 'resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf';
 		const loader = new GLTFLoader(loadingManager);
 		loader.load(file).then(function(result) {
 			// add mesh to scene
-			let object = result.root.children[0];
+			const object = result.root.children[0];
 
 			object.material = material;
 			object.material.depthWrite = false;
@@ -140,10 +140,10 @@
 		controller.autoRotateSpeed = 0.5;
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add(material.uniforms, "power", 0, 2, 0.01);
-		gui.add(material.uniforms, "glowInverse");
-		gui.addColor(material.uniforms, "glowColor");
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add(material.uniforms, 'power', 0, 2, 0.01);
+		gui.add(material.uniforms, 'glowInverse');
+		gui.addColor(material.uniforms, 'glowColor');
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -162,7 +162,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

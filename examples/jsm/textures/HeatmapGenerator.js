@@ -157,7 +157,7 @@ class HeatmapGenerator {
 		pointsMaterial.uniforms.gaussianSigma = gaussianSigma;
 
 		const defines = pointsMaterial.defines;
-		for (let key in defines) {
+		for (const key in defines) {
 			defines[key] = (key === interpolationMap[interpolation]);
 			pointsMaterial.needsUpdate = true;
 		}
@@ -326,6 +326,6 @@ const heatmapColorizeShader = {
 			gl_FragColor = vec4(color, alpha);
 		}
 	`
-}
+};
 
 export { HeatmapGenerator };

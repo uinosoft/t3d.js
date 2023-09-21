@@ -45,12 +45,12 @@
 		forwardRenderer.setClearColor(0.05, 0.05, 0.05, 1);
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
+			'resources/skybox/Bridge2/posx.jpg',
+			'resources/skybox/Bridge2/negx.jpg',
+			'resources/skybox/Bridge2/posy.jpg',
+			'resources/skybox/Bridge2/negy.jpg',
+			'resources/skybox/Bridge2/posz.jpg',
+			'resources/skybox/Bridge2/negz.jpg'
 		]);
 
 		const scene = new t3d.Scene();
@@ -102,21 +102,21 @@
 		};
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
 		});
 
-		const file = "resources/models/gltf/UinoHelmet/glTF/UinoHelmet.gltf";
+		const file = 'resources/models/gltf/UinoHelmet/glTF/UinoHelmet.gltf';
 		const loader = new GLTFLoader(loadingManager);
 		loader.load(file).then(function(result) {
-			let object = result.root;
+			const object = result.root;
 
 			object.traverse(node => {
 				if (node.material) {
@@ -126,7 +126,7 @@
 					material.copy(node.material);
 
 					material.uniforms = uniforms;
-					material.shaderName = "CUSTOM_PBR";
+					material.shaderName = 'CUSTOM_PBR';
 					material.vertexShader = vertexShader;
 					material.fragmentShader = fragmentShader;
 
@@ -166,11 +166,11 @@
 		controller.autoRotateSpeed = 0.1;
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add(uniforms, "power", 0, 2, 0.01);
-		gui.add(uniforms, "glowInverse");
-		gui.addColor(uniforms, "glowColor");
-		gui.add(uniforms, "mixWeight", 0, 1, 0.01);
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add(uniforms, 'power', 0, 2, 0.01);
+		gui.add(uniforms, 'glowInverse');
+		gui.addColor(uniforms, 'glowColor');
+		gui.add(uniforms, 'mixWeight', 0, 1, 0.01);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -189,7 +189,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

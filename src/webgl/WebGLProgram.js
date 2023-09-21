@@ -13,7 +13,7 @@ class WebGLProgram {
 		this.id = programIdCount++;
 		this.usedTimes = 1;
 
-		this.code = "";
+		this.code = '';
 
 		this.lightId = -1;
 		this.lightVersion = -1;
@@ -57,10 +57,10 @@ class WebGLProgram {
 
 			gl.deleteShader(vertexShader);
 			gl.deleteShader(fragmentShader);
-		}
+		};
 
 		// check if program is ready to be used
-		this.isReady = function (parallelShaderCompileExt) {
+		this.isReady = function(parallelShaderCompileExt) {
 			if (this._status === 1) {
 				if (this._compileAsynchronously && parallelShaderCompileExt) {
 					if (gl.getProgramParameter(program, parallelShaderCompileExt.COMPLETION_STATUS_KHR)) {
@@ -74,9 +74,9 @@ class WebGLProgram {
 			}
 
 			return this._status === 2;
-		}
+		};
 
-		this._tryCheckErrors = function () {
+		this._tryCheckErrors = function() {
 			if (!this._checkErrors) return;
 
 			if (gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
@@ -96,37 +96,37 @@ class WebGLProgram {
 					fragmentErrors
 				);
 			}
-		}
+		};
 
 		// set up caching for uniforms
 
 		let cachedUniforms;
 
-		this.getUniforms = function () {
+		this.getUniforms = function() {
 			if (cachedUniforms === undefined) {
 				cachedUniforms = new WebGLUniforms(gl, program);
 			}
 			return cachedUniforms;
-		}
+		};
 
 		// set up caching for attributes
 
 		let cachedAttributes;
 
-		this.getAttributes = function () {
+		this.getAttributes = function() {
 			if (cachedAttributes === undefined) {
 				cachedAttributes = extractAttributes(gl, program);
 			}
 			return cachedAttributes;
-		}
+		};
 
 		// free program
 
-		this.dispose = function () {
+		this.dispose = function() {
 			gl.deleteProgram(program);
 			this.program = undefined;
 			this._status = 0;
-		}
+		};
 	}
 
 }

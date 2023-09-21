@@ -48,7 +48,7 @@ export class WorkerPool {
 	}
 
 	postMessage(msg, transfer) {
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			const workerId = this._getIdleWorker();
 
 			if (workerId !== -1) {
@@ -63,7 +63,7 @@ export class WorkerPool {
 	}
 
 	dispose() {
-		this.workers.forEach((worker) => worker.terminate());
+		this.workers.forEach(worker => worker.terminate());
 		this.workersResolve.length = 0;
 		this.workers.length = 0;
 		this.queue.length = 0;

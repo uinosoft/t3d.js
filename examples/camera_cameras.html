@@ -25,10 +25,9 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { Clock } from './jsm/Clock.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -87,12 +86,10 @@
 		const controller = new OrbitControls(camera, canvas);
 		controller.autoRotate = true;
 
-		const clock = new Clock();
-
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			controller.update(/** clock.getDelta() */);
+			controller.update();
 
 			forwardRenderer.render(scene, camera);
 		}
@@ -106,7 +103,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

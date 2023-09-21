@@ -117,8 +117,8 @@
 			sphere_bodys.push(c_sphere_body);
 		}
 
-		document.addEventListener("mouseup", addOneCube);
-		document.addEventListener("touchend", addOneCube);
+		document.addEventListener('mouseup', addOneCube);
+		document.addEventListener('touchend', addOneCube);
 
 		addOneCube();
 
@@ -126,7 +126,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let time = count - timeTamp;
+			const time = count - timeTamp;
 			timeTamp = count;
 
 			// Step the physics world
@@ -150,7 +150,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

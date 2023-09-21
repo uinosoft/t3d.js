@@ -40,7 +40,7 @@ export class ImageParser {
 				} else {
 					const param = { loader, imageUrl, imageName, isObjectURL, sourceUrl, index, path };
 					if (mimeType && (mimeType.includes('avif') || mimeType.includes('webp'))) {
-						promise = detectSupport(mimeType).then((isSupported) => {
+						promise = detectSupport(mimeType).then(isSupported => {
 							if (isSupported) return loadImage(param);
 							throw new Error('GLTFLoader: WebP or AVIF required by asset but unsupported.');
 						});
@@ -61,7 +61,7 @@ export class ImageParser {
 }
 
 function detectSupport(mimeType) {
-	const isSupported = new Promise((resolve) => {
+	const isSupported = new Promise(resolve => {
 		// Lossy test image.
 		const image = new Image();
 		if (mimeType.includes('avif')) {

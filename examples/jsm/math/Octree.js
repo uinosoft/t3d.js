@@ -1,4 +1,4 @@
-import { Vector3, Box3, Triangle } from "t3d";
+import { Vector3, Box3, Triangle } from 't3d';
 
 class Octree {
 
@@ -164,7 +164,7 @@ class Octree {
 			}
 		}
 
-		return distance < 1e100 ? { distance: distance, triangle: triangle, position: position, target: triangle.belong  } : null;
+		return distance < 1e100 ? { distance: distance, triangle: triangle, position: position, target: triangle.belong } : null;
 	}
 
 }

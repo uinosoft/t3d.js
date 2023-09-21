@@ -33,6 +33,8 @@
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 
+		/* eslint-disable new-cap */
+
 		Ammo().then(Ammo => {
 			let width = window.innerWidth || 2;
 			let height = window.innerHeight || 2;
@@ -133,8 +135,8 @@
 				cube_bodys.push(body);
 			}
 
-			document.addEventListener("mouseup", addOneCube);
-			document.addEventListener("touchend", addOneCube);
+			document.addEventListener('mouseup', addOneCube);
+			document.addEventListener('touchend', addOneCube);
 
 			addOneCube();
 
@@ -142,7 +144,7 @@
 			function loop(count) {
 				requestAnimationFrame(loop);
 
-				let time = count - timeTamp;
+				const time = count - timeTamp;
 				timeTamp = count;
 
 				// Step the physics world
@@ -172,7 +174,7 @@
 
 				forwardRenderer.backRenderTarget.resize(width, height);
 			}
-			window.addEventListener("resize", onWindowResize, false);
+			window.addEventListener('resize', onWindowResize, false);
 		});
 	</script>
 </body>

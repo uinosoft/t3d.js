@@ -65,7 +65,7 @@
 		const controller = new OrbitControls(camera, canvas);
 		
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(scene, 'logarithmicDepthBuffer');
 
 		function loop(count) {
@@ -85,7 +85,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

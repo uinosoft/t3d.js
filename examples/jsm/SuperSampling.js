@@ -8,7 +8,7 @@ import {
 	ShaderPostPass,
 	TEXTURE_FILTER
 } from 't3d';
-import { TAAShader } from "./shaders/TAAShader.js";
+import { TAAShader } from './shaders/TAAShader.js';
 
 var SuperSampling = function(width, height, samplingSize) {
 	this._samplingSize = samplingSize || 30;
@@ -55,7 +55,7 @@ var SuperSampling = function(width, height, samplingSize) {
 	this._taaPass.material.depthTest = false;
 
 	this._frame = 0;
-}
+};
 
 SuperSampling.prototype = Object.assign(SuperSampling.prototype, {
 
@@ -88,7 +88,7 @@ SuperSampling.prototype = Object.assign(SuperSampling.prototype, {
 		var offset = this._haltonSequence[this._frame];
 
 		if (!offset) {
-			console.error("SuperSampling: try to jitter camera after finished!", this._frame, this._haltonSequence.length);
+			console.error('SuperSampling: try to jitter camera after finished!', this._frame, this._haltonSequence.length);
 		}
 
 		var translationMat = new Matrix4();
@@ -112,15 +112,15 @@ SuperSampling.prototype = Object.assign(SuperSampling.prototype, {
 
 		var first = this._frame === 0;
 
-		this._taaPass.uniforms["currTex"] = texture;
-		this._taaPass.uniforms["prevTex"] = this._prevFrame.texture;
-		this._taaPass.uniforms["velocityTex"] = velocityTexture;
-		this._taaPass.uniforms["depthTex"] = depthTexture;
-		this._taaPass.uniforms["texelSize"][0] = 1 / this._prevFrame.width;
-		this._taaPass.uniforms["texelSize"][1] = 1 / this._prevFrame.height;
-		this._taaPass.uniforms["still"] = !!still;
-		this._taaPass.uniforms["stillBlending"] = first ? 0 : 0.9;
-		this._taaPass.uniforms["motionBlending"] = first ? 0 : 0.2;
+		this._taaPass.uniforms['currTex'] = texture;
+		this._taaPass.uniforms['prevTex'] = this._prevFrame.texture;
+		this._taaPass.uniforms['velocityTex'] = velocityTexture;
+		this._taaPass.uniforms['depthTex'] = depthTexture;
+		this._taaPass.uniforms['texelSize'][0] = 1 / this._prevFrame.width;
+		this._taaPass.uniforms['texelSize'][1] = 1 / this._prevFrame.height;
+		this._taaPass.uniforms['still'] = !!still;
+		this._taaPass.uniforms['stillBlending'] = first ? 0 : 0.9;
+		this._taaPass.uniforms['motionBlending'] = first ? 0 : 0.2;
 
 		renderer.setRenderTarget(this._output);
 
@@ -139,8 +139,8 @@ SuperSampling.prototype = Object.assign(SuperSampling.prototype, {
 	},
 
 	/**
-         * @return {t3d.TextureBase} output texture
-         */
+	 * @return {t3d.TextureBase} output texture
+	 */
 	output: function() {
 		return this._prevFrame.texture;
 	}

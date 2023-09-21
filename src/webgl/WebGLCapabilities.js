@@ -22,12 +22,12 @@ class WebGLCapabilities {
 			if (this.version > 1) {
 				timerQuery = this.getExtension('EXT_disjoint_timer_query_webgl2');
 				if (timerQuery) {
-					canUseTimestamp = (gl.getQuery(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT) ?? 0) > 0;
+					canUseTimestamp = !!gl.getQuery(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT);
 				}
 			} else {
 				timerQuery = this.getExtension('EXT_disjoint_timer_query');
 				if (timerQuery) {
-					canUseTimestamp = (timerQuery.getQueryEXT(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT) ?? 0) > 0;
+					canUseTimestamp = !!timerQuery.getQueryEXT(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT);
 				}
 			}
 		} catch (err) {

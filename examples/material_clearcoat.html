@@ -58,12 +58,12 @@
         }
 
         const imageUrls = [
-        	"resources/hdr/pisaHDR/px.hdr",
-        	"resources/hdr/pisaHDR/nx.hdr",
-        	"resources/hdr/pisaHDR/py.hdr",
-        	"resources/hdr/pisaHDR/ny.hdr",
-        	"resources/hdr/pisaHDR/pz.hdr",
-        	"resources/hdr/pisaHDR/nz.hdr"
+        	'resources/hdr/pisaHDR/px.hdr',
+        	'resources/hdr/pisaHDR/nx.hdr',
+        	'resources/hdr/pisaHDR/py.hdr',
+        	'resources/hdr/pisaHDR/ny.hdr',
+        	'resources/hdr/pisaHDR/pz.hdr',
+        	'resources/hdr/pisaHDR/nz.hdr'
         ];
 
         let texture = new t3d.TextureCube();
@@ -73,7 +73,7 @@
         	promiseArray.push(rgbeLoader.loadAsync(imageUrls[i]));
         }
 
-        Promise.all(promiseArray).then(function (textureDatas) {
+        Promise.all(promiseArray).then(function(textureDatas) {
         	for (let i = 0; i < 6; i++) {
         		texture.images.push({
         			data: textureDatas[i].data,
@@ -89,8 +89,8 @@
         		texture.generateMipmaps = textureData.generateMipmaps;
         	}
 
-        	texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : TEXTURE_FILTER.LINEAR;
-        	texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : TEXTURE_FILTER.LINEAR;
+        	texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : t3d.TEXTURE_FILTER.LINEAR;
+        	texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : t3d.TEXTURE_FILTER.LINEAR;
 
         	texture.version++;
 
@@ -105,14 +105,14 @@
         	scene.add(sky_box);
 
         	scene.environment = texture;
-        })
+        });
 
         const sphere_geometry = new t3d.SphereGeometry(80, 64, 32);
 
         const water = textureLoader.load('./resources/waternormals.jpg');
         const golfBall = textureLoader.load('./resources/golfball.jpg');
 
-        const scratched = textureLoader.load("./resources/Scratched_Normal.png");
+        const scratched = textureLoader.load('./resources/Scratched_Normal.png');
 
         const sphere_material = new t3d.PBRMaterial();
         sphere_material.diffuse.setHex(0xffffff);
@@ -199,12 +199,12 @@
         			break;
         	}
         	sphere_material.needsUpdate = true;
-        })
+        });
 
         function loop(count) {
         	requestAnimationFrame(loop);
 
-        	let timer = Date.now() * 0.00025;
+        	const timer = Date.now() * 0.00025;
 
         	particleLight.position.x = Math.sin(timer * 7) * 300;
         	particleLight.position.y = Math.cos(timer * 5) * 400;
@@ -227,7 +227,7 @@
 
         	forwardRenderer.backRenderTarget.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

@@ -116,21 +116,21 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		const file = "resources/models/gltf/grass/grass.gltf";
+		const file = 'resources/models/gltf/grass/grass.gltf';
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/skyboxsun25deg/px.jpg",
-			"resources/skybox/skyboxsun25deg/nx.jpg",
-			"resources/skybox/skyboxsun25deg/py.jpg",
-			"resources/skybox/skyboxsun25deg/ny.jpg",
-			"resources/skybox/skyboxsun25deg/pz.jpg",
-			"resources/skybox/skyboxsun25deg/nz.jpg"
+			'resources/skybox/skyboxsun25deg/px.jpg',
+			'resources/skybox/skyboxsun25deg/nx.jpg',
+			'resources/skybox/skyboxsun25deg/py.jpg',
+			'resources/skybox/skyboxsun25deg/ny.jpg',
+			'resources/skybox/skyboxsun25deg/pz.jpg',
+			'resources/skybox/skyboxsun25deg/nz.jpg'
 		]);
 
 		const scene = new t3d.Scene();
@@ -159,12 +159,12 @@
 		groundTexture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
-		const loadingManager = new t3d.LoadingManager(function () {
+		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
-		}, function (url, itemsLoaded, itemsTotal) {
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
@@ -174,19 +174,19 @@
 		const FLOWER1_COUNT = 5000;
 		const FLOWER2_COUNT = 2500;
 
-		const windDirection = [1, 0]
+		const windDirection = [1, 0];
 
-		const grassMaterial = createGrassMaterial(noiseTexture, grassTexture);		// grass
+		const grassMaterial = createGrassMaterial(noiseTexture, grassTexture); // grass
 
-		const flowerMaterial = createGrassMaterial(noiseTexture, flowerTexture);	// white flower
+		const flowerMaterial = createGrassMaterial(noiseTexture, flowerTexture); // white flower
 
-		const flowerMaterial2 = createGrassMaterial(noiseTexture, flowerTexture2);	// pink flower
+		const flowerMaterial2 = createGrassMaterial(noiseTexture, flowerTexture2); // pink flower
 
 		const loader = new GLTFLoader(loadingManager);
 		loader.autoLogError = false;
 
 		console.time('GLTFLoader');
-		loader.load(file).then(function (result) {
+		loader.load(file).then(function(result) {
 			console.timeEnd('GLTFLoader');
 
 			const object = result.root;
@@ -214,8 +214,8 @@
 			const params = {
 				windSpeed: 0.1,
 				windStrength: 1,
-				noiseScale: 20,
-			}
+				noiseScale: 20
+			};
 
 			const gui = new GUI();
 
@@ -303,7 +303,7 @@
 					windStrength: 1,
 					noiseScale: 20,
 					noise: noiseTexture,
-					map: grassTexture,
+					map: grassTexture
 				},
 				vertexShader: document.getElementById('vs').textContent,
 				fragmentShader: document.getElementById('fs').textContent
@@ -373,10 +373,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 

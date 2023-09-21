@@ -272,7 +272,7 @@ class WebGLTextures extends PropertyMap {
 		const constants = this._constants;
 
 		if (capabilities.version < 2) {
-			console.warn("Try to use Texture3D but browser not support WebGL2.0");
+			console.warn('Try to use Texture3D but browser not support WebGL2.0');
 			return;
 		}
 

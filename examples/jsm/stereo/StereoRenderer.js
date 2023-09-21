@@ -1,4 +1,4 @@
-import { ForwardRenderer } from "../render/ForwardRenderer.js";
+import { ForwardRenderer } from '../render/ForwardRenderer.js';
 
 class StereoRenderer extends ForwardRenderer {
 

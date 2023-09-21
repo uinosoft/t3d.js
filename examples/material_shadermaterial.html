@@ -128,8 +128,8 @@
 		scene.add(camera);
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add({ material: 'sample1' }, "material", ['sample1', 'sample2']).onChange(value => {
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add({ material: 'sample1' }, 'material', ['sample1', 'sample2']).onChange(value => {
 			sphere.material = value === 'sample1' ? material2 : material1;
 			plane.material = value === 'sample1' ? material2 : material1;
 		});
@@ -162,7 +162,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

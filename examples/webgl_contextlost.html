@@ -53,10 +53,10 @@
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
 
-		const loadingManager = new t3d.LoadingManager(function () {
+		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
 			nanobar.el.style.background = 'transparent';
-		}, function (url, itemsLoaded, itemsTotal) {
+		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
@@ -66,7 +66,7 @@
 
 		console.time('Load glTF');
 		const gltfUri = './resources/models/gltf/bust_of_woman/glTF-Binary/bust_of_woman.glb';
-		new GLTFLoader(loadingManager).load(gltfUri).then(function (result) {
+		new GLTFLoader(loadingManager).load(gltfUri).then(function(result) {
 			console.timeEnd('Load glTF');
 
 			model = result.root;
@@ -79,7 +79,7 @@
 			});
 
 			scene.add(model);
-		}).catch(function (e) { console.error(e) });
+		}).catch(function(e) { console.error(e) });
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.9);
 		directionalLight.castShadow = true;
@@ -100,13 +100,13 @@
 		controller.target.set(0, 26, 0);
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 
 		const loseContextExtension = forwardRenderer.capabilities.getExtension('WEBGL_lose_context');
 
 		if (!loseContextExtension) {
 			document.getElementById('notSupported').style.display = '';
-			console.warn('WEBGL_lose_context is not supported.')
+			console.warn('WEBGL_lose_context is not supported.');
 		} else {
 			const params = {
 				forceContextLoss: function() {
@@ -115,21 +115,21 @@
 				forceContextRestore: function() {
 					loseContextExtension.restoreContext();
 				}
-			}
+			};
 
-			gui.add(params, "forceContextLoss");
-			gui.add(params, "forceContextRestore");
+			gui.add(params, 'forceContextLoss');
+			gui.add(params, 'forceContextRestore');
 		}
 
 		let isContextLost = false;
 
-		const onContextLost = function () {
+		const onContextLost = function() {
 			event.preventDefault();
 			console.log('Context lost');
 			isContextLost = true;
 		};
 
-		const onContextRestored = function () {
+		const onContextRestored = function() {
 			console.log('Context restored');
 			forwardRenderer.init();
 			isContextLost = false;
@@ -159,7 +159,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 

@@ -46,7 +46,7 @@ class WebGLRenderBuffers extends PropertyMap {
 
 			if (renderBuffer.multipleSampling > 0) {
 				if (capabilities.version < 2) {
-					console.error("render buffer multipleSampling is not support in webgl 1.0.");
+					console.error('render buffer multipleSampling is not support in webgl 1.0.');
 				}
 				gl.renderbufferStorageMultisample(gl.RENDERBUFFER, Math.min(renderBuffer.multipleSampling, capabilities.maxSamples), glFormat, renderBuffer.width, renderBuffer.height);
 			} else {

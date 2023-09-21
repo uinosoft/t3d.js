@@ -67,7 +67,7 @@
 		
 		// GUI
 
-		const effectController  = {
+		const effectController = {
 			turbidity: 10,
 			rayleigh: 2,
 			mieCoefficient: 0.005,
@@ -105,14 +105,14 @@
 
 		const gui = new GUI();
 
-		gui.add(effectController, "turbidity", 1.0, 20.0, 0.1).onChange(guiChanged);
-		gui.add(effectController, "rayleigh", 0.0, 4, 0.001).onChange(guiChanged);
-		gui.add(effectController, "mieCoefficient", 0.0, 0.1, 0.001).onChange(guiChanged);
-		gui.add(effectController, "mieDirectionalG", 0.0, 1, 0.001).onChange(guiChanged);
-		gui.add(effectController, "luminance", 0.0, 2).onChange(guiChanged);
-		gui.add(effectController, "inclination", 0, 1, 0.0001).onChange(guiChanged);
-		gui.add(effectController, "azimuth", 0, 1, 0.0001).onChange(guiChanged);
-		gui.add(effectController, "sun").onChange(guiChanged);
+		gui.add(effectController, 'turbidity', 1.0, 20.0, 0.1).onChange(guiChanged);
+		gui.add(effectController, 'rayleigh', 0.0, 4, 0.001).onChange(guiChanged);
+		gui.add(effectController, 'mieCoefficient', 0.0, 0.1, 0.001).onChange(guiChanged);
+		gui.add(effectController, 'mieDirectionalG', 0.0, 1, 0.001).onChange(guiChanged);
+		gui.add(effectController, 'luminance', 0.0, 2).onChange(guiChanged);
+		gui.add(effectController, 'inclination', 0, 1, 0.0001).onChange(guiChanged);
+		gui.add(effectController, 'azimuth', 0, 1, 0.0001).onChange(guiChanged);
+		gui.add(effectController, 'sun').onChange(guiChanged);
 
 		guiChanged();
 
@@ -134,7 +134,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -4,8 +4,8 @@ import {
 	VectorKeyframeTrack,
 	KeyframeClip
 } from 't3d';
-import { GLTFUtils } from "../GLTFUtils.js";
-import { PATH_PROPERTIES } from "../Constants.js";
+import { GLTFUtils } from '../GLTFUtils.js';
+import { PATH_PROPERTIES } from '../Constants.js';
 
 export class AnimationParser {
 

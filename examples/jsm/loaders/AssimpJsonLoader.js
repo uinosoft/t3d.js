@@ -31,20 +31,20 @@ import {
 import { Texture2DLoader } from '../loaders/Texture2DLoader.js';
 
 var AssimpJsonLoader = function() {
-	this.texturePath = "./";
+	this.texturePath = './';
 	this.textureLoader = new Texture2DLoader();
-}
+};
 
 AssimpJsonLoader.prototype.load = function(url, onLoad, onProgress, onError) {
 	this.texturePath = this.extractUrlBase(url);
 
 	var loader = new FileLoader();
-	loader.setResponseType("json").load(url, function(json) {
-		console.log(json)
+	loader.setResponseType('json').load(url, function(json) {
+		console.log(json);
 		var result = this.parse(json);
 		onLoad(result.object, result.animation);
 	}.bind(this), onProgress, onError);
-}
+};
 
 AssimpJsonLoader.prototype.parseNodeTree = function(node) {
 	var object = new Object3D();
@@ -62,7 +62,7 @@ AssimpJsonLoader.prototype.parseNodeTree = function(node) {
 	}
 
 	return object;
-}
+};
 
 AssimpJsonLoader.prototype.cloneNodeToBones = function(node, boneMap) {
 	var bone = new Bone();
@@ -83,7 +83,7 @@ AssimpJsonLoader.prototype.cloneNodeToBones = function(node, boneMap) {
 	}
 
 	return bone;
-}
+};
 
 AssimpJsonLoader.prototype.parseSkeleton = function(meshName, bonesInfo, nodeTree, boneMap) {
 	var meshParents = [];
@@ -147,7 +147,7 @@ AssimpJsonLoader.prototype.parseSkeleton = function(meshName, bonesInfo, nodeTre
 		skeleton: skeleton,
 		rootBones: rootBones
 	};
-}
+};
 
 AssimpJsonLoader.prototype.parseAnimations = function(json, boneMap) {
 	var animation = new AnimationMixer();
@@ -181,7 +181,7 @@ AssimpJsonLoader.prototype.parseAnimations = function(json, boneMap) {
 						duration = frame[0];
 					}
 				}
-				var positionTrack = new VectorKeyframeTrack(bone, "position", times, values);
+				var positionTrack = new VectorKeyframeTrack(bone, 'position', times, values);
 				clip.tracks.push(positionTrack);
 
 				var times = [], values = [];
@@ -193,7 +193,7 @@ AssimpJsonLoader.prototype.parseAnimations = function(json, boneMap) {
 						duration = frame[0];
 					}
 				}
-				var rotationTrack = new QuaternionKeyframeTrack(bone, "quaternion", times, values);
+				var rotationTrack = new QuaternionKeyframeTrack(bone, 'quaternion', times, values);
 				clip.tracks.push(rotationTrack);
 
 				var times = [], values = [];
@@ -205,7 +205,7 @@ AssimpJsonLoader.prototype.parseAnimations = function(json, boneMap) {
 						duration = frame[0];
 					}
 				}
-				var scalingTrack = new VectorKeyframeTrack(bone, "scale", times, values);
+				var scalingTrack = new VectorKeyframeTrack(bone, 'scale', times, values);
 				clip.tracks.push(scalingTrack);
 			}
 		}
@@ -217,7 +217,7 @@ AssimpJsonLoader.prototype.parseAnimations = function(json, boneMap) {
 	}
 
 	return animation;
-}
+};
 
 AssimpJsonLoader.prototype.parse = function(json) {
 	var nodeTree = this.parseNodeTree(json.rootnode);
@@ -244,7 +244,7 @@ AssimpJsonLoader.prototype.parse = function(json) {
 		object: this.parseObject(json, json.rootnode, meshes, materials, skeletons),
 		animation: animation
 	};
-}
+};
 
 AssimpJsonLoader.prototype.parseList = function(json, handler) {
 	var arrays = new Array(json.length);
@@ -252,7 +252,7 @@ AssimpJsonLoader.prototype.parseList = function(json, handler) {
 		arrays[i] = handler.call(this, json[i]);
 	}
 	return arrays;
-}
+};
 
 AssimpJsonLoader.prototype.parseMaterial = function(json) {
 	var material = new PhongMaterial();
@@ -287,9 +287,9 @@ AssimpJsonLoader.prototype.parseMaterial = function(json) {
 				// Wrapping is the default, though.
 				diffuseMap.wrapS = diffuseMap.wrapT = TEXTURE_WRAP.REPEAT;
 			} else if (prop.semantic == 2) {
-
+				// empty
 			} else if (prop.semantic == 5) {
-
+				// empty
 			} else if (prop.semantic == 6) {
 				var material_url = this.texturePath + prop.value;
 				material_url = material_url.replace(/.\\/g, '');
@@ -299,9 +299,9 @@ AssimpJsonLoader.prototype.parseMaterial = function(json) {
 				normalMap.wrapS = normalMap.wrapT = TEXTURE_WRAP.REPEAT;
 			}
 		} else if (prop.key === '?mat.name') {
-
+			// empty
 		} else if (prop.key === '$clr.ambient') {
-
+			// empty
 		} else if (prop.key === '$clr.diffuse') {
 			var value = prop.value;
 			material.diffuse.setRGB(value[0], value[1], value[2]);
@@ -317,7 +317,7 @@ AssimpJsonLoader.prototype.parseMaterial = function(json) {
 		} else if (prop.key === '$mat.shadingm') {
 			// Flat shading?
 			if (prop.value === 1) {
-
+				// empty
 			}
 		} else if (prop.key === '$mat.shininess') {
 			material.shininess = prop.value;
@@ -328,7 +328,7 @@ AssimpJsonLoader.prototype.parseMaterial = function(json) {
 	material.normalMap = normalMap;
 
 	return material;
-}
+};
 
 AssimpJsonLoader.prototype.parseMesh = function(json) {
 	var geometry = new Geometry();
@@ -450,26 +450,26 @@ AssimpJsonLoader.prototype.parseMesh = function(json) {
 		var buffer = new Buffer(new Float32Array(g_v), 19);
 		var attribute;
 		attribute = new Attribute(buffer, 3, 0);
-		geometry.addAttribute("a_Position", attribute);
+		geometry.addAttribute('a_Position', attribute);
 		attribute = new Attribute(buffer, 3, 3);
-		geometry.addAttribute("a_Normal", attribute);
+		geometry.addAttribute('a_Normal', attribute);
 		attribute = new Attribute(buffer, 4, 9);
-		geometry.addAttribute("skinIndex", attribute);
+		geometry.addAttribute('skinIndex', attribute);
 		attribute = new Attribute(buffer, 4, 15);
-		geometry.addAttribute("skinWeight", attribute);
+		geometry.addAttribute('skinWeight', attribute);
 		attribute = new Attribute(buffer, 2, 13);
-		geometry.addAttribute("a_Uv", attribute);
+		geometry.addAttribute('a_Uv', attribute);
 	} else {
 		var buffer = new Buffer(new Float32Array(g_v), 17);
 		var attribute;
 		attribute = new Attribute(buffer, 3, 0);
-		geometry.addAttribute("a_Position", attribute);
+		geometry.addAttribute('a_Position', attribute);
 		attribute = new Attribute(buffer, 3, 3);
-		geometry.addAttribute("a_Normal", attribute);
+		geometry.addAttribute('a_Normal', attribute);
 		attribute = new Attribute(buffer, 4, 9);
-		geometry.addAttribute("a_Color", attribute);
+		geometry.addAttribute('a_Color', attribute);
 		attribute = new Attribute(buffer, 2, 13);
-		geometry.addAttribute("a_Uv", attribute);
+		geometry.addAttribute('a_Uv', attribute);
 	}
 
 	var g_i = [];
@@ -485,12 +485,12 @@ AssimpJsonLoader.prototype.parseMesh = function(json) {
 	geometry.computeBoundingSphere();
 
 	return geometry;
-}
+};
 
 AssimpJsonLoader.prototype.parseObject = function(json, node, meshes, materials, skeletons) {
 	var group = new Object3D();
 
-	group.name = node.name || "";
+	group.name = node.name || '';
 	group.matrix.fromArray(node.transformation).transpose();
 	group.matrix.decompose(group.position, group.quaternion, group.scale);
 
@@ -516,12 +516,12 @@ AssimpJsonLoader.prototype.parseObject = function(json, node, meshes, materials,
 	}
 
 	return group;
-}
+};
 
 AssimpJsonLoader.prototype.extractUrlBase = function(url) {
 	var parts = url.split('/');
 	parts.pop();
 	return (parts.length < 1 ? '.' : parts.join('/')) + '/';
-}
+};
 
 export { AssimpJsonLoader };

@@ -45,12 +45,12 @@
 		const scene = new t3d.Scene();
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Park2/posx.jpg",
-			"resources/skybox/Park2/negx.jpg",
-			"resources/skybox/Park2/posy.jpg",
-			"resources/skybox/Park2/negy.jpg",
-			"resources/skybox/Park2/posz.jpg",
-			"resources/skybox/Park2/negz.jpg"
+			'resources/skybox/Park2/posx.jpg',
+			'resources/skybox/Park2/negx.jpg',
+			'resources/skybox/Park2/posy.jpg',
+			'resources/skybox/Park2/negy.jpg',
+			'resources/skybox/Park2/posz.jpg',
+			'resources/skybox/Park2/negz.jpg'
 		]);
 		const sky_box = new SkyBox(cube_texture);
 		scene.add(sky_box);
@@ -105,7 +105,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

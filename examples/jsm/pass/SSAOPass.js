@@ -6,7 +6,7 @@ import {
 	TEXTURE_FILTER,
 	TEXTURE_WRAP
 } from 't3d';
-import { SSAOShader } from "../shaders/SSAOShader.js";
+import { SSAOShader } from '../shaders/SSAOShader.js';
 
 class SSAOPass extends ShaderPostPass {
 
@@ -22,20 +22,20 @@ class SSAOPass extends ShaderPostPass {
 	setKernelSize(size, offset) {
 		offset = (offset !== undefined) ? offset : 0;
 
-		const code = size + "_" + offset;
+		const code = size + '_' + offset;
 		if (!this._kernels[code]) {
 			this._kernels[code] = generateKernel(size, offset * size);
 		}
 
-		this.material.defines["KERNEL_SIZE"] = size;
-		this.material.uniforms["kernel"] = this._kernels[code];
+		this.material.defines['KERNEL_SIZE'] = size;
+		this.material.uniforms['kernel'] = this._kernels[code];
 	}
 
 	setNoiseSize(size) {
-		let texture = this.material.uniforms["noiseTex"];
+		let texture = this.material.uniforms['noiseTex'];
 		if (!texture) {
 			texture = generateNoiseTexture(size);
-			this.material.uniforms["noiseTex"] = texture;
+			this.material.uniforms['noiseTex'] = texture;
 		} else {
 			texture.image.data = generateNoiseData(size);
 			texture.image.width = size;
@@ -43,7 +43,7 @@ class SSAOPass extends ShaderPostPass {
 			texture.version++;
 		}
 
-		this.material.uniforms["noiseTexSize"] = [size, size];
+		this.material.uniforms['noiseTexSize'] = [size, size];
 	}
 
 }

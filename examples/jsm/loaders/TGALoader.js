@@ -58,7 +58,7 @@ class TGALoader extends Loader {
 			}
 
 			// Check image pixel size
-			if (header.pixel_size !== 8  &&
+			if (header.pixel_size !== 8 &&
 				header.pixel_size !== 16 &&
 				header.pixel_size !== 24 &&
 				header.pixel_size !== 32) {

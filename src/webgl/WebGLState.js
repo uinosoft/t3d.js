@@ -25,18 +25,18 @@ function ColorBuffer(gl) {
 
 	return {
 
-		setMask: function (colorMask) {
+		setMask: function(colorMask) {
 			if (currentColorMask !== colorMask && !locked) {
 				gl.colorMask(colorMask, colorMask, colorMask, colorMask);
 				currentColorMask = colorMask;
 			}
 		},
 
-		setLocked: function (lock) {
+		setLocked: function(lock) {
 			locked = lock;
 		},
 
-		setClear: function (r, g, b, a, premultipliedAlpha) {
+		setClear: function(r, g, b, a, premultipliedAlpha) {
 			if (premultipliedAlpha === true) {
 				r *= a; g *= a; b *= a;
 			}
@@ -53,7 +53,7 @@ function ColorBuffer(gl) {
 			return currentColorClear;
 		},
 
-		reset: function () {
+		reset: function() {
 			locked = false;
 
 			currentColorMask = null;
@@ -72,7 +72,7 @@ function DepthBuffer(gl, state) {
 
 	return {
 
-		setTest: function (depthTest) {
+		setTest: function(depthTest) {
 			if (depthTest) {
 				state.enable(gl.DEPTH_TEST);
 			} else {
@@ -80,32 +80,32 @@ function DepthBuffer(gl, state) {
 			}
 		},
 
-		setMask: function (depthMask) {
+		setMask: function(depthMask) {
 			if (currentDepthMask !== depthMask && !locked) {
 				gl.depthMask(depthMask);
 				currentDepthMask = depthMask;
 			}
 		},
 
-		setFunc: function (depthFunc) {
+		setFunc: function(depthFunc) {
 			if (currentDepthFunc !== depthFunc) {
 				gl.depthFunc(depthFunc);
 				currentDepthFunc = depthFunc;
 			}
 		},
 
-		setLocked: function (lock) {
+		setLocked: function(lock) {
 			locked = lock;
 		},
 
-		setClear: function (depth) {
+		setClear: function(depth) {
 			if (currentDepthClear !== depth) {
 				gl.clearDepth(depth);
 				currentDepthClear = depth;
 			}
 		},
 
-		reset: function () {
+		reset: function() {
 			locked = false;
 
 			currentDepthMask = null;
@@ -136,7 +136,7 @@ function StencilBuffer(gl, state) {
 
 	return {
 
-		setTest: function (stencilTest) {
+		setTest: function(stencilTest) {
 			if (stencilTest) {
 				state.enable(gl.STENCIL_TEST);
 			} else {
@@ -144,14 +144,14 @@ function StencilBuffer(gl, state) {
 			}
 		},
 
-		setMask: function (stencilMask) {
+		setMask: function(stencilMask) {
 			if (currentStencilMask !== stencilMask && !locked) {
 				gl.stencilMask(stencilMask);
 				currentStencilMask = stencilMask;
 			}
 		},
 
-		setFunc: function (stencilFunc, stencilRef, stencilMask, stencilFuncBack, stencilRefBack, stencilMaskBack) {
+		setFunc: function(stencilFunc, stencilRef, stencilMask, stencilFuncBack, stencilRefBack, stencilMaskBack) {
 			if (currentStencilFunc !== stencilFunc ||
 				currentStencilRef !== stencilRef ||
 				currentStencilFuncMask !== stencilMask ||
@@ -174,7 +174,7 @@ function StencilBuffer(gl, state) {
 			}
 		},
 
-		setOp: function (stencilFail, stencilZFail, stencilZPass, stencilFailBack, stencilZFailBack, stencilZPassBack) {
+		setOp: function(stencilFail, stencilZFail, stencilZPass, stencilFailBack, stencilZFailBack, stencilZPassBack) {
 			if (currentStencilFail	 !== stencilFail 	||
 				currentStencilZFail !== stencilZFail ||
 				currentStencilZPass !== stencilZPass ||
@@ -197,18 +197,18 @@ function StencilBuffer(gl, state) {
 			}
 		},
 
-		setLocked: function (lock) {
+		setLocked: function(lock) {
 			locked = lock;
 		},
 
-		setClear: function (stencil) {
+		setClear: function(stencil) {
 			if (currentStencilClear !== stencil) {
 				gl.clearStencil(stencil);
 				currentStencilClear = stencil;
 			}
 		},
 
-		reset: function () {
+		reset: function() {
 			locked = false;
 
 			currentStencilMask = null;
@@ -454,7 +454,7 @@ class WebGLState {
 			if (lineWidthRange[0] <= width && width <= lineWidthRange[1]) {
 				this.gl.lineWidth(width);
 			} else {
-				console.warn("GL_ALIASED_LINE_WIDTH_RANGE is [" + lineWidthRange[0] + "," + lineWidthRange[1] + "], but set to " + width + ".");
+				console.warn('GL_ALIASED_LINE_WIDTH_RANGE is [' + lineWidthRange[0] + ',' + lineWidthRange[1] + '], but set to ' + width + '.');
 			}
 			this.currentLineWidth = width;
 		}

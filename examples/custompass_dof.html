@@ -49,11 +49,11 @@
 		const objects = [];
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -115,7 +115,7 @@
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		const contextParams = { antialias: true, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
@@ -124,13 +124,13 @@
 		const shadowMapPass = new t3d.ShadowMapPass();
 
 		const dofPass = new t3d.ShaderPostPass(BokehShader);
-		dofPass.uniforms["focalDepth"] = 35.36;
-		dofPass.uniforms["focalLength"] = 50;
-		dofPass.uniforms["resolution"][0] = 1 / width;
-		dofPass.uniforms["resolution"][1] = 1 / height;
-		dofPass.uniforms["znear"] = 1;
-		dofPass.uniforms["zfar"] = 500;
-		dofPass.uniforms["gain"] = 0.1;
+		dofPass.uniforms['focalDepth'] = 35.36;
+		dofPass.uniforms['focalLength'] = 50;
+		dofPass.uniforms['resolution'][0] = 1 / width;
+		dofPass.uniforms['resolution'][1] = 1 / height;
+		dofPass.uniforms['znear'] = 1;
+		dofPass.uniforms['zfar'] = 500;
+		dofPass.uniforms['gain'] = 0.1;
 
 		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
@@ -149,12 +149,12 @@
 
 			const array = raycaster.intersectObject(scene, true);
 			if (array.length > 0) {
-				dofPass.uniforms["focalDepth"] = array[0].distance;
+				dofPass.uniforms['focalDepth'] = array[0].distance;
 			}
 		}
 
-		document.addEventListener("click", updateFocalDepth);
-		document.addEventListener("mousemove", updateFocalDepth);
+		document.addEventListener('click', updateFocalDepth);
+		document.addEventListener('mousemove', updateFocalDepth);
 
 		const gui = new GUI();
 		gui.add(dofPass.uniforms, 'focalDepth', 0, 50, 0.01).listen();
@@ -190,8 +190,8 @@
 			renderer.setClearColor(0, 0, 0, 1);
 			renderer.clear(true, true, true);
 
-			dofPass.uniforms["tColor"] = tempRenderTarget.texture;
-			dofPass.uniforms["tDepth"] = gBuffer.getDepthTexture();
+			dofPass.uniforms['tColor'] = tempRenderTarget.texture;
+			dofPass.uniforms['tDepth'] = gBuffer.getDepthTexture();
 			dofPass.render(renderer);
 		}
 		requestAnimationFrame(loop);
@@ -207,10 +207,10 @@
 
 			tempRenderTarget.resize(width, height);
 
-			dofPass.uniforms["resolution"][0] = 1 / width;
-			dofPass.uniforms["resolution"][1] = 1 / height;
+			dofPass.uniforms['resolution'][0] = 1 / width;
+			dofPass.uniforms['resolution'][1] = 1 / height;
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

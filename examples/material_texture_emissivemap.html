@@ -68,8 +68,8 @@
 
 		const params = { scaleX: 4, scaleY: 2 };
 		const gui = new GUI();
-		gui.add(params, "scaleX", 0.1, 5.0, 0.01);
-		gui.add(params, "scaleY", 0.1, 5.0, 0.01);
+		gui.add(params, 'scaleX', 0.1, 5.0, 0.01);
+		gui.add(params, 'scaleY', 0.1, 5.0, 0.01);
 
 		let offsetY = 0;
 		let randomCount = 0;
@@ -101,7 +101,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

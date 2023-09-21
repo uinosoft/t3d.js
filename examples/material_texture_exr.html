@@ -130,14 +130,14 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			let aspect = width / height;
+			aspect = width / height;
 
 			camera.setOrtho(-aspect, aspect, -1, 1, 0, 1);
 
 			backRenderTarget.resize(width, height);
 			renderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

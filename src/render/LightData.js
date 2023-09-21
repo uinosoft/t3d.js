@@ -398,8 +398,8 @@ function getLightCache(light) {
 		cache = {
 			direction: new Float32Array(3),
 			skyColor: new Float32Array([0, 0, 0]),
-			groundColor: new Float32Array([0, 0, 0]),
-		}
+			groundColor: new Float32Array([0, 0, 0])
+		};
 	} else if (light.isDirectionalLight) {
 		cache = {
 			direction: new Float32Array(3),

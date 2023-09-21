@@ -60,7 +60,7 @@
 			);
 		}
 
-		pointsGeometry.addAttribute("a_Position", new t3d.Attribute(new t3d.Buffer(new Float32Array(verticesArray), 3)));
+		pointsGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(verticesArray), 3)));
 
 		pointsGeometry.computeBoundingBox();
 		pointsGeometry.computeBoundingSphere();
@@ -105,7 +105,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let time = Date.now() * 0.00005;
+			const time = Date.now() * 0.00005;
 
 			for (let i = 0; i < pointsArray.length; i++) {
 				pointsArray[i].euler.y = time * (i < 4 ? i + 1 : -(i + 1));
@@ -125,7 +125,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

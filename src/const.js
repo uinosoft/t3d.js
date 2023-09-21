@@ -5,17 +5,17 @@
  * @enum {String}
  */
 const MATERIAL_TYPE = {
-	BASIC: "basic",
-	LAMBERT: "lambert",
-	PHONG: "phong",
-	PBR: "pbr",
-	PBR2: "pbr2",
+	BASIC: 'basic',
+	LAMBERT: 'lambert',
+	PHONG: 'phong',
+	PBR: 'pbr',
+	PBR2: 'pbr2',
 	MATCAP: 'matcap',
-	POINT: "point",
-	LINE: "line",
-	SHADER: "shader",
-	DEPTH: "depth",
-	DISTANCE: "distance"
+	POINT: 'point',
+	LINE: 'line',
+	SHADER: 'shader',
+	DEPTH: 'depth',
+	DISTANCE: 'distance'
 };
 
 export { MATERIAL_TYPE };
@@ -27,12 +27,12 @@ export { MATERIAL_TYPE };
  * @enum {String}
  */
 const BLEND_TYPE = {
-	NONE: "none",
-	NORMAL: "normal",
-	ADD: "add",
-	SUB: "sub",
-	MUL: "mul",
-	CUSTOM: "custom"
+	NONE: 'none',
+	NORMAL: 'normal',
+	ADD: 'add',
+	SUB: 'sub',
+	MUL: 'mul',
+	CUSTOM: 'custom'
 };
 
 export { BLEND_TYPE };
@@ -80,10 +80,10 @@ export { BLEND_FACTOR };
  * @enum {String}
  */
 const CULL_FACE_TYPE = {
-	NONE: "none",
-	FRONT: "front",
-	BACK: "back",
-	FRONT_AND_BACK: "front_and_back"
+	NONE: 'none',
+	FRONT: 'front',
+	BACK: 'back',
+	FRONT_AND_BACK: 'front_and_back'
 };
 
 export { CULL_FACE_TYPE };
@@ -95,9 +95,9 @@ export { CULL_FACE_TYPE };
  * @enum {String}
  */
 const DRAW_SIDE = {
-	FRONT: "front",
-	BACK: "back",
-	DOUBLE: "double"
+	FRONT: 'front',
+	BACK: 'back',
+	DOUBLE: 'double'
 };
 
 export { DRAW_SIDE };
@@ -109,9 +109,9 @@ export { DRAW_SIDE };
  * @enum {String}
  */
 const SHADING_TYPE = {
-	SMOOTH_SHADING: "smooth_shading",
-	FLAT_SHADING: "flat_shading"
-}
+	SMOOTH_SHADING: 'smooth_shading',
+	FLAT_SHADING: 'flat_shading'
+};
 
 export { SHADING_TYPE };
 
@@ -272,16 +272,16 @@ export { OPERATION };
  * @enum {String}
  */
 const SHADOW_TYPE = {
-	HARD: "hard",
-	POISSON_SOFT: "poisson_soft",
-	PCF3_SOFT: "pcf3_soft",
-	PCF5_SOFT: "pcf5_soft",
+	HARD: 'hard',
+	POISSON_SOFT: 'poisson_soft',
+	PCF3_SOFT: 'pcf3_soft',
+	PCF5_SOFT: 'pcf5_soft',
 	/** Only webgl2 */
-	PCSS16_SOFT: "pcss16_soft",
+	PCSS16_SOFT: 'pcss16_soft',
 	/** Only webgl2 */
-	PCSS32_SOFT: "pcss32_soft",
+	PCSS32_SOFT: 'pcss32_soft',
 	/** Only webgl2 */
-	PCSS64_SOFT: "pcss64_soft"
+	PCSS64_SOFT: 'pcss64_soft'
 };
 
 export { SHADOW_TYPE };
@@ -293,13 +293,13 @@ export { SHADOW_TYPE };
  * @enum {String}
  */
 const TEXEL_ENCODING_TYPE = {
-	LINEAR: "linear",
-	SRGB: "sRGB",
-	RGBE: "RGBE",
-	RGBM7: "RGBM7",
-	RGBM16: "RGBM16",
-	RGBD: "RGBD",
-	GAMMA: "Gamma"
+	LINEAR: 'linear',
+	SRGB: 'sRGB',
+	RGBE: 'RGBE',
+	RGBM7: 'RGBM7',
+	RGBM16: 'RGBM16',
+	RGBD: 'RGBD',
+	GAMMA: 'Gamma'
 };
 
 export { TEXEL_ENCODING_TYPE };
@@ -311,9 +311,9 @@ export { TEXEL_ENCODING_TYPE };
  * @enum {String}
  */
 const ENVMAP_COMBINE_TYPE = {
-	MULTIPLY: "ENVMAP_BLENDING_MULTIPLY",
-	MIX: "ENVMAP_BLENDING_MIX",
-	ADD: "ENVMAP_BLENDING_ADD"
+	MULTIPLY: 'ENVMAP_BLENDING_MULTIPLY',
+	MIX: 'ENVMAP_BLENDING_MIX',
+	ADD: 'ENVMAP_BLENDING_ADD'
 };
 
 export { ENVMAP_COMBINE_TYPE };
@@ -410,6 +410,6 @@ const QUERY_TYPE = {
 	ANY_SAMPLES_PASSED: 7000,
 	ANY_SAMPLES_PASSED_CONSERVATIVE: 7001,
 	TIME_ELAPSED: 7002
-}
+};
 
 export { QUERY_TYPE };

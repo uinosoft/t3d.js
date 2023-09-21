@@ -1,5 +1,5 @@
 const InfiniteGridShader = {
-	name: "infinite_grid",
+	name: 'infinite_grid',
 	defines: {
 		USE_LINEARFADE: true
 	},
@@ -104,6 +104,6 @@ const InfiniteGridShader = {
             #endif
         }
     `
-}
+};
 
 export { InfiniteGridShader };

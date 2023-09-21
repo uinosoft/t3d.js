@@ -49,7 +49,7 @@ class Material extends EventDispatcher {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.shaderName = "";
+		this.shaderName = '';
 
 		/**
 		 * Custom defines of the shader.
@@ -73,7 +73,7 @@ class Material extends EventDispatcher {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.vertexShader = "";
+		this.vertexShader = '';
 
 		/**
 		 * Custom GLSL code for fragment shader.
@@ -81,7 +81,7 @@ class Material extends EventDispatcher {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.fragmentShader = "";
+		this.fragmentShader = '';
 
 		/**
 		 * Override the renderer's default precision for this material.

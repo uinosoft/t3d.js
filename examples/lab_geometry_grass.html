@@ -91,7 +91,7 @@
         import { OrbitControls } from './jsm/controls/OrbitControls.js';
         import { SkyBox } from './jsm/objects/SkyBox.js';
         import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-        import { GeometryUtils } from './jsm/geometries/GeometryUtils.js'
+        import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
         import Stats from './libs/stats.module.js';
 
         let width = window.innerWidth || 2;
@@ -100,19 +100,19 @@
         const canvas = document.createElement('canvas');
         canvas.width = width * window.devicePixelRatio;
         canvas.height = height * window.devicePixelRatio;
-        canvas.style.width = width + "px";
-        canvas.style.height = height + "px";
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
         document.body.appendChild(canvas);
 
         const forwardRenderer = new ForwardRenderer(canvas, { antialias: true, alpha: true });
 
         const cube_texture = new TextureCubeLoader().load([
-        	"resources/skybox/skyboxsun25deg/px.jpg",
-        	"resources/skybox/skyboxsun25deg/nx.jpg",
-        	"resources/skybox/skyboxsun25deg/py.jpg",
-        	"resources/skybox/skyboxsun25deg/ny.jpg",
-        	"resources/skybox/skyboxsun25deg/pz.jpg",
-        	"resources/skybox/skyboxsun25deg/nz.jpg"
+        	'resources/skybox/skyboxsun25deg/px.jpg',
+        	'resources/skybox/skyboxsun25deg/nx.jpg',
+        	'resources/skybox/skyboxsun25deg/py.jpg',
+        	'resources/skybox/skyboxsun25deg/ny.jpg',
+        	'resources/skybox/skyboxsun25deg/pz.jpg',
+        	'resources/skybox/skyboxsun25deg/nz.jpg'
         ]);
 
         const scene = new t3d.Scene();
@@ -292,10 +292,10 @@
 
         	forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-        	canvas.style.width = width + "px";
-        	canvas.style.height = height + "px";
+        	canvas.style.width = width + 'px';
+        	canvas.style.height = height + 'px';
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

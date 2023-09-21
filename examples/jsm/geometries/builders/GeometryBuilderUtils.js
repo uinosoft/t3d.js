@@ -43,7 +43,7 @@ var GeometryBuilderUtils = {
 		}
 	}
 
-}
+};
 
 function area(contour) {
 	var n = contour.length;

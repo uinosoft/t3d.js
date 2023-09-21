@@ -37,7 +37,7 @@
 		import { DeferredShader } from './jsm/shaders/DeferredShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
-		const isMobile = (function () {
+		const isMobile = (function() {
 			if (!window.navigator) {
 				return true;
 			}
@@ -59,11 +59,11 @@
 		const scene = new t3d.Scene();
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -158,7 +158,7 @@
 		resultRenderTarget.texture.generateMipmaps = false;
 
 		const contextParams = { antialias: true, alpha: false };
-		const gl = canvas.getContext("webgl", contextParams); // this demo not support webgl2 yet (shadow)
+		const gl = canvas.getContext('webgl', contextParams); // this demo not support webgl2 yet (shadow)
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const shadowMapPass = new t3d.ShadowMapPass();
@@ -217,19 +217,19 @@
 		spotLightPrePass.material.premultipliedAlpha = true;
 
 		// gui
-		const params = { render: "prelight-deferred", pass: "result", fxaa: false, directionalLight: true, pointLight: true, spotLight: true };
+		const params = { render: 'prelight-deferred', pass: 'result', fxaa: false, directionalLight: true, pointLight: true, spotLight: true };
 		const gui = new GUI();
-		gui.add(params, "render", ["forward", "deferred", "prelight-deferred"]);
-		gui.add(params, "pass", ["normalDepth(Shininess)", "color(light)", "result"]);
-		gui.add(params, "fxaa");
+		gui.add(params, 'render', ['forward', 'deferred', 'prelight-deferred']);
+		gui.add(params, 'pass', ['normalDepth(Shininess)', 'color(light)', 'result']);
+		gui.add(params, 'fxaa');
 
-		const lightFolder = gui.addFolder("lights");
-		lightFolder.add(directionalLight, "visible").name("directionalLight");
-		lightFolder.add(pointLight, "visible").name("pointLight");
-		lightFolder.add(spotLight, "visible").name("spotLight");
+		const lightFolder = gui.addFolder('lights');
+		lightFolder.add(directionalLight, 'visible').name('directionalLight');
+		lightFolder.add(pointLight, 'visible').name('pointLight');
+		lightFolder.add(spotLight, 'visible').name('spotLight');
 
-		let matProjViewInverse = new t3d.Matrix4();
-		let cameraPos = new t3d.Vector3();
+		const matProjViewInverse = new t3d.Matrix4();
+		const cameraPos = new t3d.Vector3();
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -249,7 +249,7 @@
 
 			shadowMapPass.render(renderer, scene);
 
-			if (params.render === "forward") {
+			if (params.render === 'forward') {
 				renderer.setRenderTarget(backRenderTarget);
 
 				renderer.setClearColor(0, 0, 0, 1);
@@ -270,21 +270,21 @@
 				renderer.beginRender();
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
-						if (params.render == "prelight-deferred") {
-							if (!renderable.geometry.attributes["a_Normal"]) {
+						if (params.render == 'prelight-deferred') {
+							if (!renderable.geometry.attributes['a_Normal']) {
 								normalDepthShininessMaterial.shading = t3d.SHADING_TYPE.FLAT_SHADING;
 							} else {
 								normalDepthShininessMaterial.shading = t3d.SHADING_TYPE.SMOOTH_SHADING;
 							}
 							if (renderable.material.shininess !== undefined) {
-								normalDepthShininessMaterial.uniforms["shininess"] = renderable.material.shininess;
+								normalDepthShininessMaterial.uniforms['shininess'] = renderable.material.shininess;
 							} else {
-								normalDepthShininessMaterial.uniforms["shininess"] = 30;
+								normalDepthShininessMaterial.uniforms['shininess'] = 30;
 							}
 							normalDepthShininessMaterial.needsUpdate = true;
 							return normalDepthShininessMaterial;
 						} else {
-							if (!renderable.geometry.attributes["a_Normal"]) {
+							if (!renderable.geometry.attributes['a_Normal']) {
 								normalDepthMaterial.shading = t3d.SHADING_TYPE.FLAT_SHADING;
 							} else {
 								normalDepthMaterial.shading = t3d.SHADING_TYPE.SMOOTH_SHADING;
@@ -294,12 +294,12 @@
 						}
 					},
 					ifRender: function(renderable) {
-						return !!renderable.geometry.getAttribute("a_Normal");
+						return !!renderable.geometry.getAttribute('a_Normal');
 					}
 				});
 				renderer.endRender();
 
-				if (params.render == "deferred") {
+				if (params.render == 'deferred') {
 					// render color texture
 
 					renderer.setRenderTarget(colorRenderTarget);
@@ -315,19 +315,19 @@
 							colorMaterial.emissive.copy(renderable.material.emissive);
 		
 							if (renderable.material.specular !== undefined) {
-								colorMaterial.uniforms["specular"][0] = renderable.material.specular.r;
-								colorMaterial.uniforms["specular"][1] = renderable.material.specular.g;
-								colorMaterial.uniforms["specular"][2] = renderable.material.specular.b;
+								colorMaterial.uniforms['specular'][0] = renderable.material.specular.r;
+								colorMaterial.uniforms['specular'][1] = renderable.material.specular.g;
+								colorMaterial.uniforms['specular'][2] = renderable.material.specular.b;
 							} else {
-								colorMaterial.uniforms["specular"][0] = 0;
-								colorMaterial.uniforms["specular"][1] = 0;
-								colorMaterial.uniforms["specular"][2] = 0;
+								colorMaterial.uniforms['specular'][0] = 0;
+								colorMaterial.uniforms['specular'][1] = 0;
+								colorMaterial.uniforms['specular'][2] = 0;
 							}
 		
 							if (renderable.material.shininess !== undefined) {
-								colorMaterial.uniforms["shininess"] = renderable.material.shininess;
+								colorMaterial.uniforms['shininess'] = renderable.material.shininess;
 							} else {
-								colorMaterial.uniforms["shininess"] = 30;
+								colorMaterial.uniforms['shininess'] = 30;
 							}
 
 							colorMaterial.needsUpdate = true;
@@ -335,14 +335,14 @@
 							return colorMaterial;
 						},
 						ifRender: function(renderable) {
-							return !!renderable.geometry.getAttribute("a_Normal");
+							return !!renderable.geometry.getAttribute('a_Normal');
 						}
 					});
 					renderer.endRender();
 				}
 
 
-				if (params.render == "deferred") {
+				if (params.render == 'deferred') {
 					// render emissive light
 
 					renderer.setRenderTarget(resultRenderTarget);
@@ -350,9 +350,9 @@
 					renderer.setClearColor(0, 0, 0, 0);
 					renderer.clear(true, true, true);
 
-					emissiveLightPass.uniforms["samplerColor"] = colorRenderTarget.texture;
-					emissiveLightPass.uniforms["viewWidth"] = width;
-					emissiveLightPass.uniforms["viewHeight"] = height;
+					emissiveLightPass.uniforms['samplerColor'] = colorRenderTarget.texture;
+					emissiveLightPass.uniforms['viewWidth'] = width;
+					emissiveLightPass.uniforms['viewHeight'] = height;
 					emissiveLightPass.render(renderer);
 				}
 		
@@ -361,7 +361,7 @@
 
 				// render lights
 
-				if (params.render == "prelight-deferred") {
+				if (params.render == 'prelight-deferred') {
 					renderer.setRenderTarget(colorRenderTarget);
 
 					renderer.setClearColor(0, 0, 0, 0);
@@ -372,17 +372,17 @@
 				cameraPos.copy(renderStates.camera.position);
 
 				// directional
-				const d_Pass = params.render == "prelight-deferred" ? directionalLightPrePass : directionalLightPass;
-				if (params.render !== "prelight-deferred") {
-					d_Pass.uniforms["samplerNormalDepth"] = normalDepthRenderTarget.texture;
-					d_Pass.uniforms["samplerColor"] = colorRenderTarget.texture;
+				const d_Pass = params.render == 'prelight-deferred' ? directionalLightPrePass : directionalLightPass;
+				if (params.render !== 'prelight-deferred') {
+					d_Pass.uniforms['samplerNormalDepth'] = normalDepthRenderTarget.texture;
+					d_Pass.uniforms['samplerColor'] = colorRenderTarget.texture;
 				} else {
-					d_Pass.uniforms["samplerNormalDepthShininess"] = normalDepthRenderTarget.texture;
+					d_Pass.uniforms['samplerNormalDepthShininess'] = normalDepthRenderTarget.texture;
 				}
-				d_Pass.uniforms["viewWidth"] = width;
-				d_Pass.uniforms["viewHeight"] = height;
-				d_Pass.uniforms["matProjViewInverse"].set(matProjViewInverse.elements);
-				d_Pass.uniforms["cameraPos"] = [cameraPos.x, cameraPos.y, cameraPos.z];
+				d_Pass.uniforms['viewWidth'] = width;
+				d_Pass.uniforms['viewHeight'] = height;
+				d_Pass.uniforms['matProjViewInverse'].set(matProjViewInverse.elements);
+				d_Pass.uniforms['cameraPos'] = [cameraPos.x, cameraPos.y, cameraPos.z];
 
 				const directionalLights = renderStates.lights.directional;
 				const directionalShadows = renderStates.lights.directionalShadow;
@@ -392,39 +392,39 @@
 				for (let i = 0; i < directsNum; i++) {
 					const directionalLight = directionalLights[i];
 
-					d_Pass.uniforms["lightColor"] = [directionalLight.color[0], directionalLight.color[1], directionalLight.color[2]];
-					d_Pass.uniforms["lightDirectionVS"] = [-directionalLight.direction[0], -directionalLight.direction[1], -directionalLight.direction[2]];
+					d_Pass.uniforms['lightColor'] = [directionalLight.color[0], directionalLight.color[1], directionalLight.color[2]];
+					d_Pass.uniforms['lightDirectionVS'] = [-directionalLight.direction[0], -directionalLight.direction[1], -directionalLight.direction[2]];
 
 					if (i < directShadowNum) {
 						const directionalShadow = directionalShadows[i];
 		
-						d_Pass.material.defines["SHADOW"] = 1;
-						d_Pass.uniforms["shadowBias"] = directionalShadow.shadowBias[0];
-						d_Pass.uniforms["shadowRadius"] = directionalShadow.shadowParams[0];
-						d_Pass.uniforms["shadowMapSize"][0] = directionalShadow.shadowMapSize[0];
-						d_Pass.uniforms["shadowMapSize"][1] = directionalShadow.shadowMapSize[1];
+						d_Pass.material.defines['SHADOW'] = 1;
+						d_Pass.uniforms['shadowBias'] = directionalShadow.shadowBias[0];
+						d_Pass.uniforms['shadowRadius'] = directionalShadow.shadowParams[0];
+						d_Pass.uniforms['shadowMapSize'][0] = directionalShadow.shadowMapSize[0];
+						d_Pass.uniforms['shadowMapSize'][1] = directionalShadow.shadowMapSize[1];
 
-						d_Pass.uniforms["shadowMap"] = renderer.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
-						d_Pass.uniforms["shadowMatrix"].set(renderStates.lights.directionalShadowMatrix, i * 16);
+						d_Pass.uniforms['shadowMap'] = renderer.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
+						d_Pass.uniforms['shadowMatrix'].set(renderStates.lights.directionalShadowMatrix, i * 16);
 					} else {
-						d_Pass.material.defines["SHADOW"] = 0;
+						d_Pass.material.defines['SHADOW'] = 0;
 					}
 
 					d_Pass.render(renderer);
 				}
 
 				// point
-				const p_Pass = params.render == "prelight-deferred" ? pointLightPrePass : pointLightPass;
-				if (params.render !== "prelight-deferred") {
-					p_Pass.uniforms["samplerNormalDepth"] = normalDepthRenderTarget.texture;
-					p_Pass.uniforms["samplerColor"] = colorRenderTarget.texture;
+				const p_Pass = params.render == 'prelight-deferred' ? pointLightPrePass : pointLightPass;
+				if (params.render !== 'prelight-deferred') {
+					p_Pass.uniforms['samplerNormalDepth'] = normalDepthRenderTarget.texture;
+					p_Pass.uniforms['samplerColor'] = colorRenderTarget.texture;
 				} else {
-					p_Pass.uniforms["samplerNormalDepthShininess"] = normalDepthRenderTarget.texture;
+					p_Pass.uniforms['samplerNormalDepthShininess'] = normalDepthRenderTarget.texture;
 				}
-				p_Pass.uniforms["viewWidth"] = width;
-				p_Pass.uniforms["viewHeight"] = height;
-				p_Pass.uniforms["matProjViewInverse"].set(matProjViewInverse.elements);
-				p_Pass.uniforms["cameraPos"] = [cameraPos.x, cameraPos.y, cameraPos.z];
+				p_Pass.uniforms['viewWidth'] = width;
+				p_Pass.uniforms['viewHeight'] = height;
+				p_Pass.uniforms['matProjViewInverse'].set(matProjViewInverse.elements);
+				p_Pass.uniforms['cameraPos'] = [cameraPos.x, cameraPos.y, cameraPos.z];
 
 				const pointLights = renderStates.lights.point;
 				const pointShadows = renderStates.lights.pointShadow;
@@ -434,43 +434,43 @@
 				for (let i = 0; i < pointsNum; i++) {
 					const pointLight = pointLights[i];
 
-					p_Pass.uniforms["lightColor"] = [pointLight.color[0], pointLight.color[1], pointLight.color[2]];
-					p_Pass.uniforms["lightPositionVS"] = [pointLight.position[0], pointLight.position[1], pointLight.position[2]];
-					p_Pass.uniforms["lightRadius"] = pointLight.distance;
-					p_Pass.uniforms["lightDecay"] = pointLight.decay;
+					p_Pass.uniforms['lightColor'] = [pointLight.color[0], pointLight.color[1], pointLight.color[2]];
+					p_Pass.uniforms['lightPositionVS'] = [pointLight.position[0], pointLight.position[1], pointLight.position[2]];
+					p_Pass.uniforms['lightRadius'] = pointLight.distance;
+					p_Pass.uniforms['lightDecay'] = pointLight.decay;
 
 					if (i < pointShadowNum) {
 						const pointShadow = pointShadows[i];
 
-						p_Pass.material.defines["SHADOW"] = 1;
-						p_Pass.uniforms["shadowBias"] = pointShadow.shadowBias[0];
-						p_Pass.uniforms["shadowRadius"] = pointShadow.shadowParams[0];
-						p_Pass.uniforms["shadowMapSize"][0] = pointShadow.shadowMapSize[0];
-						p_Pass.uniforms["shadowMapSize"][1] = pointShadow.shadowMapSize[1];
+						p_Pass.material.defines['SHADOW'] = 1;
+						p_Pass.uniforms['shadowBias'] = pointShadow.shadowBias[0];
+						p_Pass.uniforms['shadowRadius'] = pointShadow.shadowParams[0];
+						p_Pass.uniforms['shadowMapSize'][0] = pointShadow.shadowMapSize[0];
+						p_Pass.uniforms['shadowMapSize'][1] = pointShadow.shadowMapSize[1];
 
-						p_Pass.uniforms["shadowMap"] = renderStates.lights.pointShadowMap[i];
+						p_Pass.uniforms['shadowMap'] = renderStates.lights.pointShadowMap[i];
 
-						p_Pass.uniforms["shadowCameraNear"] = pointShadow.shadowCameraRange[0];
-						p_Pass.uniforms["shadowCameraFar"] = pointShadow.shadowCameraRange[1];
+						p_Pass.uniforms['shadowCameraNear'] = pointShadow.shadowCameraRange[0];
+						p_Pass.uniforms['shadowCameraFar'] = pointShadow.shadowCameraRange[1];
 					} else {
-						p_Pass.material.defines["SHADOW"] = 0;
+						p_Pass.material.defines['SHADOW'] = 0;
 					}
 
 					p_Pass.render(renderer);
 				}
 
 				// spot lights
-				const s_Pass = params.render == "prelight-deferred" ? spotLightPrePass : spotLightPass;
-				if (params.render !== "prelight-deferred") {
-					s_Pass.uniforms["samplerNormalDepth"] = normalDepthRenderTarget.texture;
-					s_Pass.uniforms["samplerColor"] = colorRenderTarget.texture;
+				const s_Pass = params.render == 'prelight-deferred' ? spotLightPrePass : spotLightPass;
+				if (params.render !== 'prelight-deferred') {
+					s_Pass.uniforms['samplerNormalDepth'] = normalDepthRenderTarget.texture;
+					s_Pass.uniforms['samplerColor'] = colorRenderTarget.texture;
 				} else {
-					s_Pass.uniforms["samplerNormalDepthShininess"] = normalDepthRenderTarget.texture;
+					s_Pass.uniforms['samplerNormalDepthShininess'] = normalDepthRenderTarget.texture;
 				}
-				s_Pass.uniforms["viewWidth"] = width;
-				s_Pass.uniforms["viewHeight"] = height;
-				s_Pass.uniforms["matProjViewInverse"].set(matProjViewInverse.elements);
-				s_Pass.uniforms["cameraPos"] = [cameraPos.x, cameraPos.y, cameraPos.z];
+				s_Pass.uniforms['viewWidth'] = width;
+				s_Pass.uniforms['viewHeight'] = height;
+				s_Pass.uniforms['matProjViewInverse'].set(matProjViewInverse.elements);
+				s_Pass.uniforms['cameraPos'] = [cameraPos.x, cameraPos.y, cameraPos.z];
 
 				const spotLights = renderStates.lights.spot;
 				const spotShadows = renderStates.lights.spotShadow;
@@ -480,33 +480,33 @@
 				for (let i = 0; i < spotsNum; i++) {
 					const spotLight = spotLights[i];
 
-					s_Pass.uniforms["lightColor"] = [spotLight.color[0], spotLight.color[1], spotLight.color[2]];
-					s_Pass.uniforms["lightPositionVS"] = [spotLight.position[0], spotLight.position[1], spotLight.position[2]];
-					s_Pass.uniforms["lightDirectionVS"] = [-spotLight.direction[0], -spotLight.direction[1], -spotLight.direction[2]];
-					s_Pass.uniforms["lightConeCos"] = spotLight.coneCos;
-					s_Pass.uniforms["lightPenumbraCos"] = spotLight.penumbraCos;
-					s_Pass.uniforms["lightRadius"] = spotLight.distance;
-					s_Pass.uniforms["lightDecay"] = spotLight.decay;
+					s_Pass.uniforms['lightColor'] = [spotLight.color[0], spotLight.color[1], spotLight.color[2]];
+					s_Pass.uniforms['lightPositionVS'] = [spotLight.position[0], spotLight.position[1], spotLight.position[2]];
+					s_Pass.uniforms['lightDirectionVS'] = [-spotLight.direction[0], -spotLight.direction[1], -spotLight.direction[2]];
+					s_Pass.uniforms['lightConeCos'] = spotLight.coneCos;
+					s_Pass.uniforms['lightPenumbraCos'] = spotLight.penumbraCos;
+					s_Pass.uniforms['lightRadius'] = spotLight.distance;
+					s_Pass.uniforms['lightDecay'] = spotLight.decay;
 
 					if (i < spotShadowNum) {
 						const spotShadow = spotShadows[i];
 
-						s_Pass.material.defines["SHADOW"] = 1;
-						s_Pass.uniforms["shadowBias"] = spotShadow.shadowBias[0];
-						s_Pass.uniforms["shadowRadius"] = spotShadow.shadowParams[0];
-						s_Pass.uniforms["shadowMapSize"][0] = spotShadow.shadowMapSize[0];
-						s_Pass.uniforms["shadowMapSize"][1] = spotShadow.shadowMapSize[1];
+						s_Pass.material.defines['SHADOW'] = 1;
+						s_Pass.uniforms['shadowBias'] = spotShadow.shadowBias[0];
+						s_Pass.uniforms['shadowRadius'] = spotShadow.shadowParams[0];
+						s_Pass.uniforms['shadowMapSize'][0] = spotShadow.shadowMapSize[0];
+						s_Pass.uniforms['shadowMapSize'][1] = spotShadow.shadowMapSize[1];
 
-						s_Pass.uniforms["shadowMap"] = renderer.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
-						s_Pass.uniforms["shadowMatrix"].set(renderStates.lights.spotShadowMatrix, i * 16);
+						s_Pass.uniforms['shadowMap'] = renderer.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
+						s_Pass.uniforms['shadowMatrix'].set(renderStates.lights.spotShadowMatrix, i * 16);
 					} else {
-						s_Pass.material.defines["SHADOW"] = 0;
+						s_Pass.material.defines['SHADOW'] = 0;
 					}
 
 					s_Pass.render(renderer);
 				}
 
-				if (params.render == "prelight-deferred") {
+				if (params.render == 'prelight-deferred') {
 					// reconstruction
 
 					renderer.setRenderTarget(resultRenderTarget);
@@ -514,9 +514,9 @@
 					renderer.setClearColor(0, 0, 0, 1);
 					renderer.clear(true, true, true);
 
-					reconstructionMaterial.uniforms["viewWidth"] = width;
-					reconstructionMaterial.uniforms["viewHeight"] = height;
-					reconstructionMaterial.uniforms["samplerLight"] = colorRenderTarget.texture;
+					reconstructionMaterial.uniforms['viewWidth'] = width;
+					reconstructionMaterial.uniforms['viewHeight'] = height;
+					reconstructionMaterial.uniforms['samplerLight'] = colorRenderTarget.texture;
 
 					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
@@ -527,19 +527,19 @@
 								reconstructionMaterial.emissive.copy(renderable.material.emissive);
 		
 								if (renderable.material.specular !== undefined) {
-									reconstructionMaterial.uniforms["specular"][0] = renderable.material.specular.r;
-									reconstructionMaterial.uniforms["specular"][1] = renderable.material.specular.g;
-									reconstructionMaterial.uniforms["specular"][2] = renderable.material.specular.b;
+									reconstructionMaterial.uniforms['specular'][0] = renderable.material.specular.r;
+									reconstructionMaterial.uniforms['specular'][1] = renderable.material.specular.g;
+									reconstructionMaterial.uniforms['specular'][2] = renderable.material.specular.b;
 								} else {
-									reconstructionMaterial.uniforms["specular"][0] = 0;
-									reconstructionMaterial.uniforms["specular"][1] = 0;
-									reconstructionMaterial.uniforms["specular"][2] = 0;
+									reconstructionMaterial.uniforms['specular'][0] = 0;
+									reconstructionMaterial.uniforms['specular'][1] = 0;
+									reconstructionMaterial.uniforms['specular'][2] = 0;
 								}
 		
 								if (renderable.material.shininess !== undefined) {
-									reconstructionMaterial.uniforms["shininess"] = renderable.material.shininess;
+									reconstructionMaterial.uniforms['shininess'] = renderable.material.shininess;
 								} else {
-									reconstructionMaterial.uniforms["shininess"] = 30;
+									reconstructionMaterial.uniforms['shininess'] = 30;
 								}
 
 								reconstructionMaterial.needsUpdate = true;
@@ -554,7 +554,7 @@
 				}
 
 				// prelight-deferred support transparent objects
-				if (params.render == "prelight-deferred") {
+				if (params.render == 'prelight-deferred') {
 					// render transparent objects forward
 					renderer.beginRender();
 					renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
@@ -570,15 +570,15 @@
 
 				const pass = params.fxaa ? fxaaPass : copyPass;
 
-				if (params.pass === "normalDepth(Shininess)") {
-					pass.uniforms["tDiffuse"] = normalDepthRenderTarget.texture;
-				} else if (params.pass === "color(light)") {
-					pass.uniforms["tDiffuse"] = colorRenderTarget.texture;
-				} else if (params.pass === "result") {
-					pass.uniforms["tDiffuse"] = resultRenderTarget.texture;
+				if (params.pass === 'normalDepth(Shininess)') {
+					pass.uniforms['tDiffuse'] = normalDepthRenderTarget.texture;
+				} else if (params.pass === 'color(light)') {
+					pass.uniforms['tDiffuse'] = colorRenderTarget.texture;
+				} else if (params.pass === 'result') {
+					pass.uniforms['tDiffuse'] = resultRenderTarget.texture;
 				}
 
-				fxaaPass.uniforms["resolution"] = [1 / width, 1 / height];
+				fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 		
 				pass.render(renderer);
 			}
@@ -596,7 +596,7 @@
 			colorRenderTarget.resize(width, height);
 			resultRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

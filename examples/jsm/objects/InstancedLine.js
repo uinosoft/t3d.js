@@ -99,10 +99,10 @@ export class InstancedLineGeometry extends Geometry {
 		let dist = 0, breakIndex = 0;
 
 		points.forEach((p, i) => {
-			let point = isVectorArray ? p : _vec3_1.fromArray(p);
+			const point = isVectorArray ? p : _vec3_1.fromArray(p);
 
 			if (i > 0) {
-				let prevPoint = isVectorArray ? points[i - 1] : _vec3_2.fromArray(points[i - 1]);
+				const prevPoint = isVectorArray ? points[i - 1] : _vec3_2.fromArray(points[i - 1]);
 				dist += point.distanceTo(prevPoint);
 			}
 
@@ -131,7 +131,7 @@ export class InstancedLineGeometry extends Geometry {
 		// Convert to instance buffer
 		// prev2---prev1---next1---next2
 
-		let stride = useBreak ? 5 : 4;
+		const stride = useBreak ? 5 : 4;
 
 		const instanceBuffer = new Buffer(new Float32Array(bufferArray), stride, 1);
 		instanceBuffer.count = Math.max(0, instanceBuffer.count - 3); // fix count
@@ -215,7 +215,7 @@ export class InstancedLineGeometry extends Geometry {
 }
 
 const instancedLineShader = {
-	name: "instanced_line",
+	name: 'instanced_line',
 	defines: {
 		LINE_BREAK: false,
 		DISABLE_CORNER_BROKEN: false,

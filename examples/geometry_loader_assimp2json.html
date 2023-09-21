@@ -45,14 +45,14 @@
 
 		const scene = new t3d.Scene();
 
-		const jeep = "resources/models/assimp/jeep/jeep.assimp.json";
-		const interior = "resources/models/assimp/interior/interior.assimp.json";
+		const jeep = 'resources/models/assimp/jeep/jeep.assimp.json';
+		const interior = 'resources/models/assimp/interior/interior.assimp.json';
 
 		const loader1 = new AssimpJsonLoader();
-		loader1.load(jeep, function (object) {
+		loader1.load(jeep, function(object) {
 			object.scale.set(0.4, 0.4, 0.4);
 
-			object.traverse(function (obj) {
+			object.traverse(function(obj) {
 				if (obj.isMesh) {
 					obj.castShadow = true;
 				}
@@ -65,8 +65,8 @@
 		});
 
 		const loader2 = new AssimpJsonLoader();
-		loader2.load(interior, function (object) {
-			object.traverse(function (obj) {
+		loader2.load(interior, function(object) {
+			object.traverse(function(obj) {
 				if (obj.isMesh) {
 					obj.receiveShadow = true;
 				}
@@ -92,7 +92,7 @@
 
 		const gui = new GUI();
 		const params = { fov: 45 };
-		gui.add(params, "fov", 0, 180).onChange(val => {
+		gui.add(params, 'fov', 0, 180).onChange(val => {
 			camera.setPerspective(val / 180 * Math.PI, width / height, 1, 1000);
 		});
 
@@ -118,7 +118,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 

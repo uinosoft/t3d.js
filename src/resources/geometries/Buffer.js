@@ -1,4 +1,4 @@
-import { BUFFER_USAGE } from "../../const.js";
+import { BUFFER_USAGE } from '../../const.js';
 
 /**
  * The Buffer contain the data that is used for the geometry of 3D models, animations, and skinning.

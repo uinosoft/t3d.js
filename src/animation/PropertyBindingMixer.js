@@ -16,7 +16,7 @@ class PropertyBindingMixer {
 	constructor(target, propertyPath, typeName, valueSize) {
 		this.target = null;
 
-		this.property = "";
+		this.property = '';
 
 		this.parseBinding(target, propertyPath);
 
@@ -56,7 +56,7 @@ class PropertyBindingMixer {
 	}
 
 	parseBinding(target, propertyPath) {
-		propertyPath = propertyPath.split(".");
+		propertyPath = propertyPath.split('.');
 
 		if (propertyPath.length > 1) {
 			let property = target[propertyPath[0]];

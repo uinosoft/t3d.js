@@ -49,7 +49,7 @@ class SkyBox extends Mesh {
 		} else {
 			this.material.diffuseMap = val;
 			this.material.uniforms.flip = -1;
-			this.material.defines['PANORAMA'] = "";
+			this.material.defines['PANORAMA'] = '';
 		}
 		this.material.needsUpdate = true;
 	}
@@ -142,6 +142,6 @@ SkyBox.SkyBoxShader = {
 		}
 	`
 
-}
+};
 
 export { SkyBox };

@@ -12,7 +12,7 @@ class PropertyMap {
      * @param {String} prefix - The prefix of the properties name.
      */
 	constructor(prefix) {
-		this._key = prefix + "$";
+		this._key = prefix + '$';
 		this._count = 0;
 	}
 

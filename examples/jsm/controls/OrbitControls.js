@@ -91,25 +91,25 @@ class OrbitControls {
 		// public methods
 		//
 
-		this.getPolarAngle = function () {
+		this.getPolarAngle = function() {
 			return spherical.phi;
 		};
 
-		this.getAzimuthalAngle = function () {
+		this.getAzimuthalAngle = function() {
 			return spherical.theta;
 		};
 
-		this.listenToKeyEvents = function (domElement) {
+		this.listenToKeyEvents = function(domElement) {
 			domElement.addEventListener('keydown', onKeyDown);
 			scope._domElementKeyEvents = domElement;
 		};
 
-		this.saveState = function () {
+		this.saveState = function() {
 			scope.target0.copy(scope.target);
 			scope.position0.copy(scope.object.position);
 		};
 
-		this.reset = function () {
+		this.reset = function() {
 			scope.target.copy(scope.target0);
 			scope.object.position.copy(scope.position0);
 
@@ -220,7 +220,7 @@ class OrbitControls {
 				// using small-angle approximation cos(x/2) = 1 - x^2 / 8
 
 				if (lastPosition.distanceToSquared(scope.object.position) > EPS ||
-                8 * (1 - lastQuaternion.dot(scope.object.quaternion)) > EPS) {
+					8 * (1 - lastQuaternion.dot(scope.object.quaternion)) > EPS) {
 					lastPosition.copy(scope.object.position);
 					lastQuaternion.copy(scope.object.quaternion);
 
@@ -228,7 +228,7 @@ class OrbitControls {
 				}
 
 				return false;
-			}
+			};
 		}();
 
 		this.dispose = function() {
@@ -296,7 +296,7 @@ class OrbitControls {
 			sphericalDelta.phi -= angle;
 		}
 
-		const panLeft = function () {
+		const panLeft = function() {
 			const v = new Vector3();
 
 			return function panLeft(distance, objectMatrix) {
@@ -307,7 +307,7 @@ class OrbitControls {
 			};
 		}();
 
-		const panUp = function () {
+		const panUp = function() {
 			const v = new Vector3();
 
 			return function panUp(distance, objectMatrix) {
@@ -325,7 +325,7 @@ class OrbitControls {
 		}();
 
 		// deltaX and deltaY are in pixels; right and down are positive
-		const pan = function () {
+		const pan = function() {
 			const offset = new Vector3();
 
 			const p = new Vector3();
@@ -340,7 +340,7 @@ class OrbitControls {
 				const depth = p.set(0, 0, targetDistance).applyMatrix4(scope.object.projectionMatrix).z;
 
 				// full-screen to world distance
-				let distance = p.set(0, -1, depth).applyMatrix4(scope.object.projectionMatrixInverse).y;
+				const distance = p.set(0, -1, depth).applyMatrix4(scope.object.projectionMatrixInverse).y;
 				// distance *= 2;
 
 				// we use only clientHeight here so aspect ratio does not distort speed
@@ -502,7 +502,7 @@ class OrbitControls {
 
 			const element = scope.domElement;
 
-			rotateLeft(2 * Math.PI * rotateDelta.x / element.clientHeight);  // prevent the browser from scrolling on cursor keys
+			rotateLeft(2 * Math.PI * rotateDelta.x / element.clientHeight); // prevent the browser from scrolling on cursor keys
 
 			rotateUp(2 * Math.PI * rotateDelta.y / element.clientHeight);
 

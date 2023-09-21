@@ -78,7 +78,7 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
@@ -88,11 +88,11 @@
 		ssaoPass.setNoiseSize(256);
 		ssaoPass.setKernelSize(32);
 		// ssaoPass.material.defines["ALCHEMY"] = 1;
-		let radius = 10;
-		ssaoPass.uniforms["intensity"] = 1;
-		ssaoPass.uniforms["power"] = 1;
-		ssaoPass.uniforms["bias"] = radius / 50;
-		ssaoPass.uniforms["radius"] = radius;
+		const radius = 10;
+		ssaoPass.uniforms['intensity'] = 1;
+		ssaoPass.uniforms['power'] = 1;
+		ssaoPass.uniforms['bias'] = radius / 50;
+		ssaoPass.uniforms['radius'] = radius;
 
 		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
@@ -104,18 +104,18 @@
 		tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget3.texture.generateMipmaps = false;
 
-		let projection = new t3d.Matrix4();
-		let projectionInv = new t3d.Matrix4();
-		let viewInverseTranspose = new t3d.Matrix4();
+		const projection = new t3d.Matrix4();
+		const projectionInv = new t3d.Matrix4();
+		const viewInverseTranspose = new t3d.Matrix4();
 
-		ssaoPass.uniforms["projection"] = projection.elements;
-		ssaoPass.uniforms["projectionInv"] = projectionInv.elements;
-		ssaoPass.uniforms["viewInverseTranspose"] = viewInverseTranspose.elements;
+		ssaoPass.uniforms['projection'] = projection.elements;
+		ssaoPass.uniforms['projectionInv'] = projectionInv.elements;
+		ssaoPass.uniforms['viewInverseTranspose'] = viewInverseTranspose.elements;
 
-		ssaoPass.uniforms["normalTex"] = gBuffer.getNormalGlossinessTexture();
-		ssaoPass.uniforms["depthTex"] = gBuffer.getDepthTexture();
-		ssaoPass.uniforms["texSize"][0] = width;
-		ssaoPass.uniforms["texSize"][1] = height;
+		ssaoPass.uniforms['normalTex'] = gBuffer.getNormalGlossinessTexture();
+		ssaoPass.uniforms['depthTex'] = gBuffer.getDepthTexture();
+		ssaoPass.uniforms['texSize'][0] = width;
+		ssaoPass.uniforms['texSize'][1] = height;
 
 		const blurPass = new t3d.ShaderPostPass(BlurShader);
 		blurPass.material.blending = t3d.BLEND_TYPE.NONE;
@@ -123,53 +123,53 @@
 		blurPass.material.blendDst = t3d.BLEND_FACTOR.SRC_COLOR;
 		blurPass.material.depthWrite = false;
 		blurPass.material.depthTest = false;
-		blurPass.uniforms["projection"] = projection.elements;
-		blurPass.uniforms["viewInverseTranspose"] = viewInverseTranspose.elements;
+		blurPass.uniforms['projection'] = projection.elements;
+		blurPass.uniforms['viewInverseTranspose'] = viewInverseTranspose.elements;
 
-		blurPass.uniforms["normalTex"] = gBuffer.getNormalGlossinessTexture();
-		blurPass.uniforms["depthTex"] = gBuffer.getDepthTexture();
-		blurPass.uniforms["textureSize"][0] = width;
-		blurPass.uniforms["textureSize"][1] = height;
+		blurPass.uniforms['normalTex'] = gBuffer.getNormalGlossinessTexture();
+		blurPass.uniforms['depthTex'] = gBuffer.getDepthTexture();
+		blurPass.uniforms['textureSize'][0] = width;
+		blurPass.uniforms['textureSize'][1] = height;
 
-		blurPass.uniforms["blurSize"] = 2;
-		blurPass.uniforms["depthRange"] = 1;
+		blurPass.uniforms['blurSize'] = 2;
+		blurPass.uniforms['depthRange'] = 1;
 
-		blurPass.material.defines["NORMALTEX_ENABLED"] = 1;
-		blurPass.material.defines["DEPTHTEX_ENABLED"] = 1;
-		ssaoPass.material.defines["DEPTH_PACKING"] = 0;
-		blurPass.material.defines["DEPTH_PACKING"] = 0;
+		blurPass.material.defines['NORMALTEX_ENABLED'] = 1;
+		blurPass.material.defines['DEPTHTEX_ENABLED'] = 1;
+		ssaoPass.material.defines['DEPTH_PACKING'] = 0;
+		blurPass.material.defines['DEPTH_PACKING'] = 0;
 
 		let beauty = true;
 		let ssao = true;
 
-		const params = { type: "BEAUTY + SSAO", kernelSize: 32 };
+		const params = { type: 'BEAUTY + SSAO', kernelSize: 32 };
 		const gui = new GUI();
-		gui.add(params, "type", ["BEAUTY + SSAO", "BEAUTY", "SSAO"]).onChange(val => {
+		gui.add(params, 'type', ['BEAUTY + SSAO', 'BEAUTY', 'SSAO']).onChange(val => {
 			switch (val) {
-				case "BEAUTY + SSAO":
+				case 'BEAUTY + SSAO':
 					beauty = true;
 					ssao = true;
 					break;
-				case "BEAUTY":
+				case 'BEAUTY':
 					beauty = true;
 					ssao = false;
 					break;
-				case "SSAO":
+				case 'SSAO':
 					beauty = false;
 					ssao = true;
 					break;
 			}
 		});
-		gui.add(params, "kernelSize", [16, 32, 64, 128, 256]).onChange(val => {
+		gui.add(params, 'kernelSize', [16, 32, 64, 128, 256]).onChange(val => {
 			ssaoPass.setKernelSize(val);
 		});
-		gui.add(ssaoPass.uniforms, "intensity", 0, 2, 0.1);
-		gui.add(ssaoPass.uniforms, "power", 0, 5, 1);
-		gui.add(ssaoPass.uniforms, "radius", 0, 20, 0.01);
-		gui.add(ssaoPass.uniforms, "bias", 0, 5, 0.01);
+		gui.add(ssaoPass.uniforms, 'intensity', 0, 2, 0.1);
+		gui.add(ssaoPass.uniforms, 'power', 0, 5, 1);
+		gui.add(ssaoPass.uniforms, 'radius', 0, 20, 0.01);
+		gui.add(ssaoPass.uniforms, 'bias', 0, 5, 0.01);
 
-		gui.add(blurPass.uniforms, "blurSize", 0, 2, 0.01);
-		gui.add(blurPass.uniforms, "depthRange", 0, 3, 0.01);
+		gui.add(blurPass.uniforms, 'blurSize', 0, 2, 0.01);
+		gui.add(blurPass.uniforms, 'depthRange', 0, 3, 0.01);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -199,8 +199,8 @@
 			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, true, true);
 
-			blurPass.uniforms["tDiffuse"] = tempRenderTarget2.texture;
-			blurPass.uniforms["direction"] = 0;
+			blurPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
+			blurPass.uniforms['direction'] = 0;
 			blurPass.render(renderer);
 
 			renderer.setRenderTarget(backRenderTarget);
@@ -215,8 +215,8 @@
 			}
 
 			if (ssao) {
-				blurPass.uniforms["tDiffuse"] = tempRenderTarget3.texture;
-				blurPass.uniforms["direction"] = 1;
+				blurPass.uniforms['tDiffuse'] = tempRenderTarget3.texture;
+				blurPass.uniforms['direction'] = 1;
 				blurPass.render(renderer);
 			}
 
@@ -238,13 +238,13 @@
 			tempRenderTarget2.resize(width, height);
 			tempRenderTarget3.resize(width, height);
 
-			ssaoPass.uniforms["texSize"][0] = width;
-			ssaoPass.uniforms["texSize"][1] = height;
+			ssaoPass.uniforms['texSize'][0] = width;
+			ssaoPass.uniforms['texSize'][1] = height;
 
-			blurPass.uniforms["textureSize"][0] = width;
-			blurPass.uniforms["textureSize"][1] = height;
+			blurPass.uniforms['textureSize'][0] = width;
+			blurPass.uniforms['textureSize'][1] = height;
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

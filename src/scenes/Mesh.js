@@ -92,13 +92,13 @@ class Mesh extends Object3D {
 			return;
 		}
 
-		const position = geometry.getAttribute("a_Position");
+		const position = geometry.getAttribute('a_Position');
 
 		if (!position) {
 			return;
 		}
 
-		const uv = geometry.getAttribute("a_Uv");
+		const uv = geometry.getAttribute('a_Uv');
 
 		const morphPosition = geometry.morphAttributes.position;
 
@@ -225,7 +225,7 @@ function checkGeometryIntersection(object, ray, _ray, position, morphPosition, u
 			b: b,
 			c: c,
 			normal: new Vector3()
-		}
+		};
 
 		Triangle.normal(_vA, _vB, _vC, face.normal);
 

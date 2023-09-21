@@ -91,7 +91,7 @@
 
 		const mouse = new t3d.Vector2();
 
-		document.addEventListener("mousemove", function(e) {
+		document.addEventListener('mousemove', function(e) {
 			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -131,7 +131,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

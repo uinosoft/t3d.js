@@ -19,7 +19,7 @@ class AnimationMixer {
 	 */
 	addAction(action) {
 		if (this._actions.indexOf(action) !== -1) {
-			console.warn("AnimationMixer.addAction(): already has the action, clip name is <" + action.clip.name + ">.");
+			console.warn('AnimationMixer.addAction(): already has the action, clip name is <' + action.clip.name + '>.');
 			return;
 		}
 
@@ -48,18 +48,18 @@ class AnimationMixer {
 		const index = this._actions.indexOf(action);
 
 		if (index === -1) {
-			console.warn("AnimationMixer.removeAction(): action not found in this mixer, clip name is <" + action.clip.name + ">.");
+			console.warn('AnimationMixer.removeAction(): action not found in this mixer, clip name is <' + action.clip.name + '>.');
 			return;
 		}
 
 		if (action.weight > 0) {
-			console.warn("AnimationMixer.removeAction(): make sure action's weight is zero before removing it.");
+			console.warn('AnimationMixer.removeAction(): make sure action\'s weight is zero before removing it.');
 			return;
 		}
 
 		this._actions.splice(index, 1);
 
-		const tracks = clip.tracks;
+		const tracks = action.clip.tracks;
 
 		for (let i = 0; i < tracks.length; i++) {
 			const trackName = tracks[i].name;
@@ -100,7 +100,7 @@ class AnimationMixer {
 	update(deltaTime) {
 		// Mark active to false for all bindings.
 
-		for (let bindingName in this._bindings) {
+		for (const bindingName in this._bindings) {
 			this._bindings[bindingName].active = false;
 		}
 
@@ -139,7 +139,7 @@ class AnimationMixer {
 
 		// Apply all bindings.
 
-		for (let bindingName in this._bindings) {
+		for (const bindingName in this._bindings) {
 			const bindingInfo = this._bindings[bindingName];
 			if (bindingInfo.active) {
 				bindingInfo.binding.apply();

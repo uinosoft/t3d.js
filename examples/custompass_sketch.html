@@ -79,7 +79,7 @@
 
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const gBuffer = new GBuffer(width, height);
@@ -94,12 +94,12 @@
 
 		const matProjViewInverse = new t3d.Matrix4();
 
-		sketchPass.uniforms["matProjViewInverse"] = matProjViewInverse.elements;
+		sketchPass.uniforms['matProjViewInverse'] = matProjViewInverse.elements;
 
-		sketchPass.uniforms["normalTexture"] = gBuffer.getNormalGlossinessTexture();
-		sketchPass.uniforms["depthTexture"] = gBuffer.getDepthTexture();
-		sketchPass.uniforms["invResolution"][0] = 1 / width;
-		sketchPass.uniforms["invResolution"][1] = 1 / height;
+		sketchPass.uniforms['normalTexture'] = gBuffer.getNormalGlossinessTexture();
+		sketchPass.uniforms['depthTexture'] = gBuffer.getDepthTexture();
+		sketchPass.uniforms['invResolution'][0] = 1 / width;
+		sketchPass.uniforms['invResolution'][1] = 1 / height;
 
 		const copyPass = new t3d.ShaderPostPass(CopyShader);
 		copyPass.material.transparent = true;
@@ -110,27 +110,27 @@
 		let sketch = true;
 
 		// gui
-		const params = { type: "BEAUTY + SKETCH" };
+		const params = { type: 'BEAUTY + SKETCH' };
 		const gui = new GUI();
-		gui.add(params, "type", ["BEAUTY + SKETCH", "BEAUTY", "SKETCH"]).onChange(val => {
+		gui.add(params, 'type', ['BEAUTY + SKETCH', 'BEAUTY', 'SKETCH']).onChange(val => {
 			switch (val) {
-				case "BEAUTY + SKETCH":
+				case 'BEAUTY + SKETCH':
 					beauty = true;
 					sketch = true;
 					break;
-				case "BEAUTY":
+				case 'BEAUTY':
 					beauty = true;
 					sketch = false;
 					break;
-				case "SKETCH":
+				case 'SKETCH':
 					beauty = false;
 					sketch = true;
 					break;
 			}
 		});
-		gui.add(sketchPass.uniforms, "uThreshold", 0, 1, 0.01);
-		gui.add(sketchPass.uniforms, "uContrast", 0, 1, 0.01);
-		gui.addColor(sketchPass.uniforms, "uColor");
+		gui.add(sketchPass.uniforms, 'uThreshold', 0, 1, 0.01);
+		gui.add(sketchPass.uniforms, 'uContrast', 0, 1, 0.01);
+		gui.addColor(sketchPass.uniforms, 'uColor');
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -162,7 +162,7 @@
 			}
 
 			if (sketch) {
-				copyPass.uniforms["tDiffuse"] = tempRenderTarget2.texture;
+				copyPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
 				copyPass.render(renderer);
 			}
 		}
@@ -179,10 +179,10 @@
 
 			tempRenderTarget2.resize(width, height);
 
-			sketchPass.uniforms["invResolution"][0] = 1 / width;
-			sketchPass.uniforms["invResolution"][1] = 1 / height;
+			sketchPass.uniforms['invResolution'][0] = 1 / width;
+			sketchPass.uniforms['invResolution'][1] = 1 / height;
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

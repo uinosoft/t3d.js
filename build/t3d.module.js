@@ -21,7 +21,7 @@ class KeyframeTrack {
 		this.target = target;
 		this.propertyPath = propertyPath;
 
-		this.name = this.target.uuid + "." + propertyPath;
+		this.name = this.target.uuid + '.' + propertyPath;
 
 		this.times = times;
 		this.values = values;
@@ -2070,17 +2070,17 @@ VectorKeyframeTrack.prototype.valueTypeName = 'vector';
  * @enum {String}
  */
 const MATERIAL_TYPE = {
-	BASIC: "basic",
-	LAMBERT: "lambert",
-	PHONG: "phong",
-	PBR: "pbr",
-	PBR2: "pbr2",
+	BASIC: 'basic',
+	LAMBERT: 'lambert',
+	PHONG: 'phong',
+	PBR: 'pbr',
+	PBR2: 'pbr2',
 	MATCAP: 'matcap',
-	POINT: "point",
-	LINE: "line",
-	SHADER: "shader",
-	DEPTH: "depth",
-	DISTANCE: "distance"
+	POINT: 'point',
+	LINE: 'line',
+	SHADER: 'shader',
+	DEPTH: 'depth',
+	DISTANCE: 'distance'
 };
 
 /**
@@ -2090,12 +2090,12 @@ const MATERIAL_TYPE = {
  * @enum {String}
  */
 const BLEND_TYPE = {
-	NONE: "none",
-	NORMAL: "normal",
-	ADD: "add",
-	SUB: "sub",
-	MUL: "mul",
-	CUSTOM: "custom"
+	NONE: 'none',
+	NORMAL: 'normal',
+	ADD: 'add',
+	SUB: 'sub',
+	MUL: 'mul',
+	CUSTOM: 'custom'
 };
 
 /**
@@ -2137,10 +2137,10 @@ const BLEND_FACTOR = {
  * @enum {String}
  */
 const CULL_FACE_TYPE = {
-	NONE: "none",
-	FRONT: "front",
-	BACK: "back",
-	FRONT_AND_BACK: "front_and_back"
+	NONE: 'none',
+	FRONT: 'front',
+	BACK: 'back',
+	FRONT_AND_BACK: 'front_and_back'
 };
 
 /**
@@ -2150,9 +2150,9 @@ const CULL_FACE_TYPE = {
  * @enum {String}
  */
 const DRAW_SIDE = {
-	FRONT: "front",
-	BACK: "back",
-	DOUBLE: "double"
+	FRONT: 'front',
+	BACK: 'back',
+	DOUBLE: 'double'
 };
 
 /**
@@ -2162,8 +2162,8 @@ const DRAW_SIDE = {
  * @enum {String}
  */
 const SHADING_TYPE = {
-	SMOOTH_SHADING: "smooth_shading",
-	FLAT_SHADING: "flat_shading"
+	SMOOTH_SHADING: 'smooth_shading',
+	FLAT_SHADING: 'flat_shading'
 };
 
 /**
@@ -2311,16 +2311,16 @@ const OPERATION = {
  * @enum {String}
  */
 const SHADOW_TYPE = {
-	HARD: "hard",
-	POISSON_SOFT: "poisson_soft",
-	PCF3_SOFT: "pcf3_soft",
-	PCF5_SOFT: "pcf5_soft",
+	HARD: 'hard',
+	POISSON_SOFT: 'poisson_soft',
+	PCF3_SOFT: 'pcf3_soft',
+	PCF5_SOFT: 'pcf5_soft',
 	/** Only webgl2 */
-	PCSS16_SOFT: "pcss16_soft",
+	PCSS16_SOFT: 'pcss16_soft',
 	/** Only webgl2 */
-	PCSS32_SOFT: "pcss32_soft",
+	PCSS32_SOFT: 'pcss32_soft',
 	/** Only webgl2 */
-	PCSS64_SOFT: "pcss64_soft"
+	PCSS64_SOFT: 'pcss64_soft'
 };
 
 /**
@@ -2330,13 +2330,13 @@ const SHADOW_TYPE = {
  * @enum {String}
  */
 const TEXEL_ENCODING_TYPE = {
-	LINEAR: "linear",
-	SRGB: "sRGB",
-	RGBE: "RGBE",
-	RGBM7: "RGBM7",
-	RGBM16: "RGBM16",
-	RGBD: "RGBD",
-	GAMMA: "Gamma"
+	LINEAR: 'linear',
+	SRGB: 'sRGB',
+	RGBE: 'RGBE',
+	RGBM7: 'RGBM7',
+	RGBM16: 'RGBM16',
+	RGBD: 'RGBD',
+	GAMMA: 'Gamma'
 };
 
 /**
@@ -2346,9 +2346,9 @@ const TEXEL_ENCODING_TYPE = {
  * @enum {String}
  */
 const ENVMAP_COMBINE_TYPE = {
-	MULTIPLY: "ENVMAP_BLENDING_MULTIPLY",
-	MIX: "ENVMAP_BLENDING_MIX",
-	ADD: "ENVMAP_BLENDING_ADD"
+	MULTIPLY: 'ENVMAP_BLENDING_MULTIPLY',
+	MIX: 'ENVMAP_BLENDING_MIX',
+	ADD: 'ENVMAP_BLENDING_ADD'
 };
 
 /**
@@ -2595,7 +2595,7 @@ class PropertyBindingMixer {
 	constructor(target, propertyPath, typeName, valueSize) {
 		this.target = null;
 
-		this.property = "";
+		this.property = '';
 
 		this.parseBinding(target, propertyPath);
 
@@ -2635,7 +2635,7 @@ class PropertyBindingMixer {
 	}
 
 	parseBinding(target, propertyPath) {
-		propertyPath = propertyPath.split(".");
+		propertyPath = propertyPath.split('.');
 
 		if (propertyPath.length > 1) {
 			let property = target[propertyPath[0]];
@@ -2869,7 +2869,7 @@ class AnimationMixer {
 	 */
 	addAction(action) {
 		if (this._actions.indexOf(action) !== -1) {
-			console.warn("AnimationMixer.addAction(): already has the action, clip name is <" + action.clip.name + ">.");
+			console.warn('AnimationMixer.addAction(): already has the action, clip name is <' + action.clip.name + '>.');
 			return;
 		}
 
@@ -2898,18 +2898,18 @@ class AnimationMixer {
 		const index = this._actions.indexOf(action);
 
 		if (index === -1) {
-			console.warn("AnimationMixer.removeAction(): action not found in this mixer, clip name is <" + action.clip.name + ">.");
+			console.warn('AnimationMixer.removeAction(): action not found in this mixer, clip name is <' + action.clip.name + '>.');
 			return;
 		}
 
 		if (action.weight > 0) {
-			console.warn("AnimationMixer.removeAction(): make sure action's weight is zero before removing it.");
+			console.warn('AnimationMixer.removeAction(): make sure action\'s weight is zero before removing it.');
 			return;
 		}
 
 		this._actions.splice(index, 1);
 
-		const tracks = clip.tracks;
+		const tracks = action.clip.tracks;
 
 		for (let i = 0; i < tracks.length; i++) {
 			const trackName = tracks[i].name;
@@ -2950,7 +2950,7 @@ class AnimationMixer {
 	update(deltaTime) {
 		// Mark active to false for all bindings.
 
-		for (let bindingName in this._bindings) {
+		for (const bindingName in this._bindings) {
 			this._bindings[bindingName].active = false;
 		}
 
@@ -2989,7 +2989,7 @@ class AnimationMixer {
 
 		// Apply all bindings.
 
-		for (let bindingName in this._bindings) {
+		for (const bindingName in this._bindings) {
 			const bindingInfo = this._bindings[bindingName];
 			if (bindingInfo.active) {
 				bindingInfo.binding.apply();
@@ -3325,7 +3325,7 @@ class FileLoader extends Loader {
 		// create request
 		const req = new Request(url, {
 			headers: new Headers(this.requestHeader),
-			credentials: this.withCredentials ? 'include' : 'same-origin',
+			credentials: this.withCredentials ? 'include' : 'same-origin'
 			// An abort controller could be added within a future PR
 		});
 
@@ -6448,7 +6448,7 @@ class Object3D {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.name = "";
+		this.name = '';
 
 		/**
 		 * A Vector3 representing the object's local position.
@@ -6621,7 +6621,7 @@ class Object3D {
 	 */
 	add(object) {
 		if (object === this) {
-			console.error("Object3D.add: object can't be added as a child of itself.", object);
+			console.error('Object3D.add: object can\'t be added as a child of itself.', object);
 			return;
 		}
 
@@ -7201,7 +7201,7 @@ function getLightCache(light) {
 		cache = {
 			direction: new Float32Array(3),
 			skyColor: new Float32Array([0, 0, 0]),
-			groundColor: new Float32Array([0, 0, 0]),
+			groundColor: new Float32Array([0, 0, 0])
 		};
 	} else if (light.isDirectionalLight) {
 		cache = {
@@ -8295,13 +8295,13 @@ class Mesh extends Object3D {
 			return;
 		}
 
-		const position = geometry.getAttribute("a_Position");
+		const position = geometry.getAttribute('a_Position');
 
 		if (!position) {
 			return;
 		}
 
-		const uv = geometry.getAttribute("a_Uv");
+		const uv = geometry.getAttribute('a_Uv');
 
 		const morphPosition = geometry.morphAttributes.position;
 
@@ -8850,7 +8850,7 @@ class Geometry extends EventDispatcher {
 	 * Bounding boxes aren't computed by default. They need to be explicitly computed.
 	 */
 	computeBoundingBox() {
-		const position = this.attributes["a_Position"] || this.attributes["position"];
+		const position = this.attributes['a_Position'] || this.attributes['position'];
 
 		if (position) {
 			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
@@ -8878,7 +8878,7 @@ class Geometry extends EventDispatcher {
 	 * Bounding spheres aren't computed by default. They need to be explicitly computed.
 	 */
 	computeBoundingSphere() {
-		const position = this.attributes["a_Position"] || this.attributes["position"];
+		const position = this.attributes['a_Position'] || this.attributes['position'];
 		const morphAttributesPosition = this.morphAttributes.position;
 
 		if (!position) {
@@ -9163,7 +9163,7 @@ class Material extends EventDispatcher {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.shaderName = "";
+		this.shaderName = '';
 
 		/**
 		 * Custom defines of the shader.
@@ -9187,7 +9187,7 @@ class Material extends EventDispatcher {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.vertexShader = "";
+		this.vertexShader = '';
 
 		/**
 		 * Custom GLSL code for fragment shader.
@@ -9195,7 +9195,7 @@ class Material extends EventDispatcher {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.fragmentShader = "";
+		this.fragmentShader = '';
 
 		/**
 		 * Override the renderer's default precision for this material.
@@ -10108,7 +10108,7 @@ class ShadowMapPass {
 
 const oldClearColor = new Vector4();
 
-const shadowSide = { "front": DRAW_SIDE.BACK, "back": DRAW_SIDE.FRONT, "double": DRAW_SIDE.DOUBLE };
+const shadowSide = { 'front': DRAW_SIDE.BACK, 'back': DRAW_SIDE.FRONT, 'double': DRAW_SIDE.DOUBLE };
 
 const depthMaterials = {};
 const distanceMaterials = {};
@@ -10170,8 +10170,8 @@ function _getDistanceMaterial(renderable, light) {
 	}
 
 	material.side = shadowSide[renderable.material.side];
-	material.uniforms["nearDistance"] = light.shadow.cameraNear;
-	material.uniforms["farDistance"] = light.shadow.cameraFar;
+	material.uniforms['nearDistance'] = light.shadow.cameraNear;
+	material.uniforms['farDistance'] = light.shadow.cameraFar;
 
 	material.clippingPlanes = renderable.material.clippingPlanes;
 	material.drawMode = renderable.material.drawMode;
@@ -10193,7 +10193,7 @@ class PropertyMap {
      * @param {String} prefix - The prefix of the properties name.
      */
 	constructor(prefix) {
-		this._key = prefix + "$";
+		this._key = prefix + '$';
 		this._count = 0;
 	}
 
@@ -12650,7 +12650,7 @@ class Skeleton {
 
 		for (let i = 0; i < this.bones.length; i++) {
 			const bone = this.bones[i];
-			if (bone.parent && bone.parent.type == "bone") {
+			if (bone.parent && bone.parent.isBone) {
 				bone.matrix.getInverse(bone.parent.worldMatrix);
 				bone.matrix.multiply(bone.worldMatrix);
 			} else {
@@ -13972,12 +13972,12 @@ class WebGLCapabilities {
 			if (this.version > 1) {
 				timerQuery = this.getExtension('EXT_disjoint_timer_query_webgl2');
 				if (timerQuery) {
-					canUseTimestamp = (gl.getQuery(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT) ?? 0) > 0;
+					canUseTimestamp = !!gl.getQuery(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT);
 				}
 			} else {
 				timerQuery = this.getExtension('EXT_disjoint_timer_query');
 				if (timerQuery) {
-					canUseTimestamp = (timerQuery.getQueryEXT(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT) ?? 0) > 0;
+					canUseTimestamp = !!timerQuery.getQueryEXT(timerQuery.TIMESTAMP_EXT, timerQuery.QUERY_COUNTER_BITS_EXT);
 				}
 			}
 		} catch (err) {
@@ -14710,7 +14710,7 @@ class WebGLProgram {
 		this.id = programIdCount++;
 		this.usedTimes = 1;
 
-		this.code = "";
+		this.code = '';
 
 		this.lightId = -1;
 		this.lightVersion = -1;
@@ -14757,7 +14757,7 @@ class WebGLProgram {
 		};
 
 		// check if program is ready to be used
-		this.isReady = function (parallelShaderCompileExt) {
+		this.isReady = function(parallelShaderCompileExt) {
 			if (this._status === 1) {
 				if (this._compileAsynchronously && parallelShaderCompileExt) {
 					if (gl.getProgramParameter(program, parallelShaderCompileExt.COMPLETION_STATUS_KHR)) {
@@ -14773,7 +14773,7 @@ class WebGLProgram {
 			return this._status === 2;
 		};
 
-		this._tryCheckErrors = function () {
+		this._tryCheckErrors = function() {
 			if (!this._checkErrors) return;
 
 			if (gl.getProgramParameter(program, gl.LINK_STATUS) === false) {
@@ -14799,7 +14799,7 @@ class WebGLProgram {
 
 		let cachedUniforms;
 
-		this.getUniforms = function () {
+		this.getUniforms = function() {
 			if (cachedUniforms === undefined) {
 				cachedUniforms = new WebGLUniforms(gl, program);
 			}
@@ -14810,7 +14810,7 @@ class WebGLProgram {
 
 		let cachedAttributes;
 
-		this.getAttributes = function () {
+		this.getAttributes = function() {
 			if (cachedAttributes === undefined) {
 				cachedAttributes = extractAttributes(gl, program);
 			}
@@ -14819,7 +14819,7 @@ class WebGLProgram {
 
 		// free program
 
-		this.dispose = function () {
+		this.dispose = function() {
 			gl.deleteProgram(program);
 			this.program = undefined;
 			this._status = 0;
@@ -14912,8 +14912,8 @@ class WebGLPrograms {
 		if (program === undefined) {
 			const customDefines = generateDefines(material.defines);
 
-			const vertexShader = ShaderLib[material.type + "_vert"] || material.vertexShader || ShaderLib.basic_vert;
-			const fragmentShader = ShaderLib[material.type + "_frag"] || material.fragmentShader || ShaderLib.basic_frag;
+			const vertexShader = ShaderLib[material.type + '_vert'] || material.vertexShader || ShaderLib.basic_vert;
+			const fragmentShader = ShaderLib[material.type + '_frag'] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
 			program.compile(compileOptions);
@@ -14944,14 +14944,14 @@ class WebGLPrograms {
 // Program properties and code
 
 function generateProgramCode(props, material) {
-	let code = "";
+	let code = '';
 
 	for (const key in props) {
-		code += props[key] + "_";
+		code += props[key] + '_';
 	}
 
 	for (const name in material.defines) {
-		code += name + "_" + material.defines[name] + "_";
+		code += name + '_' + material.defines[name] + '_';
 	}
 
 	// If the material type is SHADER and there is no shader Name,
@@ -14992,7 +14992,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.version = capabilities.version;
 	props.precision = material.precision || capabilities.maxPrecision;
 	props.useStandardDerivatives = capabilities.version >= 2 || !!capabilities.getExtension('OES_standard_derivatives') || !!capabilities.getExtension('GL_OES_standard_derivatives');
-	props.useShaderTextureLOD =  capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
+	props.useShaderTextureLOD = capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
 	// maps
 	props.useDiffuseMap = !!material.diffuseMap ? (material.diffuseMapCoord + 1) : 0;
 	props.useAlphaMap = !!material.alphaMap ? (material.alphaMapCoord + 1) : 0;
@@ -15070,7 +15070,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	} else {
 		maxBones = object.skeleton ? object.skeleton.bones.length : 0;
 		if (maxBones * 16 > maxVertexUniformVectors) {
-			console.warn("Program: too many bones (" + maxBones + "), current cpu only support " + Math.floor(maxVertexUniformVectors / 16) + " bones!!");
+			console.warn('Program: too many bones (' + maxBones + '), current cpu only support ' + Math.floor(maxVertexUniformVectors / 16) + ' bones!!');
 			maxBones = Math.floor(maxVertexUniformVectors / 16);
 		}
 	}
@@ -15118,12 +15118,12 @@ function getEncodingComponents(encoding) {
 
 function getTexelDecodingFunction(functionName, encoding) {
 	const components = getEncodingComponents(encoding);
-	return "vec4 " + functionName + "(vec4 value) { return " + components[0] + "ToLinear" + components[1] + "; }";
+	return 'vec4 ' + functionName + '(vec4 value) { return ' + components[0] + 'ToLinear' + components[1] + '; }';
 }
 
 function getTexelEncodingFunction(functionName, encoding) {
 	const components = getEncodingComponents(encoding);
-	return "vec4 " + functionName + "(vec4 value) { return LinearTo" + components[0] + components[1] + "; }";
+	return 'vec4 ' + functionName + '(vec4 value) { return LinearTo' + components[0] + components[1] + '; }';
 }
 
 function createProgram(gl, defines, props, vertex, fragment) {
@@ -15154,7 +15154,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.flatShading ? '#define FLAT_SHADED' : '',
 		props.flipSided ? '#define FLIP_SIDED' : '',
 
-		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' +  props.useDiffuseMap) : '',
+		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' + props.useDiffuseMap) : '',
 		props.useAlphaMap ? ('#define USE_ALPHA_MAP ' + props.useAlphaMap) : '',
 		props.useEnvMap ? '#define USE_ENV_MAP' : '',
 		props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
@@ -15179,7 +15179,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
 		'\n'
-	].filter(filterEmptyLine).join("\n");
+	].filter(filterEmptyLine).join('\n');
 
 	let prefixFragment = [
 		// use dfdx and dfdy must enable OES_standard_derivatives
@@ -15268,12 +15268,12 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		props.dithering ? '#define DITHERING' : '',
 
-		ShaderChunk["encodings_pars_frag"],
-		getTexelDecodingFunction("mapTexelToLinear", props.diffuseMapEncoding),
-		props.useEnvMap ? getTexelDecodingFunction("envMapTexelToLinear", props.envMapEncoding) : '',
-		props.useEmissiveMap ? getTexelDecodingFunction("emissiveMapTexelToLinear", props.emissiveMapEncoding) : '',
-		props.useMatcap ? getTexelDecodingFunction("matcapTexelToLinear", props.matcapEncoding) : '',
-		getTexelEncodingFunction("linearToOutputTexel", props.outputEncoding),
+		ShaderChunk['encodings_pars_frag'],
+		getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding),
+		props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '',
+		props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
+		props.useMatcap ? getTexelDecodingFunction('matcapTexelToLinear', props.matcapEncoding) : '',
+		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 
 		props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '',
 
@@ -15281,7 +15281,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
 		'\n'
-	].filter(filterEmptyLine).join("\n");
+	].filter(filterEmptyLine).join('\n');
 
 	let vshader = vertex;
 	let fshader = fragment;
@@ -15307,21 +15307,21 @@ function createProgram(gl, defines, props, vertex, fragment) {
 			'#define texture2D texture'
 		].join('\n') + '\n' + prefixVertex;
 
-		fshader = fshader.replace("#extension GL_EXT_draw_buffers : require", "");
+		fshader = fshader.replace('#extension GL_EXT_draw_buffers : require', '');
 
 		// replace gl_FragData by layout
 		let i = 0;
 		const layout = [];
-		while (fshader.indexOf("gl_FragData[" + i + "]") > -1) {
-			fshader = fshader.replace("gl_FragData[" + i + "]", "pc_fragData" + i);
-			layout.push("layout(location = " + i + ") out highp vec4 pc_fragData" + i + ";");
+		while (fshader.indexOf('gl_FragData[' + i + ']') > -1) {
+			fshader = fshader.replace('gl_FragData[' + i + ']', 'pc_fragData' + i);
+			layout.push('layout(location = ' + i + ') out highp vec4 pc_fragData' + i + ';');
 			i++;
 		}
 
 		prefixFragment = [
 			'#version 300 es\n',
 			'#define varying in',
-			(fshader.indexOf("layout") > -1 || layout.length > 0) ? '' : 'out highp vec4 pc_fragColor;',
+			(fshader.indexOf('layout') > -1 || layout.length > 0) ? '' : 'out highp vec4 pc_fragColor;',
 			'#define gl_FragColor pc_fragColor',
 			'#define gl_FragDepthEXT gl_FragDepth',
 			'#define texture2D texture',
@@ -15409,7 +15409,7 @@ class WebGLQueries extends PropertyMap {
 		const timerQuery = capabilities.timerQuery;
 		const that = this;
 
-		const onQueryDispose = (event) => {
+		const onQueryDispose = event => {
 			const query = event.target;
 			const queryProperties = that.get(query);
 
@@ -15786,18 +15786,18 @@ function ColorBuffer(gl) {
 
 	return {
 
-		setMask: function (colorMask) {
+		setMask: function(colorMask) {
 			if (currentColorMask !== colorMask && !locked) {
 				gl.colorMask(colorMask, colorMask, colorMask, colorMask);
 				currentColorMask = colorMask;
 			}
 		},
 
-		setLocked: function (lock) {
+		setLocked: function(lock) {
 			locked = lock;
 		},
 
-		setClear: function (r, g, b, a, premultipliedAlpha) {
+		setClear: function(r, g, b, a, premultipliedAlpha) {
 			if (premultipliedAlpha === true) {
 				r *= a; g *= a; b *= a;
 			}
@@ -15814,7 +15814,7 @@ function ColorBuffer(gl) {
 			return currentColorClear;
 		},
 
-		reset: function () {
+		reset: function() {
 			locked = false;
 
 			currentColorMask = null;
@@ -15833,7 +15833,7 @@ function DepthBuffer(gl, state) {
 
 	return {
 
-		setTest: function (depthTest) {
+		setTest: function(depthTest) {
 			if (depthTest) {
 				state.enable(gl.DEPTH_TEST);
 			} else {
@@ -15841,32 +15841,32 @@ function DepthBuffer(gl, state) {
 			}
 		},
 
-		setMask: function (depthMask) {
+		setMask: function(depthMask) {
 			if (currentDepthMask !== depthMask && !locked) {
 				gl.depthMask(depthMask);
 				currentDepthMask = depthMask;
 			}
 		},
 
-		setFunc: function (depthFunc) {
+		setFunc: function(depthFunc) {
 			if (currentDepthFunc !== depthFunc) {
 				gl.depthFunc(depthFunc);
 				currentDepthFunc = depthFunc;
 			}
 		},
 
-		setLocked: function (lock) {
+		setLocked: function(lock) {
 			locked = lock;
 		},
 
-		setClear: function (depth) {
+		setClear: function(depth) {
 			if (currentDepthClear !== depth) {
 				gl.clearDepth(depth);
 				currentDepthClear = depth;
 			}
 		},
 
-		reset: function () {
+		reset: function() {
 			locked = false;
 
 			currentDepthMask = null;
@@ -15897,7 +15897,7 @@ function StencilBuffer(gl, state) {
 
 	return {
 
-		setTest: function (stencilTest) {
+		setTest: function(stencilTest) {
 			if (stencilTest) {
 				state.enable(gl.STENCIL_TEST);
 			} else {
@@ -15905,14 +15905,14 @@ function StencilBuffer(gl, state) {
 			}
 		},
 
-		setMask: function (stencilMask) {
+		setMask: function(stencilMask) {
 			if (currentStencilMask !== stencilMask && !locked) {
 				gl.stencilMask(stencilMask);
 				currentStencilMask = stencilMask;
 			}
 		},
 
-		setFunc: function (stencilFunc, stencilRef, stencilMask, stencilFuncBack, stencilRefBack, stencilMaskBack) {
+		setFunc: function(stencilFunc, stencilRef, stencilMask, stencilFuncBack, stencilRefBack, stencilMaskBack) {
 			if (currentStencilFunc !== stencilFunc ||
 				currentStencilRef !== stencilRef ||
 				currentStencilFuncMask !== stencilMask ||
@@ -15935,7 +15935,7 @@ function StencilBuffer(gl, state) {
 			}
 		},
 
-		setOp: function (stencilFail, stencilZFail, stencilZPass, stencilFailBack, stencilZFailBack, stencilZPassBack) {
+		setOp: function(stencilFail, stencilZFail, stencilZPass, stencilFailBack, stencilZFailBack, stencilZPassBack) {
 			if (currentStencilFail	 !== stencilFail 	||
 				currentStencilZFail !== stencilZFail ||
 				currentStencilZPass !== stencilZPass ||
@@ -15958,18 +15958,18 @@ function StencilBuffer(gl, state) {
 			}
 		},
 
-		setLocked: function (lock) {
+		setLocked: function(lock) {
 			locked = lock;
 		},
 
-		setClear: function (stencil) {
+		setClear: function(stencil) {
 			if (currentStencilClear !== stencil) {
 				gl.clearStencil(stencil);
 				currentStencilClear = stencil;
 			}
 		},
 
-		reset: function () {
+		reset: function() {
 			locked = false;
 
 			currentStencilMask = null;
@@ -16215,7 +16215,7 @@ class WebGLState {
 			if (lineWidthRange[0] <= width && width <= lineWidthRange[1]) {
 				this.gl.lineWidth(width);
 			} else {
-				console.warn("GL_ALIASED_LINE_WIDTH_RANGE is [" + lineWidthRange[0] + "," + lineWidthRange[1] + "], but set to " + width + ".");
+				console.warn('GL_ALIASED_LINE_WIDTH_RANGE is [' + lineWidthRange[0] + ',' + lineWidthRange[1] + '], but set to ' + width + '.');
 			}
 			this.currentLineWidth = width;
 		}
@@ -16683,7 +16683,7 @@ class WebGLTextures extends PropertyMap {
 		const constants = this._constants;
 
 		if (capabilities.version < 2) {
-			console.warn("Try to use Texture3D but browser not support WebGL2.0");
+			console.warn('Try to use Texture3D but browser not support WebGL2.0');
 			return;
 		}
 
@@ -17000,7 +17000,7 @@ class WebGLRenderBuffers extends PropertyMap {
 
 			if (renderBuffer.multipleSampling > 0) {
 				if (capabilities.version < 2) {
-					console.error("render buffer multipleSampling is not support in webgl 1.0.");
+					console.error('render buffer multipleSampling is not support in webgl 1.0.');
 				}
 				gl.renderbufferStorageMultisample(gl.RENDERBUFFER, Math.min(renderBuffer.multipleSampling, capabilities.maxSamples), glFormat, renderBuffer.width, renderBuffer.height);
 			} else {
@@ -17096,7 +17096,7 @@ class WebGLRenderTargets extends PropertyMap {
 
 			if (glAttachTarget === gl.DEPTH_ATTACHMENT || glAttachTarget === gl.DEPTH_STENCIL_ATTACHMENT) {
 				if (capabilities.version < 2 && !capabilities.getExtension('WEBGL_depth_texture')) {
-					console.warn("WebGLRenderTargets: extension WEBGL_depth_texture is not support.");
+					console.warn('WebGLRenderTargets: extension WEBGL_depth_texture is not support.');
 				}
 			} else if (glAttachTarget !== gl.STENCIL_ATTACHMENT) {
 				drawBuffers.push(glAttachTarget);
@@ -17172,7 +17172,7 @@ class WebGLRenderTargets extends PropertyMap {
 		const capabilities = this._capabilities;
 
 		if (capabilities.version < 2) {
-			console.warn("WebGLRenderTargets: blitFramebuffer not support by WebGL" + capabilities.version);
+			console.warn('WebGLRenderTargets: blitFramebuffer not support by WebGL' + capabilities.version);
 			return;
 		}
 
@@ -17446,7 +17446,7 @@ class WebGLMaterials extends PropertyMap {
 
 }
 
-const emptyString = "";
+const emptyString = '';
 
 class WebGLVertexArrayBindings extends PropertyMap {
 
@@ -17458,10 +17458,10 @@ class WebGLVertexArrayBindings extends PropertyMap {
 		this._buffers = buffers;
 
 		this._isWebGL2 = capabilities.version >= 2;
-		this._vaoExt = capabilities.getExtension("OES_vertex_array_object");
+		this._vaoExt = capabilities.getExtension('OES_vertex_array_object');
 
 		this._vaoCache = {}; // save vao cache here for releaseByProgram() method
-		this._currentGeometryProgram = "";
+		this._currentGeometryProgram = '';
 		this._currentVAO = null;
 	}
 
@@ -17490,7 +17490,7 @@ class WebGLVertexArrayBindings extends PropertyMap {
 				vao.version = geometry.version;
 			}
 		} else {
-			const geometryProgram = program.id + "_" + geometry.id + "_" + geometry.version;
+			const geometryProgram = program.id + '_' + geometry.id + '_' + geometry.version;
 			if (geometryProgram !== this._currentGeometryProgram) {
 				this._setupVertexAttributes(program, geometry);
 				this._currentGeometryProgram = geometryProgram;
@@ -17585,7 +17585,7 @@ class WebGLVertexArrayBindings extends PropertyMap {
 				const size = geometryAttribute.size;
 
 				if (programAttribute.count !== size) {
-					console.warn("WebGLVertexArrayBindings: attribute " + key + " size not match! " + programAttribute.count + " : " + size);
+					console.warn('WebGLVertexArrayBindings: attribute ' + key + ' size not match! ' + programAttribute.count + ' : ' + size);
 				}
 
 				const buffer = geometryAttribute.buffer;
@@ -17605,7 +17605,7 @@ class WebGLVertexArrayBindings extends PropertyMap {
 						} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 							capabilities.getExtension('ANGLE_instanced_arrays').vertexAttribDivisorANGLE(programAttribute.location + i, geometryAttribute.divisor);
 						} else {
-							console.warn("vertexAttribDivisor not supported");
+							console.warn('vertexAttribDivisor not supported');
 						}
 					}
 				}
@@ -18090,66 +18090,66 @@ class WebGLRenderer extends ThinRenderer {
 		const textures = this._textures;
 
 		if (lights.useAmbient && refresh) {
-			uniforms.set("u_AmbientLightColor", lights.ambient);
+			uniforms.set('u_AmbientLightColor', lights.ambient);
 		}
 		if (lights.useSphericalHarmonics && refresh) {
-			uniforms.set("u_SphericalHarmonicsLightData", lights.sh);
+			uniforms.set('u_SphericalHarmonicsLightData', lights.sh);
 		}
 		if (lights.hemisNum > 0 && refresh) {
-			uniforms.set("u_Hemi", lights.hemisphere);
+			uniforms.set('u_Hemi', lights.hemisphere);
 		}
 
 		if (lights.directsNum > 0) {
-			if (refresh) uniforms.set("u_Directional", lights.directional);
+			if (refresh) uniforms.set('u_Directional', lights.directional);
 
 			if (lights.directShadowNum > 0) {
-				if (refresh) uniforms.set("u_DirectionalShadow", lights.directionalShadow);
+				if (refresh) uniforms.set('u_DirectionalShadow', lights.directionalShadow);
 
-				if (uniforms.has("directionalShadowMap")) {
+				if (uniforms.has('directionalShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set("directionalShadowMap", lights.directionalShadowDepthMap, textures);
+						uniforms.set('directionalShadowMap', lights.directionalShadowDepthMap, textures);
 					} else {
-						uniforms.set("directionalShadowMap", lights.directionalShadowMap, textures);
+						uniforms.set('directionalShadowMap', lights.directionalShadowMap, textures);
 					}
-					uniforms.set("directionalShadowMatrix", lights.directionalShadowMatrix);
+					uniforms.set('directionalShadowMatrix', lights.directionalShadowMatrix);
 				}
 
-				if (uniforms.has("directionalDepthMap")) {
-					uniforms.set("directionalDepthMap", lights.directionalShadowMap, textures);
+				if (uniforms.has('directionalDepthMap')) {
+					uniforms.set('directionalDepthMap', lights.directionalShadowMap, textures);
 				}
 			}
 		}
 
 		if (lights.pointsNum > 0) {
-			if (refresh) uniforms.set("u_Point", lights.point);
+			if (refresh) uniforms.set('u_Point', lights.point);
 
 			if (lights.pointShadowNum > 0) {
-				if (refresh) uniforms.set("u_PointShadow", lights.pointShadow);
+				if (refresh) uniforms.set('u_PointShadow', lights.pointShadow);
 
-				if (uniforms.has("pointShadowMap")) {
-					uniforms.set("pointShadowMap", lights.pointShadowMap, textures);
-					uniforms.set("pointShadowMatrix", lights.pointShadowMatrix);
+				if (uniforms.has('pointShadowMap')) {
+					uniforms.set('pointShadowMap', lights.pointShadowMap, textures);
+					uniforms.set('pointShadowMatrix', lights.pointShadowMatrix);
 				}
 			}
 		}
 
 		if (lights.spotsNum > 0) {
-			if (refresh) uniforms.set("u_Spot", lights.spot);
+			if (refresh) uniforms.set('u_Spot', lights.spot);
 
 			if (lights.spotShadowNum > 0) {
-				if (refresh) uniforms.set("u_SpotShadow", lights.spotShadow);
+				if (refresh) uniforms.set('u_SpotShadow', lights.spotShadow);
 
-				if (uniforms.has("spotShadowMap")) {
+				if (uniforms.has('spotShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set("spotShadowMap", lights.spotShadowDepthMap, textures);
+						uniforms.set('spotShadowMap', lights.spotShadowDepthMap, textures);
 					} else {
-						uniforms.set("spotShadowMap", lights.spotShadowMap, textures);
+						uniforms.set('spotShadowMap', lights.spotShadowMap, textures);
 					}
-					uniforms.set("spotShadowMatrix", lights.spotShadowMatrix);
+					uniforms.set('spotShadowMatrix', lights.spotShadowMatrix);
 				}
 
-				if (uniforms.has("spotDepthMap")) {
-					uniforms.set("spotDepthMap", lights.spotShadowMap, textures);
+				if (uniforms.has('spotDepthMap')) {
+					uniforms.set('spotDepthMap', lights.spotShadowMap, textures);
 				}
 			}
 		}
@@ -18165,19 +18165,19 @@ class WebGLRenderer extends ThinRenderer {
 					skeleton.generateBoneTexture(capabilities.version >= 2);
 				}
 
-				uniforms.set("boneTexture", skeleton.boneTexture, this._textures);
-				uniforms.set("boneTextureSize", skeleton.boneTexture.image.width);
+				uniforms.set('boneTexture', skeleton.boneTexture, this._textures);
+				uniforms.set('boneTextureSize', skeleton.boneTexture.image.width);
 			} else {
-				uniforms.set("boneMatrices", skeleton.boneMatrices);
+				uniforms.set('boneMatrices', skeleton.boneMatrices);
 			}
 
-			uniforms.set("bindMatrix", object.bindMatrix.elements);
+			uniforms.set('bindMatrix', object.bindMatrix.elements);
 
 			helpMatrix4.copy(object.bindMatrixInverse);
 			if (sceneData.useAnchorMatrix) {
 				helpMatrix4.multiply(sceneData.anchorMatrix); // convert to anchor space
 			}
-			uniforms.set("bindMatrixInverse", helpMatrix4.elements);
+			uniforms.set('bindMatrixInverse', helpMatrix4.elements);
 		}
 	}
 
@@ -18242,7 +18242,7 @@ class WebGLRenderer extends ThinRenderer {
 		const buffers = this._buffers;
 
 		const useIndexBuffer = geometry.index !== null;
-		const position = geometry.getAttribute("a_Position");
+		const position = geometry.getAttribute('a_Position');
 
 		let drawStart = 0;
 		let drawCount = Infinity;
@@ -18268,7 +18268,7 @@ class WebGLRenderer extends ThinRenderer {
 
 			if (type === gl.UNSIGNED_INT) {
 				if (capabilities.version < 2 && !capabilities.getExtension('OES_element_index_uint')) {
-					console.warn("draw elements type not support UNSIGNED_INT!");
+					console.warn('draw elements type not support UNSIGNED_INT!');
 				}
 			}
 
@@ -18279,7 +18279,7 @@ class WebGLRenderer extends ThinRenderer {
 					} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 						capabilities.getExtension('ANGLE_instanced_arrays').drawElementsInstancedANGLE(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
 					} else {
-						console.warn("no support instanced draw.");
+						console.warn('no support instanced draw.');
 						return;
 					}
 				}
@@ -18294,7 +18294,7 @@ class WebGLRenderer extends ThinRenderer {
 					} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 						capabilities.getExtension('ANGLE_instanced_arrays').drawArraysInstancedANGLE(material.drawMode, drawStart, drawCount, instanceCount);
 					} else {
-						console.warn("no support instanced draw.");
+						console.warn('no support instanced draw.');
 						return;
 					}
 				}
@@ -18335,7 +18335,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	renderTarget: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn('WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.');
 			return this._renderTargets;
 		}
 	},
@@ -18343,7 +18343,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	state: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn('WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.');
 			return this._state;
 		}
 	},
@@ -18351,7 +18351,7 @@ Object.defineProperties(WebGLRenderer.prototype, {
 	vertexArrayBindings: {
 		configurable: true,
 		get: function() {
-			console.warn("WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.");
+			console.warn('WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.');
 			return this._vertexArrayBindings;
 		}
 	}

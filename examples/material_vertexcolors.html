@@ -40,12 +40,12 @@
 		const scene = new t3d.Scene();
 
 		function addVertexColors(geometry, r, g, b, a) {
-			let count = geometry.getAttribute("a_Position").buffer.count;
-			let colors = [];
+			const count = geometry.getAttribute('a_Position').buffer.count;
+			const colors = [];
 			for (let i = 0; i < count; i++) {
 				colors.push(r, g, b, a);
 			}
-			geometry.addAttribute("a_Color", new t3d.Attribute(new t3d.Buffer(new Float32Array(colors), 4)));
+			geometry.addAttribute('a_Color', new t3d.Attribute(new t3d.Buffer(new Float32Array(colors), 4)));
 		}
 
 		const sphere_geometry = new t3d.SphereGeometry(10, 20, 20);
@@ -102,7 +102,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

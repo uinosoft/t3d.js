@@ -183,7 +183,7 @@
 
 		// gui
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(shaderMaterial.uniforms, 'u_Uvz', 0, 64, 0.01).name('depth');
 		gui.add(shaderMaterial.uniforms, 'uFogDensity', 0, 0.1, 0.001).name('fog density');
 		gui.add(shaderMaterial.uniforms, 'uSpeed', 0, 5, 0.01).name('speed');
@@ -207,7 +207,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -36,7 +36,7 @@ class Object3D {
 		 * @type {String}
 		 * @default ""
 		 */
-		this.name = "";
+		this.name = '';
 
 		/**
 		 * A Vector3 representing the object's local position.
@@ -209,7 +209,7 @@ class Object3D {
 	 */
 	add(object) {
 		if (object === this) {
-			console.error("Object3D.add: object can't be added as a child of itself.", object);
+			console.error('Object3D.add: object can\'t be added as a child of itself.', object);
 			return;
 		}
 

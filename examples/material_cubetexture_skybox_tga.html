@@ -43,12 +43,12 @@
 		const scene = new t3d.Scene();
 
 		const imageUrls = [
-			"resources/skybox/mp_cloud9/cloud9_rt.tga",
-			"resources/skybox/mp_cloud9/cloud9_lf.tga",
-			"resources/skybox/mp_cloud9/cloud9_up.tga",
-			"resources/skybox/mp_cloud9/cloud9_dn.tga",
-			"resources/skybox/mp_cloud9/cloud9_bk.tga",
-			"resources/skybox/mp_cloud9/cloud9_ft.tga"
+			'resources/skybox/mp_cloud9/cloud9_rt.tga',
+			'resources/skybox/mp_cloud9/cloud9_lf.tga',
+			'resources/skybox/mp_cloud9/cloud9_up.tga',
+			'resources/skybox/mp_cloud9/cloud9_dn.tga',
+			'resources/skybox/mp_cloud9/cloud9_bk.tga',
+			'resources/skybox/mp_cloud9/cloud9_ft.tga'
 		];
 		const cube_texture = new t3d.TextureCube();
 		const tgaLoader = new TGALoader();
@@ -75,8 +75,8 @@
 		scene.add(camera);
 		
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add(sky_box, "level", 0, 8, 1);
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add(sky_box, 'level', 0, 8, 1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -96,7 +96,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

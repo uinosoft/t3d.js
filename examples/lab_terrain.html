@@ -102,12 +102,12 @@
 		scene.fog.color.setRGB(0.83, 0.78, 0.68);
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/skyboxsun25deg/px.jpg",
-			"resources/skybox/skyboxsun25deg/nx.jpg",
-			"resources/skybox/skyboxsun25deg/py.jpg",
-			"resources/skybox/skyboxsun25deg/ny.jpg",
-			"resources/skybox/skyboxsun25deg/pz.jpg",
-			"resources/skybox/skyboxsun25deg/nz.jpg"
+			'resources/skybox/skyboxsun25deg/px.jpg',
+			'resources/skybox/skyboxsun25deg/nx.jpg',
+			'resources/skybox/skyboxsun25deg/py.jpg',
+			'resources/skybox/skyboxsun25deg/ny.jpg',
+			'resources/skybox/skyboxsun25deg/pz.jpg',
+			'resources/skybox/skyboxsun25deg/nz.jpg'
 		]);
 
 		const sky_box = new SkyBox(cube_texture);
@@ -122,7 +122,7 @@
 
 		const heightmapImage = new Image();
 		heightmapImage.src = './resources/terrain/heightmap.png';
-		heightmapImage.onload = function () {
+		heightmapImage.onload = function() {
 			const terrain = new Terrain({
 				width: 1024,
 				height: 1024,
@@ -147,7 +147,7 @@
 
 			const water = createWater();
 			scene.add(water);
-		}
+		};
 
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
 		scene.add(ambientLight);
@@ -209,7 +209,7 @@
 
 				const y = terrain.getHeightAt(x, z);
 
-				if (y < -67) {      // water
+				if (y < -67) { // water
 					continue;
 				}
 
@@ -289,7 +289,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 
 		// Reference: github.com/wybiral/terrain
 
@@ -329,7 +329,7 @@
 
 			bindEvents() {
 				// You can only request pointer lock from a user triggered event
-				let el = this.domElement;
+				const el = this.domElement;
 				el.ownerDocument.addEventListener('mousedown', () => {
 					if (!el.requestPointerLock) {
 						el.requestPointerLock = el.mozRequestPointerLock;
@@ -346,9 +346,9 @@
 				});
 
 				// mouse move
-				document.body.addEventListener('mousemove', (evt) => {
+				document.body.addEventListener('mousemove', evt => {
 					if (!this.locked) return;
-					let sensitivity = 0.002;
+					const sensitivity = 0.002;
 					this.rotation.x -= evt.movementY * sensitivity;
 					this.rotation.y -= evt.movementX * sensitivity;
 					// Constrain viewing angle
@@ -361,10 +361,10 @@
 				}, false);
 
 				// keyboard
-				window.addEventListener('keydown', (evt) => {
+				window.addEventListener('keydown', evt => {
 					this.keystate[evt.code] = true;
 				}, false);
-				window.addEventListener('keyup', (evt) => {
+				window.addEventListener('keyup', evt => {
 					this.keystate[evt.code] = false;
 				}, false);
 			}

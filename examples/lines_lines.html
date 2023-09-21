@@ -25,7 +25,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from "./jsm/Clock.js";
+		import { Clock } from './jsm/Clock.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 
@@ -35,8 +35,8 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
@@ -95,7 +95,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let deltaTime = clock.getDelta();
+			const deltaTime = clock.getDelta();
 
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i];
@@ -121,10 +121,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

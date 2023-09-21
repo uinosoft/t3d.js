@@ -123,7 +123,7 @@
 		pointLight2.castShadow = true;
 		scene.add(pointLight2);
 		
-		const pointLightHelper2 = new PointLightHelper(pointLight2,  1);
+		const pointLightHelper2 = new PointLightHelper(pointLight2, 1);
 		pointLight2.add(pointLightHelper2);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
@@ -136,7 +136,7 @@
 		directionalLight.castShadow = true;
 		scene.add(directionalLight);
 		
-		const directionalLightHelper = new DirectionalLightHelper(directionalLight,  1);
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 1);
 		directionalLight.add(directionalLightHelper);
 
 		const camera = new t3d.Camera();
@@ -170,7 +170,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

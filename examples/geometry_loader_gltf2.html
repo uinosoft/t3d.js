@@ -42,19 +42,19 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = width * window.devicePixelRatio;
 		canvas.height = height * window.devicePixelRatio;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
+			'resources/skybox/Bridge2/posx.jpg',
+			'resources/skybox/Bridge2/negx.jpg',
+			'resources/skybox/Bridge2/posy.jpg',
+			'resources/skybox/Bridge2/negy.jpg',
+			'resources/skybox/Bridge2/posz.jpg',
+			'resources/skybox/Bridge2/negz.jpg'
 		]);
 
 		const scene = new t3d.Scene();
@@ -64,21 +64,22 @@
 		sky_box.level = 0;
 		scene.add(sky_box);
 
-		let animation, params = { clipName: '', timeScale: 1, skeleton: false };
+		let animation;
+		const params = { clipName: '', timeScale: 1, skeleton: false };
 
 		const nanobar = new Nanobar();
-		nanobar.el.style.background = "gray";
+		nanobar.el.style.background = 'gray';
 
 		const loadingManager = new t3d.LoadingManager(function() {
 			nanobar.go(100);
-			nanobar.el.style.background = "transparent";
+			nanobar.el.style.background = 'transparent';
 		}, function(url, itemsLoaded, itemsTotal) {
 			if (itemsLoaded < itemsTotal) {
 				nanobar.go(itemsLoaded / itemsTotal * 100);
 			}
 		});
 
-		const gltfUri = "resources/models/gltf/UinoDog/glTF/robot.gltf";
+		const gltfUri = 'resources/models/gltf/UinoDog/glTF/robot.gltf';
 		new GLTFLoader(loadingManager).load(gltfUri).then(function(result) {
 			const object = result.root;
 
@@ -90,7 +91,7 @@
 			});
 
 			animation = new t3d.AnimationMixer();
-			result.animations.forEach(function (clip) {
+			result.animations.forEach(function(clip) {
 				const action = new t3d.AnimationAction(clip);
 				animation.addAction(action);
 			});
@@ -113,8 +114,8 @@
 			const skeletonHelper = new SkeletonHelper(scene);
 
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-			gui.add(params, "skeleton").onChange(value => {
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+			gui.add(params, 'skeleton').onChange(value => {
 				if (value) {
 					scene.add(skeletonHelper);
 				} else {
@@ -186,10 +187,10 @@
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

@@ -30,7 +30,7 @@
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
-		import { Clock } from "./jsm/Clock.js";
+		import { Clock } from './jsm/Clock.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -106,7 +106,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let deltaTime = clock.getDelta();
+			const deltaTime = clock.getDelta();
 			offsetX += 0.2 * deltaTime;
 
 			instancedLine2.material.diffuseMapTransform.setUvTransform(offsetX, 0, 0.002, 1, 0, 0.5, 0.5);
@@ -133,7 +133,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

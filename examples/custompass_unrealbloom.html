@@ -46,11 +46,11 @@
         const scene = new t3d.Scene();
 
         const nanobar = new Nanobar();
-        nanobar.el.style.background = "gray";
+        nanobar.el.style.background = 'gray';
 
         const loadingManager = new t3d.LoadingManager(function() {
         	nanobar.go(100);
-        	nanobar.el.style.background = "transparent";
+        	nanobar.el.style.background = 'transparent';
         }, function(url, itemsLoaded, itemsTotal) {
         	if (itemsLoaded < itemsTotal) {
         		nanobar.go(itemsLoaded / itemsTotal * 100);
@@ -60,17 +60,17 @@
         let animation;
 
         const loader = new GLTFLoader(loadingManager);
-        loader.load('./resources/models/gltf/PrimaryIonDrive.glb').then(function (result) {
+        loader.load('./resources/models/gltf/PrimaryIonDrive.glb').then(function(result) {
         	const object = result.root;
         
-        	object.traverse(function (obj) {
+        	object.traverse(function(obj) {
         		if (obj.material && obj.material.transparent) {
         			obj.material.depthWrite = false;
         		}
         	});
         
         	animation = new t3d.AnimationMixer();
-        	result.animations.forEach(function (clip) {
+        	result.animations.forEach(function(clip) {
         		const action = new t3d.AnimationAction(clip);
         		action.weight = 1;
         		animation.addAction(action);
@@ -99,7 +99,7 @@
         const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
         const contextParams = { antialias: false, alpha: false };
-        const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+        const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
         const renderer = new t3d.WebGLRenderer(gl);
 
         if (renderer.capabilities.version < 2) {
@@ -154,7 +154,7 @@
         	backRenderTarget.resize(width, height);
         	bloomPass.resize(width, height);
         }
-        window.addEventListener("resize", onWindowResize, false);
+        window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

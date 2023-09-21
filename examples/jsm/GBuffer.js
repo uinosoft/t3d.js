@@ -164,10 +164,11 @@ class GBuffer {
 					}
 					helpMatrix4.copy(camera.projectionMatrix).toArray(renderable.object.userData['prevProjection']);
 
-					if (renderable.object.skeleton) {
-						if (renderable.object.skeleton.boneTexture) {
+					const skeleton = renderable.object.skeleton;
+					if (skeleton) {
+						if (skeleton.boneTexture) {
 							if (!renderable.object.userData['prevBoneTexture']) {
-								const oldTexture = renderable.object.skeleton.boneTexture;
+								const oldTexture = skeleton.boneTexture;
 								const newTexture = oldTexture.clone();
 								newTexture.image = {
 									width: oldTexture.image.width,
@@ -177,7 +178,7 @@ class GBuffer {
 								renderable.object.userData['prevBoneTexture'] = newTexture;
 							}
 
-							renderable.object.userData['prevBoneTexture'].image.data.set(renderable.object.skeleton.boneTexture.image.data);
+							renderable.object.userData['prevBoneTexture'].image.data.set(skeleton.boneTexture.image.data);
 							renderable.object.userData['prevBoneTexture'].version++;
 						} else {
 							if (!renderable.object.userData['prevBoneMatrices']) {
@@ -454,7 +455,7 @@ function MaterialCache() {
 		getNormalGlossinessMaterial: getNormalGlossinessMaterial,
 		getAlbedoMetalnessMaterial: getAlbedoMetalnessMaterial,
 		getMotionMaterial: getMotionMaterial
-	}
+	};
 }
 
 const normalGlossinessShader = {

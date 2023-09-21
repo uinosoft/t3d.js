@@ -53,12 +53,12 @@
 		}
 
 		const imageUrls = [
-			"resources/hdr/pisaHDR/px.hdr",
-			"resources/hdr/pisaHDR/nx.hdr",
-			"resources/hdr/pisaHDR/py.hdr",
-			"resources/hdr/pisaHDR/ny.hdr",
-			"resources/hdr/pisaHDR/pz.hdr",
-			"resources/hdr/pisaHDR/nz.hdr"
+			'resources/hdr/pisaHDR/px.hdr',
+			'resources/hdr/pisaHDR/nx.hdr',
+			'resources/hdr/pisaHDR/py.hdr',
+			'resources/hdr/pisaHDR/ny.hdr',
+			'resources/hdr/pisaHDR/pz.hdr',
+			'resources/hdr/pisaHDR/nz.hdr'
 		];
 
 		let texture = new t3d.TextureCube();
@@ -83,8 +83,8 @@
 				texture.generateMipmaps = textureData.generateMipmaps;
 			}
 
-			texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : TEXTURE_FILTER.LINEAR;
-			texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : TEXTURE_FILTER.LINEAR;
+			texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : t3d.TEXTURE_FILTER.LINEAR;
+			texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : t3d.TEXTURE_FILTER.LINEAR;
 
 			texture.version++;
 
@@ -118,9 +118,9 @@
 			}
 
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-			gui.add(sky_box, "level", 0, 8, 1);
-			gui.add(camera, "gammaFactor", 0, 3, 0.01);
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+			gui.add(sky_box, 'level', 0, 8, 1);
+			gui.add(camera, 'gammaFactor', 0, 3, 0.01);
 		});
 
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
@@ -156,7 +156,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

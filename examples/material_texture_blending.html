@@ -50,7 +50,7 @@
 
 			ctx.fillStyle = 'white';
 			ctx.font = 'bold 14pt arial';
-			ctx.textAlign = "center";
+			ctx.textAlign = 'center';
 			ctx.fillText(text, 64, 22);
 
 			const map = new t3d.Texture2D();
@@ -73,7 +73,7 @@
 			{ constant: t3d.BLEND_TYPE.MUL, labelMaterial: generateLabelMaterial('Mul') }
 		];
 
-		const assignSRGB = (texture) => {
+		const assignSRGB = texture => {
 			texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		};
 
@@ -170,7 +170,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

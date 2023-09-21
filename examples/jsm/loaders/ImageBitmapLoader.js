@@ -33,15 +33,15 @@ class ImageBitmapLoader extends Loader {
 		fetchOptions.credentials = (this.crossOrigin === 'anonymous') ? 'same-origin' : 'include';
 		fetchOptions.headers = this.requestHeader;
 
-		fetch(url, fetchOptions).then(function (res) {
+		fetch(url, fetchOptions).then(function(res) {
 			return res.blob();
-		}).then(function (blob) {
+		}).then(function(blob) {
 			return createImageBitmap(blob, Object.assign(scope.options, { colorSpaceConversion: 'none' }));
-		}).then(function (imageBitmap) {
+		}).then(function(imageBitmap) {
 			if (onLoad) onLoad(imageBitmap);
 
 			scope.manager.itemEnd(url);
-		}).catch(function (e) {
+		}).catch(function(e) {
 			if (onError) onError(e);
 
 			scope.manager.itemError(url);

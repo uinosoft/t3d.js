@@ -33,7 +33,7 @@ var FlyControls = function(object, domElement) {
 	this.moveVector = new Vector3(0, 0, 0);
 	this.rotationVector = new Vector3(0, 0, 0);
 
-	this.keydown = function (event) {
+	this.keydown = function(event) {
 		if (event.altKey) {
 			return;
 		}
@@ -66,7 +66,7 @@ var FlyControls = function(object, domElement) {
 		this.updateRotationVector();
 	};
 
-	this.keyup = function (event) {
+	this.keyup = function(event) {
 		switch (event.keyCode) {
 			case 16: /* shift */ this.movementSpeedMultiplier = 1; break;
 
@@ -93,7 +93,7 @@ var FlyControls = function(object, domElement) {
 		this.updateRotationVector();
 	};
 
-	this.mousedown = function (event) {
+	this.mousedown = function(event) {
 		if (this.domElement !== document) {
 			this.domElement.focus();
 		}
@@ -113,7 +113,7 @@ var FlyControls = function(object, domElement) {
 		}
 	};
 
-	this.mousemove = function (event) {
+	this.mousemove = function(event) {
 		if (!this.dragToLook || this.mouseStatus > 0) {
 			var container = this.getContainerDimensions();
 			var halfWidth = container.size[0] / 2;
@@ -126,7 +126,7 @@ var FlyControls = function(object, domElement) {
 		}
 	};
 
-	this.mouseup = function (event) {
+	this.mouseup = function(event) {
 		event.preventDefault();
 		event.stopPropagation();
 
@@ -151,7 +151,7 @@ var FlyControls = function(object, domElement) {
 	var lastQuaternion = new Quaternion();
 	var EPS = 0.000001;
 
-	this.update = function (delta) {
+	this.update = function(delta) {
 		delta = delta || 0.0166;
 
 		var moveMult = delta * this.movementSpeed / 0.0166;
@@ -185,7 +185,7 @@ var FlyControls = function(object, domElement) {
 		return false;
 	};
 
-	this.updateMovementVector = function () {
+	this.updateMovementVector = function() {
 		var forward = (this.moveState.forward || (this.autoForward && !this.moveState.back)) ? 1 : 0;
 
 		this.moveVector.x = (-this.moveState.left + this.moveState.right);
@@ -195,7 +195,7 @@ var FlyControls = function(object, domElement) {
 		// console.log( 'move:', [ this.moveVector.x, this.moveVector.y, this.moveVector.z ] );
 	};
 
-	this.updateRotationVector = function () {
+	this.updateRotationVector = function() {
 		this.rotationVector.x = (-this.moveState.pitchDown + this.moveState.pitchUp);
 		this.rotationVector.y = (-this.moveState.yawRight + this.moveState.yawLeft);
 		this.rotationVector.z = (-this.moveState.rollRight + this.moveState.rollLeft);
@@ -203,7 +203,7 @@ var FlyControls = function(object, domElement) {
 		// console.log( 'rotate:', [ this.rotationVector.x, this.rotationVector.y, this.rotationVector.z ] );
 	};
 
-	this.getContainerDimensions = function () {
+	this.getContainerDimensions = function() {
 		if (this.domElement != document) {
 			return {
 				size: [this.domElement.offsetWidth, this.domElement.offsetHeight],
@@ -218,7 +218,7 @@ var FlyControls = function(object, domElement) {
 	};
 
 	function bind(scope, fn) {
-		return function () {
+		return function() {
 			fn.apply(scope, arguments);
 		};
 	}
@@ -227,7 +227,7 @@ var FlyControls = function(object, domElement) {
 		event.preventDefault();
 	}
 
-	this.dispose = function () {
+	this.dispose = function() {
 		this.domElement.removeEventListener('contextmenu', contextmenu, { passive: false });
 		this.domElement.removeEventListener('mousedown', _mousedown, { passive: false });
 		this.domElement.removeEventListener('mousemove', _mousemove, false);
@@ -254,6 +254,6 @@ var FlyControls = function(object, domElement) {
 
 	this.updateMovementVector();
 	this.updateRotationVector();
-}
+};
 
 export { FlyControls };

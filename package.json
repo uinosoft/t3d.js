@@ -36,15 +36,6 @@
     "canvas",
     "html5"
   ],
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "./tools/.eslintrc.cjs"
-    ],
-    "plugins": [
-      "html"
-    ]
-  },
   "author": "uino",
   "license": "BSD-3-Clause",
   "bugs": {
@@ -58,6 +49,7 @@
     "clean-jsdoc-theme": "^4.1.8",
     "eslint": "^8.24.0",
     "eslint-plugin-html": "^7.1.0",
+    "eslint-plugin-import": "^2.28.1",
     "jsdoc": "^4.0.2",
     "rollup": "^3.18.0"
   },
@@ -68,7 +60,9 @@
     "doc": "jsdoc --readme ./README.md ./src -r -d ./docs -c ./tools/doc.config.json",
     "lint": "eslint src",
     "lint-fix": "eslint src --fix",
-    "lint-examples": "eslint examples/jsm",
-    "lint-examples-fix": "eslint examples/jsm --fix"
+    "lint-addons": "eslint examples/jsm",
+    "lint-addons-fix": "eslint examples/jsm --fix",
+    "lint-examples": "eslint examples --ext .html",
+    "lint-examples-fix": "eslint examples --ext .html --fix"
   }
 }

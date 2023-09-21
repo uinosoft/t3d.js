@@ -74,8 +74,8 @@
 		// insert skinIndex & skinWeight
 		const skinIndexArray = [];
 		const skinWeightArray = [];
-		const vertexCount = cube_geometry.getAttribute("a_Position").buffer.count;
-		const verticesArray = cube_geometry.getAttribute("a_Position").buffer.array;
+		const vertexCount = cube_geometry.getAttribute('a_Position').buffer.count;
+		const verticesArray = cube_geometry.getAttribute('a_Position').buffer.array;
 		for (let i = 0; i < vertexCount; i++) {
 			const offset = i * 3;
 			const y = verticesArray[offset + 1];
@@ -90,9 +90,9 @@
 			}
 		}
 
-		cube_geometry.removeAttribute("a_Color");
-		cube_geometry.addAttribute("skinIndex", new t3d.Attribute(new t3d.Buffer(new Float32Array(skinIndexArray), 4)));
-		cube_geometry.addAttribute("skinWeight", new t3d.Attribute(new t3d.Buffer(new Float32Array(skinWeightArray), 4)));
+		cube_geometry.removeAttribute('a_Color');
+		cube_geometry.addAttribute('skinIndex', new t3d.Attribute(new t3d.Buffer(new Float32Array(skinIndexArray), 4)));
+		cube_geometry.addAttribute('skinWeight', new t3d.Attribute(new t3d.Buffer(new Float32Array(skinWeightArray), 4)));
 
 		const phong = new t3d.PhongMaterial();
 		phong.diffuse.setHex(0xffffff);
@@ -154,7 +154,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

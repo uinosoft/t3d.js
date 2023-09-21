@@ -50,7 +50,7 @@ class RenderInfo {
 		this.update = function(count, mode, instanceCount) {
 			render.calls++;
 			updateFuncs[mode](instanceCount, count);
-		}
+		};
 
 		/**
 		 * Reset the render info.
@@ -61,7 +61,7 @@ class RenderInfo {
 			render.triangles = 0;
 			render.lines = 0;
 			render.points = 0;
-		}
+		};
 
 		/**
          * A series of statistical information of rendering process, include calls, triangles, lines and points.

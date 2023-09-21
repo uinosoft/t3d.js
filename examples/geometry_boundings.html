@@ -68,7 +68,7 @@
 			geometry.morphAttributes.position = [];
 
 			// the original positions of the cube's vertices
-			const positionAttribute = geometry.attributes["a_Position"];
+			const positionAttribute = geometry.attributes['a_Position'];
 
 			// for the first morph target we'll move the cube's vertices onto the surface of a sphere
 			const spherePositions = [];
@@ -148,15 +148,15 @@
 
 		const gui = new GUI({ title: 'Morph Targets' });
 
-		gui.add(params, 'Spherify', 0, 1).step(0.01).onChange(function (value) {
+		gui.add(params, 'Spherify', 0, 1).step(0.01).onChange(function(value) {
 			mesh.morphTargetInfluences[0] = value;
 		});
 
-		gui.add(params, 'Twist', 0, 1).step(0.01).onChange(function (value) {
+		gui.add(params, 'Twist', 0, 1).step(0.01).onChange(function(value) {
 			mesh.morphTargetInfluences[1] = value;
 		});
 
-		gui.add(params, "BoundingBox").onChange(value => {
+		gui.add(params, 'BoundingBox').onChange(value => {
 			if (value) {
 				boxHelper.visible = true;
 			} else {
@@ -164,7 +164,7 @@
 			}
 		});
 
-		gui.add(params, "BoundingSphere").onChange(value => {
+		gui.add(params, 'BoundingSphere').onChange(value => {
 			if (value) {
 				sphere.visible = true;
 			} else {
@@ -193,7 +193,7 @@
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
 
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 </html>

@@ -131,13 +131,13 @@ function generateSetter(uniform, pureArray) {
 				if (cache[0] === value) return;
 				gl.uniform1f(location, value);
 				cache[0] = value;
-			}
+			};
 			if (pureArray) {
 				uniform.set = function(value) {
 					if (arraysEqual(cache, value)) return;
 					gl.uniform1fv(location, value);
 					copyArray(cache, value);
-				}
+				};
 			} else {
 				uniform.set = uniform.setValue;
 			}
@@ -150,7 +150,7 @@ function generateSetter(uniform, pureArray) {
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
-			}
+			};
 			if (pureArray) {
 				uniform.set = function(value, textures) {
 					const n = value.length;
@@ -161,7 +161,7 @@ function generateSetter(uniform, pureArray) {
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
 					copyArray(cache, units);
-				}
+				};
 			} else {
 				uniform.set = uniform.setValue;
 			}
@@ -174,7 +174,7 @@ function generateSetter(uniform, pureArray) {
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
-			}
+			};
 			if (pureArray) {
 				uniform.set = function(value, textures) {
 					const n = value.length;
@@ -185,7 +185,7 @@ function generateSetter(uniform, pureArray) {
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
 					copyArray(cache, units);
-				}
+				};
 			} else {
 				uniform.set = uniform.setValue;
 			}
@@ -197,7 +197,7 @@ function generateSetter(uniform, pureArray) {
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
-			}
+			};
 			if (pureArray) {
 				uniform.set = function(value, textures) {
 					const n = value.length;
@@ -208,7 +208,7 @@ function generateSetter(uniform, pureArray) {
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
 					copyArray(cache, units);
-				}
+				};
 			} else {
 				uniform.set = uniform.setValue;
 			}
@@ -219,13 +219,13 @@ function generateSetter(uniform, pureArray) {
 				if (cache[0] === value) return;
 				gl.uniform1i(location, value);
 				cache[0] = value;
-			}
+			};
 			if (pureArray) {
 				uniform.set = function(value) {
 					if (arraysEqual(cache, value)) return;
 					gl.uniform1iv(location, value);
 					copyArray(cache, value);
-				}
+				};
 			} else {
 				uniform.set = uniform.setValue;
 			}
@@ -237,12 +237,12 @@ function generateSetter(uniform, pureArray) {
 					cache[0] = p1;
 					cache[1] = p2;
 				}
-			}
+			};
 			uniform.set = function(value) {
 				if (arraysEqual(cache, value)) return;
 				gl.uniform2fv(location, value);
 				copyArray(cache, value);
-			}
+			};
 			break;
 		case gl.BOOL_VEC2:
 		case gl.INT_VEC2:
@@ -252,12 +252,12 @@ function generateSetter(uniform, pureArray) {
 					cache[0] = p1;
 					cache[1] = p2;
 				}
-			}
+			};
 			uniform.set = function(value) {
 				if (arraysEqual(cache, value)) return;
 				gl.uniform2iv(location, value);
 				copyArray(cache, value);
-			}
+			};
 			break;
 		case gl.FLOAT_VEC3:
 			uniform.setValue = function(p1, p2, p3) {
@@ -267,12 +267,12 @@ function generateSetter(uniform, pureArray) {
 					cache[1] = p2;
 					cache[2] = p3;
 				}
-			}
+			};
 			uniform.set = function(value) {
 				if (arraysEqual(cache, value)) return;
 				gl.uniform3fv(location, value);
 				copyArray(cache, value);
-			}
+			};
 			break;
 		case gl.BOOL_VEC3:
 		case gl.INT_VEC3:
@@ -283,12 +283,12 @@ function generateSetter(uniform, pureArray) {
 					cache[1] = p2;
 					cache[2] = p3;
 				}
-			}
+			};
 			uniform.set = function(value) {
 				if (arraysEqual(cache, value)) return;
 				gl.uniform3iv(location, value);
 				copyArray(cache, value);
-			}
+			};
 			break;
 		case gl.FLOAT_VEC4:
 			uniform.setValue = function(p1, p2, p3, p4) {
@@ -299,12 +299,12 @@ function generateSetter(uniform, pureArray) {
 					cache[2] = p3;
 					cache[3] = p4;
 				}
-			}
+			};
 			uniform.set = function(value) {
 				if (arraysEqual(cache, value)) return;
 				gl.uniform4fv(location, value);
 				copyArray(cache, value);
-			}
+			};
 			break;
 		case gl.BOOL_VEC4:
 		case gl.INT_VEC4:
@@ -316,12 +316,12 @@ function generateSetter(uniform, pureArray) {
 					cache[2] = p3;
 					cache[3] = p4;
 				}
-			}
+			};
 			uniform.set = function(value) {
 				if (arraysEqual(cache, value)) return;
 				gl.uniform4iv(location, value);
 				copyArray(cache, value);
-			}
+			};
 			break;
 
 		case gl.FLOAT_MAT2:
@@ -330,7 +330,7 @@ function generateSetter(uniform, pureArray) {
 					if (arraysEqual(cache, value)) return;
 					gl.uniformMatrix2fv(location, false, value);
 					copyArray(cache, value);
-				}
+				};
 			} else {
 				uniform.setValue = uniform.set = function(value) {
 					if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]) {
@@ -340,7 +340,7 @@ function generateSetter(uniform, pureArray) {
 						cache[2] = value[2];
 						cache[3] = value[3];
 					}
-				}
+				};
 			}
 			break;
 		case gl.FLOAT_MAT3:
@@ -349,7 +349,7 @@ function generateSetter(uniform, pureArray) {
 					if (arraysEqual(cache, value)) return;
 					gl.uniformMatrix3fv(location, false, value);
 					copyArray(cache, value);
-				}
+				};
 			} else {
 				uniform.setValue = uniform.set = function(value) {
 					if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2]
@@ -366,7 +366,7 @@ function generateSetter(uniform, pureArray) {
 						cache[7] = value[7];
 						cache[8] = value[8];
 					}
-				}
+				};
 			}
 			break;
 		case gl.FLOAT_MAT4:
@@ -375,7 +375,7 @@ function generateSetter(uniform, pureArray) {
 					if (arraysEqual(cache, value)) return;
 					gl.uniformMatrix4fv(location, false, value);
 					copyArray(cache, value);
-				}
+				};
 			} else {
 				uniform.setValue = uniform.set = function(value) {
 					if (cache[0] !== value[0] || cache[1] !== value[1] || cache[2] !== value[2] || cache[3] !== value[3]
@@ -400,7 +400,7 @@ function generateSetter(uniform, pureArray) {
 						cache[14] = value[14];
 						cache[15] = value[15];
 					}
-				}
+				};
 			}
 			break;
 	}

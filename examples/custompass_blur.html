@@ -39,8 +39,8 @@
 
 		const scene = new t3d.Scene();
 
-		const jeep = "resources/models/assimp/jeep/jeep.assimp.json";
-		const interior = "resources/models/assimp/interior/interior.assimp.json";
+		const jeep = 'resources/models/assimp/jeep/jeep.assimp.json';
+		const interior = 'resources/models/assimp/interior/interior.assimp.json';
 
 		const loader1 = new AssimpJsonLoader();
 		loader1.load(jeep, function(object) {
@@ -89,19 +89,19 @@
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const shadowMapPass = new t3d.ShadowMapPass();
 		const blurPass = new t3d.ShaderPostPass(FastGaussianBlurShader);
-		blurPass.uniforms["resolution"] = [1 / width, 1 / height];
+		blurPass.uniforms['resolution'] = [1 / width, 1 / height];
 
 		// gui
-		let params = { radius: 5 };
+		const params = { radius: 5 };
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
-		gui.add(params, "radius", 0, 10, 0.01);
-		gui.add(blurPass.material.defines, "SAMPLERS", [5, 9, 13]).onChange(val => {
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(params, 'radius', 0, 10, 0.01);
+		gui.add(blurPass.material.defines, 'SAMPLERS', [5, 9, 13]).onChange(val => {
 			blurPass.material.needsUpdate = true;
 		});
 
@@ -155,9 +155,9 @@
 			tempRenderTarget1.resize(width, height);
 			tempRenderTarget2.resize(width, height);
 
-			blurPass.uniforms["resolution"] = [1 / width, 1 / height];
+			blurPass.uniforms['resolution'] = [1 / width, 1 / height];
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

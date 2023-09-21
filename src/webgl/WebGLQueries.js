@@ -12,7 +12,7 @@ class WebGLQueries extends PropertyMap {
 		const timerQuery = capabilities.timerQuery;
 		const that = this;
 
-		const onQueryDispose = (event) => {
+		const onQueryDispose = event => {
 			const query = event.target;
 			const queryProperties = that.get(query);
 
@@ -27,7 +27,7 @@ class WebGLQueries extends PropertyMap {
 			}
 
 			that.delete(query);
-		}
+		};
 
 		this._onQueryDispose = onQueryDispose;
 
@@ -35,7 +35,7 @@ class WebGLQueries extends PropertyMap {
 			[QUERY_TYPE.ANY_SAMPLES_PASSED]: 0x8C2F,
 			[QUERY_TYPE.ANY_SAMPLES_PASSED_CONSERVATIVE]: 0x8D6A,
 			[QUERY_TYPE.TIME_ELAPSED]: 0x88BF
-		}
+		};
 	}
 
 	_get(query) {

@@ -27,7 +27,7 @@ var LineDashedShader = {
 
 		'	#include <pvm_vert>',
 		'}'
-	].join("\n"),
+	].join('\n'),
 
 	fragmentShader: [
 		'#include <common_frag>',
@@ -48,8 +48,8 @@ var LineDashedShader = {
 		'	#include <premultipliedAlpha_frag>',
 		'	#include <fog_frag>',
 		'}'
-	].join("\n")
+	].join('\n')
 
-}
+};
 
 export { LineDashedShader };

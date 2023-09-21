@@ -90,10 +90,10 @@
 		const params = { scaleX: 1, scaleY: 1 };
 
 		const gui = new GUI();
-		gui.add(params, "scaleX", 0.1, 5.0, 0.01).onChange(() => {
+		gui.add(params, 'scaleX', 0.1, 5.0, 0.01).onChange(() => {
 			mat2.alphaMapTransform.setUvTransform(0, 0, params.scaleX, params.scaleY, 0, 0.5, 0.5);
 		});
-		gui.add(params, "scaleY", 0.1, 5.0, 0.01).onChange(() => {
+		gui.add(params, 'scaleY', 0.1, 5.0, 0.01).onChange(() => {
 			mat2.alphaMapTransform.setUvTransform(0, 0, params.scaleX, params.scaleY, 0, 0.5, 0.5);
 		});
 
@@ -117,7 +117,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

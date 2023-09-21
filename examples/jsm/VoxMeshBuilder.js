@@ -40,11 +40,11 @@ var VOXMeshBuilder = (function() {
 		this.materialIndex = source.materialIndex;
 
 		return this;
-	}
+	};
 
 	VOXFace3.prototype.clone = function() {
 		return new VOXFace3().copy(this);
-	}
+	};
 
 	function VOXGeometry() {
 		this.vertices = [];
@@ -52,7 +52,7 @@ var VOXMeshBuilder = (function() {
 		this.faceVertexUvs = [[]];
 	}
 
-	VOXGeometry.prototype.computeFaceNormals = function () {
+	VOXGeometry.prototype.computeFaceNormals = function() {
 		var cb = new Vector3(), ab = new Vector3();
 
 		for (var f = 0, fl = this.faces.length; f < fl; f++) {
@@ -70,9 +70,9 @@ var VOXMeshBuilder = (function() {
 
 			face.normal.copy(cb);
 		}
-	}
+	};
 
-	VOXGeometry.prototype.merge = function (geometry, matrix, materialIndexOffset) {
+	VOXGeometry.prototype.merge = function(geometry, matrix, materialIndexOffset) {
 		var normalMatrix,
 			vertexOffset = this.vertices.length,
 			vertices1 = this.vertices,
@@ -134,9 +134,9 @@ var VOXMeshBuilder = (function() {
 
 			uvs1.push(uvCopy);
 		}
-	}
+	};
 
-	VOXGeometry.prototype.mergeVertices = function () {
+	VOXGeometry.prototype.mergeVertices = function() {
 		var verticesMap = {}; // Hashmap for looking up vertices by position coordinates (and making sure they are unique)
 		var unique = [], changes = [];
 
@@ -199,7 +199,7 @@ var VOXMeshBuilder = (function() {
 		var diff = this.vertices.length - unique.length;
 		this.vertices = unique;
 		return diff;
-	}
+	};
 
 	VOXGeometry.prototype.createGeometry = function() {
 		var geometry = new Geometry();
@@ -280,19 +280,19 @@ var VOXMeshBuilder = (function() {
 		var buffer = new Buffer(new Float32Array(verticesArray), 12);
 		var attribute;
 		attribute = new Attribute(buffer, 3, 0);
-		geometry.addAttribute("a_Position", attribute);
+		geometry.addAttribute('a_Position', attribute);
 		attribute = new Attribute(buffer, 3, 3);
-		geometry.addAttribute("a_Normal", attribute);
+		geometry.addAttribute('a_Normal', attribute);
 		attribute = new Attribute(buffer, 4, 6);
-		geometry.addAttribute("a_Color", attribute);
+		geometry.addAttribute('a_Color', attribute);
 		attribute = new Attribute(buffer, 2, 10);
-		geometry.addAttribute("a_Uv", attribute);
+		geometry.addAttribute('a_Uv', attribute);
 
 		geometry.computeBoundingBox();
 		geometry.computeBoundingSphere();
 
 		return geometry;
-	}
+	};
 
 	/**
      * Reference https://github.com/daishihmr/vox.js
@@ -314,9 +314,11 @@ var VOXMeshBuilder = (function() {
      */
 	function VOXMeshBuilder(voxelData, param) {
 		if (!VOXMeshBuilder.textureFactory) {
+			// eslint-disable-next-line
 			if (!vox || !vox.TextureFactory) {
 				console.error('t3d.VOXMeshBuilder relies on vox.js');
 			}
+			// eslint-disable-next-line
 			VOXMeshBuilder.textureFactory = new vox.TextureFactory();
 		}
 
@@ -365,7 +367,7 @@ var VOXMeshBuilder = (function() {
 		} else {
 			this.material.diffuseMap = VOXMeshBuilder.textureFactory.getTexture(this.voxelData);
 		}
-	}
+	};
 
 	VOXMeshBuilder.prototype._createVoxGeometry = function(voxel) {
 	// 隣接するボクセルを検索し、存在する場合は面を無視する
@@ -379,7 +381,7 @@ var VOXMeshBuilder = (function() {
 		}
 
 		// 6方向すべて隣接されていたらnullを返す
-		if (ignoreFaces.length ===  6) return null;
+		if (ignoreFaces.length === 6) return null;
 
 		// 頂点データ
 		var voxVertices = voxVerticesSource.map(function(voxel) {
@@ -390,7 +392,7 @@ var VOXMeshBuilder = (function() {
 		var voxFaces = voxFacesSource.map(function(f) {
 			return {
 				faceA: new VOXFace3(f.faceA.a, f.faceA.b, f.faceA.c),
-				faceB: new VOXFace3(f.faceB.a, f.faceB.b, f.faceB.c),
+				faceB: new VOXFace3(f.faceB.a, f.faceB.b, f.faceB.c)
 			};
 		});
 
@@ -446,21 +448,21 @@ var VOXMeshBuilder = (function() {
 		});
 
 		return vox;
-	}
+	};
 
 	/**
      * @return {t3d.Texture2D}
      */
 	VOXMeshBuilder.prototype.getTexture = function() {
 		return VOXMeshBuilder.textureFactory.getTexture(this.voxelData);
-	}
+	};
 
 	/**
      * @return {Mesh}
      */
 	VOXMeshBuilder.prototype.createMesh = function() {
 		return new Mesh(this.geometry, this.material);
-	}
+	};
 
 	/**
      * 外側に面したボクセルか
@@ -476,7 +478,7 @@ var VOXMeshBuilder = (function() {
 		voxelSize: 1.0,
 		vertexColor: false,
 		optimizeFaces: true,
-		originToBottom: true,
+		originToBottom: true
 	};
 
 	VOXMeshBuilder.textureFactory = undefined;
@@ -488,7 +490,7 @@ var VOXMeshBuilder = (function() {
 		{ x: 0, y: -1, z: 0, ignoreFace: 5 },
 		{ x: 0, y: 1, z: 0, ignoreFace: 4 },
 		{ x: 0, y: 0, z: -1, ignoreFace: 2 },
-		{ x: 0, y: 0, z: 1, ignoreFace: 3 },
+		{ x: 0, y: 0, z: 1, ignoreFace: 3 }
 	];
 
 	// 頂点データソース
@@ -500,21 +502,21 @@ var VOXMeshBuilder = (function() {
 		{ x: -1, y: -1, z: -1 },
 		{ x: 1, y: -1, z: -1 },
 		{ x: -1, y: -1, z: 1 },
-		{ x: 1, y: -1, z: 1 },
+		{ x: 1, y: -1, z: 1 }
 	];
 
 	// 面データソース
 	var voxFacesSource = [
-		{ faceA: { a: 6, b: 2, c: 0 }, faceB: { a: 6, b: 0, c: 4 }},
-		{ faceA: { a: 5, b: 1, c: 3 }, faceB: { a: 5, b: 3, c: 7 }},
-		{ faceA: { a: 5, b: 7, c: 6 }, faceB: { a: 5, b: 6, c: 4 }},
-		{ faceA: { a: 2, b: 3, c: 1 }, faceB: { a: 2, b: 1, c: 0 }},
-		{ faceA: { a: 4, b: 0, c: 1 }, faceB: { a: 4, b: 1, c: 5 }},
-		{ faceA: { a: 7, b: 3, c: 2 }, faceB: { a: 7, b: 2, c: 6 }},
+		{ faceA: { a: 6, b: 2, c: 0 }, faceB: { a: 6, b: 0, c: 4 } },
+		{ faceA: { a: 5, b: 1, c: 3 }, faceB: { a: 5, b: 3, c: 7 } },
+		{ faceA: { a: 5, b: 7, c: 6 }, faceB: { a: 5, b: 6, c: 4 } },
+		{ faceA: { a: 2, b: 3, c: 1 }, faceB: { a: 2, b: 1, c: 0 } },
+		{ faceA: { a: 4, b: 0, c: 1 }, faceB: { a: 4, b: 1, c: 5 } },
+		{ faceA: { a: 7, b: 3, c: 2 }, faceB: { a: 7, b: 2, c: 6 } }
 	];
 
 	var hash = function(x, y, z) {
-		return "x" + x + "y" + y + "z" + z;
+		return 'x' + x + 'y' + y + 'z' + z;
 	};
 
 	var createHashTable = function(voxels) {
@@ -525,7 +527,7 @@ var VOXMeshBuilder = (function() {
 
 		hashTable.has = function(x, y, z) {
 			return hash(x, y, z) in this;
-		}
+		};
 		return hashTable;
 	};
 

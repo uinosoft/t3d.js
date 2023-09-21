@@ -93,12 +93,12 @@
 		controller.target.set(0, 26, 0);
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-		gui.add(hemisphereLight, "intensity", 0, 2, 0.01);
-		gui.addColor(hemisphereLight, "color").name('skyColor').onChange(function() {
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add(hemisphereLight, 'intensity', 0, 2, 0.01);
+		gui.addColor(hemisphereLight, 'color').name('skyColor').onChange(function() {
 			hemisphereLightHelper.update();
 		});
-		gui.addColor(hemisphereLight, "groundColor").onChange(function() {
+		gui.addColor(hemisphereLight, 'groundColor').onChange(function() {
 			hemisphereLightHelper.update();
 		});
 		gui.add({ rotation: 0 }, 'rotation', 0, 360, 0.01).onChange(function(value) {
@@ -122,7 +122,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

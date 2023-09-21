@@ -48,7 +48,7 @@
 		// const normalTexture = textureLoader.load('./resources/models/assimp/leePerrySmith/Infinite-Level_02_Tangent_SmoothUV.jpg');
 		const specularTexture = textureLoader.load('./resources/models/assimp/leePerrySmith/Map-SPEC.jpg');
 
-		const leePerrySmith = "resources/models/assimp/leePerrySmith/LeePerrySmith.json";
+		const leePerrySmith = 'resources/models/assimp/leePerrySmith/LeePerrySmith.json';
 		const loader = new AssimpJsonLoader();
 		loader.load(leePerrySmith, function(object) {
 			for (let i = 0; i < object.children.length; i++) {
@@ -106,7 +106,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

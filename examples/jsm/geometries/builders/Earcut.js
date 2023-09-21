@@ -4,7 +4,7 @@
 
 const Earcut = {
 
-	triangulate: function (data, holeIndices, dim) {
+	triangulate: function(data, holeIndices, dim) {
 		dim = dim || 2;
 
 		const hasHoles = holeIndices && holeIndices.length;
@@ -543,7 +543,7 @@ function middleInside(a, b) {
 		py = (a.y + b.y) / 2;
 	do {
 		if (((p.y > py) !== (p.next.y > py)) && p.next.y !== p.y &&
-				(px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x)) { inside = !inside; }
+				(px < (p.next.x - p.x) * (py - p.y) / (p.next.y - p.y) + p.x)) { inside = !inside }
 		p = p.next;
 	} while (p !== a);
 

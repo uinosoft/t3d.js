@@ -63,19 +63,19 @@
 		scene.add(plane);
 		
 		// add morph targets
-		let influnences = [];
-		let morphPositions = [];
+		const influnences = [];
+		const morphPositions = [];
 		for (let i = 0; i < 8; i++) {
-			let morphPosition = cube_geometry.getAttribute('a_Position').clone(new WeakMap());
+			const morphPosition = cube_geometry.getAttribute('a_Position').clone(new WeakMap());
 
 			for (let j = 0, l = morphPosition.buffer.array.length; j < l; j += 3) {
-				let x = morphPosition.buffer.array[j];
-				let y = morphPosition.buffer.array[j + 1];
-				let z = morphPosition.buffer.array[j + 2];
+				const x = morphPosition.buffer.array[j];
+				const y = morphPosition.buffer.array[j + 1];
+				const z = morphPosition.buffer.array[j + 2];
 
-				let flag1 = (i % 8 > 3) === (x > 0);
-				let flag2 = (i % 4 > 1) === (y > 0);
-				let flag3 = (i % 2 > 0) === (z > 0);
+				const flag1 = (i % 8 > 3) === (x > 0);
+				const flag2 = (i % 4 > 1) === (y > 0);
+				const flag3 = (i % 2 > 0) === (z > 0);
 				if (flag1 && flag2 && flag3) {
 					morphPosition.buffer.array[j] = x;
 					morphPosition.buffer.array[j + 1] = y;
@@ -135,7 +135,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

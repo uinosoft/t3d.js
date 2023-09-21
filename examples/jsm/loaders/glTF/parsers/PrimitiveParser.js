@@ -1,6 +1,6 @@
 import { Geometry, PBRMaterial, VERTEX_COLOR, SHADING_TYPE, PointsMaterial, Material, BasicMaterial } from 't3d';
-import { GLTFUtils } from "../GLTFUtils.js";
-import { ATTRIBUTES, ACCESSOR_COMPONENT_TYPES, WEBGL_DRAW_MODES } from "../Constants.js";
+import { GLTFUtils } from '../GLTFUtils.js';
+import { ATTRIBUTES, ACCESSOR_COMPONENT_TYPES, WEBGL_DRAW_MODES } from '../Constants.js';
 import { KHR_draco_mesh_compression as _KHR_draco_mesh_compression } from '../extensions/KHR_draco_mesh_compression.js';
 
 export class PrimitiveParser {
@@ -239,7 +239,7 @@ function assignFinalMaterial(primitive, materialCache) {
 				} else if (geometry.attributes[ATTRIBUTES.COLOR_0].size === 4) {
 					cachedMaterial.vertexColors = VERTEX_COLOR.RGBA;
 				} else {
-					console.warn("Illegal vertex color size: " + geometry.attributes[ATTRIBUTES.COLOR_0].size);
+					console.warn('Illegal vertex color size: ' + geometry.attributes[ATTRIBUTES.COLOR_0].size);
 				}
 			}
 

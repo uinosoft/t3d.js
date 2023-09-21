@@ -90,27 +90,27 @@
 		scene.add(camera);
 
 		// gui
-		const params = { type: "exp", density: 0.002, near: 1, far: 1000 };
+		const params = { type: 'exp', density: 0.002, near: 1, far: 1000 };
 		const gui = new GUI();
-		gui.add(params, "type", ["linear", "exp", "none"]).onChange(value => {
+		gui.add(params, 'type', ['linear', 'exp', 'none']).onChange(value => {
 			switch (value) {
-				case "linear":
+				case 'linear':
 					scene.fog = fog;
 					break;
-				case "exp":
+				case 'exp':
 					scene.fog = fogExp2;
 					break;
 				default:
 					scene.fog = null;
 			}
 		});
-		gui.add(params, "density", 0, 0.005, 0.0001).onChange(value => {
+		gui.add(params, 'density', 0, 0.005, 0.0001).onChange(value => {
 			fogExp2.density = value;
 		});
-		gui.add(params, "near", 1, 100, 0.1).onChange(value => {
+		gui.add(params, 'near', 1, 100, 0.1).onChange(value => {
 			fog.near = value;
 		});
-		gui.add(params, "far", 100, 1000, 1).onChange(value => {
+		gui.add(params, 'far', 100, 1000, 1).onChange(value => {
 			fog.far = value;
 		});
 
@@ -134,7 +134,7 @@
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

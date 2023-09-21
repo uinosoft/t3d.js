@@ -2,9 +2,6 @@
  * volume shader
  * https://github.com/modelo/API_samples/tree/master/samples/volume-rendering
  */
-
-
-
 var VolumeShader = {
 
 	defines: {
@@ -30,7 +27,7 @@ var VolumeShader = {
 		'	#include <pvm_vert>',
 		'	#include <modelPos_vert>',
 		'}'
-	].join("\n"),
+	].join('\n'),
 
 	fragmentShader: [
 		'precision highp sampler3D;',
@@ -48,7 +45,7 @@ var VolumeShader = {
 		// axis aligned box centered at the origin, with size boxSize
 		'vec2 boxIntersection(vec3 ro, vec3 rd, vec3 boxSize) {',
 		'	vec3 m = 1.0 / rd;', // can precompute if traversing a set of aligned boxes
-		'	vec3 n = m * ro;',   // can precompute if traversing a set of aligned boxes
+		'	vec3 n = m * ro;', // can precompute if traversing a set of aligned boxes
 		'	vec3 k = abs(m) * boxSize;',
 		'	vec3 t1 = -n - k;',
 		'	vec3 t2 = -n + k;',
@@ -122,7 +119,7 @@ var VolumeShader = {
 		'	vec3 color = shade(transparent, P, V);',
 		'	gl_FragColor = vec4(color, transparent);',
 		'}'
-	].join("\n")
+	].join('\n')
 
 };
 

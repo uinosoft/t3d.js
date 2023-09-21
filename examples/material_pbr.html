@@ -32,7 +32,7 @@
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
 		import { PMREM } from './jsm/PMREM.js';
 
-		let useDevicePixelRatio = true;
+		const useDevicePixelRatio = true;
 		const devicePixelRatio = window.devicePixelRatio;
 
 		let width = window.innerWidth || 2;
@@ -41,8 +41,8 @@
 		const canvas = document.createElement('canvas');
 		canvas.width = useDevicePixelRatio ? width * devicePixelRatio : width;
 		canvas.height = useDevicePixelRatio ? height * devicePixelRatio : height;
-		canvas.style.width = width + "px";
-		canvas.style.height = height + "px";
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
@@ -77,12 +77,12 @@
 		scene.add(camera);
 
 		let cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/Bridge2/posx.jpg",
-			"resources/skybox/Bridge2/negx.jpg",
-			"resources/skybox/Bridge2/posy.jpg",
-			"resources/skybox/Bridge2/negy.jpg",
-			"resources/skybox/Bridge2/posz.jpg",
-			"resources/skybox/Bridge2/negz.jpg"
+			'resources/skybox/Bridge2/posx.jpg',
+			'resources/skybox/Bridge2/negx.jpg',
+			'resources/skybox/Bridge2/posy.jpg',
+			'resources/skybox/Bridge2/negy.jpg',
+			'resources/skybox/Bridge2/posz.jpg',
+			'resources/skybox/Bridge2/negz.jpg'
 		], function() {
 			cube_texture = PMREM.prefilterEnvironmentMap(forwardRenderer, cube_texture, {
 				width: cube_texture.images[0].width,
@@ -124,8 +124,8 @@
 			}
 
 			const gui = new GUI();
-			gui.add({ version: "WebGL " + forwardRenderer.capabilities.version }, "version").disable();
-			gui.add(sky_box, "level", 0, 8, 1);
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+			gui.add(sky_box, 'level', 0, 8, 1);
 		});
 		
 		// add a hover controller
@@ -134,7 +134,7 @@
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			let timer = Date.now() * 0.00025;
+			const timer = Date.now() * 0.00025;
 
 			particleLight.position.x = Math.sin(timer * 7) * 300;
 			particleLight.position.y = Math.cos(timer * 5) * 400;
@@ -153,10 +153,10 @@
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
 
 			forwardRenderer.backRenderTarget.resize(useDevicePixelRatio ? width * devicePixelRatio : width, useDevicePixelRatio ? height * devicePixelRatio : height);
-			canvas.style.width = width + "px";
-			canvas.style.height = height + "px";
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

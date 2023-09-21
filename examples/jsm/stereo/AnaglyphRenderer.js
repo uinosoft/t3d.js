@@ -3,7 +3,7 @@ import {
 	RenderTarget2D,
 	Matrix4,
 	Matrix3,
-	ShaderPostPass,
+	ShaderPostPass
 } from 't3d';
 import { ForwardRenderer } from '../render/ForwardRenderer.js';
 
@@ -251,6 +251,6 @@ const AnaglyphShader = {
 					max( colorL.a, colorR.a ) );
 		}
 		`
-}
+};
 
 export { AnaglyphRenderer };

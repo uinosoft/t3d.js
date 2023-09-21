@@ -32,8 +32,8 @@ class WebGLPrograms {
 		if (program === undefined) {
 			const customDefines = generateDefines(material.defines);
 
-			const vertexShader = ShaderLib[material.type + "_vert"] || material.vertexShader || ShaderLib.basic_vert;
-			const fragmentShader = ShaderLib[material.type + "_frag"] || material.fragmentShader || ShaderLib.basic_frag;
+			const vertexShader = ShaderLib[material.type + '_vert'] || material.vertexShader || ShaderLib.basic_vert;
+			const fragmentShader = ShaderLib[material.type + '_frag'] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
 			program.compile(compileOptions);
@@ -64,14 +64,14 @@ class WebGLPrograms {
 // Program properties and code
 
 function generateProgramCode(props, material) {
-	let code = "";
+	let code = '';
 
 	for (const key in props) {
-		code += props[key] + "_";
+		code += props[key] + '_';
 	}
 
 	for (const name in material.defines) {
-		code += name + "_" + material.defines[name] + "_";
+		code += name + '_' + material.defines[name] + '_';
 	}
 
 	// If the material type is SHADER and there is no shader Name,
@@ -112,7 +112,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.version = capabilities.version;
 	props.precision = material.precision || capabilities.maxPrecision;
 	props.useStandardDerivatives = capabilities.version >= 2 || !!capabilities.getExtension('OES_standard_derivatives') || !!capabilities.getExtension('GL_OES_standard_derivatives');
-	props.useShaderTextureLOD =  capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
+	props.useShaderTextureLOD = capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
 	// maps
 	props.useDiffuseMap = !!material.diffuseMap ? (material.diffuseMapCoord + 1) : 0;
 	props.useAlphaMap = !!material.alphaMap ? (material.alphaMapCoord + 1) : 0;
@@ -190,7 +190,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	} else {
 		maxBones = object.skeleton ? object.skeleton.bones.length : 0;
 		if (maxBones * 16 > maxVertexUniformVectors) {
-			console.warn("Program: too many bones (" + maxBones + "), current cpu only support " + Math.floor(maxVertexUniformVectors / 16) + " bones!!");
+			console.warn('Program: too many bones (' + maxBones + '), current cpu only support ' + Math.floor(maxVertexUniformVectors / 16) + ' bones!!');
 			maxBones = Math.floor(maxVertexUniformVectors / 16);
 		}
 	}
@@ -238,12 +238,12 @@ function getEncodingComponents(encoding) {
 
 function getTexelDecodingFunction(functionName, encoding) {
 	const components = getEncodingComponents(encoding);
-	return "vec4 " + functionName + "(vec4 value) { return " + components[0] + "ToLinear" + components[1] + "; }";
+	return 'vec4 ' + functionName + '(vec4 value) { return ' + components[0] + 'ToLinear' + components[1] + '; }';
 }
 
 function getTexelEncodingFunction(functionName, encoding) {
 	const components = getEncodingComponents(encoding);
-	return "vec4 " + functionName + "(vec4 value) { return LinearTo" + components[0] + components[1] + "; }";
+	return 'vec4 ' + functionName + '(vec4 value) { return LinearTo' + components[0] + components[1] + '; }';
 }
 
 function createProgram(gl, defines, props, vertex, fragment) {
@@ -274,7 +274,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.flatShading ? '#define FLAT_SHADED' : '',
 		props.flipSided ? '#define FLIP_SIDED' : '',
 
-		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' +  props.useDiffuseMap) : '',
+		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' + props.useDiffuseMap) : '',
 		props.useAlphaMap ? ('#define USE_ALPHA_MAP ' + props.useAlphaMap) : '',
 		props.useEnvMap ? '#define USE_ENV_MAP' : '',
 		props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
@@ -299,7 +299,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
 		'\n'
-	].filter(filterEmptyLine).join("\n");
+	].filter(filterEmptyLine).join('\n');
 
 	let prefixFragment = [
 		// use dfdx and dfdy must enable OES_standard_derivatives
@@ -388,12 +388,12 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		props.dithering ? '#define DITHERING' : '',
 
-		ShaderChunk["encodings_pars_frag"],
-		getTexelDecodingFunction("mapTexelToLinear", props.diffuseMapEncoding),
-		props.useEnvMap ? getTexelDecodingFunction("envMapTexelToLinear", props.envMapEncoding) : '',
-		props.useEmissiveMap ? getTexelDecodingFunction("emissiveMapTexelToLinear", props.emissiveMapEncoding) : '',
-		props.useMatcap ? getTexelDecodingFunction("matcapTexelToLinear", props.matcapEncoding) : '',
-		getTexelEncodingFunction("linearToOutputTexel", props.outputEncoding),
+		ShaderChunk['encodings_pars_frag'],
+		getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding),
+		props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '',
+		props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
+		props.useMatcap ? getTexelDecodingFunction('matcapTexelToLinear', props.matcapEncoding) : '',
+		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 
 		props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '',
 
@@ -401,7 +401,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
 
 		'\n'
-	].filter(filterEmptyLine).join("\n");
+	].filter(filterEmptyLine).join('\n');
 
 	let vshader = vertex;
 	let fshader = fragment;
@@ -427,21 +427,21 @@ function createProgram(gl, defines, props, vertex, fragment) {
 			'#define texture2D texture'
 		].join('\n') + '\n' + prefixVertex;
 
-		fshader = fshader.replace("#extension GL_EXT_draw_buffers : require", "");
+		fshader = fshader.replace('#extension GL_EXT_draw_buffers : require', '');
 
 		// replace gl_FragData by layout
 		let i = 0;
 		const layout = [];
-		while (fshader.indexOf("gl_FragData[" + i + "]") > -1) {
-			fshader = fshader.replace("gl_FragData[" + i + "]", "pc_fragData" + i);
-			layout.push("layout(location = " + i + ") out highp vec4 pc_fragData" + i + ";");
+		while (fshader.indexOf('gl_FragData[' + i + ']') > -1) {
+			fshader = fshader.replace('gl_FragData[' + i + ']', 'pc_fragData' + i);
+			layout.push('layout(location = ' + i + ') out highp vec4 pc_fragData' + i + ';');
 			i++;
 		}
 
 		prefixFragment = [
 			'#version 300 es\n',
 			'#define varying in',
-			(fshader.indexOf("layout") > -1 || layout.length > 0) ? '' : 'out highp vec4 pc_fragColor;',
+			(fshader.indexOf('layout') > -1 || layout.length > 0) ? '' : 'out highp vec4 pc_fragColor;',
 			'#define gl_FragColor pc_fragColor',
 			'#define gl_FragDepthEXT gl_FragDepth',
 			'#define texture2D texture',
@@ -477,7 +477,7 @@ const parseIncludes = function(string) {
 	}
 
 	return string.replace(pattern, replace);
-}
+};
 
 function filterEmptyLine(string) {
 	return string !== '';

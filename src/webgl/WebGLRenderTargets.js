@@ -24,7 +24,7 @@ class WebGLRenderTargets extends PropertyMap {
 			const renderTargetProperties = that.get(renderTarget);
 
 			if (renderTargetProperties.__webglFramebuffer) {
-				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer)
+				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 			}
 
 			that.delete(renderTarget);
@@ -66,7 +66,7 @@ class WebGLRenderTargets extends PropertyMap {
 
 			if (glAttachTarget === gl.DEPTH_ATTACHMENT || glAttachTarget === gl.DEPTH_STENCIL_ATTACHMENT) {
 				if (capabilities.version < 2 && !capabilities.getExtension('WEBGL_depth_texture')) {
-					console.warn("WebGLRenderTargets: extension WEBGL_depth_texture is not support.");
+					console.warn('WebGLRenderTargets: extension WEBGL_depth_texture is not support.');
 				}
 			} else if (glAttachTarget !== gl.STENCIL_ATTACHMENT) {
 				drawBuffers.push(glAttachTarget);
@@ -142,7 +142,7 @@ class WebGLRenderTargets extends PropertyMap {
 		const capabilities = this._capabilities;
 
 		if (capabilities.version < 2) {
-			console.warn("WebGLRenderTargets: blitFramebuffer not support by WebGL" + capabilities.version);
+			console.warn('WebGLRenderTargets: blitFramebuffer not support by WebGL' + capabilities.version);
 			return;
 		}
 

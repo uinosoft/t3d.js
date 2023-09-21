@@ -23,7 +23,7 @@ class TextureCubeLoader extends Loader {
 			texture.version++;
 
 			if (onLoad) onLoad(texture);
-		}).catch(function (e) {
+		}).catch(function(e) {
 			if (onError) onError(e);
 		});
 

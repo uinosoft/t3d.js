@@ -56,7 +56,7 @@ class Skeleton {
 
 		for (let i = 0; i < this.bones.length; i++) {
 			const bone = this.bones[i];
-			if (bone.parent && bone.parent.type == "bone") {
+			if (bone.parent && bone.parent.isBone) {
 				bone.matrix.getInverse(bone.parent.worldMatrix);
 				bone.matrix.multiply(bone.worldMatrix);
 			} else {

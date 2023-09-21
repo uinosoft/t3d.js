@@ -41,7 +41,7 @@
 		document.body.appendChild(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
-		const gl = canvas.getContext("webgl2", contextParams) || canvas.getContext("webgl", contextParams);
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 		const maxSamples = renderer.capabilities.maxSamples;
 		const multipleSampling = maxSamples > 1 ? Math.min(4, maxSamples) : 0;
@@ -80,7 +80,7 @@
 			{ texture: textureFlare3, scale: 0.05, offset: 0.6 },
 			{ texture: textureFlare3, scale: 0.06, offset: 0.7 },
 			{ texture: textureFlare3, scale: 0.1, offset: 0.9 },
-			{ texture: textureFlare3, scale: 0.06, offset: 1 },
+			{ texture: textureFlare3, scale: 0.06, offset: 1 }
 		];
 
 		const lensflareShader = {
@@ -318,14 +318,14 @@
 		const params = { position: 0.25, color: [255, 255, 255], scale: 1, occlusionScale: 0.02, debug: false };
 
 		const gui = new GUI();
-		gui.add({ version: "WebGL " + renderer.capabilities.version }, "version").disable();
-		gui.add(params, "position", 0, 1, 0.01).onChange(value => {
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(params, 'position', 0, 1, 0.01).onChange(value => {
 			lensflareGroup.position.x = -10 + 20 * value;
 			lensflareGroup.position.y = Math.sin(value * Math.PI) * 5;
 		});
 		gui.add(params, 'scale', 0, 1, 0.01);
 		gui.add(params, 'occlusionScale', 0, 0.5, 0.001);
-		gui.addColor(lensflares[0].material.uniforms, "color").onChange(value => {
+		gui.addColor(lensflares[0].material.uniforms, 'color').onChange(value => {
 			pointLight.color.fromArray(value);
 		});
 		gui.add(params, 'debug');
@@ -396,7 +396,7 @@
 			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, true, true);
 			clipPass.uniforms.tDiffuse = resultRenderTarget.texture;
-			clipPass.uniforms.clipRect[0] = ((screenPosition.x - params.occlusionScale * height / width)  * 0.5 + 0.5);
+			clipPass.uniforms.clipRect[0] = ((screenPosition.x - params.occlusionScale * height / width) * 0.5 + 0.5);
 			clipPass.uniforms.clipRect[1] = ((screenPosition.y - params.occlusionScale) * 0.5 + 0.5);
 			clipPass.uniforms.clipRect[2] = params.occlusionScale * height / width;
 			clipPass.uniforms.clipRect[3] = params.occlusionScale;
@@ -452,7 +452,7 @@
 			occlusionRenderTarget.resize(width, height);
 			resultRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

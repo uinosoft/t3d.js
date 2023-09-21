@@ -27,7 +27,7 @@
 		import * as t3d from 't3d';
 		import { SkyBox } from './jsm/objects/SkyBox.js';
 		import { Clock } from './jsm/Clock.js';
-		import { OrbitControls } from "./jsm/controls/OrbitControls.js";
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
 		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
 		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
 		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
@@ -90,12 +90,12 @@
 		updateSpherePosition();
 
 		const cube_texture = new TextureCubeLoader().load([
-			"resources/skybox/skyboxsun25deg/px.jpg",
-			"resources/skybox/skyboxsun25deg/nx.jpg",
-			"resources/skybox/skyboxsun25deg/py.jpg",
-			"resources/skybox/skyboxsun25deg/ny.jpg",
-			"resources/skybox/skyboxsun25deg/pz.jpg",
-			"resources/skybox/skyboxsun25deg/nz.jpg"
+			'resources/skybox/skyboxsun25deg/px.jpg',
+			'resources/skybox/skyboxsun25deg/nx.jpg',
+			'resources/skybox/skyboxsun25deg/py.jpg',
+			'resources/skybox/skyboxsun25deg/ny.jpg',
+			'resources/skybox/skyboxsun25deg/pz.jpg',
+			'resources/skybox/skyboxsun25deg/nz.jpg'
 		]);
 		const sky_box = new SkyBox(cube_texture);
 		scene.add(sky_box);
@@ -121,11 +121,11 @@
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 		texture.anisotropy = 16;
 
-		let vertexShader = t3d.ShaderLib.pbr_vert;
+		const vertexShader = t3d.ShaderLib.pbr_vert;
 		let fragmentShader = t3d.ShaderLib.pbr_frag;
 
 		// pars
-		fragmentShader = fragmentShader.replace(`#include <clippingPlanes_pars_frag>`, `
+		fragmentShader = fragmentShader.replace('#include <clippingPlanes_pars_frag>', `
 			#include <clippingPlanes_pars_frag>
 
 			#ifdef USE_NORMAL_MAP
@@ -151,7 +151,7 @@
 		`);
 
 		// frag code
-		fragmentShader = fragmentShader.replace(`#include <normal_frag>`, `
+		fragmentShader = fragmentShader.replace('#include <normal_frag>', `
 			// Use v_modelPos from modelPos_pars_frag
 
 			#ifdef FLAT_SHADED
@@ -208,7 +208,7 @@
 			#endif
 		`);
 
-		fragmentShader = fragmentShader.replace(`#include <dithering_frag>`, `
+		fragmentShader = fragmentShader.replace('#include <dithering_frag>', `
 			#include <dithering_frag>
 
 			#ifdef USE_DEBUG
@@ -223,9 +223,9 @@
 			'flow1': [0.059, 0.034, 0.0097, 1 / 4],
 			'flow2': [0.053, -0.032, 0.0093, 1 / 4],
 			'flow3': [0.01, 0.011, 0.0001, 1 / 4],
-			'flow4': [-0.009, 0.009, 0.0053, 1 / 4],
+			'flow4': [-0.009, 0.009, 0.0053, 1 / 4]
 		};
-		waterMaterial.shaderName = "waterShader";
+		waterMaterial.shaderName = 'waterShader';
 		waterMaterial.vertexShader = vertexShader;
 		waterMaterial.fragmentShader = fragmentShader;
 		waterMaterial.clearcoat = 0.05;
@@ -257,7 +257,7 @@
 		waterFolder.add(waterMaterial, 'metalness', 0, 1, .001);
 		waterFolder.add(waterMaterial, 'roughness', 0, 1, .001);
 		waterFolder.add(waterMaterial, 'opacity', 0, 1, .001);
-		waterFolder.add(params, 'strength', 0, 1, .001).onChange((value) => {
+		waterFolder.add(params, 'strength', 0, 1, .001).onChange(value => {
 			waterMaterial.normalScale.set(value, value);
 		});
 
@@ -266,7 +266,7 @@
 		waterFolder.add(uniforms.flow2, 2, 0.0001, 0.1, 0.0001).name('size2');
 		waterFolder.add(uniforms.flow3, 2, 0.0001, 0.1, 0.0001).name('size3');
 		waterFolder.add(uniforms.flow4, 2, 0.0001, 0.1, 0.0001).name('size4');
-		waterFolder.add(params, 'debug').onChange((value) => {
+		waterFolder.add(params, 'debug').onChange(value => {
 			if (value) {
 				waterMaterial.defines.USE_DEBUG = true;
 				waterMaterial.needsUpdate = true;
@@ -277,32 +277,32 @@
 		});
 
 		const flowFolder = gui.addFolder('flow');
-		flowFolder.add(uniforms.flow1, 0, -1, 1., 0.001).name("flowSpeed1_X");
-		flowFolder.add(uniforms.flow1, 1, -1, 1, 0.001).name("flowSpeed1_Y");
-		flowFolder.add(uniforms.flow2, 0, -1, 1, 0.001).name("flowSpeed2_X");
-		flowFolder.add(uniforms.flow2, 1, -1, 1, 0.001).name("flowSpeed2_Y");
-		flowFolder.add(uniforms.flow3, 0, -1, 1, 0.001).name("flowSpeed3_X");
-		flowFolder.add(uniforms.flow3, 1, -1, 1, 0.001).name("flowSpeed3_Y");
-		flowFolder.add(uniforms.flow4, 0, -1, 1, 0.001).name("flowSpeed4_X");
-		flowFolder.add(uniforms.flow4, 1, -1, 1, 0.001).name("flowSpeed4_Y");
-		flowFolder.add(params, 'timeScaler', -1000, 1000, 1).name("timeScaler");
+		flowFolder.add(uniforms.flow1, 0, -1, 1., 0.001).name('flowSpeed1_X');
+		flowFolder.add(uniforms.flow1, 1, -1, 1, 0.001).name('flowSpeed1_Y');
+		flowFolder.add(uniforms.flow2, 0, -1, 1, 0.001).name('flowSpeed2_X');
+		flowFolder.add(uniforms.flow2, 1, -1, 1, 0.001).name('flowSpeed2_Y');
+		flowFolder.add(uniforms.flow3, 0, -1, 1, 0.001).name('flowSpeed3_X');
+		flowFolder.add(uniforms.flow3, 1, -1, 1, 0.001).name('flowSpeed3_Y');
+		flowFolder.add(uniforms.flow4, 0, -1, 1, 0.001).name('flowSpeed4_X');
+		flowFolder.add(uniforms.flow4, 1, -1, 1, 0.001).name('flowSpeed4_Y');
+		flowFolder.add(params, 'timeScaler', -1000, 1000, 1).name('timeScaler');
 
 		const fogFolder = gui.addFolder('fog');
-		fogFolder.add({ type: "linear" }, "type", ["linear", "exp", "none"]).onChange(value => {
+		fogFolder.add({ type: 'linear' }, 'type', ['linear', 'exp', 'none']).onChange(value => {
 			switch (value) {
-				case "linear":
+				case 'linear':
 					scene.fog = fog;
 					break;
-				case "exp":
+				case 'exp':
 					scene.fog = fogExp2;
 					break;
 				default:
 					scene.fog = null;
 			}
 		});
-		fogFolder.add(fogExp2, "density", 0, 0.01);
-		fogFolder.add(fog, "near", 1, 500);
-		fogFolder.add(fog, "far", 500, 2000);
+		fogFolder.add(fogExp2, 'density', 0, 0.01);
+		fogFolder.add(fog, 'near', 1, 500);
+		fogFolder.add(fog, 'far', 500, 2000);
 
 		const lightFolder = gui.addFolder('light');
 		lightFolder.add(params, 'phi', 10, 89, 0.001).onChange(updateSpherePosition);
@@ -329,7 +329,7 @@
 
 			renderer.backRenderTarget.resize(width, height);
 		}
-		window.addEventListener("resize", onWindowResize, false);
+		window.addEventListener('resize', onWindowResize, false);
 	</script>
 </body>
 </html>

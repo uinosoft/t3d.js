@@ -23,7 +23,7 @@ class QuaternionKeyframeTrack extends KeyframeTrack {
 		const values = this.values;
 
 		if (this.interpolant) {
-			Quaternion.slerpFlat(outBuffer, 0, values, index0 * 4, values, (index0 + 1) * 4, ratio)
+			Quaternion.slerpFlat(outBuffer, 0, values, index0 * 4, values, (index0 + 1) * 4, ratio);
 		} else {
 			this._copyValue(index0, outBuffer);
 		}

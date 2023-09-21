@@ -1,5 +1,5 @@
-import { BLEND_TYPE } from "../const.js";
-import { EventDispatcher } from "../EventDispatcher.js";
+import { BLEND_TYPE } from '../const.js';
+import { EventDispatcher } from '../EventDispatcher.js';
 
 /**
  * AnimationAction wraps AnimationClip and is mainly responsible for the update logic of time.
