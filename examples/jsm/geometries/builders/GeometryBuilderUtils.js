@@ -1,11 +1,11 @@
 /**
  * Geometry Builder Utils
  */
-var GeometryBuilderUtils = {
+const GeometryBuilderUtils = {
 
 	convertShapeDataToEarcut: function(shape, vertices, holeIndices) {
-		var contour = shape.contour;
-		var holes = shape.holes;
+		let contour = shape.contour;
+		const holes = shape.holes;
 
 		// check directions of shape contour and holes
 
@@ -14,8 +14,8 @@ var GeometryBuilderUtils = {
 		}
 
 		if (holes) {
-			for (var i = 0, l = holes.length; i < l; i++) {
-				var hole = holes[i];
+			for (let i = 0, l = holes.length; i < l; i++) {
+				const hole = holes[i];
 				if (isClockWise(hole)) {
 					holes[i] = hole.reverse();
 				}
@@ -31,11 +31,11 @@ var GeometryBuilderUtils = {
 		addContour(vertices, contour);
 
 		if (holes) {
-			var holeIndex = contour.length;
+			let holeIndex = contour.length;
 
 			holes.forEach(removeDupEndPts);
 
-			for (var i = 0; i < holes.length; i++) {
+			for (let i = 0; i < holes.length; i++) {
 				holeIndices.push(holeIndex);
 				holeIndex += holes[i].length;
 				addContour(vertices, holes[i]);
@@ -46,10 +46,10 @@ var GeometryBuilderUtils = {
 };
 
 function area(contour) {
-	var n = contour.length;
-	var a = 0.0;
+	const n = contour.length;
+	let a = 0.0;
 
-	for (var p = n - 1, q = 0; q < n; p = q++) {
+	for (let p = n - 1, q = 0; q < n; p = q++) {
 		a += contour[p][0] * contour[q][1] - contour[q][0] * contour[p][1];
 	}
 
@@ -61,7 +61,7 @@ function isClockWise(contour) {
 }
 
 function removeDupEndPts(contour) {
-	var l = contour.length;
+	const l = contour.length;
 
 	if (l > 2 && isArrayEquals(contour[l - 1], contour[0])) {
 		contour.pop();
@@ -73,7 +73,7 @@ function isArrayEquals(a1, a2) {
 		return false;
 	}
 
-	for (var i = 0, l = a1.length; i < l; i++) {
+	for (let i = 0, l = a1.length; i < l; i++) {
 		if (a1[i] !== a2[i]) {
 			return false;
 		}
@@ -83,7 +83,7 @@ function isArrayEquals(a1, a2) {
 }
 
 function addContour(vertices, contour) {
-	for (var i = 0; i < contour.length; i++) {
+	for (let i = 0; i < contour.length; i++) {
 		vertices.push(contour[i][0]);
 		vertices.push(contour[i][1]);
 	}

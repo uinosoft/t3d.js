@@ -3,7 +3,7 @@ import { Vector3, Quaternion } from 't3d';
 /**
  * TubeBuilder
  */
-var TubeBuilder = {
+const TubeBuilder = {
 
 	/**
 	 * @param {Object} frames
@@ -20,11 +20,11 @@ var TubeBuilder = {
 
 		// build vertex data
 
-		var positions = [];
-		var normals = [];
-		var uvs = [];
-		var uvs2 = [];
-		var indices = [];
+		const positions = [];
+		const normals = [];
+		const uvs = [];
+		const uvs2 = [];
+		const indices = [];
 
 		const frameLength = frames.points.length;
 		const lastIndex = frameLength - 1;

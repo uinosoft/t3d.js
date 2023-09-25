@@ -1,7 +1,7 @@
 /**
  * EdgesBuilder
  */
-var EdgesBuilder = {
+const EdgesBuilder = {
 
 	/**
 	 * @param {Array} positions - Flat array of positions.

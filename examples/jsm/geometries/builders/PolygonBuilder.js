@@ -4,7 +4,7 @@ import { GeometryBuilderUtils } from './GeometryBuilderUtils.js';
 /**
  * PolygonBuilder
  */
-var PolygonBuilder = {
+const PolygonBuilder = {
 
 	/**
      * @param {Object} shape - The shape.
@@ -12,18 +12,18 @@ var PolygonBuilder = {
      * @param {Array} shape.holes - The holes of this shape, for example: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
      */
 	getGeometryData: function(shape) {
-		var vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
-		var holeIndices = []; // array of hole indices
+		const vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
+		const holeIndices = []; // array of hole indices
 
 		GeometryBuilderUtils.convertShapeDataToEarcut(shape, vertices, holeIndices);
 
-		var indices = Earcut.triangulate(vertices, holeIndices);
+		const indices = Earcut.triangulate(vertices, holeIndices);
 
 		// build vertex data
 
-		var positions = [];
-		var normals = [];
-		var uvs = [];
+		const positions = [];
+		const normals = [];
+		const uvs = [];
 
 		for (let i = 0, l = vertices.length; i < l; i += 2) {
 			positions.push(vertices[i], vertices[i + 1], 0); // x-y plane

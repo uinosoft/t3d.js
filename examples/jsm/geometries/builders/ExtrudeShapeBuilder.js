@@ -4,7 +4,7 @@ import { GeometryBuilderUtils } from './GeometryBuilderUtils.js';
 /**
  * ExtrudeShapeBuilder
  */
-var ExtrudeShapeBuilder = {
+const ExtrudeShapeBuilder = {
 
 	/**
      * @param {Object} shape - The shape.
@@ -13,31 +13,31 @@ var ExtrudeShapeBuilder = {
 	 * @param {Array} [shape.depth=1] - The depth of this shape. If it is a negative number, extrude in the positive direction of the z-axis, otherwise, extrude in the negative direction of the z-axis,
      */
 	getGeometryData: function(shape) {
-		var depth = (shape.depth !== undefined) ? shape.depth : 1;
-		var negativeDepth = depth < 0;
-		var vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
-		var holeIndices = []; // array of hole indices
+		const depth = (shape.depth !== undefined) ? shape.depth : 1;
+		const negativeDepth = depth < 0;
+		const vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
+		const holeIndices = []; // array of hole indices
 
 		GeometryBuilderUtils.convertShapeDataToEarcut(shape, vertices, holeIndices);
 
-		var faces = Earcut.triangulate(vertices, holeIndices);
+		const faces = Earcut.triangulate(vertices, holeIndices);
 
 		// build vertex data
 
-		var positions = [];
-		var uvs = [];
-		var indices = [];
+		const positions = [];
+		const uvs = [];
+		const indices = [];
 
-		var vertexCount = 0;
+		let vertexCount = 0;
 
 		// top
 
-		for (var i = 0, l = vertices.length; i < l; i += 2) {
+		for (let i = 0, l = vertices.length; i < l; i += 2) {
 			positions.push(vertices[i], vertices[i + 1], 0); // x-y plane
 			uvs.push(negativeDepth ? -vertices[i] : vertices[i], vertices[i + 1]); // world uvs
 		}
 
-		for (var i = 0, l = faces.length; i < l; i += 3) {
+		for (let i = 0, l = faces.length; i < l; i += 3) {
 			if (negativeDepth) {
 				indices.push(faces[i + 0], faces[i + 2], faces[i + 1]);
 			} else {
@@ -49,12 +49,12 @@ var ExtrudeShapeBuilder = {
 
 		vertexCount = positions.length / 3;
 
-		for (var i = 0, l = vertices.length; i < l; i += 2) {
+		for (let i = 0, l = vertices.length; i < l; i += 2) {
 			positions.push(vertices[i], vertices[i + 1], -depth); // x-y plane
 			uvs.push(negativeDepth ? vertices[i] : -vertices[i], vertices[i + 1]); // world uvs
 		}
 
-		for (var i = 0, l = faces.length; i < l; i += 3) {
+		for (let i = 0, l = faces.length; i < l; i += 3) {
 			if (negativeDepth) {
 				indices.push(vertexCount + faces[i + 1], vertexCount + faces[i + 2], vertexCount + faces[i + 0]);
 			} else {
@@ -65,26 +65,26 @@ var ExtrudeShapeBuilder = {
 		// side
 
 		vertexCount = positions.length / 3;
-		var hasHoles = holeIndices.length;
+		const hasHoles = holeIndices.length;
 
-		var loop = [];
+		const loop = [];
 		if (hasHoles) {
 			loop.push([0, holeIndices[0] * 2]);
-			for (var i = 0; i < holeIndices.length - 1; i++) {
+			for (let i = 0; i < holeIndices.length - 1; i++) {
 				loop.push([holeIndices[i] * 2, holeIndices[i + 1] * 2]);
 			}
-			loop.push([holeIndices[i] * 2, vertices.length]);
+			loop.push([holeIndices[holeIndices.length - 1] * 2, vertices.length]);
 		} else {
 			loop.push([0, vertices.length]);
 		}
 
-		for (var i = 0; i < loop.length; i++) {
-			var dist = 0;
-			var sideStart = loop[i][0];
-			var sideFinish = loop[i][1];
-			for (var j = sideStart; j < sideFinish; j += 2) {
-				var _index1 = j;
-				var _index2 = (j + 2 >= sideFinish) ? sideStart : (j + 2);
+		for (let i = 0; i < loop.length; i++) {
+			let dist = 0;
+			const sideStart = loop[i][0];
+			const sideFinish = loop[i][1];
+			for (let j = sideStart; j < sideFinish; j += 2) {
+				const _index1 = j;
+				const _index2 = (j + 2 >= sideFinish) ? sideStart : (j + 2);
 
 				positions.push(vertices[_index1 + 0], vertices[_index1 + 1], 0);
 				positions.push(vertices[_index1 + 0], vertices[_index1 + 1], -depth);
@@ -123,8 +123,8 @@ var ExtrudeShapeBuilder = {
 };
 
 function getLength(x0, y0, x1, y1) {
-	var x = x1 - x0;
-	var y = y1 - y0;
+	const x = x1 - x0;
+	const y = y1 - y0;
 	return Math.sqrt(x * x + y * y);
 }
 

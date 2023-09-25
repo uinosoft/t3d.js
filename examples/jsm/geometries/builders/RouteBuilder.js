@@ -3,7 +3,7 @@ import { Vector3 } from 't3d';
 /**
  * RouteBuilder
  */
-var RouteBuilder = {
+const RouteBuilder = {
 
 	/**
 	 * @param {Object} frames
@@ -22,11 +22,11 @@ var RouteBuilder = {
 
 		// build vertex data
 
-		var positions = [];
-		var normals = [];
-		var uvs = [];
-		var uvs2 = [];
-		var indices = [];
+		const positions = [];
+		const normals = [];
+		const uvs = [];
+		const uvs2 = [];
+		const indices = [];
 
 		const frameLength = frames.points.length;
 		const lastIndex = frameLength - 1;
