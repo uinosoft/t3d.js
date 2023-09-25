@@ -145,5 +145,5 @@ npm run build
 [npm-size-url]: https://img.shields.io/bundlephobia/minzip/t3d
 [issues-badge]: https://img.shields.io/github/issues/uinosoft/t3d.js.svg
 [issues-badge-url]: https://github.com/uinosoft/t3d.js/issues
-[deepscan]: https://deepscan.io/api/teams/20241/projects/23692/branches/722329/badge/grade.svg
-[deepscan-url]: https://deepscan.io/dashboard#view=project&tid=20241&pid=23692&bid=722329
+[deepscan]: https://deepscan.io/api/teams/20241/projects/25542/branches/800776/badge/grade.svg
+[deepscan-url]: https://deepscan.io/dashboard#view=project&tid=20241&pid=25542&bid=800776

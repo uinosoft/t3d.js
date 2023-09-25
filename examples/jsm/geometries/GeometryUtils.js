@@ -123,7 +123,7 @@ class GeometryUtils {
 
 		const nVertices = positions.length / 3;
 
-		if (attributes.a_Tangent === undefined) {
+		if (!attributes.a_Tangent) {
 			geometry.addAttribute('a_Tangent', new Attribute(new Buffer(new Float32Array(4 * nVertices), 4)));
 		}
 

@@ -168,14 +168,14 @@ class Canvas2D extends Mesh {
 			vertices[vertexIndex++] = 1;
 
 			_x = x + w;
-			_y = y;
+			// _y = y;
 			vertices[vertexIndex++] = a * _x + c * _y + tx;
 			vertices[vertexIndex++] = b * _x + d * _y + ty;
 			vertices[vertexIndex++] = 0;
 			vertices[vertexIndex++] = 1;
 			vertices[vertexIndex++] = 1;
 
-			_x = x + w;
+			// _x = x + w;
 			_y = y + h;
 			vertices[vertexIndex++] = a * _x + c * _y + tx;
 			vertices[vertexIndex++] = b * _x + d * _y + ty;
@@ -184,7 +184,7 @@ class Canvas2D extends Mesh {
 			vertices[vertexIndex++] = 0;
 
 			_x = x;
-			_y = y + h;
+			// _y = y + h;
 			vertices[vertexIndex++] = a * _x + c * _y + tx;
 			vertices[vertexIndex++] = b * _x + d * _y + ty;
 			vertices[vertexIndex++] = 0;
