@@ -1,19 +1,18 @@
-var WebXRControl = function(camera) {
-	this.camera = camera;
+class WebXRControl {
 
-	this._session = null;
-	this._referenceSpace = null;
+	constructor(camera) {
+		this.camera = camera;
 
-	this._currentDepthNear = 0;
-	this._currentDepthFar = 0;
-};
+		this._session = null;
+		this._referenceSpace = null;
 
-Object.assign(WebXRControl.prototype, {
-	enter: function(gl, type) {
-		type = type || 'immersive-vr';
+		this._currentDepthNear = 0;
+		this._currentDepthFar = 0;
+	}
 
+	enter(gl, type = 'immersive-vr') {
 		if (navigator.xr) {
-			var sessionInit = { optionalFeatures: ['local-floor', 'bounded-floor'] };
+			const sessionInit = { optionalFeatures: ['local-floor', 'bounded-floor'] };
 
 			return navigator.xr.isSessionSupported(type)
 				.then(supported => {
@@ -28,8 +27,8 @@ Object.assign(WebXRControl.prototype, {
 				})
 				.then(session => {
 					this._session = session;
-					var attributes = gl.getContextAttributes();
-					var layerInit = {
+					const attributes = gl.getContextAttributes();
+					const layerInit = {
 						antialias: attributes.antialias,
 						alpha: attributes.alpha,
 						depth: attributes.depth,
@@ -37,8 +36,8 @@ Object.assign(WebXRControl.prototype, {
 						framebufferScaleFactor: 1.0
 					};
 					// eslint-disable-next-line
-					var baseLayer = new XRWebGLLayer(session, gl, layerInit);
-					session.updateRenderState({ baseLayer: baseLayer });
+					const baseLayer = new XRWebGLLayer(session, gl, layerInit);
+					session.updateRenderState({ baseLayer });
 					return session.requestReferenceSpace('local-floor');
 				})
 				.then(referenceSpace => {
@@ -48,19 +47,19 @@ Object.assign(WebXRControl.prototype, {
 		} else {
 			return Promise.reject('xr not exist in navigator');
 		}
-	},
+	}
 
-	exit: function() {
+	exit() {
 		// todo
-	},
+	}
 
-	update: function(frame, width, height) {
-		var camera = this.camera;
-		var session = this._session;
-		var referenceSpace = this._referenceSpace;
+	update(frame, width, height) {
+		const camera = this.camera;
+		const session = this._session;
+		const referenceSpace = this._referenceSpace;
 
-		var cameraL = camera.cameraL;
-		var cameraR = camera.cameraR;
+		const cameraL = camera.cameraL;
+		const cameraR = camera.cameraR;
 
 		if (this._currentDepthNear !== camera.near || this._currentDepthFar !== camera.far) {
 			// the new renderState won't apply until the next frame
@@ -72,17 +71,17 @@ Object.assign(WebXRControl.prototype, {
 			this._currentDepthFar = camera.far;
 		}
 
-		var pose = frame.getViewerPose(referenceSpace);
+		const pose = frame.getViewerPose(referenceSpace);
 		if (pose !== null) {
-			var views = pose.views;
-			var baseLayer = session.renderState.baseLayer;
+			const views = pose.views;
+			const baseLayer = session.renderState.baseLayer;
 
 			// set cameras
-			for (var i = 0; i < views.length; i++) {
-				var view = views[i];
-				var viewport = baseLayer.getViewport(view);
+			for (let i = 0; i < views.length; i++) {
+				const view = views[i];
+				const viewport = baseLayer.getViewport(view);
 
-				var _camera = i === 0 ? cameraL : cameraR;
+				const _camera = i === 0 ? cameraL : cameraR;
 				_camera.matrix.fromArray(view.transform.matrix);
 				_camera.matrix.decompose(_camera.position, _camera.quaternion, _camera.scale);
 				_camera.position.add(camera.position);
@@ -90,22 +89,23 @@ Object.assign(WebXRControl.prototype, {
 				_camera.projectionMatrix.fromArray(view.projectionMatrix);
 				_camera.projectionMatrixInverse.getInverse(_camera.projectionMatrix);
 
-				var x = viewport.x / width;
-				var y = viewport.y / height;
-				var _width = viewport.width / width;
-				var _height = viewport.height / height;
+				const x = viewport.x / width;
+				const y = viewport.y / height;
+				const _width = viewport.width / width;
+				const _height = viewport.height / height;
 				_camera.rect.set(x, y, x + _width, y + _height);
 			}
 		}
-	},
+	}
 
 	getContext() {
 		return this._session;
-	},
+	}
 
-	getFramebuffer: function() {
+	getFramebuffer() {
 		return this._session.renderState.baseLayer.framebuffer;
 	}
-});
+
+}
 
 export { WebXRControl };

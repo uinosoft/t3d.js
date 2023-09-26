@@ -1,28 +1,28 @@
-var WebVRControl = function(camera) {
-	this.camera = camera;
+class WebVRControl {
 
-	this._vrDisplay = null;
-	this._frameData = null;
+	constructor(camera) {
+		this.camera = camera;
 
-	this._currentDepthNear = 0;
-	this._currentDepthFar = 0;
-};
+		this._vrDisplay = null;
+		this._frameData = null;
 
-Object.assign(WebVRControl.prototype, {
-	enter: function() {
-		var that = this;
+		this._currentDepthNear = 0;
+		this._currentDepthFar = 0;
+	}
+
+	enter() {
 		if (navigator.getVRDisplays) {
-			return navigator.getVRDisplays().then(function(displays) {
+			return navigator.getVRDisplays().then(displays => {
 				if (displays.length > 0) {
-					that._vrDisplay = displays[0];
+					this._vrDisplay = displays[0];
 					return Promise.resolve();
 				} else {
 					return Promise.reject('WebVRControl: displays.length = 0.');
 				}
-			}).then(function() {
+			}).then(() => {
 				if ('VRFrameData' in window) {
-					that._frameData = new window.VRFrameData();
-					return Promise.resolve(that._vrDisplay);
+					this._frameData = new window.VRFrameData();
+					return Promise.resolve(this._vrDisplay);
 				} else {
 					return Promise.reject('WebVRControl: VRFrameData not exist in global.');
 				}
@@ -30,24 +30,24 @@ Object.assign(WebVRControl.prototype, {
 		} else {
 			return Promise.reject('WebVRControl: getVRDisplays not exist in navigator.');
 		}
-	},
+	}
 
-	exit: function() {
+	exit() {
 		this._vrDisplay = null;
 		this._frameData = null;
-	},
+	}
 
-	update: function() {
-		var camera = this.camera;
-		var vrDisplay = this._vrDisplay;
-		var frameData = this._frameData;
+	update() {
+		const camera = this.camera;
+		const vrDisplay = this._vrDisplay;
+		const frameData = this._frameData;
 
 		if (!vrDisplay || !frameData) {
 			return;
 		}
 
-		var cameraL = camera.cameraL;
-		var cameraR = camera.cameraR;
+		const cameraL = camera.cameraL;
+		const cameraR = camera.cameraR;
 
 		if (this._currentDepthNear !== camera.near || this._currentDepthFar !== camera.far) {
 			// read from camera
@@ -75,17 +75,18 @@ Object.assign(WebVRControl.prototype, {
 		cameraR.position.add(camera.position);
 		cameraR.updateMatrix();
 		cameraR.rect.set(0.5, 0, 1, 1);
-	},
+	}
 
 	getContext() {
 		return this._vrDisplay;
-	},
+	}
 
-	submit: function() {
+	submit() {
 		if (this._vrDisplay) {
 			this._vrDisplay.submitFrame();
 		}
 	}
-});
+
+}
 
 export { WebVRControl };
