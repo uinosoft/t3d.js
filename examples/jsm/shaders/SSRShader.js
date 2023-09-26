@@ -5,10 +5,12 @@
  */
 const SSRShader = {
 	name: 'effect_ssr',
+
 	defines: {
 		MAX_ITERATION: 50,
 		MAX_BINARY_SEARCH_ITERATION: 5
 	},
+
 	uniforms: {
 		colorTex: null,
 		gBufferTexture1: null,
@@ -36,6 +38,7 @@ const SSRShader = {
 		jitterOffset: 0,
 		viewportSize: [512, 512]
 	},
+
 	vertexShader: `
 		attribute vec3 a_Position;
 		attribute vec2 a_Uv;
@@ -50,6 +53,7 @@ const SSRShader = {
 			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
 		}
 	`,
+
 	fragmentShader: `
 		varying vec2 v_Uv;
 

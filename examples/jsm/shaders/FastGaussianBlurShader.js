@@ -1,14 +1,10 @@
 /**
- * @author shawn0326 / https://github.com/shawn0326
- *
- * https://github.com/Jam3/glsl-fast-gaussian-blur
- * http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
- *
+ * Fast Gaussian blur shader
+ * ref: https://github.com/Jam3/glsl-fast-gaussian-blur
+ * ref: http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
  */
-
-
-
-var FastGaussianBlurShader = {
+const FastGaussianBlurShader = {
+	name: 'fast_gaussian_blur',
 
 	defines: {
 		'SAMPLERS': 9
@@ -20,24 +16,20 @@ var FastGaussianBlurShader = {
 		'direction': [1, 0]
 	},
 
-	vertexShader: [
+	vertexShader: `
+        attribute vec3 a_Position;
+        attribute vec2 a_Uv;
 
-		'attribute vec3 a_Position;',
-		'attribute vec2 a_Uv;',
+        uniform mat4 u_ProjectionView;
+        uniform mat4 u_Model;
 
-		'uniform mat4 u_ProjectionView;',
-		'uniform mat4 u_Model;',
+        varying vec2 v_Uv;
 
-		'varying vec2 v_Uv;',
-
-		'void main() {',
-
-		'   v_Uv = a_Uv;',
-		'   gl_Position = u_ProjectionView * u_Model * vec4( a_Position, 1.0 );',
-
-		'}'
-
-	].join('\n'),
+        void main() {
+            v_Uv = a_Uv;
+            gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+        }
+    `,
 
 	fragmentShader: `
         uniform sampler2D tDiffuse;
@@ -89,7 +81,6 @@ var FastGaussianBlurShader = {
             gl_FragColor = blur(tDiffuse, v_Uv, resolution, direction);
         }
     `
-
 };
 
 export { FastGaussianBlurShader };

@@ -1,8 +1,10 @@
 const InfiniteGridShader = {
 	name: 'infinite_grid',
+
 	defines: {
 		USE_LINEARFADE: true
 	},
+
 	uniforms: {
 		flipProgress: 0.0,
 		axisIntensity: 0.7,

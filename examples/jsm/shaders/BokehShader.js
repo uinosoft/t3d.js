@@ -1,15 +1,14 @@
 /**
  * Bokeh Shader
  */
-
-
-
-var BokehShader = {
+const BokehShader = {
+	name: 'bokeh',
 
 	defines: {
 		'RINGS': 3,
 		'SAMPLES': 4
 	},
+
 	uniforms: {
 		'tColor': null,
 		'tDepth': null,
@@ -31,128 +30,122 @@ var BokehShader = {
 		'dithering': 0.0001
 	},
 
-	vertexShader: [
+	vertexShader: `
+		attribute vec3 a_Position;
+		attribute vec2 a_Uv;
 
-		'attribute vec3 a_Position;',
-		'attribute vec2 a_Uv;',
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
 
-		'uniform mat4 u_ProjectionView;',
-		'uniform mat4 u_Model;',
+		varying vec2 v_Uv;
 
-		'varying vec2 v_Uv;',
+		void main() {
+			v_Uv = a_Uv;
+			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+		}
+	`,
 
-		'void main() {',
+	fragmentShader: `
+		varying vec2 v_Uv;
 
-		'	v_Uv = a_Uv;',
-		'	gl_Position = u_ProjectionView * u_Model * vec4( a_Position, 1.0 );',
+		uniform sampler2D tColor;
+		uniform sampler2D tDepth;
 
-		'}'
+		uniform vec2 resolution;
 
-	].join('\n'),
+		uniform float znear;
+		uniform float zfar;
 
-	fragmentShader: [
-		'varying vec2 v_Uv;',
+		uniform float focalDepth;
+		uniform float focalLength;
+		uniform float fstop;
 
-		'uniform sampler2D tColor;',
-		'uniform sampler2D tDepth;',
+		uniform float maxblur; // clamp value of max blur (0.0 = no blur, 1.0 default)
+		uniform float threshold; // highlight threshold
+		uniform float gain; // highlight gain
+		uniform float bias; // bokeh edge bias
+		uniform float dithering;
 
-		'uniform vec2 resolution;',
+		const int samples = SAMPLES;
+		const int rings = RINGS;
+		const int maxringsamples = rings * samples;
 
-		'uniform float znear;',
-		'uniform float zfar;',
+		float CoC = 0.03; // circle of confusion size in mm (35mm film = 0.03mm)
 
-		'uniform float focalDepth;',
-		'uniform float focalLength;',
-		'uniform float fstop;',
+		vec3 color(vec2 coords, float blur) {
+		    vec3 col = texture2D(tColor, coords).rgb;
+		    vec3 lumcoeff = vec3(0.299,0.587,0.114);
+		    float lum = dot(col.rgb, lumcoeff);
+		    float thresh = max((lum - threshold) * gain, 0.0);
+		    return col + mix(vec3(0.0), col, thresh * blur);
+		}
 
-		'uniform float maxblur;', // clamp value of max blur (0.0 = no blur, 1.0 default)
-		'uniform float threshold;', // highlight threshold
-		'uniform float gain;', // highlight gain
-		'uniform float bias;', // bokeh edge bias
-		'uniform float dithering;',
+		float linearize(float depth) {
+		    return -zfar * znear / (depth * (zfar - znear) - zfar);
+		}
 
-		'const int samples = SAMPLES;',
-		'const int rings = RINGS;',
-		'const int maxringsamples = rings * samples;',
+		float gather(float i, float j, int ringsamples, inout vec3 col, float w, float h, float blur) {
+			float rings2 = float(rings);
+			float step = PI * 2.0 / float(ringsamples);
+			float pw = cos(j * step) * i;
+			float ph = sin(j * step) * i;
+			col += color(v_Uv + vec2(pw * w, ph * h), blur) * mix(1.0, i / rings2, bias);
+			return mix(1.0, i / rings2, bias);
+		}
 
-		'float CoC = 0.03;', // circle of confusion size in mm (35mm film = 0.03mm)
+		void main() {
+			float depth = linearize(texture2D(tDepth, v_Uv).x);
+			float fDepth = focalDepth;
 
-		'vec3 color(vec2 coords, float blur) {',
-		'    vec3 col = texture2D(tColor, coords).rgb;',
-		'    vec3 lumcoeff = vec3(0.299,0.587,0.114);',
-		'    float lum = dot(col.rgb, lumcoeff);',
-		'    float thresh = max((lum - threshold) * gain, 0.0);',
-		'    return col + mix(vec3(0.0), col, thresh * blur);',
-		'}',
+			// dof blur factor calculation
 
-		'float linearize(float depth) {',
-		'    return -zfar * znear / (depth * (zfar - znear) - zfar);',
-		'}',
+			float f = focalLength; // focal length in mm
+			float d = fDepth * 1000.; // focal plane in mm
+			float o = depth * 1000.; // depth in mm
 
-		'float gather(float i, float j, int ringsamples, inout vec3 col, float w, float h, float blur) {',
-		'    float rings2 = float(rings);',
-		'    float step = PI * 2.0 / float(ringsamples);',
-		'    float pw = cos(j * step) * i;',
-		'    float ph = sin(j * step) * i;',
-		'    col += color(v_Uv + vec2(pw * w, ph * h), blur) * mix(1.0, i / rings2, bias);',
-		'    return mix(1.0, i / rings2, bias);',
-		'}',
+			float a = (o * f) / (o - f);
+			float b = (d * f) / (d - f);
+			float c = (d - f) / (d * fstop * CoC);
 
-		'void main() {',
-		'   float depth = linearize(texture2D(tDepth, v_Uv).x);',
-		'   float fDepth = focalDepth;',
+			float blur = abs(a - b) * c;
+			blur = clamp(blur, 0.0, 1.0);
 
-		// dof blur factor calculation
+			// calculation of pattern for dithering
 
-		'   float f = focalLength;', // focal length in mm
-		'   float d = fDepth * 1000.;', // focal plane in mm
-		'   float o = depth * 1000.;', // depth in mm
+			vec2 noise = vec2(rand(v_Uv), rand(v_Uv + vec2(0.4, 0.6))) * dithering * blur;
 
-		'   float a = (o * f) / (o - f);',
-		'   float b = (d * f) / (d - f);',
-		'   float c = (d - f) / (d * fstop * CoC);',
+			// getting blur x and y step factor
 
-		'   float blur = abs(a - b) * c;',
-		'   blur = clamp(blur, 0.0, 1.0);',
+			float w = resolution.x * blur * maxblur + noise.x;
+			float h = resolution.y * blur * maxblur + noise.y;
 
-		// calculation of pattern for dithering
+			// calculation of final color
 
-		'   vec2 noise = vec2(rand(v_Uv), rand(v_Uv + vec2(0.4, 0.6))) * dithering * blur;',
+			vec3 col = vec3(0.0);
 
-		// getting blur x and y step factor
+			if (blur < 0.05) {
+				col = texture2D(tColor, v_Uv).rgb;
+			} else {
+				col = texture2D(tColor, v_Uv).rgb;
 
-		'   float w = resolution.x * blur * maxblur + noise.x;',
-		'   float h = resolution.y * blur * maxblur + noise.y;',
+				float s = 1.0;
+				int ringsamples;
 
-		// calculation of final color
+				for(int i = 1; i <= rings; i++) {
+					ringsamples = i * samples;
 
-		'   vec3 col = vec3(0.0);',
+					for (int j = 0; j < maxringsamples; j++) {
+						if (j >= ringsamples) break;
+						s += gather(float(i), float(j), ringsamples, col, w, h, blur);
+					}
+				}
 
-		'   if (blur < 0.05) {',
-		'       col = texture2D(tColor, v_Uv).rgb;',
-		'   } else {',
-		'       col = texture2D(tColor, v_Uv).rgb;',
+				col /= s; // divide by sample count
+			}
 
-		'       float s = 1.0;',
-		'       int ringsamples;',
-
-		'       for(int i = 1; i <= rings; i++) {',
-		'           ringsamples = i * samples;',
-
-		'           for (int j = 0; j < maxringsamples; j++) {',
-		'               if (j >= ringsamples) break;',
-		'               s += gather(float(i), float(j), ringsamples, col, w, h, blur);',
-		'           }',
-		'       }',
-
-		'       col /= s;', // divide by sample count
-		'   }',
-
-		'   gl_FragColor = vec4(col, 1.0);',
-		'}'
-
-	].join('\n')
-
+			gl_FragColor = vec4(col, 1.0);
+		}
+	`
 };
 
 export { BokehShader };

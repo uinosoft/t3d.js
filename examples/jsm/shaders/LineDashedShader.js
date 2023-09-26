@@ -1,10 +1,8 @@
 /**
  * Line Dashed Shader
  */
-
-
-
-var LineDashedShader = {
+const LineDashedShader = {
+	name: 'line_dashed',
 
 	uniforms: {
 		'scale': 1, // The scale of the dashed part of a line.
@@ -12,44 +10,41 @@ var LineDashedShader = {
 		'totalSize': 4 // The size of the gap.
 	},
 
-	vertexShader: [
-		'#include <common_vert>',
+	vertexShader: `
+		#include <common_vert>
 
-		'uniform float scale;',
-		'attribute float lineDistance;',
+		uniform float scale;
+		attribute float lineDistance;
 
-		'varying float vLineDistance;',
+		varying float vLineDistance;
 
-		'void main() {',
-		'	vLineDistance = scale * lineDistance;',
+		void main() {
+			vLineDistance = scale * lineDistance;
+			vec3 transformed = vec3(a_Position);
+			#include <pvm_vert>
+		}
+	`,
 
-		'	vec3 transformed = vec3(a_Position);',
+	fragmentShader: `
+		#include <common_frag>
+		#include <fog_pars_frag>
 
-		'	#include <pvm_vert>',
-		'}'
-	].join('\n'),
+		uniform float dashSize;
+		uniform float totalSize;
 
-	fragmentShader: [
-		'#include <common_frag>',
-		'#include <fog_pars_frag>',
+		varying float vLineDistance;
 
-		'uniform float dashSize;',
-		'uniform float totalSize;',
+		void main() {
+			if (mod(vLineDistance, totalSize) > dashSize) {
+				discard;
+			}
 
-		'varying float vLineDistance;',
-
-		'void main() {',
-		'	if ( mod( vLineDistance, totalSize ) > dashSize ) {',
-		'		discard;',
-		'	}',
-
-		'	#include <begin_frag>',
-		'	#include <end_frag>',
-		'	#include <premultipliedAlpha_frag>',
-		'	#include <fog_frag>',
-		'}'
-	].join('\n')
-
+			#include <begin_frag>
+			#include <end_frag>
+			#include <premultipliedAlpha_frag>
+			#include <fog_frag>
+		}
+	`
 };
 
 export { LineDashedShader };

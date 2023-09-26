@@ -2,10 +2,12 @@
 
 export const SkyShader = {
 	name: 'sky_bg',
+
 	defines: {
 		SAMPLES_NUMS: 16,
 		DISPLAY_SUN: false
 	},
+
 	uniforms: {
 		sunU: 1.55,
 		sunV: 0.65,
@@ -16,6 +18,7 @@ export const SkyShader = {
 		mieHeight: 1200, // = 1200;
 		sunBrightness: 1.0 // = 1.0;
 	},
+
 	vertexShader: `
 		attribute vec3 a_Position;
 		attribute vec2 a_Uv;
@@ -30,6 +33,7 @@ export const SkyShader = {
 			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
 		}
 	`,
+
 	fragmentShader: `
 		uniform float sunU;
 		uniform float sunV;

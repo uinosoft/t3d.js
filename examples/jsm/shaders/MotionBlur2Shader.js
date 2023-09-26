@@ -1,5 +1,4 @@
 const MotionBlur2Shader = {
-
 	name: 'motion_blur2',
 
 	uniforms: {
@@ -58,7 +57,6 @@ const MotionBlur2Shader = {
 			gl_FragColor.a = result.a;
         }
     `
-
 };
 
 export { MotionBlur2Shader };
