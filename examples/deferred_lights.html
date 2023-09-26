@@ -18,20 +18,21 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { FXAAShader } from 't3d/addons/shaders/FXAAShader.js';
+		import { PMREM } from 't3d/addons/PMREM.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { DeferredRenderer } from 't3d/addons/render/DeferredRenderer.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { FXAAShader } from './jsm/shaders/FXAAShader.js';
-		import { PMREM } from './jsm/PMREM.js';
-		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
-		import { DeferredRenderer } from './jsm/render/DeferredRenderer.js';
-		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
 		import Stats from './libs/stats.module.js';
 
 		let width = window.innerWidth || 2;

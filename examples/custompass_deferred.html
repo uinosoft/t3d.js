@@ -20,21 +20,22 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
-		import { PointLightHelper } from './jsm/objects/PointLightHelper.js';
-		import { SpotLightHelper } from './jsm/objects/SpotLightHelper.js';
-		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { CopyShader } from './jsm/shaders/CopyShader.js';
-		import { FXAAShader } from './jsm/shaders/FXAAShader.js';
-		import { DeferredShader } from './jsm/shaders/DeferredShader.js';
+		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { PointLightHelper } from 't3d/addons/objects/PointLightHelper.js';
+		import { SpotLightHelper } from 't3d/addons/objects/SpotLightHelper.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { CopyShader } from 't3d/addons/shaders/CopyShader.js';
+		import { FXAAShader } from 't3d/addons/shaders/FXAAShader.js';
+		import { DeferredShader } from 't3d/addons/shaders/DeferredShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		const isMobile = (function() {

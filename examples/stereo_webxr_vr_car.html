@@ -20,17 +20,18 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { WebXRControl } from './jsm/stereo/WebXRControls.js';
-		import { StereoCamera } from './jsm/stereo/StereoCamera.js';
-		import { StereoRenderer } from './jsm/stereo/StereoRenderer.js';
-		import { AssimpJsonLoader } from './jsm/loaders/AssimpJsonLoader.js';
+		import { WebXRControl } from 't3d/addons/stereo/WebXRControls.js';
+		import { StereoCamera } from 't3d/addons/stereo/StereoCamera.js';
+		import { StereoRenderer } from 't3d/addons/stereo/StereoRenderer.js';
+		import { AssimpJsonLoader } from 't3d/addons/loaders/AssimpJsonLoader.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;

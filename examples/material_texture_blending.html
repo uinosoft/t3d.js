@@ -16,15 +16,16 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;

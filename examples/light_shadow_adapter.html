@@ -20,19 +20,20 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { DirectionalLightHelper } from './jsm/objects/DirectionalLightHelper.js';
-		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
-		import { ShadowAdapter } from './jsm/math/ShadowAdapter.js';
-		import { Box3Helper } from './jsm/objects/Box3Helper.js';
+		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { ShadowAdapter } from 't3d/addons/math/ShadowAdapter.js';
+		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;

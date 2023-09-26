@@ -18,23 +18,24 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GBuffer } from 't3d/addons/GBuffer.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { CopyShader } from 't3d/addons/shaders/CopyShader.js';
+		import { SuperSampling } from 't3d/addons/SuperSampling.js';
+		import { Clock } from 't3d/addons/Clock.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
-		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
-		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { GBuffer } from './jsm/GBuffer.js';
-		import { SkyBox } from './jsm/objects/SkyBox.js';
-		import { CopyShader } from './jsm/shaders/CopyShader.js';
-		import { SuperSampling } from './jsm/SuperSampling.js';
-		import { Clock } from './jsm/Clock.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;

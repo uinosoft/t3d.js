@@ -18,18 +18,19 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GBuffer } from 't3d/addons/GBuffer.js';
+		import { SSAOPass } from 't3d/addons/pass/SSAOPass.js';
+		import { BlurShader } from 't3d/addons/shaders/BlurShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { GBuffer } from './jsm/GBuffer.js';
-		import { SSAOPass } from './jsm/pass/SSAOPass.js';
-		import { BlurShader } from './jsm/shaders/BlurShader.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;

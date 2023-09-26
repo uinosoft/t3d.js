@@ -18,21 +18,22 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { MathUtils } from './jsm/math/MathUtils.js';
-		import { CurvePath3 } from './jsm/math/curves/Curves.js';
-		import { TubeBuilder } from './jsm/geometries/builders/TubeBuilder.js';
-		import { RouteBuilder } from './jsm/geometries/builders/RouteBuilder.js';
-		import { GeometryUtils } from './jsm/geometries/GeometryUtils.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { MathUtils } from 't3d/addons/math/MathUtils.js';
+		import { CurvePath3 } from 't3d/addons/math/curves/Curves.js';
+		import { TubeBuilder } from 't3d/addons/geometries/builders/TubeBuilder.js';
+		import { RouteBuilder } from 't3d/addons/geometries/builders/RouteBuilder.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;

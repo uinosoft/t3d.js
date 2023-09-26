@@ -18,21 +18,22 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { Water } from 't3d/addons/objects/Water.js';
+		import { Sky } from 't3d/addons/objects/Sky.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { ReflectionProbe } from 't3d/addons/probes/ReflectionProbe.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { Water } from './jsm/objects/Water.js';
-		import { Sky } from './jsm/objects/Sky.js';
-		import { SkyBox } from './jsm/objects/SkyBox.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
-		import { ReflectionProbe } from './jsm/probes/ReflectionProbe.js';
 		
 		const devicePixelRatio = window.devicePixelRatio;
 

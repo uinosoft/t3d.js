@@ -20,21 +20,22 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { BlurShader } from 't3d/addons/shaders/BlurShader.js';
+		import { CopyShader } from 't3d/addons/shaders/CopyShader.js';
+		import { LuminosityHighPassShader } from 't3d/addons/shaders/LuminosityHighPassShader.js';
+		import { BlurPass } from 't3d/addons/pass/BlurPass.js';
+		import { Clock } from 't3d/addons/Clock.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { BlurShader } from './jsm/shaders/BlurShader.js';
-		import { CopyShader } from './jsm/shaders/CopyShader.js';
-		import { LuminosityHighPassShader } from './jsm/shaders/LuminosityHighPassShader.js';
-		import { BlurPass } from './jsm/pass/BlurPass.js';
-		import { Clock } from './jsm/Clock.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;

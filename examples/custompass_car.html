@@ -18,7 +18,8 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
@@ -26,10 +27,10 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-		import { AssimpJsonLoader } from './jsm/loaders/AssimpJsonLoader.js';
-		import { ColorAdjustShader } from './jsm/shaders/ColorAdjustShader.js';
-		import { FilmShader } from './jsm/shaders/FilmShader.js';
-		import { FXAAShader } from './jsm/shaders/FXAAShader.js';
+		import { AssimpJsonLoader } from 't3d/addons/loaders/AssimpJsonLoader.js';
+		import { ColorAdjustShader } from 't3d/addons/shaders/ColorAdjustShader.js';
+		import { FilmShader } from 't3d/addons/shaders/FilmShader.js';
+		import { FXAAShader } from 't3d/addons/shaders/FXAAShader.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;

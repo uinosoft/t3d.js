@@ -20,19 +20,20 @@
     <script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from './jsm/Clock.js';
-		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
-		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
-		import { SkeletonHelper } from './jsm/objects/SkeletonHelper.js';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { SkeletonHelper } from 't3d/addons/objects/SkeletonHelper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
 

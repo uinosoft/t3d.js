@@ -22,23 +22,24 @@
 	<script type="importmap">
         {
             "imports": {
-                "t3d": "../build/t3d.module.js"
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
             }
         }
     </script>
 
 	<script type="module">
 		import * as t3d from 't3d';
-		import { OrbitControls } from './jsm/controls/OrbitControls.js';
-		import { GLTFLoader } from './jsm/loaders/glTF/GLTFLoader.js';
-		import { TextureCubeLoader } from './jsm/loaders/TextureCubeLoader.js';
-		import { GridHelper } from './jsm/objects/GridHelper.js';
-		import { PolarGridHelper } from './jsm/objects/PolarGridHelper.js';
-		import { VertexNormalsHelper } from './jsm/objects/VertexNormalsHelper.js';
-		import { VertexTangentsHelper } from './jsm/objects/VertexTangentsHelper.js';
-		import { BoxHelper } from './jsm/objects/BoxHelper.js';
-		import { Box3Helper } from './jsm/objects/Box3Helper.js';
-		import { AxisHelper } from './jsm/objects/AxisHelper.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
+		import { PolarGridHelper } from 't3d/addons/objects/PolarGridHelper.js';
+		import { VertexNormalsHelper } from 't3d/addons/objects/VertexNormalsHelper.js';
+		import { VertexTangentsHelper } from 't3d/addons/objects/VertexTangentsHelper.js';
+		import { BoxHelper } from 't3d/addons/objects/BoxHelper.js';
+		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
+		import { AxisHelper } from 't3d/addons/objects/AxisHelper.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
