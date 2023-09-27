@@ -9,45 +9,47 @@ import {
 } from 't3d';
 import { GBuffer } from '../GBuffer.js';
 
-var matProjViewInverse = new Matrix4();
-var eyePosition = new Vector3();
+const matProjViewInverse = new Matrix4();
+const eyePosition = new Vector3();
+
+const defaultContextParams = {
+	antialias: true, // antialias
+	alpha: false, // effect performance, default false
+	// premultipliedAlpha: false, // effect performance, default false
+	stencil: true
+};
 
 /**
  * Deferred WebGL Renderer
  */
 class DeferredRenderer extends WebGLRenderer {
 
-	constructor(view, options) {
-		var defaultContextParams = {
-			antialias: true, // antialias
-			alpha: false, // effect performance, default false
-			// premultipliedAlpha: false, // effect performance, default false
-			stencil: true
-		};
-
-		var gl = view.getContext('webgl2', options || defaultContextParams) || view.getContext('webgl', options || defaultContextParams);
+	constructor(view, options = defaultContextParams) {
+		const gl = view.getContext('webgl2', options) || view.getContext('webgl', options);
 
 		super(gl);
 
-		console.info('DeferredRenderer use WebGL Version: ' + this.capabilities.version);
+		if (this.capabilities.version < 2) {
+			console.info('DeferredRenderer use WebGL1 because of your browser not support WebGL2.');
+		}
 
 		this.shadowMapPass = new ShadowMapPass();
 
 		this.backRenderTarget = new RenderTargetBack(view);
 
-		var width = this.backRenderTarget.width;
-		var height = this.backRenderTarget.height;
+		const width = this.backRenderTarget.width;
+		const height = this.backRenderTarget.height;
 
 		this.gBuffer = new GBuffer(width, height);
 
-		var directionalLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.directionalLight);
+		const directionalLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.directionalLight);
 		directionalLightPass.material.transparent = true;
 		directionalLightPass.material.blending = BLEND_TYPE.ADD;
 		directionalLightPass.material.depthWrite = false;
 		directionalLightPass.material.depthTest = false;
 		this.directionalLightPass = directionalLightPass;
 
-		var directionalShadowLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.directionalLight);
+		const directionalShadowLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.directionalLight);
 		directionalShadowLightPass.material.transparent = true;
 		directionalShadowLightPass.material.blending = BLEND_TYPE.ADD;
 		directionalShadowLightPass.material.depthWrite = false;
@@ -55,14 +57,14 @@ class DeferredRenderer extends WebGLRenderer {
 		directionalShadowLightPass.material.defines['SHADOW'] = 1;
 		this.directionalShadowLightPass = directionalShadowLightPass;
 
-		var pointLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.pointLight);
+		const pointLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.pointLight);
 		pointLightPass.material.transparent = true;
 		pointLightPass.material.blending = BLEND_TYPE.ADD;
 		pointLightPass.material.depthWrite = false;
 		pointLightPass.material.depthTest = false;
 		this.pointLightPass = pointLightPass;
 
-		var pointShadowLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.pointLight);
+		const pointShadowLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.pointLight);
 		pointShadowLightPass.material.transparent = true;
 		pointShadowLightPass.material.blending = BLEND_TYPE.ADD;
 		pointShadowLightPass.material.depthWrite = false;
@@ -70,14 +72,14 @@ class DeferredRenderer extends WebGLRenderer {
 		pointShadowLightPass.material.defines['SHADOW'] = 1;
 		this.pointShadowLightPass = pointShadowLightPass;
 
-		var spotLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.spotLight);
+		const spotLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.spotLight);
 		spotLightPass.material.transparent = true;
 		spotLightPass.material.blending = BLEND_TYPE.ADD;
 		spotLightPass.material.depthWrite = false;
 		spotLightPass.material.depthTest = false;
 		this.spotLightPass = spotLightPass;
 
-		var spotShadowLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.spotLight);
+		const spotShadowLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.spotLight);
 		spotShadowLightPass.material.transparent = true;
 		spotShadowLightPass.material.blending = BLEND_TYPE.ADD;
 		spotShadowLightPass.material.depthWrite = false;
@@ -85,7 +87,7 @@ class DeferredRenderer extends WebGLRenderer {
 		spotShadowLightPass.material.defines['SHADOW'] = 1;
 		this.spotShadowLightPass = spotShadowLightPass;
 
-		var ambientCubemapLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.ambientCubemapLight);
+		const ambientCubemapLightPass = new ShaderPostPass(DeferredRenderer.DeferredShader.ambientCubemapLight);
 		ambientCubemapLightPass.material.transparent = true;
 		ambientCubemapLightPass.material.blending = BLEND_TYPE.ADD;
 		ambientCubemapLightPass.material.depthWrite = false;
@@ -102,23 +104,23 @@ class DeferredRenderer extends WebGLRenderer {
 	}
 
 	render(scene, camera, renderTarget) {
-		var gBuffer = this.gBuffer;
-		var width = this.backRenderTarget.width;
-		var height = this.backRenderTarget.height;
+		const gBuffer = this.gBuffer;
+		const width = this.backRenderTarget.width;
+		const height = this.backRenderTarget.height;
 
 		scene.updateMatrix();
-		var renderStates = scene.updateRenderStates(camera);
+		const renderStates = scene.updateRenderStates(camera);
 		scene.updateRenderQueue(camera);
 
 		this.shadowMapPass.render(this, scene);
 
 		// Step 1: update GBuffer
+
 		gBuffer.update(this, scene, camera);
 
 		// Step 2: light accum
 
 		this.setRenderTarget(renderTarget || this.backRenderTarget);
-
 		this.setClearColor(0, 0, 0, 0);
 		this.clear(true, true, true);
 
@@ -137,24 +139,26 @@ class DeferredRenderer extends WebGLRenderer {
 			pass.uniforms['eyePosition'][2] = eyePosition.z;
 		}
 
+		let lights, shadows, count, shadowCount;
+
 		// directional
 
-		var lights = renderStates.lights.directional;
-		var shadows = renderStates.lights.directionalShadow;
-		var count = renderStates.lights.directsNum;
-		var shadowCount = renderStates.lights.directShadowNum;
+		lights = renderStates.lights.directional;
+		shadows = renderStates.lights.directionalShadow;
+		count = renderStates.lights.directsNum;
+		shadowCount = renderStates.lights.directShadowNum;
 
-		for (var i = 0; i < count; i++) {
-			var light = lights[i];
+		for (let i = 0; i < count; i++) {
+			const light = lights[i];
 
-			var pass = i < shadowCount ? this.directionalShadowLightPass : this.directionalLightPass;
+			const pass = i < shadowCount ? this.directionalShadowLightPass : this.directionalLightPass;
 			uploadCommonUniforms(pass);
 
 			pass.uniforms['lightColor'] = [light.color[0], light.color[1], light.color[2]];
 			pass.uniforms['lightDirection'] = [light.direction[0], light.direction[1], light.direction[2]];
 
 			if (i < shadowCount) {
-				var shadow = shadows[i];
+				const shadow = shadows[i];
 
 				pass.uniforms['shadowBias'][0] = shadow.shadowBias[0];
 				pass.uniforms['shadowBias'][1] = shadow.shadowBias[1];
@@ -172,15 +176,15 @@ class DeferredRenderer extends WebGLRenderer {
 
 		// point
 
-		var lights = renderStates.lights.point;
-		var shadows = renderStates.lights.pointShadow;
-		var count = renderStates.lights.pointsNum;
-		var shadowCount = renderStates.lights.pointShadowNum;
+		lights = renderStates.lights.point;
+		shadows = renderStates.lights.pointShadow;
+		count = renderStates.lights.pointsNum;
+		shadowCount = renderStates.lights.pointShadowNum;
 
-		for (var i = 0; i < count; i++) {
-			var light = lights[i];
+		for (let i = 0; i < count; i++) {
+			const light = lights[i];
 
-			var pass = i < shadowCount ? this.pointShadowLightPass : this.pointLightPass;
+			const pass = i < shadowCount ? this.pointShadowLightPass : this.pointLightPass;
 			uploadCommonUniforms(pass);
 
 			pass.uniforms['lightColor'] = [light.color[0], light.color[1], light.color[2]];
@@ -189,7 +193,7 @@ class DeferredRenderer extends WebGLRenderer {
 			// pass.uniforms["attenuationFactor"] = light.decay; 5.0?
 
 			if (i < shadowCount) {
-				var shadow = shadows[i];
+				const shadow = shadows[i];
 
 				pass.uniforms['shadowBias'][0] = shadow.shadowBias[0];
 				pass.uniforms['shadowBias'][1] = shadow.shadowBias[1];
@@ -209,15 +213,15 @@ class DeferredRenderer extends WebGLRenderer {
 
 		// spot
 
-		var lights = renderStates.lights.spot;
-		var shadows = renderStates.lights.spotShadow;
-		var count = renderStates.lights.spotsNum;
-		var shadowCount = renderStates.lights.spotShadowNum;
+		lights = renderStates.lights.spot;
+		shadows = renderStates.lights.spotShadow;
+		count = renderStates.lights.spotsNum;
+		shadowCount = renderStates.lights.spotShadowNum;
 
-		for (var i = 0; i < count; i++) {
-			var light = lights[i];
+		for (let i = 0; i < count; i++) {
+			const light = lights[i];
 
-			var pass = i < shadowCount ? this.spotShadowLightPass : this.spotLightPass;
+			const pass = i < shadowCount ? this.spotShadowLightPass : this.spotLightPass;
 			uploadCommonUniforms(pass);
 
 			pass.uniforms['lightColor'] = [light.color[0], light.color[1], light.color[2]];
@@ -229,7 +233,7 @@ class DeferredRenderer extends WebGLRenderer {
 			// pass.uniforms["attenuationFactor"] = light.decay; 5.0?
 
 			if (i < shadowCount) {
-				var shadow = shadows[i];
+				const shadow = shadows[i];
 
 				pass.uniforms['shadowBias'][0] = shadow.shadowBias[0];
 				pass.uniforms['shadowBias'][1] = shadow.shadowBias[1];
@@ -248,7 +252,7 @@ class DeferredRenderer extends WebGLRenderer {
 		// ambientCubemap
 
 		if (this.ambientCubemap) {
-			var pass = this.ambientCubemapLightPass;
+			const pass = this.ambientCubemapLightPass;
 			uploadCommonUniforms(pass);
 
 			pass.uniforms['cubeMap'] = this.ambientCubemap;
@@ -260,135 +264,119 @@ class DeferredRenderer extends WebGLRenderer {
 
 }
 
-var DeferredShaderChunk = {
+const DeferredShaderChunk = {
 
-	light_vertex: [
+	light_vertex: `
+		attribute vec3 a_Position;
 
-		'attribute vec3 a_Position;',
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
 
-		'uniform mat4 u_ProjectionView;',
-		'uniform mat4 u_Model;',
+		void main() {
+			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+		}
+	`,
 
-		'void main() {',
+	light_head: `
+		uniform sampler2D normalGlossinessTexture;
+		uniform sampler2D depthTexture;
+		uniform sampler2D albedoMetalnessTexture;
 
-		'gl_Position = u_ProjectionView * u_Model * vec4( a_Position, 1.0 );',
+		uniform vec2 windowSize;
 
-		'}'
+		uniform mat4 matProjViewInverse;
+	`,
 
-	].join('\n'),
+	// Extract
+	// - N, z, position
+	// - albedo, metalness, specularColor, diffuseColor
+	gbuffer_read: `
+		vec2 texCoord = gl_FragCoord.xy / windowSize;
 
-	light_head: [
-
-		'uniform sampler2D normalGlossinessTexture;',
-		'uniform sampler2D depthTexture;',
-		'uniform sampler2D albedoMetalnessTexture;',
-
-		'uniform vec2 windowSize;',
-
-		'uniform mat4 matProjViewInverse;'
-
-	].join('\n'),
-
-	gbuffer_read: [
-		// Extract
-		// - N, z, position
-		// - albedo, metalness, specularColor, diffuseColor
-
-		'vec2 texCoord = gl_FragCoord.xy / windowSize;',
-
-		'vec4 texel1 = texture2D(normalGlossinessTexture, texCoord);',
-		'vec4 texel3 = texture2D(albedoMetalnessTexture, texCoord);',
+		vec4 texel1 = texture2D(normalGlossinessTexture, texCoord);
+		vec4 texel3 = texture2D(albedoMetalnessTexture, texCoord);
 
 		// Is empty
-		'if (dot(texel1.rgb, vec3(1.0)) == 0.0) {',
-		'discard;',
-		'}',
+		if (dot(texel1.rgb, vec3(1.0)) == 0.0) {
+			discard;
+		}
 
-		'float glossiness = texel1.a;',
-		'float metalness = texel3.a;',
+		float glossiness = texel1.a;
+		float metalness = texel3.a;
 
-		'vec3 N = texel1.rgb * 2.0 - 1.0;',
+		vec3 N = texel1.rgb * 2.0 - 1.0;
 
 		// Depth buffer range is 0.0 - 1.0
-		'float z = texture2D(depthTexture, texCoord).r * 2.0 - 1.0;',
+		float z = texture2D(depthTexture, texCoord).r * 2.0 - 1.0;
 
-		'vec2 xy = texCoord * 2.0 - 1.0;',
+		vec2 xy = texCoord * 2.0 - 1.0;
 
-		'vec4 projectedPos = vec4(xy, z, 1.0);',
-		'vec4 p4 = matProjViewInverse * projectedPos;',
+		vec4 projectedPos = vec4(xy, z, 1.0);
+		vec4 p4 = matProjViewInverse * projectedPos;
 
-		'vec3 position = p4.xyz / p4.w;',
+		vec3 position = p4.xyz / p4.w;
 
-		'vec3 albedo = texel3.rgb;',
+		vec3 albedo = texel3.rgb;
 
-		'vec3 diffuseColor = albedo * (1.0 - metalness);',
-		'vec3 specularColor = mix(vec3(0.04), albedo, metalness);'
+		vec3 diffuseColor = albedo * (1.0 - metalness);
+		vec3 specularColor = mix(vec3(0.04), albedo, metalness);
+	`,
 
-	].join('\n'),
+	calculate_attenuation: `
+		uniform float attenuationFactor;
 
-	calculate_attenuation: [
+		float lightAttenuation(float dist, float range) {
+			float attenuation = 1.0;
+			attenuation = dist * dist / (range * range + 1.0);
+			float att_s = attenuationFactor;
+			attenuation = 1.0 / (attenuation * att_s + 1.0);
+			att_s = 1.0 / (att_s + 1.0);
+			attenuation = attenuation - att_s;
+			attenuation /= 1.0 - att_s;
+			return clamp(attenuation, 0.0, 1.0);
+		}
+	`,
 
-		'uniform float attenuationFactor;',
+	light_equation: `
+		float D_Phong(in float g, in float ndh) {
+			// from black ops 2
+			float a = pow(8192.0, g);
+			return (a + 2.0) / 8.0 * pow(ndh, a);
+		}
 
-		'float lightAttenuation(float dist, float range)',
-		'{',
-		'float attenuation = 1.0;',
-		'attenuation = dist*dist/(range*range+1.0);',
-		'float att_s = attenuationFactor;',
-		'attenuation = 1.0/(attenuation*att_s+1.0);',
-		'att_s = 1.0/(att_s+1.0);',
-		'attenuation = attenuation - att_s;',
-		'attenuation /= 1.0 - att_s;',
-		'return clamp(attenuation, 0.0, 1.0);',
-		'}'
-
-	].join('\n'),
-
-	light_equation: [
-
-		'float D_Phong(in float g, in float ndh) {',
-		// from black ops 2
-		'float a = pow(8192.0, g);',
-		'return (a + 2.0) / 8.0 * pow(ndh, a);',
-		'}',
-
-		'float D_GGX(in float g, in float ndh) {',
-		'float r = 1.0 - g;',
-		'float a = r * r;',
-		'float tmp = ndh * ndh * (a - 1.0) + 1.0;',
-		'return a / (3.1415926 * tmp * tmp);',
-		'}',
+		float D_GGX(in float g, in float ndh) {
+			float r = 1.0 - g;
+			float a = r * r;
+			float tmp = ndh * ndh * (a - 1.0) + 1.0;
+			return a / (3.1415926 * tmp * tmp);
+		}
 
 		// Fresnel
-		'vec3 F_Schlick(in float ndv, vec3 spec) {',
-		'return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);',
-		'}',
+		vec3 F_Schlick(in float ndv, vec3 spec) {
+			return spec + (1.0 - spec) * pow(1.0 - ndv, 5.0);
+		}
 
-		'vec3 lightEquation(',
-		'in vec3 lightColor, in vec3 diffuseColor, in vec3 specularColor,',
-		'in float ndl, in float ndh, in float ndv, in float g',
-		')',
-		'{',
-		'return ndl * PI * lightColor',
-		'* (diffuseColor + D_Phong(g, ndh) * F_Schlick(ndv, specularColor));',
-		'}'
-
-	].join('\n')
+		vec3 lightEquation(
+			in vec3 lightColor, in vec3 diffuseColor, in vec3 specularColor,
+			in float ndl, in float ndh, in float ndv, in float g
+		) {
+			return ndl * PI * lightColor
+				* (diffuseColor + D_Phong(g, ndh) * F_Schlick(ndv, specularColor));
+		}
+	`
 
 };
 
 DeferredRenderer.DeferredShader = {
 
 	directionalLight: {
+		name: 'deferred_directionallight',
 
 		defines: {
-
 			'SHADOW': 0
-
 		},
 
 		uniforms: {
-
 			normalGlossinessTexture: null,
 			depthTexture: null,
 			albedoMetalnessTexture: null,
@@ -407,74 +395,62 @@ DeferredRenderer.DeferredShader = {
 			shadowBias: [0, 0],
 			shadowParams: [1, 0],
 			shadowMapSize: [1024, 1024]
-
 		},
 
 		vertexShader: DeferredShaderChunk.light_vertex,
 
-		fragmentShader: [
+		fragmentShader: `
+			${DeferredShaderChunk.light_head}
+			${DeferredShaderChunk.light_equation}
 
-			DeferredShaderChunk.light_head,
-			DeferredShaderChunk.light_equation,
+			uniform vec3 lightDirection;
+			uniform vec3 lightColor;
 
-			'uniform vec3 lightDirection;',
-			'uniform vec3 lightColor;',
+			uniform vec3 eyePosition;
 
-			'uniform vec3 eyePosition;',
+			#if SHADOW == 1
+				uniform sampler2DShadow shadowMap;
+				uniform mat4 shadowMatrix;
 
-			'#if SHADOW == 1',
+				uniform vec2 shadowBias;
+				uniform vec2 shadowParams;
+				uniform vec2 shadowMapSize;
 
-			'uniform sampler2DShadow shadowMap;',
-			'uniform mat4 shadowMatrix;',
+				#include <packing>
+				#include <shadow>
+			#endif
 
-			'uniform vec2 shadowBias;',
-			'uniform vec2 shadowParams;',
-			'uniform vec2 shadowMapSize;',
+			void main() {
+				${DeferredShaderChunk.gbuffer_read}
 
-			'#include <packing>',
-			'#include <shadow>',
+				vec3 L = -normalize(lightDirection);
+				vec3 V = normalize(eyePosition - position);
 
-			'#endif',
+				vec3 H = normalize(L + V);
+				float ndl = clamp(dot(N, L), 0.0, 1.0);
+				float ndh = clamp(dot(N, H), 0.0, 1.0);
+				float ndv = clamp(dot(N, V), 0.0, 1.0);
 
-			'void main() {',
+				gl_FragColor.rgb = lightEquation(lightColor, diffuseColor, specularColor, ndl, ndh, ndv, glossiness);
 
-			DeferredShaderChunk.gbuffer_read,
+				#if SHADOW == 1
+					float shadowContrib = getShadow(shadowMap, shadowMatrix * vec4(position, 1.), shadowMapSize, shadowBias, shadowParams);
+					gl_FragColor.rgb *= shadowContrib;
+				#endif
 
-			'vec3 L = -normalize(lightDirection);',
-			'vec3 V = normalize(eyePosition - position);',
-
-			'vec3 H = normalize(L + V);',
-			'float ndl = clamp(dot(N, L), 0.0, 1.0);',
-			'float ndh = clamp(dot(N, H), 0.0, 1.0);',
-			'float ndv = clamp(dot(N, V), 0.0, 1.0);',
-
-			'gl_FragColor.rgb = lightEquation(',
-			'lightColor, diffuseColor, specularColor, ndl, ndh, ndv, glossiness',
-			');',
-
-			'#if SHADOW == 1',
-			'float shadowContrib = getShadow(shadowMap, shadowMatrix * vec4(position, 1.), shadowMapSize, shadowBias, shadowParams);',
-			'gl_FragColor.rgb *= shadowContrib;',
-			'#endif',
-
-			'gl_FragColor.a = 1.0;',
-
-			'}'
-
-		].join('\n')
-
+				gl_FragColor.a = 1.0;
+			}
+		`
 	},
 
 	pointLight: {
+		name: 'deferred_pointlight',
 
 		defines: {
-
 			'SHADOW': 0
-
 		},
 
 		uniforms: {
-
 			normalGlossinessTexture: null,
 			depthTexture: null,
 			albedoMetalnessTexture: null,
@@ -496,81 +472,69 @@ DeferredRenderer.DeferredShader = {
 			shadowParams: [1, 0],
 			shadowMapSize: [1024, 1024],
 			shadowCameraRange: [1, 100]
-
 		},
 
 		vertexShader: DeferredShaderChunk.light_vertex,
 
-		fragmentShader: [
+		fragmentShader: `
+			${DeferredShaderChunk.light_head}
+			${DeferredShaderChunk.calculate_attenuation}
+			${DeferredShaderChunk.light_equation}
 
-			DeferredShaderChunk.light_head,
-			DeferredShaderChunk.calculate_attenuation,
-			DeferredShaderChunk.light_equation,
+			uniform vec3 lightPosition;
+			uniform vec3 lightColor;
+			uniform float lightRange;
 
-			'uniform vec3 lightPosition;',
-			'uniform vec3 lightColor;',
-			'uniform float lightRange;',
+			uniform vec3 eyePosition;
 
-			'uniform vec3 eyePosition;',
+			#if SHADOW == 1
+				uniform samplerCube shadowMap;
 
-			'#if SHADOW == 1',
+				uniform vec2 shadowBias;
+				uniform vec2 shadowParams;
+				uniform vec2 shadowMapSize;
+				uniform vec2 shadowCameraRange;
 
-			'uniform samplerCube shadowMap;',
+				#include <packing>
+				#include <shadow>
+			#endif
 
-			'uniform vec2 shadowBias;',
-			'uniform vec2 shadowParams;',
-			'uniform vec2 shadowMapSize;',
-			'uniform vec2 shadowCameraRange;',
+			void main() {
+				${DeferredShaderChunk.gbuffer_read}
 
-			'#include <packing>',
-			'#include <shadow>',
+				vec3 L = lightPosition - position;
+				vec3 V = normalize(eyePosition - position);
 
-			'#endif',
+				float dist = length(L);
+				L /= dist;
 
-			'void main() {',
+				vec3 H = normalize(L + V);
 
-			DeferredShaderChunk.gbuffer_read,
+				float ndl = clamp(dot(N, L), 0.0, 1.0);
+				float ndh = clamp(dot(N, H), 0.0, 1.0);
+				float ndv = clamp(dot(N, V), 0.0, 1.0);
+				float attenuation = lightAttenuation(dist, lightRange);
+				// Diffuse term
+				gl_FragColor.rgb = attenuation * lightEquation(lightColor, diffuseColor, specularColor, ndl, ndh, ndv, glossiness);
 
-			'vec3 L = lightPosition - position;',
-			'vec3 V = normalize(eyePosition - position);',
+				#if SHADOW == 1
+					float shadowContrib = getPointShadow(shadowMap, vec4(-L * dist, 1.0), shadowMapSize, shadowBias, shadowParams, shadowCameraRange);
+					gl_FragColor.rgb *= clamp(shadowContrib, 0.0, 1.0);
+				#endif
 
-			'float dist = length(L);',
-			'L /= dist;',
-
-			'vec3 H = normalize(L + V);',
-
-			'float ndl = clamp(dot(N, L), 0.0, 1.0);',
-			'float ndh = clamp(dot(N, H), 0.0, 1.0);',
-			'float ndv = clamp(dot(N, V), 0.0, 1.0);',
-			'float attenuation = lightAttenuation(dist, lightRange);',
-			// Diffuse term
-			'gl_FragColor.rgb = attenuation * lightEquation(',
-			'lightColor, diffuseColor, specularColor, ndl, ndh, ndv, glossiness',
-			');',
-
-			'#if SHADOW == 1',
-			'float shadowContrib = getPointShadow(shadowMap, vec4(-L * dist, 1.0), shadowMapSize, shadowBias, shadowParams, shadowCameraRange);',
-			'gl_FragColor.rgb *= clamp(shadowContrib, 0.0, 1.0);',
-			'#endif',
-
-			'gl_FragColor.a = 1.0;',
-
-			'}'
-
-		].join('\n')
-
+				gl_FragColor.a = 1.0;
+			}
+		`
 	},
 
 	spotLight: {
+		name: 'deferred_spotlight',
 
 		defines: {
-
 			'SHADOW': 0
-
 		},
 
 		uniforms: {
-
 			normalGlossinessTexture: null,
 			depthTexture: null,
 			albedoMetalnessTexture: null,
@@ -596,90 +560,78 @@ DeferredRenderer.DeferredShader = {
 			shadowBias: [0, 0],
 			shadowParams: [1, 0],
 			shadowMapSize: [1024, 1024]
-
 		},
 
 		vertexShader: DeferredShaderChunk.light_vertex,
 
-		fragmentShader: [
+		fragmentShader: `
+			${DeferredShaderChunk.light_head}
+			${DeferredShaderChunk.calculate_attenuation}
+			${DeferredShaderChunk.light_equation}
 
-			DeferredShaderChunk.light_head,
-			DeferredShaderChunk.calculate_attenuation,
-			DeferredShaderChunk.light_equation,
+			uniform vec3 lightPosition;
+			uniform vec3 lightDirection;
+			uniform vec3 lightColor;
+			uniform float lightConeCos;
+			uniform float lightPenumbraCos;
+			uniform float lightRange;
+			uniform float falloffFactor;
 
-			'uniform vec3 lightPosition;',
-			'uniform vec3 lightDirection;',
-			'uniform vec3 lightColor;',
-			'uniform float lightConeCos;',
-			'uniform float lightPenumbraCos;',
-			'uniform float lightRange;',
-			'uniform float falloffFactor;',
+			uniform vec3 eyePosition;
 
-			'uniform vec3 eyePosition;',
+			#if SHADOW == 1
+				uniform sampler2DShadow shadowMap;
+				uniform mat4 shadowMatrix;
 
-			'#if SHADOW == 1',
+				uniform vec2 shadowBias;
+				uniform vec2 shadowParams;
+				uniform vec2 shadowMapSize;
 
-			'uniform sampler2DShadow shadowMap;',
-			'uniform mat4 shadowMatrix;',
+				#include <packing>
+				#include <shadow>
+			#endif
 
-			'uniform vec2 shadowBias;',
-			'uniform vec2 shadowParams;',
-			'uniform vec2 shadowMapSize;',
+			void main() {
+				${DeferredShaderChunk.gbuffer_read}
 
-			'#include <packing>',
-			'#include <shadow>',
+				vec3 L = lightPosition - position;
+				vec3 V = normalize(eyePosition - position);
 
-			'#endif',
+				float dist = length(L);
+				L /= dist;
 
-			'void main() {',
+				float attenuation = lightAttenuation(dist, lightRange);
+				float angleCos = dot(-normalize(lightDirection), L);
 
-			DeferredShaderChunk.gbuffer_read,
+				if (angleCos <= lightConeCos) discard;
+				if (dist > lightRange) discard;
 
-			'vec3 L = lightPosition - position;',
-			'vec3 V = normalize(eyePosition - position);',
+				float spotEffect = smoothstep(lightConeCos, lightPenumbraCos, angleCos);
 
-			'float dist = length(L);',
-			'L /= dist;',
+				vec3 H = normalize(L + V);
+				float ndl = clamp(dot(N, L), 0.0, 1.0);
+				float ndh = clamp(dot(N, H), 0.0, 1.0);
+				float ndv = clamp(dot(N, V), 0.0, 1.0);
 
-			'float attenuation = lightAttenuation(dist, lightRange);',
-			'float angleCos = dot( -normalize(lightDirection), L );',
+				// Diffuse term
+				gl_FragColor.rgb = spotEffect * attenuation * lightEquation(lightColor, diffuseColor, specularColor, ndl, ndh, ndv, glossiness);
 
-			'if ( angleCos <= lightConeCos ) discard;',
-			'if ( dist > lightRange ) discard;',
+				#if SHADOW == 1
+					float shadowContrib = getShadow(shadowMap, shadowMatrix * vec4(position, 1.), shadowMapSize, shadowBias, shadowParams);
+					gl_FragColor.rgb *= shadowContrib;
+				#endif
 
-			'float spotEffect = smoothstep( lightConeCos, lightPenumbraCos, angleCos );',
-
-			'vec3 H = normalize(L + V);',
-			'float ndl = clamp(dot(N, L), 0.0, 1.0);',
-			'float ndh = clamp(dot(N, H), 0.0, 1.0);',
-			'float ndv = clamp(dot(N, V), 0.0, 1.0);',
-
-			// Diffuse term
-			'gl_FragColor.rgb = spotEffect * attenuation * lightEquation(',
-			'lightColor, diffuseColor, specularColor, ndl, ndh, ndv, glossiness',
-			');',
-
-			'#if SHADOW == 1',
-			'float shadowContrib = getShadow(shadowMap, shadowMatrix * vec4(position, 1.), shadowMapSize, shadowBias, shadowParams);',
-			'gl_FragColor.rgb *= shadowContrib;',
-			'#endif',
-
-			'gl_FragColor.a = 1.0;',
-
-			'}'
-
-		].join('\n')
-
+				gl_FragColor.a = 1.0;
+			}
+		`
 	},
 
 	ambientCubemapLight: {
+		name: 'deferred_ambientcubemaplight',
 
-		defines: {
-
-		},
+		defines: {},
 
 		uniforms: {
-
 			normalGlossinessTexture: null,
 			depthTexture: null,
 			albedoMetalnessTexture: null,
@@ -692,60 +644,50 @@ DeferredRenderer.DeferredShader = {
 			intensity: 1.0,
 
 			eyePosition: [0, 1, 0]
-
 		},
 
 		vertexShader: DeferredShaderChunk.light_vertex,
 
-		fragmentShader: [
+		fragmentShader: `
+			${DeferredShaderChunk.light_head}
+			${DeferredShaderChunk.light_equation}
 
-			DeferredShaderChunk.light_head,
-			DeferredShaderChunk.light_equation,
+			uniform samplerCube cubeMap;
+			uniform float intensity;
 
-			'uniform samplerCube cubeMap;',
-			'uniform float intensity;',
+			uniform vec3 eyePosition;
 
-			'uniform vec3 eyePosition;',
+			void main() {
+				${DeferredShaderChunk.gbuffer_read}
 
-			'void main() {',
+				vec3 V = normalize(eyePosition - position);
+				vec3 L = reflect(-V, N);
 
-			DeferredShaderChunk.gbuffer_read,
+				vec3 H = normalize(L + V);
 
-			'vec3 V = normalize(eyePosition - position);',
-			'vec3 L = reflect(-V, N);',
+				float ndv = clamp(dot(N, V), 0.0, 1.0);
+				float ndh = clamp(dot(N, H), 0.0, 1.0);
+				float rough = clamp(1.0 - glossiness, 0.0, 1.0);
 
-			'vec3 H = normalize(L + V);',
+				// FIXME fixed maxMipmapLevel ?
+				float level = rough * 5.0;
 
-			'float ndv = clamp(dot(N, V), 0.0, 1.0);',
-			'float ndh = clamp(dot(N, H), 0.0, 1.0);',
-			'float rough = clamp(1.0 - glossiness, 0.0, 1.0);',
+				#ifdef TEXTURE_LOD_EXT
+					vec4 cubeMapColor1 = textureCubeLodEXT(cubeMap, L, 8.);
+					vec4 cubeMapColor2 = textureCubeLodEXT(cubeMap, L, level);
+				#else
+					// force the bias high to get the last LOD level as it is the most blurred.
+					vec4 cubeMapColor1 = textureCubeLodEXT(cubeMap, L, 8.);
+					vec4 cubeMapColor2 = textureCube(cubeMap, L, level);
+				#endif
 
-			// FIXME fixed maxMipmapLevel ?
-			'float level = rough * 5.0;',
-
-			'#ifdef TEXTURE_LOD_EXT',
-
-			'vec4 cubeMapColor1 = textureCubeLodEXT( cubeMap, L, 8. );',
-			'vec4 cubeMapColor2 = textureCubeLodEXT( cubeMap, L, level );',
-
-			'#else',
-
-			// force the bias high to get the last LOD level as it is the most blurred.
-			'vec4 cubeMapColor1 = textureCubeLodEXT( cubeMap, L, 8. );',
-			'vec4 cubeMapColor2 = textureCube( cubeMap, L, level );',
-
-			'#endif',
-
-			// Diffuse term
-			// TODO
-			'gl_FragColor.rgb = intensity * (cubeMapColor2.xyz * F_Schlick(ndv, specularColor) + cubeMapColor1.xyz * diffuseColor / PI);',
-
-			'gl_FragColor.a = 1.0;',
-
-			'}'
-
-		].join('\n')
-
+				// Diffuse term
+				// TODO
+				gl_FragColor.rgb = intensity * (cubeMapColor2.xyz * F_Schlick(ndv, specularColor) + cubeMapColor1.xyz * diffuseColor / PI);
+				
+				gl_FragColor.a = 1.0;
+			}
+		`
 	}
 
 };
