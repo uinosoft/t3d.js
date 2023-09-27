@@ -36,7 +36,7 @@ const FXAAShader = {
 		// FXAA 3.11 implementation by NVIDIA, ported to WebGL by Agost Biro (biro@archilogic.com)
 		
 		//----------------------------------------------------------------------------------
-		// File:        es3-kepler\FXAA\assets\shaders/FXAA_DefaultES.frag
+		// File:        es3-kepler/FXAA/assets/shaders/FXAA_DefaultES.frag
 		// SDK Version: v3.00
 		// Email:       gameworks@nvidia.com
 		// Site:        http://developer.nvidia.com/

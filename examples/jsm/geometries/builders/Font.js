@@ -70,7 +70,7 @@ function createPath(char, scale, offsetX, offsetY, data) {
 			const action = outline[i++];
 
 			switch (action) {
-				case 'm': // move points
+				case 'm': { // move points
 					count++;
 
 					path[count] = new CurvePath3();
@@ -81,9 +81,8 @@ function createPath(char, scale, offsetX, offsetY, data) {
 					currentPoint[1] = y;
 
 					break;
-
-				case 'l': // line
-
+				}
+				case 'l': { // line
 					x = outline[i++] * scale + offsetX;
 					y = outline[i++] * scale + offsetY;
 
@@ -95,9 +94,8 @@ function createPath(char, scale, offsetX, offsetY, data) {
 					currentPoint[1] = y;
 
 					break;
-
-				case 'q': // quadraticCurve
-
+				}
+				case 'q': { // quadraticCurve
 					cpx = outline[i++] * scale + offsetX;
 					cpy = outline[i++] * scale + offsetY;
 					cpx1 = outline[i++] * scale + offsetX;
@@ -111,9 +109,8 @@ function createPath(char, scale, offsetX, offsetY, data) {
 					currentPoint[1] = cpy;
 
 					break;
-
-				case 'b': // bezierCurve
-
+				}
+				case 'b': { // bezierCurve
 					cpx = outline[i++] * scale + offsetX;
 					cpy = outline[i++] * scale + offsetY;
 					cpx1 = outline[i++] * scale + offsetX;
@@ -129,6 +126,7 @@ function createPath(char, scale, offsetX, offsetY, data) {
 					currentPoint[1] = cpy;
 
 					break;
+				}
 			}
 		}
 	}

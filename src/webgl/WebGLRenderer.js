@@ -673,7 +673,7 @@ class WebGLRenderer extends ThinRenderer {
 			}
 		}
 
-		if (!!renderInfo) {
+		if (renderInfo) {
 			renderInfo.update(drawCount, material.drawMode, instanceCount < 0 ? 1 : instanceCount);
 		}
 	}

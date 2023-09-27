@@ -17,7 +17,7 @@ class WebGLBuffers extends PropertyMap {
 		if (!needCreate && bufferProperties.version === buffer.version) return;
 
 		// Avoid polluting the binding state
-		if (!!vertexArrayBindings) {
+		if (vertexArrayBindings) {
 			vertexArrayBindings.reset();
 		}
 

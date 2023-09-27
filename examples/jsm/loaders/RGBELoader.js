@@ -162,7 +162,7 @@ const
 			gamma_re = /^\s*GAMMA\s*=\s*(\d+(\.\d+)?)\s*$/,
 			exposure_re = /^\s*EXPOSURE\s*=\s*(\d+(\.\d+)?)\s*$/,
 			format_re = /^\s*FORMAT=(\S+)\s*$/,
-			dimensions_re = /^\s*\-Y\s+(\d+)\s+\+X\s+(\d+)\s*$/,
+			dimensions_re = /^\s*-Y\s+(\d+)\s+\+X\s+(\d+)\s*$/,
 
 			// RGBE format header struct
 			header = {
@@ -199,17 +199,21 @@ const
 				continue; // comment line
 			}
 
-			if (match = line.match(gamma_re)) {
+			match = line.match(gamma_re);
+			if (match) {
 				header.gamma = parseFloat(match[1]);
 			}
-			if (match = line.match(exposure_re)) {
+			match = line.match(exposure_re);
+			if (match) {
 				header.exposure = parseFloat(match[1]);
 			}
-			if (match = line.match(format_re)) {
+			match = line.match(format_re);
+			if (match) {
 				header.valid |= RGBE_VALID_FORMAT;
 				header.format = match[1];// '32-bit_rle_rgbe';
 			}
-			if (match = line.match(dimensions_re)) {
+			match = line.match(dimensions_re);
+			if (match) {
 				header.valid |= RGBE_VALID_DIMENSIONS;
 				header.height = parseInt(match[1], 10);
 				header.width = parseInt(match[2], 10);

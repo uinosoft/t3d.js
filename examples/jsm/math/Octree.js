@@ -100,14 +100,15 @@ class Octree {
 			}
 		}
 
-		let triangle;
+		let triangle = this.triangles.pop();
 
-		while (triangle = this.triangles.pop()) {
+		while (triangle) {
 			for (let i = 0; i < subTrees.length; i++) {
 				if (subTrees[i].box.intersectsTriangle(triangle)) {
 					subTrees[i].triangles.push(triangle);
 				}
 			}
+			triangle = this.triangles.pop();
 		}
 
 		for (let i = 0; i < subTrees.length; i++) {

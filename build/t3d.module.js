@@ -10012,7 +10012,7 @@ class ShadowMapPass {
 	 * @type {Null|Function}
 	 */
 	set getGeometry(func) {
-		if (!!func) {
+		if (func) {
 			this._renderOptions.getGeometry = func;
 		} else {
 			delete this._renderOptions.getGeometry;
@@ -10027,7 +10027,7 @@ class ShadowMapPass {
 	 * @type {Function}
 	 */
 	set ifRender(func) {
-		if (!!func) {
+		if (func) {
 			this._renderOptions.ifRender = func;
 		} else {
 			delete this._renderOptions.ifRender;
@@ -13956,7 +13956,7 @@ class WebGLCapabilities {
 
 		// webgl version
 
-		this.version = parseFloat(/^WebGL\ (\d)/.exec(gl.getParameter(gl.VERSION))[1]);
+		this.version = parseFloat(/^WebGL (\d)/.exec(gl.getParameter(gl.VERSION))[1]);
 
 		// texture filter anisotropic extension
 		// this extension is available to both, WebGL1 and WebGL2 contexts.
@@ -14994,10 +14994,10 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.useStandardDerivatives = capabilities.version >= 2 || !!capabilities.getExtension('OES_standard_derivatives') || !!capabilities.getExtension('GL_OES_standard_derivatives');
 	props.useShaderTextureLOD = capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
 	// maps
-	props.useDiffuseMap = !!material.diffuseMap ? (material.diffuseMapCoord + 1) : 0;
-	props.useAlphaMap = !!material.alphaMap ? (material.alphaMapCoord + 1) : 0;
-	props.useEmissiveMap = !!material.emissiveMap ? (material.emissiveMapCoord + 1) : 0;
-	props.useAOMap = !!material.aoMap ? (material.aoMapCoord + 1) : 0;
+	props.useDiffuseMap = material.diffuseMap ? (material.diffuseMapCoord + 1) : 0;
+	props.useAlphaMap = material.alphaMap ? (material.alphaMapCoord + 1) : 0;
+	props.useEmissiveMap = material.emissiveMap ? (material.emissiveMapCoord + 1) : 0;
+	props.useAOMap = material.aoMap ? (material.aoMapCoord + 1) : 0;
 	props.useNormalMap = !!material.normalMap;
 	props.useBumpMap = !!material.bumpMap;
 	props.useSpecularMap = !!material.specularMap;
@@ -15020,10 +15020,10 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	// lights
 	props.useAmbientLight = !!lights && lights.useAmbient;
 	props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
-	props.hemisphereLightNum = !!lights ? lights.hemisNum : 0;
-	props.directLightNum = !!lights ? lights.directsNum : 0;
-	props.pointLightNum = !!lights ? lights.pointsNum : 0;
-	props.spotLightNum = !!lights ? lights.spotsNum : 0;
+	props.hemisphereLightNum = lights ? lights.hemisNum : 0;
+	props.directLightNum = lights ? lights.directsNum : 0;
+	props.pointLightNum = lights ? lights.pointsNum : 0;
+	props.spotLightNum = lights ? lights.spotsNum : 0;
 	props.directShadowNum = (object.receiveShadow && !!lights) ? lights.directShadowNum : 0;
 	props.pointShadowNum = (object.receiveShadow && !!lights) ? lights.pointShadowNum : 0;
 	props.spotShadowNum = (object.receiveShadow && !!lights) ? lights.spotShadowNum : 0;
@@ -15037,7 +15037,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	// encoding
 	const currentRenderTarget = state.currentRenderTarget;
 	props.gammaFactor = renderStates.gammaFactor;
-	props.outputEncoding = !!currentRenderTarget.texture ? getTextureEncodingFromMap(currentRenderTarget.texture) : renderStates.outputEncoding;
+	props.outputEncoding = currentRenderTarget.texture ? getTextureEncodingFromMap(currentRenderTarget.texture) : renderStates.outputEncoding;
 	props.diffuseMapEncoding = getTextureEncodingFromMap(material.diffuseMap || material.cubeMap);
 	props.envMapEncoding = getTextureEncodingFromMap(envMap);
 	props.emissiveMapEncoding = getTextureEncodingFromMap(material.emissiveMap);
@@ -17283,7 +17283,7 @@ class WebGLBuffers extends PropertyMap {
 		if (!needCreate && bufferProperties.version === buffer.version) return;
 
 		// Avoid polluting the binding state
-		if (!!vertexArrayBindings) {
+		if (vertexArrayBindings) {
 			vertexArrayBindings.reset();
 		}
 
@@ -18303,7 +18303,7 @@ class WebGLRenderer extends ThinRenderer {
 			}
 		}
 
-		if (!!renderInfo) {
+		if (renderInfo) {
 			renderInfo.update(drawCount, material.drawMode, instanceCount < 0 ? 1 : instanceCount);
 		}
 	}

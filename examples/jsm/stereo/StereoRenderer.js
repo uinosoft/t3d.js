@@ -42,7 +42,7 @@ class StereoRenderer extends ForwardRenderer {
 		scene.updateRenderQueue(cameraR, false, false);
 		this.renderScene(scene, cameraR);
 
-		if (!!renderTarget.texture) {
+		if (renderTarget.texture) {
 			this.updateRenderTargetMipmap(renderTarget);
 		}
 	}

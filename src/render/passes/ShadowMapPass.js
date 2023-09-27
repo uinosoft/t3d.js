@@ -59,7 +59,7 @@ class ShadowMapPass {
 	 * @type {Null|Function}
 	 */
 	set getGeometry(func) {
-		if (!!func) {
+		if (func) {
 			this._renderOptions.getGeometry = func;
 		} else {
 			delete this._renderOptions.getGeometry;
@@ -74,7 +74,7 @@ class ShadowMapPass {
 	 * @type {Function}
 	 */
 	set ifRender(func) {
-		if (!!func) {
+		if (func) {
 			this._renderOptions.ifRender = func;
 		} else {
 			delete this._renderOptions.ifRender;

@@ -1267,19 +1267,18 @@ class EXRLoader extends Loader {
 			// Read DCT - AC component data
 			if (dwaHeader.acCompressedSize > 0) {
 				switch (dwaHeader.acCompression) {
-					case STATIC_HUFFMAN:
-
+					case STATIC_HUFFMAN: {
 						acBuffer = new Uint16Array(dwaHeader.totalAcUncompressedCount);
 						hufUncompress(info.array, inDataView, inOffset, dwaHeader.acCompressedSize, acBuffer, dwaHeader.totalAcUncompressedCount);
 						break;
-
-					case DEFLATE:
-
+					}
+					case DEFLATE: {
 						const compressed = info.array.slice(inOffset.value, inOffset.value + dwaHeader.totalAcUncompressedCount);
 						const data = _fflate.unzlibSync(compressed);
 						acBuffer = new Uint16Array(data.buffer);
 						inOffset.value += dwaHeader.totalAcUncompressedCount;
 						break;
+					}
 				}
 			}
 
@@ -1327,8 +1326,7 @@ class EXRLoader extends Loader {
 				if (cd.decoded) continue;
 
 				switch (cd.compression) {
-					case RLE:
-
+					case RLE: {
 						let row = 0;
 						let rleOffset = 0;
 
@@ -1347,9 +1345,8 @@ class EXRLoader extends Loader {
 						}
 
 						break;
-
+					}
 					case LOSSY_DCT: // skip
-
 					default:
 						throw new Error('EXRLoader.parse: unsupported channel compression');
 				}
@@ -1646,7 +1643,7 @@ class EXRLoader extends Loader {
 					const attributeValue = parseValue(dataView, buffer, offset, attributeType, attributeSize);
 
 					if (attributeValue === undefined) {
-						console.warn(`EXRLoader.parse: skipped unknown header attribute type \'${attributeType}\'.`);
+						console.warn(`EXRLoader.parse: skipped unknown header attribute type '${attributeType}'.`);
 					} else {
 						EXRHeader[attributeName] = attributeValue;
 					}

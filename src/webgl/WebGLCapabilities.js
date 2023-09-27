@@ -6,7 +6,7 @@ class WebGLCapabilities {
 
 		// webgl version
 
-		this.version = parseFloat(/^WebGL\ (\d)/.exec(gl.getParameter(gl.VERSION))[1]);
+		this.version = parseFloat(/^WebGL (\d)/.exec(gl.getParameter(gl.VERSION))[1]);
 
 		// texture filter anisotropic extension
 		// this extension is available to both, WebGL1 and WebGL2 contexts.

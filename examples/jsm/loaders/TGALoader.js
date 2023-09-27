@@ -46,7 +46,7 @@ class TGALoader extends Loader {
 				// What the need of a file without data ?
 				case TGA_TYPE_NO_DATA:
 					console.error('TGALoader.parse.tgaCheckHeader: No data.');
-
+					break;
 				// Invalid type ?
 				default:
 					console.error('TGALoader.parse.tgaCheckHeader: Invalid type " ' + header.image_type + '".');

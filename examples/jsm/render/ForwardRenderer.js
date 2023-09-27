@@ -108,7 +108,7 @@ class ForwardRenderer extends WebGLRenderer {
 
 		this.renderScene(scene, camera);
 
-		if (!!renderTarget.texture) {
+		if (renderTarget.texture) {
 			this.updateRenderTargetMipmap(renderTarget);
 		}
 	}

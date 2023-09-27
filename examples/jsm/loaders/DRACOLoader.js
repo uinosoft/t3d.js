@@ -381,7 +381,7 @@ function DRACOWorker() {
 		const message = e.data;
 
 		switch (message.type) {
-			case 'init':
+			case 'init': {
 				decoderConfig = message.decoderConfig;
 				decoderPending = new Promise(function(resolve/* , reject */) {
 					decoderConfig.onModuleLoaded = function(draco) {
@@ -391,8 +391,8 @@ function DRACOWorker() {
 					DracoDecoderModule(decoderConfig);
 				});
 				break;
-
-			case 'decode':
+			}
+			case 'decode': {
 				const buffer = message.buffer;
 				const taskConfig = message.taskConfig;
 				decoderPending.then(module => {
@@ -411,6 +411,7 @@ function DRACOWorker() {
 					}
 				});
 				break;
+			}
 		}
 	};
 
