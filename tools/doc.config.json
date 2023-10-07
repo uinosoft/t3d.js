@@ -9,9 +9,21 @@
         "theme_opts": {
             "favicon": "../examples/favicon.ico",
             "title": "t3d.js",
-            "default_theme": "light",
-            "base_url": "https://uinosoft.github.io/t3d.js/docs/",
-            "exclude_inherited": true
+            "homepageTitle": "t3d.js API",
+            "default_theme": "fallback-light",
+            "exclude_inherited": false,
+            "menu": [
+                {
+                    "title": "Github",
+                    "link": "https://github.com/uinosoft/t3d.js",
+                    "target": "_blank"
+                },
+                {
+                    "title": "Npm",
+                    "link": "https://www.npmjs.com/package/t3d",
+                    "target": "_blank"
+                }
+            ]
         }
     }
 }

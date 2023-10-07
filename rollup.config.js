@@ -9,9 +9,9 @@ const babelrc = {
 				modules: false,
 				targets: '>0.3%, not dead',
 				loose: true,
-				bugfixes: true,
-			},
-		],
+				bugfixes: true
+			}
+		]
 	]
 };
 
@@ -64,7 +64,20 @@ function header() {
 	};
 }
 
-export default [
+const builds = [
+	{
+		input: 'src/main.js',
+		plugins: [
+			glsl(),
+			header()
+		],
+		output: [
+			{
+				format: 'esm',
+				file: 'build/t3d.module.js'
+			}
+		]
+	},
 	{
 		input: 'src/main.js',
 		plugins: [
@@ -107,18 +120,7 @@ export default [
 				file: 'build/t3d.min.js'
 			}
 		]
-	},
-	{
-		input: 'src/main.js',
-		plugins: [
-			glsl(),
-			header()
-		],
-		output: [
-			{
-				format: 'esm',
-				file: 'build/t3d.module.js'
-			}
-		]
 	}
 ];
+
+export default args => args.configOnlyModule ? builds[0] : builds;
