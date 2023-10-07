@@ -1,5 +1,4 @@
-ThingJS 3D Engine
-========
+# ThingJS 3D Engine
 
 [![NPM Package][npm]][npm-url]
 ![npm-size][npm-size-url]
@@ -14,7 +13,7 @@ Used by ThingJS for web3d rendering, but also available standalone.
 [Documentation](https://uinosoft.github.io/t3d.js/docs/) &mdash;
 [Discord](https://discord.gg/urB54PPXc4)
 
-### Import ###
+## Import
 
 Use `t3d.js` or `t3d.min.js` in your page:
 
@@ -28,7 +27,7 @@ or import as es6 module:
 import * as t3d from 't3d.module.js';
 ````
 
-### npm ###
+## Npm
 
 t3d is published on npm. To install, use:
 
@@ -54,7 +53,7 @@ After v0.1.2, the js files in `examples/jsm` can be imported like this:
 import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
 ````
 
-### CDN ###
+## CDN
 
 * https://unpkg.com/t3d@latest/build/t3d.min.js
 * https://unpkg.com/t3d@latest/build/t3d.module.js
@@ -62,7 +61,7 @@ import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
 * https://cdn.jsdelivr.net/npm/t3d@latest/build/t3d.min.js
 * https://cdn.jsdelivr.net/npm/t3d@latest/build/t3d.module.min.js
 
-### Usage ###
+## Usage
 
 Draw a simple cube:
 
@@ -120,7 +119,7 @@ function loop(count) {
 requestAnimationFrame(loop);
 ````
 
-### Extensions ###
+## Extensions
 
 * [t3d-effect-composer](https://github.com/uinosoft/t3d-effect-composer) - Post Effects extension for t3d.js.
 * [t3d-particle](https://github.com/uinosoft/t3d-particle) - This is a particle system developed based on t3d.js.
@@ -128,17 +127,9 @@ requestAnimationFrame(loop);
 * [t3d-3dtiles](https://github.com/uinosoft/t3d-3dtiles) - A 3dtile extension based on t3d.js.
 * [t3d-dynamic-sky](https://github.com/uinosoft/t3d-dynamic-sky) - Dynamic sky addon for t3d.
 
-### Build ###
+## Contribution
 
-Use npm to build:
-
-````
-npm install
-````
-
-````
-npm run build
-````
+Please make sure to read the [Contributing Guide](./.github/contributing.md) before making a pull request.
 
 [npm]: https://img.shields.io/npm/v/t3d
 [npm-url]: https://www.npmjs.com/package/t3d
