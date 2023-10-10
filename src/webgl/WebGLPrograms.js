@@ -221,14 +221,6 @@ function getEncodingComponents(encoding) {
 			return ['Linear', '(value)'];
 		case TEXEL_ENCODING_TYPE.SRGB:
 			return ['sRGB', '(value)'];
-		case TEXEL_ENCODING_TYPE.RGBE:
-			return ['RGBE', '(value)'];
-		case TEXEL_ENCODING_TYPE.RGBM7:
-			return ['RGBM', '(value, 7.0)'];
-		case TEXEL_ENCODING_TYPE.RGBM16:
-			return ['RGBM', '(value, 16.0)'];
-		case TEXEL_ENCODING_TYPE.RGBD:
-			return ['RGBD', '(value, 256.0)'];
 		case TEXEL_ENCODING_TYPE.GAMMA:
 			return ['Gamma', '(value, float(GAMMA_FACTOR))'];
 		default:

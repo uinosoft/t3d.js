@@ -295,10 +295,6 @@ export { SHADOW_TYPE };
 const TEXEL_ENCODING_TYPE = {
 	LINEAR: 'linear',
 	SRGB: 'sRGB',
-	RGBE: 'RGBE',
-	RGBM7: 'RGBM7',
-	RGBM16: 'RGBM16',
-	RGBD: 'RGBD',
 	GAMMA: 'Gamma'
 };
 
