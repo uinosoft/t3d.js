@@ -1,9 +1,4 @@
 #ifdef USE_EMISSIVEMAP
-
-	vec4 emissiveColor = texture2D(emissiveMap, vEmissiveMapUV);
-
-	emissiveColor.rgb = emissiveMapTexelToLinear( emissiveColor ).rgb;
-
+	vec4 emissiveColor = emissiveMapTexelToLinear(texture2D(emissiveMap, vEmissiveMapUV));
 	totalEmissiveRadiance *= emissiveColor.rgb;
-
 #endif

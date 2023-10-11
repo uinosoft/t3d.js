@@ -1,4 +1,4 @@
-// Use V from light_frag
+// Use V, roughness from light_frag
 // Use N from normal_frag
 
 #ifdef USE_AOMAP

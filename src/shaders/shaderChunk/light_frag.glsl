@@ -184,11 +184,7 @@
         #pragma unroll_loop_end
     #endif
 
-    vec3 iblIrradiance = vec3(0., 0., 0.);
-    vec3 indirectIrradiance = vec3(0., 0., 0.);
-    vec3 indirectRadiance = vec3(0., 0., 0.);
-
-    vec3 clearcoatRadiance = vec3(0., 0., 0.);
+    vec3 indirectIrradiance = vec3(0., 0., 0.);   
 
     #ifdef USE_AMBIENT_LIGHT
         indirectIrradiance += u_AmbientLightColor * PI;
@@ -214,6 +210,10 @@
     #endif
 
     // TODO light map
+
+    vec3 iblIrradiance = vec3(0., 0., 0.);
+    vec3 indirectRadiance = vec3(0., 0., 0.);
+    vec3 clearcoatRadiance = vec3(0., 0., 0.);
 
     #if defined(USE_ENV_MAP) && defined(USE_PBR)
         vec3 envDir;
