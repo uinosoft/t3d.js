@@ -345,19 +345,18 @@ KTX2Loader.BasisWorker = function() {
 
 			for (let layer = 0; layer < layers; layer++) {
 				const levelInfo = ktx2File.getImageLevelInfo(mip, layer, 0);
-				mipWidth = levelInfo.origWidth < 4 ? levelInfo.origWidth : levelInfo.width;
-				mipHeight = levelInfo.origHeight < 4 ? levelInfo.origHeight : levelInfo.height;
+
+				// refer to: github.com/mrdoob/three.js/issues/25908
+				if (levels > 1) {
+					mipWidth = levelInfo.origWidth;
+					mipHeight = levelInfo.origHeight;
+				} else {
+					mipWidth = levelInfo.width;
+					mipHeight = levelInfo.height;
+				}
+
 				const dst = new Uint8Array(ktx2File.getImageTranscodedSizeInBytes(mip, layer, 0, transcoderFormat));
-				const status = ktx2File.transcodeImage(
-					dst,
-					mip,
-					layer,
-					0,
-					transcoderFormat,
-					0,
-					-1,
-					-1
-				);
+				const status = ktx2File.transcodeImage(dst, mip, layer, 0, transcoderFormat, 0, -1, -1);
 
 				if (!status) {
 					cleanup();
