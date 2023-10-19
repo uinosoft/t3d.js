@@ -84,38 +84,39 @@
 			const sphere = new t3d.Mesh(sphere_geometry, pbr_mat);
 			scene.add(sphere);
 
-			let cube_texture = new TextureCubeLoader().load(
+			const cubeTexturePath = './resources/skybox/pisa/';
+			let cubeTexture = new TextureCubeLoader().load(
 				[
-					'resources/skybox/pisa/px.png',
-					'resources/skybox/pisa/nx.png',
-					'resources/skybox/pisa/py.png',
-					'resources/skybox/pisa/ny.png',
-					'resources/skybox/pisa/pz.png',
-					'resources/skybox/pisa/nz.png'
+					cubeTexturePath + 'px.png',
+					cubeTexturePath + 'nx.png',
+					cubeTexturePath + 'py.png',
+					cubeTexturePath + 'ny.png',
+					cubeTexturePath + 'pz.png',
+					cubeTexturePath + 'nz.png'
 				],
 				function() {
 					const sphericalHarmonicsLight = new t3d.SphericalHarmonicsLight();
 					scene.add(sphericalHarmonicsLight);
 			
-					cube_texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-					// SHGenerator.fromCubeTexture(forwardRenderer, cube_texture, sphericalHarmonicsLight.sh);
+					cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+					// SHGenerator.fromCubeTexture(forwardRenderer, cubeTexture, sphericalHarmonicsLight.sh);
 					sphericalHarmonicsLight.sh.fromArray(shData);
 			
-					cube_texture = PMREM.prefilterEnvironmentMap(
+					cubeTexture = PMREM.prefilterEnvironmentMap(
 						forwardRenderer,
-						cube_texture,
+						cubeTexture,
 						{
-							width: cube_texture.images[0].width,
-							height: cube_texture.images[0].height,
+							width: cubeTexture.images[0].width,
+							height: cubeTexture.images[0].height,
 							sampleSize: 128
 						}
 					);
 
-					const sky_box = new SkyBox(cube_texture);
-					sky_box.material.defines.GAMMA = true;
-					scene.add(sky_box);
+					const skyBox = new SkyBox(cubeTexture);
+					skyBox.gamma = true;
+					scene.add(skyBox);
 
-					scene.environment = cube_texture;
+					scene.environment = cubeTexture;
 					scene.environmentLightIntensity = 0;
 
 					const gui = new GUI();

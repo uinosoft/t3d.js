@@ -147,13 +147,14 @@
 
 		const deferredRenderer = new DeferredRenderer(canvas);
 
+		const cubeTexturePath = './resources/skybox/Bridge2/';
 		let cubeTexture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		], function() {
 			cubeTexture = PMREM.prefilterEnvironmentMap(deferredRenderer, cubeTexture, {
 				sampleSize: 1024

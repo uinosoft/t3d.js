@@ -69,9 +69,9 @@
 				sampleSize: 1024
 			});
 		
-			const sky_box = new SkyBox(texture);
-			sky_box.gamma = true;
-			scene.add(sky_box);
+			const skyBox = new SkyBox(texture);
+			skyBox.gamma = true;
+			scene.add(skyBox);
 
 			const stepSize = 1.0 / 6;
 			const colors = [[1, 1, 1], [0.6, 0.44, 0.01]];
@@ -96,7 +96,7 @@
 
 			const gui = new GUI();
 			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
-			gui.add(sky_box, 'level', 0, 8, 1);
+			gui.add(skyBox, 'level', 0, 8, 1);
 			gui.add(camera, 'gammaFactor', 0, 3, 0.01);
 		});
 

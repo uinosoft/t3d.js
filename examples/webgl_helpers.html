@@ -59,18 +59,18 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
-
-		const file = 'resources/models/gltf/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf';
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -85,9 +85,11 @@
 		});
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/NormalTangentMirrorTest/glTF/NormalTangentMirrorTest.gltf'
+		).then(function(result) {
 			root = result.root;
-			root.children[0].material.envMap = cube_texture;
+			root.children[0].material.envMap = cubeTexture;
 
 			root.scale.set(20, 20, 20);
 			root.position.set(-20, 0, 0);

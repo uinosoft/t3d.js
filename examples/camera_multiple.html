@@ -74,15 +74,16 @@
 
 		const sceneMini = new t3d.Scene();
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/right.jpg',
-			'resources/skybox/left.jpg',
-			'resources/skybox/up.jpg',
-			'resources/skybox/down.jpg',
-			'resources/skybox/back.jpg',
-			'resources/skybox/front.jpg'
+		const cubeTexturePath = './resources/skybox/sunset/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
-		const sky_box = new SkyBox(cube_texture);
+		const skyBox = new SkyBox(cubeTexture);
 
 		// add the same thing
 		sceneMini.add(sphere.clone());
@@ -94,7 +95,7 @@
 		cameraMini.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		cameraMini.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
 		cameraMini.rect.set(0, 0, 0.25, 0.25);
-		cameraMini.add(sky_box);
+		cameraMini.add(skyBox);
 		sceneMini.add(cameraMini);
 
 		forwardRenderer.autoClear = false;

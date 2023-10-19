@@ -50,7 +50,7 @@
 
 		const scene = new t3d.Scene();
 
-		const ambientLight = new t3d.AmbientLight(0x222222);
+		const ambientLight = new t3d.AmbientLight(0x666666);
 		scene.add(ambientLight);
 
 		const directLight = new t3d.DirectionalLight(0xffffff, 1);
@@ -77,22 +77,26 @@
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
 		scene.add(camera);
 
-		let cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		let cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		], function() {
-			cube_texture = PMREM.prefilterEnvironmentMap(forwardRenderer, cube_texture, {
-				width: cube_texture.images[0].width,
-				height: cube_texture.images[0].height,
+			cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+			cubeTexture = PMREM.prefilterEnvironmentMap(forwardRenderer, cubeTexture, {
+				width: cubeTexture.images[0].width,
+				height: cubeTexture.images[0].height,
 				sampleSize: 128
 			});
 		
-			const sky_box = new SkyBox(cube_texture);
-			scene.add(sky_box);
+			const skyBox = new SkyBox(cubeTexture);
+			skyBox.gamma = true;
+			scene.add(skyBox);
 
 			const cubeWidth = 400;
 			const numberOfSphersPerSide = 5;
@@ -110,7 +114,7 @@
 						pbr_mat.diffuse.setHSL(alpha, 0.5, gamma * 0.5);
 						pbr_mat.metalness = beta;
 						pbr_mat.roughness = 1.0 - alpha;
-						pbr_mat.envMap = index % 2 === 0 ? null : cube_texture;
+						pbr_mat.envMap = index % 2 === 0 ? null : cubeTexture;
 
 						index++;
 
@@ -126,7 +130,7 @@
 
 			const gui = new GUI();
 			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
-			gui.add(sky_box, 'level', 0, 8, 1);
+			gui.add(skyBox, 'level', 0, 8, 1);
 		});
 		
 		// add a hover controller

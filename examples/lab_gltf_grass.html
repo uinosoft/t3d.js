@@ -122,24 +122,25 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		const file = 'resources/models/gltf/grass/grass.gltf';
-
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/skyboxsun25deg/px.jpg',
-			'resources/skybox/skyboxsun25deg/nx.jpg',
-			'resources/skybox/skyboxsun25deg/py.jpg',
-			'resources/skybox/skyboxsun25deg/ny.jpg',
-			'resources/skybox/skyboxsun25deg/pz.jpg',
-			'resources/skybox/skyboxsun25deg/nz.jpg'
+		const cubeTexturePath = './resources/skybox/skyboxsun25deg/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
 
 		window.scene = scene;
 
-		const sky_box = new SkyBox(cube_texture);
-		sky_box.level = 0;
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.level = 0;
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
 		const textureLoader = new Texture2DLoader();
 		const noiseTexture = textureLoader.load('./resources/grass/noise.png');
@@ -186,7 +187,9 @@
 		loader.autoLogError = false;
 
 		console.time('GLTFLoader');
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/grass/grass.gltf'
+		).then(function(result) {
 			console.timeEnd('GLTFLoader');
 
 			const object = result.root;

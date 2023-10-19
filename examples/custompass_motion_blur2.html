@@ -50,16 +50,17 @@
 
 			const scene = new t3d.Scene();
 
-			const cube_texture = new TextureCubeLoader().load([
-				'resources/skybox/Park2/posx.jpg',
-				'resources/skybox/Park2/negx.jpg',
-				'resources/skybox/Park2/posy.jpg',
-				'resources/skybox/Park2/negy.jpg',
-				'resources/skybox/Park2/posz.jpg',
-				'resources/skybox/Park2/negz.jpg'
+			const cubeTexturePath = './resources/skybox/Park2/';
+			const cubeTexture = new TextureCubeLoader().load([
+				cubeTexturePath + 'posx.jpg',
+				cubeTexturePath + 'negx.jpg',
+				cubeTexturePath + 'posy.jpg',
+				cubeTexturePath + 'negy.jpg',
+				cubeTexturePath + 'posz.jpg',
+				cubeTexturePath + 'negz.jpg'
 			]);
-			const sky_box = new SkyBox(cube_texture);
-			scene.add(sky_box);
+			const skyBox = new SkyBox(cubeTexture);
+			scene.add(skyBox);
 
 			const camera = new t3d.Camera();
 			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
@@ -89,12 +90,12 @@
 			const grid = new GridHelper(50, 20, 0xffffff, 0xffffff);
 			scene.add(grid);
 
-			const file = './resources/models/gltf/UinoMan/glTF/UinoMan.gltf';
-
 			let animation, object;
 
 			const loader = new GLTFLoader();
-			loader.load(file).then(function(result) {
+			loader.load(
+				'./resources/models/gltf/UinoMan/glTF/UinoMan.gltf'
+			).then(function(result) {
 				object = result.root.children[0];
 
 				animation = new t3d.AnimationMixer();

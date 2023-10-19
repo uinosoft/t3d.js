@@ -32,7 +32,6 @@
 		import * as t3d from 't3d';
 		import { Clock } from 't3d/addons/Clock.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
-		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -53,20 +52,9 @@
 		const forwardRenderer = new ForwardRenderer(canvas);
 		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
-		]);
-
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(undefined, 10, 100);
 		scene.fog.color.setRGB(0.6, 0.7, 0.8);
-		scene.environmentLightIntensity = 0.8;
-		scene.environment = cube_texture;
 
 		let mixer, crossFadeUpdateFunction = null;
 		const params = { timeScale: 1 }, actionMap = {}, controls = [];
@@ -110,15 +98,13 @@
 			}
 		});
 
-		const file = 'resources/models/gltf/Soldier.glb';
 		const loader = new GLTFLoader(loadingManager);
-		loader.load(file).then(function(result) {
+		loader.load('./resources/models/gltf/Soldier.glb').then(function(result) {
 			const object = result.root;
 
 			object.traverse(function(node) {
-				if (node.material) {
+				if (node.isMesh) {
 					node.castShadow = true;
-					// node.receiveShadow = true;
 					node.frustumCulled = false;
 				}
 			});
@@ -220,17 +206,19 @@
 		const plane_material = new t3d.PBRMaterial();
 		plane_material.roughness = 1;
 		plane_material.diffuse.setHex(0x888888);
+		plane_material.dithering = true;
 		const plane = new t3d.Mesh(plane_geometry, plane_material);
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		const ambientLight = new t3d.AmbientLight(undefined, 0.5);
+		ambientLight.color.setRGB(0.6, 0.7, 0.8);
 		scene.add(ambientLight);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
 		directionalLight.position.set(-4, 5, 4);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		directionalLight.shadow.windowSize = 8;
+		directionalLight.shadow.windowSize = 3;
 		directionalLight.shadow.cameraNear = 2;
 		directionalLight.shadow.cameraFar = 20;
 		directionalLight.castShadow = true;
@@ -240,7 +228,7 @@
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(0, 2, 3);
 		camera.lookAt(new t3d.Vector3(0, 1, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
@@ -292,7 +280,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
 
 			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
 

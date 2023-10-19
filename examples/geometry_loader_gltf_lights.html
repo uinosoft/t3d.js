@@ -45,19 +45,19 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		const file = 'resources/models/gltf/GlamVelvetSofa/glTF-Binary/GlamVelvetSofa.glb';
-
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
-		scene.environment = cube_texture;
+		scene.environment = cubeTexture;
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -72,7 +72,9 @@
 		});
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/GlamVelvetSofa/glTF-Binary/GlamVelvetSofa.glb'
+		).then(function(result) {
 			scene.add(result.root);
 		}).catch(e => console.error(e));
 

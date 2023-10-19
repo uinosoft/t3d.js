@@ -47,23 +47,24 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
-		scene.environment = cube_texture;
+		scene.environment = cubeTexture;
 
-		const sky_box = new SkyBox(cube_texture);
-		sky_box.level = 0;
-		scene.add(sky_box);
-
-		const file = 'resources/models/gltf/UinoMan/glTF/UinoMan.gltf';
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.level = 0;
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
 		let animation;
 
@@ -80,7 +81,9 @@
 		});
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/UinoMan/glTF/UinoMan.gltf'
+		).then(function(result) {
 			const object = result.root;
 
 			object.traverse(function(node) {
@@ -112,7 +115,7 @@
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
 		scene.add(ambientLight);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);

@@ -79,8 +79,7 @@
 		capabilities.getExtension('OES_texture_float_linear');
 		capabilities.getExtension('EXT_color_buffer_half_float');
 
-		const file = './resources/hdr/memorial.hdr';
-		loader.load(file, function(textureData) {
+		loader.load('./resources/hdr/memorial.hdr', function(textureData) {
 			const texture = new t3d.Texture2D();
 			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
 			texture.version++;

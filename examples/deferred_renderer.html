@@ -46,10 +46,10 @@
 
 		const scene = new t3d.Scene();
 
-		const file = 'resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf';
-
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf'
+		).then(function(result) {
 			// add mesh to scene
 			const object = result.root.children[0];
 
@@ -122,13 +122,14 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		const deferredRenderer = new DeferredRenderer(canvas);
+		const cubeTexturePath = './resources/skybox/Bridge2/';
 		deferredRenderer.ambientCubemap = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
 		deferredRenderer.ambientCubemapIntensity = 1;
 

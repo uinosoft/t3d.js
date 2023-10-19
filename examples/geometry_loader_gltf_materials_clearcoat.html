@@ -45,23 +45,24 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
-		const file = 'resources/models/gltf/ClearCoatTest.glb';
-
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
-		scene.environment = cube_texture;
+		scene.environment = cubeTexture;
 
-		const sky_box = new SkyBox(cube_texture);
-		sky_box.level = 0;
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.level = 0;
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -79,14 +80,16 @@
 		loader.autoLogError = false;
 		
 		console.time('GLTFLoader');
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/ClearCoatTest.glb'
+		).then(function(result) {
 			console.timeEnd('GLTFLoader');
 
 			const object = result.root;
 			scene.add(object);
 		}).catch(e => console.error(e));
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
 		scene.add(ambientLight);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);

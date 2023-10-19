@@ -51,16 +51,17 @@
 
 		const scene = new t3d.Scene();
 
-		const cube_texture = new TextureCubeLoader().load([
-			'./resources/skybox/right.jpg',
-			'./resources/skybox/left.jpg',
-			'./resources/skybox/up.jpg',
-			'./resources/skybox/down.jpg',
-			'./resources/skybox/back.jpg',
-			'./resources/skybox/front.jpg'
+		const cubeTexturePath = './resources/skybox/sunset/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		scene.add(skyBox);
 
 		// small ball
 		const ball_geometry = new t3d.SphereGeometry(2, 32, 16);

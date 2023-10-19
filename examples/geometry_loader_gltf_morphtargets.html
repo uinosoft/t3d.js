@@ -77,12 +77,12 @@
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(0xffffff, 1, 5000);
 
-		const file = 'resources/models/gltf/Flamingo.glb';
-
 		let animation;
 
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/Flamingo.glb'
+		).then(function(result) {
 			// add mesh to scene
 			const object = result.root.children[0];
 			object.castShadow = true;

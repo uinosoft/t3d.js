@@ -72,12 +72,12 @@
 		cube.receiveShadow = true;
 		scene.add(cube);
 
-		const file = 'resources/models/gltf/CesiumMan/glTF-Binary/CesiumMan.glb';
-
 		let animation, object;
 
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/CesiumMan/glTF-Binary/CesiumMan.glb'
+		).then(function(result) {
 			// add mesh to scene
 			object = result.root.children[0];
 			object.children[1].castShadow = true;
@@ -108,18 +108,19 @@
 		directionalLight.castShadow = true;
 		scene.add(directionalLight);
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/right.jpg',
-			'resources/skybox/left.jpg',
-			'resources/skybox/up.jpg',
-			'resources/skybox/down.jpg',
-			'resources/skybox/back.jpg',
-			'resources/skybox/front.jpg'
+		const cubeTexturePath = './resources/skybox/sunset/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		], function() {
 			sceneChange = true;
 		});
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		scene.add(skyBox);
 
 		const camera = new t3d.Camera();
 		camera.position.set(50, 20, 40);

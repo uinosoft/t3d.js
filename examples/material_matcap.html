@@ -67,10 +67,11 @@
 			}
 		});
 
-		const file = 'resources/models/gltf/LeePerrySmith/LeePerrySmith.glb';
 		const loader = new GLTFLoader(loadingManager);
 		let root;
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/LeePerrySmith/LeePerrySmith.glb'
+		).then(function(result) {
 			// add mesh to scene
 			root = result.root;
 

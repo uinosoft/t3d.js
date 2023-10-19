@@ -43,21 +43,26 @@
 
 		const anaglyphRenderer = new AnaglyphRenderer(canvas);
 		anaglyphRenderer.shadowAutoUpdate = false;
+		anaglyphRenderer._renderTargetL.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		anaglyphRenderer._renderTargetR.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/pisa/px.png',
-			'resources/skybox/pisa/nx.png',
-			'resources/skybox/pisa/py.png',
-			'resources/skybox/pisa/ny.png',
-			'resources/skybox/pisa/pz.png',
-			'resources/skybox/pisa/nz.png'
+		const cubeTexturePath = './resources/skybox/pisa/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.png',
+			cubeTexturePath + 'nx.png',
+			cubeTexturePath + 'py.png',
+			cubeTexturePath + 'ny.png',
+			cubeTexturePath + 'pz.png',
+			cubeTexturePath + 'nz.png'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
-		scene.environment = cube_texture;
+		scene.environment = cubeTexture;
 
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
 		const spheres = [];
 

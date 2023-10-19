@@ -40,12 +40,11 @@
 		document.body.appendChild(canvas);
 
 		const scene = new t3d.Scene();
-		console.log(scene);
-
-		const file = 'resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf';
 
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf'
+		).then(function(result) {
 			// add mesh to scene
 			const object = result.root.children[0];
 

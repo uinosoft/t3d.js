@@ -30,7 +30,6 @@
     <script type="module">
         import * as t3d from 't3d';
         import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
-        import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
         import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
         import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
         import { Octree } from 't3d/addons/math/Octree.js';
@@ -49,31 +48,14 @@
         document.body.appendChild(canvas);
 
         const forwardRenderer = new ForwardRenderer(canvas);
-        forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
-
-        // const file = "resources/models/gltf/school/school.gltf";
-        const file = './resources/models/gltf/bust_of_woman/glTF/bust_of_woman.gltf';
-
-        const cube_texture = new TextureCubeLoader().load([
-        	'resources/skybox/Bridge2/posx.jpg',
-        	'resources/skybox/Bridge2/negx.jpg',
-        	'resources/skybox/Bridge2/posy.jpg',
-        	'resources/skybox/Bridge2/negy.jpg',
-        	'resources/skybox/Bridge2/posz.jpg',
-        	'resources/skybox/Bridge2/negz.jpg'
-        ]);
 
         const scene = new t3d.Scene();
-        scene.environment = cube_texture;
 
-        scene.fog = new t3d.Fog(undefined, 10, 500);
-        scene.fog.color.setRGB(0.6, 0.7, 0.8);
-        scene.environmentLightIntensity = 0.8;
-
-        const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+        const ambientLight = new t3d.AmbientLight(undefined, 0.4);
+        ambientLight.color.setRGB(0.6, 0.7, 0.8);
         scene.add(ambientLight);
 
-        const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+        const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(-10, 10, 10);
         directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
         scene.add(directionalLight);
@@ -101,7 +83,9 @@
         loader.autoLogError = false;
 
         console.time('GLTFLoader');
-        loader.load(file).then(function(result) {
+        loader.load(
+        	'./resources/models/gltf/bust_of_woman/glTF/bust_of_woman.gltf'
+        ).then(function(result) {
         	console.timeEnd('GLTFLoader');
 
         	const object = result.root;

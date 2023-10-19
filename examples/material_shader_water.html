@@ -56,16 +56,17 @@
 		scene.fog = fogExp2;
 
 		// skybox
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		scene.add(skyBox);
 
 		const camera = new t3d.Camera();
 		camera.position.set(0, 150, 350);
@@ -85,7 +86,7 @@
 		const waterMaterial = new t3d.ShaderMaterial(WaterShader);
 		waterMaterial.transparent = true;
 		const uniforms = waterMaterial.uniforms;
-		uniforms.envMap = cube_texture;
+		uniforms.envMap = cubeTexture;
 		uniforms.normalMap = texture;
 		const waterGeometry = new t3d.PlaneGeometry(3000, 3000);
 		const uvArray = waterGeometry.getAttribute('a_Uv').buffer.array;

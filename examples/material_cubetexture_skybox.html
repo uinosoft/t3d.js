@@ -43,16 +43,17 @@
 
 		const scene = new t3d.Scene();
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/right.jpg',
-			'resources/skybox/left.jpg',
-			'resources/skybox/up.jpg',
-			'resources/skybox/down.jpg',
-			'resources/skybox/back.jpg',
-			'resources/skybox/front.jpg'
+		const cubeTexturePath = './resources/skybox/sunset/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		scene.add(skyBox);
 
 		const camera = new t3d.Camera();
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
@@ -60,7 +61,7 @@
 		
 		const gui = new GUI();
 		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
-		gui.add(sky_box, 'level', 0, 8, 1);
+		gui.add(skyBox, 'level', 0, 8, 1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);

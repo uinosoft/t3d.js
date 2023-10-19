@@ -50,19 +50,23 @@
 
 		const texture = textureLoader.load('./resources/hardwood2_diffuse.jpg');
 		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
+		texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const ao_texture = textureLoader.load('./resources/ao.png');
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/right.jpg',
-			'resources/skybox/left.jpg',
-			'resources/skybox/up.jpg',
-			'resources/skybox/down.jpg',
-			'resources/skybox/back.jpg',
-			'resources/skybox/front.jpg'
+		const cubeTexturePath = './resources/skybox/sunset/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
 		const baisc = new t3d.BasicMaterial();
 		baisc.diffuse.setHex(0xffffff);
@@ -89,7 +93,7 @@
 				let material = materials[i];
 				if (j > 0) {
 					material = material.clone();
-					material.envMap = cube_texture;
+					material.envMap = cubeTexture;
 					material.envMapIntensity = i < 6 ? 0.5 : 1;
 				}
 				const sphere = new t3d.Mesh(sphere_geometry, material);
@@ -107,6 +111,7 @@
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(0, 60, 120);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);

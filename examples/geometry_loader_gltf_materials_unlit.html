@@ -45,12 +45,12 @@
 
 		const scene = new t3d.Scene();
 
-		const file = 'resources/models/gltf/BotSkinned/glTF-MaterialsUnlit/Bot_Skinned.gltf';
-
 		let animation;
 
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/BotSkinned/glTF-MaterialsUnlit/Bot_Skinned.gltf'
+		).then(function(result) {
 			// add mesh to scene
 			const object = result.root.children[0];
 			object.traverse(function(obj) {

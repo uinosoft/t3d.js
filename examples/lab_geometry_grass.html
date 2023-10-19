@@ -86,217 +86,220 @@
     </script>
 
     <script type="module">
-        import * as t3d from 't3d';
-        import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
-        import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
-        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-        import { SkyBox } from 't3d/addons/objects/SkyBox.js';
-        import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
-        import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
-        import Stats from './libs/stats.module.js';
+		import * as t3d from 't3d';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import Stats from './libs/stats.module.js';
 
-        let width = window.innerWidth || 2;
-        let height = window.innerHeight || 2;
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width * window.devicePixelRatio;
-        canvas.height = height * window.devicePixelRatio;
-        canvas.style.width = width + 'px';
-        canvas.style.height = height + 'px';
-        document.body.appendChild(canvas);
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
 
-        const forwardRenderer = new ForwardRenderer(canvas, { antialias: true, alpha: true });
+		const forwardRenderer = new ForwardRenderer(canvas, { antialias: true, alpha: true });
 
-        const cube_texture = new TextureCubeLoader().load([
-        	'resources/skybox/skyboxsun25deg/px.jpg',
-        	'resources/skybox/skyboxsun25deg/nx.jpg',
-        	'resources/skybox/skyboxsun25deg/py.jpg',
-        	'resources/skybox/skyboxsun25deg/ny.jpg',
-        	'resources/skybox/skyboxsun25deg/pz.jpg',
-        	'resources/skybox/skyboxsun25deg/nz.jpg'
-        ]);
+		const cubeTexturePath = './resources/skybox/skyboxsun25deg/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
-        const scene = new t3d.Scene();
+		const scene = new t3d.Scene();
 
-        const sky_box = new SkyBox(cube_texture);
-        sky_box.level = 0;
-        scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.level = 0;
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
-        const textureLoader = new Texture2DLoader();
-        const grassTexture = textureLoader.load('./resources/grass/grass.jpg');
+		const textureLoader = new Texture2DLoader();
+		const grassTexture = textureLoader.load('./resources/grass/grass.jpg');
 
-        // const cloudTexture = textureLoader.load('./resources/grass/cloud.jpg');
-        const cloudTexture = textureLoader.load('./resources/grass/grass.jpg');
-        cloudTexture.wrapS = cloudTexture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		// const cloudTexture = textureLoader.load('./resources/grass/cloud.jpg');
+		const cloudTexture = textureLoader.load('./resources/grass/grass.jpg');
+		cloudTexture.wrapS = cloudTexture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
-        // Parameters
-        const PLANE_SIZE = 30;
-        const BLADE_COUNT = 100000;
-        const BLADE_WIDTH = 0.1;
-        const BLADE_HEIGHT = 0.8;
-        const BLADE_HEIGHT_VARIATION = 0.6;
+		// Parameters
+		const PLANE_SIZE = 30;
+		const BLADE_COUNT = 100000;
+		const BLADE_WIDTH = 0.1;
+		const BLADE_HEIGHT = 0.8;
+		const BLADE_HEIGHT_VARIATION = 0.6;
 
-        const grassMaterial = new t3d.ShaderMaterial({
-        	uniforms: {
-        		time: 0.0,
-        		grassTexture: grassTexture,
-        		cloudTexture: cloudTexture
-        	},
-        	vertexShader: document.getElementById('vs').textContent,
-        	fragmentShader: document.getElementById('fs').textContent
-        });
+		const grassMaterial = new t3d.ShaderMaterial({
+			uniforms: {
+				time: 0.0,
+				grassTexture: grassTexture,
+				cloudTexture: cloudTexture
+			},
+			vertexShader: document.getElementById('vs').textContent,
+			fragmentShader: document.getElementById('fs').textContent
+		});
 
-        grassMaterial.transparent = true;
-        grassMaterial.side = 'Double';
+		grassMaterial.transparent = true;
+		grassMaterial.side = 'Double';
 
-        generateField();
+		generateField();
 
-        function generateField() {
-        	const positions = [];
-        	const uvs = [];
-        	const indices = [];
-        	const colors = [];
+		function generateField() {
+			const positions = [];
+			const uvs = [];
+			const indices = [];
+			const colors = [];
 
-        	for (let i = 0; i < BLADE_COUNT; i++) {
-        		const VERTEX_COUNT = 5;
-        		const surfaceMin = PLANE_SIZE / 2 * -1;
-        		const surfaceMax = PLANE_SIZE / 2;
-        		const radius = PLANE_SIZE / 2;
+			for (let i = 0; i < BLADE_COUNT; i++) {
+				const VERTEX_COUNT = 5;
+				const surfaceMin = PLANE_SIZE / 2 * -1;
+				const surfaceMax = PLANE_SIZE / 2;
+				const radius = PLANE_SIZE / 2;
 
-        		const r = radius * Math.sqrt(Math.random());
-        		const theta = Math.random() * 2 * Math.PI;
-        		const x = r * Math.cos(theta);
-        		const y = r * Math.sin(theta);
+				const r = radius * Math.sqrt(Math.random());
+				const theta = Math.random() * 2 * Math.PI;
+				const x = r * Math.cos(theta);
+				const y = r * Math.sin(theta);
 
-        		// blade position
-        		const pos = new t3d.Vector3(x, 0, y);
+				// blade position
+				const pos = new t3d.Vector3(x, 0, y);
 
-        		const uv = [convertRange(pos.x, surfaceMin, surfaceMax, 0, 1), convertRange(pos.z, surfaceMin, surfaceMax, 0, 1)];
+				const uv = [convertRange(pos.x, surfaceMin, surfaceMax, 0, 1), convertRange(pos.z, surfaceMin, surfaceMax, 0, 1)];
 
-        		const blade = generateBlade(pos, i * VERTEX_COUNT, uv);
-        		blade.verts.forEach(vert => {
-        			positions.push(...vert.pos);
-        			uvs.push(...vert.uv);
-        			colors.push(...vert.color);
-        		});
-        		blade.indices.forEach(index => indices.push(index));
-        	}
+				const blade = generateBlade(pos, i * VERTEX_COUNT, uv);
+				blade.verts.forEach(vert => {
+					positions.push(...vert.pos);
+					uvs.push(...vert.uv);
+					colors.push(...vert.color);
+				});
+				blade.indices.forEach(index => indices.push(index));
+			}
 
-        	const geometry = new t3d.Geometry();
+			const geometry = new t3d.Geometry();
 
-        	const position = new t3d.Attribute(new t3d.Buffer(new Float32Array(positions), 3));
-        	const uv = new t3d.Attribute(new t3d.Buffer(new Float32Array(uvs), 2));
-        	const color = new t3d.Attribute(new t3d.Buffer(new Float32Array(colors), 3));
+			const position = new t3d.Attribute(new t3d.Buffer(new Float32Array(positions), 3));
+			const uv = new t3d.Attribute(new t3d.Buffer(new Float32Array(uvs), 2));
+			const color = new t3d.Attribute(new t3d.Buffer(new Float32Array(colors), 3));
 
-        	geometry.addAttribute('a_Position', position);
-        	geometry.addAttribute('a_Uv', uv);
-        	geometry.addAttribute('a_Color', color);
+			geometry.addAttribute('a_Position', position);
+			geometry.addAttribute('a_Uv', uv);
+			geometry.addAttribute('a_Color', color);
 
-        	geometry.setIndex(indices);
-        	GeometryUtils.computeNormals(geometry);
+			geometry.setIndex(indices);
+			GeometryUtils.computeNormals(geometry);
 
-        	const mesh = new t3d.Mesh(geometry, grassMaterial);
-        	scene.add(mesh);
-        }
+			const mesh = new t3d.Mesh(geometry, grassMaterial);
+			scene.add(mesh);
+		}
 
-        function convertRange(val, oldMin, oldMax, newMin, newMax) {
-        	return (((val - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin;
-        }
+		function convertRange(val, oldMin, oldMax, newMin, newMax) {
+			return (((val - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin;
+		}
 
-        function generateBlade(center, vArrOffset, uv) {
-        	const MID_WIDTH = BLADE_WIDTH * 0.5;
-        	const TIP_OFFSET = 0.1;
-        	const height = BLADE_HEIGHT + (Math.random() * BLADE_HEIGHT_VARIATION);
+		function generateBlade(center, vArrOffset, uv) {
+			const MID_WIDTH = BLADE_WIDTH * 0.5;
+			const TIP_OFFSET = 0.1;
+			const height = BLADE_HEIGHT + (Math.random() * BLADE_HEIGHT_VARIATION);
 
-        	const yaw = Math.random() * Math.PI * 2;
-        	const yawUnitVec = new t3d.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
-        	const tipBend = Math.random() * Math.PI * 2;
-        	const tipBendUnitVec = new t3d.Vector3(Math.sin(tipBend), 0, -Math.cos(tipBend));
+			const yaw = Math.random() * Math.PI * 2;
+			const yawUnitVec = new t3d.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+			const tipBend = Math.random() * Math.PI * 2;
+			const tipBendUnitVec = new t3d.Vector3(Math.sin(tipBend), 0, -Math.cos(tipBend));
 
-        	// Find the Bottom Left, Bottom Right, Top Left, Top right, Top Center vertex positions
-        	const bl = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((BLADE_WIDTH / 2) * 1));
-        	const br = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((BLADE_WIDTH / 2) * -1));
-        	const tl = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((MID_WIDTH / 2) * 1));
-        	const tr = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((MID_WIDTH / 2) * -1));
-        	const tc = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(tipBendUnitVec).multiplyScalar(TIP_OFFSET));
+			// Find the Bottom Left, Bottom Right, Top Left, Top right, Top Center vertex positions
+			const bl = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((BLADE_WIDTH / 2) * 1));
+			const br = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((BLADE_WIDTH / 2) * -1));
+			const tl = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((MID_WIDTH / 2) * 1));
+			const tr = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(yawUnitVec).multiplyScalar((MID_WIDTH / 2) * -1));
+			const tc = new t3d.Vector3().addVectors(center, new t3d.Vector3().copy(tipBendUnitVec).multiplyScalar(TIP_OFFSET));
 
-        	tl.y += height / 2;
-        	tr.y += height / 2;
-        	tc.y += height;
+			tl.y += height / 2;
+			tr.y += height / 2;
+			tc.y += height;
 
-        	// Vertex Colors
-        	const black = [0, 0, 0];
-        	const gray = [0.5, 0, 0.5];
-        	const white = [1.0, 0, 0.0];
+			// Vertex Colors
+			const black = [0, 0, 0];
+			const gray = [0.5, 0, 0.5];
+			const white = [1.0, 0, 0.0];
 
-        	const verts = [
-        		{ pos: bl.toArray(), uv: uv, color: black },
-        		{ pos: br.toArray(), uv: uv, color: black },
-        		{ pos: tr.toArray(), uv: uv, color: gray },
-        		{ pos: tl.toArray(), uv: uv, color: gray },
-        		{ pos: tc.toArray(), uv: uv, color: white }
-        	];
+			const verts = [
+				{ pos: bl.toArray(), uv: uv, color: black },
+				{ pos: br.toArray(), uv: uv, color: black },
+				{ pos: tr.toArray(), uv: uv, color: gray },
+				{ pos: tl.toArray(), uv: uv, color: gray },
+				{ pos: tc.toArray(), uv: uv, color: white }
+			];
 
-        	const indices = [
-        		vArrOffset,
-        		vArrOffset + 1,
-        		vArrOffset + 2,
-        		vArrOffset + 2,
-        		vArrOffset + 4,
-        		vArrOffset + 3,
-        		vArrOffset + 3,
-        		vArrOffset,
-        		vArrOffset + 2
-        	];
+			const indices = [
+				vArrOffset,
+				vArrOffset + 1,
+				vArrOffset + 2,
+				vArrOffset + 2,
+				vArrOffset + 4,
+				vArrOffset + 3,
+				vArrOffset + 3,
+				vArrOffset,
+				vArrOffset + 2
+			];
 
-        	return { verts, indices };
-        }
+			return { verts, indices };
+		}
 
-        const camera = new t3d.Camera();
-        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-        camera.position.set(3.5, 1.6, 11);
-        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-        camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
-        scene.add(camera);
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(3.5, 1.6, 11);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
 
-        // stats
-        const stats = new Stats();
-        stats.showPanel(0);
-        document.body.appendChild(stats.dom);
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
 
-        const controller = new OrbitControls(camera, canvas);
-        controller.enablePan = false;
-        controller.maxDistance = 20;
-        controller.minPolarAngle = 70 / 180 * Math.PI;
-        controller.maxPolarAngle = 85 / 180 * Math.PI;
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = false;
+		controller.maxDistance = 20;
+		controller.minPolarAngle = 70 / 180 * Math.PI;
+		controller.maxPolarAngle = 85 / 180 * Math.PI;
 
-        function loop(count) {
-        	requestAnimationFrame(loop);
+		function loop(count) {
+			requestAnimationFrame(loop);
 
-        	stats.begin();
+			stats.begin();
 
-        	grassMaterial.uniforms.time = count;
+			grassMaterial.uniforms.time = count;
 
-        	controller.update();
+			controller.update();
 
-        	forwardRenderer.render(scene, camera);
-        	stats.end();
-        }
+			forwardRenderer.render(scene, camera);
+			stats.end();
+		}
 
-        requestAnimationFrame(loop);
+		requestAnimationFrame(loop);
 
-        function onWindowResize() {
-        	width = window.innerWidth || 2;
-        	height = window.innerHeight || 2;
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
 
-        	camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 
-        	forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
-        	canvas.style.width = width + 'px';
-        	canvas.style.height = height + 'px';
-        }
-        window.addEventListener('resize', onWindowResize, false);
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

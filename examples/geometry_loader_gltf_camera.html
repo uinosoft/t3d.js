@@ -44,12 +44,12 @@
 
 		const scene = new t3d.Scene();
 
-		const file = 'resources/models/gltf/Duck/glTF/Duck.gltf';
-
 		let camera, controller;
 
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/Duck/glTF/Duck.gltf'
+		).then(function(result) {
 			scene.add(result.root);
 			camera = result.cameras[0];
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);

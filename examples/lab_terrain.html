@@ -102,17 +102,18 @@
 		scene.fog = new t3d.Fog(undefined, 10, 1200);
 		scene.fog.color.setRGB(0.83, 0.78, 0.68);
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/skyboxsun25deg/px.jpg',
-			'resources/skybox/skyboxsun25deg/nx.jpg',
-			'resources/skybox/skyboxsun25deg/py.jpg',
-			'resources/skybox/skyboxsun25deg/ny.jpg',
-			'resources/skybox/skyboxsun25deg/pz.jpg',
-			'resources/skybox/skyboxsun25deg/nz.jpg'
+		const cubeTexturePath = './resources/skybox/skyboxsun25deg/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
 
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		scene.add(skyBox);
 
 		const texture2DLoader = new Texture2DLoader();
 

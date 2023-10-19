@@ -1,12 +1,14 @@
-import { Mesh, Geometry, BasicMaterial, DRAW_MODE, Attribute, Buffer } from 't3d';
+import { Mesh, Geometry, BasicMaterial, DRAW_MODE, BLEND_TYPE, Attribute, Buffer } from 't3d';
 
 class OctreeHelper extends Mesh {
 
-	constructor(color = 0xffff00) {
+	constructor(color = 0x000900) {
 		const geometry = new Geometry();
 
 		const material = new BasicMaterial();
 		material.drawMode = DRAW_MODE.LINES;
+		material.envMap = undefined;
+		material.blending = BLEND_TYPE.ADD;
 		material.diffuse.setHex(color);
 
 		super(geometry, material);

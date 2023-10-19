@@ -44,10 +44,10 @@
 
 		const scene = new t3d.Scene();
 
-		const file = 'resources/models/gltf/TextureTransformTest/glTF/TextureTransformTest.gltf';
-
 		const loader = new GLTFLoader();
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/TextureTransformTest/glTF/TextureTransformTest.gltf'
+		).then(function(result) {
 			result.root.traverse(function(obj) {
 				if (obj.isMesh) {
 					obj.frustumCulled = false;

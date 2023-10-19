@@ -59,8 +59,6 @@
 		texture.wrapT = texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
 		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 
-		const file = 'resources/models/gltf/LeePerrySmith/LeePerrySmith.glb';
-
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
 
@@ -78,7 +76,9 @@
 		const loader = new GLTFLoader(loadingManager);
 		let root;
 		const materials = [];
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/LeePerrySmith/LeePerrySmith.glb'
+		).then(function(result) {
 			root = result.root;
 
 			root.traverse(node => {

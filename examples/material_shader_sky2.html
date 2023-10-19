@@ -52,8 +52,8 @@
         camera.position.set(-10, 0, 0);
         scene.add(camera);
 
-        const sky_box = new SkyBox(forwardRenderer.texture);
-        scene.add(sky_box);
+        const skyBox = new SkyBox(forwardRenderer.texture);
+        scene.add(skyBox);
 
         const controller = new OrbitControls(camera, canvas);
 
@@ -64,7 +64,7 @@
 
         const skyPass = new t3d.ShaderPostPass(SkyShader);
 
-        sky_box.texture = tempRenderTarget.texture;
+        skyBox.texture = tempRenderTarget.texture;
 
         const params = { sunHorizontal: 0, sunVertical: 10 };
 

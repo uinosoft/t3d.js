@@ -51,20 +51,21 @@
 		const forwardRenderer = new ForwardRenderer(canvas);
 		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/Bridge2/posx.jpg',
-			'resources/skybox/Bridge2/negx.jpg',
-			'resources/skybox/Bridge2/posy.jpg',
-			'resources/skybox/Bridge2/negy.jpg',
-			'resources/skybox/Bridge2/posz.jpg',
-			'resources/skybox/Bridge2/negz.jpg'
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
 		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(undefined, 10, 100);
 		scene.fog.color.setRGB(0.6, 0.7, 0.8);
-		scene.environmentLightIntensity = 0.8;
-		scene.environment = cube_texture;
+		scene.environment = cubeTexture;
 
 		// fix depth material for instancing
 
@@ -165,8 +166,6 @@
 		const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(matrices), 16));
 		instanceMatrixAttribute.divisor = 1;
 
-		const file = 'resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb';
-
 		let mixer;
 
 		function getMatrixFromRoot(node, root, target) {
@@ -214,7 +213,9 @@
 		});
 
 		const loader = new GLTFLoader(loadingManager);
-		loader.load(file).then(function(result) {
+		loader.load(
+			'./resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb'
+		).then(function(result) {
 			const object = result.root;
 
 			const offsetMatrix = new t3d.Matrix4();
@@ -265,7 +266,7 @@
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
 		scene.add(ambientLight);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);

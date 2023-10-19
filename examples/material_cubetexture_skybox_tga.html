@@ -43,15 +43,16 @@
 
 		const scene = new t3d.Scene();
 
+		const cubeTexturePath = './resources/skybox/mp_cloud9/';
 		const imageUrls = [
-			'resources/skybox/mp_cloud9/cloud9_rt.tga',
-			'resources/skybox/mp_cloud9/cloud9_lf.tga',
-			'resources/skybox/mp_cloud9/cloud9_up.tga',
-			'resources/skybox/mp_cloud9/cloud9_dn.tga',
-			'resources/skybox/mp_cloud9/cloud9_bk.tga',
-			'resources/skybox/mp_cloud9/cloud9_ft.tga'
+			cubeTexturePath + 'cloud9_rt.tga',
+			cubeTexturePath + 'cloud9_lf.tga',
+			cubeTexturePath + 'cloud9_up.tga',
+			cubeTexturePath + 'cloud9_dn.tga',
+			cubeTexturePath + 'cloud9_bk.tga',
+			cubeTexturePath + 'cloud9_ft.tga'
 		];
-		const cube_texture = new t3d.TextureCube();
+		const cubeTexture = new t3d.TextureCube();
 		const tgaLoader = new TGALoader();
 		
 		const promiseArray = [];
@@ -60,7 +61,7 @@
 		}
 		Promise.all(promiseArray).then(function(textureDatas) {
 			for (let i = 0; i < 6; i++) {
-				cube_texture.images.push({
+				cubeTexture.images.push({
 					data: textureDatas[i].data,
 					width: textureDatas[i].width,
 					height: textureDatas[i].height
@@ -68,8 +69,8 @@
 			}
 		});
 
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		const skyBox = new SkyBox(cubeTexture);
+		scene.add(skyBox);
 
 		const camera = new t3d.Camera();
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 10000);
@@ -77,7 +78,7 @@
 		
 		const gui = new GUI();
 		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
-		gui.add(sky_box, 'level', 0, 8, 1);
+		gui.add(skyBox, 'level', 0, 8, 1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);

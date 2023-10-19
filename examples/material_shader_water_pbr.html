@@ -90,18 +90,22 @@
 		const spherical = new t3d.Spherical();
 		updateSpherePosition();
 
-		const cube_texture = new TextureCubeLoader().load([
-			'resources/skybox/skyboxsun25deg/px.jpg',
-			'resources/skybox/skyboxsun25deg/nx.jpg',
-			'resources/skybox/skyboxsun25deg/py.jpg',
-			'resources/skybox/skyboxsun25deg/ny.jpg',
-			'resources/skybox/skyboxsun25deg/pz.jpg',
-			'resources/skybox/skyboxsun25deg/nz.jpg'
+		const cubeTexturePath = './resources/skybox/skyboxsun25deg/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
 		]);
-		const sky_box = new SkyBox(cube_texture);
-		scene.add(sky_box);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.gamma = true;
+		scene.add(skyBox);
 
-		scene.environment = cube_texture;
+		scene.environment = cubeTexture;
 		scene.environmentLightIntensity = 1;
 
 		const camera = new t3d.Camera();
