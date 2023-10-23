@@ -257,7 +257,6 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
-		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.useSphericalHarmonicsLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
 		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
 		props.useBumpMap ? '#define USE_BUMPMAP' : '',
 		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
@@ -340,7 +339,6 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
-		(props.pointLightNum > 0 || props.directLightNum > 0 || props.useAmbientLight || props.useSphericalHarmonicsLight || props.hemisphereLightNum > 0 || props.spotLightNum > 0) ? '#define USE_LIGHT' : '',
 		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
 		props.useBumpMap ? '#define USE_BUMPMAP' : '',
 		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
