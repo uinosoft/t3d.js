@@ -11,8 +11,6 @@ import normaldepth_vert from './shaderLib/normaldepth_vert.glsl';
 import pbr_frag from './shaderLib/pbr_frag.glsl';
 import pbr2_frag from './shaderLib/pbr2_frag.glsl';
 import pbr_vert from './shaderLib/pbr_vert.glsl';
-import matcap_frag from './shaderLib/matcap_frag.glsl';
-import matcap_vert from './shaderLib/matcap_vert.glsl';
 import phong_frag from './shaderLib/phong_frag.glsl';
 import phong_vert from './shaderLib/phong_vert.glsl';
 import point_frag from './shaderLib/point_frag.glsl';
@@ -33,8 +31,6 @@ export const ShaderLib = {
 	pbr_vert: pbr_vert,
 	pbr2_frag: pbr2_frag,
 	pbr2_vert: pbr_vert,
-	matcap_frag: matcap_frag,
-	matcap_vert: matcap_vert,
 	phong_frag: phong_frag,
 	phong_vert: phong_vert,
 	point_frag: point_frag,

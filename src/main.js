@@ -67,7 +67,6 @@ export { DepthMaterial } from './resources/materials/DepthMaterial.js';
 export { DistanceMaterial } from './resources/materials/DistanceMaterial.js';
 export { LambertMaterial } from './resources/materials/LambertMaterial.js';
 export { LineMaterial } from './resources/materials/LineMaterial.js';
-export { MatcapMaterial } from './resources/materials/MatcapMaterial.js';
 export { Material } from './resources/materials/Material.js';
 export { PBR2Material } from './resources/materials/PBR2Material.js';
 export { PBRMaterial } from './resources/materials/PBRMaterial.js';

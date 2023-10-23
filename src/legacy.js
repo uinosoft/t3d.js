@@ -1,7 +1,8 @@
-import { PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, COMPARE_FUNC, OPERATION } from './const.js';
+import { PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, COMPARE_FUNC, OPERATION, MATERIAL_TYPE } from './const.js';
 import { WebGLRenderer } from './webgl/WebGLRenderer.js';
 import { BoxGeometry } from './resources/geometries/BoxGeometry.js';
 import { Object3D } from './scenes/Object3D.js';
+import { BasicMaterial } from './resources/materials/BasicMaterial.js';
 
 // since 0.1.2
 export { PIXEL_FORMAT as WEBGL_PIXEL_FORMAT };
@@ -113,6 +114,19 @@ export class WebGLProperties {
 
 	size() {
 		return this._count;
+	}
+
+}
+
+// since 0.2.1, moved matcap shader to addons.
+
+MATERIAL_TYPE.MATCAP = 'matcap';
+
+export class MatcapMaterial extends BasicMaterial {
+
+	constructor() {
+		super();
+		console.warn('MatcapMaterial has been removed and fallback to BasicMaterial, use addons/shaders/MatcapShader instead.');
 	}
 
 }

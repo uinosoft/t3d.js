@@ -10,7 +10,6 @@ const MATERIAL_TYPE = {
 	PHONG: 'phong',
 	PBR: 'pbr',
 	PBR2: 'pbr2',
-	MATCAP: 'matcap',
 	POINT: 'point',
 	LINE: 'line',
 	SHADER: 'shader',

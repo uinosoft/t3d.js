@@ -50,7 +50,6 @@ const internalUniforms = {
 	'emissive': [4, function(material, textures) { const color = material.emissive; this.setValue(color.r, color.g, color.b) }],
 	'emissiveMap': [4, function(material, textures) { this.set(material.emissiveMap, textures) }],
 	'emissiveMapUVTransform': [4, function(material, textures) { this.set(material.emissiveMapTransform.elements) }],
-	'matcap': [4, function(material, textures) { this.set(material.matcap, textures) }],
 	'uvTransform': [4, function(material, textures) { this.set(material.diffuseMapTransform.elements) }],
 	'u_PointSize': [4, function(material, textures) { this.set(material.size) }],
 	'u_PointScale': [5, null],

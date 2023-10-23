@@ -32,6 +32,7 @@
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { MatcapShader } from 't3d/addons/shaders/MatcapShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -77,8 +78,8 @@
 
 			root.traverse(node => {
 				if (node.material) {
-					node.material = new t3d.MatcapMaterial();
-					node.material.matcap = matcapTextures.darkgreymetal;
+					node.material = new t3d.ShaderMaterial(MatcapShader);
+					node.material.uniforms.matcap = matcapTextures.darkgreymetal;
 				}
 			});
 
@@ -102,7 +103,7 @@
 		gui.add({ matcap: 'darkgreymetal' }, 'matcap', ['collor', 'darkgreymetal']).onChange(value => {
 			root.traverse(node => {
 				if (node.material) {
-					node.material.matcap = matcapTextures[value];
+					node.material.uniforms.matcap = matcapTextures[value];
 				}
 			});
 		});

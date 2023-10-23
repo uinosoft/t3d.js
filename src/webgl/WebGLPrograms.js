@@ -124,7 +124,6 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.useRoughnessMap = !!material.roughnessMap;
 	props.useMetalnessMap = !!material.metalnessMap;
 	props.useGlossinessMap = !!material.glossinessMap;
-	props.useMatcap = !!material.matcap;
 	props.useEnvMap = !!envMap;
 	props.envMapCombine = material.envMapCombine;
 
@@ -161,7 +160,6 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.diffuseMapEncoding = getTextureEncodingFromMap(material.diffuseMap || material.cubeMap);
 	props.envMapEncoding = getTextureEncodingFromMap(envMap);
 	props.emissiveMapEncoding = getTextureEncodingFromMap(material.emissiveMap);
-	props.matcapEncoding = getTextureEncodingFromMap(material.matcap);
 	// other
 	props.alphaTest = material.alphaTest;
 	props.premultipliedAlpha = material.premultipliedAlpha;
@@ -369,7 +367,6 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '',
 		props.useEnvMap ? '#define ' + props.envMapCombine : '',
 		'#define GAMMA_FACTOR ' + props.gammaFactor,
-		props.useMatcap ? '#define USE_MATCAP' : '',
 
 		props.useUv1 ? '#define USE_UV1' : '',
 		props.useUv2 ? '#define USE_UV2' : '',
@@ -382,7 +379,6 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding),
 		props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '',
 		props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
-		props.useMatcap ? getTexelDecodingFunction('matcapTexelToLinear', props.matcapEncoding) : '',
 		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 
 		props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '',

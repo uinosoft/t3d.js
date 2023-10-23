@@ -2075,7 +2075,6 @@ const MATERIAL_TYPE = {
 	PHONG: 'phong',
 	PBR: 'pbr',
 	PBR2: 'pbr2',
-	MATCAP: 'matcap',
 	POINT: 'point',
 	LINE: 'line',
 	SHADER: 'shader',
@@ -11394,41 +11393,6 @@ class LineMaterial extends Material {
 }
 
 /**
- * MatcapMaterial is defined by a MatCap (or Lit Sphere) texture, which encodes the material color and shading.
- * MatcapMaterial does not respond to lights since the matcap image file encodes baked lighting.
- * It will cast a shadow onto an object that receives shadows (and shadow clipping works), but it will not self-shadow or receive shadows.
- * @extends t3d.Material
- * @memberof t3d
- */
-class MatcapMaterial extends Material {
-
-	/**
-	 * Create a MatcapMaterial.
-	 */
-	constructor() {
-		super();
-
-		this.type = MATERIAL_TYPE.MATCAP;
-
-		/**
-		 * The matcap map.
-		 * @type {t3d.Texture2D}
-		 * @default null
-		 */
-		this.matcap = null;
-	}
-
-	copy(source) {
-		super.copy(source);
-
-		this.matcap = source.matcap;
-
-		return this;
-	}
-
-}
-
-/**
  * A standard physically based material, using Specular-Glossiness workflow.
  * Physically based rendering (PBR) has recently become the standard in many 3D applications, such as Unity, Unreal and 3D Studio Max.
  * This approach differs from older approaches in that instead of using approximations for the way in which light interacts with a surface, a physically correct model is used.
@@ -13839,10 +13803,6 @@ var pbr2_frag = "#define USE_PBR\n#define USE_PBR2\n#include <common_frag>\n#inc
 
 var pbr_vert = "#define USE_PBR\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
 
-var matcap_frag = "#define MATCAP\nuniform sampler2D matcap;\nvarying vec3 vViewPosition;\n#include <common_frag>\n#include <dithering_pars_frag>\n#include <uv_pars_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <alphamap_pars_frag>\n#include <normalMap_pars_frag>\n#include <modelPos_pars_frag>\n#include <bumpMap_pars_frag>\n#include <normal_pars_frag>\n#include <fog_pars_frag>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #include <logdepthbuf_frag>\n    #include <begin_frag>\n    #include <color_frag>\n    #include <diffuseMap_frag>\n    #include <alphamap_frag>\n    #include <alphaTest_frag>\n    #include <normal_frag>\n    vec3 viewDir = normalize(vViewPosition);\n\tvec3 x = normalize(vec3(viewDir.z, 0.0, -viewDir.x));\n\tvec3 y = cross(viewDir, x);\n    vec3 viewN = (u_View * vec4(N, 0.0)).xyz;\n\tvec2 uv = vec2(dot(x, viewN), dot(y, viewN)) * 0.495 + 0.5;\n    #ifdef USE_MATCAP\n\t\tvec4 matcapColor = texture2D(matcap, uv);\n\t\tmatcapColor = matcapTexelToLinear(matcapColor);\n\t#else\n\t\tvec4 matcapColor = vec4(1.0);\n\t#endif\n\toutColor.rgb *= matcapColor.rgb;\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n    #include <dithering_frag>\n}";
-
-var matcap_vert = "#define MATCAP\nvarying vec3 vViewPosition;\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <alphamap_pars_vert>\n#include <modelPos_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <alphamap_vert>\n    #include <modelPos_vert>\n    vec4 mvPosition = u_View * worldPosition;\n    vViewPosition = - mvPosition.xyz;\n}";
-
 var phong_frag = "#define USE_PHONG\n#include <common_frag>\n#include <dithering_pars_frag>\nuniform float u_Specular;\nuniform vec3 u_SpecularColor;\n#include <specularMap_pars_frag>\nuniform vec3 emissive;\n#include <uv_pars_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <alphamap_pars_frag>\n#include <normalMap_pars_frag>\n#include <bumpMap_pars_frag>\n#include <light_pars_frag>\n#include <normal_pars_frag>\n#include <modelPos_pars_frag>\n#include <bsdfs>\n#include <envMap_pars_frag>\n#include <aoMap_pars_frag>\n#include <shadowMap_pars_frag>\n#include <fog_pars_frag>\n#include <emissiveMap_pars_frag>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #include <logdepthbuf_frag>\n    #include <begin_frag>\n    #include <color_frag>\n    #include <diffuseMap_frag>\n    #include <alphamap_frag>\n    #include <alphaTest_frag>\n    #include <normal_frag>\n    #include <specularMap_frag>\n    ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));\n    #include <light_frag>\n    #include <aoMap_frag>\n    outColor.xyz = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;\n    #include <envMap_frag>\n    #include <shadowMap_frag>\n    vec3 totalEmissiveRadiance = emissive;\n    #include <emissiveMap_frag>\n    outColor.xyz += totalEmissiveRadiance;\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n    #include <dithering_frag>\n}";
 
 var phong_vert = "#define USE_PHONG\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
@@ -13866,8 +13826,6 @@ const ShaderLib = {
 	pbr_vert: pbr_vert,
 	pbr2_frag: pbr2_frag,
 	pbr2_vert: pbr_vert,
-	matcap_frag: matcap_frag,
-	matcap_vert: matcap_vert,
 	phong_frag: phong_frag,
 	phong_vert: phong_vert,
 	point_frag: point_frag,
@@ -14169,7 +14127,6 @@ const internalUniforms = {
 	'emissive': [4, function(material, textures) { const color = material.emissive; this.setValue(color.r, color.g, color.b); }],
 	'emissiveMap': [4, function(material, textures) { this.set(material.emissiveMap, textures); }],
 	'emissiveMapUVTransform': [4, function(material, textures) { this.set(material.emissiveMapTransform.elements); }],
-	'matcap': [4, function(material, textures) { this.set(material.matcap, textures); }],
 	'uvTransform': [4, function(material, textures) { this.set(material.diffuseMapTransform.elements); }],
 	'u_PointSize': [4, function(material, textures) { this.set(material.size); }],
 	'u_PointScale': [5, null],
@@ -15000,7 +14957,6 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.useRoughnessMap = !!material.roughnessMap;
 	props.useMetalnessMap = !!material.metalnessMap;
 	props.useGlossinessMap = !!material.glossinessMap;
-	props.useMatcap = !!material.matcap;
 	props.useEnvMap = !!envMap;
 	props.envMapCombine = material.envMapCombine;
 
@@ -15037,7 +14993,6 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.diffuseMapEncoding = getTextureEncodingFromMap(material.diffuseMap || material.cubeMap);
 	props.envMapEncoding = getTextureEncodingFromMap(envMap);
 	props.emissiveMapEncoding = getTextureEncodingFromMap(material.emissiveMap);
-	props.matcapEncoding = getTextureEncodingFromMap(material.matcap);
 	// other
 	props.alphaTest = material.alphaTest;
 	props.premultipliedAlpha = material.premultipliedAlpha;
@@ -15245,7 +15200,6 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '',
 		props.useEnvMap ? '#define ' + props.envMapCombine : '',
 		'#define GAMMA_FACTOR ' + props.gammaFactor,
-		props.useMatcap ? '#define USE_MATCAP' : '',
 
 		props.useUv1 ? '#define USE_UV1' : '',
 		props.useUv2 ? '#define USE_UV2' : '',
@@ -15258,7 +15212,6 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding),
 		props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '',
 		props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
-		props.useMatcap ? getTexelDecodingFunction('matcapTexelToLinear', props.matcapEncoding) : '',
 		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 
 		props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '',
@@ -18395,6 +18348,19 @@ class WebGLProperties {
 
 	size() {
 		return this._count;
+	}
+
+}
+
+// since 0.2.1, moved matcap shader to addons.
+
+MATERIAL_TYPE.MATCAP = 'matcap';
+
+class MatcapMaterial extends BasicMaterial {
+
+	constructor() {
+		super();
+		console.warn('MatcapMaterial has been removed and fallback to BasicMaterial, use addons/shaders/MatcapShader instead.');
 	}
 
 }
