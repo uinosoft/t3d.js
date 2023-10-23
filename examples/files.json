@@ -197,6 +197,7 @@
 		"lab_gltf_grass",
 		"lab_geometry_grass",
 		"lab_terrain",
-		"lab_water_simulation"
+		"lab_water_simulation",
+		"lab_path_finding"
 	]
 }

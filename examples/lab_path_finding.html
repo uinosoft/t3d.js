@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - path finding</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> - path finding |
+		Reference to <a href="https://github.com/donmccurdy/three-pathfinding" target="_blank" rel="noopener">three-pathfinding</a><br/>
+		Click Left Mouse: Set start or end point<br/>
+		Click Right Mouse: Clear path and points<br/>
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Raycaster } from 't3d/addons/Raycaster.js';
+		import { Pathfinding } from 't3d/addons/navigation/Pathfinding.js';
+		import { Zone } from 't3d/addons/navigation/Zone.js';
+		import { PathfindingHelper } from 't3d/addons/navigation/PathfindingHelper.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		
+		const SPEED = 10;
+
+		let path, zone, settedPlayerPosition = false;
+
+		const playerPosition = new t3d.Vector3();
+		const targetPosition = new t3d.Vector3();
+
+		const helper = new PathfindingHelper();
+		const mouse = new t3d.Vector2();
+		const mouseDown = new t3d.Vector2();
+		const raycaster = new Raycaster();
+
+		const scene = new t3d.Scene();
+
+		scene.add(helper);
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.901, 0.970, 0.902, 1);
+
+		const camera = new t3d.Camera();
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.position.set(-5.7, 10, -15);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		scene.add(camera);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(8, 8, 8);
+		directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 25;
+		directionalLight.shadow.mapSize.set(512, 512);
+		directionalLight.shadow.cameraNear = 0.1;
+		directionalLight.shadow.cameraFar = 50;
+		scene.add(directionalLight);
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go((itemsLoaded / itemsTotal) * 100);
+			}
+		});
+
+		const gltfLoader = new GLTFLoader(loadingManager);
+
+		gltfLoader.load('./resources/models/gltf/level.glb').then(function(gltf) {
+			const model = gltf.root.children[0];
+			model.material.diffuse.setHex(0x222222);
+			GeometryUtils.computeNormals(model.geometry);
+			model.receiveShadow = true;
+			model.castShadow = true;
+
+			scene.add(model);
+		}).catch(function(e) {
+			console.error(e);
+		});
+
+		// load navmesh
+		gltfLoader.load('./resources/models/gltf/level.nav.glb').then(function(gltf) {
+			const navMesh = gltf.root.children[0];
+			navMesh.material.diffuse.setHex(0xA9A9A9);
+			GeometryUtils.computeNormals(navMesh.geometry);
+			navMesh.receiveShadow = true;
+			navMesh.castShadow = true;
+			navMesh.isNavMesh = true;
+
+			zone = Zone.createFromGeometry(navMesh.geometry);
+
+			// debug
+
+			const wireFrameGeometry = navMesh.geometry.clone();
+			wireFrameGeometry.index = GeometryUtils.getWireframeAttribute(wireFrameGeometry);
+			wireFrameGeometry.computeBoundingBox();
+			wireFrameGeometry.computeBoundingSphere();
+
+			const basicMaterial = new t3d.BasicMaterial();
+			basicMaterial.diffuse.setHex(0x000000);
+			basicMaterial.drawMode = t3d.DRAW_MODE.LINES;
+			basicMaterial.transparent = true;
+			basicMaterial.opacity = 0.5;
+
+			const cubeEdges = new t3d.Mesh(wireFrameGeometry, basicMaterial);
+			cubeEdges.position.y = 0.05;
+			navMesh.add(cubeEdges);
+
+			scene.add(navMesh);
+		}).catch(function(e) {
+			console.error(e);
+		});
+
+		const controls = new OrbitControls(camera, canvas);
+		controls.target.set(3, 0, 0);
+
+		document.addEventListener('pointerdown', onDocumentPointerDown, false);
+		document.addEventListener('pointerup', onDocumentPointerUp, false);
+		window.addEventListener('resize', onWindowResize, false);
+
+		function onDocumentPointerDown(event) {
+			mouseDown.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouseDown.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		}
+
+		function onDocumentPointerUp(event) {
+			if (event.ctrlKey || event.metaKey || event.button === 2) {
+				path = null;
+				helper.reset();
+				settedPlayerPosition = false;
+				return;
+			}
+
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+			if (
+				Math.abs(mouseDown.x - mouse.x) > 0 ||
+				Math.abs(mouseDown.y - mouse.y) > 0
+			) {
+				return;
+			}
+
+			raycaster.setFromCamera(mouse, camera);
+
+			const intersects = raycaster.intersectObject(scene, true);
+
+			if (!intersects.length) return;
+			if (!intersects[0].object.isNavMesh) return;
+
+			targetPosition.copy(intersects[0].point);
+
+			helper.reset().setPlayerPosition(playerPosition);
+
+			if (!settedPlayerPosition) {
+				path = null;
+				settedPlayerPosition = true;
+				playerPosition.copy(targetPosition);
+				helper.setPlayerPosition(playerPosition);
+				return;
+			} else {
+				helper.setTargetPosition(targetPosition);
+
+				// Calculate a path to the target and store it
+				path = Pathfinding.findPath(playerPosition, targetPosition, zone);
+				if (path && path.length) {
+					helper.setPath(path);
+				}
+			}
+		}
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controls.update();
+
+			move();
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		function move() {
+			if (!(path || []).length) return;
+
+			const targetPosition = path[0];
+			const velocity = targetPosition.clone().sub(playerPosition);
+			if (velocity.getLengthSquared() > 0.08 * 0.08) {
+				velocity.normalize();
+				// Move player to target
+				playerPosition.add(velocity.multiplyScalar(0.016 * SPEED));
+				helper.setPlayerPosition(playerPosition);
+			} else {
+				// Remove node from the path we calculated
+				path.shift();
+			}
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+
+</html>
