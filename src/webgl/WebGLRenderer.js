@@ -20,6 +20,8 @@ const helpMatrix4 = new Matrix4();
 const influencesList = new WeakMap();
 const morphInfluences = new Float32Array(8);
 
+const compilingPrograms = new Set();
+
 let _clippingPlanesData = new Float32Array([]);
 
 function defaultGetGeometry(renderable) {
@@ -454,6 +456,97 @@ class WebGLRenderer extends ThinRenderer {
 
 		afterRender(renderable);
 		object.onAfterRender(renderable);
+	}
+
+	compileAsync(scene, renderStates, options){
+		const onlyVisible = options.onlyVisible === undefined? true : options.onlyVisible;
+		const shaderCompileOptions = options.shaderCompileOptions || this.shaderCompileOptions;
+		const sceneData = renderStates.scene;
+		const lightData = renderStates.lights;
+		const programs = this._programs;
+		const materials = this._materials;
+		const vertexArrayBindings = this._vertexArrayBindings;
+		compilingPrograms.clear();
+
+		lightData.begin();
+		scene.traverse((object) => {
+			if (onlyVisible && !object.visible) {
+				return;
+			}
+
+			if (object.isLight) {
+				lightData.push(object);
+			}
+		});
+		lightData.end(sceneData);
+
+		scene.traverse((object) => {
+			if (onlyVisible && !object.visible) {
+				return;
+			}
+	
+			const material = object.material, geometry = object.geometry;
+			if (!!geometry && !!material && object.renderable) {
+				const fog = material.fog ? sceneData.fog : null;
+				const envMap = material.envMap !== undefined ? (material.envMap || sceneData.environment) : null;
+				const materialProperties = materials.setMaterial(material);
+
+				let numClippingPlanes = sceneData.numClippingPlanes;
+				if (material.clippingPlanes && material.clippingPlanes.length > 0) {
+					numClippingPlanes = material.clippingPlanes.length;
+				}
+
+				const oldProgram = materialProperties.program;
+				materialProperties.program = programs.getProgram(material, object, renderStates, shaderCompileOptions);
+				if (oldProgram) { // release after new program is created.
+					vertexArrayBindings.releaseByProgram(oldProgram);
+					programs.releaseProgram(oldProgram);
+				}
+		
+				materialProperties.fog = fog;
+				materialProperties.envMap = envMap;
+				materialProperties.logarithmicDepthBuffer = sceneData.logarithmicDepthBuffer;
+		
+				materialProperties.acceptLight = material.acceptLight;
+				materialProperties.lightsHash = lightData.hash.copyTo(materialProperties.lightsHash);
+				materialProperties.receiveShadow = object.receiveShadow;
+				materialProperties.shadowType = object.shadowType;
+		
+				materialProperties.numClippingPlanes = numClippingPlanes;
+				materialProperties.outputEncoding = renderStates.outputEncoding;
+				materialProperties.gammaFactor = renderStates.gammaFactor;
+				materialProperties.disableShadowSampler = sceneData.disableShadowSampler;
+
+				compilingPrograms.add(materialProperties.program);
+			}
+		});
+
+		return new Promise((resolve, reject) => {
+			const capabilities = this.capabilities;
+			
+			function checkProgramsIsReady() {
+				compilingPrograms.forEach( function ( program ) {
+					if ( program.isReady(capabilities.parallelShaderCompileExt) ) {
+						compilingPrograms.delete( program );
+					}
+				} );
+
+				if ( compilingPrograms.size === 0 ) {
+					resolve();
+					return;
+				}
+
+				setTimeout( checkProgramsIsReady, 10 );
+			}
+
+			if(capabilities.parallelShaderCompileExt){
+				checkProgramsIsReady();
+			}
+			else{
+				setTimeout( checkProgramsIsReady, 10 );
+			}
+
+		});
 	}
 
 	_uploadLights(uniforms, lights, disableShadowSampler, refresh) {
