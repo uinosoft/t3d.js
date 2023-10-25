@@ -308,7 +308,7 @@ class WebGLRenderer extends ThinRenderer {
 
 		const program = materialProperties.program;
 
-		if (!program.isReady(capabilities.parallelShaderCompileExt)) return;
+		if (options.onlyCompile || !program.isReady(capabilities.parallelShaderCompileExt)) return;
 
 		state.setProgram(program);
 

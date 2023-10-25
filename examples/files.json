@@ -185,7 +185,8 @@
 		"webgl_query_timer",
 		"webgl_helpers",
 		"webgl_contextlost",
-		"webgl_shader_compile"
+		"webgl_shader_compile",
+		"webgl_shader_precompile"
 	],
 	"lab": [
 		"lab_clouds",

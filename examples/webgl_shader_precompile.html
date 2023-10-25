@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>t3d - shader compile async</title>
+	<title>t3d - shader precompile</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 	<style>
@@ -29,10 +29,11 @@
 
 <body>
 	<div id="info">
-		<a href="" target="_blank">t3d</a> - compile shaders asynchronously
+		<a href="" target="_blank">t3d</a> - precompile shaders
+		<br/>
+		Displayed immediately after creation VS Wait 10ms after precompile
 		<br/>
 		To facilitate testing, the material defines for each mesh is different.
-		<br/>
 		<!-- The smoothness of the block's moving indicates whether the main thread is too busy. -->
 		<div id='block'></div>
 	</div>
@@ -72,29 +73,12 @@
 
 		const scene = new t3d.Scene();
 
-		// meshes
-
-		const meshes = [];
-		const sphere_geometry = new t3d.SphereGeometry(30, 16, 12);
-
-		for (let i = 0; i < 60; i++) {
-			const material = new t3d.PBRMaterial();
-			material.diffuse.setHex(0xF9E3B1);
-			material.defines.time = 0;
-			const sphere = new t3d.Mesh(sphere_geometry, material);
-			sphere.position.x = Math.random() * 500 - 250;
-			sphere.position.y = Math.random() * 500 - 250;
-			sphere.position.z = Math.random() * 500 - 250;
-			scene.add(sphere);
-			meshes.push(sphere);
-		}
-
 		// camera
 
 		const camera = new t3d.Camera();
 		camera.position.set(1000, 500, 1000);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
 		scene.add(camera);
 
 		// lights
@@ -123,42 +107,99 @@
 		const lightBall = new t3d.Mesh(lightBall_geometry, basic);
 		particleLight.add(lightBall);
 
+		const compileList = new t3d.RenderQueueLayer(0);
+
 		const renderOption = {};
+		const compileOption = { onlyCompile: true };
 
 		// gui
+
 		const supportParallelCompile = !!renderer.capabilities.parallelShaderCompileExt;
 
-		let counter = 0, compling = false;
+		let meshes = [], watchingCreateShow = false, watchingCreatePrecompileShow = false;
+
+		let defineCount = 1;
 		const color = new t3d.Color3();
-		function compileShader(compileAsynchronously) {
-			renderer.shaderCompileOptions.compileAsynchronously = compileAsynchronously;
+		const sphere_geometry = new t3d.SphereGeometry(30, 16, 12);
 
+		function createNewMeshes(first) {
+			meshes = [];
 			color.setHSL(Math.random(), Math.random(), 0.5);
-		
-			for (let i = 0; i < meshes.length; i++) {
-				const mesh = meshes[i];
-				const material = mesh.material;
+			for (let i = 0; i < 60; i++) {
+				const material = new t3d.PBRMaterial();
 				material.diffuse.copy(color);
-				material.defines['CUSTOM'] = counter++; // force recompile
-				material.needsUpdate = true;
+				material.defines.time = first ? 0 : defineCount++;
+				const sphere = new t3d.Mesh(sphere_geometry, material);
+				sphere.position.x = Math.random() * 500 - 250;
+				sphere.position.y = Math.random() * 500 - 250;
+				sphere.position.z = Math.random() * 500 - 250;
+				meshes.push(sphere);
 			}
-
-			compling = true;
+			return meshes;
 		}
 
+		function showCreatedMeshes() {
+			meshes.forEach(mesh => scene.add(mesh));
+		}
+
+		function precompileCreatedMeshes() {
+			compileList.begin();
+			meshes.forEach(function(mesh) {
+				compileList.addRenderable(mesh, mesh.geometry, mesh.material, 0);
+			});
+			compileList.end();
+
+			const renderStates = scene.updateRenderStates(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+
+			renderer.beginRender();
+			renderer.renderRenderableList(compileList.opaque, renderStates, compileOption);
+			renderer.endRender();
+		}
+
+		createNewMeshes(true);
+		showCreatedMeshes();
+
 		const uiFunctions = {
-			compile: function() {
-				compileShader(false);
+			create_show: function() {
+				console.time('show1');
+				createNewMeshes();
+				showCreatedMeshes();
+				watchingCreateShow = true;
 			},
-			compileAsync: function() {
-				compileShader(true);
+			create_precompile_wait_show: function() {
+				console.time('show2');
+				createNewMeshes();
+				precompileCreatedMeshes();
+				setTimeout(() => {
+					showCreatedMeshes();
+					watchingCreatePrecompileShow = true;
+				}, 10);
+			},
+			destroy: function() {
+				const destroyedMeshes = [];
+				scene.children.forEach(node => {
+					if (node.isMesh) {
+						destroyedMeshes.push(node);
+					}
+				});
+				destroyedMeshes.forEach(mesh => {
+					scene.remove(mesh);
+					mesh.material.dispose();
+				});
 			}
 		};
 		
 		const gui = new GUI();
-		gui.add({ supportParallelCompile: supportParallelCompile }, 'supportParallelCompile').disable();
-		gui.add(uiFunctions, 'compile');
-		gui.add(uiFunctions, 'compileAsync');
+		if (supportParallelCompile) {
+			gui.add(renderer.shaderCompileOptions, 'compileAsynchronously');
+		} else {
+			gui.add(renderer.shaderCompileOptions, 'compileAsynchronously').disable();
+		}
+		gui.add(uiFunctions, 'create_show');
+		gui.add(uiFunctions, 'create_precompile_wait_show');
+		gui.add(uiFunctions, 'destroy');
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -178,18 +219,18 @@
 			renderer.setRenderTarget(backRenderTarget);
 			renderer.clear(true, true, false);
 
-			if (compling) {
-				console.time('cost');
-			}
-
 			renderer.beginRender();
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
 			renderer.endRender();
 
-			if (compling) {
-				console.log('---first frame cost after shaders changed---');
-				console.timeEnd('cost');
-				compling = false;
+			if (watchingCreateShow) {
+				console.timeEnd('show1');
+				watchingCreateShow = false;
+			}
+
+			if (watchingCreatePrecompileShow) {
+				console.timeEnd('show2');
+				watchingCreatePrecompileShow = false;
 			}
 		}
 		requestAnimationFrame(loop);
@@ -198,7 +239,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
 
 			backRenderTarget.resize(width, height);
 		}

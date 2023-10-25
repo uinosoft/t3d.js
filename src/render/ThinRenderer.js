@@ -67,6 +67,7 @@ class ThinRenderer {
 	 * @property {Function} afterRender - (Optional) After render each renderable item.
 	 * @property {Function} ifRender - (Optional) If render the renderable item.
 	 * @property {t3d.RenderInfo} renderInfo - (Optional) Render info for collect information.
+	 * @property {Boolean} onlyCompile - (Optional) Only compile shader, do not render.
 	 */
 
 	/**
