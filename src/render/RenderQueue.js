@@ -1,10 +1,9 @@
 import { RenderQueueLayer } from './RenderQueueLayer.js';
-import { Sphere } from '../math/Sphere.js';
 import { Vector3 } from '../math/Vector3.js';
 
 /**
- * RenderQueue is used to collect renderable objects from the scene.
- * And dispatch all renderable objects to the corresponding RenderQueueLayer according to object.renderLayer
+ * RenderQueue is used to collect all renderable items, lights and skeletons from the scene.
+ * Renderable items will be dispatched to the corresponding RenderQueueLayer according to the object's renderLayer property.
  * @memberof t3d
  */
 class RenderQueue {
@@ -13,6 +12,11 @@ class RenderQueue {
 		this.layerMap = new Map();
 		this.layerList = [];
 
+		this.lightsArray = [];
+
+		this.skeletons = new Set();
+
+		// to optimize the performance of the next push, cache the last layer used
 		this._lastLayer = this.createLayer(0);
 	}
 
@@ -20,6 +24,10 @@ class RenderQueue {
 		for (let i = 0, l = this.layerList.length; i < l; i++) {
 			this.layerList[i].begin();
 		}
+
+		this.lightsArray.length = 0;
+
+		this.skeletons.clear();
 	}
 
 	end() {
@@ -30,17 +38,15 @@ class RenderQueue {
 	}
 
 	push(object, camera) {
-		// frustum test, only test bounding sphere
-		if (object.frustumCulled && camera.frustumCulled) {
-			helpSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
-			if (!camera.frustum.intersectsSphere(helpSphere)) {
-				return;
-			}
+		// collect skeleton if exists
+		if (object.skeleton) {
+			this.skeletons.add(object.skeleton);
 		}
 
-		// calculate z
+		// calculate depth for sorting
 		helpVector3.setFromMatrixPosition(object.worldMatrix);
-		helpVector3.applyMatrix4(camera.projectionViewMatrix); // helpVector3.project(camera);
+		helpVector3.applyMatrix4(camera.projectionViewMatrix);
+		const depth = helpVector3.z;
 
 		const layerId = object.renderLayer || 0;
 
@@ -60,12 +66,16 @@ class RenderQueue {
 				const group = groups[i];
 				const groupMaterial = object.material[group.materialIndex];
 				if (groupMaterial) {
-					layer.addRenderable(object, object.geometry, groupMaterial, helpVector3.z, group);
+					layer.addRenderable(object, object.geometry, groupMaterial, depth, group);
 				}
 			}
 		} else {
-			layer.addRenderable(object, object.geometry, object.material, helpVector3.z);
+			layer.addRenderable(object, object.geometry, object.material, depth);
 		}
+	}
+
+	pushLight(light) {
+		this.lightsArray.push(light);
 	}
 
 	/**
@@ -123,7 +133,6 @@ class RenderQueue {
 }
 
 const helpVector3 = new Vector3();
-const helpSphere = new Sphere();
 
 function sortLayer(a, b) {
 	return a.id - b.id;

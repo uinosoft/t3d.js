@@ -7000,20 +7000,26 @@
 	}
 
 	/**
-	 * RenderQueue is used to collect renderable objects from the scene.
-	 * And dispatch all renderable objects to the corresponding RenderQueueLayer according to object.renderLayer
+	 * RenderQueue is used to collect all renderable items, lights and skeletons from the scene.
+	 * Renderable items will be dispatched to the corresponding RenderQueueLayer according to the object's renderLayer property.
 	 * @memberof t3d
 	 */
 	class RenderQueue {
 		constructor() {
 			this.layerMap = new Map();
 			this.layerList = [];
+			this.lightsArray = [];
+			this.skeletons = new Set();
+
+			// to optimize the performance of the next push, cache the last layer used
 			this._lastLayer = this.createLayer(0);
 		}
 		begin() {
 			for (let i = 0, l = this.layerList.length; i < l; i++) {
 				this.layerList[i].begin();
 			}
+			this.lightsArray.length = 0;
+			this.skeletons.clear();
 		}
 		end() {
 			for (let i = 0, l = this.layerList.length; i < l; i++) {
@@ -7022,18 +7028,15 @@
 			}
 		}
 		push(object, camera) {
-			// frustum test, only test bounding sphere
-			if (object.frustumCulled && camera.frustumCulled) {
-				helpSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
-				if (!camera.frustum.intersectsSphere(helpSphere)) {
-					return;
-				}
+			// collect skeleton if exists
+			if (object.skeleton) {
+				this.skeletons.add(object.skeleton);
 			}
 
-			// calculate z
+			// calculate depth for sorting
 			helpVector3.setFromMatrixPosition(object.worldMatrix);
-			helpVector3.applyMatrix4(camera.projectionViewMatrix); // helpVector3.project(camera);
-
+			helpVector3.applyMatrix4(camera.projectionViewMatrix);
+			const depth = helpVector3.z;
 			const layerId = object.renderLayer || 0;
 			let layer = this._lastLayer;
 			if (layer.id !== layerId) {
@@ -7049,12 +7052,15 @@
 					const group = groups[i];
 					const groupMaterial = object.material[group.materialIndex];
 					if (groupMaterial) {
-						layer.addRenderable(object, object.geometry, groupMaterial, helpVector3.z, group);
+						layer.addRenderable(object, object.geometry, groupMaterial, depth, group);
 					}
 				}
 			} else {
-				layer.addRenderable(object, object.geometry, object.material, helpVector3.z);
+				layer.addRenderable(object, object.geometry, object.material, depth);
 			}
+		}
+		pushLight(light) {
+			this.lightsArray.push(light);
 		}
 
 		/**
@@ -7107,7 +7113,6 @@
 		}
 	}
 	const helpVector3 = new Vector3();
-	const helpSphere = new Sphere();
 	function sortLayer(a, b) {
 		return a.id - b.id;
 	}
@@ -7315,7 +7320,6 @@
 			this.anchorMatrix = new Matrix4();
 			this._sceneData = new SceneData();
 			this._lightData = new LightData();
-			this._skeletons = new Set();
 			this._renderQueueMap = new WeakMap();
 			this._renderStatesMap = new WeakMap();
 		}
@@ -7327,8 +7331,7 @@
 		 * @param {Boolean} [updateScene=true] - Whether to update scene data.
 		 * @return {t3d.RenderStates} - The result render states.
 		 */
-		updateRenderStates(camera, updateScene) {
-			updateScene = updateScene !== undefined ? updateScene : true;
+		updateRenderStates(camera, updateScene = true) {
 			if (!this._renderStatesMap.has(camera)) {
 				this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightData));
 			}
@@ -7360,30 +7363,26 @@
 		 * @param {Boolean} [updateSkeletons=true] - Whether to update skeletons.
 		 * @return {t3d.RenderQueue} - The result render queue.
 		 */
-		updateRenderQueue(camera, collectLights, updateSkeletons) {
-			collectLights = collectLights !== undefined ? collectLights : true;
-			updateSkeletons = updateSkeletons !== undefined ? updateSkeletons : true;
+		updateRenderQueue(camera, collectLights = true, updateSkeletons = true) {
 			if (!this._renderQueueMap.has(camera)) {
 				this._renderQueueMap.set(camera, new RenderQueue());
 			}
 			const renderQueue = this._renderQueueMap.get(camera);
-			if (updateSkeletons) {
-				this._skeletons.clear();
-			}
 			renderQueue.begin();
+			this._pushToRenderQueue(this, camera, renderQueue);
+			renderQueue.end();
 			if (collectLights) {
 				this._lightData.begin();
-				this._doPushObject(this, camera, renderQueue, updateSkeletons);
+				for (const light of renderQueue.lightsArray) {
+					this._lightData.push(light);
+				}
 				this._lightData.end(this._sceneData);
-			} else {
-				this._doPushMesh(this, camera, renderQueue, updateSkeletons);
 			}
-			renderQueue.end();
 
 			// Since skeletons may be referenced by different mesh, it is necessary to collect skeletons in the scene in order to avoid repeated updates.
 			// For IOS platform, we should try to avoid repeated texture updates within one frame, otherwise the performance will be seriously degraded.
 			if (updateSkeletons) {
-				for (const skeleton of this._skeletons) {
+				for (const skeleton of renderQueue.skeletons) {
 					skeleton.updateBones(this._sceneData);
 				}
 			}
@@ -7399,36 +7398,26 @@
 		getRenderQueue(camera) {
 			return this._renderQueueMap.get(camera);
 		}
-		_doPushMesh(object, camera, renderQueue, updateSkeletons) {
+		_pushToRenderQueue(object, camera, renderQueue) {
 			if (!object.visible) {
 				return;
 			}
-			if (!!object.geometry && !!object.material && object.renderable) {
-				renderQueue.push(object, camera);
-				if (updateSkeletons && !!object.skeleton) {
-					this._skeletons.add(object.skeleton);
-				}
-			}
-			const children = object.children;
-			for (let i = 0, l = children.length; i < l; i++) {
-				this._doPushMesh(children[i], camera, renderQueue, updateSkeletons);
-			}
-		}
-		_doPushObject(object, camera, renderQueue, updateSkeletons) {
-			if (!object.visible) {
-				return;
-			}
-			if (!!object.geometry && !!object.material && object.renderable) {
-				renderQueue.push(object, camera);
-				if (updateSkeletons && !!object.skeleton) {
-					this._skeletons.add(object.skeleton);
+			if (object.geometry && object.material && object.renderable) {
+				if (object.frustumCulled && camera.frustumCulled) {
+					// frustum test, only test bounding sphere
+					_boundingSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
+					if (camera.frustum.intersectsSphere(_boundingSphere)) {
+						renderQueue.push(object, camera);
+					}
+				} else {
+					renderQueue.push(object, camera);
 				}
 			} else if (object.isLight) {
-				this._lightData.push(object);
+				renderQueue.pushLight(object);
 			}
 			const children = object.children;
 			for (let i = 0, l = children.length; i < l; i++) {
-				this._doPushObject(children[i], camera, renderQueue, updateSkeletons);
+				this._pushToRenderQueue(children[i], camera, renderQueue);
 			}
 		}
 	}
@@ -7439,6 +7428,7 @@
 	 * @default true
 	 */
 	Scene.prototype.isScene = true;
+	const _boundingSphere = new Sphere();
 
 	/**
 	 * The camera used for rendering a 3D scene.

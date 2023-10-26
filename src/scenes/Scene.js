@@ -4,6 +4,7 @@ import { LightData } from '../render/LightData.js';
 import { RenderQueue } from '../render/RenderQueue.js';
 import { SceneData } from '../render/SceneData.js';
 import { RenderStates } from '../render/RenderStates.js';
+import { Sphere } from '../math/Sphere.js';
 
 /**
  * Scenes allow you to set up what and where is to be rendered by t3d.
@@ -79,7 +80,6 @@ class Scene extends Object3D {
 
 		this._sceneData = new SceneData();
 		this._lightData = new LightData();
-		this._skeletons = new Set();
 
 		this._renderQueueMap = new WeakMap();
 		this._renderStatesMap = new WeakMap();
@@ -92,9 +92,7 @@ class Scene extends Object3D {
 	 * @param {Boolean} [updateScene=true] - Whether to update scene data.
 	 * @return {t3d.RenderStates} - The result render states.
 	 */
-	updateRenderStates(camera, updateScene) {
-		updateScene = updateScene !== undefined ? updateScene : true;
-
+	updateRenderStates(camera, updateScene = true) {
 		if (!this._renderStatesMap.has(camera)) {
 			this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightData));
 		}
@@ -130,36 +128,29 @@ class Scene extends Object3D {
 	 * @param {Boolean} [updateSkeletons=true] - Whether to update skeletons.
 	 * @return {t3d.RenderQueue} - The result render queue.
 	 */
-	updateRenderQueue(camera, collectLights, updateSkeletons) {
-		collectLights = collectLights !== undefined ? collectLights : true;
-		updateSkeletons = updateSkeletons !== undefined ? updateSkeletons : true;
-
+	updateRenderQueue(camera, collectLights = true, updateSkeletons = true) {
 		if (!this._renderQueueMap.has(camera)) {
 			this._renderQueueMap.set(camera, new RenderQueue());
 		}
 
 		const renderQueue = this._renderQueueMap.get(camera);
 
-		if (updateSkeletons) {
-			this._skeletons.clear();
-		}
-
 		renderQueue.begin();
+		this._pushToRenderQueue(this, camera, renderQueue);
+		renderQueue.end();
 
 		if (collectLights) {
 			this._lightData.begin();
-			this._doPushObject(this, camera, renderQueue, updateSkeletons);
+			for (const light of renderQueue.lightsArray) {
+				this._lightData.push(light);
+			}
 			this._lightData.end(this._sceneData);
-		} else {
-			this._doPushMesh(this, camera, renderQueue, updateSkeletons);
 		}
-
-		renderQueue.end();
 
 		// Since skeletons may be referenced by different mesh, it is necessary to collect skeletons in the scene in order to avoid repeated updates.
 		// For IOS platform, we should try to avoid repeated texture updates within one frame, otherwise the performance will be seriously degraded.
 		if (updateSkeletons) {
-			for (const skeleton of this._skeletons) {
+			for (const skeleton of renderQueue.skeletons) {
 				skeleton.updateBones(this._sceneData);
 			}
 		}
@@ -177,43 +168,28 @@ class Scene extends Object3D {
 		return this._renderQueueMap.get(camera);
 	}
 
-	_doPushMesh(object, camera, renderQueue, updateSkeletons) {
+	_pushToRenderQueue(object, camera, renderQueue) {
 		if (!object.visible) {
 			return;
 		}
 
-		if (!!object.geometry && !!object.material && object.renderable) {
-			renderQueue.push(object, camera);
-
-			if (updateSkeletons && !!object.skeleton) {
-				this._skeletons.add(object.skeleton);
-			}
-		}
-
-		const children = object.children;
-		for (let i = 0, l = children.length; i < l; i++) {
-			this._doPushMesh(children[i], camera, renderQueue, updateSkeletons);
-		}
-	}
-
-	_doPushObject(object, camera, renderQueue, updateSkeletons) {
-		if (!object.visible) {
-			return;
-		}
-
-		if (!!object.geometry && !!object.material && object.renderable) {
-			renderQueue.push(object, camera);
-
-			if (updateSkeletons && !!object.skeleton) {
-				this._skeletons.add(object.skeleton);
+		if (object.geometry && object.material && object.renderable) {
+			if (object.frustumCulled && camera.frustumCulled) {
+				// frustum test, only test bounding sphere
+				_boundingSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
+				if (camera.frustum.intersectsSphere(_boundingSphere)) {
+					renderQueue.push(object, camera);
+				}
+			} else {
+				renderQueue.push(object, camera);
 			}
 		} else if (object.isLight) {
-			this._lightData.push(object);
+			renderQueue.pushLight(object);
 		}
 
 		const children = object.children;
 		for (let i = 0, l = children.length; i < l; i++) {
-			this._doPushObject(children[i], camera, renderQueue, updateSkeletons);
+			this._pushToRenderQueue(children[i], camera, renderQueue);
 		}
 	}
 
@@ -225,5 +201,7 @@ class Scene extends Object3D {
  * @default true
  */
 Scene.prototype.isScene = true;
+
+const _boundingSphere = new Sphere();
 
 export { Scene };
