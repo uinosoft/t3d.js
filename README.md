@@ -4,13 +4,12 @@
 ![npm-size][npm-size-url]
 [![Issues][issues-badge]][issues-badge-url]
 [![DeepScan grade][deepscan]][deepscan-url]
+[![Discord][discord]][discord-url]
 
-ThingJS 3D Engine (t3d) is a web-first, light weight, extendable 3D rendering library.
-
-Used by ThingJS for web3d rendering, but also available standalone.
+ThingJS 3D Engine (t3d) is a lightweight, web-first, and extendable 3D rendering library. It is used by ThingJS for web3d rendering, but can also be used as a standalone library.
 
 [Examples](https://uinosoft.github.io/t3d.js/examples/) &mdash;
-[Documentation](https://uinosoft.github.io/t3d.js/docs/) &mdash;
+[Docs](https://uinosoft.github.io/t3d.js/docs/) &mdash;
 [Discord](https://discord.gg/urB54PPXc4)
 
 ## Import
@@ -47,10 +46,10 @@ or individual classes using:
 import { Scene, Renderer } from 't3d';
 ````
 
-After v0.1.2, the js files in `examples/jsm` can be imported like this:
+Since v0.2.0, the JavaScript files in `examples/jsm` can be imported like this:
 
 ````javascript
-import { OrbitControls } from 't3d/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 ````
 
 ## CDN
@@ -74,7 +73,7 @@ canvas.width = width;
 canvas.height = height;
 document.body.appendChild(canvas);
 
-const gl = canvas.getContext("webgl2", {
+const gl = canvas.getContext('webgl2', {
   antialias: true,
   alpha: false
 });
@@ -127,7 +126,7 @@ requestAnimationFrame(loop);
 * [t3d-3dtiles](https://github.com/uinosoft/t3d-3dtiles) - A 3dtile extension based on t3d.js.
 * [t3d-dynamic-sky](https://github.com/uinosoft/t3d-dynamic-sky) - Dynamic sky addon for t3d.
 
-## Contribution
+## Contributing
 
 Please make sure to read the [Contributing Guide](./.github/contributing.md) before making a pull request.
 
@@ -138,3 +137,5 @@ Please make sure to read the [Contributing Guide](./.github/contributing.md) bef
 [issues-badge-url]: https://github.com/uinosoft/t3d.js/issues
 [deepscan]: https://deepscan.io/api/teams/20241/projects/25542/branches/800776/badge/grade.svg
 [deepscan-url]: https://deepscan.io/dashboard#view=project&tid=20241&pid=25542&bid=800776
+[discord]: https://img.shields.io/discord/1069800954494464043
+[discord-url]: https://discord.gg/urB54PPXc4
