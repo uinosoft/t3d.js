@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>t3d - compressed texture dds</title>
+	<meta
+		name="viewport"
+		content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+	/>
+	<link type="text/css" rel="stylesheet" href="main.css" />
+</head>
+
+<body>
+	<div id="info" class="dark">
+		<a href="" target="_blank">t3d</a> - env texture loader<br/>
+		<div id="notSupported" style="display: none">
+			Sorry, your graphics card + browser does not support WebGL2
+		</div>
+	</div>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/"
+			}
+		}
+	</script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { EnvLoader } from 't3d/addons/loaders/EnvLoader.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 15);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective((60 / 180) * Math.PI, width / height, 1, 1000);
+
+		scene.add(camera);
+		const controller = new OrbitControls(camera, canvas);
+
+		const loader = new EnvLoader();
+		const gui = new GUI();
+		loader.setRenderer(forwardRenderer)
+			.setOutputTexture(new t3d.TextureCube())
+			.load('./resources/spot1Lux.env', function(cubeTexture) {
+				const skyBox = new SkyBox(cubeTexture);
+				gui.add(skyBox.material.uniforms, 'level', 0, 10);
+				scene.add(skyBox);
+			});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+		
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		if (forwardRenderer.capabilities.version < 2) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			requestAnimationFrame(loop);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective((60 / 180) * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
