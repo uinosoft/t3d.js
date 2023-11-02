@@ -46,6 +46,7 @@
 		"material_texture_normalmap",
 		"material_texture_emissivemap",
 		"material_texture_bumpmap",
+		"material_texture_lightmap",
 		"material_texture_mipmap",
 		"material_texture_uvtransform",
 		"material_texture_uvcoord",

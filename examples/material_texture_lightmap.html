@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - lightmap</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - lightmap
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		let vertexShader = t3d.ShaderLib.pbr_vert;
+		let fragmentShader = t3d.ShaderLib.pbr_frag;
+		vertexShader = vertexShader.replace('#include <logdepthbuf_pars_vert>', `
+			#include <logdepthbuf_pars_vert>
+
+			#ifdef USE_LIGHT_MAP
+				varying vec2 vLightMapUV;
+			#endif
+		`);
+		vertexShader = vertexShader.replace('#include <emissiveMap_vert>', `
+			#include <emissiveMap_vert>
+
+			#ifdef USE_LIGHT_MAP
+				vLightMapUV = a_Uv;
+			#endif
+		`);
+		fragmentShader = fragmentShader.replace('#include <clippingPlanes_pars_frag>', `
+			#include <clippingPlanes_pars_frag>
+
+			#ifdef USE_LIGHT_MAP
+				uniform sampler2D lightMap;
+				uniform float lightMapIntensity;
+				varying vec2 vLightMapUV;
+			#endif
+		`);
+		fragmentShader = fragmentShader.replace('#include <aoMap_frag>', `
+			#include <aoMap_frag>
+			
+			#ifdef USE_LIGHT_MAP
+				vec4 lightMapTexel = sRGBToLinear(texture2D(lightMap, vLightMapUV)) * lightMapIntensity;
+
+				#ifdef USE_LIGHT_MAP_AS_SHADOW_MAP
+					reflectedLight.directDiffuse.rgb *= lightMapTexel.rgb;
+					reflectedLight.directSpecular.rgb *= lightMapTexel.rgb;
+				#else
+					reflectedLight.directDiffuse.rgb += lightMapTexel.rgb;
+				#endif
+			#endif
+		`);
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const textureLoader = new Texture2DLoader(loadingManager);
+		const lightmapPromise = textureLoader.loadAsync('./resources/lightmap.png').then(texture => {
+			texture.flipY = false;
+			texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+			texture.generateMipmaps = false;
+			return texture;
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		const modelPromise = loader.load('./resources/models/gltf/CornellBox.glb');
+
+		const materials = [];
+		Promise.all([lightmapPromise, modelPromise]).then(([lightmap, result]) => {
+			result.root.traverse(node => {
+				if (!node.isMesh) return;
+
+				const material = node.material;
+				material.type = t3d.MATERIAL_TYPE.SHADER;
+				material.shaderName = 'pbr_lightmap';
+				material.vertexShader = vertexShader;
+				material.fragmentShader = fragmentShader;
+				material.defines.USE_UV1 = true;
+				material.defines.USE_LIGHT_MAP = true;
+				material.defines.USE_LIGHT_MAP_AS_SHADOW_MAP = false;
+
+				material.uniforms.lightMap = lightmap;
+				material.uniforms.lightMapIntensity = 1;
+		
+				node.receiveShadow = true;
+				node.castShadow = true;
+
+				materials.push(material);
+			});
+
+			scene.add(result.root);
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+		ambientLight.visible = false;
+		scene.add(ambientLight);
+
+		const pointLight = new t3d.PointLight(0xffffff, 0.8, 3, 2);
+		pointLight.position.set(0, 1.5, 0);
+		pointLight.castShadow = true;
+		pointLight.shadow.mapSize.set(1024, 1024);
+		scene.add(pointLight);
+
+		const lightBall = new t3d.Mesh(new t3d.SphereGeometry(0.03, 20, 20), new t3d.BasicMaterial());
+		pointLight.add(lightBall);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 1, 5);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.y = 1;
+
+		const param = {
+			ambientType: 'lightmap',
+			lightMapIntensity: 1
+		};
+		const gui = new GUI();
+		gui.add(param, 'ambientType', ['lightmap', 'light', 'none']).onChange(value => {
+			materials.forEach(material => {
+				material.defines.USE_LIGHT_MAP = value === 'lightmap';
+				material.defines.USE_UV1 = value === 'lightmap';
+				material.needsUpdate = true;
+			});
+
+			ambientLight.visible = value === 'light';
+		});
+		gui.add(param, 'lightMapIntensity', 0, 5, 0.1).onChange(value => {
+			materials.forEach(material => {
+				material.uniforms.lightMapIntensity = value;
+			});
+		});
+		gui.add(ambientLight, 'intensity', 0, 2, 0.1).name('lightIntensity');
+		const pointLightFolder = gui.addFolder('Point Light').close();
+		pointLightFolder.add(pointLight, 'visible');
+		pointLightFolder.add(pointLight, 'castShadow');
+		pointLightFolder.add(pointLight, 'intensity', 0, 2, 0.1);
+		pointLightFolder.addColor(pointLight, 'color').onChange(value => {
+			lightBall.material.diffuse.copy(value);
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			pointLight.position.z = 0.8 * Math.sin(count / 1000);
+			pointLight.position.x = 0.8 * Math.sin(count / 1000);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
