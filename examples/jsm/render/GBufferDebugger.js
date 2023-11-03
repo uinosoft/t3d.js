@@ -29,7 +29,8 @@ const DebugTypes = {
 	Depth: 3,
 	Position: 4,
 	Albedo: 5,
-	Emissive: 6
+	AO: 6,
+	Emissive: 7
 };
 
 GBufferDebugger.DebugTypes = DebugTypes;
@@ -79,22 +80,6 @@ const debugShader = {
 			return normalize(v);
 		}
 
-        vec3 unpackBaseColor(vec3 packedColors) {
-            vec3 baseColor;
-            baseColor.r = float(int(packedColors.r) >> 8) / 255.0;
-            baseColor.g = float(int(packedColors.g) >> 8) / 255.0;
-            baseColor.b = float(int(packedColors.b) >> 8) / 255.0;
-            return baseColor;
-        }
-        
-        vec3 unpackEmissiveColor(vec3 packedColors) {
-            vec3 emissiveColor;
-            emissiveColor.r = float(int(packedColors.r) & 255) / 255.0;
-            emissiveColor.g = float(int(packedColors.g) & 255) / 255.0;
-            emissiveColor.b = float(int(packedColors.b) & 255) / 255.0;
-            return emissiveColor;
-        }
-
 		void main() {
             vec2 texCoord = v_Uv;
 
@@ -119,8 +104,12 @@ const debugShader = {
 
             vec4 texelB = texture2D(textureB, texCoord);
 
-            vec3 albedo = unpackBaseColor(texelB.xyz);
-            vec3 emissive = unpackEmissiveColor(texelB.xyz);
+            vec3 albedo = texelB.xyz;
+			float ao = texelB.w;
+
+			vec4 texelC = texture2D(textureC, texCoord);
+
+            vec3 emissive = texelC.xyz;
 
             if (debug == 0) {
                 gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0);
@@ -135,6 +124,8 @@ const debugShader = {
 			} else if (debug == 5) {
 				gl_FragColor = vec4(albedo, 1.0);
 			} else if (debug == 6) {
+				gl_FragColor = vec4(vec3(1.0 - ao), 1.0);
+			} else {
 				gl_FragColor = vec4(emissive, 1.0);
 			}
         }

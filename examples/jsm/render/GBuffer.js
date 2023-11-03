@@ -9,30 +9,28 @@ import {
 	TEXTURE_FILTER
 } from 't3d';
 
-// TODO emissive, ao, velocity
-
 class GBuffer {
 
 	constructor(width, height) {
 		const renderTarget = new RenderTarget2D(width, height);
 
-		// rg: normal, b: metallic, a: roughness
+		// rg: normal, b: metalness, a: roughness
 		const textureA = renderTarget.texture;
 		textureA.format = PIXEL_FORMAT.RGBA;
 		textureA.type = PIXEL_TYPE.HALF_FLOAT;
-		textureA.magFilter = TEXTURE_FILTER.LINEAR;
-		textureA.minFilter = TEXTURE_FILTER.LINEAR;
+		textureA.magFilter = TEXTURE_FILTER.NEAREST;
+		textureA.minFilter = TEXTURE_FILTER.NEAREST;
 		textureA.generateMipmaps = false;
 
-		// rgb: albedo&emissive, a: ao
+		// rgb: albedo, a: ao
 		const textureB = new Texture2D();
 		textureB.format = PIXEL_FORMAT.RGBA;
-		textureB.type = PIXEL_TYPE.HALF_FLOAT;
+		textureB.type = PIXEL_TYPE.UNSIGNED_BYTE;
 		textureB.magFilter = TEXTURE_FILTER.LINEAR;
 		textureB.minFilter = TEXTURE_FILTER.LINEAR;
 		textureB.generateMipmaps = false;
 
-		// rgb: velocity, a: unused
+		// rgb: emissive, a: unused
 		const textureC = new Texture2D();
 		textureC.format = PIXEL_FORMAT.RGBA;
 		textureC.type = PIXEL_TYPE.HALF_FLOAT;
@@ -58,6 +56,9 @@ class GBuffer {
 		this._renderOptions = {
 			getMaterial: function(renderable) {
 				return materialCache.getMaterial(renderable);
+			},
+			ifRender: function(renderable) {
+				return renderable.material.shaderName != 'skybox';
 			}
 		};
 
@@ -147,11 +148,12 @@ class MaterialCache {
 		state.useDiffuseMap = !!renderable.material.diffuseMap;
 		state.useRoughnessMap = !!renderable.material.roughnessMap;
 		state.useMetalnessMap = !!renderable.material.metalnessMap;
+		state.useAOMap = !!renderable.material.aoMap;
+		state.useEmissiveMap = !!renderable.material.emissiveMap;
 		state.useSkinning = renderable.object.isSkinnedMesh && renderable.object.skeleton;
 		state.morphTargets = !!renderable.object.morphTargetInfluences;
 		state.morphNormals = !!renderable.object.morphTargetInfluences && renderable.object.geometry.morphAttributes.normal;
 		state.drawMode = renderable.material.drawMode;
-		state.isBackground = renderable.material.shaderName == 'skybox';
 		let maxBones = 0;
 		if (state.useSkinning) {
 			if (renderable.object.skeleton.boneTexture) {
@@ -176,9 +178,6 @@ class MaterialCache {
 			material = new ShaderMaterial(gBufferShader);
 			material.shading = state.useFlatShading ? SHADING_TYPE.FLAT_SHADING : SHADING_TYPE.SMOOTH_SHADING;
 			material.alphaTest = state.useDiffuseMap ? 0.999 : 0; // ignore if alpha < 0.99
-			if (state.isBackground) {
-				material.defines['BACKGROUND'] = true;
-			}
 			this._map.set(key, material);
 		}
 
@@ -188,6 +187,20 @@ class MaterialCache {
 		material.roughnessMap = renderable.material.roughnessMap;
 		material.uniforms.metalness = renderable.material.metalness !== undefined ? renderable.material.metalness : 0.5;
 		material.metalnessMap = renderable.material.metalnessMap;
+
+		material.aoMap = renderable.material.aoMap;
+		if (state.useAOMap) {
+			material.aoMapIntensity = renderable.material.aoMapIntensity;
+			material.aoMapCoord = renderable.material.aoMapCoord; // TODO move coord to state
+			material.aoMapTransform.copy(renderable.material.aoMapTransform);
+		}
+
+		material.emissive.copy(renderable.material.emissive);
+		material.emissiveMap = renderable.material.emissiveMap;
+		if (state.useEmissiveMap) {
+			material.emissiveMapCoord = renderable.material.emissiveMapCoord; // TODO move coord to state
+			material.emissiveMapTransform.copy(renderable.material.emissiveMapTransform);
+		}
 
 		return material;
 	}
@@ -203,9 +216,7 @@ const materialCache = new MaterialCache();
 
 const gBufferShader = {
 	name: 'gbuffer_mrt',
-	defines: {
-		BACKGROUND: false
-	},
+	defines: {},
 	uniforms: {
 		roughness: 0.5,
 		metalness: 0.5
@@ -217,6 +228,8 @@ const gBufferShader = {
 		#include <normal_pars_vert>
 		#include <uv_pars_vert>
 		#include <modelPos_pars_vert>
+		#include <aoMap_pars_vert>
+		#include <emissiveMap_pars_vert>
 		void main() {
 			#include <begin_vert>
 			#include <morphtarget_vert>
@@ -227,6 +240,8 @@ const gBufferShader = {
 			#include <pvm_vert>
 			#include <uv_vert>
 			#include <modelPos_vert>
+			#include <aoMap_vert>
+			#include <emissiveMap_vert>
 		}
 	`,
 	fragmentShader: `
@@ -237,6 +252,8 @@ const gBufferShader = {
 
 		#include <packing>
 		#include <normal_pars_frag>
+
+		uniform vec3 emissive;
 
 		uniform float roughness;
 		uniform float metalness;
@@ -251,17 +268,12 @@ const gBufferShader = {
 
 		#include <modelPos_pars_frag>
 
+		#include <aoMap_pars_frag>
+		#include <emissiveMap_pars_frag>
+
 		vec2 unitVectorToOctahedron(vec3 v) {
 			vec2 p = v.xy / dot(vec3(1.0), abs(v));
 			return v.z < 0.0 ? (1.0 - abs(p.yx)) * sign(p.xy) : p;
-		}
-
-		vec3 packColors(vec3 baseColor, vec3 emissiveColor) {
-			vec3 packedColor;
-			packedColor.r = float(int(baseColor.r * 255.0) << 8 | int(emissiveColor.r * 255.0));
-			packedColor.g = float(int(baseColor.g * 255.0) << 8 | int(emissiveColor.g * 255.0));
-			packedColor.b = float(int(baseColor.b * 255.0) << 8 | int(emissiveColor.b * 255.0));
-			return packedColor; // Normalize to [0, 1]
 		}
 
 		void main() {
@@ -271,10 +283,6 @@ const gBufferShader = {
 			#if defined(USE_DIFFUSE_MAP) && defined(ALPHATEST)
 				float alpha = outColor.a * u_Opacity;
 				if(alpha < ALPHATEST) discard;
-			#endif
-
-			#ifdef BACKGROUND
-				discard;
 			#endif
 
 			#ifdef FLAT_SHADED
@@ -298,13 +306,19 @@ const gBufferShader = {
 				metalnessFactor *= texture2D(metalnessMap, v_Uv).b;
 			#endif
 
+			float ambientOcclusion = 0.0;
+			#ifdef USE_AOMAP
+				ambientOcclusion = (1.0 - texture2D(aoMap, vAOMapUV).r) * aoMapIntensity;
+			#endif
+
+			vec3 totalEmissiveRadiance = emissive;
+			#include <emissiveMap_frag>
+
 			vec2 packedNormal = unitVectorToOctahedron(normal);
 
-			vec3 packedColors = packColors(outColor.rgb, vec3(0.5));
-
 			gl_FragData[0] = vec4(packedNormal, metalnessFactor, roughnessFactor);
-			gl_FragData[1] = vec4(packedColors, 1.0);
-			gl_FragData[2] = vec4(0.0);
+			gl_FragData[1] = vec4(outColor.rgb, ambientOcclusion);
+			gl_FragData[2] = vec4(totalEmissiveRadiance, 1.0);
 		}
 	`
 };
