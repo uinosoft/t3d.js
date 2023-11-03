@@ -164,7 +164,8 @@
 		"custompass_depth_texture_share",
 		"custompass_depth_buffer_share",
 		"custompass_gpupick",
-		"custompass_lensflare"
+		"custompass_lensflare",
+		"custompass_transmission"
 	],
 	"deferred": [
 		"deferred_renderer",
