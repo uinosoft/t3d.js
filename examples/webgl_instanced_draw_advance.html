@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - webgl instanced draw advance</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - instanced draw advance
+		<br/>Model from <a href="https://sketchfab.com/3d-models/asteroid-aa26af77e2cb40c48e0dc19f16115f72"  target="_blank">"asteroid"</a> 
+		by <a href="https://sketchfab.com/shawn0326"  target="_blank">shawn0326</a>
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { InstancedPBRMaterial } from 't3d/addons/materials/InstancedPBRMaterial.js';
+		import { IndicesManager, EVENT_TYPES } from 't3d/addons/IndicesManager.js';
+		import { BufferUtils } from 't3d/addons/BufferUtils.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 2);
+		directionalLight.position.set(50, 20, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const pointLight = new t3d.PointLight(0x00d5ff, 2, 150, 1);
+		scene.add(pointLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(80, 10, 80);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = false;
+		controller.maxDistance = 200;
+		controller.autoRotate = true;
+		controller.autoRotateSpeed = 0.3;
+
+		let instanceMesh;
+		const instances = 5000, instanceObjects = [];
+		const _position = new t3d.Vector3(), _orientation = new t3d.Quaternion(), _scale = new t3d.Vector3();
+		const _mat4_1 = new t3d.Matrix4(), _mat4_2 = new t3d.Matrix4();
+
+		function randomTransform(matrix) {
+			const ratio = Math.random();
+			const radiusX = 110 * ratio;
+			const rangeY = (Math.random() > 0.5 ? 1 : -1) * (Math.cos(radiusX / 80 * Math.PI / 2) * 30 + Math.random() * 20 - 10);
+			const theta = Math.random() * Math.PI * 2;
+
+			_position.x = radiusX * Math.cos(theta);
+			_position.z = radiusX * Math.sin(theta);
+			_position.y = rangeY * Math.random();
+
+			_orientation.x = Math.random() * 2 - 1;
+			_orientation.y = Math.random() * 2 - 1;
+			_orientation.z = Math.random() * 2 - 1;
+			_orientation.w = Math.random() * 2 - 1;
+			_orientation.normalize();
+
+			const mainScale = Math.random() * 1.9 + 0.1;
+
+			_scale.x = (Math.random() * 0.5 + 0.5) * mainScale;
+			_scale.y = (Math.random() * 0.5 + 0.5) * mainScale;
+			_scale.z = (Math.random() * 0.5 + 0.5) * mainScale;
+
+			matrix.transform(_position, _scale, _orientation);
+		}
+
+		function createInstancedGeoemtry(geometry) {
+			const instancedGeometry = geometry.clone();
+			const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(instances * 16), 16));
+			instanceMatrixAttribute.divisor = 1;
+			instancedGeometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
+			instancedGeometry.instanceCount = instances;
+
+			for(let i = 0; i < instances; i++){
+				const instanceObject = {
+					name: 'instanced-object-' + i,
+					visible: true,
+					disposed: false,
+					worldMatrix: new t3d.Matrix4(),
+					setVisible: function(visible) {
+						if (this.visible !== visible) {
+							this.visible = visible;
+							if(visible){
+								indicesManager.activateIndex(this);
+							}
+							else{
+								indicesManager.deactivateIndex(this);
+							}
+						}
+					},
+					dispose: function() {
+						if(!this.disposed){
+							this.disposed = true;
+							indicesManager.releaseIndex(this);
+						}
+					},
+				};
+
+				randomTransform(instanceObject.worldMatrix);
+				const index = indicesManager.allocateIndex(instanceObject, instanceObject.visible);
+				instanceObject.worldMatrix.toArray(instanceMatrixAttribute.buffer.array, index * 16);
+
+				instanceObjects.push(instanceObject);
+			}
+
+			return instancedGeometry;
+		}
+
+		const indicesManager = new IndicesManager(instances);
+		indicesManager.addEventListener(EVENT_TYPES.INDEX_CHANGED, function(event) {
+			const sourceIndex = event.sourceIndex;
+			const targetIndex = event.targetIndex;
+			
+			const instanceMatrix = instanceMesh.geometry.getAttribute('instanceMatrix');
+			const matrixSize = instanceMatrix.size;
+			const sourceMatrixOffset = sourceIndex * matrixSize;
+			const targetMatrixOffset = targetIndex * matrixSize;
+			const matrixBuffer = instanceMatrix.buffer;
+			const matrixArray = matrixBuffer.array;
+			_mat4_1.fromArray(matrixArray, targetMatrixOffset);
+			_mat4_2.fromArray(matrixArray, sourceMatrixOffset);
+			_mat4_1.toArray(matrixArray, sourceMatrixOffset);
+			_mat4_2.toArray(matrixArray, targetMatrixOffset);
+			BufferUtils.updateBufferRange(matrixBuffer, targetMatrixOffset);
+			BufferUtils.updateBufferRange(matrixBuffer, sourceMatrixOffset);
+			matrixBuffer.version++;
+
+			instanceMesh.geometry.instanceCount = indicesManager.activeCount;
+		});
+		indicesManager.addEventListener(EVENT_TYPES.ACTIVE_COUNT_CHANGED, function(event) {
+			const activeCount = event.activeCount;
+			if (instanceMesh.geometry.instanceCount !== activeCount) {
+				instanceMesh.geometry.instanceCount = activeCount;
+			}
+
+			if(activeCount === 0){
+				instanceMesh.visible = false;
+			}
+			else{
+				instanceMesh.visible = true;
+			}
+		});
+
+
+		const loader = new GLTFLoader(loadingManager);
+		await loader.load('./resources/models/gltf/asteroid.glb').then(function(result) {
+			result.root.traverse(function(node) {
+				if (node.isMesh) {
+					instanceMesh = node;
+					node.material = new InstancedPBRMaterial(node.material);
+					node.geometry = createInstancedGeoemtry(node.geometry);
+					node.frustumCulled = false;
+				}
+			});
+			scene.add(result.root);
+		}).catch(e => console.error(e));
+
+		const params = {
+			'random invisible instance object (≈ 100)': () => {
+				let num = 100;
+				while(num > 0){
+					const index = Math.floor(Math.random() * (indicesManager.activeCount));
+					const object = instanceObjects[index];
+					object.setVisible(false);
+					num--;
+				}
+			},
+			'random dispose instance object (≈ 100)': () => {
+				let num = 100;
+				while(num > 0){
+					const index = Math.floor(Math.random() * indicesManager.allocatedCount);
+					const object = instanceObjects[index];
+					object.dispose();
+					num--;
+				}
+			},
+			'invisible instance object (ALL)': () => {
+				for(let i = 0, il = instanceObjects.length; i < il; i++){
+					const object = instanceObjects[i];
+					object.setVisible(false);
+				}
+			},
+			'dispose instance object (ALL)': () => {
+				for(let i = 0, il = instanceObjects.length; i < il; i++){
+					const object = instanceObjects[i];
+					object.dispose();
+				}
+			},
+			'reset': () => {
+				for(let i = 0, il = instanceObjects.length; i < il; i++){
+					const object = instanceObjects[i];
+					if(object.disposed){
+						object.visible = true;
+						object.disposed = false;
+
+						const index = indicesManager.allocateIndex(object, object.visible);
+						const instanceMatrixAttribute = instanceMesh.geometry.getAttribute('instanceMatrix');
+						object.worldMatrix.toArray(instanceMatrixAttribute.buffer.array, index * 16);
+					}
+					else if(!object.visible){
+						object.setVisible(true);
+					}
+				}
+			},
+		}
+
+		const gui = new GUI();
+		gui.add(instanceMesh, 'visible').name('instance mesh visible').listen().disable();
+		gui.add(instanceMesh.geometry, 'instanceCount').listen().disable();
+		gui.add(indicesManager, 'allocatedCount').name('instance object count').listen().disable();
+		gui.add(indicesManager, 'activeCount').name('instance object visible count').listen().disable();
+		gui.add(params, 'random invisible instance object (≈ 100)');
+		gui.add(params, 'random dispose instance object (≈ 100)');
+		gui.add(params, 'invisible instance object (ALL)');
+		gui.add(params, 'dispose instance object (ALL)');
+		gui.add(params, 'reset');
+
+		//
+
+		let lastTime = 0;
+
+		const moveQ = new t3d.Quaternion(0.5, 0.5, 0.5, 0.0).normalize();
+		const tmpQ = new t3d.Quaternion();
+		const matrix = new t3d.Matrix4();
+		const rotationMatrix = new t3d.Matrix4();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			const time = performance.now();
+			
+			if(indicesManager.activeCount > 0){
+				pointLight.intensity = Math.abs(Math.sin(time / 2000)) * 2.5;
+	
+				const delta = (time - lastTime) / 2000;
+				tmpQ.set(moveQ.x * delta, moveQ.y * delta, moveQ.z * delta, 1).normalize();
+				tmpQ.toMatrix4(rotationMatrix);
+
+				const matricesAttribute = instanceMesh.geometry.getAttribute('instanceMatrix');
+				for(let i = 0, il = instanceObjects.length; i < il; i++){
+					const object = instanceObjects[i];
+					if(!object.disposed && object.visible){
+						const index = indicesManager.getIndex(object);
+						object.worldMatrix.multiply(rotationMatrix);
+						object.worldMatrix.toArray(matricesAttribute.buffer.array, index * 16);
+					}
+				}
+
+				matricesAttribute.buffer.version++;
+			}
+		
+			lastTime = time;
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
