@@ -15850,6 +15850,13 @@
 		endRender() {
 			super.endRender();
 			this._currentMaterial = null;
+
+			// Ensure depth buffer writing is enabled so it can be cleared on next render
+
+			const state = this._state;
+			state.depthBuffer.setTest(true);
+			state.depthBuffer.setMask(true);
+			state.colorBuffer.setMask(true);
 		}
 		clear(color, depth, stencil) {
 			const gl = this.context;
@@ -16124,12 +16131,6 @@
 			state.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
 			this._draw(geometry, material, group, renderInfo);
 			textures.resetTextureUnits();
-
-			// Ensure depth buffer writing is enabled so it can be cleared on next render
-
-			state.depthBuffer.setTest(true);
-			state.depthBuffer.setMask(true);
-			state.colorBuffer.setMask(true);
 			afterRender(renderable);
 			object.onAfterRender(renderable);
 		}
