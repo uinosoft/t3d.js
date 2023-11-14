@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - wireframe</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf wireframe
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+		import { WireframeMeshBuilder } from 't3d/addons/geometries/builders/WireframeMeshBuilder.js';
+
+		const devicePixelRatio = window.devicePixelRatio;
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.floor(width * devicePixelRatio);
+		canvas.height = Math.floor(height * devicePixelRatio);
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
+		const scene = new t3d.Scene();
+		let animation;
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+		let model;
+		let params;
+		const loader = new GLTFLoader(loadingManager);
+		loader.load(
+			'./resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb'
+		).then(function(result) {
+			const object = result.root;
+			model = object;
+		
+			object.traverse(function(node) {
+				if (node.material) {
+					node.castShadow = true;
+					node.frustumCulled = false;
+					WireframeMeshBuilder.getMeshData(node);
+				}
+			});
+			animation = new t3d.AnimationMixer();
+			result.animations.forEach(function(clip) {
+				const action = new t3d.AnimationAction(clip);
+				animation.addAction(action);
+			});
+
+			const actions = animation.getActions();
+			const actionIndex = 0;
+		
+			actions[actionIndex].time = 0;
+			actions[actionIndex].weight = 1;
+
+			scene.add(object);
+
+			params = {
+				thickness: 0.01,
+				secondThickness: 0.05,
+				dashRepeats: 2,
+				dashLength: 0.55,
+				dashOverlap: true,
+				dashEnabled: false,
+				dashAnimate: false,
+				seeThrough: true,
+				insideAltColor: true,
+				dualStroke: false,
+				noiseA: false,
+				noiseB: false,
+				squeeze: false,
+				removeEdge: false,
+				squeezeMin: 0.1,
+				squeezeMax: 1.0,
+				stroke: [0.1255, 0.1255, 0.1255],
+				fill: [0.7725, 0.7725, 0.7725],
+				play: true
+			};
+			const gui = new GUI();
+			const animationFolder = gui.addFolder('geometryFolder');
+			animationFolder.add(params, 'play');
+			const adapterFolder = gui.addFolder('shader');
+			adapterFolder.add(params, 'seeThrough').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.seeThrough = value;
+					}
+				});
+			});
+
+			adapterFolder.add(params, 'thickness', 0, 0.2, 0.01).onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.thickness = value;
+					}
+				});
+			});
+			adapterFolder.addColor(params, 'stroke').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.stroke = value;
+					}
+				});
+			});
+			adapterFolder.addColor(params, 'fill').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.fill = value;
+					}
+				});
+			});
+		
+			const dashFolder = gui.addFolder('dash');
+			dashFolder.add(params, 'dashEnabled').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.dashEnabled = value;
+					}
+				});
+			});
+			dashFolder.add(params, 'dashAnimate').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.dashAnimate = value;
+					}
+				});
+			});
+
+			dashFolder.add(params, 'dashRepeats', 0, 20, 1).onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.dashRepeats = value;
+					}
+				});
+			});
+			dashFolder.add(params, 'dashLength', 0, 1, 0.01).onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.dashLength = value;
+					}
+				});
+			});
+			dashFolder.add(params, 'dashOverlap').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.dashOverlap = value;
+					}
+				});
+			});
+		
+			const effectFolder = gui.addFolder('effect');
+			effectFolder.add(params, 'noiseA').name('Noise Big').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.noiseA = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'noiseB').name('Noise Small').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.noiseB = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'insideAltColor').name('Backface Color').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.insideAltColor = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'dualStroke').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.dualStroke = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'secondThickness', 0, 1, 0.01).name('Dual Thick').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.secondThickness = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'squeeze').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.squeeze = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'squeezeMin', 0, 1, 0.01).onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.squeezeMin = value;
+					}
+				});
+			});
+			effectFolder.add(params, 'squeezeMax', 0, 1, 0.01).onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.squeezeMax = value;
+					}
+				});
+			});
+			const geometryFolder = gui.addFolder('geometryFolder');
+			geometryFolder.add(params, 'removeEdge').onChange(value => {
+				object.traverse(function(node) {
+					if (node.material) {
+						node.material.uniforms.removeEdge = value;
+					}
+				});
+			});
+		}).catch(e => console.error(e));
+
+		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.roughness = 1;
+		plane_material.diffuse.setHex(0x888888);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-4, 5, 4);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 8;
+		directionalLight.shadow.cameraNear = 2;
+		directionalLight.shadow.cameraFar = 20;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(4, 3, 4);
+		camera.lookAt(new t3d.Vector3(0, 2, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1.5, 0);
+
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			params && params.play && animation && animation.update(clock.getDelta());
+		
+			model && model.traverse(function(node) {
+				if (node.material) {
+					node.material.uniforms.time += 0.1;
+				}
+			});
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
+
+			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
