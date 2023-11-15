@@ -81,8 +81,8 @@ class Geometry extends EventDispatcher {
 
 		/**
 		 * Split the geometry into groups, each of which will be rendered in a separate WebGL draw call. This allows an array of materials to be used with the geometry.
-		 * Each group is an object of the form:
-		 * { start: Integer, count: Integer, materialIndex: Integer }
+		 * Each group is an object of the form: { start: Integer, count: Integer, materialIndex: Integer },
+		 * or { multiDrawStarts: Integer[], multiDrawCounts: Integer[], multiDrawCount: Integer, materialIndex: Integer } if multiDraw is available.
 		 * @type {Array}
 		 * @default []
 		 */

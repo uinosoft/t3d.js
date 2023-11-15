@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - multi draw</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - multi draw<br/>
+		Draw 30k planes using WEBGL_multi_draw.<br/>
+		Setting multiDrawCount will have no effect if useMultiDraw is set to false.
+        <div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WEBGL_multi_draw</div>
+	</div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const capabilities = forwardRenderer.capabilities;
+		if ((!capabilities.getExtension('WEBGL_multi_draw'))) {
+			document.getElementById('notSupported').style.display = '';
+			console.error('Not supported WEBGL_multi_draw!');
+		}
+
+		const scene = new t3d.Scene();
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 1);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.lookAt(new t3d.Vector3(0, -25, -25), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const material = new t3d.PBRMaterial();
+		material.metalness = 0.4;
+		material.roughness = 1;
+		material.diffuseMap = new Texture2DLoader().load('./resources/UV_Grid_Sm.jpg');
+		material.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		material.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const planeGeometry = new t3d.PlaneGeometry(1, 1);
+
+		const maxNumber = 30000;
+
+		// prepare two groups, one for multi draw, one for single draw
+		const multiDrawGroup = { multiDrawStarts: new Int32Array(maxNumber), multiDrawCounts: new Int32Array(maxNumber), multiDrawCount: 0, materialIndex: 0 };
+		const geometryGroup = { start: 0, count: 0, materialIndex: 0 };
+
+		// prepare merged geometry
+		console.time('merge geometry');
+
+		const cubeGeometries = [];
+		const mat = new t3d.Matrix4(), qua = new t3d.Quaternion(), euler = new t3d.Euler(), pos = new t3d.Vector3(), scale = new t3d.Vector3(1, 1, 1);
+		let start = 0, count = 0;
+		for (let i = 0; i < maxNumber; i++) {
+			// random mat4
+			euler.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+			qua.setFromEuler(euler);
+			pos.set(Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25);
+			scale.x = scale.z = Math.random() * 2;
+			mat.transform(pos, scale, qua);
+
+			const clonedGeometry = planeGeometry.clone();
+			GeometryUtils.applyMatrix4(clonedGeometry, mat);
+			cubeGeometries.push(clonedGeometry);
+
+			multiDrawGroup.multiDrawStarts[i] = start * 2;
+			count = clonedGeometry.index.buffer.count;
+			multiDrawGroup.multiDrawCounts[i] = count;
+			start += count;
+		}
+		multiDrawGroup.multiDrawCount = multiDrawGroup.multiDrawCounts.length;
+		geometryGroup.count = start;
+		
+		const mergedGeometry = GeometryUtils.mergeGeometries(cubeGeometries);
+		mergedGeometry.groups = [multiDrawGroup];
+
+		// fix byte length for Uint32Array
+		if (mergedGeometry.index.buffer.array instanceof Uint32Array) {
+			const multiDrawStarts = multiDrawGroup.multiDrawStarts;
+			for (let i = 0, l = multiDrawStarts.length; i < l; i++) {
+				multiDrawStarts[i] *= 2;
+			}
+		}
+
+		console.timeEnd('merge geometry');
+
+		const mesh = new t3d.Mesh(mergedGeometry, [material]);
+		scene.add(mesh);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(50, 50, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const gui = new GUI();
+		gui.add({ useMultiDraw: true }, 'useMultiDraw').onChange(value => {
+			mergedGeometry.groups[0] = value ? multiDrawGroup : geometryGroup;
+		});
+		gui.add(multiDrawGroup, 'multiDrawCount', 0, multiDrawGroup.multiDrawCount, 1);
+
+		const stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.top = '0px';
+		canvas.parentElement.appendChild(stats.domElement);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+
+</html>

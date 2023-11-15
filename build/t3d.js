@@ -8060,8 +8060,8 @@
 
 			/**
 			 * Split the geometry into groups, each of which will be rendered in a separate WebGL draw call. This allows an array of materials to be used with the geometry.
-			 * Each group is an object of the form:
-			 * { start: Integer, count: Integer, materialIndex: Integer }
+			 * Each group is an object of the form: { start: Integer, count: Integer, materialIndex: Integer },
+			 * or { multiDrawStarts: Integer[], multiDrawCounts: Integer[], multiDrawCount: Integer, materialIndex: Integer } if multiDraw is available.
 			 * @type {Array}
 			 * @default []
 			 */
@@ -16259,22 +16259,26 @@
 			const gl = this.context;
 			const capabilities = this.capabilities;
 			const buffers = this._buffers;
-			const useIndexBuffer = geometry.index !== null;
-			const position = geometry.getAttribute('a_Position');
-			let drawStart = 0;
-			let drawCount = Infinity;
-			if (useIndexBuffer) {
-				drawCount = geometry.index.buffer.count;
-			} else if (position) {
-				drawCount = position.buffer.count;
-			}
-			const groupStart = group ? group.start : 0;
-			const groupCount = group ? group.count : Infinity;
-			drawStart = Math.max(drawStart, groupStart);
-			drawCount = Math.min(drawCount, groupCount);
-			if (drawCount < 0 || drawCount === Infinity) return;
 			const instanceCount = geometry.instanceCount;
 			const useInstancing = instanceCount >= 0;
+			const useGroup = !!group;
+			const useMultiDraw = useGroup && group.multiDrawCount !== undefined;
+			const useIndexBuffer = geometry.index !== null;
+			let drawStart = 0;
+			let drawCount = Infinity;
+			if (!useMultiDraw) {
+				const position = geometry.getAttribute('a_Position');
+				if (useIndexBuffer) {
+					drawCount = geometry.index.buffer.count;
+				} else if (position) {
+					drawCount = position.buffer.count;
+				}
+				if (useGroup) {
+					drawStart = Math.max(drawStart, group.start);
+					drawCount = Math.min(drawCount, group.count);
+				}
+				if (drawCount < 0 || drawCount === Infinity) return;
+			}
 			if (useIndexBuffer) {
 				const indexBufferProperties = buffers.get(geometry.index.buffer);
 				const bytesPerElement = indexBufferProperties.bytesPerElement;
@@ -16285,36 +16289,56 @@
 					}
 				}
 				if (useInstancing) {
-					if (instanceCount > 0) {
-						if (capabilities.version >= 2) {
-							gl.drawElementsInstanced(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
-						} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
-							capabilities.getExtension('ANGLE_instanced_arrays').drawElementsInstancedANGLE(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
-						} else {
-							console.warn('no support instanced draw.');
-							return;
-						}
+					if (instanceCount <= 0) return;
+					if (capabilities.version >= 2) {
+						gl.drawElementsInstanced(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
+					} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
+						capabilities.getExtension('ANGLE_instanced_arrays').drawElementsInstancedANGLE(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
+					} else {
+						console.warn('using instanced draw but hardware does not support.');
+						return;
 					}
+				} else if (useMultiDraw) {
+					if (group.multiDrawCount <= 0) return;
+					const extension = capabilities.getExtension('WEBGL_multi_draw');
+					if (!extension) {
+						console.warn('using multi draw but hardware does not support extension WEBGL_multi_draw.');
+						return;
+					}
+					extension.multiDrawElementsWEBGL(material.drawMode, group.multiDrawCounts, 0, type, group.multiDrawStarts, 0, group.multiDrawCount);
 				} else {
 					gl.drawElements(material.drawMode, drawCount, type, drawStart * bytesPerElement);
 				}
 			} else {
 				if (useInstancing) {
-					if (instanceCount > 0) {
-						if (capabilities.version >= 2) {
-							gl.drawArraysInstanced(material.drawMode, drawStart, drawCount, instanceCount);
-						} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
-							capabilities.getExtension('ANGLE_instanced_arrays').drawArraysInstancedANGLE(material.drawMode, drawStart, drawCount, instanceCount);
-						} else {
-							console.warn('no support instanced draw.');
-							return;
-						}
+					if (instanceCount <= 0) return;
+					if (capabilities.version >= 2) {
+						gl.drawArraysInstanced(material.drawMode, drawStart, drawCount, instanceCount);
+					} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
+						capabilities.getExtension('ANGLE_instanced_arrays').drawArraysInstancedANGLE(material.drawMode, drawStart, drawCount, instanceCount);
+					} else {
+						console.warn('using instanced draw but hardware does not support.');
+						return;
 					}
+				} else if (useMultiDraw) {
+					if (group.multiDrawCount <= 0) return;
+					const extension = capabilities.getExtension('WEBGL_multi_draw');
+					if (!extension) {
+						console.warn('using multi draw but hardware does not support extension WEBGL_multi_draw.');
+						return;
+					}
+					extension.multiDrawArraysWEBGL(material.drawMode, group.multiDrawStarts, 0, group.multiDrawCounts, 0, group.multiDrawCount);
 				} else {
 					gl.drawArrays(material.drawMode, drawStart, drawCount);
 				}
 			}
 			if (renderInfo) {
+				if (useMultiDraw) {
+					drawCount = 0;
+					for (let i = 0; i < group.multiDrawCount; i++) {
+						drawCount += group.multiDrawCounts[i];
+					}
+				}
 				renderInfo.update(drawCount, material.drawMode, instanceCount < 0 ? 1 : instanceCount);
 			}
 		}
