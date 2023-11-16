@@ -176,6 +176,7 @@
 		"webgl_depthfunc",
 		"webgl_instanced_draw",
 		"webgl_multi_draw",
+		"webgl_mesh_batch",
 		"webgl_polygonoffset",
 		"webgl_logarithmicDepthBuffer",
 		"webgl_canvas_transparent",

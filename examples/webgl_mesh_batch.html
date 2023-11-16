@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - webgl mesh batch</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - mesh batch<br/>
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebGL2 or WEBGL_multi_draw</div>
+	</div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { BatchedMesh } from 't3d/addons/objects/BatchedMesh.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { BatchedPBRMaterial } from 't3d/addons/materials/BatchedPBRMaterial.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const capabilities = forwardRenderer.capabilities;
+		if (!capabilities.getExtension('WEBGL_multi_draw') || capabilities.version < 2) {
+			document.getElementById('notSupported').style.display = '';
+			throw new Error('Not supported WebGL2 or WEBGL_multi_draw!');
+		}
+
+		const scene = new t3d.Scene();
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 2);
+		directionalLight.position.set(50, 20, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const pointLight = new t3d.PointLight(0x00d5ff, 2, 150, 1);
+		scene.add(pointLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 0, 80);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.enablePan = false;
+		controller.maxDistance = 200;
+		controller.autoRotate = true;
+		controller.autoRotateSpeed = 0.3;
+
+		//
+
+		const stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.top = '0px';
+		canvas.parentElement.appendChild(stats.domElement);
+
+		//
+
+		let mesh;
+
+		const ids = [];
+		const matrix = new t3d.Matrix4();
+
+		const position = new t3d.Vector3();
+		const rotation = new t3d.Euler();
+		const quaternion = new t3d.Quaternion();
+		const scale = new t3d.Vector3();
+
+		const MAX_GEOMETRY_COUNT = 8192 * 2;
+
+		const Method = {
+			BATCHED: 'BATCHED',
+			NAIVE: 'NAIVE'
+		};
+
+		const api = {
+			method: Method.BATCHED,
+			count: 512,
+			dynamic: 512
+		};
+
+		const planeGeometry = new t3d.PlaneGeometry(2, 2);
+		const material = new t3d.PBRMaterial();
+		material.side = t3d.DRAW_SIDE.DOUBLE;
+		const batchedMaterial = new BatchedPBRMaterial(material);
+		
+		initMesh();
+
+		function randomizeMatrix(matrix) {
+			position.x = Math.random() * 40 - 20;
+			position.y = Math.random() * 40 - 20;
+			position.z = Math.random() * 40 - 20;
+
+			rotation.x = Math.random() * 2 * Math.PI;
+			rotation.y = Math.random() * 2 * Math.PI;
+			rotation.z = Math.random() * 2 * Math.PI;
+
+			quaternion.setFromEuler(rotation);
+
+			scale.x = scale.y = scale.z = 0.5 + (Math.random() * 0.5);
+
+			return matrix.transform(position, scale, quaternion);
+		}
+
+		function randomizeRotationSpeed(rotation) {
+			rotation.x = Math.random() * 0.05;
+			rotation.y = Math.random() * 0.05;
+			rotation.z = Math.random() * 0.05;
+			return rotation;
+		}
+
+		function cleanup() {
+			if (mesh) {
+				mesh.parent.remove(mesh);
+
+				if (mesh instanceof BatchedMesh) {
+					mesh.geometry.dispose();
+					mesh._matricesTexture.dispose();
+				}
+			}
+		}
+
+		function initMesh() {
+			cleanup();
+
+			if (api.method === Method.BATCHED) {
+				initBatchedMesh();
+			} else {
+				initRegularMesh();
+			}
+		}
+
+		function initRegularMesh() {
+			mesh = new t3d.Object3D();
+
+			for (let i = 0; i < api.count; i++) {
+				const child = new t3d.Mesh(planeGeometry, material);
+				randomizeMatrix(child.matrix);
+				child.matrix.decompose(child.position, child.quaternion, child.scale);
+				child.userData.rotationSpeed = randomizeRotationSpeed(new t3d.Euler());
+				mesh.add(child);
+			}
+
+			scene.add(mesh);
+		}
+
+		function initBatchedMesh() {
+			const geometryCount = api.count;
+			const vertexCount = api.count * 4;
+			const indexCount = api.count * 6;
+
+			const euler = new t3d.Euler();
+			const quaternion = new t3d.Quaternion();
+			const matrix = new t3d.Matrix4();
+			mesh = new BatchedMesh(geometryCount, vertexCount, indexCount, batchedMaterial);
+			mesh.userData.rotationSpeeds = [];
+
+			ids.length = 0;
+
+			for (let i = 0; i < api.count; i++) {
+				const id = mesh.addGeometry(planeGeometry);
+				mesh.setMatrixAt(id, randomizeMatrix(matrix));
+
+				const rotationMatrix = new t3d.Matrix4();
+				quaternion.setFromEuler(randomizeRotationSpeed(euler));
+				rotationMatrix.makeRotationFromQuaternion(quaternion);
+				mesh.userData.rotationSpeeds.push(rotationMatrix);
+
+				ids.push(id);
+			}
+
+			scene.add(mesh);
+		}
+
+		function animateMeshes() {
+			const loopNum = Math.min(api.count, api.dynamic);
+
+			if (api.method === Method.BATCHED) {
+				for (let i = 0; i < loopNum; i++) {
+					const rotationMatrix = mesh.userData.rotationSpeeds[i];
+					const id = ids[i];
+
+					mesh.getMatrixAt(id, matrix);
+					matrix.multiply(rotationMatrix);
+					mesh.setMatrixAt(id, matrix);
+				}
+			} else {
+				for (let i = 0; i < loopNum; i++) {
+					const child = mesh.children[i];
+					const rotationSpeed = child.userData.rotationSpeed;
+
+					child.euler.set(
+						child.euler.x + rotationSpeed.x,
+						child.euler.y + rotationSpeed.y,
+						child.euler.z + rotationSpeed.z
+					);
+				}
+			}
+		}
+
+		//
+
+		const gui = new GUI();
+		gui.add(api, 'count', 1, MAX_GEOMETRY_COUNT).step(1).onChange(initMesh);
+		gui.add(api, 'dynamic', 0, MAX_GEOMETRY_COUNT).step(1);
+		gui.add(api, 'method', Method).onChange(initMesh);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			if (api.method === Method.BATCHED) {
+				mesh.update();
+			}
+
+			animateMeshes();
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
