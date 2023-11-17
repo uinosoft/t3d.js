@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - planar shadow</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - planar shadow
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { PlanarShadowShader } from 't3d/addons/shaders/PlanarShadowShader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+
+		renderer.setClearColor(0.6, 0.6, 0.6, 1);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x999999, 50, 1000);
+
+		const pbrMaterial = new t3d.PBRMaterial();
+		pbrMaterial.diffuse.setHex(0xBBBBBB);
+		pbrMaterial.metalness = 0;
+		pbrMaterial.roughness = 1;
+		pbrMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const sphere = new t3d.Mesh(new t3d.SphereGeometry(10, 32, 16), pbrMaterial);
+		sphere.position.set(30, 10, 15);
+		sphere.planarShadow = true;
+		scene.add(sphere);
+
+		const cylinder = new t3d.Mesh(new t3d.CylinderGeometry(0, 10, 20, 100, 50), pbrMaterial);
+		cylinder.position.set(-30, 10, 15);
+		cylinder.planarShadow = true;
+		scene.add(cylinder);
+
+		const cylinder2 = new t3d.Mesh(new t3d.CylinderGeometry(6, 6, 40, 32, 32), pbrMaterial);
+		cylinder2.position.set(0, 6, -40);
+		cylinder2.planarShadow = true;
+		cylinder2.euler.z = Math.PI / 2;
+		scene.add(cylinder2);
+
+		const plane_geometry = new t3d.PlaneGeometry(2000, 2000, 1, 1);
+		const plane_material = new t3d.LambertMaterial();
+		plane_material.diffuse.setHex(0x999999);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.position.y = -0.2;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.9);
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(-166.1, 70.7, 98.45);
+		camera.lookAt(new t3d.Vector3(0.85, -0.14, -0.49), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0.85, -0.14, -0.49);
+		controller.maxDistance = 500;
+
+		const planarShadowMaterial = new t3d.ShaderMaterial(PlanarShadowShader);
+		planarShadowMaterial.uniforms.height = 0.05;
+		planarShadowMaterial.transparent = true;
+		planarShadowMaterial.polygonOffset = true;
+		planarShadowMaterial.polygonOffsetFactor = -1;
+		planarShadowMaterial.polygonOffsetUnits = -1;
+
+		const helpVector = new t3d.Vector3();
+
+		const shadowRenderOptions = {
+			getMaterial: () => {
+				directionalLight.getWorldDirection(helpVector).toArray(planarShadowMaterial.uniforms.lightDir);
+				return planarShadowMaterial;
+			},
+			ifRender: ({ object }) => {
+				return object.planarShadow;
+			}
+		};
+
+		function setLightPosition(angle) {
+			directionalLight.position.x = -Math.sin(angle / 180 * Math.PI) * 100;
+			directionalLight.position.y = 100;
+			directionalLight.position.z = -Math.cos(angle / 180 * Math.PI) * 100;
+			directionalLight.lookAt(new t3d.Vector3(0, 25, 0), new t3d.Vector3(0, 1, 0));
+		}
+
+		setLightPosition(90);
+
+		const gui = new GUI();
+		const lightFolder = gui.addFolder('Light');
+		lightFolder.add(directionalLight, 'intensity', 0, 2, 0.01);
+		lightFolder.addColor(directionalLight, 'color');
+		lightFolder.add({ angle: 90 }, 'angle', 0, 360, 0.01).onChange(setLightPosition);
+		lightFolder.close();
+		const shadowFolder = gui.addFolder('Shadow');
+		shadowFolder.add(planarShadowMaterial.uniforms, 'height', -0.1, 0.5, 0.001);
+		shadowFolder.add(planarShadowMaterial.uniforms, 'shadowFalloff', 0, 1, 0.0001);
+		shadowFolder.addColor(planarShadowMaterial.uniforms, 'shadowColor');
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			scene.updateMatrix();
+			const renderStates = scene.updateRenderStates(camera);
+			const renderQueue = scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, true);
+			renderer.renderScene(scene, camera);
+
+			// Render planar shadows
+
+			renderer.beginRender();
+			for (let i = 0; i < renderQueue.layerList.length; i++) {
+				const renderQueueLayer = renderQueue.layerList[i];
+				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, shadowRenderOptions);
+				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, shadowRenderOptions);
+			}
+			renderer.endRender();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+
+</html>
