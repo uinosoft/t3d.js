@@ -14036,12 +14036,10 @@ class WebGLGeometries extends PropertyMap {
 		const geometryProperties = this.get(geometry);
 
 		// If in pass rendering, skip the geometry if it has been set in this pass.
-		if (passInfo.enabled) {
-			if (geometryProperties.pass === passInfo.count) {
-				return;
-			}
-			geometryProperties.pass = passInfo.count;
+		if (geometryProperties.pass === passInfo.count) {
+			return;
 		}
+		geometryProperties.pass = passInfo.count;
 
 		if (!geometryProperties.created) {
 			geometry.addEventListener('dispose', this._onGeometryDispose);
@@ -17791,6 +17789,11 @@ class WebGLRenderer extends ThinRenderer {
 			return;
 		}
 
+		if (!passInfo.enabled) {
+			console.warn('WebGLRenderer: beginRender must be called before renderRenderableItem.');
+			return;
+		}
+
 		const object = renderable.object;
 		const material = getMaterial.call(this, renderable);
 		const geometry = getGeometry.call(this, renderable);
@@ -17908,16 +17911,14 @@ class WebGLRenderer extends ThinRenderer {
 		}
 
 		let refreshMaterial = true;
-		if (passInfo.enabled) {
-			if (!material.forceUpdateUniforms) {
-				if (materialProperties.pass !== passInfo.count) {
-					materialProperties.pass = passInfo.count;
-				} else {
-					refreshMaterial = this._currentMaterial !== material;
-				}
+		if (!material.forceUpdateUniforms) {
+			if (materialProperties.pass !== passInfo.count) {
+				materialProperties.pass = passInfo.count;
+			} else {
+				refreshMaterial = this._currentMaterial !== material;
 			}
-			this._currentMaterial = material;
 		}
+		this._currentMaterial = material;
 
 		const uniforms = program.getUniforms();
 
@@ -18203,7 +18204,7 @@ class WebGLRenderer extends ThinRenderer {
 
 			if (type === gl.UNSIGNED_INT) {
 				if (capabilities.version < 2 && !capabilities.getExtension('OES_element_index_uint')) {
-					console.warn('draw elements type not support UNSIGNED_INT!');
+					console.warn('WebGLRenderer: draw elements type not support UNSIGNED_INT!');
 				}
 			}
 
@@ -18215,7 +18216,7 @@ class WebGLRenderer extends ThinRenderer {
 				} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 					capabilities.getExtension('ANGLE_instanced_arrays').drawElementsInstancedANGLE(material.drawMode, drawCount, type, drawStart * bytesPerElement, instanceCount);
 				} else {
-					console.warn('using instanced draw but hardware does not support.');
+					console.warn('WebGLRenderer: using instanced draw but hardware does not support.');
 					return;
 				}
 			} else if (useMultiDraw) {
@@ -18224,7 +18225,7 @@ class WebGLRenderer extends ThinRenderer {
 				const extension = capabilities.getExtension('WEBGL_multi_draw');
 
 				if (!extension) {
-					console.warn('using multi draw but hardware does not support extension WEBGL_multi_draw.');
+					console.warn('WebGLRenderer: using multi draw but hardware does not support extension WEBGL_multi_draw.');
 					return;
 				}
 
@@ -18241,7 +18242,7 @@ class WebGLRenderer extends ThinRenderer {
 				} else if (capabilities.getExtension('ANGLE_instanced_arrays')) {
 					capabilities.getExtension('ANGLE_instanced_arrays').drawArraysInstancedANGLE(material.drawMode, drawStart, drawCount, instanceCount);
 				} else {
-					console.warn('using instanced draw but hardware does not support.');
+					console.warn('WebGLRenderer: using instanced draw but hardware does not support.');
 					return;
 				}
 			} else if (useMultiDraw) {
@@ -18250,7 +18251,7 @@ class WebGLRenderer extends ThinRenderer {
 				const extension = capabilities.getExtension('WEBGL_multi_draw');
 
 				if (!extension) {
-					console.warn('using multi draw but hardware does not support extension WEBGL_multi_draw.');
+					console.warn('WebGLRenderer: using multi draw but hardware does not support extension WEBGL_multi_draw.');
 					return;
 				}
 
