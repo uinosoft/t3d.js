@@ -28,6 +28,7 @@
 
 	<script type="module">
 		import * as t3d from 't3d';
+		import { ColorGradient } from 't3d/addons/math/ColorGradient.js';
 		import { IDWMapGenerator } from 't3d/addons/textures/IDWMapGenerator.js';
 		import { GradientTextureGenerator } from 't3d/addons/textures/GradientTextureGenerator.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
@@ -59,9 +60,16 @@
 
 		const generator = new IDWMapGenerator(1024, 1024);
 
-		const gradientTexture = new GradientTextureGenerator().gradient({
-			0.1: 'blue', 0.4: 'cyan', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red'
-		}).getTexture();
+		const colorGradient = new ColorGradient()
+			.addColorStop(0.1, new t3d.Color3(0x0000ff))
+			.addColorStop(0.4, new t3d.Color3(0x00ffff))
+			.addColorStop(0.6, new t3d.Color3(0x00ff00))
+			.addColorStop(0.8, new t3d.Color3(0xffff00))
+			.addColorStop(1.0, new t3d.Color3(0xff0000));
+
+		const gradientTexture = new GradientTextureGenerator()
+			.gradient(colorGradient)
+			.getTexture();
 
 		const planeGeometry = new t3d.PlaneGeometry(50, 50);
 

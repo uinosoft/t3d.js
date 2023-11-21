@@ -1,39 +1,19 @@
 import { Texture2D, TEXTURE_FILTER } from 't3d';
 
-// TODO Optimize: Avoid canvas creation, use Data buffer instead.
 class GradientTextureGenerator {
 
-	constructor(width = 256, height = 1) {
-		const canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		const context = canvas.getContext('2d');
-
+	constructor(width = 256) {
 		const texture = new Texture2D();
+		texture.image = { data: null, width: width, height: 1 };
 		texture.magFilter = texture.minFilter = TEXTURE_FILTER.LINEAR;
 		texture.generateMipmaps = false;
-		texture.image = canvas;
-
-		this._canvas = canvas;
-		this._context = context;
 		this._texture = texture;
 	}
 
-	gradient(gradientData) {
-		const width = this._canvas.width;
-		const height = this._canvas.height;
-		const context = this._context;
+	gradient(colorGradient) {
 		const texture = this._texture;
-
-		const gradient = context.createLinearGradient(0, 0, width, 0);
-		for (const i in gradientData) {
-			gradient.addColorStop(+i, gradientData[i]);
-		}
-		context.fillStyle = gradient;
-		context.fillRect(0, 0, width, height);
-
+		texture.image.data = colorGradient.getUint8Array(texture.image.width);
 		texture.version++;
-
 		return this;
 	}
 
