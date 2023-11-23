@@ -88,6 +88,9 @@
 		"camera_controls_fly",
 		"camera_controls_free"
 	],
+	"controls": [
+		"controls_transform"
+	],
 	"scene": [
 		"scene_fog",
 		"scene_gamma_correction",

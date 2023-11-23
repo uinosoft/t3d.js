@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>t3d - transform controls</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - controls - transform
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { TransformControls } from 't3d/addons/controls/TransformControls.js';
+
+		// TODO: pick object to transform
+		// TODO: press key to switch transform mode
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 8, 10);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+		scene.add(camera);
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+
+		const boxGeometry = new t3d.BoxGeometry(1, 1, 1);
+		const boxMaterial = new t3d.BasicMaterial();
+		boxMaterial.diffuseMap = texture;
+		const box1 = new t3d.Mesh(boxGeometry, boxMaterial);
+		box1.position.set(-2, 0, 0);
+		box1.euler.set(Math.PI / 6, 0, Math.PI / 6);
+		scene.add(box1);
+		const box2 = new t3d.Mesh(boxGeometry, boxMaterial);
+		box2.position.set(2, 0, 0);
+		scene.add(box2);
+
+		const grid = new GridHelper(50, 50, 0xffffff, 0x888888);
+		scene.add(grid);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		camera.updateMatrix();
+		const transformControls = new TransformControls(camera);
+		transformControls.size = 0.8;
+		scene.add(transformControls);
+
+		box1.updateMatrix();
+		transformControls.group.addObject(box1);
+
+		const params = { box1: true, box2: false, translate: '0.00, 0.00, 0.00', rotate: '0.00, 0.00, 0.00', scale: '1.00, 1.00, 1.00' };
+		const gui = new GUI();
+		gui.add(transformControls, 'mode', ['translate', 'scale', 'rotate', 'all']);
+		gui.add(transformControls, 'size', 0.5, 1.5);
+		gui.add(transformControls.group, 'anchorType', ['center', 'pivot']);
+		gui.add(transformControls.group, 'coordinateType', ['local', 'global']);
+		gui.add(params, 'box1').onChange(value => {
+			if (value) {
+				transformControls.group.addObject(box1);
+			} else {
+				transformControls.group.deleteObject(box1);
+			}
+		});
+		gui.add(params, 'box2').onChange(value => {
+			if (value) {
+				transformControls.group.addObject(box2);
+			} else {
+				transformControls.group.deleteObject(box2);
+			}
+		});
+		const transformFolder = gui.addFolder('Transform');
+		transformFolder.add(params, 'translate').listen().disable();
+		transformFolder.add(params, 'rotate').listen().disable();
+		transformFolder.add(params, 'scale').listen().disable();
+
+		const tempWorldMatrix = new t3d.Matrix4();
+		const tempPosition = new t3d.Vector3();
+		const tempQuaternion = new t3d.Quaternion();
+		const tempScale = new t3d.Vector3();
+		const tempEuler = new t3d.Euler();
+
+		let panelRefreshTimer = 0;
+		const panelRefreshInterval = 200;
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.enabled = !transformControls.isDragging();
+			controller.update();
+
+			transformControls.update();
+
+			panelRefreshTimer += 1000 / 60;
+
+			if (panelRefreshTimer >= panelRefreshInterval) {
+				if (transformControls.group.objects.length > 1) {
+					transformControls.group.getWorldMatrix(tempWorldMatrix);
+					tempWorldMatrix.decompose(tempPosition, tempQuaternion, tempScale);
+					tempEuler.setFromQuaternion(tempQuaternion);
+				} else if (transformControls.group.objects.length > 0) {
+					const object = transformControls.group.objects[0];
+					tempPosition.copy(object.position);
+					tempEuler.copy(object.euler);
+					tempScale.copy(object.scale);
+				} else {
+					tempPosition.set(0, 0, 0);
+					tempEuler.set(0, 0, 0);
+					tempScale.set(1, 1, 1);
+				}
+
+				params.translate = `${tempPosition.x.toFixed(2)}, ${tempPosition.y.toFixed(2)}, ${tempPosition.z.toFixed(2)}`;
+				params.rotate = `${tempEuler.x.toFixed(2)}, ${tempEuler.y.toFixed(2)}, ${tempEuler.z.toFixed(2)}`;
+				params.scale = `${tempScale.x.toFixed(2)}, ${tempScale.y.toFixed(2)}, ${tempScale.z.toFixed(2)}`;
+
+				panelRefreshTimer = 0;
+			}
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+</html>

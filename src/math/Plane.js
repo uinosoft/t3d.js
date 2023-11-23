@@ -2,6 +2,7 @@ import { Vector3 } from './Vector3.js';
 import { Matrix3 } from './Matrix3.js';
 
 const _vec3_1 = new Vector3();
+const _vec3_2 = new Vector3();
 const _mat4_1 = new Matrix3();
 
 /**
@@ -56,6 +57,21 @@ class Plane {
 		this.normal.copy(normal);
 		this.constant = -point.dot(this.normal);
 
+		return this;
+	}
+
+	/**
+	 * Defines the plane based on the 3 provided points.
+	 * The winding order is assumed to be counter-clockwise, and determines the direction of the normal.
+	 * @param {t3d.Vector3} a - first point on the plane.
+	 * @param {t3d.Vector3} b - second point on the plane.
+	 * @param {t3d.Vector3} c - third point on the plane.
+	 * @returns
+	 */
+	setFromCoplanarPoints(a, b, c) {
+		const normal = _vec3_1.subVectors(c, b).cross(_vec3_2.subVectors(a, b)).normalize();
+		// Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
+		this.setFromNormalAndCoplanarPoint(normal, a);
 		return this;
 	}
 

@@ -88,6 +88,69 @@ class Ray {
 	}
 
 	/**
+	 * Get the distance of the closest approach between the Ray and the Plane.
+	 * @param {t3d.Plane} plane - the Plane to compute a distance to.
+	 * @return {Number}
+	 */
+	distanceToPlane(plane) {
+		const denominator = plane.normal.dot(this.direction);
+
+		if (denominator === 0) {
+			// line is coplanar, return origin
+			if (plane.distanceToPoint(this.origin) === 0) {
+				return 0;
+			}
+
+			// Null is preferable to undefined since undefined means.... it is undefined
+			return null;
+		}
+
+		const t = -(this.origin.dot(plane.normal) + plane.constant) / denominator;
+
+		// Return if the ray never intersects the plane
+		return t >= 0 ? t : null;
+	}
+
+	/**
+	 * Intersect this Ray with a Plane, returning the intersection point or null if there is no intersection.
+	 * @param {t3d.Plane} plane - the Plane to intersect with.
+	 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
+	 * @return {t3d.Vector3}
+	 */
+	intersectPlane(plane, optionalTarget = new Vector3()) {
+		const t = this.distanceToPlane(plane);
+
+		if (t === null) {
+			return null;
+		}
+
+		return this.at(t, optionalTarget);
+	}
+
+	/**
+	 * Return true if this Ray intersects with the Plane.
+	 * @param {t3d.Plane} plane - the plane to intersect with.
+	 * @return {Boolean}
+	 */
+	intersectsPlane(plane) {
+		// check if the ray lies on the plane first
+		const distToPoint = plane.distanceToPoint(this.origin);
+
+		if (distToPoint === 0) {
+			return true;
+		}
+
+		const denominator = plane.normal.dot(this.direction);
+
+		if (denominator * distToPoint < 0) {
+			return true;
+		}
+
+		// ray origin is behind the plane (and is pointing behind it)
+		return false;
+	}
+
+	/**
 	 * Return true if this Ray intersects with the Box3.
 	 * @param {t3d.Box3} box - the Box3 to intersect with.
 	 * @return {Boolean}
