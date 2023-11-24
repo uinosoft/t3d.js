@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - bitmap text</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - bitmap text<br/>
+		Reference to <a href="https://github.com/leochocolat/three-msdf-text-utils" target="_blank">three-msdf-text-utils</a>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { BitmapTextGeometry } from 't3d/addons/geometries/BitmapTextGeometry.js';
+		import { MSDFTextShader } from 't3d/addons/shaders/MSDFTextShader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 0, 1));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const fileLoader = new t3d.FileLoader();
+		fileLoader.setResponseType('json');
+		const textureLoader = new Texture2DLoader();
+		
+		Promise.all([
+			textureLoader.loadAsync('./resources/fonts/msdf/roboto-regular.png'),
+			fileLoader.loadAsync('./resources/fonts/msdf/roboto-regular.fnt')
+		]).then(([atlas, font]) => {
+			const params = {
+				text: 'Hello world! Hello world! Hello world! Hello world! Hello world! ',
+				font: font,
+				width: 1000,
+				mode: 'word-wrapper',
+				align: 'center',
+				letterSpacing: 0,
+				lineHeight: 100,
+				tabSize: 1
+			};
+		
+			const geometry = new BitmapTextGeometry(params);
+			const material = new t3d.ShaderMaterial(MSDFTextShader);
+			material.transparent = true;
+			material.side = t3d.DRAW_SIDE.DOUBLE;
+			material.uniforms.uMap = atlas;
+
+			const meshScalar = 0.08;
+		
+			const mesh = new t3d.Mesh(geometry, material);
+			mesh.scale.set(1, 1, 1).multiplyScalar(meshScalar);
+			mesh.euler.x = Math.PI;
+			mesh.position.x = -geometry.layout.width / 2 * meshScalar;
+			mesh.position.y = -geometry.layout.height / 2 * meshScalar;
+			scene.add(mesh);
+
+			function updateTexts() {
+				geometry.update(params);
+				mesh.position.x = -geometry.layout.width / 2 * meshScalar;
+				mesh.position.y = -geometry.layout.height / 2 * meshScalar;
+			}
+
+			const gui = new GUI();
+			const geometryFolder = gui.addFolder('geometry').onChange(updateTexts);
+			geometryFolder.add(params, 'text');
+			geometryFolder.add(params, 'width', 0, 1000, 1);
+			geometryFolder.add(params, 'mode', ['nowrap', 'pre', 'word-wrapper']);
+			geometryFolder.add(params, 'align', ['center', 'right', 'left']);
+			geometryFolder.add(params, 'letterSpacing', 0, 100, 1);
+			geometryFolder.add(params, 'lineHeight', 0, 100, 1);
+			geometryFolder.add(params, 'tabSize', 0, 100, 1);
+			const materialFolder = gui.addFolder('material').close();
+			materialFolder.addColor(material, 'diffuse').name('color');
+			materialFolder.add(material, 'opacity', 0, 1, 0.1);
+			materialFolder.add(material.uniforms, 'uAlphaTest', 0, 1, 0.1);
+			const strokeFolder = materialFolder.addFolder('stroke').close();
+			strokeFolder.add(material.defines, 'IS_STOKED').onChange(value => {
+				material.needsUpdate = true;
+			});
+			strokeFolder.addColor(material.uniforms, 'uStrokeColor');
+			strokeFolder.add(material.uniforms, 'uStrokeInsetWidth', 0, 0.5, 0.01);
+			strokeFolder.add(material.uniforms, 'uStrokeOutsetWidth', 0, 0.5, 0.01);
+			const smallFolder = materialFolder.addFolder('small').close();
+			smallFolder.add(material.defines, 'IS_SMALL').onChange(value => {
+				material.needsUpdate = true;
+			});
+			smallFolder.add(material.uniforms, 'uThreshold', 0, 0.5, 0.01);
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
