@@ -81,21 +81,21 @@
 		"material_clippingplanes",
 		"material_clearcoat"
 	],
-	"camera": [
-		"camera_cameras",
-		"camera_multiple",
-		"camera_controls_orbit",
-		"camera_controls_fly",
-		"camera_controls_free"
-	],
-	"controls": [
-		"controls_transform"
-	],
 	"scene": [
 		"scene_fog",
 		"scene_gamma_correction",
 		"scene_anchor",
 		"scene_clippingplanes"
+	],
+	"camera": [
+		"camera_cameras",
+		"camera_multiple"
+	],
+	"controls": [
+		"controls_camera_orbit",
+		"controls_camera_fly",
+		"controls_camera_free",
+		"controls_transform"
 	],
 	"probes": [
 		"probes_reflection"

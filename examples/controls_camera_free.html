@@ -2,13 +2,13 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>t3d - fly controller</title>
+	<title>t3d - camera free controls</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
     <div id="info">
-        <a href="" target="_blank">t3d</a> - fly controller
+        <a href="" target="_blank">t3d</a> - camera free controls
     </div>
 
 	<!-- Import maps polyfill -->
@@ -26,7 +26,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { FlyControls } from 't3d/addons/controls/FlyControls.js';
+		import { FreeControls } from 't3d/addons/controls/FreeControls.js';
 		import { Clock } from 't3d/addons/Clock.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 
@@ -65,19 +65,24 @@
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.position.set(40, 80, 100);
+		camera.position.set(0, 80, 100);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
-		const controller = new FlyControls(camera, canvas);
+		const controller = new FreeControls(camera, canvas);
+		controller.rotateSpeed = 1;
 
 		const clock = new Clock();
 
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			controller.update(clock.getDelta());
+			const change = controller.update(clock.getDelta());
+
+			if (change) {
+				console.info('camera change');
+			}
 
 			forwardRenderer.render(scene, camera);
 		}
