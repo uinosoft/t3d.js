@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - geometry images</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - geometry images<br/>
+		reference to <a href="https://hhoppe.com/proj/gim/" target="_blank">hhoppe.com/proj/gim/</a>
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support vertex textures</div>
+	</div>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from './jsm/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { Texture2DLoader } from './jsm/loaders/Texture2DLoader.js';
+		import { OrbitControls } from './jsm/controls/OrbitControls.js';
+
+		// TODO: use merged geometry instead of instanced geometry for better performance
+		// TODO: use uint attributes
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		if (forwardRenderer.capabilities.maxVertexTextures < 2) {
+			document.getElementById('notSupported').style.display = '';
+			console.error('Not supported vertex textures!');
+		}
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 2);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const mainTex = new Texture2DLoader().load('./resources/bunny.p65.gim257.fmp.bmp');
+		mainTex.wrapS = mainTex.wrapT = t3d.TEXTURE_WRAP.CLAMP_TO_EDGE;
+		const normalTex = new Texture2DLoader().load('./resources/bunny.p65.nim512.bmp');
+		normalTex.wrapS = normalTex.wrapT = t3d.TEXTURE_WRAP.CLAMP_TO_EDGE;
+
+		const shader = {
+			name: 'dynamic_mesh',
+			uniforms: {
+				u_gridSize: 1,
+				u_gridCount: 50,
+				u_mainTex: mainTex,
+				u_normalTex: normalTex
+			},
+			vertexShader: `
+				attribute float a_VertexID;
+				attribute float instanceID;
+
+				uniform float u_gridSize;
+				uniform float u_gridCount;
+
+				uniform sampler2D u_mainTex;
+				uniform sampler2D u_normalTex;
+
+				uniform mat4 u_ProjectionView;
+				uniform mat4 u_Model;
+
+				#ifdef FLAT_SHADED
+					varying vec3 v_modelPos;
+				#else
+					varying vec3 vNormal;
+				#endif
+				
+				void main() {
+					int x = int(instanceID) % int(u_gridCount); // mod(instanceID, u_gridCount)
+					int z = int(instanceID) / int(u_gridCount); // instanceID / u_gridCount
+
+					float checkFace = mod(instanceID , 2.);
+
+					vec2 points[4];
+					points[0] = vec2(float(x) * u_gridSize, float(z) * u_gridSize);
+					points[1] = points[0] + vec2(u_gridSize, 0.0);
+					points[3] = points[0] + vec2(0.0, u_gridSize);
+					points[2] = points[0] + vec2(u_gridSize, u_gridSize);
+
+					float invChunkSize = 1.0 / (u_gridSize * u_gridCount);
+					vec2 uv1 = vec2(points[int(a_VertexID)].x * invChunkSize, points[int(a_VertexID)].y * invChunkSize);
+					vec2 uv2 = vec2(points[(int(a_VertexID) + 2) % 4].x * invChunkSize, points[(int(a_VertexID) + 2) % 4].y * invChunkSize);
+					vec2 uv = checkFace == 0. ? uv1 : uv2;
+
+					vec3 pos = texture2D(u_mainTex, uv.xy).xyz;
+					gl_Position = u_ProjectionView * u_Model * vec4(pos, 1.0);
+
+					#ifdef FLAT_SHADED
+						v_modelPos = (u_Model * vec4(pos, 1.0)).xyz;
+					#else
+						vec3 normal = texture2D(u_normalTex, uv.xy).xyz;
+						vNormal = normal;
+					#endif
+				}
+			`,
+			fragmentShader: `
+				#ifdef FLAT_SHADED
+					varying vec3 v_modelPos;
+				#else
+					varying vec3 vNormal;
+				#endif
+
+				void main() {
+					#ifdef FLAT_SHADED
+						vec3 fdx = dFdx(v_modelPos);
+						vec3 fdy = dFdy(v_modelPos);
+						vec3 N = normalize(cross(fdx, fdy));
+						gl_FragColor =vec4(N * 0.5 + 0.5, 1.);
+					#else
+						gl_FragColor =vec4(vNormal, 1.);
+					#endif
+				}
+			`
+		};
+
+		const shaderMaterial = new t3d.ShaderMaterial(shader);
+		shaderMaterial.uniforms.u_mainTex = mainTex;
+		shaderMaterial.uniforms.u_normalTex = normalTex;
+
+		const maxGridCount = 200;
+
+		const instancedGeometry = new t3d.Geometry();
+		instancedGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array([0, 0, 0]), 3))); // just a placeholder
+		const vertexIDArray = new Float32Array([0, 1, 2, 3]);
+		instancedGeometry.addAttribute('a_VertexID', new t3d.Attribute(new t3d.Buffer(vertexIDArray, 1)));
+		const indicesArray = new Uint16Array([0, 1, 2, 0, 2, 3]);
+		instancedGeometry.setIndex(new t3d.Attribute(new t3d.Buffer(indicesArray, 1)));
+		const maxCount = 2 * maxGridCount * maxGridCount;
+		const instanceIDArray = new Float32Array(maxCount);
+		for (let i = 0; i < maxGridCount; i++) {
+			for (let j = 0; j < maxGridCount; j++) {
+				const gridIndex = i * maxGridCount + j;
+				instanceIDArray[2 * gridIndex] = gridIndex;
+				instanceIDArray[2 * gridIndex + 1] = gridIndex;
+			}
+		}
+		const instanceIDAttribute = new t3d.Attribute(new t3d.Buffer(instanceIDArray, 1));
+		instanceIDAttribute.divisor = 1;
+		instancedGeometry.addAttribute('instanceID', instanceIDAttribute);
+
+		instancedGeometry.instanceCount = 50 * 50 * 2;
+
+		const instancedMesh = new t3d.Mesh(instancedGeometry, shaderMaterial);
+		instancedMesh.position.set(-0.5, -0.5, -0.5);
+		instancedMesh.frustumCulled = false;
+		scene.add(instancedMesh);
+
+		const gui = new GUI();
+		gui.add(shaderMaterial.uniforms, 'u_gridCount', 20, maxGridCount, 1).name('gridCount').onChange(value => {
+			instancedGeometry.instanceCount = value * value * 2;
+		});
+		gui.add({ flatShading: false }, 'flatShading').onChange(value => {
+			shaderMaterial.shading = value ? t3d.SHADING_TYPE.FLAT_SHADING : t3d.SHADING_TYPE.SMOOTH_SHADING;
+			shaderMaterial.needsUpdate = true;
+		});
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+		
+			controller.update();
+		
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

@@ -204,6 +204,7 @@
 		"lab_ik",
 		"lab_gltf_grass",
 		"lab_geometry_grass",
+		"lab_geometry_images",
 		"lab_terrain",
 		"lab_water_simulation",
 		"lab_path_finding"
