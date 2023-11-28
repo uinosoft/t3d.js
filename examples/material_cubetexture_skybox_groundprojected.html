@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - ground projected skybox</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info" class="dark">
+        <a href="" target="_blank">t3d</a> - ground projected skybox
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { RGBELoader } from 't3d/addons/loaders/RGBELoader.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { DRACOLoader } from 't3d/addons/loaders/DRACOLoader.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { PMREM } from 't3d/addons/PMREM.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GroundProjectedSkyboxShader } from 't3d/addons/shaders/GroundProjectedSkyboxShader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const bodyMaterial = new t3d.PBRMaterial();
+		bodyMaterial.diffuse.setHex(0x000000);
+		bodyMaterial.metalness = 1.0;
+		bodyMaterial.roughness = 0.8;
+		bodyMaterial.clearcoat = 1.0,
+		bodyMaterial.clearcoatRoughness = 0.0;
+
+		const detailsMaterial = new t3d.PBRMaterial();
+		detailsMaterial.diffuse.setHex(0xffffff);
+		detailsMaterial.metalness = 1.0;
+		detailsMaterial.roughness = 0.5;
+
+		const glassMaterial = new t3d.PBRMaterial();
+		glassMaterial.transparent = true;
+		glassMaterial.opacity = 0.5;
+		glassMaterial.diffuse.setHex(0xffffff);
+		glassMaterial.metalness = 0.25;
+		glassMaterial.roughness = 0;
+
+		const shadow = new Texture2DLoader().load('./resources/models/gltf/ferrari/ferrari_ao.png');
+		const shadowMaterial = new t3d.BasicMaterial();
+		shadowMaterial.transparent = true;
+		shadowMaterial.diffuseMap = shadow;
+		shadowMaterial.blending = t3d.BLEND_TYPE.MUL;
+		shadowMaterial.envMap = undefined;
+
+		const dracoLoader = new DRACOLoader();
+		dracoLoader.setDecoderPath('libs/draco/');
+		const gltfloader = new GLTFLoader();
+		gltfloader.setDRACOLoader(dracoLoader);
+
+		gltfloader.load(
+			'./resources/models/gltf/ferrari/ferrari.glb'
+		).then(function(result) {
+			const object = result.root;
+
+			object.getObjectByName('body').material = bodyMaterial;
+
+			object.getObjectByName('rim_fl').material = detailsMaterial;
+			object.getObjectByName('rim_fr').material = detailsMaterial;
+			object.getObjectByName('rim_rr').material = detailsMaterial;
+			object.getObjectByName('rim_rl').material = detailsMaterial;
+			object.getObjectByName('trim').material = detailsMaterial;
+
+			object.getObjectByName('glass').material = glassMaterial;
+
+			object.scale.multiplyScalar(4);
+
+			const mesh = new t3d.Mesh(
+				new t3d.PlaneGeometry(0.655 * 4, 1.3 * 4),
+				shadowMaterial
+			);
+			object.add(mesh);
+
+			scene.add(object);
+		});
+
+		new RGBELoader().load('resources/hdr/blouberg_sunrise_2_1k.hdr', function(textureData) {
+			let texture = new t3d.Texture2D();
+			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
+			texture.version++;
+		
+			texture.type = textureData.type;
+			texture.format = textureData.format;
+
+			texture.magFilter = textureData.magFilter;
+			texture.minFilter = textureData.minFilter;
+			texture.flipY = textureData.flipY;
+			texture.generateMipmaps = textureData.generateMipmaps;
+
+			texture = PMREM.prefilterEnvironmentMap(forwardRenderer, texture, {
+				sampleSize: 1024
+			});
+
+			const geometry = new t3d.BoxGeometry(1, 1, 1);
+			const material = new t3d.ShaderMaterial(GroundProjectedSkyboxShader);
+			material.side = t3d.DRAW_SIDE.BACK;
+			material.defines.PANORAMA = false;
+			material.defines.GAMMA = true;
+			material.cubeMap = texture;
+			material.uniforms.height = 20;
+			material.uniforms.radius = 440;
+			const skyBox = new t3d.Mesh(geometry, material);
+			skyBox.frustumCulled = false;
+			scene.add(skyBox);
+
+			scene.environment = texture;
+
+			const gui = new GUI();
+			gui.add(material.uniforms, 'height', 10, 50);
+			gui.add(material.uniforms, 'radius', 200, 600);
+		});
+
+		const light = new t3d.DirectionalLight(0xffffff, 0.2);
+		light.position.set(5, 5, 5);
+		scene.add(light);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(20, 7, -20);
+		camera.setPerspective(40 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 2, 0);
+		controller.maxPolarAngle = Math.PI / 2;
+		controller.maxDistance = 80;
+		controller.minDistance = 20;
+		controller.enablePan = false;
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(40 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
