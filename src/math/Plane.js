@@ -66,7 +66,7 @@ class Plane {
 	 * @param {t3d.Vector3} a - first point on the plane.
 	 * @param {t3d.Vector3} b - second point on the plane.
 	 * @param {t3d.Vector3} c - third point on the plane.
-	 * @returns
+	 * @return {t3d.Plane}
 	 */
 	setFromCoplanarPoints(a, b, c) {
 		const normal = _vec3_1.subVectors(c, b).cross(_vec3_2.subVectors(a, b)).normalize();
