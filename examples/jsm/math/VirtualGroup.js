@@ -42,6 +42,8 @@ class VirtualGroup {
 	}
 
 	addObject(object) {
+		const index = this._objects.indexOf(object);
+		if (index > -1) return;
 		this._objects.push(object);
 		this._dirtyFlag |= DirtyFlag.All;
 	}

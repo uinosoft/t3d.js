@@ -6,13 +6,12 @@ import { TorusBuilder } from '../geometries/builders/TorusBuilder.js';
 import { VirtualGroup } from '../math/VirtualGroup.js';
 import { Raycaster } from '../Raycaster.js';
 
-// TODO: Add dispose method
 // TODO: Support snapping
 // TODO: Optimize gizmo picking
 // TODO: Optimize xyz rotate
 class TransformControls extends Object3D {
 
-	constructor(camera) {
+	constructor(camera, domElement) {
 		super();
 
 		const group = new VirtualGroup();
@@ -31,6 +30,8 @@ class TransformControls extends Object3D {
 		this.add(scaleControl);
 		this.add(rotateControl);
 
+		this._domElement = domElement;
+
 		this._mode = '';
 		this._camera = camera;
 		this._group = group;
@@ -43,6 +44,11 @@ class TransformControls extends Object3D {
 		this._raycaster = new Raycaster();
 
 		this.mode = 'translate';
+
+		this._onPointDown = this._onPointDown.bind(this);
+		this._onPointMove = this._onPointMove.bind(this);
+		this._onPointUp = this._onPointUp.bind(this);
+
 		this._addEventListeners();
 	}
 
@@ -95,48 +101,75 @@ class TransformControls extends Object3D {
 		this._controlMap.forEach(control => control.update(isModify));
 	}
 
+	dispose() {
+		this._removeEventListeners();
+
+		this.traverse(child => {
+			if (child.isMesh) {
+				child.geometry.dispose();
+				child.material.dispose();
+			}
+		});
+
+		this._group.reset();
+	}
+
 	_addEventListeners() {
-		document.addEventListener('pointerdown', e => {
+		const element = this._domElement;
+		element.addEventListener('pointerdown', this._onPointDown);
+		element.addEventListener('pointermove', this._onPointMove);
+		element.addEventListener('pointerup', this._onPointUp);
+	}
+
+	_removeEventListeners() {
+		const element = this._domElement;
+		element.removeEventListener('pointerdown', this._onPointDown);
+		element.removeEventListener('pointermove', this._onPointMove);
+		element.removeEventListener('pointerup', this._onPointUp);
+	}
+
+	_onPointDown(e) {
+		const selectedObject = this._selectGizmoMesh(e.clientX, e.clientY);
+		if (selectedObject) {
+			this._triggerGizmoStart(selectedObject.parent.name, selectedObject.name);
+		}
+	}
+
+	_onPointMove(e) {
+		if (!this._currentDraggingControl) {
+			this._onGizmoHoverEnd();
+
 			const selectedObject = this._selectGizmoMesh(e.clientX, e.clientY);
 			if (selectedObject) {
-				this._triggerGizmoStart(selectedObject.parent.name, selectedObject.name);
+				this._onGizmoHoverStart(selectedObject.parent.name, selectedObject.name);
 			}
-		});
-
-		document.addEventListener('pointermove', e => {
-			if (!this._currentDraggingControl) {
-				this._onGizmoHoverEnd();
-
-				const selectedObject = this._selectGizmoMesh(e.clientX, e.clientY);
-				if (selectedObject) {
-					this._onGizmoHoverStart(selectedObject.parent.name, selectedObject.name);
-				}
-			} else {
-				if (this._mode === 'all') {
-					this._controlMap.forEach(control => {
-						if (control !== this._currentDraggingControl) control.visible = false;
-					});
-				}
-
-				this._setRaycaster(e.clientX, e.clientY);
-				this._currentDraggingControl.onMove(this._raycaster.ray);
+		} else {
+			if (this._mode === 'all') {
+				this._controlMap.forEach(control => {
+					if (control !== this._currentDraggingControl) control.visible = false;
+				});
 			}
-		});
 
-		document.addEventListener('pointerup', () => {
-			if (this._currentDraggingControl) {
-				this._triggerGizmoEnd();
+			this._setRaycaster(e.clientX, e.clientY);
+			this._currentDraggingControl.onMove(this._raycaster.ray);
+		}
+	}
 
-				if (this._mode === 'all') {
-					this._controlMap.forEach(control => control.visible = true);
-				}
+	_onPointUp(e) {
+		if (this._currentDraggingControl) {
+			this._triggerGizmoEnd();
+
+			if (this._mode === 'all') {
+				this._controlMap.forEach(control => control.visible = true);
 			}
-		});
+		}
 	}
 
 	_setRaycaster(clientX, clientY) {
-		_vec2_1.x = (clientX / window.innerWidth) * 2 - 1;
-		_vec2_1.y = -(clientY / window.innerHeight) * 2 + 1;
+		const element = this._domElement;
+
+		_vec2_1.x = (clientX / element.clientWidth) * 2 - 1;
+		_vec2_1.y = -(clientY / element.clientHeight) * 2 + 1;
 
 		this._raycaster.setFromCamera(_vec2_1, this._camera);
 	}
@@ -366,22 +399,20 @@ class TranslateControl extends BaseControl {
 			}
 		});
 
-		if (this._currPoint && this._startPoint) {
-			_vec3_1.x = this._currPoint.x - (this._startPoint.x / _startScale) * currScale;
-			_vec3_1.y = this._currPoint.y - (this._startPoint.y / _startScale) * currScale;
-			_vec3_1.z = this._currPoint.z - (this._startPoint.z / _startScale) * currScale;
+		_vec3_1.x = this._currPoint.x - (this._startPoint.x / _startScale) * currScale;
+		_vec3_1.y = this._currPoint.y - (this._startPoint.y / _startScale) * currScale;
+		_vec3_1.z = this._currPoint.z - (this._startPoint.z / _startScale) * currScale;
 
-			const localAxis = axisVector[this._selectedAxis];
+		const localAxis = axisVector[this._selectedAxis];
 
-			_mat4_1.identity();
-			_mat4_1.elements[12] = _vec3_1.x * localAxis.x;
-			_mat4_1.elements[13] = _vec3_1.y * localAxis.y;
-			_mat4_1.elements[14] = _vec3_1.z * localAxis.z;
+		_mat4_1.identity();
+		_mat4_1.elements[12] = _vec3_1.x * localAxis.x;
+		_mat4_1.elements[13] = _vec3_1.y * localAxis.y;
+		_mat4_1.elements[14] = _vec3_1.z * localAxis.z;
 
-			_mat4_1.premultiply(this._startGroupMatrix);
+		_mat4_1.premultiply(this._startGroupMatrix);
 
-			this._group.setWorldMatrix(_mat4_1);
-		}
+		this._group.setWorldMatrix(_mat4_1);
 	}
 
 	onMoveEnd() {
@@ -544,30 +575,28 @@ class ScaleControl extends BaseControl {
 		this._calRayIntersection(ray, this._currPoint);
 		const { _factorVec: factorVec } = this;
 
-		if (this._currPoint && this._startPoint) {
-			if (this._selectedAxis === 'xyz') {
-				const start = this._startPoint.getLength();
-				const end = this._currPoint.getLength();
+		if (this._selectedAxis === 'xyz') {
+			const start = this._startPoint.getLength();
+			const end = this._currPoint.getLength();
 
-				_vec3_1.x = end / start;
-				_vec3_1.y = end / start;
-				_vec3_1.z = end / start;
-			} else { // x y z
-				_vec3_1.subVectors(this._currPoint, this._startPoint);
-				_vec3_1.x = _vec3_1.x * factorVec.x + 1;
-				_vec3_1.y = _vec3_1.y * factorVec.y + 1;
-				_vec3_1.z = _vec3_1.z * factorVec.z + 1;
-			}
-
-			_mat4_1.identity();
-			_mat4_1.elements[0] = _vec3_1.x;
-			_mat4_1.elements[5] = _vec3_1.y;
-			_mat4_1.elements[10] = _vec3_1.z;
-
-			_mat4_1.premultiply(this._startGroupMatrix);
-
-			this._group.setWorldMatrix(_mat4_1);
+			_vec3_1.x = end / start;
+			_vec3_1.y = end / start;
+			_vec3_1.z = end / start;
+		} else { // x y z
+			_vec3_1.subVectors(this._currPoint, this._startPoint);
+			_vec3_1.x = _vec3_1.x * factorVec.x + 1;
+			_vec3_1.y = _vec3_1.y * factorVec.y + 1;
+			_vec3_1.z = _vec3_1.z * factorVec.z + 1;
 		}
+
+		_mat4_1.identity();
+		_mat4_1.elements[0] = _vec3_1.x;
+		_mat4_1.elements[5] = _vec3_1.y;
+		_mat4_1.elements[10] = _vec3_1.z;
+
+		_mat4_1.premultiply(this._startGroupMatrix);
+
+		this._group.setWorldMatrix(_mat4_1);
 	}
 
 	onMoveEnd() {

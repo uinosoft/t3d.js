@@ -9,6 +9,7 @@
 <body>
     <div id="info">
         <a href="" target="_blank">t3d</a> - transform controls
+		<br/>"W" translate | "E" rotate | "R" scale | "A" all
     </div>
 
     <!-- Import maps polyfill -->
@@ -32,9 +33,7 @@
 		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { TransformControls } from 't3d/addons/controls/TransformControls.js';
-
-		// TODO: pick object to transform
-		// TODO: press key to switch transform mode
+		import { Raycaster } from 't3d/addons/Raycaster.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -60,13 +59,17 @@
 		const boxGeometry = new t3d.BoxGeometry(1, 1, 1);
 		const boxMaterial = new t3d.BasicMaterial();
 		boxMaterial.diffuseMap = texture;
+
+		const boxes = [];
 		const box1 = new t3d.Mesh(boxGeometry, boxMaterial);
 		box1.position.set(-2, 0, 0);
 		box1.euler.set(Math.PI / 6, 0, Math.PI / 6);
 		scene.add(box1);
+		boxes.push(box1);
 		const box2 = new t3d.Mesh(boxGeometry, boxMaterial);
 		box2.position.set(2, 0, 0);
 		scene.add(box2);
+		boxes.push(box2);
 
 		const grid = new GridHelper(50, 50, 0xffffff, 0x888888);
 		scene.add(grid);
@@ -74,33 +77,66 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		camera.updateMatrix();
-		const transformControls = new TransformControls(camera);
-		transformControls.size = 0.8;
+		const transformControls = new TransformControls(camera, canvas);
 		scene.add(transformControls);
 
 		box1.updateMatrix();
 		transformControls.group.addObject(box1);
 
+		const raycaster = new Raycaster();
+		const mouse = new t3d.Vector2();
+		let shiftKeyPressed = false;
+
+		document.addEventListener('mousedown', event => {
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+			raycaster.setFromCamera(mouse, camera);
+
+			const array = raycaster.intersectObjects(boxes, true);
+			if (array.length) {
+				const object = array[0].object;
+				if (!shiftKeyPressed) {
+					transformControls.group.reset();
+				}
+				transformControls.group.addObject(object);
+			}
+		});
+
+		document.addEventListener('keydown', event => {
+			switch (event.key) {
+				case 'w':
+					transformControls.mode = 'translate';
+					break;
+				case 'r':
+					transformControls.mode = 'scale';
+					break;
+				case 'e':
+					transformControls.mode = 'rotate';
+					break;
+				case 'a':
+					transformControls.mode = 'all';
+					break;
+				case 'Shift':
+					shiftKeyPressed = true;
+					break;
+			}
+		});
+
+		document.addEventListener('keyup', event => {
+			switch (event.key) {
+				case 'Shift':
+					shiftKeyPressed = false;
+					break;
+			}
+		});
+
 		const params = { box1: true, box2: false, translate: '0.00, 0.00, 0.00', rotate: '0.00, 0.00, 0.00', scale: '1.00, 1.00, 1.00' };
 		const gui = new GUI();
-		gui.add(transformControls, 'mode', ['translate', 'scale', 'rotate', 'all']);
+		gui.add(transformControls, 'mode', ['translate', 'scale', 'rotate', 'all']).listen();
 		gui.add(transformControls, 'size', 0.5, 1.5);
 		gui.add(transformControls.group, 'anchorType', ['center', 'pivot']);
 		gui.add(transformControls.group, 'coordinateType', ['local', 'global']);
-		gui.add(params, 'box1').onChange(value => {
-			if (value) {
-				transformControls.group.addObject(box1);
-			} else {
-				transformControls.group.deleteObject(box1);
-			}
-		});
-		gui.add(params, 'box2').onChange(value => {
-			if (value) {
-				transformControls.group.addObject(box2);
-			} else {
-				transformControls.group.deleteObject(box2);
-			}
-		});
 		const transformFolder = gui.addFolder('Transform');
 		transformFolder.add(params, 'translate').listen().disable();
 		transformFolder.add(params, 'rotate').listen().disable();
