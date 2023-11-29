@@ -81,6 +81,9 @@
 			material.side = t3d.DRAW_SIDE.DOUBLE;
 			material.uniforms.uMap = atlas;
 
+			const debugMaterial = new t3d.BasicMaterial();
+			debugMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
 			const meshScalar = 0.08;
 		
 			const mesh = new t3d.Mesh(geometry, material);
@@ -97,6 +100,9 @@
 			}
 
 			const gui = new GUI();
+			gui.add({ debug: false }, 'debug').onChange(value => {
+				mesh.material = value ? debugMaterial : material;
+			});
 			const geometryFolder = gui.addFolder('geometry').onChange(updateTexts);
 			geometryFolder.add(params, 'text');
 			geometryFolder.add(params, 'width', 0, 1000, 1);

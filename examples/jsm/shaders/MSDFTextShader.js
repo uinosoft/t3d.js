@@ -10,7 +10,7 @@ const MSDFTextShader = {
 	uniforms: {
 		uMap: null,
 		uAlphaTest: 0.01,
-		uStrokeColor: [255, 0, 0],
+		uStrokeColor: [1, 0, 0],
 		uStrokeOutsetWidth: 0,
 		uStrokeInsetWidth: 0.3,
 		uThreshold: 0.05
