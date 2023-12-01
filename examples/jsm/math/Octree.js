@@ -1,176 +1,113 @@
-import { Vector3, Box3, Triangle } from 't3d';
+import { Vector3, Box3 } from 't3d';
 
 class Octree {
 
-	static generateOctreeFromNode(node, maxDepth = 5) {
-		const triangles = [], box = new Box3();
-
-		function addTriangle(triangle) {
-			box.min.x = Math.min(box.min.x, triangle.a.x, triangle.b.x, triangle.c.x);
-			box.min.y = Math.min(box.min.y, triangle.a.y, triangle.b.y, triangle.c.y);
-			box.min.z = Math.min(box.min.z, triangle.a.z, triangle.b.z, triangle.c.z);
-			box.max.x = Math.max(box.max.x, triangle.a.x, triangle.b.x, triangle.c.x);
-			box.max.y = Math.max(box.max.y, triangle.a.y, triangle.b.y, triangle.c.y);
-			box.max.z = Math.max(box.max.z, triangle.a.z, triangle.b.z, triangle.c.z);
-
-			triangles.push(triangle);
-		}
-
-		node.traverse(child => {
-			if (child.isMesh) {
-				const geometry = child.geometry;
-				const isIndexed = !!geometry.index;
-
-				const positionBuffer = geometry.getAttribute('a_Position').buffer;
-				const positionArray = positionBuffer.array;
-
-				if (isIndexed) {
-					const indexArray = geometry.index.buffer.array;
-					for (let i = 0; i < indexArray.length; i += 3) {
-						const a = indexArray[i];
-						const b = indexArray[i + 1];
-						const c = indexArray[i + 2];
-
-						const v1 = new Vector3().fromArray(positionArray, a * 3);
-						const v2 = new Vector3().fromArray(positionArray, b * 3);
-						const v3 = new Vector3().fromArray(positionArray, c * 3);
-
-						v1.applyMatrix4(child.worldMatrix);
-						v2.applyMatrix4(child.worldMatrix);
-						v3.applyMatrix4(child.worldMatrix);
-
-						const triangle = new Triangle(v1, v2, v3);
-						triangle._belong = child;
-
-						addTriangle(triangle);
-					}
-				} else {
-					for (let i = 0; i < positionBuffer.count; i += 3) {
-						const v1 = new Vector3().fromArray(positionArray, i * 3);
-						const v2 = new Vector3().fromArray(positionArray, (i + 1) * 3);
-						const v3 = new Vector3().fromArray(positionArray, (i + 2) * 3);
-
-						v1.applyMatrix4(child.worldMatrix);
-						v2.applyMatrix4(child.worldMatrix);
-						v3.applyMatrix4(child.worldMatrix);
-
-						const triangle = new Triangle(v1, v2, v3);
-						triangle._belong = child;
-
-						addTriangle(triangle);
-					}
-				}
-			}
-		});
-
-		// offset small amount to account for regular grid
-		box.min.x -= 0.01;
-		box.min.y -= 0.01;
-		box.min.z -= 0.01;
-
-		const octree = new Octree(box, maxDepth);
-		octree.triangles = triangles;
-
-		return octree.split(0);
-	}
-
-	constructor(box, maxDepth = 5) {
+	constructor(box = new Box3(), depth = 0) {
 		this.box = box;
-		this.maxDepth = maxDepth;
+		this.depth = depth;
 
-		this.triangles = [];
 		this.subTrees = [];
+
+		this.elements = [];
+
+		this.elementTest = function(box, element) {
+			return box.containsPoint(element);
+		};
 	}
 
-	split(level) {
-		const subTrees = [];
-		const halfSize = vec_0.copy(this.box.max).sub(this.box.min).multiplyScalar(0.5);
+	isEmpty() {
+		return this.elements.length === 0 && this.subTrees.length === 0;
+	}
 
-		for (let x = 0; x < 2; x++) {
-			for (let y = 0; y < 2; y++) {
-				for (let z = 0; z < 2; z++) {
-					const box = new Box3();
-					const v = vec_1.set(x, y, z);
+	divideElements(maxDepth = 5, capacity = 8) {
+		const { depth, subTrees, elements, elementTest } = this;
 
-					box.min.copy(this.box.min).add(v.multiply(halfSize));
-					box.max.copy(box.min).add(halfSize);
+		if (depth >= maxDepth || elements.length <= capacity) return;
 
-					subTrees.push(new Octree(box, this.maxDepth));
+		this.subdivide();
+
+		// distribute elements to subTrees
+		let element = this.elements.pop();
+		while (element) {
+			for (let i = 0; i < subTrees.length; i++) {
+				if (elementTest(subTrees[i].box, element)) {
+					subTrees[i].elements.push(element);
 				}
 			}
+			element = this.elements.pop();
 		}
 
-		let triangle = this.triangles.pop();
+		// recursive call
+		subTrees.forEach(subTree => subTree.divideElements(maxDepth, capacity));
+	}
 
-		while (triangle) {
-			for (let i = 0; i < subTrees.length; i++) {
-				if (subTrees[i].box.intersectsTriangle(triangle)) {
-					subTrees[i].triangles.push(triangle);
-				}
-			}
-			triangle = this.triangles.pop();
+	addElement(element, maxDepth = 5, capacity = 8) {
+		const { box, depth, subTrees, elements, elementTest } = this;
+
+		if (!elementTest(box, element)) return false;
+
+		if (elements.length <= capacity || depth >= maxDepth) {
+			elements.push(element);
+			return true;
+		}
+
+		if (subTrees.length === 0) {
+			this.subdivide();
 		}
 
 		for (let i = 0; i < subTrees.length; i++) {
-			const len = subTrees[i].triangles.length;
-
-			if (len > 8 && level < this.maxDepth) {
-				subTrees[i].split(level + 1);
-			}
-
-			if (len !== 0) {
-				this.subTrees.push(subTrees[i]);
+			if (subTrees[i].addElement(element, maxDepth, capacity)) {
+				return true;
 			}
 		}
-
-		return this;
 	}
 
-	getRayTriangles(ray, triangles) {
-		for (let i = 0; i < this.subTrees.length; i++) {
-			const subTree = this.subTrees[i];
-			if (!ray.intersectsBox(subTree.box)) continue;
+	removeElement(element) {
+		const elements = this.elements;
+		const index = elements.indexOf(element);
 
-			if (subTree.triangles.length > 0) {
-				for (let j = 0; j < subTree.triangles.length; j++) {
-					if (triangles.indexOf(subTree.triangles[j]) === -1) triangles.push(subTree.triangles[j]);
-				}
-			} else {
-				subTree.getRayTriangles(ray, triangles);
+		if (index !== -1) {
+			elements.splice(index, 1);
+			return true;
+		}
+
+		const subTrees = this.subTrees;
+
+		for (let i = 0; i < subTrees.length; i++) {
+			if (subTrees[i].removeElement(element)) {
+				return true;
 			}
 		}
 
-		return triangles;
+		return false;
 	}
 
-	rayIntersect(ray) {
-		if (ray.direction.getLength() === 0) return;
+	subdivide() {
+		const halfSize = _vec3_1.copy(this.box.max).sub(this.box.min).multiplyScalar(0.5);
+		_subdivideArray.forEach((v, i) => {
+			const box = new Box3();
 
-		const triangles = [];
-		let triangle, position, distance = 1e100;
+			box.min.copy(this.box.min).add(_vec3_2.copy(v).multiply(halfSize));
+			box.max.copy(box.min).add(halfSize);
 
-		this.getRayTriangles(ray, triangles);
-
-		for (let i = 0; i < triangles.length; i++) {
-			const result = ray.intersectTriangle(triangles[i].a, triangles[i].b, triangles[i].c, true, vec_1);
-
-			if (result) {
-				const tempDistnce = result.sub(ray.origin).getLength();
-
-				if (distance > tempDistnce) {
-					position = result.clone().add(ray.origin);
-					distance = tempDistnce;
-					triangle = triangles[i];
-				}
-			}
-		}
-
-		return distance < 1e100 ? { distance: distance, triangle: triangle, position: position, target: triangle.belong } : null;
+			this.subTrees[i] = new this.constructor(box, this.depth + 1);
+		});
 	}
 
 }
 
-const vec_0 = new Vector3();
-const vec_1 = new Vector3();
+const _subdivideArray = [
+	new Vector3(0, 0, 0),
+	new Vector3(0, 0, 1),
+	new Vector3(0, 1, 0),
+	new Vector3(0, 1, 1),
+	new Vector3(1, 0, 0),
+	new Vector3(1, 0, 1),
+	new Vector3(1, 1, 0),
+	new Vector3(1, 1, 1)
+];
+
+const _vec3_1 = new Vector3();
+const _vec3_2 = new Vector3();
 
 export { Octree };

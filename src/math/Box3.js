@@ -156,12 +156,32 @@ class Box3 {
 
 	/**
 	 * Returns the center point of the box as a Vector3.
-	 * @param {t3d.Vector3} optionalTarget - the result will be copied into this Vector3.
+	 * @param {t3d.Vector3} target - the result will be copied into this Vector3.
 	 * @return {t3d.Vector3}
 	 */
-	getCenter(optionalTarget) {
-		const result = optionalTarget || new Vector3();
-		return this.isEmpty() ? result.set(0, 0, 0) : result.addVectors(this.min, this.max).multiplyScalar(0.5);
+	getCenter(target = new Vector3()) {
+		return this.isEmpty() ? target.set(0, 0, 0) : target.addVectors(this.min, this.max).multiplyScalar(0.5);
+	}
+
+	/**
+	 * Returns the width, height and depth of this box.
+	 * @param {t3d.Vector3} target - the result will be copied into this Vector3.
+	 * @return {t3d.Vector3}
+	 */
+	getSize(target = new Vector3()) {
+		return this.isEmpty() ? target.set(0, 0, 0) : target.subVectors(this.max, this.min);
+	}
+
+	/**
+	 * Computes the union of this box and box,
+	 * setting the upper bound of this box to the greater of the two boxes' upper bounds and the lower bound of this box to the lesser of the two boxes' lower bounds.
+	 * @param {t3d.Box3} box - Box that will be unioned with this box.
+	 * @return {t3d.Box3}
+	 */
+	union(box) {
+		this.min.min(box.min);
+		this.max.max(box.max);
+		return this;
 	}
 
 	/**
@@ -186,6 +206,17 @@ class Box3 {
 		this.setFromPoints(_points);
 
 		return this;
+	}
+
+	/**
+	 * Returns true if the specified point lies within or on the boundaries of this box.
+	 * @param {t3d.Vector3} point - Vector3 to check for inclusion.
+	 * @return {Boolean}
+	 */
+	containsPoint(point) {
+		return point.x < this.min.x || point.x > this.max.x ||
+			point.y < this.min.y || point.y > this.max.y ||
+			point.z < this.min.z || point.z > this.max.z ? false : true;
 	}
 
 	/**

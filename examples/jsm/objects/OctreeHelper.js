@@ -19,6 +19,8 @@ class OctreeHelper extends Mesh {
 
 		const traverse = tree => {
 			for (let i = 0; i < tree.length; i++) {
+				if (tree[i].isEmpty()) continue;
+
 				const min = tree[i].box.min;
 				const max = tree[i].box.max;
 

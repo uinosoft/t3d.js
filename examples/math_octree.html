@@ -32,7 +32,7 @@
         import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
         import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
         import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
-        import { Octree } from 't3d/addons/math/Octree.js';
+        import { TrianglesOctree } from 't3d/addons/math/TrianglesOctree.js';
         import { OctreeHelper } from 't3d/addons/objects/OctreeHelper.js';
         import { GUI } from './libs/lil-gui.esm.min.js';
         import Stats from './libs/stats.module.js';
@@ -94,7 +94,7 @@
         	scene.updateMatrix();
         
         	console.time('generate-octree');
-        	let worldOctree = Octree.generateOctreeFromNode(object, 3);
+        	let worldOctree = TrianglesOctree.fromNode(object, 3);
         	console.timeEnd('generate-octree');
 
         	const helper = new OctreeHelper();
@@ -107,7 +107,7 @@
         	const gui = new GUI();
         	gui.add({ maxDepth: 3 }, 'maxDepth', [0, 1, 2, 3, 4]).onChange(value => {
         		console.time('generate-octree');
-        		worldOctree = Octree.generateOctreeFromNode(object, value);
+        		worldOctree = TrianglesOctree.fromNode(object, value);
         		console.timeEnd('generate-octree');
         		console.time('helper-update');
         		helper.update(worldOctree, false);
