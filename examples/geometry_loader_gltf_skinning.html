@@ -121,13 +121,6 @@
 			const skeletonHelper = new SkeletonHelper(scene);
 
 			const gui = new GUI();
-			gui.add(params, 'skeleton').onChange(value => {
-				if (value) {
-					scene.add(skeletonHelper);
-				} else {
-					scene.remove(skeletonHelper);
-				}
-			});
 			gui.add(params, 'clipName', animNames).onChange(value => {
 				const lastActionIndex = actionIndex;
 
@@ -144,7 +137,20 @@
 				}
 			});
 			gui.add(params, 'timeScale', -2, 2, 0.1);
-			gui.close();
+		
+			const skeleton = gui.addFolder('Skeleton').close();
+			skeleton.add(params, 'skeleton').onChange(value => {
+				if (value) {
+					scene.add(skeletonHelper);
+				} else {
+					scene.remove(skeletonHelper);
+				}
+			});
+			skeleton.addColor(skeletonHelper, 'colorMax');
+			skeleton.addColor(skeletonHelper, 'colorMin');
+			skeleton.add(skeletonHelper, 'midStep', 0, 1, 0.01);
+			skeleton.add(skeletonHelper, 'midWidthScale', 0, 1, 0.01);
+			skeleton.add(skeletonHelper, 'ballScale', 0, 1, 0.01);
 		}).catch(e => console.error(e));
 
 		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
