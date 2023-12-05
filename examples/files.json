@@ -171,7 +171,8 @@
 		"custompass_gpupick",
 		"custompass_lensflare",
 		"custompass_transmission",
-		"custompass_shadow_planar"
+		"custompass_shadow_planar",
+		"custompass_oit"
 	],
 	"deferred": [
 		"deferred_renderer",
