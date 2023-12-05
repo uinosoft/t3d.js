@@ -2106,7 +2106,10 @@ const BLEND_TYPE = {
 const BLEND_EQUATION = {
 	ADD: 100,
 	SUBTRACT: 101,
-	REVERSE_SUBTRACT: 102
+	REVERSE_SUBTRACT: 102,
+	/** Only webgl2 */
+	MIN: 103,
+	MAX: 104
 };
 
 /**
@@ -2316,9 +2319,7 @@ const SHADOW_TYPE = {
 	PCF5_SOFT: 'pcf5_soft',
 	/** Only webgl2 */
 	PCSS16_SOFT: 'pcss16_soft',
-	/** Only webgl2 */
 	PCSS32_SOFT: 'pcss32_soft',
-	/** Only webgl2 */
 	PCSS64_SOFT: 'pcss64_soft'
 };
 
@@ -16074,7 +16075,9 @@ class WebGLState {
 		this.blendEquationToGL = {
 			[BLEND_EQUATION.ADD]: gl.FUNC_ADD,
 			[BLEND_EQUATION.SUBTRACT]: gl.FUNC_SUBTRACT,
-			[BLEND_EQUATION.REVERSE_SUBTRACT]: gl.FUNC_REVERSE_SUBTRACT
+			[BLEND_EQUATION.REVERSE_SUBTRACT]: gl.FUNC_REVERSE_SUBTRACT,
+			[BLEND_EQUATION.MIN]: gl.MIN,
+			[BLEND_EQUATION.MAX]: gl.MAX
 		};
 
 		this.blendFactorToGL = {
