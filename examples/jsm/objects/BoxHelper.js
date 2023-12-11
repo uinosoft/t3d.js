@@ -4,9 +4,9 @@ import {
 	Geometry,
 	LineMaterial,
 	Mesh,
-	Box3,
-	Matrix4
+	Box3
 } from 't3d';
+import { SceneUtils } from '../SceneUtils.js';
 
 class BoxHelper extends Mesh {
 
@@ -35,7 +35,7 @@ class BoxHelper extends Mesh {
 		}
 
 		if (this.object !== undefined) {
-			setFromObject(_box3_1, this.object);
+			SceneUtils.setBox3FromObject(this.object, this.object, _box3_1);
 		}
 
 		if (_box3_1.isEmpty()) return;
@@ -94,54 +94,5 @@ class BoxHelper extends Mesh {
 BoxHelper.prototype.isBoxHelper = true;
 
 const _box3_1 = new Box3();
-const _box3_2 = new Box3();
-const _mat4_1 = new Matrix4();
-
-function setFromObject(box, object) {
-	box.makeEmpty();
-
-	return expandByObject(box, object, object);
-}
-
-function expandByObject(box, object, root) {
-	const geometry = object.geometry;
-
-	if (geometry !== undefined) {
-		geometry.computeBoundingBox();
-
-		getMatrixFromRoot(object, root, _mat4_1);
-
-		_box3_2.copy(geometry.boundingBox);
-		_box3_2.applyMatrix4(_mat4_1);
-
-		box.expandByBox3(_box3_2);
-	}
-
-	const children = object.children;
-
-	for (let i = 0, l = children.length; i < l; i++) {
-		expandByObject(box, children[i], root);
-	}
-
-	return this;
-}
-
-function getMatrixFromRoot(node, root, target) {
-	target.identity();
-
-	let tempNode = node;
-
-	while (tempNode !== root && tempNode !== null) {
-		if (tempNode.matrixAutoUpdate || tempNode.matrixNeedsUpdate) {
-			tempNode.updateMatrix();
-		}
-
-		target.premultiply(tempNode.matrix);
-
-		tempNode = tempNode.parent;
-	}
-
-	return target;
-}
 
 export { BoxHelper };

@@ -34,6 +34,7 @@
 		import { InstancedPBRMaterial } from 't3d/addons/materials/InstancedPBRMaterial.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { SceneUtils } from 't3d/addons/SceneUtils.js';
 		import Stats from './libs/stats.module.js';
 
 		const devicePixelRatio = window.devicePixelRatio;
@@ -168,24 +169,6 @@
 
 		let mixer;
 
-		function getMatrixFromRoot(node, root, target) {
-			target.identity();
-
-			let tempNode = node;
-
-			while (tempNode !== root && tempNode !== null) {
-				if (tempNode.matrixAutoUpdate || tempNode.matrixNeedsUpdate) {
-					tempNode.updateMatrix();
-				}
-
-				target.premultiply(tempNode.matrix);
-
-				tempNode = tempNode.parent;
-			}
-
-			return target;
-		}
-
 		function onBone(node, root) {
 			let tempNode = node;
 
@@ -231,13 +214,13 @@
 					// We should insert instanceMatrix to modelMatrix
 					// So we use < inverseMat4(instanceOffset) * instanceMatrix * instanceOffset > to convert instance matrix to vertex space
 
-					getMatrixFromRoot(node, object, offsetMatrix);
+					SceneUtils.getRelativeMatrixFromRoot(node, object, offsetMatrix);
 					offsetMatrix.toArray(material.uniforms.instanceOffset);
 					if (onBone(node, object)) {
 						// Fix if instanceOffset is changing
 						// Most of the time it's because the mesh is mounted under the skeleton
 						node.onBeforeRender = function() {
-							getMatrixFromRoot(node, object, offsetMatrix);
+							SceneUtils.getRelativeMatrixFromRoot(node, object, offsetMatrix);
 							offsetMatrix.toArray(material.uniforms.instanceOffset);
 						};
 					}
