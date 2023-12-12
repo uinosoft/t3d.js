@@ -1,14 +1,11 @@
 import {
-	Object3D, Vector2, Vector3, Euler, Plane, Matrix4, Quaternion, Sphere,
+	Object3D, Vector2, Vector3, Euler, Plane, Matrix4, Quaternion,
 	Mesh, BasicMaterial, CylinderGeometry, PlaneGeometry, BoxGeometry, SphereGeometry, Geometry, Attribute, Buffer, DRAW_SIDE, DRAW_MODE
 } from 't3d';
 import { TorusBuilder } from '../geometries/builders/TorusBuilder.js';
 import { VirtualGroup } from '../math/VirtualGroup.js';
 import { Raycaster } from '../Raycaster.js';
 
-// TODO: Support snapping
-// TODO: Optimize gizmo picking
-// TODO: Optimize xyz rotate
 class TransformControls extends Object3D {
 
 	constructor(camera, domElement) {
@@ -50,6 +47,10 @@ class TransformControls extends Object3D {
 		this._onPointUp = this._onPointUp.bind(this);
 
 		this._addEventListeners();
+
+		this.onDragStart = null;
+		this.onDragEnd = null;
+		this.onDrag = null;
 	}
 
 	get group() {
@@ -92,8 +93,28 @@ class TransformControls extends Object3D {
 		return this._controlMap.get('translate').size;
 	}
 
-	isDragging() {
-		return !!this._currentDraggingControl;
+	set translateSnap(value) {
+		this._controlMap.get('translate').snap = value;
+	}
+
+	get translateSnap() {
+		return this._controlMap.get('translate').snap;
+	}
+
+	set scaleSnap(value) {
+		this._controlMap.get('scale').snap = value;
+	}
+
+	get scaleSnap() {
+		return this._controlMap.get('scale').snap;
+	}
+
+	set rotateSnap(value) {
+		this._controlMap.get('rotate').snap = value;
+	}
+
+	get rotateSnap() {
+		return this._controlMap.get('rotate').snap;
 	}
 
 	update() {
@@ -129,13 +150,18 @@ class TransformControls extends Object3D {
 	}
 
 	_onPointDown(e) {
+		if (!this.visible) return;
+
 		const selectedObject = this._selectGizmoMesh(e.clientX, e.clientY);
 		if (selectedObject) {
 			this._triggerGizmoStart(selectedObject.parent.name, selectedObject.name);
+			this.onDragStart && this.onDragStart();
 		}
 	}
 
 	_onPointMove(e) {
+		if (!this.visible) return;
+
 		if (!this._currentDraggingControl) {
 			this._onGizmoHoverEnd();
 
@@ -152,12 +178,16 @@ class TransformControls extends Object3D {
 
 			this._setRaycaster(e.clientX, e.clientY);
 			this._currentDraggingControl.onMove(this._raycaster.ray);
+			this.onDrag && this.onDrag();
 		}
 	}
 
 	_onPointUp(e) {
+		if (!this.visible) return;
+
 		if (this._currentDraggingControl) {
 			this._triggerGizmoEnd();
+			this.onDragEnd && this.onDragEnd();
 
 			if (this._mode === 'all') {
 				this._controlMap.forEach(control => control.visible = true);
@@ -238,6 +268,14 @@ const _mat4_1 = new Matrix4();
 
 const _quat_1 = new Quaternion();
 
+const _euler_1 = new Euler();
+const _euler_2 = new Euler();
+
+// for snap
+const _position = new Vector3();
+const _scale = new Vector3();
+const _quaternion = new Quaternion();
+
 const axisVector = {
 	'x': new Vector3(1, 0, 0),
 	'y': new Vector3(0, 1, 0),
@@ -270,14 +308,29 @@ class BaseControl extends Object3D {
 		this._camera = camera;
 		this._group = group;
 
+		this._startGroupMatrix = new Matrix4();
+		this._startGroupMatrixInverse = new Matrix4();
+		this._startLocalMatrix = new Matrix4();
+
 		this.size = 1;
+
+		this.snap = null;
 	}
 
 	onHoverStart(axisName) {}
 
 	onHoverEnd() {}
 
-	onMoveStart(ray, axisName) {}
+	onMoveStart(ray, axisName) {
+		const group = this._group;
+
+		group.getWorldMatrix(this._startGroupMatrix);
+		this._startGroupMatrixInverse.getInverse(this._startGroupMatrix);
+
+		if (group.objects.length > 0) {
+			this._startLocalMatrix.copy(group.objects[0].matrix);
+		}
+	}
 
 	onMove(ray) {}
 
@@ -300,8 +353,6 @@ class TranslateControl extends BaseControl {
 		this._scale = 1;
 
 		this._plane = new Plane();
-		this._startGroupMatrix = new Matrix4();
-		this._startGroupMatrixInverse = new Matrix4();
 
 		this._currPoint = new Vector3();
 		this._startPoint = new Vector3();
@@ -316,11 +367,19 @@ class TranslateControl extends BaseControl {
 		this.add(lineX);
 		this.add(arrowX);
 
+		const pickX = new GizmoMesh('pickAxis', 'x', [1.0, 1.0, 1.0], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2));
+		pickX.visible = false;
+		this.add(pickX);
+
 		const lineY = new GizmoMesh('line', 'y', [0.5, 0.8, 0.2], new Vector3(0, 0.75, 0), new Euler(0, 0, 0), 1.5);
 		const arrowY = new GizmoMesh('arrow', 'y', [0.5, 0.8, 0.2], new Vector3(0, 1.5, 0), new Euler(0, 0, 0));
 		this._translateControlMap.set('y', [lineY, arrowY]);
 		this.add(lineY);
 		this.add(arrowY);
+
+		const pickY = new GizmoMesh('pickAxis', 'y', [1.0, 1.0, 1.0], new Vector3(0, 0.75, 0), new Euler(0, 0, 0));
+		pickY.visible = false;
+		this.add(pickY);
 
 		const lineZ = new GizmoMesh('line', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0), 1.5);
 		const arrowZ = new GizmoMesh('arrow', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 1.5), new Euler(Math.PI / 2, 0, 0));
@@ -328,17 +387,33 @@ class TranslateControl extends BaseControl {
 		this.add(lineZ);
 		this.add(arrowZ);
 
-		const planeXY = new GizmoMesh('plane', 'xy', [0.3, 0.5, 1.0], new Vector3(0.15, 0.15, 0), new Euler(Math.PI / 2, 0, 0));
+		const pickZ = new GizmoMesh('pickAxis', 'z', [1.0, 1.0, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0));
+		pickZ.visible = false;
+		this.add(pickZ);
+
+		const planeXY = new GizmoMesh('plane', 'xy', [0.3, 0.5, 1.0], new Vector3(0.15, 0.15, 0), new Euler(Math.PI / 2, 0, 0), 0.3);
 		this._translateControlMap.set('xy', [planeXY]);
 		this.add(planeXY);
 
-		const planeYZ = new GizmoMesh('plane', 'yz', [1.0, 0.25, 0.25], new Vector3(0, 0.15, 0.15), new Euler(0, 0, Math.PI / 2));
+		const pickXY = new GizmoMesh('plane', 'xy', [1.0, 1.0, 1.0], new Vector3(0.25, 0.25, 0), new Euler(Math.PI / 2, 0, 0), 0.5);
+		pickXY.visible = false;
+		this.add(pickXY);
+
+		const planeYZ = new GizmoMesh('plane', 'yz', [1.0, 0.25, 0.25], new Vector3(0, 0.15, 0.15), new Euler(0, 0, Math.PI / 2), 0.3);
 		this._translateControlMap.set('yz', [planeYZ]);
 		this.add(planeYZ);
 
-		const planeXZ = new GizmoMesh('plane', 'xz', [0.5, 0.8, 0.2], new Vector3(0.15, 0, 0.15), null);
+		const pickYZ = new GizmoMesh('plane', 'yz', [1.0, 1.0, 1.0], new Vector3(0, 0.25, 0.25), new Euler(0, 0, Math.PI / 2), 0.5);
+		pickYZ.visible = false;
+		this.add(pickYZ);
+
+		const planeXZ = new GizmoMesh('plane', 'xz', [0.5, 0.8, 0.2], new Vector3(0.15, 0, 0.15), null, 0.3);
 		this._translateControlMap.set('xz', [planeXZ]);
 		this.add(planeXZ);
+
+		const pickXZ = new GizmoMesh('plane', 'xz', [1.0, 1.0, 1.0], new Vector3(0.25, 0, 0.25), null, 0.5);
+		pickXZ.visible = false;
+		this.add(pickXZ);
 
 		const helperX = new GizmoMesh('axishelper', 'x', [1, 1, 0], new Vector3(-1e3, 0, 0), null);
 		helperX.visible = false;
@@ -371,8 +446,7 @@ class TranslateControl extends BaseControl {
 	onMoveStart(ray, axisName) {
 		this._selectedAxis = axisName;
 
-		this._group.getWorldMatrix(this._startGroupMatrix);
-		this._startGroupMatrixInverse.getInverse(this._startGroupMatrix);
+		super.onMoveStart(ray, axisName);
 
 		this._startScale = this._scale;
 
@@ -405,10 +479,16 @@ class TranslateControl extends BaseControl {
 
 		const localAxis = axisVector[this._selectedAxis];
 
+		_vec3_1.x *= localAxis.x;
+		_vec3_1.y *= localAxis.y;
+		_vec3_1.z *= localAxis.z;
+
+		this._applySnap(_vec3_1);
+
 		_mat4_1.identity();
-		_mat4_1.elements[12] = _vec3_1.x * localAxis.x;
-		_mat4_1.elements[13] = _vec3_1.y * localAxis.y;
-		_mat4_1.elements[14] = _vec3_1.z * localAxis.z;
+		_mat4_1.elements[12] = _vec3_1.x;
+		_mat4_1.elements[13] = _vec3_1.y;
+		_mat4_1.elements[14] = _vec3_1.z;
 
 		_mat4_1.premultiply(this._startGroupMatrix);
 
@@ -487,6 +567,40 @@ class TranslateControl extends BaseControl {
 		this.scale.multiplyScalar(factor);
 	}
 
+	_applySnap(target) {
+		const snap = this.snap;
+
+		if (!snap) return;
+
+		const group = this._group;
+
+		if (group.coordinateType === 'global' || group.objects.length > 1) {
+			this._startGroupMatrix.decompose(_position, _quaternion, _scale);
+		} else {
+			this._startLocalMatrix.decompose(_position, _quaternion, _scale);
+		}
+
+		_position.applyQuaternion(_quaternion.conjugate());
+
+		if (target.x !== 0) {
+			target.x += _position.x;
+			target.x = Math.round(target.x / snap) * snap;
+			target.x -= _position.x;
+		}
+
+		if (target.y !== 0) {
+			target.y += _position.y;
+			target.y = Math.round(target.y / snap) * snap;
+			target.y -= _position.y;
+		}
+
+		if (target.z !== 0) {
+			target.z += _position.z;
+			target.z = Math.round(target.z / snap) * snap;
+			target.z -= _position.z;
+		}
+	}
+
 }
 
 class ScaleControl extends BaseControl {
@@ -499,8 +613,6 @@ class ScaleControl extends BaseControl {
 		this._selectedAxis = null;
 
 		this._plane = new Plane();
-		this._startGroupMatrix = new Matrix4();
-		this._startGroupMatrixInverse = new Matrix4();
 
 		this._currPoint = new Vector3();
 		this._startPoint = new Vector3();
@@ -512,22 +624,34 @@ class ScaleControl extends BaseControl {
 
 	_createAxis() {
 		const lineX = new GizmoMesh('line', 'x', [1.0, 0.25, 0.25], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2), 1.3);
-		const cubeX = new GizmoMesh('box', 'x', [1.0, 0.25, 0.25], new Vector3(1.3, 0, 0), new Euler(0, 0, 0), 0.25);
+		const cubeX = new GizmoMesh('box', 'x', [1.0, 0.25, 0.25], new Vector3(1.3, 0, 0), new Euler(0, 0, 0), 0.2);
 		this._scaleControlMap.set('x', [lineX, cubeX]);
 		this.add(lineX);
 		this.add(cubeX);
 
+		const pickX = new GizmoMesh('pickAxis', 'x', [1.0, 1.0, 1.0], new Vector3(0.75, 0, 0), new Euler(0, 0, -Math.PI / 2));
+		pickX.visible = false;
+		this.add(pickX);
+
 		const lineY = new GizmoMesh('line', 'y', [0.5, 0.8, 0.2], new Vector3(0, 0.75, 0), new Euler(0, 0, 0), 1.3);
-		const cubeY = new GizmoMesh('box', 'y', [0.5, 0.8, 0.2], new Vector3(0, 1.3, 0), new Euler(0, 0, 0), 0.25);
+		const cubeY = new GizmoMesh('box', 'y', [0.5, 0.8, 0.2], new Vector3(0, 1.3, 0), new Euler(0, 0, 0), 0.2);
 		this._scaleControlMap.set('y', [lineY, cubeY]);
 		this.add(lineY);
 		this.add(cubeY);
 
+		const pickY = new GizmoMesh('pickAxis', 'y', [1.0, 1.0, 1.0], new Vector3(0, 0.75, 0), new Euler(0, 0, 0));
+		pickY.visible = false;
+		this.add(pickY);
+
 		const lineZ = new GizmoMesh('line', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0), 1.3);
-		const cubeZ = new GizmoMesh('box', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 1.3), new Euler(0, 0, 0), 0.25);
+		const cubeZ = new GizmoMesh('box', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 1.3), new Euler(0, 0, 0), 0.2);
 		this._scaleControlMap.set('z', [lineZ, cubeZ]);
 		this.add(lineZ);
 		this.add(cubeZ);
+
+		const pickZ = new GizmoMesh('pickAxis', 'z', [1.0, 1.0, 1.0], new Vector3(0, 0, 0.75), new Euler(Math.PI / 2, 0, 0));
+		pickZ.visible = false;
+		this.add(pickZ);
 
 		const cubeXYZ = new GizmoMesh('box', 'xyz', [0.75, 0.75, 0.75], new Vector3(0, 0, 0), new Euler(0, 0, 0), 0.32);
 		this._scaleControlMap.set('xyz', [cubeXYZ]);
@@ -549,8 +673,7 @@ class ScaleControl extends BaseControl {
 	onMoveStart(ray, axisName) {
 		this._selectedAxis = axisName;
 
-		this._group.getWorldMatrix(this._startGroupMatrix);
-		this._startGroupMatrixInverse.getInverse(this._startGroupMatrix);
+		super.onMoveStart(ray, axisName);
 
 		this._getHitPlane();
 		this._calRayIntersection(ray, this._startPoint);
@@ -588,6 +711,8 @@ class ScaleControl extends BaseControl {
 			_vec3_1.y = _vec3_1.y * factorVec.y + 1;
 			_vec3_1.z = _vec3_1.z * factorVec.z + 1;
 		}
+
+		this._applySnap(_vec3_1);
 
 		_mat4_1.identity();
 		_mat4_1.elements[0] = _vec3_1.x;
@@ -667,6 +792,34 @@ class ScaleControl extends BaseControl {
 		}
 	}
 
+	_applySnap(target) {
+		const snap = this.snap;
+
+		if (!snap) return;
+
+		const { _factorVec: factorVec } = this;
+
+		this._startLocalMatrix.decompose(_position, _quaternion, _scale);
+
+		if (factorVec.x !== 0) {
+			target.x *= _scale.x;
+			target.x = Math.round(target.x / snap) * snap || snap;
+			target.x /= _scale.x;
+		}
+
+		if (factorVec.y !== 0) {
+			target.y *= _scale.y;
+			target.y = Math.round(target.y / snap) * snap || snap;
+			target.y /= _scale.y;
+		}
+
+		if (factorVec.z !== 0) {
+			target.z *= _scale.z;
+			target.z = Math.round(target.z / snap) * snap || snap;
+			target.z /= _scale.z;
+		}
+	}
+
 }
 
 class RotateControl extends BaseControl {
@@ -678,6 +831,7 @@ class RotateControl extends BaseControl {
 		this.rotateCircleRadiusE = 1.4;
 
 		this._rotateControlMap = new Map();
+		this._pickHelper = new Map();
 		this._lineHelperE = null;
 		this._lineHelperS = null;
 		this._rotateHelper = null;
@@ -685,9 +839,6 @@ class RotateControl extends BaseControl {
 		this._selectedAxis = null;
 
 		this._plane = new Plane();
-		this._sphere = new Sphere();
-		this._startGroupMatrix = new Matrix4();
-		this._startGroupMatrixInverse = new Matrix4();
 
 		this._startPointUnit = new Vector3();
 		this._currPointUnit = new Vector3();
@@ -706,17 +857,33 @@ class RotateControl extends BaseControl {
 		const axisE = new GizmoMesh('torus', 'e', [0.7, 0.7, 0.7], new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadiusE, Math.PI * 2);
 		this._rotateControlMap.set('e', axisE);
 		this.add(axisE);
+		const pickE = new GizmoMesh('torus', 'e', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadiusE, Math.PI * 2, 0.2);
+		pickE.visible = false;
+		this._pickHelper.set('e', pickE);
+		this.add(pickE);
 		const axisZ = new GizmoMesh('torus', 'z', [0.3, 0.5, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, -Math.PI / 2), this.rotateCircleRadius);
 		this._rotateControlMap.set('z', axisZ);
 		this.add(axisZ);
+		const pickZ = new GizmoMesh('torus', 'z', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, -Math.PI / 2), this.rotateCircleRadius, Math.PI, 0.2);
+		pickZ.visible = false;
+		this._pickHelper.set('z', pickZ);
+		this.add(pickZ);
 		this._axisZQuaternionStart = axisZ.quaternion.clone();
 		const axisY = new GizmoMesh('torus', 'y', [0.5, 0.8, 0.2], new Vector3(0, 0, 0), new Euler(Math.PI / 2, 0, 0), this.rotateCircleRadius);
 		this._rotateControlMap.set('y', axisY);
 		this.add(axisY);
+		const pickY = new GizmoMesh('torus', 'y', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(Math.PI / 2, 0, 0), this.rotateCircleRadius, Math.PI, 0.2);
+		pickY.visible = false;
+		this._pickHelper.set('y', pickY);
+		this.add(pickY);
 		this._axisYQuaternionStart = axisY.quaternion.clone();
 		const axisX = new GizmoMesh('torus', 'x', [1.0, 0.25, 0.25], new Vector3(0, 0, 0), new Euler(0, Math.PI / 2, Math.PI / 2), this.rotateCircleRadius);
 		this._rotateControlMap.set('x', axisX);
 		this.add(axisX);
+		const pickX = new GizmoMesh('torus', 'x', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, Math.PI / 2, Math.PI / 2), this.rotateCircleRadius, Math.PI, 0.2);
+		pickX.visible = false;
+		this._pickHelper.set('x', pickX);
+		this.add(pickX);
 		this._axisXQuaternionStart = axisX.quaternion.clone();
 		const center = new GizmoMesh('sphere', 'xyz', [1.0, 1.0, 1.0], new Vector3(0, 0, 0), new Euler(0, 0, 0), this.rotateCircleRadius);
 		this._rotateControlMap.set('xyz', center);
@@ -748,8 +915,7 @@ class RotateControl extends BaseControl {
 	onMoveStart(ray, axisName) {
 		this._selectedAxis = axisName;
 
-		this._group.getWorldMatrix(this._startGroupMatrix);
-		this._startGroupMatrixInverse.getInverse(this._startGroupMatrix);
+		super.onMoveStart(ray, axisName);
 
 		const cameraPos = _vec3_1.setFromMatrixPosition(this._camera.worldMatrix);
 		const gizmoPos = _vec3_2.setFromMatrixPosition(this._startGroupMatrix);
@@ -787,9 +953,9 @@ class RotateControl extends BaseControl {
 
 		let localAxis, rad;
 		if (this._selectedAxis === 'xyz') {
-			_vec3_1.copy(this._startPointUnit).normalize();
-			_vec3_2.copy(this._currPointUnit).normalize();
-			_quat_1.setFromUnitVectors(_vec3_1, _vec3_2);
+			_vec3_1.copy(this._currPointUnit).sub(this._startPointUnit);
+			localAxis = _vec3_3.copy(_vec3_1).cross(this._eye).normalize();
+			rad = _vec3_1.dot(_vec3_2.copy(localAxis).cross(this._eye));
 		} else {
 			if (this._selectedAxis === 'e') {
 				localAxis = this._eye;
@@ -798,7 +964,28 @@ class RotateControl extends BaseControl {
 				localAxis = axisVector[this._selectedAxis];
 				rad = this._getFinalRad(localAxis, this.rotateCircleRadius);
 			}
+		}
+		_quat_1.setFromAxisAngle(localAxis, rad);
 
+		if (this.snap && this._selectedAxis !== 'e') {
+			_euler_1.setFromQuaternion(_quat_1);
+			this._applySnap(_euler_1);
+			_quat_1.setFromEuler(_euler_1);
+
+			// fix rad
+			if (this._selectedAxis === 'x') {
+				rad = this._getSnapRad(_euler_1.x, rad);
+			} else if (this._selectedAxis === 'y') {
+				rad = this._getSnapRad(_euler_1.y, rad, true);
+			} else if (this._selectedAxis === 'z') {
+				rad = this._getSnapRad(_euler_1.z, rad);
+			}
+		}
+
+		_mat4_1.identity();
+		_quat_1.toMatrix4(_mat4_1);
+
+		if (this._selectedAxis !== 'xyz') {
 			this._rotateHelper.geometry.updateCircle(this._startPointUnit, localAxis, -rad);
 			this._rotateHelper.visible = true;
 
@@ -806,12 +993,7 @@ class RotateControl extends BaseControl {
 			_vec3_2.copy(this._startPointUnit).applyQuaternion(_quat_1);
 			this._lineHelperE.geometry.updateLine(_vec3_1.set(0, 0, 0), _vec3_2);
 			this._lineHelperE.visible = true;
-
-			_quat_1.setFromAxisAngle(localAxis, rad);
 		}
-
-		_mat4_1.identity();
-		_quat_1.toMatrix4(_mat4_1);
 
 		_mat4_1.premultiply(this._startGroupMatrix);
 
@@ -848,8 +1030,8 @@ class RotateControl extends BaseControl {
 			ray.intersectPlane(this._plane, out);
 			out.normalize().multiplyScalar(this.rotateCircleRadiusE);
 		} else if (this._selectedAxis === 'xyz') {
-			this._sphere.radius = this.rotateCircleRadius;
-			ray.intersectSphere(this._sphere, out);
+			this._plane.normal.copy(this._eye);
+			ray.intersectPlane(this._plane, out);
 		} else {
 			ray.intersectPlane(axisPlane[this._selectedAxis], out);
 			out.normalize().multiplyScalar(this.rotateCircleRadius);
@@ -876,6 +1058,31 @@ class RotateControl extends BaseControl {
 		return this._finalRad;
 	}
 
+	_getSnapRad(euler, rad, isY = false) {
+		const period = isY ? Math.PI : Math.PI * 2;
+
+		let finalRad;
+
+		if (Math.abs(rad) % period <= (period / 2)) {
+			finalRad = euler;
+		} else {
+			if (Math.sign(euler) === 0) {
+				finalRad = Math.sign(rad) * (period - Math.abs(euler));
+			} else {
+				finalRad = (isY ? 1 : -1) * Math.sign(euler) * (period - Math.abs(euler));
+			}
+		}
+
+		if (Math.abs(rad) >= period) {
+			if (isY) {
+				finalRad = Math.sign(rad) * Math.abs(finalRad);
+			}
+			finalRad += Math.sign(rad) * Math.floor(Math.abs(rad) / period) * period;
+		}
+
+		return finalRad;
+	}
+
 	update() {
 		this._resizeControl();
 		this._updateAxisTransform();
@@ -897,16 +1104,20 @@ class RotateControl extends BaseControl {
 		_quat_1.setFromAxisAngle(axisVector['z'], Math.atan2(-y, z));
 		_quat_1.multiplyQuaternions(this._axisXQuaternionStart, _quat_1);
 		this._rotateControlMap.get('x').quaternion.copy(_quat_1);
+		this._pickHelper.get('x').quaternion.copy(_quat_1);
 
 		_quat_1.setFromAxisAngle(axisVector['z'], Math.atan2(-x, z));
 		_quat_1.multiplyQuaternions(this._axisYQuaternionStart, _quat_1);
 		this._rotateControlMap.get('y').quaternion.copy(_quat_1);
+		this._pickHelper.get('y').quaternion.copy(_quat_1);
 
 		_quat_1.setFromAxisAngle(axisVector['z'], Math.atan2(y, x));
 		_quat_1.multiplyQuaternions(this._axisZQuaternionStart, _quat_1);
 		this._rotateControlMap.get('z').quaternion.copy(_quat_1);
+		this._pickHelper.get('z').quaternion.copy(_quat_1);
 
 		this._rotateControlMap.get('e').quaternion.setFromRotationMatrix(_mat4_1.lookAtRH(eye, _vec3_1.set(0, 0, 0), axisVector['z']));
+		this._pickHelper.get('e').quaternion.setFromRotationMatrix(_mat4_1.lookAtRH(eye, _vec3_1.set(0, 0, 0), axisVector['z']));
 	}
 
 	_resizeControl() {
@@ -931,13 +1142,41 @@ class RotateControl extends BaseControl {
 		this.scale.multiplyScalar(factor);
 	}
 
+	_applySnap(target) {
+		const snap = this.snap;
+
+		if (!snap) return;
+
+		this._startLocalMatrix.decompose(_position, _quaternion, _scale);
+
+		_euler_2.setFromQuaternion(_quaternion);
+
+		if (target.x) {
+			target.x += _euler_2.x;
+			target.x = Math.round(target.x / snap) * snap;
+			target.x -= _euler_2.x;
+		}
+
+		if (target.y) {
+			target.y += _euler_2.y;
+			target.y = Math.round(target.y / snap) * snap;
+			target.y -= _euler_2.y;
+		}
+
+		if (target.z) {
+			target.z += _euler_2.z;
+			target.z = Math.round(target.z / snap) * snap;
+			target.z -= _euler_2.z;
+		}
+	}
+
 }
 
 // GizmoMesh and geometries
 
 class GizmoMesh extends Mesh {
 
-	constructor(type, name, color, position, rotation, size, arc) {
+	constructor(type, name, color, position, rotation, size, arc, tube) {
 		const material = new BasicMaterial();
 		let geometry;
 
@@ -948,15 +1187,18 @@ class GizmoMesh extends Mesh {
 			case 'arrow':
 				geometry = new CylinderGeometry(0, 0.08, 0.3);
 				break;
+			case 'pickAxis':
+				geometry = new CylinderGeometry(0.3, 0, 1.5, 4);
+				break;
 			case 'plane':
-				geometry = new PlaneGeometry(0.3, 0.3);
+				geometry = new PlaneGeometry(size, size);
 				material.opacity = 0.9;
 				break;
 			case 'box':
 				geometry = new BoxGeometry(size, size, size);
 				break;
 			case 'torus':
-				geometry = new RotateTorusGeometry(size, arc);
+				geometry = new RotateTorusGeometry(size, arc, tube);
 				break;
 			case 'sphere':
 				geometry = new SphereGeometry(size, 32, 16);
@@ -1018,10 +1260,10 @@ class GizmoMesh extends Mesh {
 
 class RotateTorusGeometry extends Geometry {
 
-	constructor(radius = 1, arc = Math.PI) {
+	constructor(radius = 1, arc = Math.PI, tube = 0.02) {
 		super();
 
-		const param = TorusBuilder.getGeometryData(radius, 0.02, 6, 48, arc);
+		const param = TorusBuilder.getGeometryData(radius, tube, 6, 48, arc);
 
 		// build geometry
 

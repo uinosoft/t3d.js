@@ -10,6 +10,7 @@
     <div id="info">
         <a href="" target="_blank">t3d</a> - transform controls
 		<br/>"W" translate | "E" rotate | "R" scale | "A" all
+		<br/>"Shift" snap or select multiple
     </div>
 
     <!-- Import maps polyfill -->
@@ -80,9 +81,6 @@
 		const transformControls = new TransformControls(camera, canvas);
 		scene.add(transformControls);
 
-		box1.updateMatrix();
-		transformControls.group.addObject(box1);
-
 		const raycaster = new Raycaster();
 		const mouse = new t3d.Vector2();
 		let shiftKeyPressed = false;
@@ -100,6 +98,7 @@
 					transformControls.group.reset();
 				}
 				transformControls.group.addObject(object);
+				syncTransformPanel();
 			}
 		});
 
@@ -119,6 +118,9 @@
 					break;
 				case 'Shift':
 					shiftKeyPressed = true;
+					transformControls.translateSnap = params.translateSnap;
+					transformControls.scaleSnap = params.scaleSnap;
+					transformControls.rotateSnap = params.rotateSnap * Math.PI / 180;
 					break;
 			}
 		});
@@ -127,16 +129,23 @@
 			switch (event.key) {
 				case 'Shift':
 					shiftKeyPressed = false;
+					transformControls.translateSnap = null;
+					transformControls.scaleSnap = null;
+					transformControls.rotateSnap = null;
 					break;
 			}
 		});
 
-		const params = { box1: true, box2: false, translate: '0.00, 0.00, 0.00', rotate: '0.00, 0.00, 0.00', scale: '1.00, 1.00, 1.00' };
+		const params = { translateSnap: 1, scaleSnap: 0.5, rotateSnap: 30, translate: '0.00, 0.00, 0.00', rotate: '0.00, 0.00, 0.00', scale: '1.00, 1.00, 1.00' };
 		const gui = new GUI();
 		gui.add(transformControls, 'mode', ['translate', 'scale', 'rotate', 'all']).listen();
 		gui.add(transformControls, 'size', 0.5, 1.5);
-		gui.add(transformControls.group, 'anchorType', ['center', 'pivot']);
+		gui.add(transformControls.group, 'anchorType', ['center', 'pivot']).onChange(syncTransformPanel);
 		gui.add(transformControls.group, 'coordinateType', ['local', 'global']);
+		const snapFolder = gui.addFolder('Snap').close();
+		snapFolder.add(params, 'translateSnap', 0, 10, 0.1);
+		snapFolder.add(params, 'scaleSnap', 0, 10, 0.1);
+		snapFolder.add(params, 'rotateSnap', 0, 180, 1);
 		const transformFolder = gui.addFolder('Transform');
 		transformFolder.add(params, 'translate').listen().disable();
 		transformFolder.add(params, 'rotate').listen().disable();
@@ -148,41 +157,56 @@
 		const tempScale = new t3d.Vector3();
 		const tempEuler = new t3d.Euler();
 
-		let panelRefreshTimer = 0;
-		const panelRefreshInterval = 200;
+		function processNumber(value, radToDeg = false) {
+			if (radToDeg) {
+				value *= 180 / Math.PI;
+			}
+
+			value = Math.round(value * 100) / 100;
+
+			return value.toFixed(2);
+		}
+
+		function syncTransformPanel() {
+			if (transformControls.group.objects.length > 1) {
+				transformControls.group.getWorldMatrix(tempWorldMatrix);
+				tempWorldMatrix.decompose(tempPosition, tempQuaternion, tempScale);
+				tempEuler.setFromQuaternion(tempQuaternion);
+			} else if (transformControls.group.objects.length > 0) {
+				const object = transformControls.group.objects[0];
+				tempPosition.copy(object.position);
+				tempEuler.copy(object.euler);
+				tempScale.copy(object.scale);
+			} else {
+				tempPosition.set(0, 0, 0);
+				tempEuler.set(0, 0, 0);
+				tempScale.set(1, 1, 1);
+			}
+
+			params.translate = `${processNumber(tempPosition.x)}, ${processNumber(tempPosition.y)}, ${processNumber(tempPosition.z)}`;
+			params.rotate = `${processNumber(tempEuler.x, true)}, ${processNumber(tempEuler.y, true)}, ${processNumber(tempEuler.z, true)}`;
+			params.scale = `${processNumber(tempScale.x)}, ${processNumber(tempScale.y)}, ${processNumber(tempScale.z)}`;
+		}
+
+		box1.updateMatrix();
+		transformControls.group.addObject(box1);
+		transformControls.onDrag = syncTransformPanel;
+		syncTransformPanel();
+
+		transformControls.onDragStart = function() {
+			controller.enabled = false;
+		};
+
+		transformControls.onDragEnd = function() {
+			controller.enabled = true;
+		};
 
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			controller.enabled = !transformControls.isDragging();
 			controller.update();
 
 			transformControls.update();
-
-			panelRefreshTimer += 1000 / 60;
-
-			if (panelRefreshTimer >= panelRefreshInterval) {
-				if (transformControls.group.objects.length > 1) {
-					transformControls.group.getWorldMatrix(tempWorldMatrix);
-					tempWorldMatrix.decompose(tempPosition, tempQuaternion, tempScale);
-					tempEuler.setFromQuaternion(tempQuaternion);
-				} else if (transformControls.group.objects.length > 0) {
-					const object = transformControls.group.objects[0];
-					tempPosition.copy(object.position);
-					tempEuler.copy(object.euler);
-					tempScale.copy(object.scale);
-				} else {
-					tempPosition.set(0, 0, 0);
-					tempEuler.set(0, 0, 0);
-					tempScale.set(1, 1, 1);
-				}
-
-				params.translate = `${tempPosition.x.toFixed(2)}, ${tempPosition.y.toFixed(2)}, ${tempPosition.z.toFixed(2)}`;
-				params.rotate = `${tempEuler.x.toFixed(2)}, ${tempEuler.y.toFixed(2)}, ${tempEuler.z.toFixed(2)}`;
-				params.scale = `${tempScale.x.toFixed(2)}, ${tempScale.y.toFixed(2)}, ${tempScale.z.toFixed(2)}`;
-
-				panelRefreshTimer = 0;
-			}
 
 			forwardRenderer.render(scene, camera);
 		}
