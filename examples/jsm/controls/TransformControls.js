@@ -198,8 +198,14 @@ class TransformControls extends Object3D {
 	_setRaycaster(clientX, clientY) {
 		const element = this._domElement;
 
-		_vec2_1.x = (clientX / element.clientWidth) * 2 - 1;
-		_vec2_1.y = -(clientY / element.clientHeight) * 2 + 1;
+		const rect = element.getBoundingClientRect();
+		const style = element.currentStyle || window.getComputedStyle(element);
+
+		const borderLeftWidth = parseInt(style['borderLeftWidth'], 10);
+		const borderTopWidth = parseInt(style['borderTopWidth'], 10);
+
+		_vec2_1.x = ((clientX - rect.left - borderLeftWidth) / element.clientWidth) * 2 - 1;
+		_vec2_1.y = -((clientY - rect.top - borderTopWidth) / element.clientHeight) * 2 + 1;
 
 		this._raycaster.setFromCamera(_vec2_1, this._camera);
 	}
