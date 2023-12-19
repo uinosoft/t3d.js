@@ -4,179 +4,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 /**
- * Base class for property track.
- * @memberof t3d
- * @abstract
- */
-class KeyframeTrack {
-
-	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
-	 * @param {Array} times
-	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
-	 */
-	constructor(target, propertyPath, times, values, interpolant = true) {
-		this.target = target;
-		this.propertyPath = propertyPath;
-
-		this.name = this.target.uuid + '.' + propertyPath;
-
-		this.times = times;
-		this.values = values;
-
-		this.valueSize = values.length / times.length;
-
-		this.interpolant = interpolant;
-	}
-
-	getValue(t, outBuffer) {
-		const times = this.times,
-			tl = times.length;
-
-		if (t <= times[0]) {
-			return this._copyValue(0, outBuffer);
-		} else if (t >= times[tl - 1]) {
-			return this._copyValue(tl - 1, outBuffer);
-		}
-
-		// TODO optimize
-		// https://github.com/mrdoob/three.js/blob/dev/src/math/Interpolant.js
-		let i0 = tl - 1;
-		while (t < times[i0] && i0 > 0) {
-			i0--;
-		}
-
-		const ratio = (t - times[i0]) / (times[i0 + 1] - times[i0]);
-		return this._interpolate(i0, ratio, outBuffer);
-	}
-
-	_interpolate(index0, ratio, outBuffer) {
-		const values = this.values,
-			valueSize = this.valueSize;
-
-		let value1, value2;
-
-		for (let i = 0; i < valueSize; i++) {
-			value1 = values[index0 * valueSize + i];
-			value2 = values[(index0 + 1) * valueSize + i];
-
-			if (this.interpolant) {
-				if (value1 !== undefined && value2 !== undefined) {
-					outBuffer[i] = value1 * (1 - ratio) + value2 * ratio;
-				} else {
-					outBuffer[i] = value1;
-				}
-			} else {
-				outBuffer[i] = value1;
-			}
-		}
-
-		return outBuffer;
-	}
-
-	_copyValue(index, outBuffer) {
-		const values = this.values,
-			valueSize = this.valueSize,
-			offset = valueSize * index;
-
-		for (let i = 0; i < valueSize; i++) {
-			outBuffer[i] = values[offset + i];
-		}
-
-		return outBuffer;
-	}
-
-}
-
-/**
- * Used for boolean property track.
- * @memberof t3d
- * @extends t3d.KeyframeTrack
- */
-class BooleanKeyframeTrack extends KeyframeTrack {
-
-	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
-	 * @param {Array} times
-	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
-	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
-
-	_interpolate(index0, _ratio, outBuffer) {
-		outBuffer[0] = this.values[index0];
-		return outBuffer;
-	}
-
-}
-
-/**
- * @readonly
- * @type {String}
- * @default 'bool'
- */
-BooleanKeyframeTrack.prototype.valueTypeName = 'bool';
-
-/**
- * Used for color property track.
- * @memberof t3d
- * @extends t3d.KeyframeTrack
- */
-class ColorKeyframeTrack extends KeyframeTrack {
-
-	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
-	 * @param {Array} times
-	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
-	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
-
-}
-
-/**
- * @readonly
- * @type {String}
- * @default 'color'
- */
-ColorKeyframeTrack.prototype.valueTypeName = 'color';
-
-/**
- * Used for number property track.
- * @memberof t3d
- * @extends t3d.KeyframeTrack
- */
-class NumberKeyframeTrack extends KeyframeTrack {
-
-	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
-	 * @param {Array} times
-	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
-	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
-
-}
-
-/**
- * @readonly
- * @type {String}
- * @default 'number'
- */
-NumberKeyframeTrack.prototype.valueTypeName = 'number';
-
-/**
  * The vector 3 class.
  * @memberof t3d
  */
@@ -1966,6 +1793,366 @@ class Quaternion {
 }
 
 /**
+ * Interpolant serves as the base class for all interpolation algorithms.
+ * It defines a set of static methods that are intended to be invoked by a keyframe track for the purpose of interpolation.
+ * @memberof t3d
+ * @abstract
+ */
+class KeyframeInterpolant {
+
+	/**
+	 * Get the value size for keyframe values.
+	 * @return {Number} - the value size.
+	 */
+	static getValueSize() {
+		return this.values.length / this.times.length;
+	}
+
+	/**
+	 * Interpolate the value for the specified time.
+	 * @param {Number} index0 - the index of the first keyframe.
+	 * @param {Number} ratio - the ratio (0-1) of the time passed between the first keyframe and the next keyframe.
+	 * @param {Number} duration - the duration time between the first keyframe and the next keyframe.
+	 * @param {Array} outBuffer - the output buffer to store the interpolated value.
+	 * @return {Array} - the output buffer to store the interpolated value.
+	 */
+	static interpolate(index0, ratio, duration, outBuffer) {
+		throw new Error('Interpolant: call to abstract method');
+	}
+
+	/**
+	 * Copy the value for the specified index.
+	 * @param {Number} index - the index of the keyframe.
+	 * @param {Array} outBuffer - the output buffer to store the copied value.
+	 * @return {Array} - the output buffer to store the copied value.
+	 */
+	static copyValue(index, outBuffer) {
+		const values = this.values,
+			valueSize = this.valueSize,
+			offset = valueSize * index;
+
+		for (let i = 0; i < valueSize; i++) {
+			outBuffer[i] = values[offset + i];
+		}
+
+		return outBuffer;
+	}
+
+}
+
+/**
+ * Step (Discrete) interpolation of keyframe values.
+ * @memberof t3d
+ * @extends t3d.KeyframeInterpolant
+ */
+class StepInterpolant extends KeyframeInterpolant {
+
+	static interpolate(index0, ratio, duration, outBuffer) {
+		const values = this.values,
+			valueSize = this.valueSize,
+			offset = valueSize * index0;
+
+		for (let i = 0; i < valueSize; i++) {
+			outBuffer[i] = values[offset + i];
+		}
+
+		return outBuffer;
+	}
+
+}
+
+/**
+ * Linear interpolation of keyframe values.
+ * @memberof t3d
+ * @extends t3d.KeyframeInterpolant
+ */
+class LinearInterpolant extends KeyframeInterpolant {
+
+	static interpolate(index0, ratio, duration, outBuffer) {
+		const values = this.values,
+			valueSize = this.valueSize,
+
+			offset0 = index0 * valueSize,
+			offset1 = (index0 + 1) * valueSize;
+
+		let value1, value2;
+
+		for (let i = 0; i < valueSize; i++) {
+			value1 = values[offset0 + i];
+			value2 = values[offset1 + i];
+
+			if (value1 !== undefined && value2 !== undefined) {
+				outBuffer[i] = value1 * (1 - ratio) + value2 * ratio;
+			} else {
+				outBuffer[i] = value1;
+			}
+		}
+
+		return outBuffer;
+	}
+
+}
+
+/**
+ * Quaternion Linear interpolation of keyframe values.
+ * @memberof t3d
+ * @extends t3d.KeyframeInterpolant
+ */
+class QuaternionLinearInterpolant extends KeyframeInterpolant {
+
+	static interpolate(index0, ratio, duration, outBuffer) {
+		const values = this.values,
+			valueSize = this.valueSize;
+
+		Quaternion.slerpFlat(outBuffer, 0, values, index0 * valueSize, values, (index0 + 1) * valueSize, ratio);
+
+		return outBuffer;
+	}
+
+}
+
+/**
+ * Cubic spline interpolation of keyframe values.
+ * @memberof t3d
+ * @extends t3d.KeyframeInterpolant
+ */
+class CubicSplineInterpolant extends KeyframeInterpolant {
+
+	static getValueSize() {
+		return this.values.length / this.times.length / 3;
+	}
+
+	static interpolate(index0, ratio, duration, outBuffer) {
+		const values = this.values,
+			valueSize = this.valueSize,
+
+			valueSize2 = valueSize * 2,
+			valueSize3 = valueSize * 3,
+
+			rr = ratio * ratio,
+			rrr = rr * ratio,
+
+			offset0 = index0 * valueSize3,
+			offset1 = offset0 + valueSize3,
+
+			s2 = -2 * rrr + 3 * rr,
+			s3 = rrr - rr,
+			s0 = 1 - s2,
+			s1 = s3 - rr + ratio;
+
+		// Layout of keyframe output values for CUBICSPLINE animations:
+		//   [ inTangent_1, splineVertex_1, outTangent_1, inTangent_2, splineVertex_2, ... ]
+		for (let i = 0; i < valueSize; i++) {
+			const p0 = values[offset0 + i + valueSize], // splineVertex_k
+				m0 = values[offset0 + i + valueSize2] * duration, // outTangent_k * (t_k+1 - t_k)
+				p1 = values[offset1 + i + valueSize], // splineVertex_k+1
+				m1 = values[offset1 + i] * duration; // inTangent_k+1 * (t_k+1 - t_k)
+
+			outBuffer[i] = s0 * p0 + s1 * m0 + s2 * p1 + s3 * m1;
+		}
+
+		return outBuffer;
+	}
+
+	static copyValue(index, outBuffer) {
+		const values = this.values,
+			valueSize = this.valueSize,
+			offset = valueSize * index * 3 + valueSize;
+
+		for (let i = 0; i < valueSize; i++) {
+			outBuffer[i] = values[offset + i];
+		}
+
+		return outBuffer;
+	}
+
+}
+
+/**
+ * Quaternion Cubic spline interpolation of keyframe values.
+ * @memberof t3d
+ * @extends t3d.CubicSplineInterpolant
+ */
+class QuaternionCubicSplineInterpolant extends CubicSplineInterpolant {
+
+	static interpolate(index0, ratio, duration, outBuffer) {
+		const result = super.interpolate(index0, ratio, duration, outBuffer);
+
+		_q.fromArray(result).normalize().toArray(result);
+
+		return result;
+	}
+
+}
+
+const _q = new Quaternion();
+
+/**
+ * Base class for property track.
+ * @memberof t3d
+ * @abstract
+ */
+class KeyframeTrack {
+
+	/**
+	 * @param {t3d.Object3D} target
+	 * @param {String} propertyPath
+	 * @param {Array} times
+	 * @param {Array} values
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+	 */
+	constructor(target, propertyPath, times, values, interpolant = LinearInterpolant) {
+		this.target = target;
+		this.propertyPath = propertyPath;
+
+		this.name = this.target.uuid + '.' + propertyPath;
+
+		this.times = times;
+		this.values = values;
+
+		this.valueSize = 0;
+		this.interpolant = null;
+
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = LinearInterpolant;
+		} else if (interpolant === false) {
+			interpolant = StepInterpolant;
+		}
+
+		this.setInterpolant(interpolant);
+	}
+
+	/**
+	 * Set interpolant for this keyframe track.
+	 * @param {t3d.KeyframeInterpolant.constructor} interpolant
+	 * @return {t3d.KeyframeTrack}
+	 */
+	setInterpolant(interpolant) {
+		this.valueSize = interpolant.getValueSize.call(this);
+		this.interpolant = interpolant;
+		return this;
+	}
+
+	/**
+	 * Get value at time.
+	 * The value will be interpolated by interpolant if time is between keyframes.
+	 * @param {Number} t - time
+	 * @param {Array} outBuffer - output buffer
+	 * @return {Array} output buffer
+	 */
+	getValue(t, outBuffer) {
+		const interpolant = this.interpolant,
+			times = this.times,
+			tl = times.length;
+
+		if (t <= times[0]) {
+			return interpolant.copyValue.call(this, 0, outBuffer);
+		} else if (t >= times[tl - 1]) {
+			return interpolant.copyValue.call(this, tl - 1, outBuffer);
+		}
+
+		// TODO use index cache for better performance
+		// https://github.com/mrdoob/three.js/blob/dev/src/math/Interpolant.js
+		let i0 = tl - 1;
+		while (t < times[i0] && i0 > 0) {
+			i0--;
+		}
+
+		const duration = times[i0 + 1] - times[i0];
+		const ratio = (t - times[i0]) / duration;
+		return interpolant.interpolate.call(this, i0, ratio, duration, outBuffer);
+	}
+
+}
+
+/**
+ * Used for boolean property track.
+ * @memberof t3d
+ * @extends t3d.KeyframeTrack
+ */
+class BooleanKeyframeTrack extends KeyframeTrack {
+
+	/**
+	 * @param {t3d.Object3D} target
+	 * @param {String} propertyPath
+	 * @param {Array} times
+	 * @param {Array} values
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.StepInterpolant]
+	 */
+	constructor(target, propertyPath, times, values, interpolant = StepInterpolant) {
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = StepInterpolant;
+		}
+
+		super(target, propertyPath, times, values, interpolant);
+	}
+
+}
+
+/**
+ * @readonly
+ * @type {String}
+ * @default 'bool'
+ */
+BooleanKeyframeTrack.prototype.valueTypeName = 'bool';
+
+/**
+ * Used for color property track.
+ * @memberof t3d
+ * @extends t3d.KeyframeTrack
+ */
+class ColorKeyframeTrack extends KeyframeTrack {
+
+	/**
+	 * @param {t3d.Object3D} target
+	 * @param {String} propertyPath
+	 * @param {Array} times
+	 * @param {Array} values
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+	 */
+	constructor(target, propertyPath, times, values, interpolant) {
+		super(target, propertyPath, times, values, interpolant);
+	}
+
+}
+
+/**
+ * @readonly
+ * @type {String}
+ * @default 'color'
+ */
+ColorKeyframeTrack.prototype.valueTypeName = 'color';
+
+/**
+ * Used for number property track.
+ * @memberof t3d
+ * @extends t3d.KeyframeTrack
+ */
+class NumberKeyframeTrack extends KeyframeTrack {
+
+	/**
+	 * @param {t3d.Object3D} target
+	 * @param {String} propertyPath
+	 * @param {Array} times
+	 * @param {Array} values
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+	 */
+	constructor(target, propertyPath, times, values, interpolant) {
+		super(target, propertyPath, times, values, interpolant);
+	}
+
+}
+
+/**
+ * @readonly
+ * @type {String}
+ * @default 'number'
+ */
+NumberKeyframeTrack.prototype.valueTypeName = 'number';
+
+/**
  * Used for quaternion property track.
  * @memberof t3d
  * @extends t3d.KeyframeTrack
@@ -1977,22 +2164,15 @@ class QuaternionKeyframeTrack extends KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.QuaternionLinearInterpolant]
 	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
-
-	_interpolate(index0, ratio, outBuffer) {
-		const values = this.values;
-
-		if (this.interpolant) {
-			Quaternion.slerpFlat(outBuffer, 0, values, index0 * 4, values, (index0 + 1) * 4, ratio);
-		} else {
-			this._copyValue(index0, outBuffer);
+	constructor(target, propertyPath, times, values, interpolant = QuaternionLinearInterpolant) {
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = QuaternionLinearInterpolant;
 		}
 
-		return outBuffer;
+		super(target, propertyPath, times, values, interpolant);
 	}
 
 }
@@ -2016,15 +2196,15 @@ class StringKeyframeTrack extends KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.StepInterpolant]
 	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
+	constructor(target, propertyPath, times, values, interpolant = StepInterpolant) {
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = StepInterpolant;
+		}
 
-	_interpolate(index0, _ratio, outBuffer) {
-		outBuffer[0] = this.values[index0];
-		return outBuffer;
+		super(target, propertyPath, times, values, interpolant);
 	}
 
 }
@@ -2048,7 +2228,7 @@ class VectorKeyframeTrack extends KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
 	 */
 	constructor(target, propertyPath, times, values, interpolant) {
 		super(target, propertyPath, times, values, interpolant);
@@ -18503,4 +18683,4 @@ class MatcapMaterial extends BasicMaterial {
 
 }
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionKeyframeTrack, Query, Ray, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

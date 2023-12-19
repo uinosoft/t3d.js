@@ -1,3 +1,5 @@
+import { LinearInterpolant, StepInterpolant } from './KeyframeInterpolants.js';
+
 /**
  * Base class for property track.
  * @memberof t3d
@@ -10,9 +12,9 @@ class KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
 	 */
-	constructor(target, propertyPath, times, values, interpolant = true) {
+	constructor(target, propertyPath, times, values, interpolant = LinearInterpolant) {
 		this.target = target;
 		this.propertyPath = propertyPath;
 
@@ -21,66 +23,58 @@ class KeyframeTrack {
 		this.times = times;
 		this.values = values;
 
-		this.valueSize = values.length / times.length;
+		this.valueSize = 0;
+		this.interpolant = null;
 
-		this.interpolant = interpolant;
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = LinearInterpolant;
+		} else if (interpolant === false) {
+			interpolant = StepInterpolant;
+		}
+
+		this.setInterpolant(interpolant);
 	}
 
+	/**
+	 * Set interpolant for this keyframe track.
+	 * @param {t3d.KeyframeInterpolant.constructor} interpolant
+	 * @return {t3d.KeyframeTrack}
+	 */
+	setInterpolant(interpolant) {
+		this.valueSize = interpolant.getValueSize.call(this);
+		this.interpolant = interpolant;
+		return this;
+	}
+
+	/**
+	 * Get value at time.
+	 * The value will be interpolated by interpolant if time is between keyframes.
+	 * @param {Number} t - time
+	 * @param {Array} outBuffer - output buffer
+	 * @return {Array} output buffer
+	 */
 	getValue(t, outBuffer) {
-		const times = this.times,
+		const interpolant = this.interpolant,
+			times = this.times,
 			tl = times.length;
 
 		if (t <= times[0]) {
-			return this._copyValue(0, outBuffer);
+			return interpolant.copyValue.call(this, 0, outBuffer);
 		} else if (t >= times[tl - 1]) {
-			return this._copyValue(tl - 1, outBuffer);
+			return interpolant.copyValue.call(this, tl - 1, outBuffer);
 		}
 
-		// TODO optimize
+		// TODO use index cache for better performance
 		// https://github.com/mrdoob/three.js/blob/dev/src/math/Interpolant.js
 		let i0 = tl - 1;
 		while (t < times[i0] && i0 > 0) {
 			i0--;
 		}
 
-		const ratio = (t - times[i0]) / (times[i0 + 1] - times[i0]);
-		return this._interpolate(i0, ratio, outBuffer);
-	}
-
-	_interpolate(index0, ratio, outBuffer) {
-		const values = this.values,
-			valueSize = this.valueSize;
-
-		let value1, value2;
-
-		for (let i = 0; i < valueSize; i++) {
-			value1 = values[index0 * valueSize + i];
-			value2 = values[(index0 + 1) * valueSize + i];
-
-			if (this.interpolant) {
-				if (value1 !== undefined && value2 !== undefined) {
-					outBuffer[i] = value1 * (1 - ratio) + value2 * ratio;
-				} else {
-					outBuffer[i] = value1;
-				}
-			} else {
-				outBuffer[i] = value1;
-			}
-		}
-
-		return outBuffer;
-	}
-
-	_copyValue(index, outBuffer) {
-		const values = this.values,
-			valueSize = this.valueSize,
-			offset = valueSize * index;
-
-		for (let i = 0; i < valueSize; i++) {
-			outBuffer[i] = values[offset + i];
-		}
-
-		return outBuffer;
+		const duration = times[i0 + 1] - times[i0];
+		const ratio = (t - times[i0]) / duration;
+		return interpolant.interpolate.call(this, i0, ratio, duration, outBuffer);
 	}
 
 }

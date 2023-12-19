@@ -12,6 +12,7 @@ export { VectorKeyframeTrack } from './animation/tracks/VectorKeyframeTrack.js';
 export { AnimationAction } from './animation/AnimationAction.js';
 export { AnimationMixer } from './animation/AnimationMixer.js';
 export { KeyframeClip } from './animation/KeyframeClip.js';
+export * from './animation/KeyframeInterpolants.js';
 export { KeyframeTrack } from './animation/KeyframeTrack.js';
 export { PropertyBindingMixer } from './animation/PropertyBindingMixer.js';
 

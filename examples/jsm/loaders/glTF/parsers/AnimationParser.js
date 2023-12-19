@@ -2,7 +2,12 @@ import {
 	QuaternionKeyframeTrack,
 	NumberKeyframeTrack,
 	VectorKeyframeTrack,
-	KeyframeClip
+	KeyframeClip,
+	StepInterpolant,
+	LinearInterpolant,
+	CubicSplineInterpolant,
+	QuaternionLinearInterpolant,
+	QuaternionCubicSplineInterpolant
 } from 't3d';
 import { GLTFUtils } from '../GLTFUtils.js';
 import { PATH_PROPERTIES } from '../Constants.js';
@@ -80,8 +85,8 @@ export class AnimationParser {
 					}
 
 					for (let j = 0, jl = targetNodes.length; j < jl; j++) {
-						// TODO interpolation
-						const track = new TypedKeyframeTrack(targetNodes[j], PATH_PROPERTIES[target.path], input, output);
+						const interpolant = getInterpolant(gltfSampler.interpolation, TypedKeyframeTrack === QuaternionKeyframeTrack);
+						const track = new TypedKeyframeTrack(targetNodes[j], PATH_PROPERTIES[target.path], input, output, interpolant);
 						tracks.push(track);
 					}
 
@@ -98,4 +103,16 @@ export class AnimationParser {
 		context.animations = animationClips;
 	}
 
+}
+
+function getInterpolant(type, quaternion) {
+	switch (type) {
+		case 'STEP':
+			return StepInterpolant;
+		case 'CUBICSPLINE':
+			return quaternion ? QuaternionCubicSplineInterpolant : CubicSplineInterpolant;
+		case 'LINEAR':
+		default:
+			return quaternion ? QuaternionLinearInterpolant : LinearInterpolant;
+	}
 }

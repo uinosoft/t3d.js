@@ -1,5 +1,5 @@
 import { KeyframeTrack } from '../KeyframeTrack.js';
-import { Quaternion } from '../../math/Quaternion.js';
+import { QuaternionLinearInterpolant } from '../KeyframeInterpolants.js';
 
 /**
  * Used for quaternion property track.
@@ -13,22 +13,15 @@ class QuaternionKeyframeTrack extends KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.QuaternionLinearInterpolant]
 	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
-
-	_interpolate(index0, ratio, outBuffer) {
-		const values = this.values;
-
-		if (this.interpolant) {
-			Quaternion.slerpFlat(outBuffer, 0, values, index0 * 4, values, (index0 + 1) * 4, ratio);
-		} else {
-			this._copyValue(index0, outBuffer);
+	constructor(target, propertyPath, times, values, interpolant = QuaternionLinearInterpolant) {
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = QuaternionLinearInterpolant;
 		}
 
-		return outBuffer;
+		super(target, propertyPath, times, values, interpolant);
 	}
 
 }

@@ -68,11 +68,11 @@
 			0.8, 0.8, 0.8
 		]);
 		const track3 = new t3d.QuaternionKeyframeTrack(cube, 'quaternion', times, [
-			1, 0, 0, 1,
-			0, 1, 0, 1,
-			0, 0, 1, 1,
-			0, 1, 0, 1,
-			1, 0, 0, 1
+			0, 0, 0, 1,
+			0.5, 0.5, 0.5, 0.5,
+			0, 0, 0, 1,
+			-0.5, -0.5, 0.5, 0.5,
+			0, 0, 0, 1
 		]);
 		const track4 = new t3d.ColorKeyframeTrack(cube, 'material.diffuse', times, [
 			1, 1, 1,
@@ -114,7 +114,7 @@
 		scene.add(camera);
 
 		// gui
-		const params = { anim1: true, anim2: true, speedFactor: 1 };
+		const params = { anim1: true, anim2: true, speedFactor: 1, interpolant: 'Linear' };
 		const gui = new GUI();
 		gui.add(params, 'anim1').onChange(value => {
 			if (value) {
@@ -133,6 +133,19 @@
 			}
 		});
 		gui.add(params, 'speedFactor', 0, 2, 0.01);
+		gui.add(params, 'interpolant', ['Linear', 'Step']).onChange(value => {
+			if (value === 'Linear') {
+				track.setInterpolant(t3d.LinearInterpolant);
+				track2.setInterpolant(t3d.LinearInterpolant);
+				track3.setInterpolant(t3d.QuaternionLinearInterpolant);
+				track4.setInterpolant(t3d.LinearInterpolant);
+			} else {
+				track.setInterpolant(t3d.StepInterpolant);
+				track2.setInterpolant(t3d.StepInterpolant);
+				track3.setInterpolant(t3d.StepInterpolant);
+				track4.setInterpolant(t3d.StepInterpolant);
+			}
+		});
 
 		action1.time = 0;
 		action1.weight = 1;

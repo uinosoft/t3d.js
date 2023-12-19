@@ -12,7 +12,7 @@ class VectorKeyframeTrack extends KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
 	 */
 	constructor(target, propertyPath, times, values, interpolant) {
 		super(target, propertyPath, times, values, interpolant);

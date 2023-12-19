@@ -1,4 +1,5 @@
 import { KeyframeTrack } from '../KeyframeTrack.js';
+import { StepInterpolant } from '../KeyframeInterpolants.js';
 
 /**
  * Used for boolean property track.
@@ -12,15 +13,15 @@ class BooleanKeyframeTrack extends KeyframeTrack {
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {Boolean} [interpolant=true]
+	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.StepInterpolant]
 	 */
-	constructor(target, propertyPath, times, values, interpolant) {
-		super(target, propertyPath, times, values, interpolant);
-	}
+	constructor(target, propertyPath, times, values, interpolant = StepInterpolant) {
+		// since 0.2.2, remove this after few versions later
+		if (interpolant === true) {
+			interpolant = StepInterpolant;
+		}
 
-	_interpolate(index0, _ratio, outBuffer) {
-		outBuffer[0] = this.values[index0];
-		return outBuffer;
+		super(target, propertyPath, times, values, interpolant);
 	}
 
 }

@@ -149,7 +149,8 @@
 		"animation_multiple",
 		"animation_crossfade",
 		"animation_blending_additive",
-		"animation_skinned_instancing"
+		"animation_skinned_instancing",
+		"animation_interpolant"
 	],
 	"custompass": [
 		"custompass_car",
