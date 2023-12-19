@@ -7,9 +7,11 @@ class OctreeHelper extends Mesh {
 
 		const material = new BasicMaterial();
 		material.drawMode = DRAW_MODE.LINES;
-		material.envMap = undefined;
+		material.transparent = true;
 		material.blending = BLEND_TYPE.ADD;
 		material.diffuse.setHex(color);
+		material.envMap = undefined;
+		material.fog = false;
 
 		super(geometry, material);
 	}

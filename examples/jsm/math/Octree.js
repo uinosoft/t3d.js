@@ -44,15 +44,18 @@ class Octree {
 	addElement(element, maxDepth = 5, capacity = 8) {
 		const { box, depth, subTrees, elements, elementTest } = this;
 
-		if (!elementTest(box, element)) return false;
-
-		if (elements.length <= capacity || depth >= maxDepth) {
-			elements.push(element);
-			return true;
+		if (!elementTest(box, element)) {
+			return false;
 		}
 
 		if (subTrees.length === 0) {
-			this.subdivide();
+			elements.push(element);
+
+			if (elements.length > capacity && depth < maxDepth) {
+				this.divideElements(maxDepth, capacity);
+			}
+
+			return true;
 		}
 
 		for (let i = 0; i < subTrees.length; i++) {
@@ -92,6 +95,22 @@ class Octree {
 
 			this.subTrees[i] = new this.constructor(box, this.depth + 1);
 		});
+	}
+
+	count() {
+		let count = 1;
+
+		for (let i = 0; i < this.subTrees.length; i++) {
+			count += this.subTrees[i].count();
+		}
+
+		return count;
+	}
+
+	dispose() {
+		this.subTrees.forEach(subTree => subTree.dispose());
+		this.subTrees.length = 0;
+		this.elements.length = 0;
 	}
 
 }
