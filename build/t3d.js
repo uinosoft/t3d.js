@@ -5578,7 +5578,6 @@
 				this.theta = Math.atan2(vec3.x, vec3.z); // equator angle around y-up axis
 				this.phi = Math.acos(Math.min(1, Math.max(-1, vec3.y / this.radius))); // polar angle
 			}
-
 			return this;
 		}
 	}
@@ -7010,7 +7009,6 @@
 				shadowParams: new Float32Array(2) // [radius, frustumEdgeFalloff]
 			};
 		}
-
 		shadowCaches.set(light, cache);
 		return cache;
 	}
@@ -7813,7 +7811,6 @@
 			this.projectionViewMatrix.multiplyMatrices(this.projectionMatrix, this.viewMatrix); // get PV matrix
 			this.frustum.setFromMatrix(this.projectionViewMatrix); // update frustum
 		}
-
 		copy(source, recursive) {
 			Object3D.prototype.copy.call(this, source, recursive);
 			this.viewMatrix.copy(source.viewMatrix);
@@ -14320,7 +14317,6 @@
 			queryProperties._target = target;
 			queryProperties._result = null; // clear the last result.
 		}
-
 		end(query) {
 			const capabilities = this._capabilities;
 			const typeToGL = this._typeToGL;
@@ -14338,7 +14334,6 @@
 			queryProperties._target = timerQuery.TIMESTAMP_EXT;
 			queryProperties._result = null; // clear the last result.
 		}
-
 		isResultAvailable(query) {
 			const gl = this._gl;
 			const capabilities = this._capabilities;
@@ -14431,7 +14426,6 @@
 				// UNSIGNED_INT_10F_11F_11F_REV
 				// UNSIGNED_INT_5_9_9_9_REV
 			}
-
 			return gl[type] !== undefined ? gl[type] : type;
 		}
 		getGLFormat(format) {
@@ -14624,7 +14618,6 @@
 			}
 		};
 	}
-
 	function DepthBuffer(gl, state) {
 		let locked = false;
 		let currentDepthMask = null;
@@ -15808,7 +15801,6 @@
 			}
 		}
 	}
-
 	function getBufferType(gl, array) {
 		let type;
 		if (array instanceof Float32Array) {
@@ -16471,7 +16463,6 @@
 				if (sceneData.useAnchorMatrix) {
 					helpMatrix4.multiply(sceneData.anchorMatrix); // convert to anchor space
 				}
-
 				uniforms.set('bindMatrixInverse', helpMatrix4.elements);
 			}
 		}
@@ -16614,7 +16605,6 @@
 			// console.warn("Group has been removed, use Object3D instead.");
 		}
 	}
-
 	Group.prototype.isGroup = true;
 	Object.defineProperties(WebGLRenderer.prototype, {
 		// since 0.2.0
