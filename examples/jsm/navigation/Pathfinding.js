@@ -107,9 +107,7 @@ class Channel {
 					portalApex = portalLeft;
 					apexIndex = leftIndex;
 					// Reset portal
-					portalLeft = portalApex;
 					portalRight = portalApex;
-					leftIndex = apexIndex;
 					rightIndex = apexIndex;
 					// Restart scan
 					i = apexIndex;
@@ -131,9 +129,7 @@ class Channel {
 					apexIndex = rightIndex;
 					// Reset portal
 					portalLeft = portalApex;
-					portalRight = portalApex;
 					leftIndex = apexIndex;
-					rightIndex = apexIndex;
 					// Restart scan
 					i = apexIndex;
 					continue;
