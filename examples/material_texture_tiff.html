@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - tiff</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - tiff
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+    <script id="vertexShader" type="x-shader/x-vertex">
+		attribute vec3 a_Position;
+
+		attribute vec2 a_Uv;
+		varying vec2 v_Uv;
+
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+        uniform sampler2D terrainMap;
+        uniform float terrainExaggeration;
+
+		void main() {
+            float heigth = texture(terrainMap, a_Uv).r;
+            vec4 pos = vec4(a_Position.x, a_Position.y + heigth * terrainExaggeration, a_Position.z, 1.0);
+			gl_Position = u_ProjectionView * u_Model * pos;
+			v_Uv = a_Uv;
+		}
+	</script>
+
+	<script id="fragmentShader1" type="x-shader/x-fragment">
+		varying vec2 v_Uv;
+
+		uniform sampler2D colorMap;
+
+		void main() {
+            vec4 color = texture(colorMap, v_Uv);
+			gl_FragColor = color;
+		}
+	</script>
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+        import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+        import { TIFFLoader } from 't3d/addons/loaders/TIFFLoader.js';
+
+        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+        const vertexShader = document.getElementById('vertexShader').textContent;
+        const fragmentShader = document.getElementById('fragmentShader1').textContent;
+        const shader = {
+        	vertexShader: vertexShader,
+        	fragmentShader: fragmentShader,
+        	uniforms: { terrainMap: null, colorMap: null, terrainExaggeration: 4 }
+        };
+
+        const scene = new t3d.Scene();
+        const tiffloader = new TIFFLoader();
+        const material = new t3d.ShaderMaterial(shader);
+        const colorMap = new Texture2DLoader().load('./resources/terrain/iowa_sat.jpg');
+        material.uniforms.colorMap = colorMap;
+        tiffloader.load('./resources/terrain/iowa_terrain.tif', data => {
+        	const texture = new t3d.Texture2D();
+        	texture.image = data;
+        	const cube_geometry = new t3d.PlaneGeometry(80, 80, 1000, 1000);
+        	material.uniforms.terrainMap = texture;
+        	const cube = new t3d.Mesh(cube_geometry, material);
+        	scene.add(cube);
+        });
+
+
+
+        const camera = new t3d.Camera();
+        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+        camera.position.set(0, 10, 30);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+        const controller = new OrbitControls(camera, canvas);
+
+        scene.add(camera);
+        const gui = new GUI();
+        gui.add(material.uniforms, 'terrainExaggeration', 1, 10, 0.1);
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+        	controller.update();
+        	forwardRenderer.render(scene, camera);
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+        	forwardRenderer.backRenderTarget.resize(width, height);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+
+</html>
