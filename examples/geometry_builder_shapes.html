@@ -26,6 +26,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
+		import { CurvePath3 } from 't3d/addons/math/curves/Curves.js';
 		import { PolygonBuilder } from 't3d/addons/geometries/builders/PolygonBuilder.js';
 		import { ExtrudeShapeBuilder } from 't3d/addons/geometries/builders/ExtrudeShapeBuilder.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
@@ -59,8 +60,8 @@
 		lambertMaterial.side = t3d.DRAW_SIDE.DOUBLE;
 
 		const shape = {
-			contour: [[0, 0], [0, 5], [5, 5], [5, 0]],
-			holes: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
+			contour: [[0 - 2.5, 0 - 2.5], [0 - 2.5, 5 - 2.5], [5 - 2.5, 5 - 2.5], [5 - 2.5, 0 - 2.5]],
+			holes: [[[1 - 2.5, 3 - 2.5], [1 - 2.5, 4 - 2.5], [4 - 2.5, 4 - 2.5], [4 - 2.5, 3 - 2.5]], [[1 - 2.5, 1 - 2.5], [1 - 2.5, 2 - 2.5], [4 - 2.5, 1 - 2.5]]]
 		};
 
 		const geometryData = PolygonBuilder.getGeometryData({
@@ -78,8 +79,9 @@
 		geometry.computeBoundingBox();
 		geometry.computeBoundingSphere();
 		const polygon = new t3d.Mesh(geometry, lambertMaterial);
-		polygon.position.set(-2.5 - 3, -2.5, 0);
+		polygon.position.set(-6, 0, 0);
 		polygon.castShadow = true;
+		polygon.receiveShadow = true;
 		scene.add(polygon);
 
 		const geometryData1 = ExtrudeShapeBuilder.getGeometryData({
@@ -98,9 +100,38 @@
 		geometry1.computeBoundingBox();
 		geometry1.computeBoundingSphere();
 		const extrudeShape = new t3d.Mesh(geometry1, lambertMaterial);
-		extrudeShape.position.set(-2.5 + 3, -2.5, 0);
+		extrudeShape.position.set(0, 0, 0);
 		extrudeShape.castShadow = true;
+		extrudeShape.receiveShadow = true;
 		scene.add(extrudeShape);
+
+		const pathPoints = [new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 0, -10), new t3d.Vector3(10, 0, -10)];
+		const curvePath3 = new CurvePath3();
+		curvePath3.setFromPoints(pathPoints, { bevelRadius: 10 });
+		const geometryData2 = ExtrudeShapeBuilder.getGeometryData({
+			contour: shape.contour,
+			holes: shape.holes,
+			depth: 4,
+			pathFrames: curvePath3.computeFrames({
+				up: new t3d.Vector3(0, 1, 0),
+				divisions: 8
+			})
+		});
+		const geometry2 = new t3d.Geometry();
+		geometry2.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData2.positions), 3)));
+		geometry2.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData2.uvs), 2)));
+		geometry2.setIndex(new t3d.Attribute(new t3d.Buffer(
+			(geometryData2.positions.length / 3) > 65536 ? new Uint32Array(geometryData2.indices) : new Uint16Array(geometryData2.indices),
+			1
+		)));
+		GeometryUtils.computeNormals(geometry2);
+		geometry2.computeBoundingBox();
+		geometry2.computeBoundingSphere();
+		const extrudePathShape = new t3d.Mesh(geometry2, lambertMaterial);
+		extrudePathShape.position.set(6, 0, 0);
+		extrudePathShape.castShadow = true;
+		extrudePathShape.receiveShadow = true;
+		scene.add(extrudePathShape);
 
 		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
 		const plane_material = new t3d.LambertMaterial();
@@ -117,17 +148,18 @@
 		directionalLight.position.set(-10, 20, 30);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		directionalLight.castShadow = true;
-		directionalLight.shadow.windowSize = 15;
+		directionalLight.shadow.windowSize = 25;
+		directionalLight.shadow.bias = -0.0003;
+		directionalLight.shadow.normalBias = 0.2;
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.position.set(0, 3, 20);
+		camera.position.set(0, 8, 25);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
-		// controller.enablePan = false;
 
 		const wireframeGeometries = new WeakMap();
 		function getWireframeGeometry(geometry) {
@@ -151,6 +183,7 @@
 		gui.add({ wireframe: false }, 'wireframe').onChange(value => {
 			polygon.geometry = value ? getWireframeGeometry(geometry) : geometry;
 			extrudeShape.geometry = value ? getWireframeGeometry(geometry1) : geometry1;
+			extrudePathShape.geometry = value ? getWireframeGeometry(geometry2) : geometry2;
 
 			lambertMaterial.drawMode = value ? t3d.DRAW_MODE.LINES : t3d.DRAW_MODE.TRIANGLES;
 		});
