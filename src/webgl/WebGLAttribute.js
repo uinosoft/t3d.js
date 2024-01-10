@@ -26,15 +26,17 @@ class WebGLAttribute {
 function getAttributeCount(gl, type) {
 	switch (type) {
 		case gl.FLOAT:
-		case gl.BYTE:
-		case gl.UNSIGNED_BYTE:
-		case gl.UNSIGNED_SHORT:
+		case gl.INT:
+		case gl.UNSIGNED_INT:
 			return 1;
 		case gl.FLOAT_VEC2:
+		case gl.INT_VEC2:
 			return 2;
 		case gl.FLOAT_VEC3:
+		case gl.INT_VEC3:
 			return 3;
 		case gl.FLOAT_VEC4:
+		case gl.INT_VEC4:
 			return 4;
 		case gl.FLOAT_MAT2:
 			return 4;
@@ -57,12 +59,13 @@ function getAttributeFormat(gl, type) {
 		case gl.FLOAT_MAT3:
 		case gl.FLOAT_MAT4:
 			return gl.FLOAT;
-		case gl.UNSIGNED_BYTE:
-			return gl.UNSIGNED_BYTE;
-		case gl.UNSIGNED_SHORT:
-			return gl.UNSIGNED_SHORT;
-		case gl.BYTE:
-			return gl.BYTE;
+		case gl.INT:
+		case gl.INT_VEC2:
+		case gl.INT_VEC3:
+		case gl.INT_VEC4:
+			return gl.INT;
+		case gl.UNSIGNED_INT:
+			return gl.UNSIGNED_INT;
 		default:
 			return gl.FLOAT;
 	}

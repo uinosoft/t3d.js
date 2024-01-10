@@ -146,9 +146,8 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 				const bufferProperties = buffers.get(buffer);
 
 				const type = bufferProperties.type;
-				if (programAttribute.format !== type) {
-					// console.warn("WebGLVertexArrayBindings: attribute " + key + " type not match! " + programAttribute.format + " : " + type);
-				}
+
+				const integer = isWebGL2 && (programAttribute.format === gl.INT || programAttribute.format === gl.UNSIGNED_INT);
 
 				for (let i = 0, l = programAttribute.locationSize; i < l; i++) {
 					gl.enableVertexAttribArray(programAttribute.location + i);
@@ -175,16 +174,17 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 				gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
 
 				if (programAttribute.count === stride && programAttribute.locationSize === 1) {
-					gl.vertexAttribPointer(programAttribute.location, programAttribute.count, type, normalized, 0, 0);
+					this._vertexAttribPointer(programAttribute.location, programAttribute.count, type, normalized, 0, 0, integer);
 				} else {
 					for (let i = 0; i < programAttribute.locationSize; i++) {
-						gl.vertexAttribPointer(
+						this._vertexAttribPointer(
 							programAttribute.location + i,
 							programAttribute.count / programAttribute.locationSize,
 							type,
 							normalized,
 							bytesPerElement * stride,
-							bytesPerElement * (offset + (programAttribute.count / programAttribute.locationSize) * i)
+							bytesPerElement * (offset + (programAttribute.count / programAttribute.locationSize) * i),
+							integer
 						);
 					}
 				}
@@ -197,6 +197,15 @@ export class WebGLVertexArrayBindings extends PropertyMap {
 		if (geometry.index) {
 			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferProperties.glBuffer);
+		}
+	}
+
+	_vertexAttribPointer(index, size, type, normalized, stride, offset, integer) {
+		const gl = this._gl;
+		if (integer) {
+			gl.vertexAttribIPointer(index, size, type, stride, offset);
+		} else {
+			gl.vertexAttribPointer(index, size, type, normalized, stride, offset);
 		}
 	}
 

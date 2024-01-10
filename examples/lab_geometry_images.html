@@ -10,7 +10,7 @@
 	<div id="info">
 		<a href="" target="_blank">t3d</a> - geometry images<br/>
 		reference to <a href="https://hhoppe.com/proj/gim/" target="_blank">hhoppe.com/proj/gim/</a>
-		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support vertex textures</div>
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebGL2</div>
 	</div>
 
 	<!-- Import maps polyfill -->
@@ -34,7 +34,6 @@
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		// TODO: use merged geometry instead of instanced geometry for better performance
-		// TODO: use uint attributes
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -45,11 +44,6 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-
-		if (forwardRenderer.capabilities.maxVertexTextures < 2) {
-			document.getElementById('notSupported').style.display = '';
-			console.error('Not supported vertex textures!');
-		}
 
 		const scene = new t3d.Scene();
 
@@ -74,11 +68,11 @@
 				u_normalTex: normalTex
 			},
 			vertexShader: `
-				attribute float a_VertexID;
-				attribute float instanceID;
+				attribute int a_VertexID;
+				attribute int instanceID;
 
 				uniform float u_gridSize;
-				uniform float u_gridCount;
+				uniform int u_gridCount;
 
 				uniform sampler2D u_mainTex;
 				uniform sampler2D u_normalTex;
@@ -93,10 +87,10 @@
 				#endif
 				
 				void main() {
-					int x = int(instanceID) % int(u_gridCount); // mod(instanceID, u_gridCount)
-					int z = int(instanceID) / int(u_gridCount); // instanceID / u_gridCount
+					int x = instanceID % u_gridCount;
+					int z = instanceID / u_gridCount;
 
-					float checkFace = mod(instanceID , 2.);
+					int checkFace = instanceID % 2;
 
 					vec2 points[4];
 					points[0] = vec2(float(x) * u_gridSize, float(z) * u_gridSize);
@@ -104,10 +98,10 @@
 					points[3] = points[0] + vec2(0.0, u_gridSize);
 					points[2] = points[0] + vec2(u_gridSize, u_gridSize);
 
-					float invChunkSize = 1.0 / (u_gridSize * u_gridCount);
-					vec2 uv1 = vec2(points[int(a_VertexID)].x * invChunkSize, points[int(a_VertexID)].y * invChunkSize);
-					vec2 uv2 = vec2(points[(int(a_VertexID) + 2) % 4].x * invChunkSize, points[(int(a_VertexID) + 2) % 4].y * invChunkSize);
-					vec2 uv = checkFace == 0. ? uv1 : uv2;
+					float invChunkSize = 1.0 / (u_gridSize * float(u_gridCount));
+					vec2 uv1 = vec2(points[a_VertexID].x * invChunkSize, points[a_VertexID].y * invChunkSize);
+					vec2 uv2 = vec2(points[(a_VertexID + 2) % 4].x * invChunkSize, points[(a_VertexID + 2) % 4].y * invChunkSize);
+					vec2 uv = checkFace == 0 ? uv1 : uv2;
 
 					vec3 pos = texture2D(u_mainTex, uv.xy).xyz;
 					gl_Position = u_ProjectionView * u_Model * vec4(pos, 1.0);
@@ -148,12 +142,12 @@
 
 		const instancedGeometry = new t3d.Geometry();
 		instancedGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array([0, 0, 0]), 3))); // just a placeholder
-		const vertexIDArray = new Float32Array([0, 1, 2, 3]);
+		const vertexIDArray = new Int8Array([0, 1, 2, 3]);
 		instancedGeometry.addAttribute('a_VertexID', new t3d.Attribute(new t3d.Buffer(vertexIDArray, 1)));
 		const indicesArray = new Uint16Array([0, 1, 2, 0, 2, 3]);
 		instancedGeometry.setIndex(new t3d.Attribute(new t3d.Buffer(indicesArray, 1)));
 		const maxCount = 2 * maxGridCount * maxGridCount;
-		const instanceIDArray = new Float32Array(maxCount);
+		const instanceIDArray = new Int32Array(maxCount);
 		for (let i = 0; i < maxGridCount; i++) {
 			for (let j = 0; j < maxGridCount; j++) {
 				const gridIndex = i * maxGridCount + j;
@@ -188,7 +182,12 @@
 		
 			forwardRenderer.render(scene, camera);
 		}
-		requestAnimationFrame(loop);
+
+		if (forwardRenderer.capabilities.version < 2) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			requestAnimationFrame(loop);
+		}
 
 		function onWindowResize() {
 			width = window.innerWidth || 2;

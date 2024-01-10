@@ -14139,15 +14139,17 @@ class WebGLAttribute {
 function getAttributeCount(gl, type) {
 	switch (type) {
 		case gl.FLOAT:
-		case gl.BYTE:
-		case gl.UNSIGNED_BYTE:
-		case gl.UNSIGNED_SHORT:
+		case gl.INT:
+		case gl.UNSIGNED_INT:
 			return 1;
 		case gl.FLOAT_VEC2:
+		case gl.INT_VEC2:
 			return 2;
 		case gl.FLOAT_VEC3:
+		case gl.INT_VEC3:
 			return 3;
 		case gl.FLOAT_VEC4:
+		case gl.INT_VEC4:
 			return 4;
 		case gl.FLOAT_MAT2:
 			return 4;
@@ -14170,12 +14172,13 @@ function getAttributeFormat(gl, type) {
 		case gl.FLOAT_MAT3:
 		case gl.FLOAT_MAT4:
 			return gl.FLOAT;
-		case gl.UNSIGNED_BYTE:
-			return gl.UNSIGNED_BYTE;
-		case gl.UNSIGNED_SHORT:
-			return gl.UNSIGNED_SHORT;
-		case gl.BYTE:
-			return gl.BYTE;
+		case gl.INT:
+		case gl.INT_VEC2:
+		case gl.INT_VEC3:
+		case gl.INT_VEC4:
+			return gl.INT;
+		case gl.UNSIGNED_INT:
+			return gl.UNSIGNED_INT;
 		default:
 			return gl.FLOAT;
 	}
@@ -17810,7 +17813,8 @@ class WebGLVertexArrayBindings extends PropertyMap {
 				const bufferProperties = buffers.get(buffer);
 
 				const type = bufferProperties.type;
-				if (programAttribute.format !== type) ;
+
+				const integer = isWebGL2 && (programAttribute.format === gl.INT || programAttribute.format === gl.UNSIGNED_INT);
 
 				for (let i = 0, l = programAttribute.locationSize; i < l; i++) {
 					gl.enableVertexAttribArray(programAttribute.location + i);
@@ -17837,16 +17841,17 @@ class WebGLVertexArrayBindings extends PropertyMap {
 				gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
 
 				if (programAttribute.count === stride && programAttribute.locationSize === 1) {
-					gl.vertexAttribPointer(programAttribute.location, programAttribute.count, type, normalized, 0, 0);
+					this._vertexAttribPointer(programAttribute.location, programAttribute.count, type, normalized, 0, 0, integer);
 				} else {
 					for (let i = 0; i < programAttribute.locationSize; i++) {
-						gl.vertexAttribPointer(
+						this._vertexAttribPointer(
 							programAttribute.location + i,
 							programAttribute.count / programAttribute.locationSize,
 							type,
 							normalized,
 							bytesPerElement * stride,
-							bytesPerElement * (offset + (programAttribute.count / programAttribute.locationSize) * i)
+							bytesPerElement * (offset + (programAttribute.count / programAttribute.locationSize) * i),
+							integer
 						);
 					}
 				}
@@ -17857,6 +17862,15 @@ class WebGLVertexArrayBindings extends PropertyMap {
 		if (geometry.index) {
 			const indexBufferProperties = buffers.get(geometry.index.buffer);
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferProperties.glBuffer);
+		}
+	}
+
+	_vertexAttribPointer(index, size, type, normalized, stride, offset, integer) {
+		const gl = this._gl;
+		if (integer) {
+			gl.vertexAttribIPointer(index, size, type, stride, offset);
+		} else {
+			gl.vertexAttribPointer(index, size, type, normalized, stride, offset);
 		}
 	}
 
