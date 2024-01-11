@@ -1,7 +1,7 @@
 {
   "name": "t3d",
   "version": "0.2.3",
-  "description": "t3d.js is a web-first, light weight, extendable 3D rendering library.",
+  "description": "t3d.js is a lightweight, web-first, and extendable 3D rendering library.",
   "type": "module",
   "main": "./build/t3d.js",
   "module": "./build/t3d.module.js",

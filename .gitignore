@@ -1,29 +1,24 @@
-bin-debug/
-node_modules/
-.idea/
-.vscode/
-tools/node_modules
-
-tools/nodejs/buildTS.local
-*.local
-*.map
-.idea
-.vscode
-
-*.swp
-*~
 .DS_Store
-.[Tt]humb
-*.config
-obj/
-*.user
+*.swp
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.project
 *.suo
+*.ntvs*
+*.njsproj
 *.sln
-*.csproj
-*.ide/
+*.user
+.vs/
+*.sw?
+
+# Logs
 npm-debug.log
-src/tsc_config_temp.txt
-/bin
-/tsconfig.json
 
 /docs
+
+**/node_modules
+*.local
+.jshintrc
