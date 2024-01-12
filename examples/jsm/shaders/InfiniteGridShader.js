@@ -36,9 +36,9 @@ const InfiniteGridShader = {
             }
             mat4 projInvMat = inverseMat4(u_Projection);
 
-            nearPoint = UnprojectPoint(a_Position.x, a_Position.y, -1.0, viewInvMat, projInvMat);// unprojecting on the near plane
-            farPoint = UnprojectPoint(a_Position.x, a_Position.y, 1.0, viewInvMat, projInvMat);// unprojecting on the far plane
-            gl_Position = vec4(a_Position, 1.0);
+            nearPoint = UnprojectPoint(a_Position.x, a_Position.y, -1.0, viewInvMat, projInvMat); // unprojecting on the near plane
+            farPoint = UnprojectPoint(a_Position.x, a_Position.y, 1.0, viewInvMat, projInvMat); // unprojecting on the far plane
+            gl_Position = vec4(a_Position, 1.0); // using directly the clipped coordinates
         }
     `,
 
@@ -60,21 +60,29 @@ const InfiniteGridShader = {
         varying vec3 farPoint;
 
         vec4 grid(vec3 fragPos3D, float scale, float alpha) {
-            vec2 coord = mix(fragPos3D.xz, fragPos3D.xy, flipProgress); // use the scale variable to set the distance between the lines
-            vec2 derivative = fwidth(coord / scale) * 1.0;
-            vec2 grid = abs(fract(coord / scale - 0.5) - 0.5) / derivative;
+            vec2 coord = mix(fragPos3D.xz, fragPos3D.xy, flipProgress) / scale; // use the scale variable to set the distance between the lines
+            vec2 derivative = fwidth(coord);
+            vec2 grid = abs(fract(coord - 0.5) - 0.5) / derivative;
             float line = min(grid.x, grid.y);
-            float minimumz = min(fwidth(coord).y, 1.0);
-            float minimumx = min(fwidth(coord).x, 1.0);
+            float minimumz = min(derivative.y, 1.0);
+            float minimumx = min(derivative.x, 1.0);
             vec4 color = vec4(gridIntensity, gridIntensity, gridIntensity, 1.0 - min(line, 1.0));
+
             // z axis
-            if(fragPos3D.x >= -axisIntensity * minimumx && fragPos3D.x <= axisIntensity * minimumx)
-                color = vec4(0.0, 0.0, 1.0, 1.0);
+            if(fragPos3D.x >= -axisIntensity * minimumx && fragPos3D.x <= axisIntensity * minimumx) {
+                color *= vec4(0.0, 0.0, 4.0, 1.0);
+                color.b = clamp(color.b, 0.0, 1.0);
+            }
+                
             // x axis and y axis
             float xy = mix(fragPos3D.z, fragPos3D.y, flipProgress);
-            if(xy >= -axisIntensity * minimumz && xy <= axisIntensity * minimumz)
-                color = vec4(1.0, 0.0, 0.0, 1.0);
+            if(xy >= -axisIntensity * minimumz && xy <= axisIntensity * minimumz) {
+                color *= vec4(4.0, 0.0, 0.0, 1.0);
+                color.r = clamp(color.r, 0.0, 1.0);
+            }
+                
             color.a *= alpha;
+
             return color;
         }
 
@@ -96,6 +104,7 @@ const InfiniteGridShader = {
             float tz = -nearPoint.z / (farPoint.z - nearPoint.z);
             float t = mix(ty, tz, flipProgress);
             vec3 fragPos3D = nearPoint + t * (farPoint - nearPoint);
+            
             gl_FragDepthEXT = computeDepth(fragPos3D);
 
             gl_FragColor = (grid(fragPos3D, primaryScale, primaryFade) + grid(fragPos3D, secondaryScale, secondaryFade)) * float(t > 0.0);
