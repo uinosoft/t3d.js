@@ -159,6 +159,7 @@ class WebGLRenderer extends ThinRenderer {
 
 	readRenderTargetPixels(x, y, width, height, buffer) {
 		this._renderTargets.readRenderTargetPixels(x, y, width, height, buffer);
+		return Promise.resolve(buffer);
 	}
 
 	updateRenderTargetMipmap(renderTarget) {

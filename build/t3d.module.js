@@ -10755,6 +10755,7 @@ class ThinRenderer {
 	 * @param {Number} width - The width of the rectangle to read from.
 	 * @param {Number} height - The height of the rectangle to read from.
 	 * @param {TypedArray} buffer Uint8Array is the only destination type supported in all cases, other types are renderTarget and platform dependent.
+	 * @return {Promise<TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the pixel data.
 	 */
 	readRenderTargetPixels(x, y, width, height, buffer) {}
 
@@ -18021,6 +18022,7 @@ class WebGLRenderer extends ThinRenderer {
 
 	readRenderTargetPixels(x, y, width, height, buffer) {
 		this._renderTargets.readRenderTargetPixels(x, y, width, height, buffer);
+		return Promise.resolve(buffer);
 	}
 
 	updateRenderTargetMipmap(renderTarget) {
