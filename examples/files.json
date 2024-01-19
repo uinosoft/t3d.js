@@ -96,6 +96,7 @@
 		"controls_camera_orbit",
 		"controls_camera_fly",
 		"controls_camera_free",
+		"controls_camera_view",
 		"controls_transform"
 	],
 	"probes": [
