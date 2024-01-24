@@ -143,6 +143,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.directLightNum = lights ? lights.directsNum : 0;
 	props.pointLightNum = lights ? lights.pointsNum : 0;
 	props.spotLightNum = lights ? lights.spotsNum : 0;
+	props.rectAreaLightNum = lights ? lights.rectAreaNum : 0;
 	props.directShadowNum = (object.receiveShadow && !!lights) ? lights.directShadowNum : 0;
 	props.pointShadowNum = (object.receiveShadow && !!lights) ? lights.pointShadowNum : 0;
 	props.spotShadowNum = (object.receiveShadow && !!lights) ? lights.spotShadowNum : 0;
@@ -479,6 +480,7 @@ function replaceLightNums(string, parameters) {
 		.replace(/NUM_DIR_LIGHTS/g, parameters.directLightNum)
 		.replace(/NUM_SPOT_LIGHTS/g, parameters.spotLightNum)
 		.replace(/NUM_POINT_LIGHTS/g, parameters.pointLightNum)
+		.replace(/NUM_RECT_AREA_LIGHTS/g, parameters.rectAreaLightNum)
 		.replace(/NUM_DIR_SHADOWS/g, parameters.directShadowNum)
 		.replace(/NUM_SPOT_SHADOWS/g, parameters.spotShadowNum)
 		.replace(/NUM_POINT_SHADOWS/g, parameters.pointShadowNum);

@@ -1,6 +1,9 @@
 import { Vector3 } from '../math/Vector3.js';
+import { Matrix4 } from '../math/Matrix4.js';
+import { RectAreaLight } from '../scenes/lights/RectAreaLight.js';
 
 const helpVector3 = new Vector3();
+const helpMatrix4 = new Matrix4();
 
 const tempDirectionalShadowMatrices = [];
 const tempPointShadowMatrices = [];
@@ -48,6 +51,10 @@ class LightData {
 		this.spotShadowDepthMap = [];
 		this.spotShadowMatrix = new Float32Array(0);
 
+		this.rectArea = [];
+		this.LTC1 = null;
+		this.LTC2 = null;
+
 		// Status
 
 		this.useAmbient = false;
@@ -56,6 +63,7 @@ class LightData {
 		this.directsNum = 0;
 		this.pointsNum = 0;
 		this.spotsNum = 0;
+		this.rectAreaNum = 0;
 		this.directShadowNum = 0;
 		this.pointShadowNum = 0;
 		this.spotShadowNum = 0;
@@ -105,9 +113,13 @@ class LightData {
 		this.directsNum = 0;
 		this.pointsNum = 0;
 		this.spotsNum = 0;
+		this.rectAreaNum = 0;
 		this.directShadowNum = 0;
 		this.pointShadowNum = 0;
 		this.spotShadowNum = 0;
+
+		this.LTC1 = null;
+		this.LTC2 = null;
 
 		// Setup Uniforms
 
@@ -125,6 +137,8 @@ class LightData {
 				this._doAddSpotLight(light, sceneData);
 			} else if (light.isSphericalHarmonicsLight) {
 				this._doAddSphericalHarmonicsLight(light);
+			} else if (light.isRectAreaLight) {
+				this._doAddRectAreaLight(light, sceneData);
 			}
 		}
 
@@ -164,6 +178,11 @@ class LightData {
 			for (let i = 0; i < spotShadowNum; i++) {
 				tempSpotShadowMatrices[i].toArray(this.spotShadowMatrix, i * 16);
 			}
+		}
+
+		if (this.rectAreaNum > 0) {
+			this.LTC1 = RectAreaLight.LTC1;
+			this.LTC2 = RectAreaLight.LTC2;
 		}
 	}
 
@@ -381,6 +400,51 @@ class LightData {
 		this.spot[this.spotsNum++] = cache;
 	}
 
+	_doAddRectAreaLight(object, sceneData) {
+		const intensity = object.intensity;
+		const color = object.color;
+		const halfHeight = object.height;
+		const halfWidth = object.width;
+
+		const useAnchorMatrix = sceneData.useAnchorMatrix;
+
+		const cache = getLightCache(object);
+
+		cache.color[0] = color.r * intensity;
+		cache.color[1] = color.g * intensity;
+		cache.color[2] = color.b * intensity;
+
+		const position = helpVector3.setFromMatrixPosition(object.worldMatrix);
+		if (useAnchorMatrix) {
+			position.applyMatrix4(sceneData.anchorMatrixInverse);
+		}
+
+		cache.position[0] = position.x;
+		cache.position[1] = position.y;
+		cache.position[2] = position.z;
+
+		// extract rotation of light to derive width/height half vectors
+		helpMatrix4.copy(object.worldMatrix);
+		if (useAnchorMatrix) {
+			helpMatrix4.premultiply(sceneData.anchorMatrixInverse);
+		}
+		helpMatrix4.extractRotation(helpMatrix4);
+
+		const halfWidthPos = helpVector3.set(halfWidth * 0.5, 0.0, 0.0);
+		halfWidthPos.applyMatrix4(helpMatrix4);
+		cache.halfWidth[0] = halfWidthPos.x;
+		cache.halfWidth[1] = halfWidthPos.y;
+		cache.halfWidth[2] = halfWidthPos.z;
+
+		const halfHeightPos = helpVector3.set(0.0, halfHeight * 0.5, 0.0);
+		halfHeightPos.applyMatrix4(helpMatrix4);
+		cache.halfHeight[0] = halfHeightPos.x;
+		cache.halfHeight[1] = halfHeightPos.y;
+		cache.halfHeight[2] = halfHeightPos.z;
+
+		this.rectArea[this.rectAreaNum++] = cache;
+	}
+
 }
 
 // Light caches
@@ -422,7 +486,15 @@ function getLightCache(light) {
 			penumbraCos: 0,
 			decay: 0
 		};
+	} else if (light.isRectAreaLight) {
+		cache = {
+			position: new Float32Array(3),
+			color: new Float32Array([0, 0, 0]),
+			halfWidth: new Float32Array(3),
+			halfHeight: new Float32Array(3)
+		};
 	}
+
 
 	lightCaches.set(light, cache);
 
@@ -481,9 +553,10 @@ class LightHash {
 		this._factor[3] = lights.directsNum;
 		this._factor[4] = lights.pointsNum;
 		this._factor[5] = lights.spotsNum;
-		this._factor[6] = lights.directShadowNum;
-		this._factor[7] = lights.pointShadowNum;
-		this._factor[8] = lights.spotShadowNum;
+		this._factor[6] = lights.rectAreaNum;
+		this._factor[7] = lights.directShadowNum;
+		this._factor[8] = lights.pointShadowNum;
+		this._factor[9] = lights.spotShadowNum;
 	}
 
 	compare(factor) {

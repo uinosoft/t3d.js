@@ -183,6 +183,24 @@ float clearcoatDHR;
     #pragma unroll_loop_end
 #endif
 
+#if NUM_RECT_AREA_LIGHTS > 0
+    vec3 RectAreaLightDirectSpecular;
+    vec3 RectAreaLightDirectDiffuse;
+    vec3 rectCoords[4];
+
+    #pragma unroll_loop_start
+    for (int i = 0; i < NUM_RECT_AREA_LIGHTS; i++) {
+        LTC_RectCoords(u_RectArea[i].position, u_RectArea[i].halfWidth, u_RectArea[i].halfHeight, rectCoords);
+
+        reflectedLight.directDiffuse += u_RectArea[i].color * LTC_Diffuse(diffuseColor, N, V, v_modelPos, rectCoords);
+
+        #ifdef USE_PBR
+            reflectedLight.directSpecular += u_RectArea[i].color * LTC_Specular(specularColor, N, V, v_modelPos, rectCoords, roughness);
+        #endif
+    }
+    #pragma unroll_loop_end
+#endif
+
 vec3 indirectIrradiance = vec3(0., 0., 0.);   
 
 #ifdef USE_AMBIENT_LIGHT

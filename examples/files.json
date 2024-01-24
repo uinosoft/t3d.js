@@ -3,6 +3,7 @@
 		"light_directlight",
 		"light_pointlight",
 		"light_spotlight",
+		"light_rectarealight",
 		"light_hemispherelight",
 		"light_sphericalharmonicslight",
 		"light_shadow",

@@ -96,6 +96,7 @@ export { HemisphereLight } from './scenes/lights/HemisphereLight.js';
 export { LightShadow } from './scenes/lights/LightShadow.js';
 export { PointLight } from './scenes/lights/PointLight.js';
 export { PointLightShadow } from './scenes/lights/PointLightShadow.js';
+export { RectAreaLight } from './scenes/lights/RectAreaLight.js';
 export { SphericalHarmonicsLight } from './scenes/lights/SphericalHarmonicsLight.js';
 export { SpotLight } from './scenes/lights/SpotLight.js';
 export { SpotLightShadow } from './scenes/lights/SpotLightShadow.js';
