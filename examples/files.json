@@ -105,6 +105,7 @@
 	"math": [
 		"math_frustumtest",
 		"math_curve",
+		"math_curve_motion",
 		"math_octree"
 	],
 	"sprite": [
