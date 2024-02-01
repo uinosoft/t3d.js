@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - curve motion</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - curve motion
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { CurvePath3 } from 't3d/addons/math/curves/Curves.js';
+		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(22, 22, 0);
+		camera.lookAt(new t3d.Vector3(0, 0, -1), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-20, 20, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 15;
+		directionalLight.shadow.mapSize.set(1024, 1024);
+		directionalLight.shadow.bias = -0.0002;
+		directionalLight.shadow.normalBias = 0.01;
+		directionalLight.shadow.cameraNear = 10;
+		scene.add(directionalLight);
+
+		const grid = new GridHelper(50, 50, 0xffffff, 0x111111);
+		grid.position.y = -0.1;
+		scene.add(grid);
+
+		function createRoadPoints() {
+			const roadRegionHalfSize = new t3d.Vector2(10, 8);
+			const bridgeHeight = 1.5;
+			return [
+				new t3d.Vector3(-roadRegionHalfSize.x, 0, 0),
+				new t3d.Vector3(-roadRegionHalfSize.x, 0, roadRegionHalfSize.y),
+				new t3d.Vector3(0, 0, 0),
+				new t3d.Vector3(roadRegionHalfSize.x, 0, -roadRegionHalfSize.y),
+				new t3d.Vector3(roadRegionHalfSize.x, 0, roadRegionHalfSize.y),
+				new t3d.Vector3(roadRegionHalfSize.x / 2, 0, roadRegionHalfSize.y / 2),
+				new t3d.Vector3(0, bridgeHeight, 0),
+				new t3d.Vector3(-roadRegionHalfSize.x / 2, 0, -roadRegionHalfSize.y / 2),
+				new t3d.Vector3(-roadRegionHalfSize.x, 0, -roadRegionHalfSize.y)
+			];
+		}
+
+		function createCurveFrames() {
+			const curvePath3_2 = new CurvePath3();
+			curvePath3_2.setFromPoints(createRoadPoints(), { close: true, bevelRadius: 3.5 });
+			return curvePath3_2.computeFrames({ divisions: 12, up: new t3d.Vector3(0, 1, 0) });
+		}
+
+		function createRoad(frames) {
+			const texture = new Texture2DLoader().load('./resources/mainroad.jpg');
+			texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
+			texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+			const roadMaterial = new t3d.PBRMaterial();
+			roadMaterial.diffuse.setHex(0x888888);
+			roadMaterial.diffuseMap = texture;
+			roadMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+	const poss = [];
+	const indexs = [];
+	const uvs = [];
+	for (let i = 0; i < frames.points.length; i++) {
+		poss.push(frames.points[i].x, frames.points[i].y, frames.points[i].z);
+		poss.push(frames.points[i].x, frames.points[i].y + 2, frames.points[i].z);
+		uvs.push(frames.lengths[i], 0);
+		uvs.push(frames.lengths[i], 1);
+		if (i === frames.points.length - 1) {
+					break;
+		}
+		indexs.push(i * 2, i * 2 + 1, i * 2 + 2);
+		indexs.push(i * 2 + 2, i * 2 + 3, i * 2 + 1);
+	}
+
+			const geometry = new t3d.Geometry();
+			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(poss), 3)));
+			// geometry.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData.normals), 3)));
+			geometry.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(uvs), 2)));
+			geometry.setIndex(new t3d.Attribute(new t3d.Buffer(new Uint32Array(indexs), 1)));
+			geometry.computeBoundingBox();
+			geometry.computeBoundingSphere();
+
+			const route = new t3d.Mesh(geometry, roadMaterial);
+			route.receiveShadow = true;
+			route.castShadow = true;
+			scene.add(route);
+
+			return route;
+		}
+
+		
+
+		const curveFrames = createCurveFrames();
+		createRoad(curveFrames);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
