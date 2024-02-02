@@ -213,6 +213,7 @@
 		"lab_geometry_images",
 		"lab_terrain",
 		"lab_water_simulation",
-		"lab_path_finding"
+		"lab_path_finding",
+		"lab_histogram"
 	]
 }

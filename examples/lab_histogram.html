@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - lab histogram</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - 3D histogram example
+		<div id="notSupported" style="display:none">
+			Sorry, your graphics card + browser does not support vertex textures more than 2
+		</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { HeatmapGenerator } from 't3d/addons/textures/HeatmapGenerator.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0, 0, 0, 1);
+
+		const scene = new t3d.Scene();
+
+		scene.fog = new t3d.Fog(0x000000, 800, 2000);
+
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+		scene.environment = cubeTexture;
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 450;
+		directionalLight.shadow.mapSize.set(2048, 2048);
+		directionalLight.shadow.bias = -0.001;
+		directionalLight.shadow.normalBias = 0.2;
+		directionalLight.shadow.cameraNear = 10;
+		directionalLight.position.set(-130, 140, 150);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(260, 100, 260);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 5000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const plane_geometry = new t3d.PlaneGeometry(3000, 3000);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.roughness = 0.7;
+		plane_material.diffuse.setHex(0x111111);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.position.y = -1;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		// stats
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+		
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+
+		const supportVertexTextures = forwardRenderer.capabilities.maxVertexTextures > 2;
+		if (!supportVertexTextures) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			requestAnimationFrame(loop);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 5000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+
+		// Part1: histogram material
+
+		class HistogramMaterial extends t3d.PBRMaterial {
+
+			constructor() {
+				super();
+
+				this.type = t3d.MATERIAL_TYPE.SHADER;
+
+				this.shaderName = 'Histogram';
+
+				this.vertexShader = vertexShader;
+				this.fragmentShader = fragmentShader;
+
+				this.uniforms.heightMap1 = null;
+				this.uniforms.heightMap2 = null;
+				this.uniforms.colorMap = null;
+				this.uniforms.heightLerp = 0;
+				this.uniforms.heightScalar = 50;
+			}
+
+		}
+
+		HistogramMaterial.prototype.isHistogramMaterial = true;
+
+		const size = '256.';
+
+		const batchingParsVert = `
+			attribute float batchId;
+			uniform sampler2D heightMap1;
+			uniform sampler2D heightMap2;
+			uniform float heightLerp;
+			uniform float heightScalar;
+			varying float heightFactor;
+			vec3 getHightMapData(float i) {
+				float x = i - floor((i + 0.5) / ${size}) * ${size};
+				float y = floor((i + 0.5) / ${size});
+
+				vec4 texel1 = texture2D(heightMap1, vec2(x / ${size}, y / ${size}));
+				vec4 texel2 = texture2D(heightMap2, vec2(x / ${size}, y / ${size}));
+
+				float height = mix(texel1.r, texel2.r, heightLerp);
+
+				return vec3(x * 1.1, y * 1.1, height);
+			}
+		`;
+
+		const batchingPositionVert = `
+			vec3 heightMapData = getHightMapData(batchId);
+
+			vec4 tPosition = vec4(transformed, 1.0);
+			tPosition.y *= heightMapData.z * heightScalar;
+			tPosition.y += 0.001;
+			tPosition.x += heightMapData.x;
+			tPosition.z += heightMapData.y;
+
+			vec4 worldPosition = u_Model * tPosition;
+			gl_Position = u_ProjectionView * worldPosition;
+
+			heightFactor = heightMapData.z;
+		`;
+
+		let vertexShader = t3d.ShaderLib.pbr_vert;
+
+		vertexShader = vertexShader.replace('#include <logdepthbuf_pars_vert>', `
+			#include <logdepthbuf_pars_vert>
+			${batchingParsVert}
+		`);
+		vertexShader = vertexShader.replace('#include <pvm_vert>', batchingPositionVert);
+
+		let fragmentShader = t3d.ShaderLib.pbr_frag;
+
+		fragmentShader = fragmentShader.replace(
+			'#include <clippingPlanes_pars_frag>',
+			`
+			#include <clippingPlanes_pars_frag>
+			uniform sampler2D colorMap;
+			varying float heightFactor;
+			`
+		);
+
+		fragmentShader = fragmentShader.replace(
+			'#include <color_frag>',
+			`
+			#include <color_frag>
+			// if (heightFactor < 0.01) discard;
+			outColor *= texture2D(colorMap, vec2(heightFactor, 0.5));
+			`
+		);
+
+		export class HistogramDepthMaterial extends t3d.DepthMaterial {
+
+			constructor() {
+				super();
+				this.type = t3d.MATERIAL_TYPE.SHADER;
+				this.packToRGBA = true;
+				this.shaderName = 'HistogramDepth';
+				this.vertexShader = depthVertexShader;
+				this.fragmentShader = t3d.ShaderLib.depth_frag;
+
+				this.uniforms.heightMap1 = null;
+				this.uniforms.heightMap2 = null;
+				this.uniforms.heightLerp = 0;
+			}
+
+		}
+
+		const depthVertexShader = `
+			#include <common_vert>
+			#include <morphtarget_pars_vert>
+			#include <skinning_pars_vert>
+			#include <uv_pars_vert>
+			#include <logdepthbuf_pars_vert>
+			${batchingParsVert}
+			void main() {
+				#include <uv_vert>
+				#include <begin_vert>
+				#include <morphtarget_vert>
+				#include <skinning_vert>
+				${batchingPositionVert}
+				#include <logdepthbuf_vert>
+			}
+		`;
+
+		// Part2: histogram geometry
+
+		class HistogramGeometry extends t3d.Geometry {
+
+			constructor(count = 256 * 256) {
+				super();
+
+				const vertices = new Float32Array(count * 24 * 3);
+				const normals = new Float32Array(count * 24 * 3);
+				const uvs = new Float32Array(count * 24 * 2);
+				const batchIds = new Float32Array(count * 24);
+
+				const indices = new Uint32Array(count * 12 * 3);
+
+				for (let i = 0; i < count; i++) {
+					vertices.set(tempPositions, i * 24 * 3);
+					normals.set(tempNormals, i * 24 * 3);
+					uvs.set(tempUvs, i * 24 * 2);
+
+					for (let j = 0; j < 24; j++) {
+						batchIds[i * 24 + j] = i;
+					}
+
+					const subIndices = Array.from(tempIndices).map(index => index + i * 24);
+					indices.set(subIndices, i * 12 * 3);
+				}
+
+				this.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(vertices, 3)));
+				this.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(normals, 3)));
+				this.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(uvs, 2)));
+				this.addAttribute('batchId', new t3d.Attribute(new t3d.Buffer(batchIds, 1)));
+
+				this.setIndex(new t3d.Attribute(new t3d.Buffer(indices, 1)));
+			}
+
+		}
+
+		const tempGeometry = new t3d.BoxGeometry(1, 1, 1, 1, 1, 1);
+		const tempPositions = tempGeometry.attributes.a_Position.buffer.array;
+		for (let i = 0; i < tempPositions.length; i += 3) {
+			tempPositions[i + 1] += 0.5;
+		}
+		const tempNormals = tempGeometry.attributes.a_Normal.buffer.array;
+		const tempUvs = tempGeometry.attributes.a_Uv.buffer.array;
+		const tempIndices = tempGeometry.index.buffer.array;
+
+		// Part3: create histogram (main)
+
+		new Texture2DLoader().load('./resources/platte.png', function(texture) {
+			texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+			const data1 = [];
+			for (let i = 0; i < 130; i++) {
+				data1[i] = [Math.random() * 120 - 60, Math.random() * 120 - 60, Math.random() * 0.8];
+			}
+			const generator1 = new HeatmapGenerator(256, 256);
+			generator1.render(forwardRenderer, data1, {
+				size: [120, 120],
+				radius: 5
+			});
+
+			const data2 = [];
+			for (let i = 0; i < 150; i++) {
+				data2[i] = [Math.random() * 120 - 60, Math.random() * 120 - 60, Math.random() * 0.7];
+			}
+			const generator2 = new HeatmapGenerator(256, 256);
+			generator2.render(forwardRenderer, data2, {
+				size: [120, 120],
+				radius: 8
+			});
+
+			const histogramMaterial = new HistogramMaterial();
+			histogramMaterial.uniforms.heightMap1 = generator1.getGrayTexture();
+			histogramMaterial.uniforms.heightMap2 = generator2.getGrayTexture();
+			histogramMaterial.uniforms.colorMap = texture;
+			histogramMaterial.metalness = 0.5;
+			histogramMaterial.roughness = 0.8;
+
+			const histogramGeometry = new HistogramGeometry();
+
+			const histogram = new t3d.Mesh(histogramGeometry, histogramMaterial);
+			histogram.frustumCulled = false;
+			histogram.castShadow = true;
+			histogram.receiveShadow = true;
+			histogram.position.set(-256 / 2, 0, -256 / 2);
+			scene.add(histogram);
+
+			const gui = new GUI();
+			gui.add(histogramMaterial.uniforms, 'heightScalar', 0, 100, 1);
+			gui.add(histogramMaterial.uniforms, 'heightLerp', 0, 1, 0.01);
+		});
+
+		// Part4: set shadow material
+
+		const depthMaterials = [];
+		const shadowSide = { 'front': t3d.DRAW_SIDE.BACK, 'back': t3d.DRAW_SIDE.FRONT, 'double': t3d.DRAW_SIDE.DOUBLE };
+		forwardRenderer.shadowMapPass.getDepthMaterial = function(renderable) {
+			const useSkinning = !!renderable.object.skeleton;
+			const useMorphing = renderable.geometry.morphAttributes.position && renderable.geometry.morphAttributes.position.length > 0;
+			const isHistogram = renderable.material.isHistogramMaterial;
+
+			const index = useMorphing << 0 | useSkinning << 1 | isHistogram << 2;
+
+			let material = depthMaterials[index];
+			if (material === undefined) {
+				material = isHistogram ? new HistogramDepthMaterial() : new t3d.DepthMaterial();
+				depthMaterials[index] = material;
+			}
+
+			material.side = shadowSide[renderable.material.side];
+
+			if (isHistogram) {
+				material.uniforms.heightMap1 = renderable.material.uniforms.heightMap1;
+				material.uniforms.heightMap2 = renderable.material.uniforms.heightMap2;
+				material.uniforms.heightLerp = renderable.material.uniforms.heightLerp;
+				material.uniforms.heightScalar = renderable.material.uniforms.heightScalar;
+			}
+
+			return material;
+		};
+	</script>
+</body>
+</html>
