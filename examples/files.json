@@ -55,6 +55,7 @@
 		"material_texture_video",
 		"material_texture_heatmap",
 		"material_texture_idwmap",
+		"material_texture_integer",
 		"material_compressedtexture_dds",
 		"material_compressedtexture_pvr",
 		"material_cubetexture_skybox",

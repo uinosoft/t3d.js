@@ -242,6 +242,8 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		'precision ' + props.precision + ' int;',
 		// depth texture may have precision problem on iOS device.
 		'precision ' + props.precision + ' sampler2D;',
+		(props.version >= 2) ? 'precision ' + props.precision + ' isampler2D;' : '',
+		(props.version >= 2) ? 'precision ' + props.precision + ' usampler2D;' : '',
 
 		'#define SHADER_NAME ' + props.shaderName,
 
@@ -300,6 +302,8 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		'precision ' + props.precision + ' int;',
 		// depth texture may have precision problem on iOS device.
 		'precision ' + props.precision + ' sampler2D;',
+		(props.version >= 2) ? 'precision ' + props.precision + ' isampler2D;' : '',
+		(props.version >= 2) ? 'precision ' + props.precision + ' usampler2D;' : '',
 		(props.version >= 2) ? 'precision ' + props.precision + ' sampler2DShadow;' : '',
 		(props.version >= 2) ? 'precision ' + props.precision + ' samplerCubeShadow;' : '',
 

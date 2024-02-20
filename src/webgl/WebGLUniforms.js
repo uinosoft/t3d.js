@@ -143,6 +143,8 @@ function generateSetter(uniform, pureArray) {
 			break;
 		case gl.SAMPLER_2D:
 		case gl.SAMPLER_2D_SHADOW:
+		case gl.INT_SAMPLER_2D:
+		case gl.UNSIGNED_INT_SAMPLER_2D:
 			uniform.setValue = function(value, textures) {
 				const unit = textures.allocTexUnit();
 				textures.setTexture2D(value || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), unit);
