@@ -36,6 +36,7 @@ class WebGLPrograms {
 			const fragmentShader = ShaderLib[material.type + '_frag'] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
+			program.name = props.shaderName;
 			program.compile(compileOptions);
 			program.code = code;
 

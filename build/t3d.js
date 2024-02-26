@@ -13985,6 +13985,7 @@
 			this.id = programIdCount++;
 			this.usedTimes = 1;
 			this.code = '';
+			this.name = '';
 			this.lightId = -1;
 			this.lightVersion = -1;
 			this.cameraId = -1;
@@ -14048,7 +14049,7 @@
 					const fragmentErrors = getShaderErrors(gl, fragmentShader, 'FRAGMENT');
 					this.program = undefined;
 					this._status = 0;
-					console.error('Shader Error ' + gl.getError() + ' - ' + 'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' + 'Program Info Log: ' + programLog + '\n' + vertexErrors + '\n' + fragmentErrors);
+					console.error('Shader Error ' + gl.getError() + ' - ' + 'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' + 'Shader Name: ' + this.name + '\n' + 'Program Info Log: ' + programLog + '\n' + vertexErrors + '\n' + fragmentErrors);
 				}
 			};
 
@@ -14150,6 +14151,7 @@
 				const vertexShader = ShaderLib[material.type + '_vert'] || material.vertexShader || ShaderLib.basic_vert;
 				const fragmentShader = ShaderLib[material.type + '_frag'] || material.fragmentShader || ShaderLib.basic_frag;
 				program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
+				program.name = props.shaderName;
 				program.compile(compileOptions);
 				program.code = code;
 				programs.push(program);

@@ -15102,6 +15102,7 @@ class WebGLProgram {
 		this.usedTimes = 1;
 
 		this.code = '';
+		this.name = '';
 
 		this.lightId = -1;
 		this.lightVersion = -1;
@@ -15179,6 +15180,7 @@ class WebGLProgram {
 				console.error(
 					'Shader Error ' + gl.getError() + ' - ' +
 					'VALIDATE_STATUS ' + gl.getProgramParameter(program, gl.VALIDATE_STATUS) + '\n\n' +
+					'Shader Name: ' + this.name + '\n' +
 					'Program Info Log: ' + programLog + '\n' +
 					vertexErrors + '\n' +
 					fragmentErrors
@@ -15307,6 +15309,7 @@ class WebGLPrograms {
 			const fragmentShader = ShaderLib[material.type + '_frag'] || material.fragmentShader || ShaderLib.basic_frag;
 
 			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
+			program.name = props.shaderName;
 			program.compile(compileOptions);
 			program.code = code;
 
