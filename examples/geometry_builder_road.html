@@ -44,97 +44,122 @@
 
 		const scene = new t3d.Scene();
 
+		const plane_geometry = new t3d.PlaneGeometry(200, 200);
+		const plane_material = new t3d.LambertMaterial();
+		plane_material.diffuse.setHex(0xbbbbbb);
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.position.y -= 2;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.9);
+		directionalLight.position.set(-1, 10, 2);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.cameraNear = 0.1;
+		directionalLight.shadow.cameraFar = 100;
+		directionalLight.shadow.windowSize = 60;
+		directionalLight.shadow.mapSize.set(4096, 4096);
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 80, 20);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
+
 		const texture = new Texture2DLoader().load('./resources/mainroad.jpg');
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		texture.anisotropy = 16;
 		
 		const sidewalkTex = new Texture2DLoader().load('./resources/walkroad.jpg');
 		const cornerTex = new Texture2DLoader().load('./resources/cornerroad.jpg');
-		const aoTex = new Texture2DLoader().load('./resources/ao2.png');
 
 		const mainMaterial = new t3d.PBRMaterial();
 		mainMaterial.diffuseMap = texture;
-		mainMaterial.aoMap = aoTex;
-		mainMaterial.aoMapCoord = 1;
-		mainMaterial.roughness = 1.0;
-		mainMaterial.metalness = 0.0;
 		mainMaterial.side = t3d.DRAW_SIDE.DOUBLE;
 
 		const sideWalkMaterial = new t3d.PBRMaterial();
 		sideWalkMaterial.diffuseMap = sidewalkTex;
-		sideWalkMaterial.roughness = 1.0;
-		sideWalkMaterial.metalness = 0.0;
 		sideWalkMaterial.side = t3d.DRAW_SIDE.DOUBLE;
 
 		const cornerMaterial = new t3d.PBRMaterial();
 		cornerMaterial.diffuseMap = cornerTex;
-		cornerMaterial.roughness = 1.0;
-		cornerMaterial.metalness = 0.0;
 		cornerMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+
+		const roadWidth = 1;
 
 		const roadDatas = [
 			[
-				{ points: [0, 0, 10, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 0, 10, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 10, 0, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 10, 0, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
+				{ points: [0, 0, 10, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 0, 10, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 10, 0, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 10, 0, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
 			],
 			[
-				{ points: [0, 0, 10, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 0, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 5, 0, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
+				{ points: [0, 0, 10, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 0, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 5, 0, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
 			],
 			[
-				{ points: [10, 0, 10, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 5, 10, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 10, 5, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 10, 0, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 10, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 5, 0, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 0, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 0, 5, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 0, 10, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
+				{ points: [10, 0, 10, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 5, 10, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 10, 5, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 10, 0, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 10, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 5, 0, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 0, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 0, 5, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 0, 10, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
 			],
 			[
-				{ points: [5, 5, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
-				{ points: [5, 5, 2.55, 2.5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
-				{ points: [5, 5, 2.5, 7.5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 5, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
-				{ points: [5, 5, 7.5, 7.5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 10, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
-				{ points: [5, 5, 7.5, 2.5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 5, 13, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 }
+				{ points: [5, 5, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
+				{ points: [5, 5, 2.55, 2.5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
+				{ points: [5, 5, 2.5, 7.5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 5, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
+				{ points: [5, 5, 7.5, 7.5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 10, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 },
+				{ points: [5, 5, 7.5, 2.5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 5, 13, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.1, cornerSections: 5 }
 			],
 			[
-				{ points: [5, 5, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 10, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
+				{ points: [5, 5, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 10, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
 			],
 			[
-				{ points: [0, 0, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 0, 10, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 0, 10, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 5, 10, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 10, 5, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 10, 0, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 10, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 5, 0, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 0, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 0, 10, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 0, 10, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 5, 10, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 10, 5, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 10, 0, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 10, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 5, 0, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
 
-				{ points: [5, 5, 0, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 5, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 5, 10, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 0, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 5, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 5, 10, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
 
-				{ points: [0, 5, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 5, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [10, 5, 5, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 5, 5, 10], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
+				{ points: [0, 5, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 5, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [10, 5, 5, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 5, 5, 10], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
 			],
 			[
-				{ points: [10, 0, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [0, 0, 5, 0], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
-				{ points: [5, 0, 5, 5], width: 0.3, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
+				{ points: [10, 0, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [0, 0, 5, 0], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 },
+				{ points: [5, 0, 5, 5], width: roadWidth, sidewalkWidth: 0.3, cornerRadius: 0.2, cornerSections: 5 }
 			]
 		];
 
@@ -156,7 +181,7 @@
 				createRoadMesh(cornerData, cornerMaterial, road);
 			}
 
-			road.position.set(15 * (index % 3) - 15, 0, 15 * Math.floor(index / 3) - 15);
+			road.position.set(15 * (index % 3) - 18, 0, 15 * Math.floor(index / 3) - 18);
 			scene.add(road);
 		});
 
@@ -180,36 +205,6 @@
 			road.add(mesh);
 		}
 
-		const plane_geometry = new t3d.PlaneGeometry(200, 200);
-		const plane_material = new t3d.LambertMaterial();
-		plane_material.diffuse.setHex(0xf0f0f0);
-		const plane = new t3d.Mesh(plane_geometry, plane_material);
-		plane.position.y -= 2;
-		plane.receiveShadow = true;
-		scene.add(plane);
-
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
-		scene.add(ambientLight);
-
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
-		directionalLight.position.set(-10, 10, 20);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		directionalLight.castShadow = true;
-		directionalLight.shadow.cameraNear = 0.1;
-		directionalLight.shadow.cameraFar = 100;
-		directionalLight.shadow.windowSize = 60;
-		directionalLight.shadow.mapSize.set(4096, 4096);
-		scene.add(directionalLight);
-
-		const camera = new t3d.Camera();
-		camera.position.set(5, 50, 5);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
-
-		const controller = new OrbitControls(camera, canvas);
-		controller.target.set(5, 0, 0);
-
 		function loop(count) {
 			requestAnimationFrame(loop);
 
@@ -223,7 +218,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
