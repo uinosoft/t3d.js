@@ -243,6 +243,26 @@ class Vector2 {
 	}
 
 	/**
+	 * Inverts this vector - i.e. sets x = -x, y = -y.
+	 * @return {t3d.Vector2}
+	 */
+	negate() {
+		this.x = -this.x;
+		this.y = -this.y;
+
+		return this;
+	}
+
+	/**
+	 * Calculate the dot product of this vector and v.
+	 * @param {t3d.Vector2} a
+	 * @return {Number}
+	 */
+	dot(a) {
+		return this.x * a.x + this.y * a.y;
+	}
+
+	/**
      * Returns a new Vector2 with the same x and y values as this one.
 	 * @return {t3d.Vector2}
      */

@@ -171,7 +171,7 @@
 		/**
 		 * Calculate the dot product of this vector and v.
 		 * @param {t3d.Vector3} a
-		 * @return {t3d.Vector3}
+		 * @return {Number}
 		 */
 		dot(a) {
 			return this.x * a.x + this.y * a.y + this.z * a.z;
@@ -3711,6 +3711,25 @@
 			// return angle;
 
 			return Math.atan2(-this.y, -this.x) + Math.PI;
+		}
+
+		/**
+		 * Inverts this vector - i.e. sets x = -x, y = -y.
+		 * @return {t3d.Vector2}
+		 */
+		negate() {
+			this.x = -this.x;
+			this.y = -this.y;
+			return this;
+		}
+
+		/**
+		 * Calculate the dot product of this vector and v.
+		 * @param {t3d.Vector2} a
+		 * @return {Number}
+		 */
+		dot(a) {
+			return this.x * a.x + this.y * a.y;
 		}
 
 		/**

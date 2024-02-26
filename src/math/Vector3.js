@@ -166,7 +166,7 @@ class Vector3 {
 	/**
 	 * Calculate the dot product of this vector and v.
 	 * @param {t3d.Vector3} a
-	 * @return {t3d.Vector3}
+	 * @return {Number}
 	 */
 	dot(a) {
 		return this.x * a.x + this.y * a.y + this.z * a.z;
