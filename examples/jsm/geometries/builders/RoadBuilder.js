@@ -1,5 +1,3 @@
-import { Vector2 } from 't3d';
-
 /**
  * RoadBuilder
  */
@@ -22,16 +20,8 @@ const RoadBuilder = {
 
 };
 
-const _vec2_1 = new Vector2();
-const _vec2_2 = new Vector2();
-const _vec2_3 = new Vector2();
-const _vec2_4 = new Vector2();
-const _vec2_5 = new Vector2();
-const _vec2_6 = new Vector2();
-const _vec2_7 = new Vector2();
-const _vec2_8 = new Vector2();
-const _vec2_9 = new Vector2();
-const _vec2_10 = new Vector2();
+const vec2_1 = [], vec2_2 = [], vec2_3 = [], vec2_4 = [], vec2_5 = [],
+	vec2_6 = [], vec2_7 = [], vec2_8 = [], vec2_9 = [], vec2_10 = [];
 
 function parseRoadData(data, corners) {
 	let roadsData = data.map(info => {
@@ -61,36 +51,37 @@ function parseRoadData(data, corners) {
 			uvrepeat: info.uvrepeat ? info.uvrepeat.slice(0) : [1, 1]
 		};
 
-		const start = _vec2_1.fromArray(info.points);
-		const startKey = start.x + '-' + start.y;
+		const start = copyValue(vec2_1, info.points);
+		const startKey = start[0] + '-' + start[1];
 		let startCorner;
 		if (corners.has(startKey)) {
 			startCorner = corners.get(startKey);
 		} else {
-			startCorner = { position: start.toArray([]), roads: [], outsideArcPoints: [], insideArcPoints: [], sidewalkPoints: [] };
+			startCorner = { position: start.slice(), roads: [], outsideArcPoints: [], insideArcPoints: [], sidewalkPoints: [] };
 			corners.set(startKey, startCorner);
 		}
 		road.startCorner = startCorner;
 		startCorner.roads.push(road);
 
-		const end = _vec2_2.fromArray(info.points, 2);
-		const endKey = end.x + '-' + end.y;
+		const end = copyValue(vec2_2, info.points, 2);
+		const endKey = end[0] + '-' + end[1];
 		let endCorner;
 		if (corners.has(endKey)) {
 			endCorner = corners.get(endKey);
 		} else {
-			endCorner = { position: end.toArray([]), roads: [], outsideArcPoints: [], insideArcPoints: [], sidewalkPoints: [] };
+			endCorner = { position: end.slice(), roads: [], outsideArcPoints: [], insideArcPoints: [], sidewalkPoints: [] };
 			corners.set(endKey, endCorner);
 		}
 		road.endCorner = endCorner;
 		endCorner.roads.push(road);
 
-		const dir = _vec2_3.subVectors(end, start);
-		const dirLength = dir.getLength();
+		const dir = subVectors(vec2_3, end, start);
+		const dirLength = getLength(dir);
 
 		road.length = dirLength;
 		if (dirLength !== 0) {
-			dir.normalize().toArray(road.dir);
+			normalize(dir);
+			copyValue(road.dir, dir);
 		}
 
 		return road;
@@ -108,19 +99,20 @@ function calculateCorner(corners) {
 	// sort roads: CCW
 	corners.forEach(corner => {
 		corner.roads.sort((road1, road2) => {
-			if (road1.startCorner === corner) {
-				_vec2_1.fromArray(road1.dir);
-			} else {
-				_vec2_1.fromArray(road1.dir).negate();
-			}
-			road1.angle = _vec2_1.angle();
+			copyValue(vec2_1, road1.dir);
 
-			if (road2.startCorner === corner) {
-				_vec2_2.fromArray(road2.dir);
-			} else {
-				_vec2_2.fromArray(road2.dir).negate();
+			if (road1.startCorner !== corner) {
+				negate(vec2_1);
 			}
-			road2.angle = _vec2_2.angle();
+			road1.angle = calculateAngle(vec2_1);
+
+			copyValue(vec2_2, road2.dir);
+
+			if (road2.startCorner !== corner) {
+				negate(vec2_2);
+			}
+
+			road2.angle = calculateAngle(vec2_2);
 
 			return road1.angle - road2.angle;
 		});
@@ -150,53 +142,67 @@ function calculateCorner(corners) {
 			const current = corner.roads[i];
 			const next = corner.roads[(i + 1) % l];
 
-			const dirFromCorner1 = _vec2_4.fromArray(current.dir);
+			const dirFromCorner1 = copyValue(vec2_4, current.dir);
 			if (current.startCorner !== corner) {
-				dirFromCorner1.negate();
+				negate(dirFromCorner1);
 			}
-			const dirFromCorner2 = _vec2_5.fromArray(next.dir);
+			const dirFromCorner2 = copyValue(vec2_5, next.dir);
 			if (next.startCorner !== corner) {
-				dirFromCorner2.negate();
+				negate(dirFromCorner2);
 			}
-			const dot = dirFromCorner1.dot(dirFromCorner2);
+			const dot = calculateDot(dirFromCorner1, dirFromCorner2);
 
 			// fix corner
 			if (0.9996 > dot && dot > -0.9996) {
 				let currentFixIndex = 0;
 				let nextFixIndex = 0;
 
-				const currentLeft = _vec2_1.set(current.dir[1], -current.dir[0]).normalize().multiplyScalar(current.halfWidth);
-				const currentP1 = _vec2_2.fromArray(corner.position), currentP2 = _vec2_3;
-				if (current.startCorner === corner) {
-					currentP2.fromArray(current.endCorner.position);
+				vec2_1[0] = current.dir[1];
+				vec2_1[1] = -current.dir[0];
 
-					currentP1.sub(currentLeft);
-					currentP2.sub(currentLeft);
+				normalize(vec2_1);
+
+				const currentLeft = multiplyScalar(vec2_1, current.halfWidth);
+
+				const currentP1 = copyValue(vec2_2, corner.position), currentP2 = vec2_3;
+				if (current.startCorner === corner) {
+					copyValue(currentP2, current.endCorner.position);
+
+					subVector(currentP1, currentLeft);
+					subVector(currentP2, currentLeft);
 
 					currentFixIndex = 1;
 				} else {
-					currentP2.fromArray(current.startCorner.position);
+					copyValue(currentP2, current.startCorner.position);
 
-					currentP1.add(currentLeft);
-					currentP2.add(currentLeft);
+					addVector(currentP1, currentLeft);
+					addVector(currentP2, currentLeft);
 
 					currentFixIndex = 2;
 				}
 
-				const nextLeft = _vec2_6.set(next.dir[1], -next.dir[0]).normalize().multiplyScalar(next.halfWidth);
-				const nextP1 = _vec2_7.fromArray(corner.position), nextP2 = _vec2_8;
-				if (next.startCorner === corner) {
-					nextP2.fromArray(next.endCorner.position);
+				vec2_6[0] = next.dir[1];
+				vec2_6[1] = -next.dir[0];
 
-					nextP1.add(nextLeft);
-					nextP2.add(nextLeft);
+				normalize(vec2_6);
+
+				const nextLeft = multiplyScalar(vec2_6, next.halfWidth);
+
+				const nextP1 = copyValue(vec2_7, corner.position), nextP2 = vec2_8;
+
+				if (next.startCorner === corner) {
+					copyValue(nextP2, next.endCorner.position);
+
+					addVector(nextP1, nextLeft);
+					addVector(nextP2, nextLeft);
+
 
 					nextFixIndex = 0;
 				} else {
-					nextP2.fromArray(next.startCorner.position);
+					copyValue(nextP2, next.endCorner.position);
 
-					nextP1.sub(nextLeft);
-					nextP2.sub(nextLeft);
+					addVector(nextP1, nextLeft);
+					addVector(nextP2, nextLeft);
 
 					nextFixIndex = 3;
 				}
@@ -207,33 +213,42 @@ function calculateCorner(corners) {
 				next.fixPoints[nextFixIndex] = intersectPoint;
 
 				// calculate bisector inner corner center
-				const bisector = _vec2_8.fromArray(current.dir);
-				if (currentFixIndex == 2) bisector.negate();
-				_vec2_9.fromArray(next.dir);
-				if (nextFixIndex == 3) _vec2_9.negate();
-				bisector.add(_vec2_9).normalize();
-				const isSameSide = bisector.dot(currentLeft) > 0;
-				const isSameSide2 = bisector.dot(nextLeft) > 0;
+
+				const bisector = copyValue(vec2_8, current.dir);
+				if (currentFixIndex == 2) negate(bisector);
+
+				copyValue(vec2_9, next.dir);
+				if (nextFixIndex == 3) negate(vec2_9);
+
+				addVector(bisector, vec2_9);
+				normalize(bisector);
+
+				const isSameSide = calculateDot(bisector, currentLeft) > 0;
+				const isSameSide2 = calculateDot(bisector, nextLeft) > 0;
 
 				// calculate inner corner center
-				const centerInner = _vec2_10.fromArray(corner.position);
+
+				const centerInner = copyValue(vec2_10, corner.position);
 				const theta = Math.acos(dot) / 2;
-				const offsetCenter = bisector.multiplyScalar((current.halfWidth + current.cornerRadius) / Math.sin(theta));
-				centerInner.add(offsetCenter);
+
+				const offsetCenter = multiplyScalar(bisector, (current.halfWidth + current.cornerRadius) / Math.sin(theta));
+				addVector(centerInner, offsetCenter);
 
 				// calculate points on the corner of a sector
 				// calculate the normal point outside the corner of the sector
-				let currentoOutNormal = currentLeft.clone();
-				let nextOutNormal = nextLeft.clone();
+
 				if (isSameSide) {
-					currentoOutNormal = currentoOutNormal.negate();
+					negate(currentLeft);
 				}
+
 				if (isSameSide2) {
-					nextOutNormal = nextOutNormal.negate();
+					negate(nextLeft);
 				}
+
 				// calculate the rotate angle of the corner of the sector
-				const roadAngleA = currentoOutNormal.angle();
-				const roadAngleB = nextOutNormal.angle();
+
+				const roadAngleA = calculateAngle(currentLeft);
+				const roadAngleB = calculateAngle(nextLeft);
 				let roadAngleDifference = (roadAngleB - roadAngleA);
 				roadAngleDifference = clampAngle(roadAngleDifference);
 
@@ -265,17 +280,18 @@ function calculateCorner(corners) {
 					corner.outsideArcPoints = outlinePoints.reverse();
 				} else {
 					// for cross line
-					_vec2_6.fromArray(inlinePoints[0]);
-					const currentSidewalkP1 = _vec2_6.add(dirFromCorner1.normalize().multiplyScalar(current.sidewalkWidth));
-					_vec2_7.fromArray(inlinePoints[current.cornerSections]);
-					const nextSidewalkP1 = _vec2_7.add(dirFromCorner2.normalize().multiplyScalar(next.sidewalkWidth));
+					copyValue(vec2_6, inlinePoints[0]);
+					const currentSidewalkP1 = addVector(vec2_6, multiplyScalar(normalize(dirFromCorner1), current.sidewalkWidth));
+					copyValue(vec2_7, inlinePoints[current.cornerSections]);
+					const nextSidewalkP1 = addVector(vec2_7, multiplyScalar(normalize(dirFromCorner2), next.sidewalkWidth));
 					current.insideArcPoints[currentFixIndex] = inlinePoints[0];
 					next.insideArcPoints[nextFixIndex] = inlinePoints[current.cornerSections];
 
-					current.sidewalkPoints[currentFixIndex] = currentSidewalkP1.toArray();
-					next.sidewalkPoints[nextFixIndex] = nextSidewalkP1.toArray();
+					current.sidewalkPoints[currentFixIndex] = currentSidewalkP1.slice();
+					next.sidewalkPoints[nextFixIndex] = nextSidewalkP1.slice();
 
-					let deltaAngle = dirFromCorner2.angle() - dirFromCorner1.angle();
+					let deltaAngle = calculateAngle(dirFromCorner2) - calculateAngle(dirFromCorner1);
+
 					if (deltaAngle < 0) deltaAngle = 2 * Math.PI + deltaAngle;
 					if (corner.roads.length > 2 && deltaAngle > Math.PI) {
 						current.insideArcPoints[currentFixIndex] = outlinePoints[0];
@@ -302,13 +318,16 @@ function calculateCorner(corners) {
 					nextFixIndex = 3;
 				}
 
-				let deltaAngle = dirFromCorner2.angle() - dirFromCorner1.angle();
+				let deltaAngle = calculateAngle(dirFromCorner2) - calculateAngle(dirFromCorner1);
 				if (deltaAngle < 0) deltaAngle = 2 * Math.PI + deltaAngle;
 
 				if (corner.roads.length > 2 && deltaAngle == Math.PI) {
-					const currentLeft = _vec2_1.set(current.dir[1], -current.dir[0]).normalize().multiplyScalar(current.halfWidth);
-					const currentP1 = _vec2_2.fromArray(corner.position);
-					currentP1.sub(currentLeft);
+					vec2_1[0] = current.dir[1];
+					vec2_1[1] = -current.dir[0];
+
+					const currentLeft = multiplyScalar(normalize(vec2_1), current.halfWidth);
+					const currentP1 = copyValue(vec2_2, corner.position);
+					subVector(currentP1, currentLeft);
 
 					const getNextSideWalk = function(next) {
 						let nextsideP, nextarcP;
@@ -326,68 +345,73 @@ function calculateCorner(corners) {
 						if (nextFixIndex == 0) {
 							next.tStartSidewalkPoints[0] = nextarcP;
 							next.tStartSidewalkPoints[1] = nextsideP;
-							next.tStartSidewalkPoints[2] = nextSidewalkP2.toArray();
-							next.tStartSidewalkPoints[3] = nextSidewalkP1.toArray();
+							next.tStartSidewalkPoints[2] = nextSidewalkP2.slice();
+							next.tStartSidewalkPoints[3] = nextSidewalkP1.slice();
 						} else {
 							next.tEndSidewalkPoints[0] = nextarcP;
 							next.tEndSidewalkPoints[1] = nextsideP;
-							next.tEndSidewalkPoints[2] = nextSidewalkP2.toArray();
-							next.tEndSidewalkPoints[3] = nextSidewalkP1.toArray();
+							next.tEndSidewalkPoints[2] = nextSidewalkP2.slice();
+							next.tEndSidewalkPoints[3] = nextSidewalkP1.slice();
 						}
 					};
 
 					if (currentFixIndex === 1) {
-						const currentSidewalkP1 = _vec2_6.fromArray(current.sidewalkPoints[0]);
-						currentSidewalkP1.sub(currentLeft);
-						currentSidewalkP1.sub(currentLeft);
+						const currentSidewalkP1 = copyValue(vec2_6, current.sidewalkPoints[0]);
+						subVector(currentSidewalkP1, currentLeft);
+						subVector(currentSidewalkP1, currentLeft);
 
-						const currentSidewalkP2 = _vec2_7.fromArray(current.insideArcPoints[0]);
-						currentSidewalkP2.sub(currentLeft);
-						currentSidewalkP2.sub(currentLeft);
-						current.tStartSidewalkPoints[0] = currentSidewalkP2.toArray();
-						current.tStartSidewalkPoints[1] = currentSidewalkP1.toArray();
+						const currentSidewalkP2 = copyValue(vec2_7, current.insideArcPoints[0]);
+						subVector(currentSidewalkP2, currentLeft);
+						subVector(currentSidewalkP2, currentLeft);
+
+						current.tStartSidewalkPoints[0] = currentSidewalkP2.slice();
+						current.tStartSidewalkPoints[1] = currentSidewalkP1.slice();
 						current.tStartSidewalkPoints[2] = current.insideArcPoints[0];
 						current.tStartSidewalkPoints[3] = current.sidewalkPoints[0];
-						corner.insideArcPoints.push([currentSidewalkP2.x, currentSidewalkP2.y]);
+
+						corner.insideArcPoints.push([currentSidewalkP2[0], currentSidewalkP2[1]]);
 
 						const { nextsideP, nextarcP } = getNextSideWalk(next);
 
-						const nextSidewalkP1 = _vec2_8.fromArray(nextsideP);
-						nextSidewalkP1.sub(currentLeft);
-						nextSidewalkP1.sub(currentLeft);
+						const nextSidewalkP1 = copyValue(vec2_8, nextsideP);
+						subVector(nextSidewalkP1, currentLeft);
+						subVector(nextSidewalkP1, currentLeft);
 
-						const nextSidewalkP2 = _vec2_9.fromArray(nextarcP);
-						nextSidewalkP2.sub(currentLeft);
-						nextSidewalkP2.sub(currentLeft);
-						corner.insideArcPoints.push([nextSidewalkP2.x, nextSidewalkP2.y]);
+						const nextSidewalkP2 = copyValue(vec2_9, nextarcP);
+						subVector(nextSidewalkP2, currentLeft);
+						subVector(nextSidewalkP2, currentLeft);
+
+						corner.insideArcPoints.push([nextSidewalkP2[0], nextSidewalkP2[1]]);
 
 						setNextSideWalk(nextFixIndex, next, nextarcP, nextsideP, nextSidewalkP1, nextSidewalkP2);
 					}
 					if (currentFixIndex === 2) {
-						const currentSidewalkP1 = _vec2_6.fromArray(current.sidewalkPoints[3]);
-						currentSidewalkP1.add(currentLeft);
-						currentSidewalkP1.add(currentLeft);
+						const currentSidewalkP1 = copyValue(vec2_6, current.sidewalkPoints[3]);
+						addVector(currentSidewalkP1, currentLeft);
+						addVector(currentSidewalkP1, currentLeft);
 
-						const currentSidewalkP2 = _vec2_7.fromArray(current.insideArcPoints[3]);
-						currentSidewalkP2.add(currentLeft);
-						currentSidewalkP2.add(currentLeft);
+						const currentSidewalkP2 = copyValue(vec2_7, current.insideArcPoints[3]);
+						addVector(currentSidewalkP2, currentLeft);
+						addVector(currentSidewalkP2, currentLeft);
 
-						current.tEndSidewalkPoints[0] = currentSidewalkP2.toArray();
-						current.tEndSidewalkPoints[1] = currentSidewalkP1.toArray();
+						current.tEndSidewalkPoints[0] = currentSidewalkP2.slice();
+						current.tEndSidewalkPoints[1] = currentSidewalkP1.slice();
 						current.tEndSidewalkPoints[2] = current.insideArcPoints[3];
 						current.tEndSidewalkPoints[3] = current.sidewalkPoints[3];
-						corner.insideArcPoints.push([currentSidewalkP2.x, currentSidewalkP2.y]);
+
+						corner.insideArcPoints.push([currentSidewalkP2[0], currentSidewalkP2[1]]);
 
 						const { nextsideP, nextarcP } = getNextSideWalk(next);
 
-						const nextSidewalkP1 = _vec2_8.fromArray(nextsideP);
-						nextSidewalkP1.add(currentLeft);
-						nextSidewalkP1.add(currentLeft);
+						const nextSidewalkP1 = copyValue(vec2_8, nextsideP);
+						addVector(nextSidewalkP1, currentLeft);
+						addVector(nextSidewalkP1, currentLeft);
 
-						const nextSidewalkP2 = _vec2_9.fromArray(nextarcP);
-						nextSidewalkP2.add(currentLeft);
-						nextSidewalkP2.add(currentLeft);
-						corner.insideArcPoints.push([nextSidewalkP2.x, nextSidewalkP2.y]);
+						const nextSidewalkP2 = copyValue(vec2_9, nextarcP);
+						addVector(nextSidewalkP2, currentLeft);
+						addVector(nextSidewalkP2, currentLeft);
+
+						corner.insideArcPoints.push([nextSidewalkP2[0], nextSidewalkP2[1]]);
 
 						setNextSideWalk(nextFixIndex, next, nextarcP, nextsideP, nextSidewalkP1, nextSidewalkP2);
 					}
@@ -437,11 +461,13 @@ function getVertices(roads, corners) {
 	const crossroadUvs = crossroadInfo.uvs;
 
 	roads.forEach(road => {
-		const start = _vec2_1.fromArray(road.startCorner.position);
-		const end = _vec2_2.fromArray(road.endCorner.position);
-		const dir = _vec2_3.fromArray(road.dir);
+		const start = copyValue(vec2_1, road.startCorner.position);
+		const end = copyValue(vec2_2, road.endCorner.position);
+		const dir = copyValue(vec2_3, road.dir);
 
-		const left = _vec2_4.set(dir.y, -dir.x).normalize().multiplyScalar(road.halfWidth);
+		vec2_4[0] = dir[1];
+		vec2_4[1] = -dir[0];
+		const left = multiplyScalar(normalize(vec2_4), road.halfWidth);
 
 		let startLeft, startRight, endLeft, endRight;
 		let isOnewayRoad = false;
@@ -452,49 +478,54 @@ function getVertices(roads, corners) {
 		if (road.fixPoints[0]) {
 			road.startLeft = startLeft = road.sidewalkPoints[0];
 		} else {
-			_vec2_5.addVectors(start, left);
+			addVectors(vec2_5, start, left);
+
 			if (road.sidewalkPoints[1]) {
-				_vec2_5.fromArray(road.sidewalkPoints[1]);
-				_vec2_5.add(left);
-				_vec2_5.add(left);
+				copyValue(vec2_5, road.sidewalkPoints[1]);
+				addVector(vec2_5, left);
+				addVector(vec2_5, left);
 			}
-			startLeft = _vec2_5.toArray(road.startLeft);
+
+			startLeft = copyValue(road.startLeft, vec2_5);
 		}
 
 		if (road.fixPoints[1]) {
 			road.startRight = startRight = road.sidewalkPoints[1];
 		} else {
-			_vec2_5.subVectors(start, left);
+			subVectors(vec2_5, start, left);
 			if (road.sidewalkPoints[0]) {
-				_vec2_5.fromArray(road.sidewalkPoints[0]);
-				_vec2_5.sub(left);
-				_vec2_5.sub(left);
+				copyValue(vec2_5, road.sidewalkPoints[0]);
+				subVector(vec2_5, left);
+				subVector(vec2_5, left);
 			}
-			startRight = _vec2_5.toArray(road.startRight);
+
+			startRight = copyValue(road.startRight, vec2_5);
 		}
 
 		if (road.fixPoints[2]) {
 			road.endLeft = endLeft = road.sidewalkPoints[2];
 		} else {
-			_vec2_5.addVectors(end, left);
+			addVectors(vec2_5, end, left);
 			if (road.sidewalkPoints[3]) {
-				_vec2_5.fromArray(road.sidewalkPoints[3]);
-				_vec2_5.add(left);
-				_vec2_5.add(left);
+				copyValue(vec2_5, road.sidewalkPoints[3]);
+				addVector(vec2_5, left);
+				addVector(vec2_5, left);
 			}
-			endLeft = _vec2_5.toArray(road.endLeft);
+
+			endLeft = copyValue(road.endLeft, vec2_5);
 		}
 
 		if (road.fixPoints[3]) {
 			road.endRight = endRight = road.sidewalkPoints[3];
 		} else {
-			_vec2_5.subVectors(end, left);
+			subVectors(vec2_5, end, left);
 			if (road.sidewalkPoints[2]) {
-				_vec2_5.fromArray(road.sidewalkPoints[2]);
-				_vec2_5.sub(left);
-				_vec2_5.sub(left);
+				copyValue(vec2_5, road.sidewalkPoints[2]);
+				subVector(vec2_5, left);
+				subVector(vec2_5, left);
 			}
-			endRight = _vec2_5.toArray(road.endRight);
+
+			endRight = copyValue(road.endRight, vec2_5);
 		}
 
 		const repeatX = road.uvrepeat[0] || 1;
@@ -621,15 +652,16 @@ function getVertices(roads, corners) {
 		const newCrossVerticesLength = oldCrossVerticesLength + cornerArcPoints.length;
 
 		if (cornerFixedPoints.length === 2) {
-			const A = _vec2_1.fromArray(cornerArcPoints[0]);
-			const B = _vec2_2.fromArray(cornerArcPoints[1]);
-			const C = _vec2_3.fromArray(cornerArcPoints[2]);
-			const AB = _vec2_4.subVectors(B, A);
-			const BC = _vec2_5.subVectors(C, B);
+			const A = copyValue(vec2_1, cornerArcPoints[0]);
+			const B = copyValue(vec2_2, cornerArcPoints[1]);
+			const C = copyValue(vec2_3, cornerArcPoints[2]);
+			const AB = subVectors(vec2_4, B, A);
+			const BC = subVectors(vec2_5, C, B);
 
-			if (AB.x * BC.y - AB.y * BC.x < 0) {
+			if (AB[0] * BC[1] - AB[1] * BC[0] < 0) {
 				cornerArcPoints.reverse();
 			}
+
 			const firstHalf = cornerArcPoints.slice(0, cornerArcPoints.length / 2);
 			const secondHalf = cornerArcPoints.slice(cornerArcPoints.length / 2).reverse();
 			const linesuv1 = calculatelinesUV(firstHalf);
@@ -694,14 +726,14 @@ function getVertices(roads, corners) {
 }
 
 function getIntersectPoint(a, b, c, d) {
-	const denominator = (b.y - a.y) * (d.x - c.x) - (a.x - b.x) * (c.y - d.y);
+	const denominator = (b[1] - a[1]) * (d[0] - c[0]) - (a[0] - b[0]) * (c[1] - d[1]);
 
-	const x = ((b.x - a.x) * (d.x - c.x) * (c.y - a.y)
-		+ (b.y - a.y) * (d.x - c.x) * a.x
-		- (d.y - c.y) * (b.x - a.x) * c.x) / denominator;
-	const y = -((b.y - a.y) * (d.y - c.y) * (c.x - a.x)
-		+ (b.x - a.x) * (d.y - c.y) * a.y
-		- (d.x - c.x) * (b.y - a.y) * c.y) / denominator;
+	const x = ((b[0] - a[0]) * (d[0] - c[0]) * (c[1] - a[1])
+		+ (b[1] - a[1]) * (d[0] - c[0]) * a[0]
+		- (d[1] - c[1]) * (b[0] - a[0]) * c[0]) / denominator;
+	const y = -((b[1] - a[1]) * (d[1] - c[1]) * (c[0] - a[0])
+		+ (b[0] - a[0]) * (d[1] - c[1]) * a[1]
+		- (d[0] - c[0]) * (b[1] - a[1]) * c[1]) / denominator;
 
 	return [x, y];
 }
@@ -718,19 +750,20 @@ function calculateSectionsPoints(center, radius, roadAngleA, roadAngleDifference
 	const points = [];
 	for (let i = 0; i <= sections; i++) {
 		const angle = roadAngleA + angleStep * i;
-		points.push([center.x + radius * Math.cos(angle), center.y + radius * Math.sin(angle)]);
+		points.push([center[0] + radius * Math.cos(angle), center[1] + radius * Math.sin(angle)]);
 	}
 
 	return points;
 }
 
 function calUv(startLeft, endLeft, startRight, endRight, uvs, uvs2, repeatX = 1, repeatY = 1) {
-	_vec2_6.fromArray(startLeft);
-	_vec2_7.fromArray(endLeft);
-	const leftLength = _vec2_7.sub(_vec2_6).getLength();
-	_vec2_6.fromArray(startRight);
-	_vec2_7.fromArray(endRight);
-	const rightLength = _vec2_7.sub(_vec2_6).getLength();
+	copyValue(vec2_6, startLeft);
+	copyValue(vec2_7, endLeft);
+	const leftLength = getLength(subVector(vec2_7, vec2_6));
+
+	copyValue(vec2_6, startRight);
+	copyValue(vec2_7, endRight);
+	const rightLength = getLength(subVector(vec2_7, vec2_6));
 
 	uvs.push([leftLength * repeatX, 0 * repeatY]);
 	uvs2.push([1, 0]);
@@ -768,6 +801,72 @@ function calculatelinesUV(points) {
 	}
 
 	return { uvs2, uvs };
+}
+
+function copyValue(v1, v2, offset = 0) {
+	v1[0] = v2[offset];
+	v1[1] = v2[offset + 1];
+	return v1;
+}
+
+function getLength(v) {
+	return Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+}
+
+function normalize(vector, thickness = 1) {
+	const length = getLength(vector) || 1;
+	const invLength = thickness / length;
+
+	vector[0] *= invLength;
+	vector[1] *= invLength;
+
+	return vector;
+}
+
+function calculateAngle(vector) {
+	return Math.atan2(-vector[1], -vector[0]) + Math.PI;
+}
+
+function multiplyScalar(vector, scalar) {
+	vector[0] *= scalar;
+	vector[1] *= scalar;
+
+	return vector;
+}
+
+function negate(vector) {
+	vector[0] = -vector[0];
+	vector[1] = -vector[1];
+	return vector;
+}
+
+function subVectors(v0, v1, v2) {
+	v0[0] = v1[0] - v2[0];
+	v0[1] = v1[1] - v2[1];
+
+	return v0;
+}
+
+function calculateDot(v1, v2) {
+	return v1[0] * v2[0] + v1[1] * v2[1];
+}
+
+function subVector(v1, v2) {
+	v1[0] -= v2[0];
+	v1[1] -= v2[1];
+	return v1;
+}
+
+function addVector(v1, v2) {
+	v1[0] += v2[0];
+	v1[1] += v2[1];
+	return v1;
+}
+
+function addVectors(v0, v1, v2) {
+	v0[0] = v1[0] + v2[0];
+	v0[1] = v1[1] + v2[1];
+	return v0;
 }
 
 export { RoadBuilder };
