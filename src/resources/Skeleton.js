@@ -41,6 +41,8 @@ class Skeleton {
 		 * @default undefined
 		 */
 		this.boneTexture = undefined;
+
+		this._version = 0;
 	}
 
 	/**
