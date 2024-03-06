@@ -123,10 +123,11 @@
 		"lines_instancedlines"
 	],
 	"text": [
+		"text_typeface",
 		"text_sdf",
 		"text_sdf_dynamic",
-		"text_typeface",
-		"text_bitmap"
+		"text_bitmap",
+		"text_bitmap_dynamic"
 	],
 	"canvas2d": [
 		"canvas2d_canvas2d"
