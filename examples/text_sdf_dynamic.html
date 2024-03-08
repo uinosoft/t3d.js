@@ -131,16 +131,18 @@
 
 		const textCanvas = new TextCanvas(1024, 128);
 		const distanceTransform = new DistanceTransform(1024 * 128, 1024);
-
+		const fontSize = 64;
 		function updateText(text) {
 			console.time('process text');
 		
-			const imageData = textCanvas.draw(text);
+			const imageData = textCanvas.draw(text, fontSize);
 
 			imageTexture.image = imageData;
 			imageTexture.version++;
 			sdfTexture.image = {
-				data: distanceTransform.transform(imageData),
+				data: distanceTransform.transform(imageData, {
+					radius: fontSize / 24 * 8
+				}),
 				width: imageData.width,
 				height: imageData.height
 			};
@@ -160,12 +162,31 @@
 		gui.add(params, 'chars').onChange(function(value) {
 			updateText(value.slice(-10)); // show lastest 10 characters
 		});
+		gui.addColor(sdfMaterial, 'diffuse').name('fontColor');
+		gui.add(sdfMaterial.uniforms, 'gamma', 0, 10, 0.01);
+		gui.add(sdfMaterial.uniforms, 'halo', 0.4, 0.9, 0.01);
+
+		const shadowFolder = gui.addFolder('shadow').close();
+		shadowFolder.add(sdfMaterial.defines, 'SHADOW').name('enable').onChange(value => {
+			sdfMaterial.needsUpdate = true;
+		});
+		shadowFolder.addColor(sdfMaterial.uniforms, 'shadowColor');
+		shadowFolder.add(sdfMaterial.uniforms.shadowOffset, '0', -0.1, 0.1, 0.001).name('offectX');
+		shadowFolder.add(sdfMaterial.uniforms.shadowOffset, '1', -0.1, 0.1, 0.001).name('offectY');
+		shadowFolder.add(sdfMaterial.uniforms, 'shadowGamma', 0, 10, 0.001);
+		
+		const outLineFolder = gui.addFolder('outLine').close();
+		outLineFolder.add(sdfMaterial.defines, 'OUTLINE').name('enable').onChange(value => {
+			sdfMaterial.needsUpdate = true;
+		});
+		outLineFolder.addColor(sdfMaterial.uniforms, 'outlineColor');
+		outLineFolder.add(sdfMaterial.uniforms, 'outlineWidth', 0, 0.1, 0.001);
+		outLineFolder.add(sdfMaterial.uniforms, 'outlineGamma', 0, 10, 0.001);
+
 		gui.add(params, 'debug').onChange(function(value) {
 			sdfMaterial.defines['DEBUG'] = value;
 			sdfMaterial.needsUpdate = true;
 		});
-		gui.add(sdfMaterial.uniforms, 'gamma', 0, 10, 0.01);
-		gui.add(sdfMaterial.uniforms, 'halo', 0.4, 0.9, 0.01);
 
 		const stats = new Stats();
 		stats.showPanel(0);
