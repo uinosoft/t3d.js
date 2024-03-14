@@ -125,6 +125,7 @@ requestAnimationFrame(loop);
 * [t3d-pano](https://github.com/uinosoft/t3d-pano) - Panorama extension for t3d.
 * [t3d-3dtiles](https://github.com/uinosoft/t3d-3dtiles) - A 3dtile extension based on t3d.js.
 * [t3d-dynamic-sky](https://github.com/uinosoft/t3d-dynamic-sky) - Dynamic sky addon for t3d.
+* [t3d-gaussian-splatting](https://github.com/uinosoft/t3d-gaussian-splatting) - A t3d-based implementation of 3D Gaussian Splatting.
 
 ## Contributing
 
