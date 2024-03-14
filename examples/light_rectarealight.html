@@ -46,17 +46,6 @@
 
 		const scene = new t3d.Scene();
 
-		const anchorOffset = new t3d.Vector3();
-		const anchorRotation = new t3d.Euler();
-		const anchorQuaternion = new t3d.Quaternion();
-		const anchorScale = new t3d.Vector3(1, 1, 1);
-
-		anchorOffset.set(1, 1, 1).multiplyScalar(1000);
-		anchorRotation.y = 130 / 180 * Math.PI;
-		anchorQuaternion.setFromEuler(anchorRotation);
-
-		scene.anchorMatrix.transform(anchorOffset, anchorScale, anchorQuaternion);
-
 		const geometry = new t3d.TorusKnotGeometry(1.5, 0.5, 200, 16);
 		const material = new t3d.PBRMaterial();
 		material.metalness = 0.8;

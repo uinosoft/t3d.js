@@ -16623,8 +16623,8 @@
 					}
 				}
 			}
-			if (lights.rectAreaNum > 0 && refresh) {
-				uniforms.set('u_RectArea', lights.rectArea);
+			if (lights.rectAreaNum > 0) {
+				if (refresh) uniforms.set('u_RectArea', lights.rectArea);
 				if (lights.LTC1 && lights.LTC2) {
 					uniforms.set('ltc_1', lights.LTC1, textures);
 					uniforms.set('ltc_2', lights.LTC2, textures);
