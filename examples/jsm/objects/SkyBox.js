@@ -58,6 +58,15 @@ class SkyBox extends Mesh {
 		return this.material.diffuseMap || this.material.cubeMap;
 	}
 
+	get fog() {
+		return this.material.defines.SKYFOG;
+	}
+
+	set fog(val) {
+		this.material.defines.SKYFOG = val;
+		this.material.needsUpdate = true;
+	}
+
 }
 
 SkyBox.SkyBoxShader = {
@@ -66,18 +75,26 @@ SkyBox.SkyBoxShader = {
 
 	defines: {
 		'GAMMA': false,
-		'PANORAMA': false
+		'PANORAMA': false,
+		'SKYFOG': false
 	},
 
 	uniforms: {
 		'level': 0,
-		'flip': -1
+		'flip': -1,
+		'fogColor': [1, 1, 1],
+		'fogStart': 0.0, // value from -0.5 to 0.5
+		'fogHeight': 0.1
 	},
 
 	vertexShader: `
 		#include <common_vert>
 
 		varying vec3 vDir;
+
+		#ifdef SKYFOG
+			varying vec3 vPosition;
+		#endif
 
 		mat4 clearMat4Translate(mat4 m) {
 			mat4 outMatrix = m;
@@ -90,6 +107,10 @@ SkyBox.SkyBoxShader = {
 			mat4 viewMatrix = clearMat4Translate(u_View);
 
 			vDir = normalize((modelMatrix * vec4(a_Position, 0.0)).xyz);
+
+			#ifdef SKYFOG
+				vPosition = a_Position.xyz;
+			#endif
 
 			gl_Position = u_Projection * viewMatrix * modelMatrix * vec4(a_Position, 1.0);
 			gl_Position.z = gl_Position.w;
@@ -108,7 +129,17 @@ SkyBox.SkyBoxShader = {
 		uniform float flip;
 		uniform float level;
 
+		#ifdef SKYFOG
+			uniform vec3 fogColor;
+			uniform float fogStart;
+			uniform float fogHeight;
+		#endif
+
 		varying vec3 vDir;
+
+		#ifdef SKYFOG
+			varying vec3 vPosition;
+		#endif
 
 		void main() {
 			#include <begin_frag>
@@ -136,8 +167,14 @@ SkyBox.SkyBoxShader = {
 			#endif
 
 			#include <end_frag>
+
 			#ifdef GAMMA
 				#include <encodings_frag>
+			#endif
+
+			#ifdef SKYFOG
+				float alpha = clamp((vPosition.y - fogStart) / fogHeight, 0.0, 1.0);
+				gl_FragColor.rgb = mix(fogColor, gl_FragColor.rgb, alpha);
 			#endif
 		}
 	`

@@ -7,7 +7,7 @@
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
-    <div id="info">
+    <div id="info" class="dark">
         <a href="" target="_blank">t3d</a> - fog
     </div>
 
@@ -27,6 +27,9 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -39,61 +42,82 @@
 
 		const forwardRenderer = new ForwardRenderer(canvas);
 
+		const cubeTexturePath = './resources/skybox/sunset/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.jpg',
+			cubeTexturePath + 'nx.jpg',
+			cubeTexturePath + 'py.jpg',
+			cubeTexturePath + 'ny.jpg',
+			cubeTexturePath + 'pz.jpg',
+			cubeTexturePath + 'nz.jpg'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
 		const scene = new t3d.Scene();
-		const fog = new t3d.Fog(0xF6CF9C, 1, 1000);
-		const fogExp2 = new t3d.FogExp2(0xF6CF9C, 0.002);
+		scene.environment = cubeTexture;
+
+		const fogColor = 0xffe1b8;
+
+		const fog = new t3d.Fog(fogColor, 1, 1000);
+		const fogExp2 = new t3d.FogExp2(fogColor, 0.002);
 		scene.fog = fogExp2;
 
-		const sphere_geometry = new t3d.BoxGeometry(20, 20, 20);
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.gamma = true;
+		skyBox.fog = true;
+		fog.color.toArray(skyBox.material.uniforms.fogColor);
+		scene.add(skyBox);
 
-		for (let i = 0; i < 10; i++) {
-			const baisc = new t3d.BasicMaterial();
-			baisc.diffuse.setHex(0xF9E3B1);
-			const sphere1 = new t3d.Mesh(sphere_geometry, baisc);
-			sphere1.position.x = Math.random() * 500 - 250;
-			sphere1.position.y = Math.random() * 500 - 250;
-			sphere1.position.z = Math.random() * 500 - 250;
-			scene.add(sphere1);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		ambientLight.color.setRGB(0.6, 0.7, 0.8);
+		scene.add(ambientLight);
 
-			const lambert = new t3d.LambertMaterial();
-			lambert.diffuse.setHex(0xF9E3B1);
-			const sphere2 = new t3d.Mesh(sphere_geometry, lambert);
-			sphere2.position.x = Math.random() * 500 - 250;
-			sphere2.position.y = Math.random() * 500 - 250;
-			sphere2.position.z = Math.random() * 500 - 250;
-			scene.add(sphere2);
-
-			const phong = new t3d.PhongMaterial();
-			phong.diffuse.setHex(0xF9E3B1);
-			const sphere3 = new t3d.Mesh(sphere_geometry, phong);
-			sphere3.position.x = Math.random() * 500 - 250;
-			sphere3.position.y = Math.random() * 500 - 250;
-			sphere3.position.z = Math.random() * 500 - 250;
-			scene.add(sphere3);
-		}
-
-		const sky_geom = new t3d.BoxGeometry(1000, 1000, 1000);
-		const basic = new t3d.BasicMaterial();
-		basic.side = t3d.DRAW_SIDE.BACK;
-		basic.diffuse.setHex(0x777777);
-		const sky = new t3d.Mesh(sky_geom, basic);
-		scene.add(sky);
-
-		const directLight = new t3d.DirectionalLight(0xffffff);
-		directLight.position.set(-40, 40, 0);
-		directLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		scene.add(directLight);
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(-40, 40, -40);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.position.set(0, 40, 600);
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(500, 80, 350);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
 		scene.add(camera);
 
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
+		controller.maxDistance = 1000;
+		controller.maxPolarAngle = Math.PI / 2;
+
+		const baisc = new t3d.BasicMaterial();
+		const lambert = new t3d.LambertMaterial();
+		const phong = new t3d.PhongMaterial();
+		const pbr = new t3d.PBRMaterial();
+
+		const boxGeometry = new t3d.BoxGeometry(20, 20, 20);
+		const boxMaterials = [baisc, lambert, phong, pbr];
+
+		for (let i = 0; i < 90; i++) {
+			const box = new t3d.Mesh(boxGeometry, boxMaterials[i % 4]);
+			box.position.x = Math.random() * 500 - 250;
+			box.position.z = Math.random() * 500 - 250;
+			box.scale.y = Math.random() * 7 + 1;
+			scene.add(box);
+		}
+
+		const planeGeometry = new t3d.PlaneGeometry(10000, 10000);
+		const planeMaterial = new t3d.PBRMaterial();
+		planeMaterial.roughness = 1;
+		planeMaterial.dithering = true;
+		const plane = new t3d.Mesh(planeGeometry, planeMaterial);
+		plane.position.y -= 10;
+		scene.add(plane);
+
 		// gui
-		const params = { type: 'exp', density: 0.002, near: 1, far: 1000 };
+
 		const gui = new GUI();
-		gui.add(params, 'type', ['linear', 'exp', 'none']).onChange(value => {
+
+		gui.add({ type: 'exp' }, 'type', ['linear', 'exp', 'none']).onChange(value => {
 			switch (value) {
 				case 'linear':
 					scene.fog = fog;
@@ -104,24 +128,28 @@
 				default:
 					scene.fog = null;
 			}
+
+			densityControl.disable(value !== 'exp');
+			nearControl.disable(value !== 'linear');
+			farControl.disable(value !== 'linear');
 		});
-		gui.add(params, 'density', 0, 0.005, 0.0001).onChange(value => {
-			fogExp2.density = value;
+		gui.addColor(skyBox.material.uniforms, 'fogColor').onChange(value => {
+			fog.color.fromArray(value);
+			fogExp2.color.fromArray(value);
 		});
-		gui.add(params, 'near', 1, 100, 0.1).onChange(value => {
-			fog.near = value;
-		});
-		gui.add(params, 'far', 100, 1000, 1).onChange(value => {
-			fog.far = value;
-		});
+		const densityControl = gui.add(fogExp2, 'density', 0, 0.005, 0.0001);
+		const nearControl = gui.add(fog, 'near', 1, 200, 0.1).disable();
+		const farControl = gui.add(fog, 'far', 200, 5000, 1).disable();
+
+		const skyFolder = gui.addFolder('sky').close();
+		skyFolder.add(skyBox, 'fog');
+		skyFolder.add(skyBox.material.uniforms, 'fogStart', -0.5, 0.5, 0.01);
+		skyFolder.add(skyBox.material.uniforms, 'fogHeight', 0.0, 1.0, 0.01);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
 
-			// rotate camera
-			camera.position.x = 600 * Math.sin(count / 1000 * .5);
-			camera.position.z = 600 * Math.cos(count / 1000 * .5);
-			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			controller.update();
 
 			forwardRenderer.render(scene, camera);
 		}
@@ -131,7 +159,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 8000);
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
