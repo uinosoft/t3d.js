@@ -141,10 +141,8 @@ class VirtualGroup {
 	_getPivot(pivot) {
 		_box3_1.makeEmpty();
 		this._objects.forEach(object => {
-			object.traverse(child => {
-				_vec3_1.setFromMatrixPosition(child.worldMatrix);
-				_box3_1.expandByPoint(_vec3_1);
-			});
+			_vec3_1.setFromMatrixPosition(object.worldMatrix);
+			_box3_1.expandByPoint(_vec3_1);
 		});
 		return _box3_1.getCenter(pivot);
 	}
