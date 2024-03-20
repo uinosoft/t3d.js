@@ -1,17 +1,21 @@
 /**
- * EdgesBuilder
+ * EdgesBuilder is a helper for building edges geometry from given triangles data.
  */
 const EdgesBuilder = {
 
 	/**
-	 * @param {Array} positions - Flat array of positions.
-	 * @param {Array} [indices=] - Flat array of indices.
-     * @param {Object} [options={}]
+	 * @param {Array} bufferArray - Flat buffer array containing vertex positions.
+	 * @param {Array} [indices=] - Flat buffer array of indices, must be multiple of 3.
+     * @param {Object} [options={}] - The options object.
 	 * @param {Number} [options.thresholdAngle=1] - An edge is only rendered if the angle (in degrees) between the face normals of the adjoining faces exceeds this value.
-	 * @return {Object} - The geometry data.
+	 * @param {Number} [options.stride=3] - The number of values of the array that should be associated with a particular vertex.
+	 * @param {Number} [options.offset=0] - The offset in the buffer array where the position starts.
+	 * @return {Object} - The edges geometry data.
 	 */
-	getGeometryData: function(positions, indices, options = {}) {
+	getGeometryData: function(bufferArray, indices, options = {}) {
 		const thresholdAngle = options.thresholdAngle !== undefined ? options.thresholdAngle : 1;
+		const stride = options.stride !== undefined ? options.stride : 3;
+		const offset = options.offset !== undefined ? options.offset : 0;
 
 		let i, j, l, key, face;
 		const result = [];
@@ -24,12 +28,13 @@ const EdgesBuilder = {
 		const precisionPoints = 4; // number of decimal points, e.g. 4 for epsilon of 0.0001
 		const precision = Math.pow(10, precisionPoints);
 
-		let x, y, z;
-		l = positions.length / 3;
+		let offsetIndex, x, y, z;
+		l = bufferArray.length / stride;
 		for (i = 0; i < l; i++) {
-			x = positions[i * 3 + 0];
-			y = positions[i * 3 + 1];
-			z = positions[i * 3 + 2];
+			offsetIndex = i * stride + offset;
+			x = bufferArray[offsetIndex + 0];
+			y = bufferArray[offsetIndex + 1];
+			z = bufferArray[offsetIndex + 2];
 
 			key = Math.round(x * precision) + '_' + Math.round(y * precision) + '_' + Math.round(z * precision);
 
