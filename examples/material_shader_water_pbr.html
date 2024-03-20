@@ -49,12 +49,12 @@
 			strength: 1,
 			debug: false,
 
-			phi: 60,
-			theta: 0
+			phi: 70,
+			theta: 224
 		};
 
 		function updateSpherePosition() {
-			spherical.radius = 1;
+			spherical.radius = 100;
 			spherical.phi = params.phi / 180 * Math.PI;
 			spherical.theta = params.theta / 180 * Math.PI;
 			directionalLight.position.setFromSpherical(spherical);
@@ -68,17 +68,11 @@
 		const renderer = new ForwardRenderer(canvas);
 
 		const scene = new t3d.Scene();
-		const fog = new t3d.Fog(0xd7cbb1, 500, 1000);
-		const fogExp2 = new t3d.FogExp2(0xd7cbb1, 0.0008);
+		const fog = new t3d.Fog(0xd38b64, 500, 2000);
+		const fogExp2 = new t3d.FogExp2(0xd38b64, 0.0008);
 		scene.fog = fog;
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
-		directionalLight.castShadow = true;
-		directionalLight.shadow.windowSize = 150;
-		directionalLight.shadow.mapSize.set(1024, 1024);
-		directionalLight.shadow.bias = -0.001;
-		directionalLight.shadow.normalBias = 0.2;
-		directionalLight.shadow.cameraNear = 10;
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.3);
 		scene.add(directionalLight);
 
 		// add light for the specular of the top view
@@ -90,7 +84,7 @@
 		const spherical = new t3d.Spherical();
 		updateSpherePosition();
 
-		const cubeTexturePath = './resources/skybox/skyboxsun25deg/';
+		const cubeTexturePath = './resources/skybox/sunset/';
 		const cubeTexture = new TextureCubeLoader().load([
 			cubeTexturePath + 'px.jpg',
 			cubeTexturePath + 'nx.jpg',
@@ -103,6 +97,8 @@
 		
 		const skyBox = new SkyBox(cubeTexture);
 		skyBox.gamma = true;
+		skyBox.fog = true;
+		fog.color.toArray(skyBox.material.uniforms.fogColor);
 		scene.add(skyBox);
 
 		scene.environment = cubeTexture;
@@ -110,15 +106,14 @@
 
 		const camera = new t3d.Camera();
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(0, 140, -300);
-		camera.lookAt(new t3d.Vector3(-0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.position.set(300, 100, 300);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
 		scene.add(camera);
 
 		const controller = new OrbitControls(camera, canvas);
 		controller.target.set(0, 0, 0);
-		controller.enablePan = false;
-		controller.maxPolarAngle = Math.PI / 2 - Math.PI / 9;
+		controller.maxPolarAngle = Math.PI / 2 - 0.01;
 		controller.maxDistance = 700;
 		controller.minDistance = 100;
 
@@ -236,7 +231,7 @@
 		waterMaterial.clearcoat = 0.05;
 		waterMaterial.clearcoatRoughness = 0.35;
 		waterMaterial.metalness = 0.5;
-		waterMaterial.roughness = 0.1;
+		waterMaterial.roughness = 0.12;
 		waterMaterial.normalMap = texture;
 		waterMaterial.diffuse.setHex(0x064569);
 		waterMaterial.transparent = true;
@@ -305,9 +300,13 @@
 					scene.fog = null;
 			}
 		});
+		fogFolder.addColor(skyBox.material.uniforms, 'fogColor').onChange(value => {
+			fog.color.fromArray(value);
+			fogExp2.color.fromArray(value);
+		});
 		fogFolder.add(fogExp2, 'density', 0, 0.01);
 		fogFolder.add(fog, 'near', 1, 500);
-		fogFolder.add(fog, 'far', 500, 2000);
+		fogFolder.add(fog, 'far', 500, 3000);
 
 		const lightFolder = gui.addFolder('light');
 		lightFolder.add(params, 'phi', 10, 89, 0.001).onChange(updateSpherePosition);
