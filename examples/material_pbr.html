@@ -31,7 +31,7 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
-		import { PMREM } from 't3d/addons/PMREM.js';
+		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 
 		const useDevicePixelRatio = true;
 		const devicePixelRatio = window.devicePixelRatio;
@@ -88,11 +88,7 @@
 		], function() {
 			cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
-			cubeTexture = PMREM.prefilterEnvironmentMap(forwardRenderer, cubeTexture, {
-				width: cubeTexture.images[0].width,
-				height: cubeTexture.images[0].height,
-				sampleSize: 128
-			});
+			cubeTexture = (new PMREMGenerator(128)).prefilter(forwardRenderer, cubeTexture);
 		
 			const skyBox = new SkyBox(cubeTexture);
 			skyBox.gamma = true;

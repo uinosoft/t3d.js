@@ -31,7 +31,7 @@
 		import { DRACOLoader } from 't3d/addons/loaders/DRACOLoader.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-		import { PMREM } from 't3d/addons/PMREM.js';
+		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GroundProjectedSkyboxShader } from 't3d/addons/shaders/GroundProjectedSkyboxShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -118,9 +118,7 @@
 			texture.flipY = textureData.flipY;
 			texture.generateMipmaps = textureData.generateMipmaps;
 
-			texture = PMREM.prefilterEnvironmentMap(forwardRenderer, texture, {
-				sampleSize: 1024
-			});
+			texture = (new PMREMGenerator()).prefilter(forwardRenderer, texture);
 
 			const geometry = new t3d.BoxGeometry(1, 1, 1);
 			const material = new t3d.ShaderMaterial(GroundProjectedSkyboxShader);

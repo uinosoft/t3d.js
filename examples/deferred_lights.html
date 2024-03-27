@@ -28,7 +28,7 @@
 		import * as t3d from 't3d';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { FXAAShader } from 't3d/addons/shaders/FXAAShader.js';
-		import { PMREM } from 't3d/addons/PMREM.js';
+		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 		import { DeferredRenderer } from 't3d/addons/render/DeferredRenderer.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
@@ -156,9 +156,7 @@
 			cubeTexturePath + 'posz.jpg',
 			cubeTexturePath + 'negz.jpg'
 		], function() {
-			cubeTexture = PMREM.prefilterEnvironmentMap(deferredRenderer, cubeTexture, {
-				sampleSize: 1024
-			});
+			cubeTexture = (new PMREMGenerator()).prefilter(deferredRenderer, cubeTexture);
 
 			deferredRenderer.ambientCubemap = cubeTexture;
 			deferredRenderer.ambientCubemapIntensity = 1;

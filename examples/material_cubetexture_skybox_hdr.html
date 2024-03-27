@@ -28,7 +28,7 @@
 		import * as t3d from 't3d';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { RGBELoader } from 't3d/addons/loaders/RGBELoader.js';
-		import { PMREM } from 't3d/addons/PMREM.js';
+		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -89,9 +89,7 @@
 
 			texture.version++;
 
-			texture = PMREM.prefilterEnvironmentMap(forwardRenderer, texture, {
-				sampleSize: 1024
-			});
+			texture = (new PMREMGenerator()).prefilter(forwardRenderer, texture);
 		
 			const skyBox = new SkyBox(texture);
 			skyBox.gamma = true;
