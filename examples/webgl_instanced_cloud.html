@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - webgl instanced cloud</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - instanced draw
+		<br/>Model from <a href="https://sketchfab.com/3d-models/asteroid-aa26af77e2cb40c48e0dc19f16115f72"  target="_blank">"asteroid"</a> 
+		by <a href="https://sketchfab.com/shawn0326"  target="_blank">shawn0326</a>
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { InstancedBasicMaterial } from 't3d/addons/materials/InstancedBasicMaterial.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { AxisHelper } from 't3d/addons/objects/AxisHelper.js';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const axis = new AxisHelper(30);
+		scene.add(axis);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 0, 20);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		class Cloud {
+
+			constructor() {
+				// limit count of cloud segments,Cannot be dynamically modified.
+				this.limitCount = 200;
+				// cloud animation factor.
+				this.speed = 0.0;
+				// cloud bounding box.
+				this.bounds = new t3d.Vector3(5, 1, 1);
+				// cloud segments count.
+				this.segments = 20;
+				// cloud fade distance.
+				this.fade = 10;
+				// The volume/thickness of the segments.
+				this.volume = 6;
+				// The smallest volume when distributing clouds.
+				this.smallestVolume = 0.25;
+				// Growth factor for animated clouds (speed > 0).
+				this.growth = 4;
+				// How to arrange segment volume inside the bounds
+				this.concentrate = 'inside';
+				// A seeded random will show the same cloud consistently.
+				this.seed = Math.random();
+				// Whether the cloud needs to be updated.
+				this.needsUpdate = false;
+			}
+
+		}
+
+		class CloudState {
+
+			constructor() {
+				this.index;
+				this.segments;
+				this.dist = 0;
+				this.matrix = new t3d.Matrix4();
+				this.bounds = new t3d.Vector3();
+				this.position = new t3d.Vector3();
+				this.volume;
+				this.length;
+				this.speed;
+				this.growth;
+				this.opacity;
+				this.fade;
+				this.density;
+				this.rotation;
+				this.rotationFactor;
+			}
+
+		}
+
+		class CloudInstancedBasicMaterial extends InstancedBasicMaterial {
+
+			constructor() {
+				super();
+
+				this.defines.CLOUD_INSTANCING = true;
+				this.transparent = true;
+				this.depthWrite = false;
+
+				// fix vertex shader
+				this.vertexShader = this.vertexShader.replace('#include <skinning_pars_vert>', `
+					#include <skinning_pars_vert>
+
+					#ifdef CLOUD_INSTANCING
+						attribute float instanceOpacity;
+						varying float vOpacity;
+					#endif
+				`);
+				this.vertexShader = this.vertexShader.replace('#include <skinning_vert>', `
+					#include <skinning_vert>
+					
+					#ifdef CLOUD_INSTANCING
+						vOpacity = instanceOpacity;
+					#endif
+				`);
+
+				// fix fragment shader
+				this.fragmentShader = this.fragmentShader.replace('#include <clippingPlanes_pars_frag>', `
+					#include <clippingPlanes_pars_frag>
+
+					#ifdef CLOUD_INSTANCING
+						varying float vOpacity;
+					#endif
+				`);
+				this.fragmentShader = this.fragmentShader.replace('#include <fog_frag>', `
+					#include <fog_frag>
+
+					#ifdef CLOUD_INSTANCING
+						gl_FragColor.a = gl_FragColor.a * vOpacity;
+					#endif	
+				`);
+			}
+
+		}
+
+		class CloudInstancedMesh extends t3d.Mesh {
+
+			constructor(cloud) {
+				super();
+
+				this.cloud = cloud;
+				this.cloudStates = [];
+				this.clock = new Clock();
+
+				this._cpos = new t3d.Vector3();
+				this._cquat = new t3d.Quaternion();
+				this._scale = new t3d.Vector3();
+				this._translation = new t3d.Vector3();
+				this._rotation = new t3d.Quaternion();
+				this._scale = new t3d.Vector3();
+				this._pos = new t3d.Vector3();
+				this._qat = new t3d.Quaternion();
+				this._dir = new t3d.Vector3(0, 0, 1);
+
+				this.frustumCulled = false;
+
+				this.material = new CloudInstancedBasicMaterial();
+
+				new Texture2DLoader().load('./resources/cloud10.png', texture => {
+					this.material.diffuseMap = texture;
+					this.material.needsUpdate = true;
+
+					const textureWidth = texture.image.width;
+					const textureHeight = texture.image.height;
+
+					const max = Math.max(textureWidth, textureHeight);
+					const imageBounds = [textureWidth / max, textureHeight / max];
+
+					// create plane geometry
+					const geometry = new t3d.PlaneGeometry(imageBounds[0], imageBounds[1]);
+
+					// convert plane geometry from xz to xy
+					GeometryUtils.applyMatrix4(geometry, new t3d.Matrix4().makeRotationAxis(new t3d.Vector3(1, 0, 0), Math.PI / 2));
+
+					const instanceCount = this.cloud.limitCount;
+
+					const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(instanceCount * 16), 16));
+					instanceMatrixAttribute.divisor = 1;
+					geometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
+
+					const instanceOpacityAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(instanceCount), 1));
+					instanceOpacityAttribute.divisor = 1;
+					geometry.addAttribute('instanceOpacity', instanceOpacityAttribute);
+		
+					geometry.instanceCount = instanceCount;
+
+					this.geometry = geometry;
+				});
+			}
+
+			updateCloudStates() {
+				if (this.cloud.segments > this.cloud.limitCount) {
+					this.cloud.segments = this.cloud.limitCount;
+				}
+		
+				const random = () => {
+					const x = Math.sin(this.cloud.seed++) * 10000.0;
+					return x - Math.floor(x);
+				};
+
+				for (let i = 0; i < this.cloud.segments; i++) {
+					this.cloudStates[i] = this.cloudStates[i] ? this.cloudStates[i] : new CloudState();
+
+					this.cloudStates[i].index = i;
+
+					this.cloudStates[i].segments = this.cloud.segments;
+					this.cloudStates[i].bounds.copy(this.cloud.bounds);
+					this.cloudStates[i].speed = this.cloud.speed;
+					this.cloudStates[i].growth = this.cloud.growth;
+					this.cloudStates[i].fade = this.cloud.fade;
+					this.cloudStates[i].volume = this.cloud.volume;
+					this.cloudStates[i].smallestVolume = this.cloud.smallestVolume;
+
+					this.cloudStates[i].density = Math.max(0.5, random());
+					this.cloudStates[i].rotation = i * (Math.PI / this.cloud.segments);
+					this.cloudStates[i].rotationFactor = Math.max(0.2, 0.5 * random()) * this.cloud.speed;
+
+					if (this.cloud.segments > 1) {
+						this.cloudStates[i].position.copy(this.cloud.bounds).multiply(new t3d.Vector3(random() * 2 - 1, random() * 2 - 1, random() * 2 - 1));
+					}
+
+					const xDiff = Math.abs(this.cloudStates[i].position.x);
+					const yDiff = Math.abs(this.cloudStates[i].position.y);
+					const zDiff = Math.abs(this.cloudStates[i].position.z);
+					const max = Math.max(xDiff, yDiff, zDiff);
+					this.cloudStates[i].length = 1;
+					if (xDiff === max) this.cloudStates[i].length -= xDiff / this.cloudStates[i].bounds.x;
+					if (yDiff === max) this.cloudStates[i].length -= yDiff / this.cloudStates[i].bounds.y;
+					if (zDiff === max) this.cloudStates[i].length -= zDiff / this.cloudStates[i].bounds.z;
+
+					this.cloudStates[i].volume = Math.max(
+						Math.max(0, this.cloudStates[i].smallestVolume),
+						this.cloud.concentrate === 'random' ? random() : this.cloud.concentrate === 'inside' ? this.cloudStates[i].length : 1 - this.cloudStates[i].length
+					) * this.cloudStates[i].volume;
+				}
+
+				if (this.cloudStates.length > this.cloud.segments) {
+					this.cloudStates.splice(this.cloud.segments, this.cloudStates.length - this.cloud.segments);
+				}
+			}
+
+			/**
+			 * update cloud
+			 * @param {t3d.Camera} camera
+			 */
+			update(camera) {
+				let oldSegments = -1;
+				if (this.cloud.segments !== this.cloudStates.length || this.cloud.needsUpdate) {
+					if (this.cloud.segments < this.cloudStates.length) {
+						oldSegments = this.cloudStates.length;
+					}
+					this.updateCloudStates();
+					this.cloud.needsUpdate = false;
+				}
+
+				camera.updateMatrix(true);
+				camera.worldMatrix.decompose(this._cpos, this._cquat, this._scale);
+
+				const t = this.clock.getElapsedTime();
+				const delta = this.clock.getDelta();
+				let config;
+				for (let index = 0; index < this.cloudStates.length; index++) {
+					config = this.cloudStates[index];
+					this._translation.set(0, 0, 0);
+					this._rotation.set(0, 0, 0, 1);
+					this._scale.set(1, 1, 1);
+					this._translation.add(this._pos.copy(config.position).applyQuaternion(this._rotation).multiply(this._scale));
+					this._rotation.copy(this._cquat).multiply(this._qat.setFromAxisAngle(this._dir, (config.rotation += delta * config.rotationFactor)));
+					this._scale.multiplyScalar(config.volume + ((1 + Math.sin(t * config.density * config.speed)) / 2) * config.growth);
+					config.matrix.transform(this._translation, this._scale, this._rotation);
+					config.dist = this._translation.distanceTo(this._cpos);
+				}
+
+				if (this.geometry) {
+					const geometry = this.geometry;
+					const instanceMatrixAttribute = geometry.attributes.instanceMatrix;
+					const instanceOpacityAttribute = geometry.attributes.instanceOpacity;
+					const matricesArray = instanceMatrixAttribute.buffer.array;
+					const opacityArray = instanceOpacityAttribute.buffer.array;
+
+					// Depth-sort. Instances have no specific draw order, w/o sorting z would be random
+					this.cloudStates.sort((a, b) => b.dist - a.dist);
+		
+					for (let index = 0; index < this.cloudStates.length; index++) {
+						config = this.cloudStates[index];
+						opacityArray[index] = 1.0 * (config.dist < config.fade - 1 ? config.dist / config.fade : 1);
+						config.matrix.toArray(matricesArray, index * 16);
+					}
+
+					if (oldSegments !== -1) {
+						for (let index = this.cloudStates.length; index < oldSegments; index++) {
+							for (let i = 0; i < 16; i++) {
+								matricesArray[index * 16 + i] = 0;
+							}
+						}
+					}
+
+					if (oldSegments !== -1) {
+						instanceMatrixAttribute.buffer.updateRange.offset = 0;
+						instanceMatrixAttribute.buffer.updateRange.count = oldSegments * 16;
+						instanceMatrixAttribute.buffer.version++;
+					} else {
+						instanceMatrixAttribute.buffer.updateRange.offset = 0;
+						instanceMatrixAttribute.buffer.updateRange.count = this.cloudStates.length * 16;
+						instanceMatrixAttribute.buffer.version++;
+					}
+
+					instanceOpacityAttribute.buffer.updateRange.offset = 0;
+					instanceOpacityAttribute.buffer.updateRange.count = this.cloudStates.length;
+					instanceOpacityAttribute.buffer.version++;
+				}
+			}
+
+		}
+
+		const cloud = new Cloud();
+		cloud.speed = 0.5;
+		const cloudInstancedMesh = new CloudInstancedMesh(cloud);
+
+		const gui = new GUI();
+		const guiOptions = {
+			speed: 0.5,
+			boundsX: 5,
+			boundsY: 1,
+			boundsZ: 1,
+			segments: 20,
+			fade: 10,
+			volume: 6,
+			smallestVolume: 0.25,
+			growth: 4,
+			concentrate: 'inside',
+			positionY: 0,
+			axishelperEnable: true
+		};
+
+		const cloudFolder = gui.addFolder('Cloud');
+		cloudFolder.add(guiOptions, 'speed', 0, 1, 0.01).onChange(value => {
+			cloud.speed = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'boundsX', 0, 10, 0.1).onChange(value => {
+			cloud.bounds.set(value, cloud.bounds.y, cloud.bounds.z);
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'boundsY', 0, 10, 0.1).onChange(value => {
+			cloud.bounds.set(cloud.bounds.x, value, cloud.bounds.z);
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'boundsZ', 0, 10, 0.1).onChange(value => {
+			cloud.bounds.set(cloud.bounds.x, cloud.bounds.y, value);
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'segments', 1, cloud.limitCount, 1).onChange(value => {
+			cloud.segments = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'fade', 0, 100, 1).onChange(value => {
+			cloud.fade = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'volume', 0, 10, 0.1).onChange(value => {
+			cloud.volume = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'smallestVolume', 0, 10, 0.01).onChange(value => {
+			cloud.smallestVolume = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'growth', 0, 10, 0.1).onChange(value => {
+			cloud.growth = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'concentrate', ['inside', 'outside', 'random']).onChange(value => {
+			cloud.concentrate = value;
+			cloud.needsUpdate = true;
+		});
+		cloudFolder.add(guiOptions, 'positionY', 0, 10, 0.1).onChange(value => {
+			cloudInstancedMesh.position.set(0, value, 0);
+		});
+		cloudFolder.add(guiOptions, 'axishelperEnable').onChange(value => {
+			axis.visible = value;
+		});
+
+		scene.add(cloudInstancedMesh);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			cloudInstancedMesh.update(camera);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
