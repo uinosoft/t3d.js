@@ -28,18 +28,16 @@ class Raycaster {
      * Updates the ray with a new origin and direction.
      * @param {t3d.Vector2} coords — 2D coordinates of the mouse, in normalized device coordinates (NDC)---X and Y components should be between -1 and 1.
      * @param {t3d.Camera} camera — camera from which the ray should originate.
-	 * @param {String} type - camera type: 'perspective' or 'orthographic'
      */
-	setFromCamera(coords, camera, type) {
-		type = type || 'perspective';
-		if (type == 'orthographic') {
+	setFromCamera(coords, camera) {
+		if (camera.projectionMatrix.elements[11] === -1.0) { // perspective
+			this.ray.origin.setFromMatrixPosition(camera.worldMatrix);
+			this.ray.direction.set(coords.x, coords.y, 0.5).unproject(camera).sub(this.ray.origin).normalize();
+		} else { // orthographic
 			// set origin in plane of camera
 			// projectionMatrix.elements[14] = (near + far) / (near - far)
 			this.ray.origin.set(coords.x, coords.y, camera.projectionMatrix.elements[14]).unproject(camera);
 			this.ray.direction.set(0, 0, -1).transformDirection(camera.worldMatrix);
-		} else {
-			this.ray.origin.setFromMatrixPosition(camera.worldMatrix);
-			this.ray.direction.set(coords.x, coords.y, 0.5).unproject(camera).sub(this.ray.origin).normalize();
 		}
 	}
 
