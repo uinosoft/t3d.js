@@ -26,10 +26,10 @@ export class GLTFUtils {
 		if (/^(https?:)?\/\//i.test(url)) return url;
 
 		// Data URI
-		if (/^data:.*,.*$/i.test(url)) return url;
+		if (/^data:/i.test(url)) return url;
 
 		// Blob URL
-		if (/^blob:.*$/i.test(url)) return url;
+		if (/^blob:/i.test(url)) return url;
 
 		// Relative URL
 		return path + url;
