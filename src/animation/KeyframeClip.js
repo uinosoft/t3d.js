@@ -5,11 +5,11 @@
 class KeyframeClip {
 
 	/**
-	 * @param {String} name - A name for this clip.
-	 * @param {t3d.KeyframeTrack[]} tracks - An array of KeyframeTracks.
+	 * @param {String} [name=''] - A name for this clip.
+	 * @param {t3d.KeyframeTrack[]} [tracks=[]] - An array of KeyframeTracks.
 	 * @param {Number} [duration] - The duration of this clip (in seconds). If not passed, the duration will be calculated from the passed tracks array.
 	 */
-	constructor(name, tracks, duration = -1) {
+	constructor(name = '', tracks = [], duration = -1) {
 		/**
 		 * A name for this clip.
 		 * @type {String}
