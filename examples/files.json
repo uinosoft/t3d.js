@@ -198,6 +198,7 @@
 		"webgl_external_texture",
 		"webgl_external_buffer",
 		"webgl_primitive_restart",
+		"webgl_clipculldistance",
 		"webgl_renderinfo",
 		"webgl_query_occlusion",
 		"webgl_query_timer",

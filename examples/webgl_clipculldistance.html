@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - webgl clip cull distance</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - vertex shader clipping <br/>
+		via <a href="https://registry.khronos.org/webgl/extensions/WEBGL_clip_cull_distance/" target="_blank" rel="noopener" >WEBGL_clip_cull_distance</a>
+		<div id="notSupported" style="display:none">WEBGL_clip_cull_distance not supported</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(-1, 0, 3.9);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.screenSpacePanning = true;
+
+		// Create box
+
+		const shader = {
+			name: 'clip_cull_distance',
+			uniforms: {
+				u_ClipPlane: [0, 1, 0, 0], // normal, constant
+				u_CullPlane: [0, 1, 0, 0],
+				u_Texture: new Texture2DLoader().load('./resources/logo.jpg')
+			},
+			vertexShader: `
+				#extension GL_ANGLE_clip_cull_distance: enable
+				#include <common_vert>
+				uniform vec4 u_ClipPlane;
+				uniform vec4 u_CullPlane;
+				attribute vec2 a_Uv;
+				varying vec2 v_Uv;
+				void main() {
+					vec4 worldPosition = u_Model * vec4(a_Position, 1.0);
+					gl_ClipDistance[0] = dot(worldPosition.xyz, normalize(u_ClipPlane.xyz)) + u_ClipPlane.w;
+					gl_CullDistance[0] = dot(worldPosition.xyz, normalize(u_CullPlane.xyz)) + u_CullPlane.w;
+					v_Uv = a_Uv;
+					gl_Position = u_ProjectionView * worldPosition;
+				}
+			`,
+			fragmentShader: `
+				uniform sampler2D u_Texture;
+				varying vec2 v_Uv;
+				void main() {
+					gl_FragColor = texture2D(u_Texture, v_Uv);
+				}
+			`
+		};
+
+		const geometry = new t3d.BoxGeometry(1, 1, 1);
+		const material = new t3d.ShaderMaterial(shader);
+		material.polygonOffset = true;
+		material.polygonOffsetFactor = 0.5;
+		material.polygonOffsetUnits = 0.5;
+		material.side = t3d.DRAW_SIDE.DOUBLE;
+		const mesh = new t3d.Mesh(geometry, material);
+		scene.add(mesh);
+
+		const wireFrameGeometry = geometry.clone();
+		wireFrameGeometry.index = GeometryUtils.getWireframeAttribute(wireFrameGeometry);
+		wireFrameGeometry.computeBoundingBox();
+		wireFrameGeometry.computeBoundingSphere();
+		const wireFrameMaterial = new t3d.BasicMaterial();
+		wireFrameMaterial.diffuse.setHex(0xff0000);
+		wireFrameMaterial.drawMode = t3d.DRAW_MODE.LINES;
+		scene.add(new t3d.Mesh(wireFrameGeometry, wireFrameMaterial));
+
+		// Create planes and helpers
+
+		const planeNormal = new t3d.Vector3(1, 1, 0).normalize();
+
+		const clipPlane = new t3d.Plane(planeNormal, 0.3);
+		const cullPlane = new t3d.Plane(planeNormal, 0.8);
+
+		const planeGeometry = new t3d.PlaneGeometry(2, 2);
+
+		const clipPlaneHelper = createPlaneHelper(0x00ff00);
+		scene.add(clipPlaneHelper);
+
+		const cullPlaneHelper = createPlaneHelper(0xffff00);
+		scene.add(cullPlaneHelper);
+
+		function createPlaneHelper(color) {
+			const material = new t3d.BasicMaterial();
+			material.diffuse.setHex(color);
+			material.transparent = true;
+			material.opacity = 0.3;
+			material.side = t3d.DRAW_SIDE.DOUBLE;
+			const mesh = new t3d.Mesh(planeGeometry, material);
+			mesh.euler.z = -Math.PI / 4;
+			return mesh;
+		}
+
+		function syncPlane() {
+			clipPlane.normal.toArray(material.uniforms.u_ClipPlane);
+			material.uniforms.u_ClipPlane[3] = clipPlane.constant;
+			clipPlaneHelper.position.copy(planeNormal).multiplyScalar(clipPlane.constant).negate();
+		
+			cullPlane.normal.toArray(material.uniforms.u_CullPlane);
+			material.uniforms.u_CullPlane[3] = cullPlane.constant;
+			cullPlaneHelper.position.copy(planeNormal).multiplyScalar(cullPlane.constant).negate();
+		}
+
+		syncPlane();
+
+		// GUI
+
+		const gui = new GUI();
+		gui.add(clipPlane, 'constant', -0.8, 0.8, 0.01).name('clipDistance').onChange(syncPlane);
+		gui.add(cullPlane, 'constant', -0.8, 0.8, 0.01).name('cullDistance').onChange(syncPlane);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		const capabilities = forwardRenderer.capabilities;
+		if (capabilities.version < 2 || !capabilities.getExtension('WEBGL_clip_cull_distance')) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			forwardRenderer.gl.enable(capabilities.getExtension('WEBGL_clip_cull_distance').CLIP_DISTANCE0_WEBGL);
+			requestAnimationFrame(loop);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
