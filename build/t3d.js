@@ -14386,9 +14386,15 @@
 		vshader = unrollLoops(vshader);
 		fshader = unrollLoops(fshader);
 
-		// support glsl version 300 es for webgl ^2.0
+		// enable glsl version 300 es for webgl ^2.0
 		if (props.version > 1) {
-			prefixVertex = ['#version 300 es\n', '#define attribute in', '#define varying out', '#define texture2D texture'].join('\n') + '\n' + prefixVertex;
+			// extract vertex extensions and insert after version strings later
+			// because it must be at the top of the shader
+			const vertexExtensions = vshader.match(extensionPattern);
+			if (vertexExtensions) {
+				vshader = vshader.replace(extensionPattern, '');
+			}
+			prefixVertex = ['#version 300 es', vertexExtensions ? vertexExtensions.join('\n') : '', '#define attribute in', '#define varying out', '#define texture2D texture'].join('\n') + '\n' + prefixVertex;
 			fshader = fshader.replace('#extension GL_EXT_draw_buffers : require', '');
 
 			// replace gl_FragData by layout
@@ -14399,7 +14405,7 @@
 				layout.push('layout(location = ' + i + ') out highp vec4 pc_fragData' + i + ';');
 				i++;
 			}
-			prefixFragment = ['#version 300 es\n', '#define varying in', fshader.indexOf('layout') > -1 || layout.length > 0 ? '' : 'out highp vec4 pc_fragColor;', '#define gl_FragColor pc_fragColor', '#define gl_FragDepthEXT gl_FragDepth', '#define texture2D texture', '#define textureCube texture', '#define texture2DProj textureProj', '#define texture2DLodEXT textureLod', '#define texture2DProjLodEXT textureProjLod', '#define textureCubeLodEXT textureLod', '#define texture2DGradEXT textureGrad', '#define texture2DProjGradEXT textureProjGrad', '#define textureCubeGradEXT textureGrad', layout.join('\n')].join('\n') + '\n' + prefixFragment;
+			prefixFragment = ['#version 300 es', '#define varying in', fshader.indexOf('layout') > -1 || layout.length > 0 ? '' : 'out highp vec4 pc_fragColor;', '#define gl_FragColor pc_fragColor', '#define gl_FragDepthEXT gl_FragDepth', '#define texture2D texture', '#define textureCube texture', '#define texture2DProj textureProj', '#define texture2DLodEXT textureLod', '#define texture2DProjLodEXT textureProjLod', '#define textureCubeLodEXT textureLod', '#define texture2DGradEXT textureGrad', '#define texture2DProjGradEXT textureProjGrad', '#define textureCubeGradEXT textureGrad', layout.join('\n')].join('\n') + '\n' + prefixFragment;
 		}
 		vshader = prefixVertex + vshader;
 		fshader = prefixFragment + fshader;
@@ -14436,6 +14442,7 @@
 	function unrollLoops(string) {
 		return string.replace(unrollLoopPattern, loopReplacer);
 	}
+	const extensionPattern = /#extension .*/g;
 
 	class WebGLQueries extends PropertyMap {
 		constructor(prefix, gl, capabilities) {

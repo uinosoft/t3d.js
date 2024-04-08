@@ -15712,10 +15712,18 @@ function createProgram(gl, defines, props, vertex, fragment) {
 	vshader = unrollLoops(vshader);
 	fshader = unrollLoops(fshader);
 
-	// support glsl version 300 es for webgl ^2.0
+	// enable glsl version 300 es for webgl ^2.0
 	if (props.version > 1) {
+		// extract vertex extensions and insert after version strings later
+		// because it must be at the top of the shader
+		const vertexExtensions = vshader.match(extensionPattern);
+		if (vertexExtensions) {
+			vshader = vshader.replace(extensionPattern, '');
+		}
+
 		prefixVertex = [
-			'#version 300 es\n',
+			'#version 300 es',
+			vertexExtensions ? vertexExtensions.join('\n') : '',
 			'#define attribute in',
 			'#define varying out',
 			'#define texture2D texture'
@@ -15733,7 +15741,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		}
 
 		prefixFragment = [
-			'#version 300 es\n',
+			'#version 300 es',
 			'#define varying in',
 			(fshader.indexOf('layout') > -1 || layout.length > 0) ? '' : 'out highp vec4 pc_fragColor;',
 			'#define gl_FragColor pc_fragColor',
@@ -15812,6 +15820,8 @@ function unrollLoops(string) {
 	return string
 		.replace(unrollLoopPattern, loopReplacer);
 }
+
+const extensionPattern = /#extension .*/g;
 
 class WebGLQueries extends PropertyMap {
 
