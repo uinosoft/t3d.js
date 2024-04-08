@@ -92,7 +92,7 @@
 		"scene_clippingplanes"
 	],
 	"camera": [
-		"camera_cameras",
+		"camera_projection",
 		"camera_multiple"
 	],
 	"controls": [
