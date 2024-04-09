@@ -572,6 +572,28 @@ class Matrix4 {
 	}
 
 	/**
+	 * Linearly interpolates between two matrix4.
+	 * @param {t3d.Matrix4} m1
+	 * @param {t3d.Matrix4} m2
+	 * @param {Number} ratio
+	 * @return {t3d.Matrix4}
+	 */
+	lerpMatrices(m1, m2, ratio) {
+		if (ratio === 0) return this.copy(m1);
+		if (ratio === 1) return this.copy(m2);
+
+		const te = this.elements,
+			te1 = m1.elements,
+			te2 = m2.elements;
+
+		for (let i = 0; i < 16; i++) {
+			te[i] = te1[i] * (1 - ratio) + te2[i] * ratio;
+		}
+
+		return this;
+	}
+
+	/**
 	 * Return true if this matrix and m are equal.
 	 * @param {t3d.Matrix4} m
 	 * @return {Boolean}
