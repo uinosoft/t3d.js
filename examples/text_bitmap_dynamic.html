@@ -42,7 +42,6 @@
 		import { BitmapTextGeometry } from 't3d/addons/geometries/BitmapTextGeometry.js';
 		import { DynamicFont } from 't3d/addons/DynamicFont.js';
 		import { SDFTextShader } from 't3d/addons/shaders/SDFTextShader.js';
-		import { CanvasAtlas } from './libs/canvas-atlas.module.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -65,37 +64,35 @@
 		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 5000);
 		scene.add(camera);
 
+		
 		const controller = new OrbitControls(camera, canvas);
 
 		// Create DynamicFont
 
-		const text = '道可道，非常道；名可名，非常名。无，名天地之始；有，名万物之母。故常无，欲以观其妙；常有，欲以观其徼。此两者，同出而异名，同谓之玄。玄之又玄，众妙之门。天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。有无相生，难易相成，长短相形，高下相盈，音声相和，前后相随，恒也。是以圣人处无为之事，行不言之教；万物作而弗始， 生而弗有，为而弗恃,功成而弗居。夫唯弗居，是以不去。';
+		const text = '道可道，非常道；名可名，非常名。无，名天地之始；有，名万物之母。故常无，欲以观其妙；常有，欲以观其徼。此两者，同出而异名，同谓之玄。玄之又玄，众妙之门。天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。有无相生，难易相成，长短相形，高下相盈，音声相和，前后相随，恒也。是以圣人处无为之事，行不言之教；万物作而弗始，生而弗有，为而弗恃,功成而弗居。夫唯弗居，是以不去。';
 
 		const params = {
 			text,
 			mode: 'word-wrapper',
 			align: 'left',
 			letterSpacing: 0,
-			lineHeight: 100
+			lineHeight: 100,
+			spaceWrap: false
 		};
 
 		const dynamicFont = new DynamicFont({ sdf: true, width: 2048, height: 2048 });
-		dynamicFont.setCanvasAtlas(new CanvasAtlas({ width: 2048, height: 2048, cellWidth: 512, cellHeight: 512 }));
 		dynamicFont.addChars(text);
-
-		// Add the atlas to the DOM
-
-		dynamicFont.atlas.classList.add('atlas');
-		document.body.appendChild(dynamicFont.atlas);
 
 		// Create text mesh
 
 		params.font = dynamicFont.font;
 		params.width = 980;
 		const geometry = new BitmapTextGeometry(params);
-
 		const imageTexture = new t3d.Texture2D();
-		imageTexture.image = dynamicFont.atlas;
+		imageTexture.image = {
+			data: dynamicFont.atlas, width: 2048, height: 2048
+		};
+		imageTexture.format = t3d.PIXEL_FORMAT.RED;
 		imageTexture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		imageTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		imageTexture.generateMipmaps = false;
@@ -120,6 +117,23 @@
 		mesh.position.x = -geometry.layout.width / 2 * meshScalar;
 		mesh.position.y = -geometry.layout.height / 2 * meshScalar;
 		scene.add(mesh);
+
+		// add the same thing
+		const sceneMini = new t3d.Scene();
+		const basicMaterial = new t3d.BasicMaterial();
+		basicMaterial.transparent = true;
+		basicMaterial.diffuseMap = imageTexture;
+		const basicGeometry = new t3d.PlaneGeometry(80, 80);
+		const mesh2 = new t3d.Mesh(basicGeometry, basicMaterial);
+		mesh2.euler.x = Math.PI / 2;
+		mesh2.position.x = -40;
+		sceneMini.add(mesh2);
+		const cameraMini = new t3d.Camera();
+		cameraMini.position.set(0, 0, 150);
+		cameraMini.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		cameraMini.setPerspective(30 / 180 * Math.PI, width / height, 1, 10000);
+		cameraMini.rect.set(0, 0, 0.25, 0.25);
+		sceneMini.add(cameraMini);
 
 		// GUI
 		
@@ -171,13 +185,21 @@
 			material.defines['DEBUG'] = value;
 			material.needsUpdate = true;
 		});
-
+		forwardRenderer.autoClear = false;
 		function loop(count) {
 			requestAnimationFrame(loop);
 
 			controller.update();
 
+			forwardRenderer.setClearColor(0, 0, 0, 0);
+			forwardRenderer.clear(true, true, true);
+
 			forwardRenderer.render(scene, camera);
+
+			forwardRenderer.setClearColor(1, 0, 0, 1);
+			forwardRenderer.clear(false, true, true);
+
+			forwardRenderer.render(sceneMini, cameraMini);
 		}
 		requestAnimationFrame(loop);
 

@@ -17,6 +17,8 @@ class BitmapTextGeometry extends Geometry {
 	 * @param {Number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
 	 * @param {Number} [options.tabSize=4] - the number of spaces to use in a single tab
 	 * @param {Boolean} [options.flipY=true] - whether the texture will be Y-flipped (default true)
+	 * @param {Boolean} [options.spaceWrap = true] - whether the texture will be Y-flipped (default true)
+
 	 */
 	constructor(options) {
 		super();
@@ -26,8 +28,9 @@ class BitmapTextGeometry extends Geometry {
 
 		// use these as default values for any subsequent
 		// calls to update()
-		this._options = Object.assign({}, options);
 
+		this._options = Object.assign({}, options);
+		this._options.spaceWrap = options.spaceWrap !== undefined ? options.spaceWrap : true;
 		this._layout = null;
 		this._visibleGlyphs = [];
 
@@ -53,6 +56,7 @@ class BitmapTextGeometry extends Geometry {
 
 		// get vec2 texcoords
 		const flipY = options.flipY !== false;
+
 
 		// the desired BMFont data
 		const font = options.font;
@@ -606,7 +610,7 @@ function wordwrap(text, opt = {}) {
 	if (mode === 'pre') {
 		return pre(measure, text, start, end, width);
 	} else {
-		return greedy(measure, text, start, end, width, mode);
+		return greedy(measure, text, start, end, width, mode, opt.spaceWrap);
 	}
 }
 
@@ -642,7 +646,7 @@ function pre(measure, text, start, end, width) {
 	return lines;
 }
 
-function greedy(measure, text, start, end, width, mode) {
+function greedy(measure, text, start, end, width, mode, spaceWrap) {
 	// A greedy word wrapper based on LibGDX algorithm
 	// https://github.com/libgdx/libgdx/blob/master/gdx/src/com/badlogic/gdx/graphics/g2d/BitmapFontCache.java
 	const lines = [];
@@ -658,11 +662,13 @@ function greedy(measure, text, start, end, width, mode) {
 		const newLine = idxOf(text, newlineChar, start, end);
 
 		// eat whitespace at start of line
-		while (start < newLine) {
-			if (!isWhitespace(text.charAt(start))) {
-				break;
+		if (spaceWrap) {
+			while (start < newLine) {
+				if (!isWhitespace(text.charAt(start))) {
+					break;
+				}
+				start++;
 			}
-			start++;
 		}
 
 		// determine visible # of glyphs for the available width
@@ -675,7 +681,7 @@ function greedy(measure, text, start, end, width, mode) {
 		if (lineEnd < newLine) {
 			// find char to break on
 			while (lineEnd > start) {
-				if (isWhitespace(text.charAt(lineEnd))) {
+				if (isWhitespace(text.charAt(lineEnd)) && spaceWrap) {
 					break;
 				}
 				lineEnd--;
@@ -689,7 +695,7 @@ function greedy(measure, text, start, end, width, mode) {
 				nextStart = lineEnd;
 				// eat whitespace at end of line
 				while (lineEnd > start) {
-					if (!isWhitespace(text.charAt(lineEnd - newlineChar.length))) {
+					if (!isWhitespace(text.charAt(lineEnd - newlineChar.length)) && spaceWrap) {
 						break;
 					}
 					lineEnd--;
