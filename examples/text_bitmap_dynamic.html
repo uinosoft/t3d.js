@@ -42,7 +42,6 @@
 		import { BitmapTextGeometry } from 't3d/addons/geometries/BitmapTextGeometry.js';
 		import { DynamicFont } from 't3d/addons/DynamicFont.js';
 		import { SDFTextShader } from 't3d/addons/shaders/SDFTextShader.js';
-		import { CanvasAtlas } from './libs/canvas-atlas.module.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -56,6 +55,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.autoClear = false;
 
 		const scene = new t3d.Scene();
 
@@ -69,35 +69,32 @@
 
 		// Create DynamicFont
 
-		const text = '道可道，非常道；名可名，非常名。无，名天地之始；有，名万物之母。故常无，欲以观其妙；常有，欲以观其徼。此两者，同出而异名，同谓之玄。玄之又玄，众妙之门。天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。有无相生，难易相成，长短相形，高下相盈，音声相和，前后相随，恒也。是以圣人处无为之事，行不言之教；万物作而弗始， 生而弗有，为而弗恃,功成而弗居。夫唯弗居，是以不去。';
+		const text = '   道可道，非常道；名可名，非常名。无，名天地之始；有，名万物之母。故常无，欲以观其妙；常有，欲以观其徼。此两者，同出而异名，同谓之玄。玄之又玄，众妙之门。天下皆知美之为美，斯恶已；皆知善之为善，斯不善已。有无相生，难易相成，长短相形，高下相盈，音声相和，前后相随，恒也。是以圣人处无为之事，行不言之教；万物作而弗始，生而弗有，为而弗恃,功成而弗居。夫唯弗居，是以不去。';
 
 		const params = {
 			text,
 			mode: 'word-wrapper',
 			align: 'left',
-			letterSpacing: 0,
-			lineHeight: 100
+			letterSpacing: 3,
+			lineHeight: 100,
+			baseline: 60
 		};
 
 		const dynamicFont = new DynamicFont({ sdf: true, width: 2048, height: 2048 });
-		dynamicFont.setCanvasAtlas(new CanvasAtlas({ width: 2048, height: 2048, cellWidth: 512, cellHeight: 512 }));
 		dynamicFont.addChars(text);
-
-		// Add the atlas to the DOM
-
-		dynamicFont.atlas.classList.add('atlas');
-		document.body.appendChild(dynamicFont.atlas);
 
 		// Create text mesh
 
-		params.font = dynamicFont.font;
-		params.width = 980;
+		params.font = dynamicFont.fontData;
+		params.width = 1000;
 		const geometry = new BitmapTextGeometry(params);
 
 		const imageTexture = new t3d.Texture2D();
-		imageTexture.image = dynamicFont.atlas;
+		imageTexture.image = { data: dynamicFont.atlasBuffer, width: 2048, height: 2048 };
+		imageTexture.format = t3d.PIXEL_FORMAT.RED;
 		imageTexture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		imageTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		imageTexture.unpackAlignment = 1;
 		imageTexture.generateMipmaps = false;
 
 		const material = new t3d.ShaderMaterial(SDFTextShader);
@@ -120,6 +117,21 @@
 		mesh.position.x = -geometry.layout.width / 2 * meshScalar;
 		mesh.position.y = -geometry.layout.height / 2 * meshScalar;
 		scene.add(mesh);
+
+		// Create debug scene
+
+		const debugScene = new t3d.Scene();
+		const basicMaterial = new t3d.BasicMaterial();
+		basicMaterial.diffuseMap = imageTexture;
+		const basicGeometry = new t3d.PlaneGeometry(2, 2);
+		const debugMesh = new t3d.Mesh(basicGeometry, basicMaterial);
+		debugMesh.euler.x = Math.PI / 2;
+		debugScene.add(debugMesh);
+		const debugCamera = new t3d.Camera();
+		debugCamera.position.set(0, 0, 1);
+		debugCamera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		debugCamera.setOrtho(-1, 1, -1, 1, 0.1, 2);
+		debugScene.add(debugCamera);
 
 		// GUI
 		
@@ -144,6 +156,7 @@
 		geometryFolder.add(params, 'align', ['center', 'right', 'left']);
 		geometryFolder.add(params, 'letterSpacing', -100, 100, 1);
 		geometryFolder.add(params, 'lineHeight', 0, 100, 1);
+		geometryFolder.add(params, 'baseline', 0, 100, 1);
 
 		const materialFolder = gui.addFolder('material').close();
 		materialFolder.addColor(material, 'diffuse').name('color');
@@ -163,10 +176,11 @@
 		materialFolder.add(material.uniforms, 'outlineWidth', 0, 0.1, 0.001);
 		materialFolder.add(material.uniforms, 'outlineGamma', 0, 10, 0.001);
 
+		const debugParams = { atlas: true, atlasScale: 0.2 };
+
 		const debugFolder = gui.addFolder('debug').close();
-		debugFolder.add({ atlas: true }, 'atlas').onChange(function(value) {
-			dynamicFont.atlas.style.display = value ? '' : 'none';
-		});
+		debugFolder.add(debugParams, 'atlas');
+		debugFolder.add(debugParams, 'atlasScale', 0.01, 1, 0.01);
 		debugFolder.add({ SDF: false }, 'SDF').onChange(function(value) {
 			material.defines['DEBUG'] = value;
 			material.needsUpdate = true;
@@ -177,7 +191,13 @@
 
 			controller.update();
 
+			forwardRenderer.clear(true, true, true);
 			forwardRenderer.render(scene, camera);
+
+			if (debugParams.atlas) {
+				debugCamera.rect.set(0, 0, debugParams.atlasScale, debugParams.atlasScale * width / height);
+				forwardRenderer.render(debugScene, debugCamera);
+			}
 		}
 		requestAnimationFrame(loop);
 

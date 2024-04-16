@@ -14,8 +14,9 @@ class BitmapTextGeometry extends Geometry {
 	 * @param {String} [options.mode=] - a mode for word-wrapper; can be 'pre' (maintain spacing), or 'nowrap' (collapse whitespace but only break on newline characters), otherwise assumes normal word-wrap behaviour (collapse whitespace, break at width or newlines)
 	 * @param {String} [options.align='left'] - can be "left", "center" or "right"
 	 * @param {Number} [options.letterSpacing=0] - the letter spacing in pixels
-	 * @param {Number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
 	 * @param {Number} [options.tabSize=4] - the number of spaces to use in a single tab
+	 * @param {Number} [options.baseline=font.common.base] - the baseline height in pixels
+	 * @param {Number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
 	 * @param {Boolean} [options.flipY=true] - whether the texture will be Y-flipped (default true)
 	 */
 	constructor(options) {
@@ -311,7 +312,7 @@ class TextLayout {
 		let x = 0;
 		let y = 0;
 		const lineHeight = number(options.lineHeight, font.common.lineHeight);
-		const baseline = font.common.base;
+		const baseline = number(options.baseline, font.common.base);
 		const descender = lineHeight - baseline;
 		const letterSpacing = options.letterSpacing || 0;
 		const height = lineHeight * lines.length - descender;
@@ -383,7 +384,7 @@ class TextLayout {
 						letterIndex
 					});
 
-					if (glyph.id === SPACE_ID && lastGlyph.id !== SPACE_ID) {
+					if (glyph.id === SPACE_ID && (!lastGlyph || lastGlyph.id !== SPACE_ID)) {
 						lineWordIndex++;
 						wordIndex++;
 					}
@@ -583,12 +584,14 @@ function number(num, def) {
 /**
  *****************************************************************
  * Word Wrapping - https://github.com/mattdesl/word-wrapper
+ * Modified to support chinese characters
  *****************************************************************
  */
 
 const newline = /\n/;
 const newlineChar = '\n';
 const whitespace = /\s/;
+const letter = /[a-zA-Z]/;
 
 function wordwrap(text, opt = {}) {
 	// zero width results in nothing visible
@@ -653,6 +656,8 @@ function greedy(measure, text, start, end, width, mode) {
 		testWidth = Number.MAX_VALUE;
 	}
 
+	let newParagraph = start;
+
 	while (start < end && start < text.length) {
 		// get next newline position
 		const newLine = idxOf(text, newlineChar, start, end);
@@ -662,8 +667,13 @@ function greedy(measure, text, start, end, width, mode) {
 			if (!isWhitespace(text.charAt(start))) {
 				break;
 			}
+			if (start === newParagraph) {
+				break;
+			}
 			start++;
 		}
+
+		newParagraph = newLine + 1;
 
 		// determine visible # of glyphs for the available width
 		const measured = measure(text, start, newLine, testWidth);
@@ -675,7 +685,7 @@ function greedy(measure, text, start, end, width, mode) {
 		if (lineEnd < newLine) {
 			// find char to break on
 			while (lineEnd > start) {
-				if (isWhitespace(text.charAt(lineEnd))) {
+				if (!letter.test(text.charAt(lineEnd))) { // if not a letter, break
 					break;
 				}
 				lineEnd--;
