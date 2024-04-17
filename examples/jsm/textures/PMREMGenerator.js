@@ -154,9 +154,13 @@ class PMREMGenerator {
 		// Render mipmaps
 
 		this._dummyScene.updateRenderStates(reflectionProbe.camera);
-
+		this._envMesh.material.uniforms.resolution = Math.pow(2, mipmapNum + 1);
 		for (let i = 0; i < mipmapNum + 1; i++) {
-			this._envMesh.material.uniforms.roughness = Math.max(i - 1, 0) / mipmapNum;
+			if (i === 0) {
+				this._envMesh.material.uniforms.roughness = 0;
+			} else {
+				this._envMesh.material.uniforms.roughness = Math.pow(2, (i / 0.8)) / Math.pow(2, mipmapNum + 1);
+			}
 
 			if (legacy) {
 				reflectionProbe.render(renderer, this._dummyScene);
@@ -265,7 +269,8 @@ const prefilterShader = {
 		environmentMap: null,
 		normalDistribution: null,
 		roughness: 0.5,
-		envMapFlip: 1
+		envMapFlip: 1,
+		resolution: 512
 	},
 
 	vertexShader: `
@@ -288,6 +293,7 @@ const prefilterShader = {
 		uniform sampler2D normalDistribution;
 		uniform float roughness;
 		uniform float envMapFlip;
+		uniform float resolution;
 		varying vec3 vDir;
 
 		vec3 importanceSampleNormal(float i, float roughness, vec3 N) {
@@ -298,6 +304,34 @@ const prefilterShader = {
 			vec3 tangentZ = cross(N, tangentX);
 			// Tangent to world space
 			return normalize(tangentX * H.x + N * H.y + tangentZ * H.z);
+		}
+
+
+		float DistributionGGX(float NdotH, float roughness) {
+			float a      = roughness*roughness;
+			float a2     = a*a;
+			float NdotH2 = NdotH*NdotH;
+		 
+			float num   = a2;
+			float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+			denom = PI * denom * denom;
+		 
+			return num / denom;
+
+		}
+
+		float getmipLevel(vec3 V,vec3 H){
+			float VoH = clamp(dot(V, H), 0., 1.);
+			float D   = DistributionGGX(VoH, roughness);
+			float pdf = (D * VoH  / (4.0 * VoH)); 
+			
+			float resolution = resolution; // resolution of source cubemap (per face)
+			float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+			float saSample = 1.0 / (float(SAMPLE_NUMBER) * pdf );
+			
+			float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+			return mipLevel;
+			
 		}
 
 		void main() {
@@ -314,14 +348,15 @@ const prefilterShader = {
 				vec3 L = reflect(-V, H);
 		
 				float NoL = clamp(dot(N, L), 0.0, 1.0);
+				float mipLevel = getmipLevel(V,H);
 				if (NoL > 0.0) {
 					#ifdef PANORAMA
 						float phi = acos(L.y);
 						float theta = envMapFlip * atan(L.x, L.z) + PI * 0.5;
 						vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);
-						prefilteredColor += mapTexelToLinear(texture2D(environmentMap, fract(uv))).rgb * NoL;
+						prefilteredColor += mapTexelToLinear(texture2D(environmentMap, fract(uv), mipLevel)).rgb * NoL;
 					#else
-						prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3(envMapFlip * L.x, L.yz))).rgb * NoL;
+						prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3(envMapFlip * L.x, L.yz), mipLevel)).rgb * NoL;
 					#endif
 					totalWeight += NoL;
 				}
