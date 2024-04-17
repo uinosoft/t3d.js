@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - skybox</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - skybox
+    </div>
+	<style>
+		.canvas2 {
+			position: absolute;
+			right: 0;
+			top: 0;
+		}
+	</style>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { RGBELoader } from 't3d/addons/loaders/RGBELoader.js';
+		import { PMREMGenerator2 } from 't3d/addons/textures/PMREMGeneratorBabylon.js';
+		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
+
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth / 2 || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+		const canvas2 = document.createElement('canvas');
+		canvas2.width = width;
+		canvas2.height = height;
+		canvas2.className = 'canvas2';
+		document.body.appendChild(canvas2);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		const forwardRenderer2 = new ForwardRenderer(canvas2);
+
+		const scene = new t3d.Scene();
+		const scene2 = new t3d.Scene();
+
+		const rgbeLoader = new RGBELoader();
+
+		const capabilities = forwardRenderer.capabilities;
+		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
+			!!capabilities.getExtension('OES_texture_float_linear')) {
+			rgbeLoader.type = t3d.PIXEL_TYPE.FLOAT;
+		}
+
+		
+		// const imageUrls = [
+		// 	'resources/hdr/pisaHDR/px.hdr',
+		// 	'resources/hdr/pisaHDR/nx.hdr',
+		// 	'resources/hdr/pisaHDR/py.hdr',
+		// 	'resources/hdr/pisaHDR/ny.hdr',
+		// 	'resources/hdr/pisaHDR/pz.hdr',
+		// 	'resources/hdr/pisaHDR/nz.hdr'
+		// ];
+
+		// let texture = new t3d.TextureCube();
+		// let texture2 = new t3d.TextureCube();
+
+		// const promiseArray = [];
+		// for (let i = 0; i < 6; i++) {
+		// 	promiseArray.push(rgbeLoader.loadAsync(imageUrls[i]));
+		// }
+		// Promise.all(promiseArray).then(function(textureDatas) {
+		// 	for (let i = 0; i < 6; i++) {
+		// 		texture.images.push({
+		// 			data: textureDatas[i].data,
+		// 			width: textureDatas[i].width,
+		// 			height: textureDatas[i].height
+		// 		});
+		// 		texture2.images.push({
+		// 			data: textureDatas[i].data,
+		// 			width: textureDatas[i].width,
+		// 			height: textureDatas[i].height
+		// 		});
+		// 	}
+
+		// 	const textureData = textureDatas[0];
+		// 	texture.type = textureData.type;
+		// 	texture2.type = textureData.type;
+
+		// 	if (textureData.generateMipmaps !== undefined) {
+		// 		texture.generateMipmaps = textureData.generateMipmaps;
+		// 	}
+
+		// 	texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : t3d.TEXTURE_FILTER.LINEAR;
+		// 	texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : t3d.TEXTURE_FILTER.LINEAR;
+
+		// 	texture2.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : t3d.TEXTURE_FILTER.LINEAR;
+		// 	texture2.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : t3d.TEXTURE_FILTER.LINEAR;
+
+		// 	texture.version++;
+		// 	texture2.version++;
+
+		// 	console.time('1');
+		// 	texture = (new PMREMGenerator2()).prefilter(forwardRenderer, texture);
+		// 	console.timeEnd('1');
+		// 	console.time('2');
+		// 	texture2 = (new PMREMGenerator()).prefilter(forwardRenderer2, texture2);
+		// 	console.timeEnd('2');
+
+		// 	const skyBox = new SkyBox(texture);
+		// 	skyBox.gamma = true;
+		// 	const skyBox2 = new SkyBox(texture2);
+		// 	skyBox2.gamma = true;
+		// 	scene.add(skyBox);
+		// 	scene2.add(skyBox2);
+
+		// 	const gui = new GUI();
+		// 	gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		// 	gui.add(skyBox, 'level', 0, 8, 0.01).onChange(function() {
+		// 		skyBox2.level = skyBox.level;
+		// 	});
+		// 	gui.add(camera, 'gammaFactor', 0, 3, 0.01);
+		// });
+
+		new RGBELoader().load('resources/hdr/blue.hdr', function(textureData) {
+			let texture = new t3d.Texture2D();
+			let texture2 = new t3d.Texture2D();
+			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
+			texture.type = textureData.type;
+			texture.format = textureData.format;
+			texture.magFilter = textureData.magFilter;
+			texture.minFilter = textureData.minFilter;
+			texture.flipY = textureData.flipY;
+			texture.generateMipmaps = textureData.generateMipmaps;
+			texture.version++;
+			texture2.image = { data: textureData.data, width: textureData.width, height: textureData.height };
+			texture2.type = textureData.type;
+			texture2.format = textureData.format;
+			texture2.magFilter = textureData.magFilter;
+			texture2.minFilter = textureData.minFilter;
+			texture2.flipY = textureData.flipY;
+			texture2.generateMipmaps = textureData.generateMipmaps;
+
+			texture2.version++;
+			console.time('1');
+			texture = (new PMREMGenerator2()).prefilter(forwardRenderer, texture);
+			console.timeEnd('1');
+			console.time('2');
+			texture2 = (new PMREMGenerator()).prefilter(forwardRenderer2, texture2);
+			console.timeEnd('2');
+			const skyBox = new SkyBox(texture);
+			skyBox.gamma = true;
+			const skyBox2 = new SkyBox(texture2);
+			skyBox2.gamma = true;
+			scene.add(skyBox);
+			scene2.add(skyBox2);
+
+			const gui = new GUI();
+			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+			gui.add(skyBox, 'level', 0, 8, 0.01).onChange(function() {
+				skyBox2.level = skyBox.level;
+			});
+			gui.add(camera, 'gammaFactor', 0, 3, 0.01);
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		scene.add(ambientLight);
+		scene2.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.1);
+		directionalLight.position.set(-30, 30, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+		scene2.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 150);
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.GAMMA;
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+		scene2.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		const controller2 = new OrbitControls(camera, canvas2);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+			controller2.update();
+
+			forwardRenderer.render(scene, camera);
+			forwardRenderer2.render(scene2, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth / 2 || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer2.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
