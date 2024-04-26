@@ -2,7 +2,9 @@ import { Scene } from '../../scenes/Scene.js';
 import { Camera } from '../../scenes/Camera.js';
 import { Mesh } from '../../scenes/Mesh.js';
 import { Vector3 } from '../../math/Vector3.js';
-import { PlaneGeometry } from '../../resources/geometries/PlaneGeometry.js';
+import { Geometry } from '../../resources/geometries/Geometry.js';
+import { Attribute } from '../../resources/geometries/Attribute.js';
+import { Buffer } from '../../resources/geometries/Buffer.js';
 import { ShaderMaterial } from '../../resources/materials/ShaderMaterial.js';
 
 /**
@@ -24,14 +26,18 @@ class ShaderPostPass {
 
 		const camera = this.camera = new Camera();
 		camera.frustumCulled = false;
-		camera.position.set(0, 1, 0);
-		camera.lookAt(new Vector3(0, 0, 0), new Vector3(0, 0, -1));
+		camera.position.set(0, 0, 1);
+		camera.lookAt(new Vector3(0, 0, 0), new Vector3(0, 1, 0));
 		camera.setOrtho(-1, 1, -1, 1, 0.1, 2);
 		scene.add(camera);
 
-		const geometry = this.geometry = new PlaneGeometry(2, 2, 1, 1);
+		const geometry = this.geometry = new Geometry(); // fullscreen triangle
+		geometry.addAttribute('a_Position', new Attribute(new Buffer(new Float32Array([-1, 3, 0, -1, -1, 0, 3, -1, 0]), 3)));
+		geometry.addAttribute('a_Uv', new Attribute(new Buffer(new Float32Array([0, 2, 0, 0, 2, 0]), 2)));
+
 		const material = this.material = new ShaderMaterial(shader);
 		this.uniforms = material.uniforms;
+
 		const plane = new Mesh(geometry, material);
 		plane.frustumCulled = false;
 		scene.add(plane);
