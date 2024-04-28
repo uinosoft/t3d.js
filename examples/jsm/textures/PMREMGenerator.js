@@ -15,6 +15,8 @@ import {
 	ATTACHMENT
 } from 't3d';
 import { ReflectionProbe } from '../probes/ReflectionProbe.js';
+import { CubeTxtureGenerator } from './CubeTxtureGenerator.js';
+
 
 /**
  * This class generates a Prefiltered, Mipmapped Radiance Environment Map.
@@ -65,6 +67,7 @@ class PMREMGenerator {
 
 		this._envMesh = envMesh;
 		this._dummyScene = dummyScene;
+		this._generateCubeTexture = null;
 	}
 
 	/**
@@ -91,14 +94,23 @@ class PMREMGenerator {
 
 		const legacy = this.legacy || !isWebGL2;
 
+		// Generate textureCube
+		if (source.isTexture2D) {
+			if (!this._generateCubeTexture) {
+				this._generateCubeTexture = new CubeTxtureGenerator();
+			}
+			source = this._generateCubeTexture.generate(renderer, source);
+		}
+		if (source.generateMipmaps === false) {
+			source.generateMipmaps = true;
+			source.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+			source.version++;
+		}
+
 		// Calculate mipmaps number and cube size
 
-		let cubeSize;
-		if (source.isTextureCube) {
-			cubeSize = source.images.length === 0 ? 16 : source.images[0].width;
-		} else {
-			cubeSize = source.image.width / 4;
-		}
+		let cubeSize = source.images[0].width;
+
 		const mipmapNum = Math.floor(Math.log2(cubeSize));
 		cubeSize = Math.pow(2, mipmapNum);
 
@@ -136,7 +148,7 @@ class PMREMGenerator {
 		this._dummyScene.add(reflectionProbe.camera);
 
 		let envMapFlip = 1;
-		if (source.isTextureCube && source.images[0] && source.images[0].rtt) {
+		if (source.images[0] && source.images[0].rtt) {
 			envMapFlip = -1;
 		}
 		if (!legacy) {
@@ -146,10 +158,6 @@ class PMREMGenerator {
 		this._envMesh.material.cubeMap = source;
 		this._envMesh.material.uniforms.environmentMap = source;
 		this._envMesh.material.uniforms.envMapFlip = envMapFlip;
-		if (this._envMesh.material.defines.PANORAMA !== !source.isTextureCube) {
-			this._envMesh.material.defines.PANORAMA = !source.isTextureCube;
-			this._envMesh.material.needsUpdate = true;
-		}
 
 		// Render mipmaps
 
@@ -261,7 +269,6 @@ const prefilterShader = {
 	name: 'pmrem',
 
 	defines: {
-		PANORAMA: false,
 		SAMPLE_NUMBER: 1024
 	},
 
@@ -285,11 +292,8 @@ const prefilterShader = {
 
 	fragmentShader: `
 		#include <common_frag>
-		#ifdef PANORAMA
-			uniform sampler2D environmentMap;
-		#else
-			uniform samplerCube environmentMap;
-		#endif
+		uniform samplerCube environmentMap;
+
 		uniform sampler2D normalDistribution;
 		uniform float roughness;
 		uniform float envMapFlip;
@@ -350,14 +354,7 @@ const prefilterShader = {
 				float NoL = clamp(dot(N, L), 0.0, 1.0);
 				float mipLevel = getmipLevel(V,H);
 				if (NoL > 0.0) {
-					#ifdef PANORAMA
-						float phi = acos(L.y);
-						float theta = envMapFlip * atan(L.x, L.z) + PI * 0.5;
-						vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);
-						prefilteredColor += mapTexelToLinear(texture2D(environmentMap, fract(uv), mipLevel)).rgb * NoL;
-					#else
-						prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3(envMapFlip * L.x, L.yz), mipLevel)).rgb * NoL;
-					#endif
+					prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3(envMapFlip * L.x, L.yz), roughness* 8.)).rgb * NoL;
 					totalWeight += NoL;
 				}
 			}

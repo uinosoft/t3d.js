@@ -122,7 +122,7 @@ class CubeTxtureGenerator {
 }
 
 const cubeTxtureShader = {
-	name: 'cubeRender',
+	name: 'cube_render',
 
 	uniforms: {
 		environmentMap: null,
