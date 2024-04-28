@@ -183,6 +183,9 @@
 		"custompass_oit",
 		"custompass_rendertarget_3d"
 	],
+	"renderer": [
+		"renderer_clustered_lighting"
+	],
 	"deferred": [
 		"deferred_renderer",
 		"deferred_lights"

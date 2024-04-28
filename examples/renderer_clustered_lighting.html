@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - clustered lighting</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - renderer - clustered lighting<br/>
+		Available only for WebGL 2.0
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebGL2</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+	<script src="./libs/nanobar.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { ClusteredLightingManager } from 't3d/addons/render/ClusteredLightingManager.js';
+		import { ClusteredLightingPBRMaterial } from 't3d/addons/materials/ClusteredLightingPBRMaterial.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const gl = canvas.getContext('webgl2', { antialias: true });
+
+		if (!gl) {
+			document.getElementById('notSupported').style.display = '';
+			throw new Error('WebGL2 is not supported on this device');
+		}
+
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.shaderCompileOptions.compileAsynchronously = true;
+		renderer.setClearColor(0.1, 0.1, 0.1, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const shadowMapPass = new t3d.ShadowMapPass();
+
+		const scene = new t3d.Scene();
+
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
+		]);
+		scene.environment = cubeTexture;
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 400, 400);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, -5, 0);
+
+		// Create meshes
+
+		const meshMaterial = new ClusteredLightingPBRMaterial();
+		meshMaterial.diffuse.setRGB(1, 1, 1);
+		meshMaterial.roughness = 0.2;
+		meshMaterial.metalness = 0.8;
+
+		const geometries = [], offsetMatrix = new t3d.Matrix4();
+		for (let i = 0; i < 15; i++) {
+			for (let j = 0; j < 15; j++) {
+				offsetMatrix.elements[12] = (i - 7) * 50;
+				offsetMatrix.elements[14] = (j - 7) * 50;
+				offsetMatrix.elements[5] = Math.random() * 1 + 2;
+				const geometry = Math.random() > 0.6 ? new t3d.BoxGeometry(20, 20, 20) : new t3d.SphereGeometry(10, 10, 20);
+				GeometryUtils.applyMatrix4(geometry, offsetMatrix);
+				geometries.push(geometry);
+			}
+		}
+		const combinedGeometry = GeometryUtils.mergeGeometries(geometries);
+		combinedGeometry.computeBoundingBox();
+		combinedGeometry.computeBoundingSphere();
+		const combinedMesh = new t3d.Mesh(combinedGeometry, meshMaterial);
+		combinedMesh.castShadow = true;
+		scene.add(combinedMesh);
+
+		// Create plane
+
+		const planeGeometry = new t3d.PlaneGeometry(1500, 1500);
+		const planeMaterial = new ClusteredLightingPBRMaterial();
+		planeMaterial.diffuse.setHex(0x555555);
+		planeMaterial.roughness = 0.6;
+		planeMaterial.metalness = 0.4;
+		const plane = new t3d.Mesh(planeGeometry, planeMaterial);
+		plane.receiveShadow = true;
+		plane.position.y = -10;
+		scene.add(plane);
+
+		// Create Lights
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.08);
+		directionalLight.position.set(50, 200, -50);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 1000;
+		directionalLight.shadow.mapSize.set(2048, 2048);
+		directionalLight.shadow.autoUpdate = false;
+		directionalLight.shadow.needsUpdate = true;
+		scene.add(directionalLight);
+
+		const maxLightCount = 1023;
+		
+		const lights = [], lightHelpers = [];
+		const helpherGeometry = new t3d.SphereGeometry(1);
+		for (let i = 0; i < maxLightCount; i++) {
+			const h = Math.random(), s = Math.random();
+			const pointLight = new t3d.PointLight(undefined, 1, 50);
+			pointLight.color.setHSL(h, s, 0.5);
+			pointLight.position.y = Math.random() * 10;
+			lights.push(pointLight);
+
+			pointLight._angle = Math.PI * 2 * Math.random();
+			pointLight._radius = Math.random() * 500 + 20;
+			pointLight._speed = (Math.random() - 0.5) * 0.03;
+
+			pointLight.position.x = Math.cos(pointLight._angle) * pointLight._radius;
+			pointLight.position.z = Math.sin(pointLight._angle) * pointLight._radius;
+
+			const mesh = new t3d.Mesh(helpherGeometry, new t3d.BasicMaterial());
+			mesh.material.diffuse.setHSL(h, s, 0.75);
+			mesh.material.envMap = undefined;
+			pointLight.add(mesh);
+			lightHelpers.push(mesh);
+		}
+
+		function setLights(value) {
+			for (let i = 0, light; i < maxLightCount; i++) {
+				light = lights[i];
+				if (i < value) {
+					scene.add(light);
+				} else {
+					scene.remove(light);
+				}
+			}
+		}
+
+		const clustersManager = new ClusteredLightingManager({
+			maxLights: maxLightCount,
+			maxLightsPerCell: 255,
+			floatLights: false
+		});
+
+		const cellsTableMap = {
+			'8-4-16': [8, 4, 16],
+			'16-8-32': [16, 8, 32],
+			'32-16-64': [32, 16, 64]
+		};
+
+		const params = {
+			lightCount: 500,
+			renderMode: 'Forward+',
+			rotate: true,
+			lightHelpers: true,
+			maxLightsPerCell: 256,
+			cellsTable: cellsTableMap['16-8-32']
+		};
+
+		setLights(params.lightCount);
+
+		// GUI
+
+		const gui = new GUI();
+		const lightCountControl = gui.add(params, 'lightCount', 0, maxLightCount, 1).onChange(setLights);
+		gui.add(params, 'renderMode', ['Forward', 'Forward+', 'Forward+Debug']).onChange(function(value) {
+			if (value === 'Forward') {
+				// clamp light count to 0-100 to avoid leaking lights
+				params.lightCount = Math.min(params.lightCount, 50);
+				lightCountControl.setValue(params.lightCount);
+				lightCountControl.max(100);
+			} else {
+				lightCountControl.max(maxLightCount);
+			}
+
+			lightCountControl.updateDisplay();
+		});
+		gui.add(params, 'rotate');
+		gui.add(params, 'lightHelpers').onChange(function(value) {
+			for (let i = 0; i < lightHelpers.length; i++) {
+				lightHelpers[i].visible = value;
+			}
+		});
+		
+		const advancedFolder = gui.addFolder('Advanced').close();
+		advancedFolder.add(clustersManager, 'clipFar', -1, 3000, 0.01);
+		const cellsDebugFolder = advancedFolder.addFolder('Cells').onChange(() => {
+			clustersManager.cellsTexture.updateCells(params.cellsTable, params.maxLightsPerCell);
+		});
+		cellsDebugFolder.add(params, 'maxLightsPerCell', [8, 16, 32, 64, 128, 256]);
+		cellsDebugFolder.add(params, 'cellsTable', cellsTableMap);
+
+		//
+
+		const stats = new Stats();
+		const gpuPanel = stats.addPanel(new Stats.Panel('MS GPU', '#ff8', '#221'));
+		stats.showPanel(3);
+		document.body.appendChild(stats.dom);
+
+		let queryInProgress = false, timer = 0;
+		const timerElapsedQuery = new t3d.Query(), supportTimerQuery = !!renderer.capabilities.timerQuery;
+
+		const renderOptions = {
+			getMaterial(renderable) {
+				const material = renderable.material;
+				if (material.shaderName === 'ClusteredLightingPBR') {
+					const useClusterLighting = params.renderMode !== 'Forward';
+					if (material.defines.CLUSTER_LIGHT !== useClusterLighting) {
+						material.defines.CLUSTER_LIGHT = useClusterLighting;
+						material.needsUpdate = true;
+					}
+		
+					const clusterDebug = params.renderMode === 'Forward+Debug';
+					if (material.defines.CLUSTER_DEBUG !== clusterDebug) {
+						material.defines.CLUSTER_DEBUG = clusterDebug;
+						material.needsUpdate = true;
+					}
+		
+					material.uniforms.maxLightsPerCell = clustersManager.maxLightsPerCell;
+
+					if (!material._linkedUniforms) {
+						material.uniforms.cells = clustersManager.cells;
+						material.uniforms.cellsDotData = clustersManager.cellsDotData;
+						material.uniforms.cellsTextureSize = clustersManager.cellsTextureSize;
+						material.uniforms.cellsTransformFactors = clustersManager.cellsTransformFactors;
+		
+						material.uniforms.cellsTexture = clustersManager.cellsTexture;
+						material.uniforms.lightsTexture = clustersManager.lightsTexture;
+
+						material._linkedUniforms = true;
+					}
+				}
+				return material;
+			}
+		};
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			if (params.rotate) {
+				for (let i = 0; i < lights.length; i++) {
+					const pointLight = lights[i];
+
+					pointLight._angle += pointLight._speed;
+
+					pointLight.position.x = Math.cos(pointLight._angle) * pointLight._radius;
+					pointLight.position.z = Math.sin(pointLight._angle) * pointLight._radius;
+				}
+			}
+
+			scene.updateMatrix();
+			const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
+			const renderStates = scene.updateRenderStates(camera);
+
+			if (params.renderMode !== 'Forward') {
+				const lightData = renderStates.lights;
+				const cameraData = renderStates.camera;
+
+				clustersManager.update(cameraData, lightData, true);
+
+				// remove point lights from lightData
+				lightData.totalNum -= lightData.pointsNum;
+				lightData.pointsNum = 0;
+				lightData.hash._factor[4] = 0;
+			}
+
+			if (supportTimerQuery && !queryInProgress) {
+				renderer.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);
+			}
+
+			shadowMapPass.render(renderer, scene);
+		
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+		
+			renderer.beginRender();
+			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOptions);
+			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOptions);
+			renderer.endRender();
+
+			if (supportTimerQuery && !queryInProgress) {
+				renderer.endQuery(timerElapsedQuery);
+				queryInProgress = true;
+			}
+
+			if (supportTimerQuery && queryInProgress) {
+				if (renderer.isQueryResultAvailable(timerElapsedQuery)) {
+					timer = renderer.getQueryResult(timerElapsedQuery);
+					queryInProgress = false;
+				}
+			}
+
+			stats.end();
+
+			gpuPanel.update(timer / 1000000, 10);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
