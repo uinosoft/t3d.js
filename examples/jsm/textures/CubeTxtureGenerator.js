@@ -10,6 +10,7 @@ import {
 	Quaternion,
 	PIXEL_FORMAT,
 	PIXEL_TYPE,
+	TEXTURE_FILTER,
 	ATTACHMENT
 } from 't3d';
 import { ReflectionProbe } from '../probes/ReflectionProbe.js';
@@ -56,9 +57,17 @@ class CubeTxtureGenerator {
 	 */
 	generate(renderer, source, target = new TextureCube()) {
 		// Check capabilities
-
-		const cubeSize = source.image.width / 4;
-
+		let cubeSize;
+		if (source.isTextureCube) {
+			target.copy(source);
+			target.generateMipmaps = true;
+			target.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+			target.magFilter = TEXTURE_FILTER.LINEAR;
+			target.version++;
+			return target;
+		} else {
+			cubeSize = source.image.width / 4;
+		}
 		// Prepare the target texture
 
 		target.type = PIXEL_TYPE.HALF_FLOAT;
@@ -77,7 +86,7 @@ class CubeTxtureGenerator {
 		const reflectionProbe = new ReflectionProbe(renderTarget);
 		this._dummyScene.add(reflectionProbe.camera);
 
-		const envMapFlip = 1;
+		const envMapFlip = -1;
 
 		this._envMesh.material.cubeMap = source;
 		this._envMesh.material.uniforms.environmentMap = source;
@@ -147,6 +156,7 @@ const cubeTxtureShader = {
 
 		void main() {
 			vec3 V = normalize(vDir);
+			V.x = -V.x;
 			float phi = acos(V.y);
             float theta = envMapFlip * atan(V.x, V.z) + PI * 0.5;
             vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);

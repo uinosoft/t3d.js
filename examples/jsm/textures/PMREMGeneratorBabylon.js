@@ -5,7 +5,8 @@ import {
 	RenderTargetCube,
 	Scene,
 	ShaderMaterial,
-	Texture2D,
+	ShaderPostPass,
+	RenderTarget2D,
 	TextureCube,
 	Euler,
 	Quaternion,
@@ -15,6 +16,8 @@ import {
 	ATTACHMENT
 } from 't3d';
 import { ReflectionProbe } from '../probes/ReflectionProbe.js';
+import { CubeTxtureGenerator } from './CubeTxtureGenerator.js';
+
 
 /**
  * This class generates a Prefiltered, Mipmapped Radiance Environment Map.
@@ -24,7 +27,7 @@ import { ReflectionProbe } from '../probes/ReflectionProbe.js';
  * https://github.com/mrdoob/three.js/blob/dev/src/extras/PMREMGenerator.js
  * https://threejs.org/examples/?q=mipmap#webgl_materials_cubemap_render_to_mipmaps
  */
-class PMREMGenerator {
+class PMREMGenerator2 {
 
 	/**
 	 * Constructs a new PMREMGenerator.
@@ -49,7 +52,6 @@ class PMREMGenerator {
 		const geometry = new BoxGeometry(1, 1, 1);
 		const material = new ShaderMaterial(prefilterShader);
 		material.side = DRAW_SIDE.BACK;
-		material.uniforms.normalDistribution = this._generateNormalDistribution(256, sampleSize);
 		material.defines.SAMPLE_NUMBER = sampleSize;
 		const envMesh = new Mesh(geometry, material);
 		envMesh.frustumCulled = false;
@@ -65,6 +67,13 @@ class PMREMGenerator {
 
 		this._envMesh = envMesh;
 		this._dummyScene = dummyScene;
+		this._generateCubeTexture = null;
+
+		this.NnrmalDistributionPass = new ShaderPostPass(NnrmalDistributionShader);
+		this.tempRenderTarget = new RenderTarget2D(1024, 256);
+		this.tempRenderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
+		this.tempRenderTarget.texture.magFilter = TEXTURE_FILTER.LINEAR;
+		this.tempRenderTarget.generateMipmaps = false;
 	}
 
 	/**
@@ -75,6 +84,12 @@ class PMREMGenerator {
 	 */
 	prefilter(renderer, source, target = new TextureCube()) {
 		// Check capabilities
+
+		if (!this._envMesh.material.uniforms.normalDistribution) {
+			renderer.setRenderTarget(this.tempRenderTarget);
+			this.NnrmalDistributionPass.render(renderer);
+			this._envMesh.material.uniforms.normalDistribution = this.tempRenderTarget.texture;
+		}
 
 		const capabilities = renderer.capabilities;
 		const isWebGL2 = capabilities.version > 1;
@@ -91,14 +106,17 @@ class PMREMGenerator {
 
 		const legacy = this.legacy || !isWebGL2;
 
+		// Generate textureCube
+
+		if (!this._generateCubeTexture) {
+			this._generateCubeTexture = new CubeTxtureGenerator();
+		}
+		source = this._generateCubeTexture.generate(renderer, source);
+
 		// Calculate mipmaps number and cube size
 
-		let cubeSize;
-		if (source.isTextureCube) {
-			cubeSize = source.images.length === 0 ? 16 : source.images[0].width;
-		} else {
-			cubeSize = source.image.width / 4;
-		}
+		let cubeSize = source.images[0].width;
+
 		const mipmapNum = Math.floor(Math.log2(cubeSize));
 		cubeSize = Math.pow(2, mipmapNum);
 
@@ -136,9 +154,7 @@ class PMREMGenerator {
 		this._dummyScene.add(reflectionProbe.camera);
 
 		let envMapFlip = 1;
-		if (source.isTextureCube && source.images[0] && source.images[0].rtt) {
-			envMapFlip = -1;
-		}
+
 		if (!legacy) {
 			envMapFlip *= -1;
 		}
@@ -146,17 +162,17 @@ class PMREMGenerator {
 		this._envMesh.material.cubeMap = source;
 		this._envMesh.material.uniforms.environmentMap = source;
 		this._envMesh.material.uniforms.envMapFlip = envMapFlip;
-		if (this._envMesh.material.defines.PANORAMA !== !source.isTextureCube) {
-			this._envMesh.material.defines.PANORAMA = !source.isTextureCube;
-			this._envMesh.material.needsUpdate = true;
-		}
 
 		// Render mipmaps
 
 		this._dummyScene.updateRenderStates(reflectionProbe.camera);
-
+		this._envMesh.material.uniforms.resolution = Math.pow(2, mipmapNum + 1);
 		for (let i = 0; i < mipmapNum + 1; i++) {
-			this._envMesh.material.uniforms.roughness = Math.max(i - 1, 0) / mipmapNum;
+			if (i === 0) {
+				this._envMesh.material.uniforms.roughness = 0.000001;
+			} else {
+				this._envMesh.material.uniforms.roughness = Math.pow(2, (i / 0.8)) / Math.pow(2, mipmapNum + 1);
+			}
 
 			if (legacy) {
 				reflectionProbe.render(renderer, this._dummyScene);
@@ -202,54 +218,6 @@ class PMREMGenerator {
 		this._envMesh.material.dispose();
 	}
 
-	_generateNormalDistribution(roughnessLevels = 256, sampleSize = 1024) {
-		const pixels = new Float32Array(sampleSize * roughnessLevels * 4);
-
-		const tmp = [];
-
-		for (let j = 0; j < roughnessLevels; j++) {
-			const roughness = j / roughnessLevels;
-			const a = roughness * roughness;
-
-			for (let i = 0; i < sampleSize; i++) {
-				// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
-				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Bitwise_Operators
-				// http://stackoverflow.com/questions/1908492/unsigned-integer-in-javascript
-				// http://stackoverflow.com/questions/1822350/what-is-the-javascript-operator-and-how-do-you-use-it
-				let y = (i << 16 | i >>> 16) >>> 0;
-				y = ((y & 1431655765) << 1 | (y & 2863311530) >>> 1) >>> 0;
-				y = ((y & 858993459) << 2 | (y & 3435973836) >>> 2) >>> 0;
-				y = ((y & 252645135) << 4 | (y & 4042322160) >>> 4) >>> 0;
-				y = (((y & 16711935) << 8 | (y & 4278255360) >>> 8) >>> 0) / 4294967296;
-
-				// CDF
-				const cosTheta = Math.sqrt((1 - y) / (1 + (a * a - 1.0) * y));
-				tmp[i] = cosTheta;
-			}
-
-			for (let i = 0; i < sampleSize; i++) {
-				const offset = (i * roughnessLevels + j) * 4;
-				const cosTheta = tmp[i];
-				const sinTheta = Math.sqrt(1.0 - cosTheta * cosTheta);
-				const x = i / sampleSize;
-				const phi = 2.0 * Math.PI * x;
-				pixels[offset] = sinTheta * Math.cos(phi);
-				pixels[offset + 1] = cosTheta;
-				pixels[offset + 2] = sinTheta * Math.sin(phi);
-				pixels[offset + 3] = 1.0;
-			}
-		}
-
-		const normalDistribution = new Texture2D();
-		normalDistribution.image = { width: roughnessLevels, height: sampleSize, data: pixels };
-		normalDistribution.type = PIXEL_TYPE.FLOAT;
-		normalDistribution.minFilter = TEXTURE_FILTER.NEAREST;
-		normalDistribution.magFilter = TEXTURE_FILTER.NEAREST;
-		normalDistribution.generateMipmaps = false;
-		normalDistribution.version++;
-
-		return normalDistribution;
-	}
 
 }
 
@@ -257,7 +225,6 @@ const prefilterShader = {
 	name: 'pmrem',
 
 	defines: {
-		PANORAMA: false,
 		SAMPLE_NUMBER: 1024
 	},
 
@@ -265,7 +232,8 @@ const prefilterShader = {
 		environmentMap: null,
 		normalDistribution: null,
 		roughness: 0.5,
-		envMapFlip: 1
+		envMapFlip: -1,
+		resolution: 512
 	},
 
 	vertexShader: `
@@ -280,49 +248,58 @@ const prefilterShader = {
 
 	fragmentShader: `
 		#include <common_frag>
-		#ifdef PANORAMA
-			uniform sampler2D environmentMap;
-		#else
-			uniform samplerCube environmentMap;
-		#endif
+		uniform samplerCube environmentMap;
+
 		uniform sampler2D normalDistribution;
 		uniform float roughness;
 		uniform float envMapFlip;
+		uniform float resolution;
 		varying vec3 vDir;
-
-		vec3 importanceSampleNormal(float i, float roughness, vec3 N) {
-			vec3 H = texture2D(normalDistribution, vec2(roughness, i)).rgb;
 		
-			vec3 upVector = abs(N.y) > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
-			vec3 tangentX = normalize(cross(N, upVector));
-			vec3 tangentZ = cross(N, tangentX);
-			// Tangent to world space
-			return normalize(tangentX * H.x + N * H.y + tangentZ * H.z);
+		const float K = 4.;
+
+		vec3 importanceSampleNormal(float i, float roughness) {
+			vec3 H = texture2D(normalDistribution, vec2(roughness, i)).rgb;
+			return H;
+		}
+
+		float normalDistributionFunction_TrowbridgeReitzGGX(float NdotH, float alphaG) {
+			float a2 = alphaG * alphaG;
+			float d = NdotH*NdotH*(a2-1.0)+1.0;
+			return a2/(PI*d*d);
+		}
+
+		float log4(float x) {
+			return log2(x) / 2.;
 		}
 
 		void main() {
 			vec3 V = normalize(vDir);
 
 			vec3 N = V;
-
+			mat3 R;
+			vec3 up =abs(N.y) > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+			R[0] = normalize(cross(up, N));
+			R[1] = cross(N, R[0]);
+			R[2] = N;
 			vec3 prefilteredColor = vec3(0.0);
 			float totalWeight = 0.0;
 			float fMaxSampleNumber = float(SAMPLE_NUMBER);
-
+			float dim0 = resolution;
+			float omegaP = (4. * PI) / (6. * dim0 * dim0);
 			for (int i = 0; i < SAMPLE_NUMBER; i++) {
-				vec3 H = importanceSampleNormal(float(i) / fMaxSampleNumber, roughness, N);
-				vec3 L = reflect(-V, H);
-		
-				float NoL = clamp(dot(N, L), 0.0, 1.0);
+				vec3 H = texture2D(normalDistribution, vec2(float(i) / fMaxSampleNumber,roughness)).rgb;
+				float NoY = H.y;	
+				float NoY2 = H.y * H.y;
+				float NoL = 2. * NoY2 - 1.;
+				vec3 L = vec3(2. * NoY * H.x, 2. * NoY * H.z, -NoL);
+				L = normalize(L);
 				if (NoL > 0.0) {
-					#ifdef PANORAMA
-						float phi = acos(L.y);
-						float theta = envMapFlip * atan(L.x, L.z) + PI * 0.5;
-						vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);
-						prefilteredColor += mapTexelToLinear(texture2D(environmentMap, fract(uv))).rgb * NoL;
-					#else
-						prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3(envMapFlip * L.x, L.yz))).rgb * NoL;
-					#endif
+					float pdf_inversed = 4. / normalDistributionFunction_TrowbridgeReitzGGX(NoY, roughness);
+					float omegaS = 1./ fMaxSampleNumber * pdf_inversed;
+					float l = log4(omegaS) - log4(omegaP) + log4(K);
+					float mipLevel = clamp(float(l), 0.0, log2(resolution) - 1.0);
+					prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3((-envMapFlip * R * L).x,(envMapFlip * R * L).yz),mipLevel )).rgb * NoL;
 					totalWeight += NoL;
 				}
 			}
@@ -333,4 +310,65 @@ const prefilterShader = {
 	`
 };
 
-export { PMREMGenerator };
+const NnrmalDistributionShader = {
+	uniforms: {
+		sampleSize: 1024
+	},
+
+	vertexShader: `
+		attribute vec3 a_Position;
+		attribute vec2 a_Uv;
+
+		uniform mat4 u_ProjectionView;
+		uniform mat4 u_Model;
+
+		varying vec2 v_Uv;
+
+		void main() {
+			v_Uv = a_Uv;
+			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
+		}
+	`,
+
+	fragmentShader: `
+		uniform int sampleSize;
+		varying vec2 v_Uv;
+
+		float radicalInverse_VdC(uint bits) {
+			bits = (bits << 16u) | (bits >> 16u);
+			bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+			bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+			bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+			bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+			return float(bits) * 2.3283064365386963e-10;
+			// / 0x100000000
+		}
+		vec2 hammersley(uint i, uint N) {
+			return vec2(float(i)/float(N), radicalInverse_VdC(i));
+		}	
+
+		vec3 hemisphereImportanceSampleDggx(vec2 u, float a) {
+			// pdf = D(a) * cosTheta
+			float phi = 2. * PI * u.x;
+			// NOTE: (aa-1) == (a-1)(a+1) produces better fp accuracy
+			
+			float cosTheta2 = (1. - u.y) / (1. + (a + 1.) * ((a - 1.) * u.y));
+			float cosTheta = sqrt(cosTheta2);
+			float sinTheta = sqrt(1. - cosTheta2);
+			return vec3(sinTheta * cos(phi), cosTheta, sinTheta * sin(phi));
+		}
+
+		vec3 getValue(vec2 uv){
+			float i = uv.x * float(sampleSize);
+			vec2 b = hammersley(uint(i), uint(sampleSize));
+			vec3 value = hemisphereImportanceSampleDggx(b, uv.y); 
+			return value;
+		}
+		void main() {                                                                                                                                                   
+			vec3 data = getValue(v_Uv);
+			gl_FragColor = vec4(data, 1.0);
+		}
+	`
+};
+
+export { PMREMGenerator2 };
