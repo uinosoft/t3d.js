@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>t3d - rendertarget 3d</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - rendertarget 3d
+    </div>
+	
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { VolumeShader } from 't3d/addons/shaders/VolumeShader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const gl = canvas.getContext('webgl2', { antialias: true });
+
+		const renderer = new t3d.WebGLRenderer(gl);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(2, 2, 2);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		function renderTexture3D(size = 64) {
+			const renderTarget3D = new t3d.RenderTarget3D(size, size, size);
+			renderTarget3D.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+			renderTarget3D.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+
+			const dymmyScene = new t3d.Scene();
+			const dymmyCamera = new t3d.Camera();
+			dymmyScene.add(dymmyCamera);
+
+			const dymmyGeometry = new t3d.SphereGeometry(0.9, 32, 32);
+			const dymmyMaterial = new t3d.BasicMaterial();
+			dymmyMaterial.diffuse.setHex(0x000000);
+			const dymmyMesh = new t3d.Mesh(dymmyGeometry, dymmyMaterial);
+			dymmyScene.add(dymmyMesh);
+
+			for (let i = 0; i < size; i++) {
+				dymmyMesh.scale.set(i / size, i / size, i / size);
+				dymmyScene.updateMatrix();
+				dymmyScene.updateRenderStates(dymmyCamera);
+				dymmyScene.updateRenderQueue(dymmyCamera);
+
+				renderTarget3D.activeLayer = i;
+				renderer.setRenderTarget(renderTarget3D);
+				renderer.setClearColor(1 - i / size, 0, 0, 1);
+				renderer.clear(true, false, false);
+				renderer.renderScene(dymmyScene, dymmyCamera);
+			}
+
+			return renderTarget3D.texture;
+		}
+
+		const shaderMaterial = new t3d.ShaderMaterial(VolumeShader);
+		shaderMaterial.transparent = true;
+		shaderMaterial.premultipliedAlpha = true;
+		shaderMaterial.uniforms.densityTexture = renderTexture3D();
+		shaderMaterial.uniforms.platteTexture = new Texture2DLoader().load('./resources/platte.png');
+		new t3d.Matrix4().toArray(shaderMaterial.uniforms.uInvTransform);
+		shaderMaterial.uniforms.uAlphaCorrection = 0.1;
+		const geometry = new t3d.BoxGeometry(1, 1, 1);
+		const box = new t3d.Mesh(geometry, shaderMaterial);
+		scene.add(box);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.setClearColor(0.1, 0.1, 0.1, 1);
+			renderer.clear(true, true, true);
+			renderer.renderScene(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 100);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

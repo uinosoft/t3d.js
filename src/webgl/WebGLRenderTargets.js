@@ -59,6 +59,11 @@ class WebGLRenderTargets extends PropertyMap {
 			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
 
+		if (renderTarget.isRenderTarget3D) {
+			renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
+			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
+		}
+
 		gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
 
 		for (const attachTarget in renderTarget._attachments) {
@@ -82,6 +87,10 @@ class WebGLRenderTargets extends PropertyMap {
 				const textureProperties = textures.setTextureCube(attachment);
 				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_CUBE_MAP_POSITIVE_X + renderTarget.activeCubeFace, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
 				state.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+			} else if (attachment.isTexture3D) {
+				const textureProperties = textures.setTexture3D(attachment);
+				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
+				state.bindTexture(gl.TEXTURE_3D, null);
 			} else {
 				const renderBufferProperties = renderBuffers.setRenderBuffer(attachment);
 				gl.framebufferRenderbuffer(gl.FRAMEBUFFER, glAttachTarget, gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
@@ -132,6 +141,23 @@ class WebGLRenderTargets extends PropertyMap {
 					}
 				}
 				renderTargetProperties.__currentActiveCubeFace = activeCubeFace;
+				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
+			}
+		}
+
+		if (renderTarget.isRenderTarget3D) {
+			renderTargetProperties = this.get(renderTarget);
+			const activeLayer = renderTarget.activeLayer;
+			const activeMipmapLevel = renderTarget.activeMipmapLevel;
+			if (renderTargetProperties.__currentActiveLayer !== activeLayer || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
+				for (const attachTarget in renderTarget._attachments) {
+					const attachment = renderTarget._attachments[attachTarget];
+					if (attachment.isTexture3D) {
+						const textureProperties = textures.get(attachment);
+						gl.framebufferTextureLayer(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], textureProperties.__webglTexture, activeMipmapLevel, activeLayer);
+					}
+				}
+				renderTargetProperties.__currentActiveLayer = activeLayer;
 				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
 			}
 		}
