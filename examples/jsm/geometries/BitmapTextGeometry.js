@@ -13,14 +13,17 @@ class BitmapTextGeometry extends Geometry {
 	 * @param {Number} [options.width=] - the desired width of the text box, causes word-wrapping and clipping in "pre" mode. Leave as undefined to remove
 	 * @param {String} [options.mode=] - a mode for word-wrapper; can be 'pre' (maintain spacing), or 'nowrap' (collapse whitespace but only break on newline characters), otherwise assumes normal word-wrap behaviour (collapse whitespace, break at width or newlines)
 	 * @param {String} [options.align='left'] - can be "left", "center" or "right"
-	 * @param {Number} [options.letterSpacing=0] - the letter spacing in pixels
+	 * @param {Number} [options.letterSpacing=0] - distance based on font size percentage
 	 * @param {Number} [options.tabSize=4] - the number of spaces to use in a single tab
 	 * @param {Number} [options.baseline=font.common.base] - the baseline height in pixels
 	 * @param {Number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
 	 * @param {Boolean} [options.flipY=true] - whether the texture will be Y-flipped (default true)
+	 * @param {Number} [options.fontSize=72] - the font size for scaling
+	 * @param {Number} [options.mapFontSize=72] - the font size used in the map
 	 */
 	constructor(options) {
 		super();
+
 
 		// Set text as object property
 		if (typeof options === 'string') options = { text: options };
@@ -28,7 +31,8 @@ class BitmapTextGeometry extends Geometry {
 		// use these as default values for any subsequent
 		// calls to update()
 		this._options = Object.assign({}, options);
-
+		this._options.fontSize = this._options.fontSize || 72;
+		this._options.mapFontSize = this._options.mapFontSize || 72;
 		this._layout = null;
 		this._visibleGlyphs = [];
 
@@ -72,7 +76,7 @@ class BitmapTextGeometry extends Geometry {
 		this._visibleGlyphs = glyphs;
 
 		// get vertex data
-		const attributes1 = attributes(glyphs, texWidth, texHeight, flipY, this._layout);
+		const attributes1 = attributes(glyphs, texWidth, texHeight, flipY, this._layout, options.fontSize / options.mapFontSize);
 		const numIndices = glyphs.length * 6;
 		const indices = new Array(numIndices);
 		for (let i = 0, j = 0; i < numIndices; i += 6, j += 4) {
@@ -91,6 +95,20 @@ class BitmapTextGeometry extends Geometry {
 
 		this.computeBoundingBox();
 		this.computeBoundingSphere();
+		const box = [this.boundingBox.max.x + this.boundingBox.min.x, this.boundingBox.max.y + this.boundingBox.min.y, this.boundingBox.max.z + this.boundingBox.min.z];
+		const arr = this._modifyGeometryCenter(attributes1.positions, box);
+		this.addAttribute('a_Position', new Attribute(new Buffer(arr, 3)));
+		this.computeBoundingBox();
+		this.computeBoundingSphere();
+	}
+
+	_modifyGeometryCenter(arr, box) {
+		for (let i = 0; i < arr.length; i += 3) {
+			arr[i] -= box[0] / 2;
+			arr[i + 1] -= box[1] / 2;
+			arr[i + 2] -= box[2] / 2;
+		}
+		return arr;
 	}
 
 	_validateOptions(options) {
@@ -108,7 +126,7 @@ class BitmapTextGeometry extends Geometry {
 
 }
 
-function attributes(glyphs, texWidth, texHeight, flipY, layout) {
+function attributes(glyphs, texWidth, texHeight, flipY, layout, fontScale) {
 	const uvs = new Float32Array(glyphs.length * 4 * 2);
 	const layoutUvs = new Float32Array(glyphs.length * 4 * 2);
 	const positions = new Float32Array(glyphs.length * 4 * 3);
@@ -179,20 +197,20 @@ function attributes(glyphs, texWidth, texHeight, flipY, layout) {
 		// Position
 
 		// BL
-		positions[j++] = x;
-		positions[j++] = y;
+		positions[j++] = x * fontScale;
+		positions[j++] = -y * fontScale;
 		positions[j++] = 0;
 		// TL
-		positions[j++] = x;
-		positions[j++] = y + h;
+		positions[j++] = x * fontScale;
+		positions[j++] = (-y - h) * fontScale;
 		positions[j++] = 0;
 		// TR
-		positions[j++] = x + w;
-		positions[j++] = y + h;
+		positions[j++] = (x + w) * fontScale;
+		positions[j++] = (-y - h) * fontScale;
 		positions[j++] = 0;
 		// BR
-		positions[j++] = x + w;
-		positions[j++] = y;
+		positions[j++] = (x + w) * fontScale;
+		positions[j++] = -y * fontScale;
 		positions[j++] = 0;
 
 		// Center
@@ -424,7 +442,7 @@ class TextLayout {
 		return null;
 	}
 
-	computeMetrics(text, start, end, width) {
+	computeMetrics(text, start, end, width, fonsScale) {
 		const letterSpacing = this._options.letterSpacing || 0;
 		const font = this._options.font;
 		let curPen = 0;
@@ -453,8 +471,8 @@ class TextLayout {
 				const kern = lastGlyph ? getKerning(font, lastGlyph.id, glyph.id) : 0;
 				curPen += kern;
 
-				const nextPen = curPen + glyph.xadvance + letterSpacing;
-				const nextWidth = curPen + glyph.width;
+				const nextPen = curPen + glyph.xadvance * fonsScale + letterSpacing * fonsScale;
+				const nextWidth = curPen + glyph.width * fonsScale;
 
 				// we've hit our limit; we can't move onto the next glyph
 				if (nextWidth >= width || nextPen >= width) { break }
@@ -604,12 +622,15 @@ function wordwrap(text, opt = {}) {
 	const start = Math.max(0, opt.start || 0);
 	const end = typeof opt.end === 'number' ? opt.end : text.length;
 	const mode = opt.mode;
+	const fontSize = opt.fontSize || 10;
+	const mapFontSize = opt.mapFontSize || 72;
+	const fontScale = fontSize / mapFontSize;
 
 	const measure = opt.measure || monospace;
 	if (mode === 'pre') {
-		return pre(measure, text, start, end, width);
+		return pre(measure, text, start, end, width, fontScale);
 	} else {
-		return greedy(measure, text, start, end, width, mode);
+		return greedy(measure, text, start, end, width, mode, fontScale);
 	}
 }
 
@@ -625,7 +646,7 @@ function isWhitespace(chr) {
 	return whitespace.test(chr);
 }
 
-function pre(measure, text, start, end, width) {
+function pre(measure, text, start, end, width, fontScale) {
 	const lines = [];
 	let lineStart = start;
 	for (let i = start; i < end && i < text.length; i++) {
@@ -636,7 +657,7 @@ function pre(measure, text, start, end, width) {
 		// Or if we've reached the EOF
 		if (isNewline || i === end - 1) {
 			const lineEnd = isNewline ? i : i + 1;
-			const measured = measure(text, lineStart, lineEnd, width);
+			const measured = measure(text, lineStart, lineEnd, width, fontScale);
 			lines.push(measured);
 
 			lineStart = i + 1;
@@ -645,7 +666,7 @@ function pre(measure, text, start, end, width) {
 	return lines;
 }
 
-function greedy(measure, text, start, end, width, mode) {
+function greedy(measure, text, start, end, width, mode, fontScale) {
 	// A greedy word wrapper based on LibGDX algorithm
 	// https://github.com/libgdx/libgdx/blob/master/gdx/src/com/badlogic/gdx/graphics/g2d/BitmapFontCache.java
 	const lines = [];
@@ -676,7 +697,7 @@ function greedy(measure, text, start, end, width, mode) {
 		newParagraph = newLine + 1;
 
 		// determine visible # of glyphs for the available width
-		const measured = measure(text, start, newLine, testWidth);
+		const measured = measure(text, start, newLine, testWidth, fontScale);
 
 		let lineEnd = start + (measured.end - measured.start);
 		let nextStart = lineEnd + newlineChar.length;
@@ -707,7 +728,7 @@ function greedy(measure, text, start, end, width, mode) {
 			}
 		}
 		if (lineEnd >= start) {
-			const result = measure(text, start, lineEnd, testWidth);
+			const result = measure(text, start, lineEnd, testWidth, fontScale);
 			lines.push(result);
 		}
 		start = nextStart;
