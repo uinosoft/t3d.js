@@ -543,7 +543,7 @@ function getShadowCache(light) {
 class LightHash {
 
 	constructor() {
-		this._factor = new Uint16Array(9);
+		this._factor = new Uint16Array(10);
 	}
 
 	update(lights) {
