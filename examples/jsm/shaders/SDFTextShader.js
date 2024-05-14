@@ -97,9 +97,9 @@ const SDFTextShader = {
 
 			float GammaCorrect = 1.0;
 			#ifdef IS_MSDF
-				GammaCorrect = 0.00832 * v_gammaScale / fontSize;
+				GammaCorrect = 0.01032 * v_gammaScale / fontSize;
 			#else
-				GammaCorrect = 0.00592 * v_gammaScale / fontSize;
+				GammaCorrect = 0.00292 * v_gammaScale / fontSize;
 			#endif	
 
 			#ifdef IS_SUPERSAMPLING
