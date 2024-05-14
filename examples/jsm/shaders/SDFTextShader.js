@@ -125,7 +125,7 @@ const SDFTextShader = {
 			
 			#ifdef OUTLINE
 				#ifdef IS_MSDF
-					float outlineAlpha = smoothstep(threshold - outlineWidth * 2.0 - outlineGamma * 0.146 * GammaCorrect, threshold - outlineWidth * 2.0 + outlineGamma * 0.146 * * GammaCorrect, sigDist);
+					float outlineAlpha = smoothstep(threshold - outlineWidth * 2.0 - outlineGamma * 0.146 * GammaCorrect, threshold - outlineWidth * 2.0 + outlineGamma * 0.146 * GammaCorrect, sigDist);
 				#else
 					float outlineAlpha = smoothstep(threshold - outlineWidth - outlineGamma * 0.046, threshold - outlineWidth + outlineGamma * 0.046, sigDist);
 				#endif	
