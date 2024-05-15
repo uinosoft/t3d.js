@@ -95,6 +95,20 @@ class BitmapTextGeometry extends Geometry {
 
 		this.computeBoundingBox();
 		this.computeBoundingSphere();
+		const box = [this.boundingBox.max.x + this.boundingBox.min.x, this.boundingBox.max.y + this.boundingBox.min.y, this.boundingBox.max.z + this.boundingBox.min.z];
+		const arr = this._modifyGeometryCenter(attributes1.positions, box);
+		this.addAttribute('a_Position', new Attribute(new Buffer(arr, 3)));
+		this.computeBoundingBox();
+		this.computeBoundingSphere();
+	}
+
+	_modifyGeometryCenter(arr, box) {
+		for (let i = 0; i < arr.length; i += 3) {
+			arr[i] -= box[0] / 2;
+			arr[i + 1] -= box[1] / 2;
+			arr[i + 2] -= box[2] / 2;
+		}
+		return arr;
 	}
 
 	_validateOptions(options) {

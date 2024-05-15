@@ -115,8 +115,6 @@
 		const meshScalar = 0.08;
 		const mesh = new t3d.Mesh(geometry, material);
 		mesh.scale.set(1, 1, 1).multiplyScalar(meshScalar);
-		mesh.position.x = -geometry.layout.width / 2 * meshScalar;
-		mesh.position.y = -geometry.layout.height / 2 * meshScalar;
 		scene.add(mesh);
 
 		// Create debug scene
@@ -145,8 +143,6 @@
 		
 			geometry.update(params);
 			mesh.material.uniforms.fontSize = params.fontSize;
-			// mesh.position.x = -geometry.layout.width / 2 * meshScalar;
-			// mesh.position.y = -geometry.layout.height / 2 * meshScalar;
 		}
 
 		const gui = new GUI();
