@@ -130,7 +130,7 @@ const SDFTextShader = {
 					float outlineAlpha = smoothstep(threshold - outlineWidth - outlineGamma * 0.046, threshold - outlineWidth + outlineGamma * 0.046, sigDist);
 				#endif	
 				vec4 outlineColor4 = vec4(outlineColor, outlineAlpha * u_Opacity);
-				textColor = mix(outlineColor4, textColor, textColor.a);
+				textColor = mix(outlineColor4, textColor, min(textColor.a * 2.0, 1.0));
 			#endif
 
 			#ifdef SHADOW
@@ -146,7 +146,7 @@ const SDFTextShader = {
 				#endif	
 				float shadowAlpha = smoothstep(threshold - fontShadowGamma, threshold + fontShadowGamma, shadowDist);
 				vec4 shadowColor4 = vec4(shadowColor, shadowAlpha * u_Opacity);
-				textColor = mix(shadowColor4, textColor, textColor.a);
+				textColor = mix(shadowColor4, textColor, min(textColor.a * 2.0, 1.0));
 			#endif
 
 			#ifdef DEBUG
