@@ -184,11 +184,9 @@
 		"custompass_rendertarget_3d"
 	],
 	"renderer": [
+		"renderer_deferred",
+		"renderer_deferred_lighting",
 		"renderer_clustered_lighting"
-	],
-	"deferred": [
-		"deferred_renderer",
-		"deferred_lights"
 	],
 	"webgl": [
 		"webgl_depthfunc",
