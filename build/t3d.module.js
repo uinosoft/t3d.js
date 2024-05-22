@@ -12928,7 +12928,6 @@ class RenderTarget3D extends RenderTargetBase {
 	}
 
 	/**
-	 * @override
 	 * Resize the render target.
 	 * @param {Number} width - The width of the render target.
 	 * @param {Number} height - The height of the render target.
