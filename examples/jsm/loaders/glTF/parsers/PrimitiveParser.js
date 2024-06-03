@@ -179,6 +179,7 @@ function assignFinalMaterial(primitive, materialCache) {
 			Material.prototype.copy.call(pointsMaterial, material);
 			pointsMaterial.diffuse.copy(material.diffuse);
 			pointsMaterial.diffuseMap = material.map;
+			pointsMaterial.drawMode = mode;
 			pointsMaterial.acceptLight = false; // PointsMaterial doesn't support lights yet
 			materialCache.set(cacheKey, pointsMaterial);
 		}
