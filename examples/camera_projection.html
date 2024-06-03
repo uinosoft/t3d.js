@@ -121,8 +121,8 @@
 				helperCamera.setOrtho(-halfViewWidth, halfViewWidth, -halfViewHeight, halfViewHeight, params.near, params.far);
 				projMatrix2.copy(helperCamera.projectionMatrix);
 
-				// TODO - better projective lerp
-				camera.projectionMatrix.lerpMatrices(projMatrix1, projMatrix2, params.projWeight);
+				// use easeOut to make the transition more 'linear'
+				camera.projectionMatrix.lerpMatrices(projMatrix1, projMatrix2, easeOut(params.projWeight));
 				camera.projectionMatrixInverse.getInverse(camera.projectionMatrix);
 
 				// fix skybox projection
@@ -131,6 +131,11 @@
 				projMatrix2.toArray(skyBox.material.uniforms.u_Projection);
 			}
 		}
+
+		function easeOut(t) {
+			return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+		}
+
 		setCameraProjection();
 
 		const gui = new GUI();
