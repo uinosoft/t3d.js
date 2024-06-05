@@ -436,16 +436,17 @@ class GeometryUtils {
 	 * @return {Geometry}
 	 */
 	static applyMatrix4(geometry, matrix, updateBoundings) {
-		let array, count;
+		let array, count, offset;
 
 		const position = geometry.attributes['a_Position'];
 		if (position !== undefined) {
 			array = position.buffer.array;
 			count = position.buffer.count;
+			offset = position.offset;
 			for (let i = 0; i < count; i++) {
-				_vec3_1.fromArray(array, i * 3);
+				_vec3_1.fromArray(array, i * 3 + offset);
 				_vec3_1.applyMatrix4(matrix);
-				_vec3_1.toArray(array, i * 3);
+				_vec3_1.toArray(array, i * 3 + offset);
 			}
 			position.buffer.version++;
 		}
@@ -454,11 +455,12 @@ class GeometryUtils {
 		if (normal !== undefined) {
 			array = normal.buffer.array;
 			count = normal.buffer.count;
+			offset = normal.offset;
 			const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
 			for (let i = 0; i < count; i++) {
-				_vec3_1.fromArray(array, i * 3);
+				_vec3_1.fromArray(array, i * 3 + offset);
 				_vec3_1.applyMatrix3(normalMatrix).normalize();
-				_vec3_1.toArray(array, i * 3);
+				_vec3_1.toArray(array, i * 3 + offset);
 			}
 			normal.buffer.version++;
 		}
@@ -467,10 +469,11 @@ class GeometryUtils {
 		if (tangent !== undefined) {
 			array = tangent.buffer.array;
 			count = tangent.buffer.count;
+			offset = tangent.offset;
 			for (let i = 0; i < count; i++) {
-				_vec3_1.fromArray(array, i * 3);
+				_vec3_1.fromArray(array, i * 3 + offset);
 				_vec3_1.transformDirection(matrix);
-				_vec3_1.toArray(array, i * 3);
+				_vec3_1.toArray(array, i * 3 + offset);
 			}
 			tangent.buffer.version++;
 		}
