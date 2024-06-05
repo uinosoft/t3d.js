@@ -31,13 +31,16 @@ export class AccessorParser {
 
 			let array, attribute;
 
-			if (byteStride && byteStride !== itemBytes) { // The buffer is interleaved if the stride equals the item size in bytes.
-				const ibCacheKey = 'Buffer:' + bufferViewIndex + ':' + componentType;
+			if (byteStride && byteStride !== itemBytes) { // The buffer is interleaved
+				// Each "slice" of the buffer, as defined by 'count' elements of 'byteStride' bytes, gets its own InterleavedBuffer
+				// This makes sure that IBA.count reflects accessor.count properly
+				const ibSlice = Math.floor(byteOffset / byteStride);
+				const ibCacheKey = 'Buffer:' + bufferViewIndex + ':' + componentType + ':' + ibSlice + ':' + count;
 				let ib = interleavedBufferCache.get(ibCacheKey);
 
 				if (!ib) {
 					// Use the full buffer if it's interleaved.
-					array = new TypedArray(bufferView);
+					array = new TypedArray(bufferView, ibSlice * byteStride, count * byteStride / elementBytes);
 
 					// Integer parameters to IB/IBA are in array elements, not bytes.
 					ib = new Buffer(array, byteStride / elementBytes);
@@ -45,7 +48,7 @@ export class AccessorParser {
 					interleavedBufferCache.set(ibCacheKey, ib);
 				}
 
-				attribute = new Attribute(ib, itemSize, byteOffset / elementBytes, normalized);
+				attribute = new Attribute(ib, itemSize, (byteOffset % byteStride) / elementBytes, normalized);
 			} else {
 				if (bufferView === null) {
 					array = new TypedArray(count * itemSize);
