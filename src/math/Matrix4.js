@@ -484,40 +484,18 @@ class Matrix4 {
 		const n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
 		const n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
 
-		// TODO: make this more efficient
-		// ( based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm )
+		const b0 = n11 * n22 - n12 * n21;
+		const b1 = n11 * n23 - n13 * n21;
+		const b2 = n12 * n23 - n13 * n22;
+		const b3 = n31 * n42 - n32 * n41;
+		const b4 = n31 * n43 - n33 * n41;
+		const b5 = n32 * n43 - n33 * n42;
+		const b6 = n11 * b5 - n12 * b4 + n13 * b3;
+		const b7 = n21 * b5 - n22 * b4 + n23 * b3;
+		const b8 = n31 * b2 - n32 * b1 + n33 * b0;
+		const b9 = n41 * b2 - n42 * b1 + n43 * b0;
 
-		return (
-			n41 * (+n14 * n23 * n32 -
-				n13 * n24 * n32 -
-				n14 * n22 * n33 +
-				n12 * n24 * n33 +
-				n13 * n22 * n34 -
-				n12 * n23 * n34
-			) +
-			n42 * (+n11 * n23 * n34 -
-				n11 * n24 * n33 +
-				n14 * n21 * n33 -
-				n13 * n21 * n34 +
-				n13 * n24 * n31 -
-				n14 * n23 * n31
-			) +
-			n43 * (+n11 * n24 * n32 -
-				n11 * n22 * n34 -
-				n14 * n21 * n32 +
-				n12 * n21 * n34 +
-				n14 * n22 * n31 -
-				n12 * n24 * n31
-			) +
-			n44 * (-n13 * n22 * n31 -
-				n11 * n23 * n32 +
-				n11 * n22 * n33 +
-				n13 * n21 * n32 -
-				n12 * n21 * n33 +
-				n12 * n23 * n31
-			)
-
-		);
+		return n24 * b6 - n14 * b7 + n44 * b8 - n34 * b9;
 	}
 
 	/**
