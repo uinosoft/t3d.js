@@ -16763,10 +16763,10 @@
 			const viewport = helpVector4.set(currentRenderTarget.width, currentRenderTarget.height, currentRenderTarget.width, currentRenderTarget.height).multiply(cameraData.rect);
 			viewport.z -= viewport.x;
 			viewport.w -= viewport.y;
-			viewport.x = Math.floor(viewport.x);
-			viewport.y = Math.floor(viewport.y);
-			viewport.z = Math.floor(viewport.z);
-			viewport.w = Math.floor(viewport.w);
+			viewport.x = Math.round(viewport.x);
+			viewport.y = Math.round(viewport.y);
+			viewport.z = Math.round(viewport.z);
+			viewport.w = Math.round(viewport.w);
 			state.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
 			this._draw(geometry, material, group, renderInfo);
 			textures.resetTextureUnits();
