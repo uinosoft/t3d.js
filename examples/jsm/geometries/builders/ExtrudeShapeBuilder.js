@@ -11,11 +11,15 @@ const ExtrudeShapeBuilder = {
      * @param {Object} shape - The shape.
      * @param {Array} shape.contour - The holes of this shape, for example: [[0, 0], [0, 5], [5, 5], [5, 0]]
      * @param {Array} shape.holes - The holes of this shape, for example: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
-	 * @param {Array} [shape.depth=1] - The depth of this shape. If it is a negative number, extrude in the positive direction of the z-axis, otherwise, extrude in the negative direction of the z-axis,
+	 * @param {Array} [shape.depth=1] - The depth of this shape. If it is a negative number, extrude in the positive direction of the z-axis, otherwise, extrude in the negative direction of the z-axis.
+	 * @param {Boolean} [shape.generateTop=true] - Whether to generate the top face.
+	 * @param {Boolean} [shape.generateBottom=true] - Whether to generate the bottom face.
 	 * @param {Object} [shape.pathFrames] - The path frames data. If it is not undefined, the shape will be extruded along the path.
      */
 	getGeometryData: function(shape) {
 		const depth = (shape.depth !== undefined) ? shape.depth : 1;
+		const generateTop = (shape.generateTop !== undefined) ? shape.generateTop : true;
+		const generateBottom = (shape.generateBottom !== undefined) ? shape.generateBottom : true;
 		const pathFrames = shape.pathFrames;
 
 		let negativeDepth = false;
@@ -40,43 +44,47 @@ const ExtrudeShapeBuilder = {
 
 		// top
 
-		for (let i = 0, l = vertices.length; i < l; i += 2) {
-			if (pathFrames) {
-				setPositionByPathFrames(pathFrames, 0, vertices[i], vertices[i + 1], positions);
-			} else {
-				positions.push(vertices[i], vertices[i + 1], 0); // x-y plane
+		if (generateTop) {
+			for (let i = 0, l = vertices.length; i < l; i += 2) {
+				if (pathFrames) {
+					setPositionByPathFrames(pathFrames, 0, vertices[i], vertices[i + 1], positions);
+				} else {
+					positions.push(vertices[i], vertices[i + 1], 0); // x-y plane
+				}
+
+				uvs.push(negativeDepth ? -vertices[i] : vertices[i], vertices[i + 1]); // world uvs
 			}
 
-			uvs.push(negativeDepth ? -vertices[i] : vertices[i], vertices[i + 1]); // world uvs
-		}
-
-		for (let i = 0, l = faces.length; i < l; i += 3) {
-			if (negativeDepth) {
-				indices.push(faces[i + 0], faces[i + 2], faces[i + 1]);
-			} else {
-				indices.push(faces[i + 0], faces[i + 1], faces[i + 2]);
+			for (let i = 0, l = faces.length; i < l; i += 3) {
+				if (negativeDepth) {
+					indices.push(faces[i + 0], faces[i + 2], faces[i + 1]);
+				} else {
+					indices.push(faces[i + 0], faces[i + 1], faces[i + 2]);
+				}
 			}
 		}
 
 		// bottom
 
-		vertexCount = positions.length / 3;
+		if (generateBottom) {
+			vertexCount = positions.length / 3;
 
-		for (let i = 0, l = vertices.length; i < l; i += 2) {
-			if (pathFrames) {
-				setPositionByPathFrames(pathFrames, pathFrames.points.length - 1, vertices[i], vertices[i + 1], positions);
-			} else {
-				positions.push(vertices[i], vertices[i + 1], -depth); // x-y plane
+			for (let i = 0, l = vertices.length; i < l; i += 2) {
+				if (pathFrames) {
+					setPositionByPathFrames(pathFrames, pathFrames.points.length - 1, vertices[i], vertices[i + 1], positions);
+				} else {
+					positions.push(vertices[i], vertices[i + 1], -depth); // x-y plane
+				}
+
+				uvs.push(negativeDepth ? vertices[i] : -vertices[i], vertices[i + 1]); // world uvs
 			}
 
-			uvs.push(negativeDepth ? vertices[i] : -vertices[i], vertices[i + 1]); // world uvs
-		}
-
-		for (let i = 0, l = faces.length; i < l; i += 3) {
-			if (negativeDepth) {
-				indices.push(vertexCount + faces[i + 1], vertexCount + faces[i + 2], vertexCount + faces[i + 0]);
-			} else {
-				indices.push(vertexCount + faces[i + 2], vertexCount + faces[i + 1], vertexCount + faces[i + 0]);
+			for (let i = 0, l = faces.length; i < l; i += 3) {
+				if (negativeDepth) {
+					indices.push(vertexCount + faces[i + 1], vertexCount + faces[i + 2], vertexCount + faces[i + 0]);
+				} else {
+					indices.push(vertexCount + faces[i + 2], vertexCount + faces[i + 1], vertexCount + faces[i + 0]);
+				}
 			}
 		}
 
