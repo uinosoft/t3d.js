@@ -74,7 +74,7 @@
 			up: new t3d.Vector3(-1, 0, 0),
 			divisions: 8
 		});
-		const geometryData1 = TubeBuilder.getGeometryData(frames, { radius: 0.15 });
+		const geometryData1 = TubeBuilder.getGeometryData(frames, { radius: 0.15, generateStartCap: true, generateEndCap: true });
 		const geometry1 = new t3d.Geometry();
 		geometry1.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.positions), 3)));
 		geometry1.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData1.normals), 3)));
@@ -135,7 +135,7 @@
 
 		const plane_geometry = new t3d.PlaneGeometry(1000, 1000);
 		const plane_material = new t3d.LambertMaterial();
-		plane_material.diffuse.setHex(0xffffff);
+		plane_material.diffuse.setHex(0xeeeeee);
 		const plane = new t3d.Mesh(plane_geometry, plane_material);
 		plane.position.y -= 3;
 		plane.receiveShadow = true;
