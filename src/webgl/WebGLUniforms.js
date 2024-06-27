@@ -1,5 +1,6 @@
 import { PIXEL_TYPE, PIXEL_FORMAT, TEXTURE_FILTER, COMPARE_FUNC } from '../const.js';
 import { Texture2D } from '../resources/textures/Texture2D.js';
+import { Texture2DArray } from '../resources/textures/Texture2DArray.js';
 import { TextureCube } from '../resources/textures/TextureCube.js';
 import { Texture3D } from '../resources/textures/Texture3D.js';
 
@@ -77,6 +78,7 @@ emptyShadowTexture.compare = COMPARE_FUNC.LESS;
 emptyShadowTexture.generateMipmaps = false;
 emptyShadowTexture.version++;
 const emptyTexture3d = new Texture3D();
+const emptyTexture2dArray = new Texture2DArray();
 const emptyCubeTexture = new TextureCube();
 
 // Array helpers
@@ -158,6 +160,32 @@ function generateSetter(uniform, pureArray) {
 					const units = allocTexUnits(textures, n);
 					for (let i = 0; i !== n; ++i) {
 						textures.setTexture2D(value[i] || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), units[i]);
+					}
+					if (arraysEqual(cache, units)) return;
+					gl.uniform1iv(location, units);
+					copyArray(cache, units);
+				};
+			} else {
+				uniform.set = uniform.setValue;
+			}
+			break;
+		case gl.SAMPLER_2D_ARRAY:
+		case gl.SAMPLER_2D_ARRAY_SHADOW:
+		case gl.INT_SAMPLER_2D_ARRAY:
+		case gl.UNSIGNED_INT_SAMPLER_2D_ARRAY:
+			uniform.setValue = function(value, textures) {
+				const unit = textures.allocTexUnit();
+				textures.setTexture2DArray(value || emptyTexture2dArray, unit);
+				if (cache[0] === unit) return;
+				gl.uniform1i(location, unit);
+				cache[0] = unit;
+			};
+			if (pureArray) {
+				uniform.set = function(value, textures) {
+					const n = value.length;
+					const units = allocTexUnits(textures, n);
+					for (let i = 0; i !== n; ++i) {
+						textures.setTexture2DArray(value[i] || emptyTexture2dArray, units[i]);
 					}
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);

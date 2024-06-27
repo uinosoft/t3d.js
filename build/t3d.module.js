@@ -13218,6 +13218,82 @@ Object.defineProperties(RenderTargetCube.prototype, {
 
 });
 
+/**
+ * Creates a 2d texture. (WebGL 2.0)
+ * @memberof t3d
+ * @extends t3d.TextureBase
+ */
+class Texture2DArray extends TextureBase {
+
+	constructor() {
+		super();
+
+		/**
+		 * Image data for this texture.
+		 * @type {Object}
+		 * @default null
+		 */
+		this.image = { data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]), width: 2, height: 2, depth: 2 };
+
+		/**
+		 * @default t3d.PIXEL_FORMAT.RED
+		 */
+		this.format = PIXEL_FORMAT.RED;
+
+		/**
+		 * @default t3d.TEXTURE_FILTER.NEAREST
+		 */
+		this.magFilter = TEXTURE_FILTER.NEAREST;
+
+		/**
+		 * @default t3d.TEXTURE_FILTER.NEAREST
+		 */
+		this.minFilter = TEXTURE_FILTER.NEAREST;
+
+		/**
+		 * @default false
+		 */
+		this.generateMipmaps = false;
+
+		/**
+		 * @default false
+		 */
+		this.flipY = false;
+
+		/**
+		 * @default 1
+		 */
+		this.unpackAlignment = 1;
+
+		/**
+		 * A set of all layers which need to be updated in the texture.
+		 * @type {Set}
+		 */
+		this.layerUpdates = new Set();
+	}
+
+	/**
+	 * Copy the given 2d texture into this texture.
+	 * @param {t3d.Texture2DArray} source - The 2d texture to be copied.
+	 * @return {t3d.Texture2DArray}
+	 */
+	copy(source) {
+		super.copy(source);
+
+		this.image = source.image;
+
+		return this;
+	}
+
+}
+
+/**
+ * @readonly
+ * @type {Boolean}
+ * @default true
+ */
+Texture2DArray.prototype.isTexture2DArray = true;
+
 let _queryId = 0;
 
 /**
@@ -14776,6 +14852,7 @@ emptyShadowTexture.compare = COMPARE_FUNC.LESS;
 emptyShadowTexture.generateMipmaps = false;
 emptyShadowTexture.version++;
 const emptyTexture3d = new Texture3D();
+const emptyTexture2dArray = new Texture2DArray();
 const emptyCubeTexture = new TextureCube();
 
 // Array helpers
@@ -14857,6 +14934,32 @@ function generateSetter(uniform, pureArray) {
 					const units = allocTexUnits(textures, n);
 					for (let i = 0; i !== n; ++i) {
 						textures.setTexture2D(value[i] || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), units[i]);
+					}
+					if (arraysEqual(cache, units)) return;
+					gl.uniform1iv(location, units);
+					copyArray(cache, units);
+				};
+			} else {
+				uniform.set = uniform.setValue;
+			}
+			break;
+		case gl.SAMPLER_2D_ARRAY:
+		case gl.SAMPLER_2D_ARRAY_SHADOW:
+		case gl.INT_SAMPLER_2D_ARRAY:
+		case gl.UNSIGNED_INT_SAMPLER_2D_ARRAY:
+			uniform.setValue = function(value, textures) {
+				const unit = textures.allocTexUnit();
+				textures.setTexture2DArray(value || emptyTexture2dArray, unit);
+				if (cache[0] === unit) return;
+				gl.uniform1i(location, unit);
+				cache[0] = unit;
+			};
+			if (pureArray) {
+				uniform.set = function(value, textures) {
+					const n = value.length;
+					const units = allocTexUnits(textures, n);
+					for (let i = 0; i !== n; ++i) {
+						textures.setTexture2DArray(value[i] || emptyTexture2dArray, units[i]);
 					}
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
@@ -17316,6 +17419,74 @@ class WebGLTextures extends PropertyMap {
 		return textureProperties;
 	}
 
+	setTexture2DArray(texture, slot) {
+		const gl = this._gl;
+		const state = this._state;
+		const capabilities = this._capabilities;
+		const constants = this._constants;
+
+		if (capabilities.version < 2) {
+			console.warn('Try to use Texture2DArray but browser not support WebGL2.0');
+			return;
+		}
+
+		if (slot !== undefined) {
+			slot = gl.TEXTURE0 + slot;
+		}
+
+		const textureProperties = this.get(texture);
+
+		if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
+			if (textureProperties.__webglTexture === undefined) {
+				texture.addEventListener('dispose', this._onTextureDispose);
+				textureProperties.__webglTexture = gl.createTexture();
+			}
+
+			state.activeTexture(slot);
+			state.bindTexture(gl.TEXTURE_2D_ARRAY, textureProperties.__webglTexture);
+
+			const image = texture.image;
+
+			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.flipY);
+			gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha);
+			gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
+			gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+			this._setTextureParameters(texture, false);
+
+			const glFormat = constants.getGLFormat(texture.format),
+				glType = constants.getGLType(texture.type),
+				glInternalFormat = (texture.internalformat !== null) ? constants.getGLInternalFormat(texture.internalformat) :
+					getGLInternalFormat(gl, capabilities, glFormat, glType);
+
+			if (texture.layerUpdates.size > 0) {
+				for (const layerIndex of texture.layerUpdates) {
+					const layerByteLength = getByteLength(image.width, image.height, texture.format, texture.type);
+					const layerData = image.data.subarray(
+						layerIndex * layerByteLength / image.data.BYTES_PER_ELEMENT,
+						(layerIndex + 1) * layerByteLength / image.data.BYTES_PER_ELEMENT
+					);
+					gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, layerIndex, image.width, image.height, 1, glFormat, glType, layerData);
+				}
+				texture.layerUpdates.clear();
+			} else {
+				gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, glInternalFormat, image.width, image.height, image.depth, texture.border, glFormat, glType, image.data);
+			}
+
+			if (texture.generateMipmaps) {
+				this._generateMipmap(gl.TEXTURE_2D_ARRAY, texture, image.width, image.height);
+			}
+
+			textureProperties.__version = texture.version;
+
+			return textureProperties;
+		}
+
+		state.activeTexture(slot);
+		state.bindTexture(gl.TEXTURE_2D_ARRAY, textureProperties.__webglTexture);
+
+		return textureProperties;
+	}
+
 	setTextureExternal(texture, webglTexture) {
 		const gl = this._gl;
 
@@ -17343,6 +17514,7 @@ class WebGLTextures extends PropertyMap {
 		let textureType = gl.TEXTURE_2D;
 		if (texture.isTextureCube) textureType = gl.TEXTURE_CUBE_MAP;
 		if (texture.isTexture3D) textureType = gl.TEXTURE_3D;
+		if (texture.isTexture2DArray) textureType = gl.TEXTURE_2D_ARRAY;
 
 		const parameters = getTextureParameters(texture, needFallback);
 
@@ -17471,7 +17643,7 @@ function getTextureParameters(texture, needFallback) {
 
 		if (
 			(texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR) ||
-            (texture.magFilter !== TEXTURE_FILTER.NEAREST && texture.magFilter !== TEXTURE_FILTER.LINEAR)
+			(texture.magFilter !== TEXTURE_FILTER.NEAREST && texture.magFilter !== TEXTURE_FILTER.LINEAR)
 		) {
 			console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to t3d.TEXTURE_FILTER.NEAREST or t3d.TEXTURE_FILTER.LINEAR.', texture);
 		}
@@ -17536,6 +17708,93 @@ function domCheck(image) {
 		|| (typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement)
 		|| (typeof HTMLVideoElement !== 'undefined' && image instanceof HTMLVideoElement)
 		|| (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap);
+}
+
+function getByteLength(width, height, format, type) {
+	const typeByteLength = getTextureTypeByteLength(type);
+
+	switch (format) {
+		// https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
+		case PIXEL_FORMAT.ALPHA:
+			return width * height;
+		case PIXEL_FORMAT.LUMINANCE:
+			return width * height;
+		case PIXEL_FORMAT.LUMINANCE_ALPHA:
+			return width * height * 2;
+		case PIXEL_FORMAT.RED:
+			return ((width * height) / typeByteLength.components) * typeByteLength.byteLength;
+		case PIXEL_FORMAT.RED_INTEGER:
+			return ((width * height) / typeByteLength.components) * typeByteLength.byteLength;
+		case PIXEL_FORMAT.RG:
+			return ((width * height * 2) / typeByteLength.components) * typeByteLength.byteLength;
+		case PIXEL_FORMAT.RG_INTEGER:
+			return ((width * height * 2) / typeByteLength.components) * typeByteLength.byteLength;
+		case PIXEL_FORMAT.RGB:
+			return ((width * height * 3) / typeByteLength.components) * typeByteLength.byteLength;
+		case PIXEL_FORMAT.RGBA:
+			return ((width * height * 4) / typeByteLength.components) * typeByteLength.byteLength;
+		case PIXEL_FORMAT.RGBA_INTEGER:
+			return ((width * height * 4) / typeByteLength.components) * typeByteLength.byteLength;
+
+		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_s3tc_srgb/
+		case PIXEL_FORMAT.RGB_S3TC_DXT1:
+		case PIXEL_FORMAT.RGBA_S3TC_DXT1:
+			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
+		case PIXEL_FORMAT.RGBA_S3TC_DXT3:
+		case PIXEL_FORMAT.RGBA_S3TC_DXT5:
+			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
+
+		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_pvrtc/
+		case PIXEL_FORMAT.RGB_PVRTC_2BPPV1:
+		case PIXEL_FORMAT.RGBA_PVRTC_2BPPV1:
+			return (Math.max(width, 16) * Math.max(height, 8)) / 4;
+		case PIXEL_FORMAT.RGB_PVRTC_4BPPV1:
+		case PIXEL_FORMAT.RGBA_PVRTC_4BPPV1:
+			return (Math.max(width, 8) * Math.max(height, 8)) / 2;
+
+		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_etc/
+		case PIXEL_FORMAT.RGB_ETC1:
+			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
+		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_astc/
+		case PIXEL_FORMAT.RGBA_ASTC_4x4:
+			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
+		// https://registry.khronos.org/webgl/extensions/EXT_texture_compression_bptc/
+		case PIXEL_FORMAT.RGBA_BPTC:
+			return Math.ceil(width / 4) * Math.ceil(height / 4) * 16;
+	}
+
+	throw new Error(
+		`Unable to determine texture byte length for ${format} format.`
+	);
+}
+
+const _tempTypeByteLength = { byteLength: 0, components: 0 };
+function getTextureTypeByteLength(type) {
+	switch (type) {
+		case PIXEL_TYPE.UNSIGNED_BYTE:
+		case PIXEL_TYPE.ByteType:
+			_tempTypeByteLength.byteLength = 1;
+			_tempTypeByteLength.components = 1;
+			return _tempTypeByteLength;
+		case PIXEL_TYPE.UNSIGNED_SHORT:
+		case PIXEL_TYPE.SHORT:
+		case PIXEL_TYPE.HALF_FLOAT:
+			_tempTypeByteLength.byteLength = 2;
+			_tempTypeByteLength.components = 1;
+			return _tempTypeByteLength;
+		case PIXEL_TYPE.UNSIGNED_SHORT_4_4_4_4:
+		case PIXEL_TYPE.UNSIGNED_SHORT_5_5_5_1:
+			_tempTypeByteLength.byteLength = 2;
+			_tempTypeByteLength.components = 4;
+			return _tempTypeByteLength;
+		case PIXEL_TYPE.UNSIGNED_INT:
+		case PIXEL_TYPE.INT:
+		case PIXEL_TYPE.FLOAT:
+			_tempTypeByteLength.byteLength = 4;
+			_tempTypeByteLength.components = 1;
+			return _tempTypeByteLength;
+	}
+	throw new Error(`Unknown texture type ${type}.`);
 }
 
 class WebGLRenderBuffers extends PropertyMap {
@@ -19098,4 +19357,4 @@ class MatcapMaterial extends BasicMaterial {
 
 }
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

@@ -82,6 +82,7 @@ export { RenderTargetBase } from './resources/targets/RenderTargetBase.js';
 export { RenderTargetCube } from './resources/targets/RenderTargetCube.js';
 
 export { Texture2D } from './resources/textures/Texture2D.js';
+export { Texture2DArray } from './resources/textures/Texture2DArray.js';
 export { Texture3D } from './resources/textures/Texture3D.js';
 export { TextureBase } from './resources/textures/TextureBase.js';
 export { TextureCube } from './resources/textures/TextureCube.js';

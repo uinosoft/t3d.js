@@ -67,6 +67,7 @@
 		"material_cubetexture_filter",
 		"material_cubetexture_envmap",
 		"material_cubetexture_skybox_groundprojected",
+		"material_texture_array",
 		"material_texture3d",
 		"material_volume",
 		"material_transparent",
