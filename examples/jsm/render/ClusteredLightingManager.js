@@ -1,4 +1,4 @@
-import { PIXEL_TYPE, PIXEL_FORMAT, Texture2D, TEXTURE_FILTER, nextPowerOfTwo, Sphere, Box3 } from 't3d';
+import { PIXEL_TYPE, PIXEL_FORMAT, Texture2D, TEXTURE_FILTER, nextPowerOfTwo, Sphere, Box3, Vector3 } from 't3d';
 
 /**
  * ClusteredLightingManager.
@@ -87,6 +87,32 @@ class ClusteredLightingManager {
 				lightIndicesWritten = this.cellsTexture.setLightIndex(_cellsRange, i) || lightIndicesWritten;
 				lightsNeedsUpdate && this.lightsTexture.setPointLight(i, pointLight);
 			}
+		}
+
+		for (let i = 0; i < lightData.spotsNum; i++) {
+			const spotLight = lightData.spot[i];
+			const angle = Math.acos(spotLight.coneCos);
+
+			if(angle > 0.7853981633974483){ // 0.7853981633974483 = Math.PI / 4.
+				_vec3_1.fromArray(spotLight.direction).multiplyScalar(spotLight.distance * spotLight.coneCos);
+				_lightSphere.center.fromArray(spotLight.position).add(_vec3_1);
+				_lightSphere.radius = spotLight.distance * Math.sin(angle);
+
+			}
+			else{
+				_vec3_1.fromArray(spotLight.direction).multiplyScalar(spotLight.distance / (spotLight.coneCos * 2));
+				_lightSphere.center.fromArray(spotLight.position).add(_vec3_1);
+				_lightSphere.radius = spotLight.distance / (spotLight.coneCos * 2);
+			}
+
+			_lightSphere.center.applyMatrix4(cameraData.viewMatrix);
+			_lightSphere.center.z *= -1;
+
+			if (getCellsRange(_lightSphere, cellsTable, cellsTransform, _cellsRange)) {
+				lightIndicesWritten = this.cellsTexture.setLightIndex(_cellsRange, i) || lightIndicesWritten;
+				lightsNeedsUpdate && this.lightsTexture.setSpotLight(i, spotLight);
+			}
+
 		}
 
 		(lightIndicesWritten && lightsNeedsUpdate) && this.lightsTexture.version++;
@@ -258,7 +284,39 @@ class LightsTexture extends Texture2D {
 		// pixel 3 - R: -, G: -, B: -, A: -
 	}
 
-	// setSpotLight(index, lightData) {}
+	setSpotLight(index, lightData) {
+		const data = this.image.data;
+		const halfFloat = this.type === PIXEL_TYPE.HALF_FLOAT;
+
+		const start = index * LIGHT_STRIDE * 4;
+		const { color, decay, position, distance, direction, coneCos, penumbraCos } = lightData;
+
+		// pixel 0 - R: lightType, G: penumbraCos, B: -, A: -
+
+		data[start + 0 * 4 + 0] = halfFloat ? float2Half(2) : 2;
+		data[start + 0 * 4 + 1] = halfFloat ? float2Half(penumbraCos) : penumbraCos;
+
+		// pixel 1 - R: color.r, G: color.g, B: color.b, A: decay
+
+		data[start + 1 * 4 + 0] = halfFloat ? float2Half(color[0]) : color[0];
+		data[start + 1 * 4 + 1] = halfFloat ? float2Half(color[1]) : color[1];
+		data[start + 1 * 4 + 2] = halfFloat ? float2Half(color[2]) : color[2];
+		data[start + 1 * 4 + 3] = halfFloat ? float2Half(decay) : decay;
+
+		// pixel 2 - R: position.x, G: position.y, B: position.z, A: distance
+
+		data[start + 2 * 4 + 0] = halfFloat ? float2Half(position[0]) : position[0];
+		data[start + 2 * 4 + 1] = halfFloat ? float2Half(position[1]) : position[1];
+		data[start + 2 * 4 + 2] = halfFloat ? float2Half(position[2]) : position[2];
+		data[start + 2 * 4 + 3] = halfFloat ? float2Half(distance) : distance;
+
+		// pixel 3 - R: direction.x, G: direction.y, B: direction.z, A: coneCos
+
+		data[start + 3 * 4 + 0] = halfFloat ? float2Half(direction[0]) : direction[0];
+		data[start + 3 * 4 + 1] = halfFloat ? float2Half(direction[1]) : direction[1];
+		data[start + 3 * 4 + 2] = halfFloat ? float2Half(direction[2]) : direction[2];
+		data[start + 3 * 4 + 3] = halfFloat ? float2Half(coneCos) : coneCos;
+	}
 
 }
 
@@ -266,6 +324,7 @@ const LIGHT_STRIDE = 4;
 
 const _lightSphere = new Sphere();
 const _cellsRange = new Box3();
+const _vec3_1 = new Vector3();
 
 function textureSize(pixelCount) {
 	return nextPowerOfTwo(Math.ceil(Math.sqrt(pixelCount)));
