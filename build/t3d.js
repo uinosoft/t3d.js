@@ -15601,10 +15601,7 @@
 					}
 				}
 				const needFallback = !_isPowerOfTwo$1(image) && capabilities.version < 2;
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.flipY);
-				gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha);
-				gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
-				gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+				this._setPixelStores(texture);
 				this._setTextureParameters(texture, needFallback);
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
@@ -15680,10 +15677,7 @@
 					images[i] = image;
 					image.__isDom = isDom;
 				}
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.flipY);
-				gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha);
-				gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
-				gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+				this._setPixelStores(texture);
 				this._setTextureParameters(texture, needFallback);
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
@@ -15750,12 +15744,9 @@
 				}
 				state.activeTexture(slot);
 				state.bindTexture(gl.TEXTURE_3D, textureProperties.__webglTexture);
-				const image = texture.image;
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.flipY);
-				gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha);
-				gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
-				gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+				this._setPixelStores(texture);
 				this._setTextureParameters(texture, false);
+				const image = texture.image;
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
 					glInternalFormat = texture.internalformat !== null ? constants.getGLInternalFormat(texture.internalformat) : getGLInternalFormat(gl, capabilities, glFormat, glType);
@@ -15790,12 +15781,9 @@
 				}
 				state.activeTexture(slot);
 				state.bindTexture(gl.TEXTURE_2D_ARRAY, textureProperties.__webglTexture);
-				const image = texture.image;
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.flipY);
-				gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha);
-				gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
-				gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+				this._setPixelStores(texture);
 				this._setTextureParameters(texture, false);
+				const image = texture.image;
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
 					glInternalFormat = texture.internalformat !== null ? constants.getGLInternalFormat(texture.internalformat) : getGLInternalFormat(gl, capabilities, glFormat, glType);
@@ -15832,6 +15820,13 @@
 			textureProperties.__webglTexture = webglTexture;
 			textureProperties.__external = true;
 		}
+		_setPixelStores(texture) {
+			const gl = this._gl;
+			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, texture.flipY);
+			gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, texture.premultiplyAlpha);
+			gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
+			gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+		}
 		_setTextureParameters(texture, needFallback) {
 			const gl = this._gl;
 			const capabilities = this._capabilities;
@@ -15841,24 +15836,45 @@
 			if (texture.isTextureCube) textureType = gl.TEXTURE_CUBE_MAP;
 			if (texture.isTexture3D) textureType = gl.TEXTURE_3D;
 			if (texture.isTexture2DArray) textureType = gl.TEXTURE_2D_ARRAY;
-			const parameters = getTextureParameters(texture, needFallback);
-			gl.texParameteri(textureType, gl.TEXTURE_WRAP_S, wrappingToGL[parameters[0]]);
-			gl.texParameteri(textureType, gl.TEXTURE_WRAP_T, wrappingToGL[parameters[1]]);
-			if (texture.isTexture3D) {
-				gl.texParameteri(textureType, gl.TEXTURE_WRAP_R, wrappingToGL[parameters[2]]);
+			let wrapS = texture.wrapS,
+				wrapT = texture.wrapT,
+				wrapR = texture.wrapR,
+				magFilter = texture.magFilter,
+				minFilter = texture.minFilter;
+
+			// fix for non power of 2 image in WebGL 1.0
+			if (needFallback) {
+				wrapS = TEXTURE_WRAP.CLAMP_TO_EDGE;
+				wrapT = TEXTURE_WRAP.CLAMP_TO_EDGE;
+				if (texture.isTexture3D) {
+					wrapR = TEXTURE_WRAP.CLAMP_TO_EDGE;
+				}
+				if (texture.wrapS !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.wrapT !== TEXTURE_WRAP.CLAMP_TO_EDGE) {
+					console.warn('Texture is not power of two. Texture.wrapS and Texture.wrapT should be set to t3d.TEXTURE_WRAP.CLAMP_TO_EDGE.', texture);
+				}
+				magFilter = filterFallback(texture.magFilter);
+				minFilter = filterFallback(texture.minFilter);
+				if (texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR || texture.magFilter !== TEXTURE_FILTER.NEAREST && texture.magFilter !== TEXTURE_FILTER.LINEAR) {
+					console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to t3d.TEXTURE_FILTER.NEAREST or t3d.TEXTURE_FILTER.LINEAR.', texture);
+				}
 			}
-			gl.texParameteri(textureType, gl.TEXTURE_MAG_FILTER, filterToGL[parameters[3]]);
-			gl.texParameteri(textureType, gl.TEXTURE_MIN_FILTER, filterToGL[parameters[4]]);
+			gl.texParameteri(textureType, gl.TEXTURE_WRAP_S, wrappingToGL[wrapS]);
+			gl.texParameteri(textureType, gl.TEXTURE_WRAP_T, wrappingToGL[wrapT]);
+			if (texture.isTexture3D) {
+				gl.texParameteri(textureType, gl.TEXTURE_WRAP_R, wrappingToGL[wrapR]);
+			}
+			gl.texParameteri(textureType, gl.TEXTURE_MAG_FILTER, filterToGL[magFilter]);
+			gl.texParameteri(textureType, gl.TEXTURE_MIN_FILTER, filterToGL[minFilter]);
 
 			// anisotropy if EXT_texture_filter_anisotropic exist
 			const extension = capabilities.anisotropyExt;
 			if (extension) {
-				gl.texParameterf(textureType, extension.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(parameters[5], capabilities.maxAnisotropy));
+				gl.texParameterf(textureType, extension.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(texture.anisotropy, capabilities.maxAnisotropy));
 			}
 			if (capabilities.version >= 2) {
-				if (parameters[6] !== undefined) {
+				if (texture.compare !== undefined) {
 					gl.texParameteri(textureType, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
-					gl.texParameteri(textureType, gl.TEXTURE_COMPARE_FUNC, parameters[6]);
+					gl.texParameteri(textureType, gl.TEXTURE_COMPARE_FUNC, texture.compare);
 				} else {
 					gl.texParameteri(textureType, gl.TEXTURE_COMPARE_MODE, gl.NONE);
 				}
@@ -15914,33 +15930,6 @@
 			return canvas;
 		}
 		return image;
-	}
-	function getTextureParameters(texture, needFallback) {
-		let wrapS = texture.wrapS,
-			wrapT = texture.wrapT,
-			wrapR = texture.wrapR,
-			magFilter = texture.magFilter,
-			minFilter = texture.minFilter;
-		const anisotropy = texture.anisotropy,
-			compare = texture.compare;
-
-		// fix for non power of 2 image in WebGL 1.0
-		if (needFallback) {
-			wrapS = TEXTURE_WRAP.CLAMP_TO_EDGE;
-			wrapT = TEXTURE_WRAP.CLAMP_TO_EDGE;
-			if (texture.isTexture3D) {
-				wrapR = TEXTURE_WRAP.CLAMP_TO_EDGE;
-			}
-			if (texture.wrapS !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.wrapT !== TEXTURE_WRAP.CLAMP_TO_EDGE) {
-				console.warn('Texture is not power of two. Texture.wrapS and Texture.wrapT should be set to t3d.TEXTURE_WRAP.CLAMP_TO_EDGE.', texture);
-			}
-			magFilter = filterFallback(texture.magFilter);
-			minFilter = filterFallback(texture.minFilter);
-			if (texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR || texture.magFilter !== TEXTURE_FILTER.NEAREST && texture.magFilter !== TEXTURE_FILTER.LINEAR) {
-				console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to t3d.TEXTURE_FILTER.NEAREST or t3d.TEXTURE_FILTER.LINEAR.', texture);
-			}
-		}
-		return [wrapS, wrapT, wrapR, magFilter, minFilter, anisotropy, compare];
 	}
 	function getGLInternalFormat(gl, capabilities, glFormat, glType) {
 		const isWebGL2 = capabilities.version >= 2;
