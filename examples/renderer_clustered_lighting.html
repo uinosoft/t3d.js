@@ -111,6 +111,7 @@
 		planeMaterial.diffuse.setHex(0x555555);
 		planeMaterial.roughness = 0.6;
 		planeMaterial.metalness = 0.4;
+		planeMaterial.dithering = true;
 		const plane = new t3d.Mesh(planeGeometry, planeMaterial);
 		plane.receiveShadow = true;
 		plane.position.y = -10;
@@ -128,28 +129,36 @@
 		directionalLight.shadow.needsUpdate = true;
 		scene.add(directionalLight);
 
-		const maxLightCount = 1023;
+		const maxLightCount = 1024;
 		
 		const lights = [], lightHelpers = [];
 		const helpherGeometry = new t3d.SphereGeometry(1);
 		for (let i = 0; i < maxLightCount; i++) {
 			const h = Math.random(), s = Math.random();
-			const pointLight = new t3d.PointLight(undefined, 1, 50);
-			pointLight.color.setHSL(h, s, 0.5);
-			pointLight.position.y = Math.random() * 10;
-			lights.push(pointLight);
 
-			pointLight._angle = Math.PI * 2 * Math.random();
-			pointLight._radius = Math.random() * 500 + 20;
-			pointLight._speed = (Math.random() - 0.5) * 0.03;
+			let light;
+			if (Math.random() > 0.5) {
+				light = new t3d.PointLight(undefined, 1, 50);
+			} else {
+				light = new t3d.SpotLight(undefined, 1, 30, Math.PI / 6, 0.5);
+				light.euler.x = -Math.PI * 0.5;
+			}
+		
+			light.color.setHSL(h, s, 0.5);
+			light.position.y = Math.random() * 10;
+			lights.push(light);
 
-			pointLight.position.x = Math.cos(pointLight._angle) * pointLight._radius;
-			pointLight.position.z = Math.sin(pointLight._angle) * pointLight._radius;
+			light._angle = Math.PI * 2 * Math.random();
+			light._radius = Math.random() * 500 + 20;
+			light._speed = (Math.random() - 0.5) * 0.03;
+
+			light.position.x = Math.cos(light._angle) * light._radius;
+			light.position.z = Math.sin(light._angle) * light._radius;
 
 			const mesh = new t3d.Mesh(helpherGeometry, new t3d.BasicMaterial());
 			mesh.material.diffuse.setHSL(h, s, 0.75);
 			mesh.material.envMap = undefined;
-			pointLight.add(mesh);
+			light.add(mesh);
 			lightHelpers.push(mesh);
 		}
 
@@ -271,12 +280,12 @@
 
 			if (params.rotate) {
 				for (let i = 0; i < lights.length; i++) {
-					const pointLight = lights[i];
+					const light = lights[i];
 
-					pointLight._angle += pointLight._speed;
+					light._angle += light._speed;
 
-					pointLight.position.x = Math.cos(pointLight._angle) * pointLight._radius;
-					pointLight.position.z = Math.sin(pointLight._angle) * pointLight._radius;
+					light.position.x = Math.cos(light._angle) * light._radius;
+					light.position.z = Math.sin(light._angle) * light._radius;
 				}
 			}
 
@@ -290,10 +299,13 @@
 
 				clustersManager.update(cameraData, lightData, true);
 
-				// remove point lights from lightData
+				// remove point and spot lights from lightData
 				lightData.totalNum -= lightData.pointsNum;
+				lightData.totalNum -= lightData.spotsNum;
 				lightData.pointsNum = 0;
+				lightData.spotsNum = 0;
 				lightData.hash._factor[4] = 0;
+				lightData.hash._factor[5] = 0;
 			}
 
 			if (supportTimerQuery && !queryInProgress) {

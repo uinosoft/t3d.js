@@ -48,18 +48,38 @@ const clusterlight_pars_frag = `
 		float distance;
 		float decay;
 	};
+	
+	struct ClusteredSpotLight {
+		vec3 position;
+		vec3 color;
+		float distance;
+		float decay;
+		vec3 direction;
+		float coneCos;
+		float penumbraCos;
+	};
 
-	void getPointLightFromTexture(int index, int size, inout ClusteredPointLight pointLight) {
-		int j = index * 4;
-		int x = j % size;
-		int y = j / size;
-		vec4 lightData1 = texelFetch(lightsTexture, ivec2(x + 1, y), 0);
-		vec4 lightData2 = texelFetch(lightsTexture, ivec2(x + 2, y), 0);
-		// vec4 lightData3 = texelFetch(lightsTexture, ivec2(x + 3, y), 0);
+	void getPointLightFromTexture(ivec2 lightDataCoords, vec4 lightData0, inout ClusteredPointLight pointLight) {
+		vec4 lightData1 = texelFetch(lightsTexture, lightDataCoords + ivec2(1, 0), 0);
+		vec4 lightData2 = texelFetch(lightsTexture, lightDataCoords + ivec2(2, 0), 0);
+		// vec4 lightData3 = texelFetch(lightsTexture, lightDataCoords + ivec2(3, 0), 0);
 		pointLight.color = lightData1.xyz;
 		pointLight.decay = lightData1.w;
 		pointLight.position = lightData2.xyz;
 		pointLight.distance = lightData2.w;
+	}
+
+	void getSpotLightFromTexture(ivec2 lightDataCoords, vec4 lightData0, inout ClusteredSpotLight spotLight) {
+		vec4 lightData1 = texelFetch(lightsTexture, lightDataCoords + ivec2(1, 0), 0);
+		vec4 lightData2 = texelFetch(lightsTexture, lightDataCoords + ivec2(2, 0), 0);
+		vec4 lightData3 = texelFetch(lightsTexture, lightDataCoords + ivec2(3, 0), 0);
+		spotLight.color = lightData1.xyz;
+		spotLight.decay = lightData1.w;
+		spotLight.position = lightData2.xyz;
+		spotLight.distance = lightData2.w;
+		spotLight.direction = lightData3.xyz;
+		spotLight.coneCos = lightData3.w;
+		spotLight.penumbraCos = lightData0.y;
 	}
 #endif
 `;
@@ -84,7 +104,11 @@ const clusterlight_frag = `
 		int size = textureSize(lightsTexture, 0).x;
 
 		ClusteredPointLight clusteredPointLight;
-		vec3 pointV;
+		ClusteredSpotLight clusteredSpotLight;
+
+		vec3 clusteredLightColor;
+		float clusteredLightDistance;
+		float clusteredAngleCos;
 
 		for (int lightCellIndex = 0; lightCellIndex < maxLightsPerCell; lightCellIndex++) {
 			float lightIndex = texelFetch(cellsTexture, ivec2(int(clusterU) + lightCellIndex, clusterV), 0).x;
@@ -96,20 +120,39 @@ const clusterlight_frag = `
 				continue;
 			#endif
 
-			getPointLightFromTexture(int(lightIndex - 1.), size, clusteredPointLight);
+			int lightOffset = int(lightIndex - 1.) * 4;
+			ivec2 lightDataCoords = ivec2(lightOffset % size, lightOffset / size);
 
-			pointV = v_modelPos - clusteredPointLight.position;
+			vec4 lightData0 = texelFetch(lightsTexture, lightDataCoords, 0);
 
-			L = -pointV;
-			falloff = pow(clamp(1. - length(L) / clusteredPointLight.distance, 0.0, 1.0), clusteredPointLight.decay);
-			L = normalize(L);
+			if (lightData0.x == 1.0) {
+				getPointLightFromTexture(lightDataCoords, lightData0, clusteredPointLight);
+				L = clusteredPointLight.position - v_modelPos;
+				clusteredLightDistance = length(L);
+				L = normalize(L);
+
+				falloff = pow(clamp(1. - clusteredLightDistance / clusteredPointLight.distance, 0.0, 1.0), clusteredPointLight.decay);
+
+				clusteredLightColor = clusteredPointLight.color;
+			} else if (lightData0.x == 2.0) {
+				getSpotLightFromTexture(lightDataCoords, lightData0, clusteredSpotLight);
+				L = clusteredSpotLight.position - v_modelPos;
+				clusteredLightDistance = length(L);
+				L = normalize(L);
+
+				clusteredAngleCos = dot(L, -normalize(clusteredSpotLight.direction));
+				falloff = smoothstep(clusteredSpotLight.coneCos, clusteredSpotLight.penumbraCos, clusteredAngleCos);
+				falloff *= pow(clamp(1. - clusteredLightDistance / clusteredSpotLight.distance, 0.0, 1.0), clusteredSpotLight.decay);
+
+				clusteredLightColor = clusteredSpotLight.color;
+			}
 
 			dotNL = saturate(dot(N, L));
-			irradiance = clusteredPointLight.color * falloff * dotNL * PI;
+			irradiance = clusteredLightColor * falloff * dotNL * PI;
 
 			#ifdef USE_CLEARCOAT
 				ccDotNL = saturate(dot(clearcoatNormal, L));
-				ccIrradiance = ccDotNL * clusteredPointLight.color * falloff  * PI;
+				ccIrradiance = ccDotNL * clusteredLightColor * falloff  * PI;
 				clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);
 				reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);
 			#else
