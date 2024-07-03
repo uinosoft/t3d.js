@@ -34,13 +34,14 @@ class Box3Helper extends Mesh {
 	updateMatrix(force) {
 		const box = this.box;
 
-		if (box.isEmpty()) return;
-
 		box.getCenter(this.position);
 
-		getSize(box, this.scale);
-
-		this.scale.multiplyScalar(0.5);
+		if (box.isEmpty()) {
+			this.scale.multiplyScalar(0);
+		} else {
+			box.getSize(this.scale);
+			this.scale.multiplyScalar(0.5);
+		}
 
 		super.updateMatrix(force);
 	}
@@ -48,9 +49,5 @@ class Box3Helper extends Mesh {
 }
 
 Box3Helper.prototype.isBox3Helper = true;
-
-function getSize(box, target) {
-	return box.isEmpty() ? target.set(0, 0, 0) : target.subVectors(box.max, box.min);
-}
 
 export { Box3Helper };

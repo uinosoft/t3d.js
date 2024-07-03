@@ -53,6 +53,18 @@
 		}
 
 		/**
+		 * Set the x, y and z values of this vector both equal to scalar.
+		 * @param {Number} scalar
+		 * @return {t3d.Vector3}
+		 */
+		setScalar(scalar) {
+			this.x = scalar;
+			this.y = scalar;
+			this.z = scalar;
+			return this;
+		}
+
+		/**
 		 * If this vector's x, y or z value is greater than v's x, y or z value, replace that value with the corresponding min value.
 		 * @param {t3d.Vector3} v
 		 * @return {t3d.Vector3}
@@ -875,9 +887,9 @@
 
 			const te = this.elements;
 			const me = m.elements;
-			const scaleX = 1 / _vec3_1$4.setFromMatrixColumn(m, 0).getLength();
-			const scaleY = 1 / _vec3_1$4.setFromMatrixColumn(m, 1).getLength();
-			const scaleZ = 1 / _vec3_1$4.setFromMatrixColumn(m, 2).getLength();
+			const scaleX = 1 / _vec3_1$5.setFromMatrixColumn(m, 0).getLength();
+			const scaleY = 1 / _vec3_1$5.setFromMatrixColumn(m, 1).getLength();
+			const scaleZ = 1 / _vec3_1$5.setFromMatrixColumn(m, 2).getLength();
 			te[0] = me[0] * scaleX;
 			te[1] = me[1] * scaleX;
 			te[2] = me[2] * scaleX;
@@ -947,9 +959,9 @@
 		 */
 		decompose(position, quaternion, scale) {
 			const te = this.elements;
-			let sx = _vec3_1$4.set(te[0], te[1], te[2]).getLength();
-			const sy = _vec3_1$4.set(te[4], te[5], te[6]).getLength();
-			const sz = _vec3_1$4.set(te[8], te[9], te[10]).getLength();
+			let sx = _vec3_1$5.set(te[0], te[1], te[2]).getLength();
+			const sy = _vec3_1$5.set(te[4], te[5], te[6]).getLength();
+			const sz = _vec3_1$5.set(te[8], te[9], te[10]).getLength();
 
 			// if determine is negative, we need to invert one scale
 			const det = this.determinant();
@@ -1121,7 +1133,7 @@
 			return array;
 		}
 	}
-	const _vec3_1$4 = new Vector3();
+	const _vec3_1$5 = new Vector3();
 	const _mat4_1$4 = new Matrix4();
 	const _x = new Vector3();
 	const _y = new Vector3();
@@ -3813,8 +3825,6 @@
 		}
 	}
 
-	const _points = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
-
 	/**
 	 * Represents an axis-aligned bounding box (AABB) in 3D space.
 	 * @memberof t3d
@@ -3925,6 +3935,21 @@
 			this.min.set(minX, minY, minZ);
 			this.max.set(maxX, maxY, maxZ);
 			return this;
+		}
+
+		/**
+		 * Returns aMinimum Bounding Sphere for the box.
+		 * @param {t3d.Sphere} target — the result will be copied into this Sphere.
+		 * @return {t3d.Sphere}
+		 */
+		getBoundingSphere(target) {
+			if (this.isEmpty()) {
+				target.makeEmpty();
+			} else {
+				this.getCenter(target.center);
+				target.radius = this.getSize(_vec3_1$4).getLength() * 0.5;
+			}
+			return target;
 		}
 
 		/**
@@ -4071,6 +4096,8 @@
 			return this;
 		}
 	}
+	const _points = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+	const _vec3_1$4 = new Vector3();
 
 	// triangle centered vertices
 

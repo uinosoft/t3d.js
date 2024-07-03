@@ -39,6 +39,7 @@
 		import { VertexTangentsHelper } from 't3d/addons/objects/VertexTangentsHelper.js';
 		import { BoxHelper } from 't3d/addons/objects/BoxHelper.js';
 		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
+		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
 		import { AxisHelper } from 't3d/addons/objects/AxisHelper.js';
 
 		let width = window.innerWidth || 2;
@@ -49,6 +50,7 @@
 		let box = null;
 		let root = null;
 		const box3 = new t3d.Box3(new t3d.Vector3(20, -10, -10), new t3d.Vector3(40, 10, 10));
+		const sphere = new t3d.Sphere();
 
 		const canvas = document.createElement('canvas');
 		canvas.width = width;
@@ -120,6 +122,9 @@
 		const _boxHelper = new Box3Helper(box3);
 		scene.add(_boxHelper);
 
+		const _sphereHelper = new SphereHelper(sphere, 0x00ffff);
+		scene.add(_sphereHelper);
+
 		const directionalLight = new t3d.DirectionalLight(0xbbbbff, 0.5);
 		directionalLight.position.set(0, 30, 100);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
@@ -142,6 +147,7 @@
 			controller.update();
 
 			box3.max.y = Math.sin(count * 0.001) * 5 + 5;
+			box3.getBoundingSphere(sphere);
 			root && (root.euler.y = count * 0.001);
 			vnh && vnh.update();
 			vth && vth.update();

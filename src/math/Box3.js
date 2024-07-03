@@ -1,16 +1,5 @@
 import { Vector3 } from './Vector3.js';
 
-const _points = [
-	new Vector3(),
-	new Vector3(),
-	new Vector3(),
-	new Vector3(),
-	new Vector3(),
-	new Vector3(),
-	new Vector3(),
-	new Vector3()
-];
-
 /**
  * Represents an axis-aligned bounding box (AABB) in 3D space.
  * @memberof t3d
@@ -134,6 +123,22 @@ class Box3 {
 		this.max.set(maxX, maxY, maxZ);
 
 		return this;
+	}
+
+	/**
+	 * Returns aMinimum Bounding Sphere for the box.
+	 * @param {t3d.Sphere} target — the result will be copied into this Sphere.
+	 * @return {t3d.Sphere}
+	 */
+	getBoundingSphere(target) {
+		if (this.isEmpty()) {
+			target.makeEmpty();
+		} else {
+			this.getCenter(target.center);
+			target.radius = this.getSize(_vec3_1).getLength() * 0.5;
+		}
+
+		return target;
 	}
 
 	/**
@@ -290,6 +295,19 @@ class Box3 {
 	}
 
 }
+
+const _points = [
+	new Vector3(),
+	new Vector3(),
+	new Vector3(),
+	new Vector3(),
+	new Vector3(),
+	new Vector3(),
+	new Vector3(),
+	new Vector3()
+];
+
+const _vec3_1 = new Vector3();
 
 // triangle centered vertices
 

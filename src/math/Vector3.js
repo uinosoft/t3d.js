@@ -44,6 +44,19 @@ class Vector3 {
 	}
 
 	/**
+	 * Set the x, y and z values of this vector both equal to scalar.
+	 * @param {Number} scalar
+	 * @return {t3d.Vector3}
+	 */
+	setScalar(scalar) {
+		this.x = scalar;
+		this.y = scalar;
+		this.z = scalar;
+
+		return this;
+	}
+
+	/**
 	 * If this vector's x, y or z value is greater than v's x, y or z value, replace that value with the corresponding min value.
 	 * @param {t3d.Vector3} v
 	 * @return {t3d.Vector3}

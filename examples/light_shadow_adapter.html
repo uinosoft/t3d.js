@@ -34,6 +34,7 @@
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 		import { ShadowAdapter } from 't3d/addons/math/ShadowAdapter.js';
 		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
+		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -109,13 +110,13 @@
 		shadowBox.min.set(-10000, 0, -10000);
 		shadowBox.max.set(10000, 200, 10000);
 
+		const lightSphere = new t3d.Sphere();
+
 		const boxHelper = new Box3Helper(shadowBox, 0xffff00);
 		scene.add(boxHelper);
 
-		const debugSphere = new t3d.Mesh(new t3d.SphereGeometry(1, 16, 10), new t3d.BasicMaterial());
-		debugSphere.material.diffuse.setRGB(0.6, 1, 0.8);
-		debugSphere.material.drawMode = t3d.DRAW_MODE.LINE_STRIP;
-		scene.add(debugSphere);
+		const sphereHelper = new SphereHelper(lightSphere, 0x00ffff);
+		scene.add(sphereHelper);
 
 		const frustumArray = new Float32Array([
 			0, 0, 0, 0, 0, 0,
@@ -149,8 +150,6 @@
 
 		// gui
 		const params = { phi: 45, theta: 45, shadowBox: true, distance: 2000, helper: false, debug: false };
-
-		const lightSphere = new t3d.Sphere();
 
 		const gui = new GUI();
 		const adapterFolder = gui.addFolder('ShadowAdapter');
@@ -203,6 +202,7 @@
 			// helpers
 
 			boxHelper.visible = params.helper;
+			sphereHelper.visible = params.helper;
 
 			pointContainer.children.forEach(point => point.visible = false);
 			if (params.debug && debugPolygons) {
@@ -221,10 +221,6 @@
 					}
 				});
 			}
-
-			debugSphere.visible = params.helper;
-			debugSphere.position.copy(lightSphere.center);
-			debugSphere.scale.set(lightSphere.radius, lightSphere.radius, lightSphere.radius);
 		
 			directionalLightHelper.visible = params.helper;
 			directionalLightHelper.update();

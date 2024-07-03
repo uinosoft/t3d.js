@@ -29,6 +29,7 @@
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
+		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 
 		let width = window.innerWidth || 2;
@@ -120,23 +121,13 @@
 
 		// box3 helper
 
-		const box3 = geometry.boundingBox;
-
-		const boxHelper = new Box3Helper(box3);
+		const boxHelper = new Box3Helper(geometry.boundingBox);
 		mesh.add(boxHelper);
 
-		// bounding sphere helper
+		// sphere helper
 
-		const sphereMath = geometry.boundingSphere;
-
-		const sphereMat = new t3d.BasicMaterial();
-		sphereMat.transparent = true;
-		sphereMat.opacity = 0.5;
-
-		const sphereGeo = new t3d.SphereGeometry(sphereMath.radius, 32, 32);
-		const sphere = new t3d.Mesh(sphereGeo, sphereMat);
-		sphere.position = sphereMath.center;
-		mesh.add(sphere);
+		const sphereHelper = new SphereHelper(geometry.boundingSphere, 0x00ffff);
+		mesh.add(sphereHelper);
 
 		// Set up dat.GUI to control targets
 
@@ -167,9 +158,9 @@
 
 		gui.add(params, 'BoundingSphere').onChange(value => {
 			if (value) {
-				sphere.visible = true;
+				sphereHelper.visible = true;
 			} else {
-				sphere.visible = false;
+				sphereHelper.visible = false;
 			}
 		});
 
