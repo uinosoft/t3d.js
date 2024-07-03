@@ -108,3 +108,24 @@ export function cloneJson(obj) {
 
 	return newObj;
 }
+
+export function clientWaitAsync( gl, sync, flags = 0, interval = 4) {
+	return new Promise( function ( resolve, reject ) {
+		
+		function check() {
+			switch ( gl.clientWaitSync( sync, flags, 0 ) ) {
+				case gl.WAIT_FAILED:
+					reject();
+					break;
+				case gl.TIMEOUT_EXPIRED:
+					setTimeout( check, interval );
+					break;
+				default:
+					resolve();
+					break;
+			}
+		}
+
+		setTimeout( check, interval );
+	} );
+}

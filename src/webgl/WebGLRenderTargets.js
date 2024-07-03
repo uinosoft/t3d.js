@@ -1,5 +1,5 @@
 import { ATTACHMENT, TEXTURE_FILTER } from '../const.js';
-import { isPowerOfTwo } from '../base.js';
+import { isPowerOfTwo, clientWaitAsync } from '../base.js';
 import { PropertyMap } from '../render/PropertyMap.js';
 
 class WebGLRenderTargets extends PropertyMap {
@@ -206,6 +206,48 @@ class WebGLRenderTargets extends PropertyMap {
 			}
 		} else {
 			console.warn('WebGLRenderTargets.readRenderTargetPixels: readPixels from renderTarget failed. Framebuffer not bound or texture not attached.');
+		}
+	}
+
+	async readRenderTargetPixelsAsync(x, y, width, height, buffer){
+		const gl = this._gl;
+		const state = this._state;
+		const constants = this._constants;
+
+		const renderTarget = state.currentRenderTarget;
+
+		if (renderTarget && renderTarget.texture) {
+			if ((x >= 0 && x <= (renderTarget.width - width)) && (y >= 0 && y <= (renderTarget.height - height))) {
+				const glType = constants.getGLType(renderTarget.texture.type);
+				const glFormat = constants.getGLFormat(renderTarget.texture.format);
+
+				const buf =  gl.createBuffer();
+				gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buf);
+				gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.STREAM_READ);
+				gl.readPixels(x, y, width, height, glFormat, glType, 0);
+				gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+
+				const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+				if (!sync) {
+					return Promise.reject('WebGLRenderTargets.readRenderTargetPixelsAsync: readPixelsAsync from renderTarget failed. Sync not created.');
+				}
+
+				gl.flush();
+
+				try{
+					await clientWaitAsync(gl, sync, 0, 4);
+					gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buf);
+					gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buffer);
+				} finally {
+					gl.deleteSync(sync);
+					gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+					gl.deleteBuffer(buf);
+				}
+
+				return buffer;
+			}
+		} else {
+			return Promise.reject('WebGLRenderTargets.readRenderTargetPixels: readPixels from renderTarget failed. Framebuffer not bound or texture not attached.');
 		}
 	}
 
