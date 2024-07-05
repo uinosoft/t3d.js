@@ -80,6 +80,7 @@
 		"material_shader_grid",
 		"material_shader_extend",
 		"material_shader_fakeInterior",
+		"material_shader_background",
 		"material_flatshading",
 		"material_vertexcolors",
 		"material_alphamask",
