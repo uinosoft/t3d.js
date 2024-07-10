@@ -1,4 +1,4 @@
-import { Vector3, Spherical, Plane, Box3 } from 't3d';
+import { Vector3, Spherical, Plane } from 't3d';
 
 class ShadowAdapter {
 
@@ -80,27 +80,13 @@ class ShadowAdapter {
 
 		// Compute the AABB bounding boxes for all intersections.
 
-		_box3_1.makeEmpty();
-
-		curPolygons.forEach(polygon => {
-			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
-				_box3_1.expandByPoint(polygon.vertices[i]);
-			}
-		});
-
-		// Calculate the smallest bounding sphere through the bounding box.
-
 		out.makeEmpty();
-		_box3_1.getCenter(out.center);
-		let maxRadiusSq = 0;
+
 		curPolygons.forEach(polygon => {
 			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
-				maxRadiusSq = Math.max(maxRadiusSq, out.center.distanceToSquared(polygon.vertices[i]));
+				out.expandByPoint(polygon.vertices[i]);
 			}
 		});
-		out.radius = Math.sqrt(maxRadiusSq);
-
-		polygonIndex = 0;
 
 		return curPolygons;
 	}
@@ -172,7 +158,6 @@ class ShadowAdapter {
 }
 
 const _vec3_1 = new Vector3();
-const _box3_1 = new Box3();
 
 const spherical = new Spherical();
 
