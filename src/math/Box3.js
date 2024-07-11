@@ -126,6 +126,26 @@ class Box3 {
 	}
 
 	/**
+	 * Clamps the point within the bounds of this box.
+	 * @param {t3d.Vector3} point - Vector3 to clamp.
+	 * @param {t3d.Vector3} target - Vector3 to store the result in.
+	 * @return {t3d.Vector3}
+	 */
+	clampPoint(point, target) {
+		return target.copy(point).min(this.max).max(this.min);
+	}
+
+	/**
+	 * Returns the distance from any edge of this box to the specified point.
+	 * If the point lies inside of this box, the distance will be 0.
+	 * @param {t3d.Vector3} point - Vector3 to measure the distance to.
+	 * @return {Number}
+	 */
+	distanceToPoint(point) {
+		return this.clampPoint(point, _vec3_1).distanceTo(point);
+	}
+
+	/**
 	 * Returns aMinimum Bounding Sphere for the box.
 	 * @param {t3d.Sphere} target — the result will be copied into this Sphere.
 	 * @return {t3d.Sphere}

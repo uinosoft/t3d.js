@@ -278,6 +278,18 @@ class Vector3 {
 	}
 
 	/**
+	 * Sets this vector to the scale elements of the transformation matrix m.
+	 * @param {t3d.Matrix4} m
+	 * @return {t3d.Vector3}
+	 */
+	setFromMatrixScale(m) {
+		const sx = this.setFromMatrixColumn(m, 0).getLength();
+		const sy = this.setFromMatrixColumn(m, 1).getLength();
+		const sz = this.setFromMatrixColumn(m, 2).getLength();
+		return this.set(sx, sy, sz);
+	}
+
+	/**
 	 * Sets this vector's x, y and z components from index column of matrix.
 	 * @param {t3d.Matrix3} m
 	 * @param {Number} index
@@ -610,6 +622,22 @@ class Matrix4 {
 		te[12] = me[12]; te[13] = me[13]; te[14] = me[14]; te[15] = me[15];
 
 		return this;
+	}
+
+	/**
+	 * Set the upper 3x3 elements of this matrix to the values of the Matrix3 m.
+	 * @param {t3d.Matrix3} m
+	 * @return {t3d.Matrix4}
+	 */
+	setFromMatrix3(m) {
+		const me = m.elements;
+
+		return this.set(
+			me[0], me[3], me[6], 0,
+			me[1], me[4], me[7], 0,
+			me[2], me[5], me[8], 0,
+			0, 0, 0, 1
+		);
 	}
 
 	/**
@@ -4171,6 +4199,26 @@ class Box3 {
 	}
 
 	/**
+	 * Clamps the point within the bounds of this box.
+	 * @param {t3d.Vector3} point - Vector3 to clamp.
+	 * @param {t3d.Vector3} target - Vector3 to store the result in.
+	 * @return {t3d.Vector3}
+	 */
+	clampPoint(point, target) {
+		return target.copy(point).min(this.max).max(this.min);
+	}
+
+	/**
+	 * Returns the distance from any edge of this box to the specified point.
+	 * If the point lies inside of this box, the distance will be 0.
+	 * @param {t3d.Vector3} point - Vector3 to measure the distance to.
+	 * @return {Number}
+	 */
+	distanceToPoint(point) {
+		return this.clampPoint(point, _vec3_1$4).distanceTo(point);
+	}
+
+	/**
 	 * Returns aMinimum Bounding Sphere for the box.
 	 * @param {t3d.Sphere} target — the result will be copied into this Sphere.
 	 * @return {t3d.Sphere}
@@ -5836,6 +5884,34 @@ class Sphere {
 
 	/**
 	 * Computes the minimum bounding sphere for an array of points.
+	 * If optionalCenteris given, it is used as the sphere's center.
+	 * Otherwise, the center of the axis-aligned bounding box encompassing points is calculated.
+	 * @param {t3d.Vector3[]} points - an Array of Vector3 positions.
+	 * @param {t3d.Vector3} [optionalCenter] - the center of the sphere.
+	 * @return {t3d.Sphere}
+	 */
+	setFromPoints(points, optionalCenter) {
+		const center = this.center;
+
+		if (optionalCenter !== undefined) {
+			center.copy(optionalCenter);
+		} else {
+			_box3_1.setFromPoints(points).getCenter(center);
+		}
+
+		let maxRadiusSq = 0;
+
+		for (let i = 0, il = points.length; i < il; i++) {
+			maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(points[i]));
+		}
+
+		this.radius = Math.sqrt(maxRadiusSq);
+
+		return this;
+	}
+
+	/**
+	 * Computes the minimum bounding sphere for an array of points.
 	 * @param {Number[]} array - an Array of Vector3 positions.
 	 * @param {Number} [gap=3] - array gap.
 	 * @param {Number} [offset=0] - array offset.
@@ -5904,6 +5980,25 @@ class Sphere {
 		this.radius = -1;
 
 		return this;
+	}
+
+	/**
+	 * Checks to see if the sphere contains the provided point inclusive of the surface of the sphere.
+	 * @param {t3d.Vector3} point - The point to check for containment.
+	 * @return {Boolean}
+	 */
+	containsPoint(point) {
+		return (point.distanceToSquared(this.center) <= (this.radius * this.radius));
+	}
+
+	/**
+	 * Returns the closest distance from the boundary of the sphere to the point.
+	 * If the sphere contains the point, the distance will be negative.
+	 * @param {t3d.Vector3} point - The point to calculate the distance to.
+	 * @return {Number}
+	 */
+	distanceToPoint(point) {
+		return (point.distanceTo(this.center) - this.radius);
 	}
 
 	/**

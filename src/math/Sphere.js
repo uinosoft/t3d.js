@@ -34,6 +34,34 @@ class Sphere {
 
 	/**
 	 * Computes the minimum bounding sphere for an array of points.
+	 * If optionalCenteris given, it is used as the sphere's center.
+	 * Otherwise, the center of the axis-aligned bounding box encompassing points is calculated.
+	 * @param {t3d.Vector3[]} points - an Array of Vector3 positions.
+	 * @param {t3d.Vector3} [optionalCenter] - the center of the sphere.
+	 * @return {t3d.Sphere}
+	 */
+	setFromPoints(points, optionalCenter) {
+		const center = this.center;
+
+		if (optionalCenter !== undefined) {
+			center.copy(optionalCenter);
+		} else {
+			_box3_1.setFromPoints(points).getCenter(center);
+		}
+
+		let maxRadiusSq = 0;
+
+		for (let i = 0, il = points.length; i < il; i++) {
+			maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(points[i]));
+		}
+
+		this.radius = Math.sqrt(maxRadiusSq);
+
+		return this;
+	}
+
+	/**
+	 * Computes the minimum bounding sphere for an array of points.
 	 * @param {Number[]} array - an Array of Vector3 positions.
 	 * @param {Number} [gap=3] - array gap.
 	 * @param {Number} [offset=0] - array offset.
@@ -102,6 +130,25 @@ class Sphere {
 		this.radius = -1;
 
 		return this;
+	}
+
+	/**
+	 * Checks to see if the sphere contains the provided point inclusive of the surface of the sphere.
+	 * @param {t3d.Vector3} point - The point to check for containment.
+	 * @return {Boolean}
+	 */
+	containsPoint(point) {
+		return (point.distanceToSquared(this.center) <= (this.radius * this.radius));
+	}
+
+	/**
+	 * Returns the closest distance from the boundary of the sphere to the point.
+	 * If the sphere contains the point, the distance will be negative.
+	 * @param {t3d.Vector3} point - The point to calculate the distance to.
+	 * @return {Number}
+	 */
+	distanceToPoint(point) {
+		return (point.distanceTo(this.center) - this.radius);
 	}
 
 	/**

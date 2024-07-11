@@ -105,6 +105,22 @@ class Matrix4 {
 	}
 
 	/**
+	 * Set the upper 3x3 elements of this matrix to the values of the Matrix3 m.
+	 * @param {t3d.Matrix3} m
+	 * @return {t3d.Matrix4}
+	 */
+	setFromMatrix3(m) {
+		const me = m.elements;
+
+		return this.set(
+			me[0], me[3], me[6], 0,
+			me[1], me[4], me[7], 0,
+			me[2], me[5], me[8], 0,
+			0, 0, 0, 1
+		);
+	}
+
+	/**
 	 * Sets this matrix as a translation transform.
 	 * @param {Number} x - the amount to translate in the X axis.
 	 * @param {Number} y - the amount to translate in the Y axis.

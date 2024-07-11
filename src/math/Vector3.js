@@ -273,6 +273,18 @@ class Vector3 {
 	}
 
 	/**
+	 * Sets this vector to the scale elements of the transformation matrix m.
+	 * @param {t3d.Matrix4} m
+	 * @return {t3d.Vector3}
+	 */
+	setFromMatrixScale(m) {
+		const sx = this.setFromMatrixColumn(m, 0).getLength();
+		const sy = this.setFromMatrixColumn(m, 1).getLength();
+		const sz = this.setFromMatrixColumn(m, 2).getLength();
+		return this.set(sx, sy, sz);
+	}
+
+	/**
 	 * Sets this vector's x, y and z components from index column of matrix.
 	 * @param {t3d.Matrix3} m
 	 * @param {Number} index
