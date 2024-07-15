@@ -1,14 +1,16 @@
-import { Vector3, Spherical, Plane, Box3 } from 't3d';
+import { Vector3, Spherical, Plane, Box3, Matrix4, Frustum } from 't3d';
 
 class ShadowAdapter {
 
 	/**
 	 * @param {Box3} box3
 	 * @param {Sphere} out
+	 * @param {Matrix4} [matrix]
 	 */
-	static getSphereByBox3(box3, out) {
+	static getSphereByBox3(box3, out, matrix = _matrix4_1) {
 		box3.getCenter(out.center);
 		out.radius = out.center.distanceTo(box3.max);
+		out.center.applyMatrix4(matrix);
 	}
 
 	/**
@@ -35,10 +37,18 @@ class ShadowAdapter {
 	 * @param {Number} near
 	 * @param {Number} distance
 	 * @param {Sphere} out
+	 * @param {Matrix4} matrix
 	 * @return {Polygon[]}
 	 */
-	static getSphereByBox3AndCamera(box3, camera, near, distance, out) {
-		if (!camera.frustum.intersectsBox(box3)) {
+	static getSphereByBox3AndCamera(box3, camera, near, distance, out, matrix = _matrix4_1) {
+		_matrix4_2.getInverse(matrix).multiply(camera.worldMatrix);
+		_matrix4_3.copy(_matrix4_2).inverse();
+
+		for (let i = 0; i < camera.frustum.planes.length; i++) {
+			frustumPlanes.planes[i].copy(camera.frustum.planes[i]).applyMatrix4(_matrix4_4.copy(matrix).inverse());
+		}
+
+		if (!frustumPlanes.intersectsBox(box3)) {
 			return;
 		}
 
@@ -49,9 +59,8 @@ class ShadowAdapter {
 		// Cutting the polygons of shadow box using the frustum.(Not including the near and far planes)
 
 		let curPolygons = boxPolygons;
-		const frustumPlanes = camera.frustum.planes;	// The near plane and the original plane are in the last two elements of the array.
-		for (let i = 0, l = frustumPlanes.length - 2; i < l; i++) {
-			const plane = frustumPlanes[i];
+		for (let i = 0, l = frustumPlanes.planes.length - 2; i < l; i++) {
+			const plane = frustumPlanes.planes[i];
 			curPolygons = clipPolygons(plane, curPolygons);
 		}
 
@@ -61,7 +70,7 @@ class ShadowAdapter {
 
 		curPolygons.forEach(polygon => {
 			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
-				_vec3_1.copy(polygon.vertices[i]).applyMatrix4(camera.viewMatrix);
+				_vec3_1.copy(polygon.vertices[i]).applyMatrix4(_matrix4_3);
 				minZ = Math.max(minZ, _vec3_1.z);
 			}
 		});
@@ -72,7 +81,7 @@ class ShadowAdapter {
 
 		farPlane.constant = Math.max(Math.abs(minZ), near) + distance;
 		farPlane.normal.set(0, 0, 1);
-		farPlane.applyMatrix4(camera.worldMatrix);
+		farPlane.applyMatrix4(_matrix4_2);
 
 		// Using the far plane determined in the previous step, cut the curPolygons.
 
@@ -177,10 +186,16 @@ const _box3_1 = new Box3();
 const spherical = new Spherical();
 
 const farPlane = new Plane();
+const frustumPlanes = new Frustum();
 
 const _defaultUp = new Vector3(0, 1, 0);
 
 const _clipVerticesBuffer = new Array(24);
+
+const _matrix4_1 = new Matrix4();
+const _matrix4_2 = new Matrix4();
+const _matrix4_3 = new Matrix4();
+const _matrix4_4 = new Matrix4();
 
 // 3 --- 0  clipVertices.near/far order
 // |     |
