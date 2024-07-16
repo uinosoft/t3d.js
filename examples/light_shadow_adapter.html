@@ -35,6 +35,7 @@
 		import { ShadowAdapter } from 't3d/addons/math/ShadowAdapter.js';
 		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
 		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
+		import { CameraHelper } from 't3d/addons/objects/CameraHelper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -65,11 +66,11 @@
 		const camera = new t3d.Camera();
 		camera.position.set(0, 800, 2000);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 500, 50000);
 		scene.add(camera);
 
 		const debugCamera = new t3d.Camera();
-		debugCamera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
+		debugCamera.setPerspective(60 / 180 * Math.PI, width / height, 500, 100000);
 		scene.add(debugCamera);
 
 		const controller = new OrbitControls(camera, canvas);
@@ -118,29 +119,8 @@
 		const sphereHelper = new SphereHelper(lightSphere, 0x00ffff);
 		scene.add(sphereHelper);
 
-		const frustumArray = new Float32Array([
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0
-		]);
-		const frustumBuffer = new t3d.Buffer(frustumArray, 3);
-		const frustumHelper = new t3d.Mesh(new t3d.Geometry(), new t3d.BasicMaterial());
-		frustumHelper.geometry.addAttribute('a_Position', new t3d.Attribute(frustumBuffer));
-		frustumHelper.material.diffuse.setRGB(0.6, 0.6, 1);
-		frustumHelper.material.drawMode = t3d.DRAW_MODE.LINES;
-		camera.add(frustumHelper);
-		const vector3 = new t3d.Vector3();
-		function updateFrustumBuffer() {
-			vector3.set(1, 1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 3);
-			vector3.set(1, -1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 9);
-			vector3.set(-1, -1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 15);
-			vector3.set(-1, 1, 1).applyMatrix4(camera.projectionMatrixInverse).toArray(frustumArray, 21);
-			frustumBuffer.version++;
-			frustumHelper.geometry.computeBoundingBox();
-			frustumHelper.geometry.computeBoundingSphere();
-		}
-		updateFrustumBuffer();
+		const cameraHelper = new CameraHelper(camera);
+		camera.add(cameraHelper);
 
 		const debugPointGeometry = new t3d.SphereGeometry(100, 8, 6);
 		const debugPointMaterial = new t3d.BasicMaterial();
@@ -203,6 +183,7 @@
 
 			boxHelper.visible = params.helper;
 			sphereHelper.visible = params.helper;
+			cameraHelper.visible = params.helper;
 
 			pointContainer.children.forEach(point => point.visible = false);
 			if (params.debug && debugPolygons) {
@@ -235,10 +216,10 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
-			debugCamera.setPerspective(45 / 180 * Math.PI, width / height, 1, 50000);
-
-			updateFrustumBuffer();
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 500, 50000);
+			debugCamera.setPerspective(60 / 180 * Math.PI, width / height, 500, 100000);
+		
+			cameraHelper.update();
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}

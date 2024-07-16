@@ -108,7 +108,7 @@
 		"probes_reflection"
 	],
 	"math": [
-		"math_frustumtest",
+		"math_frustum_test",
 		"math_curve",
 		"math_curve_motion",
 		"math_octree"

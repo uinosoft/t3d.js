@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - frustum test</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - frustum test
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { CameraHelper } from 't3d/addons/objects/CameraHelper.js';
+		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
+		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
+		directionalLight.position.set(40, 40, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(30, 30, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, -5);
+
+		// gui
+
+		const params = { testType: 'Box' };
+		const gui = new GUI();
+		gui.add(params, 'testType', ['Box', 'Sphere']);
+
+		// frustum test
+
+		const sphereGeometry = new t3d.SphereGeometry(1, 20, 20);
+		const sphereMaterial = new t3d.PhongMaterial();
+		const sphereMesh = new t3d.Mesh(sphereGeometry, sphereMaterial);
+		scene.add(sphereMesh);
+
+		const testCamera = new t3d.Camera();
+		testCamera.position.set(0, 0, 0);
+		testCamera.lookAt(new t3d.Vector3(0, 0, -1), new t3d.Vector3(0, 1, 0));
+		testCamera.setPerspective(45 / 180 * Math.PI, 16 / 9, 2, 10);
+		scene.add(testCamera);
+
+		const cameraHelper = new CameraHelper(testCamera);
+		testCamera.add(cameraHelper);
+
+		const _frustum = new t3d.Frustum();
+		const _sphere = new t3d.Sphere();
+		const _box = new t3d.Box3();
+
+		testCamera.updateMatrix();
+		_frustum.copy(testCamera.frustum);
+
+		const box3Helper = new Box3Helper(_box);
+		scene.add(box3Helper);
+		const sphereHelper = new SphereHelper(_sphere);
+		scene.add(sphereHelper);
+
+		//
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			// rotate sphere
+			sphereMesh.position.x = 8 * Math.sin(count / 500);
+			sphereMesh.position.z = 8 * Math.cos(count / 500);
+
+			sphereMesh.updateMatrix();
+			_box.copy(sphereGeometry.boundingBox).applyMatrix4(sphereMesh.worldMatrix);
+			_sphere.copy(sphereGeometry.boundingSphere).applyMatrix4(sphereMesh.worldMatrix);
+
+			box3Helper.visible = params.testType === 'Box';
+			sphereHelper.visible = params.testType === 'Sphere';
+
+			if (sphereHelper.visible && _frustum.intersectsSphere(_sphere)) {
+				sphereMaterial.diffuse.setHex(0xff0000);
+			} else if (box3Helper.visible && _frustum.intersectsBox(_box)) {
+				sphereMaterial.diffuse.setHex(0xff0000);
+			} else {
+				sphereMaterial.diffuse.setHex(0xffffff);
+			}
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
