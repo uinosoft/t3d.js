@@ -28,14 +28,15 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
-		import { ShadowAdapter } from 't3d/addons/math/ShadowAdapter.js';
+		import { LightShadowAdapter } from 't3d/addons/lights/LightShadowAdapter.js';
+		import { LightShadowAdapterHelper } from 't3d/addons/objects/LightShadowAdapterHelper.js';
 		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
-		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
 		import { CameraHelper } from 't3d/addons/objects/CameraHelper.js';
+		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { AxisHelper } from 't3d/addons/objects/AxisHelper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -57,19 +58,16 @@
 		directionalLight.shadow.mapSize.set(2048, 2048);
 		directionalLight.shadow.bias = 0.0013;
 		directionalLight.shadow.normalBias = 4;
-		directionalLight.shadow.frustumEdgeFalloff = 0.5;
+		directionalLight.shadow.frustumEdgeFalloff = -0.5;
 		scene.add(directionalLight);
 		
-		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 100);
-		directionalLight.add(directionalLightHelper);
-
 		const camera = new t3d.Camera();
 		camera.position.set(0, 800, 2000);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 500, 50000);
 		scene.add(camera);
 
 		const debugCamera = new t3d.Camera();
+		debugCamera.position.set(2000, 5000, 5000);
 		debugCamera.setPerspective(60 / 180 * Math.PI, width / height, 500, 100000);
 		scene.add(debugCamera);
 
@@ -78,7 +76,6 @@
 
 		const debugController = new OrbitControls(debugCamera, canvas);
 		debugController.enablePan = true;
-		debugController.enabled = false;
 
 		const geometries = [], offsetMatrix = new t3d.Matrix4();
 		for (let i = 0; i < 2000; i++) {
@@ -107,52 +104,101 @@
 		plane.receiveShadow = true;
 		scene.add(plane);
 
+		// shadow adapter
+
 		const shadowBox = new t3d.Box3();
 		shadowBox.min.set(-10000, 0, -10000);
 		shadowBox.max.set(10000, 200, 10000);
 
-		const lightSphere = new t3d.Sphere();
+		const shadowAdapter = new LightShadowAdapter(directionalLight);
+		shadowAdapter.bindBox.copy(shadowBox);
+		shadowAdapter.bindCamera = camera;
+		shadowAdapter.bindCameraDistance = 3500;
+
+		// helpers
+
+		const shadowAdapterHelper = new LightShadowAdapterHelper(shadowAdapter);
+		scene.add(shadowAdapterHelper);
 
 		const boxHelper = new Box3Helper(shadowBox, 0xffff00);
 		scene.add(boxHelper);
 
-		const sphereHelper = new SphereHelper(lightSphere, 0x00ffff);
-		scene.add(sphereHelper);
-
 		const cameraHelper = new CameraHelper(camera);
 		camera.add(cameraHelper);
 
-		const debugPointGeometry = new t3d.SphereGeometry(100, 8, 6);
-		const debugPointMaterial = new t3d.BasicMaterial();
-		debugPointMaterial.diffuse.setHex(0xff0000);
-		const pointContainer = new t3d.Object3D();
-		scene.add(pointContainer);
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 200);
+		directionalLight.add(directionalLightHelper);
+
+		const axisHelper = new AxisHelper(200);
+		directionalLight.add(axisHelper);
 
 		// gui
-		const params = { phi: 45, theta: 45, shadowBox: true, distance: 2000, helper: false, debug: false };
 
-		const gui = new GUI();
-		const adapterFolder = gui.addFolder('ShadowAdapter');
-		adapterFolder.add(params, 'phi', 0, 90, 0.1);
-		adapterFolder.add(params, 'theta', 0, 360, 0.1);
-		adapterFolder.add(params, 'distance', 0, 4000, 1);
-		adapterFolder.add(params, 'shadowBox');
-		adapterFolder.add(params, 'helper');
-		adapterFolder.add(params, 'debug').onChange(value => {
+		const params = { type: 'BOX3+CAMERA', phi: 45, theta: 45, sizeFactor: 1.05, depthFactor: 1.1, nearFactor: 0.1, debug: true };
+
+		shadowAdapter.shadowSizeFunction = function(size) { return size * params.sizeFactor };
+		shadowAdapter.shadowDepthFunction = function(depth, size) { return Math.max(depth * params.depthFactor, size * 0.8) };
+		shadowAdapter.shadowNearFunction = function(depth) { return depth * params.nearFactor };
+
+		function updateLightDirection() {
+			shadowAdapter.direction.setFromSphericalAngles(params.phi / 180 * Math.PI, params.theta / 180 * Math.PI);
+		}
+		updateLightDirection();
+
+		function setDebugger(value, sync = true) {
 			controller.enabled = !value;
 			debugController.enabled = value;
-			if (value) {
+			if (value && sync) {
 				debugCamera.position.copy(camera.position);
 				debugCamera.quaternion.copy(camera.quaternion);
 				debugController.target.copy(controller.target);
 			}
-		});
-		adapterFolder.add(lightSphere, 'radius').name('sphere radius').listen().disable();
-		const shadowFolder = gui.addFolder('Shadow');
+
+			shadowAdapterHelper.visible = value;
+			boxHelper.visible = value;
+			cameraHelper.visible = value;
+			directionalLightHelper.visible = value;
+			axisHelper.visible = value;
+		}
+		setDebugger(params.debug, false);
+
+		const gui = new GUI();
+
+		const lightFolder = gui.addFolder('Light').onChange(updateLightDirection);
+		lightFolder.add(params, 'phi', 0.1, 90, 0.1);
+		lightFolder.add(params, 'theta', 0, 360, 0.1);
+
+		const shadowFolder = gui.addFolder('Shadow').close();
 		shadowFolder.add(directionalLight.shadow, 'bias', -0.02, 0.02, 0.0001);
 		shadowFolder.add(directionalLight.shadow, 'normalBias', -5, 5, 0.1);
-		shadowFolder.add(directionalLight.shadow, 'frustumEdgeFalloff', 0, 1, 0.01);
-		shadowFolder.close();
+		shadowFolder.add(directionalLight.shadow, 'frustumEdgeFalloff', -1, 1, 0.01);
+
+		const adapterFolder = gui.addFolder('Shadow Adapter');
+		adapterFolder.add(params, 'type', ['BOX3+CAMERA', 'BOX3', 'CAMERA']).onChange(value => {
+			if (value === 'BOX3+CAMERA') {
+				shadowAdapter.bindBox.copy(shadowBox);
+				shadowAdapter.bindCamera = camera;
+			} else if (value === 'BOX3') {
+				shadowAdapter.bindBox.copy(shadowBox);
+				shadowAdapter.bindCamera = null;
+			} else if (value === 'CAMERA') {
+				shadowAdapter.bindBox.makeEmpty();
+				shadowAdapter.bindCamera = camera;
+			}
+		});
+		adapterFolder.add(shadowAdapter, 'autoCorrectUp');
+		adapterFolder.add(shadowAdapter, 'bindCameraDistance', 0.1, 8000, 1);
+		const detailFolder = adapterFolder.addFolder('Detail').close();
+		detailFolder.add(params, 'sizeFactor', 1, 1.5, 0.01);
+		detailFolder.add(params, 'depthFactor', 1, 1.5, 0.01);
+		detailFolder.add(params, 'nearFactor', 0, 1, 0.01);
+		detailFolder.add(shadowAdapter.shadowOffsetFactor, 'x', 0, 1, 0.1).name('offsetFactorY');
+		detailFolder.add(shadowAdapter.shadowOffsetFactor, 'y', 0, 1, 0.1).name('offsetFactorZ');
+
+		const debugFolder = gui.addFolder('Debug');
+		debugFolder.add(params, 'debug').onChange(setDebugger);
+
+		//
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -160,50 +206,9 @@
 			controller.update();
 			debugController.update();
 
-			// update camera matrix before calculate shadow
-			camera.updateMatrix();
+			camera.updateMatrix(); // update camera matrix before calculate shadow
+			shadowAdapter.update();
 
-			// set shadow area
-
-			const useShadowDistance = params.distance > 0;
-			const useShadowBox = params.shadowBox;
-			let debugPolygons;
-
-			if (useShadowDistance && useShadowBox) {
-				debugPolygons = ShadowAdapter.getSphereByBox3AndCamera(shadowBox, camera, 1, params.distance, lightSphere);
-			} else if (useShadowDistance) {
-				ShadowAdapter.getSphereByCamera(camera, 1, params.distance, lightSphere);
-			} else if (useShadowBox) {
-				ShadowAdapter.getSphereByBox3(shadowBox, lightSphere);
-			}
-
-			ShadowAdapter.setDirectionalLight(directionalLight, params.phi / 180 * Math.PI, params.theta / 180 * Math.PI, lightSphere);
-
-			// helpers
-
-			boxHelper.visible = params.helper;
-			sphereHelper.visible = params.helper;
-			cameraHelper.visible = params.helper;
-
-			pointContainer.children.forEach(point => point.visible = false);
-			if (params.debug && debugPolygons) {
-				let pointIndex = 0;
-				debugPolygons.forEach(polygon => {
-					for (let i = 0; i < polygon.verticesIndex; i++) {
-						let point = pointContainer.children[pointIndex];
-						if (!point) {
-							point = new t3d.Mesh(debugPointGeometry, debugPointMaterial);
-							pointContainer.add(point);
-						}
-						point.position.copy(polygon.vertices[i]);
-						point.scale.set(lightSphere.radius / 10000, lightSphere.radius / 10000, lightSphere.radius / 10000);
-						point.visible = true;
-						pointIndex++;
-					}
-				});
-			}
-		
-			directionalLightHelper.visible = params.helper;
 			directionalLightHelper.update();
 
 			//

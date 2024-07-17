@@ -1,5 +1,8 @@
 import { Vector3, Spherical, Plane, Box3 } from 't3d';
 
+// deprecated since v0.3.1
+// console.warn('ShadowAdapter is deprecated. Please use "t3d/addons/lights/LightShadowAdapter" instead.');
+
 class ShadowAdapter {
 
 	/**
