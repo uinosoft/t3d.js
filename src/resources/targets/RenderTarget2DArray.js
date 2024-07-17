@@ -1,13 +1,13 @@
 import { RenderTargetBase } from './RenderTargetBase.js';
-import { Texture3D } from '../textures/Texture3D.js';
+import { Texture2DArray } from '../textures/Texture2DArray.js';
 import { ATTACHMENT } from '../../const.js';
 
 /**
- * Render Target that render to 3d texture.
+ * Render Target that render to 2d array texture.
  * @memberof t3d
  * @extends t3d.RenderTargetBase
  */
-class RenderTarget3D extends RenderTargetBase {
+class RenderTarget2DArray extends RenderTargetBase {
 
 	/**
 	 * @param {Number} width - The width of the render target.
@@ -21,7 +21,7 @@ class RenderTarget3D extends RenderTargetBase {
 
 		this._attachments = {};
 
-		this.attach(new Texture3D(), ATTACHMENT.COLOR_ATTACHMENT0);
+		this.attach(new Texture2DArray(), ATTACHMENT.COLOR_ATTACHMENT0);
 
 		/**
 		 * Specifies the layer.
@@ -43,11 +43,11 @@ class RenderTarget3D extends RenderTargetBase {
 	/**
 	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {t3d.Texture3D|t3d.RenderBuffer} target
+	 * @param  {t3d.Texture2DArray|t3d.RenderBuffer} target
 	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture3D) {
+		if (target.isTexture2DArray) {
 			if (target.image && target.image.rtt) {
 				if (target.image.width !== this.width || target.image.height !== this.height || target.image.depth !== this.depth) {
 					target.version++;
@@ -97,7 +97,7 @@ class RenderTarget3D extends RenderTargetBase {
 			for (const attachment in this._attachments) {
 				const target = this._attachments[attachment];
 
-				if (target.isTexture3D) {
+				if (target.isTexture2DArray) {
 					target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
 					target.version++;
 				} else {
@@ -109,20 +109,6 @@ class RenderTarget3D extends RenderTargetBase {
 		return changed;
 	}
 
-	/**
-	 * Dispose the render target.
-	 * @param {Boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
-	 */
-	dispose(disposeAttachments = true) {
-		super.dispose();
-
-		if (disposeAttachments) {
-			for (const attachment in this._attachments) {
-				this._attachments[attachment].dispose();
-			}
-		}
-	}
-
 }
 
 /**
@@ -130,15 +116,15 @@ class RenderTarget3D extends RenderTargetBase {
  * @type {Boolean}
  * @default true
  */
-RenderTarget3D.prototype.isRenderTarget3D = true;
+RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
 
-Object.defineProperties(RenderTarget3D.prototype, {
+Object.defineProperties(RenderTarget2DArray.prototype, {
 
 	texture: {
 
 		set: function(texture) {
 			if (texture) {
-				if (texture.isTexture3D) {
+				if (texture.isTexture2DArray) {
 					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
 				}
 			} else {
@@ -148,11 +134,11 @@ Object.defineProperties(RenderTarget3D.prototype, {
 
 		get: function() {
 			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture3D ? target : null;
+			return target.isTexture2DArray ? target : null;
 		}
 
 	}
 
 });
 
-export { RenderTarget3D };
+export { RenderTarget2DArray };

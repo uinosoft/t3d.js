@@ -12782,7 +12782,7 @@ class RenderTarget2D extends RenderTargetBase {
 	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture) {
+		if (target.isTexture2D) {
 			if (target.image && target.image.rtt) {
 				if (target.image.width !== this.width || target.image.height !== this.height) {
 					target.version++;
@@ -12820,7 +12820,7 @@ class RenderTarget2D extends RenderTargetBase {
 			for (const attachment in this._attachments) {
 				const target = this._attachments[attachment];
 
-				if (target.isTexture) {
+				if (target.isTexture2D) {
 					target.image = { rtt: true, data: null, width: this.width, height: this.height };
 					target.version++;
 				} else {
@@ -12861,7 +12861,7 @@ Object.defineProperties(RenderTarget2D.prototype, {
 
 		set: function(texture) {
 			if (texture) {
-				if (texture.isTexture) {
+				if (texture.isTexture2D) {
 					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
 				}
 			} else {
@@ -12871,7 +12871,222 @@ Object.defineProperties(RenderTarget2D.prototype, {
 
 		get: function() {
 			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture ? target : null;
+			return target.isTexture2D ? target : null;
+		}
+
+	}
+
+});
+
+/**
+ * Creates a 2d texture. (WebGL 2.0)
+ * @memberof t3d
+ * @extends t3d.TextureBase
+ */
+class Texture2DArray extends TextureBase {
+
+	constructor() {
+		super();
+
+		/**
+		 * Image data for this texture.
+		 * @type {Object}
+		 * @default null
+		 */
+		this.image = { data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]), width: 2, height: 2, depth: 2 };
+
+		/**
+		 * @default t3d.PIXEL_FORMAT.RED
+		 */
+		this.format = PIXEL_FORMAT.RED;
+
+		/**
+		 * @default t3d.TEXTURE_FILTER.NEAREST
+		 */
+		this.magFilter = TEXTURE_FILTER.NEAREST;
+
+		/**
+		 * @default t3d.TEXTURE_FILTER.NEAREST
+		 */
+		this.minFilter = TEXTURE_FILTER.NEAREST;
+
+		/**
+		 * @default false
+		 */
+		this.generateMipmaps = false;
+
+		/**
+		 * @default false
+		 */
+		this.flipY = false;
+
+		/**
+		 * @default 1
+		 */
+		this.unpackAlignment = 1;
+
+		/**
+		 * A set of all layers which need to be updated in the texture.
+		 * @type {Set}
+		 */
+		this.layerUpdates = new Set();
+	}
+
+	/**
+	 * Copy the given 2d texture into this texture.
+	 * @param {t3d.Texture2DArray} source - The 2d texture to be copied.
+	 * @return {t3d.Texture2DArray}
+	 */
+	copy(source) {
+		super.copy(source);
+
+		this.image = source.image;
+
+		return this;
+	}
+
+}
+
+/**
+ * @readonly
+ * @type {Boolean}
+ * @default true
+ */
+Texture2DArray.prototype.isTexture2DArray = true;
+
+/**
+ * Render Target that render to 2d array texture.
+ * @memberof t3d
+ * @extends t3d.RenderTargetBase
+ */
+class RenderTarget2DArray extends RenderTargetBase {
+
+	/**
+	 * @param {Number} width - The width of the render target.
+	 * @param {Number} height - The height of the render target.
+	 * @param {Number} depth - The depth of the render target.
+	 */
+	constructor(width, height, depth) {
+		super(width, height);
+
+		this.depth = depth;
+
+		this._attachments = {};
+
+		this.attach(new Texture2DArray(), ATTACHMENT.COLOR_ATTACHMENT0);
+
+		/**
+		 * Specifies the layer.
+		 * This is only available in WebGL2.
+		 * @type {Number}
+		 * @default 0
+		 */
+		this.activeLayer = 0;
+
+		/**
+		 * Specifies the active mipmap level.
+		 * This is only available in WebGL2.
+		 * @type {Number}
+		 * @default 0
+		 */
+		this.activeMipmapLevel = 0;
+	}
+
+	/**
+	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
+	 * Notice: For now, dynamic Attachment during rendering is not supported.
+	 * @param  {t3d.Texture2DArray|t3d.RenderBuffer} target
+	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 */
+	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
+		if (target.isTexture2DArray) {
+			if (target.image && target.image.rtt) {
+				if (target.image.width !== this.width || target.image.height !== this.height || target.image.depth !== this.depth) {
+					target.version++;
+					target.image.width = this.width;
+					target.image.height = this.height;
+					target.image.depth = this.depth;
+				}
+			} else {
+				target.version++;
+				target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
+			}
+		} else {
+			target.resize(this.width, this.height);
+		}
+
+		this._attachments[attachment] = target;
+	}
+
+	/**
+	 * Detach a texture(RTT) or renderbuffer.
+	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 */
+	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
+		delete this._attachments[attachment];
+	}
+
+	/**
+	 * Resize the render target.
+	 * @param {Number} width - The width of the render target.
+	 * @param {Number} height - The height of the render target.
+	 * @param {Number} depth - The depth of the render target.
+	 * @return {Boolean} - If size changed.
+	 */
+	resize(width, height, depth) {
+		let changed = false;
+
+		if (this.width !== width || this.height !== height || this.depth !== depth) {
+			this.width = width;
+			this.height = height;
+			this.depth = depth;
+			changed = true;
+		}
+
+		if (changed) {
+			this.dispose(false);
+
+			for (const attachment in this._attachments) {
+				const target = this._attachments[attachment];
+
+				if (target.isTexture2DArray) {
+					target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
+					target.version++;
+				} else {
+					target.resize(width, height);
+				}
+			}
+		}
+
+		return changed;
+	}
+
+}
+
+/**
+ * @readonly
+ * @type {Boolean}
+ * @default true
+ */
+RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
+
+Object.defineProperties(RenderTarget2DArray.prototype, {
+
+	texture: {
+
+		set: function(texture) {
+			if (texture) {
+				if (texture.isTexture2DArray) {
+					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+				}
+			} else {
+				this.detach(ATTACHMENT.COLOR_ATTACHMENT0);
+			}
+		},
+
+		get: function() {
+			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
+			return target.isTexture2DArray ? target : null;
 		}
 
 	}
@@ -13004,7 +13219,7 @@ class RenderTarget3D extends RenderTargetBase {
 	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture) {
+		if (target.isTexture3D) {
 			if (target.image && target.image.rtt) {
 				if (target.image.width !== this.width || target.image.height !== this.height || target.image.depth !== this.depth) {
 					target.version++;
@@ -13054,7 +13269,7 @@ class RenderTarget3D extends RenderTargetBase {
 			for (const attachment in this._attachments) {
 				const target = this._attachments[attachment];
 
-				if (target.isTexture) {
+				if (target.isTexture3D) {
 					target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
 					target.version++;
 				} else {
@@ -13095,7 +13310,7 @@ Object.defineProperties(RenderTarget3D.prototype, {
 
 		set: function(texture) {
 			if (texture) {
-				if (texture.isTexture) {
+				if (texture.isTexture3D) {
 					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
 				}
 			} else {
@@ -13105,7 +13320,7 @@ Object.defineProperties(RenderTarget3D.prototype, {
 
 		get: function() {
 			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture ? target : null;
+			return target.isTexture3D ? target : null;
 		}
 
 	}
@@ -13240,7 +13455,7 @@ class RenderTargetCube extends RenderTargetBase {
 	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture) {
+		if (target.isTextureCube) {
 			let changed = false;
 
 			for (let i = 0; i < 6; i++) {
@@ -13286,7 +13501,7 @@ class RenderTargetCube extends RenderTargetBase {
 			for (const attachment in this._attachments) {
 				const target = this._attachments[attachment];
 
-				if (target.isTexture) {
+				if (target.isTextureCube) {
 					for (let i = 0; i < 6; i++) {
 						target.images[i] = { rtt: true, data: null, width: this.width, height: this.height };
 					}
@@ -13327,7 +13542,7 @@ Object.defineProperties(RenderTargetCube.prototype, {
 
 		set: function(texture) {
 			if (texture) {
-				if (texture.isTexture) {
+				if (texture.isTextureCube) {
 					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
 				}
 			} else {
@@ -13337,88 +13552,12 @@ Object.defineProperties(RenderTargetCube.prototype, {
 
 		get: function() {
 			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture ? target : null;
+			return target.isTextureCube ? target : null;
 		}
 
 	}
 
 });
-
-/**
- * Creates a 2d texture. (WebGL 2.0)
- * @memberof t3d
- * @extends t3d.TextureBase
- */
-class Texture2DArray extends TextureBase {
-
-	constructor() {
-		super();
-
-		/**
-		 * Image data for this texture.
-		 * @type {Object}
-		 * @default null
-		 */
-		this.image = { data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]), width: 2, height: 2, depth: 2 };
-
-		/**
-		 * @default t3d.PIXEL_FORMAT.RED
-		 */
-		this.format = PIXEL_FORMAT.RED;
-
-		/**
-		 * @default t3d.TEXTURE_FILTER.NEAREST
-		 */
-		this.magFilter = TEXTURE_FILTER.NEAREST;
-
-		/**
-		 * @default t3d.TEXTURE_FILTER.NEAREST
-		 */
-		this.minFilter = TEXTURE_FILTER.NEAREST;
-
-		/**
-		 * @default false
-		 */
-		this.generateMipmaps = false;
-
-		/**
-		 * @default false
-		 */
-		this.flipY = false;
-
-		/**
-		 * @default 1
-		 */
-		this.unpackAlignment = 1;
-
-		/**
-		 * A set of all layers which need to be updated in the texture.
-		 * @type {Set}
-		 */
-		this.layerUpdates = new Set();
-	}
-
-	/**
-	 * Copy the given 2d texture into this texture.
-	 * @param {t3d.Texture2DArray} source - The 2d texture to be copied.
-	 * @return {t3d.Texture2DArray}
-	 */
-	copy(source) {
-		super.copy(source);
-
-		this.image = source.image;
-
-		return this;
-	}
-
-}
-
-/**
- * @readonly
- * @type {Boolean}
- * @default true
- */
-Texture2DArray.prototype.isTexture2DArray = true;
 
 let _queryId = 0;
 
@@ -18045,7 +18184,7 @@ class WebGLRenderTargets extends PropertyMap {
 			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
 
-		if (renderTarget.isRenderTarget3D) {
+		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
 			renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
 			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
@@ -18077,6 +18216,10 @@ class WebGLRenderTargets extends PropertyMap {
 				const textureProperties = textures.setTexture3D(attachment);
 				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
 				state.bindTexture(gl.TEXTURE_3D, null);
+			} else if (attachment.isTexture2DArray) {
+				const textureProperties = textures.setTexture2DArray(attachment);
+				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
+				state.bindTexture(gl.TEXTURE_2D_ARRAY, null);
 			} else {
 				const renderBufferProperties = renderBuffers.setRenderBuffer(attachment);
 				gl.framebufferRenderbuffer(gl.FRAMEBUFFER, glAttachTarget, gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
@@ -18131,14 +18274,14 @@ class WebGLRenderTargets extends PropertyMap {
 			}
 		}
 
-		if (renderTarget.isRenderTarget3D) {
+		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
 			renderTargetProperties = this.get(renderTarget);
 			const activeLayer = renderTarget.activeLayer;
 			const activeMipmapLevel = renderTarget.activeMipmapLevel;
 			if (renderTargetProperties.__currentActiveLayer !== activeLayer || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
 				for (const attachTarget in renderTarget._attachments) {
 					const attachment = renderTarget._attachments[attachTarget];
-					if (attachment.isTexture3D) {
+					if (attachment.isTexture3D || attachment.isTexture2DArray) {
 						const textureProperties = textures.get(attachment);
 						gl.framebufferTextureLayer(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], textureProperties.__webglTexture, activeMipmapLevel, activeLayer);
 					}
@@ -19470,4 +19613,4 @@ class MatcapMaterial extends BasicMaterial {
 
 }
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

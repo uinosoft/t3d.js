@@ -59,7 +59,7 @@ class WebGLRenderTargets extends PropertyMap {
 			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
 
-		if (renderTarget.isRenderTarget3D) {
+		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
 			renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
 			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
@@ -91,6 +91,10 @@ class WebGLRenderTargets extends PropertyMap {
 				const textureProperties = textures.setTexture3D(attachment);
 				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
 				state.bindTexture(gl.TEXTURE_3D, null);
+			} else if (attachment.isTexture2DArray) {
+				const textureProperties = textures.setTexture2DArray(attachment);
+				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
+				state.bindTexture(gl.TEXTURE_2D_ARRAY, null);
 			} else {
 				const renderBufferProperties = renderBuffers.setRenderBuffer(attachment);
 				gl.framebufferRenderbuffer(gl.FRAMEBUFFER, glAttachTarget, gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
@@ -145,14 +149,14 @@ class WebGLRenderTargets extends PropertyMap {
 			}
 		}
 
-		if (renderTarget.isRenderTarget3D) {
+		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
 			renderTargetProperties = this.get(renderTarget);
 			const activeLayer = renderTarget.activeLayer;
 			const activeMipmapLevel = renderTarget.activeMipmapLevel;
 			if (renderTargetProperties.__currentActiveLayer !== activeLayer || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
 				for (const attachTarget in renderTarget._attachments) {
 					const attachment = renderTarget._attachments[attachTarget];
-					if (attachment.isTexture3D) {
+					if (attachment.isTexture3D || attachment.isTexture2DArray) {
 						const textureProperties = textures.get(attachment);
 						gl.framebufferTextureLayer(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], textureProperties.__webglTexture, activeMipmapLevel, activeLayer);
 					}

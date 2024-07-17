@@ -76,6 +76,7 @@ export { PointsMaterial } from './resources/materials/PointsMaterial.js';
 export { ShaderMaterial } from './resources/materials/ShaderMaterial.js';
 
 export { RenderTarget2D } from './resources/targets/RenderTarget2D.js';
+export { RenderTarget2DArray } from './resources/targets/RenderTarget2DArray.js';
 export { RenderTarget3D } from './resources/targets/RenderTarget3D.js';
 export { RenderTargetBack } from './resources/targets/RenderTargetBack.js';
 export { RenderTargetBase } from './resources/targets/RenderTargetBase.js';

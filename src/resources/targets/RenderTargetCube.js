@@ -45,7 +45,7 @@ class RenderTargetCube extends RenderTargetBase {
 	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture) {
+		if (target.isTextureCube) {
 			let changed = false;
 
 			for (let i = 0; i < 6; i++) {
@@ -91,7 +91,7 @@ class RenderTargetCube extends RenderTargetBase {
 			for (const attachment in this._attachments) {
 				const target = this._attachments[attachment];
 
-				if (target.isTexture) {
+				if (target.isTextureCube) {
 					for (let i = 0; i < 6; i++) {
 						target.images[i] = { rtt: true, data: null, width: this.width, height: this.height };
 					}
@@ -132,7 +132,7 @@ Object.defineProperties(RenderTargetCube.prototype, {
 
 		set: function(texture) {
 			if (texture) {
-				if (texture.isTexture) {
+				if (texture.isTextureCube) {
 					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
 				}
 			} else {
@@ -142,7 +142,7 @@ Object.defineProperties(RenderTargetCube.prototype, {
 
 		get: function() {
 			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture ? target : null;
+			return target.isTextureCube ? target : null;
 		}
 
 	}

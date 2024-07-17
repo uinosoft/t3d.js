@@ -30,7 +30,7 @@ class RenderTarget2D extends RenderTargetBase {
 	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture) {
+		if (target.isTexture2D) {
 			if (target.image && target.image.rtt) {
 				if (target.image.width !== this.width || target.image.height !== this.height) {
 					target.version++;
@@ -68,7 +68,7 @@ class RenderTarget2D extends RenderTargetBase {
 			for (const attachment in this._attachments) {
 				const target = this._attachments[attachment];
 
-				if (target.isTexture) {
+				if (target.isTexture2D) {
 					target.image = { rtt: true, data: null, width: this.width, height: this.height };
 					target.version++;
 				} else {
@@ -109,7 +109,7 @@ Object.defineProperties(RenderTarget2D.prototype, {
 
 		set: function(texture) {
 			if (texture) {
-				if (texture.isTexture) {
+				if (texture.isTexture2D) {
 					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
 				}
 			} else {
@@ -119,7 +119,7 @@ Object.defineProperties(RenderTarget2D.prototype, {
 
 		get: function() {
 			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture ? target : null;
+			return target.isTexture2D ? target : null;
 		}
 
 	}
