@@ -11,44 +11,6 @@
         <a href="" target="_blank">t3d</a> - shader XRay
     </div>
 
-	<script id="vertexShader" type="x-shader/x-vertex">
-		attribute vec3 a_Position; 
-		attribute vec3 a_Normal;
-
-		uniform mat4 u_ProjectionView;
-		uniform mat4 u_View;
-		uniform mat4 u_Model;
-
-		uniform float power;
-		uniform bool glowInverse;
-		varying float intensity;
-
-		#include <transpose>
-		#include <inverse>
-
-		void main()
-		{
-			mat4 normalMatrix = transposeMat4(inverseMat4(u_View * u_Model));
-			vec3 viewSpaceNormal = normalize( normalize( normalMatrix * vec4(a_Normal, 0.0) ).xyz );
-			if (glowInverse) {
-				intensity = pow(abs(dot(viewSpaceNormal, vec3(0, 0, 1.))), power);
-			} else {
-				intensity = pow(1.0 - abs(dot(viewSpaceNormal, vec3(0, 0, 1.))), power);
-			}
-
-			gl_Position = u_ProjectionView * u_Model * vec4( a_Position, 1.0 );
-		}
-	</script>
-
-	<script id="fragmentShader" type="x-shader/x-fragment">
-		uniform vec3 glowColor;
-        varying float intensity;
-		void main() {
-			vec3 glow = glowColor * intensity;
-            gl_FragColor = vec4( glowColor, intensity );
-		}
-	</script>
-
 	<script src="./libs/nanobar.min.js"></script>
 
 	<!-- Import maps polyfill -->
@@ -69,6 +31,7 @@
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { XRayShader } from 't3d/addons/shaders/XRayShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -83,20 +46,7 @@
 
 		const scene = new t3d.Scene();
 
-		const vertexShader = document.getElementById('vertexShader').textContent;
-		const fragmentShader = document.getElementById('fragmentShader').textContent;
-
-		const shader = {
-			vertexShader: vertexShader,
-			fragmentShader: fragmentShader,
-			uniforms: {
-				power: 1.0,
-				glowInverse: false,
-				glowColor: [0, 200 / 255, 1]
-			}
-		};
-
-		const material = new t3d.ShaderMaterial(shader);
+		const material = new t3d.ShaderMaterial(XRayShader);
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -121,7 +71,6 @@
 			object.material.depthWrite = false;
 			object.material.side = t3d.DRAW_SIDE.DOUBLE;
 			object.material.transparent = true;
-			// object.material.blending = t3d.BLEND_TYPE.ADD;
 
 			object.scale.set(10, 10, 10);
 			object.euler.z = -Math.PI / 6;

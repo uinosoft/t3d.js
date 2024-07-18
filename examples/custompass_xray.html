@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - custompass xray</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - custompass xray
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { XRayShader } from 't3d/addons/shaders/XRayShader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false, stencil: true };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(54 / 255, 103 / 255, 149 / 255, 1);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(1, 2, 3);
+		camera.setPerspective(50 / 180 * Math.PI, width / height, 0.01, 100);
+		scene.add(camera);
+
+		const spotLight = new t3d.SpotLight(0xffffff, 1);
+		camera.add(spotLight);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1, 0);
+
+		const geometry = new t3d.SphereGeometry(.3, 32, 16);
+
+		const portals = new t3d.Object3D();
+		scene.add(portals);
+
+		function addBackdropSphere(color) {
+			const distance = 1;
+			const id = portals.children.length;
+			const rotation = id * Math.PI / 4;
+
+			const material = new t3d.LambertMaterial();
+			material.diffuse.setHSL(Math.random(), 0.5, .1);
+			material.roughness = .2;
+			material.metalness = 0;
+
+			const mesh = new t3d.Mesh(geometry, material);
+			mesh.position.set(
+				Math.cos(rotation) * distance,
+				1,
+				Math.sin(rotation) * distance
+			);
+
+			portals.add(mesh);
+		}
+
+		for (let i = 0; i < 8; i++) {
+			addBackdropSphere(0xffffff * Math.random());
+		}
+		
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		let animation;
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load(
+			'./resources/models/gltf/Michelle.glb'
+		).then(function(result) {
+			const object = result.root;
+
+			object.traverse(node => {
+				if (node.isMesh) {
+					node._xray = true;
+					node.frustumCulled = false;
+					node.renderOrder = 1;
+					node.material.stencilTest = true;
+					node.material.stencilRef = 1;
+					node.material.stencilZPass = t3d.OPERATION.REPLACE;
+				}
+			});
+
+			const action = new t3d.AnimationAction(result.animations[0]);
+			action.time = 0;
+			action.weight = 1;
+			animation = new t3d.AnimationMixer();
+			animation.addAction(action);
+		
+			scene.add(object);
+		}).catch(e => console.error(e));
+
+		const xrayMaterial = new t3d.ShaderMaterial(XRayShader);
+		xrayMaterial.transparent = true;
+		xrayMaterial.depthFunc = t3d.COMPARE_FUNC.GREATER;
+		xrayMaterial.depthWrite = false;
+		xrayMaterial.stencilTest = true;
+		xrayMaterial.stencilFunc = t3d.COMPARE_FUNC.GREATER;
+		xrayMaterial.stencilRef = 1;
+
+		const renderOption = {
+			getMaterial(renderable) {
+				return xrayMaterial;
+			},
+			ifRender(renderable) {
+				return renderable.object._xray;
+			}
+		};
+
+		const gui = new GUI();
+		gui.add(xrayMaterial, 'opacity', 0, 1, 0.01);
+		gui.add(xrayMaterial.uniforms, 'power', 0, 1, 0.01);
+		gui.add(xrayMaterial.uniforms, 'glowInverse');
+		gui.addColor(xrayMaterial.uniforms, 'glowColor');
+
+		const clock = new Clock();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			const delta = clock.getDelta();
+
+			if (!controller.update()) {
+				portals.euler.y += delta * 0.5;
+			}
+
+			animation && animation.update(delta);
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+		
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, true);
+		
+			// render main pass
+			renderer.renderScene(scene, camera);
+
+			// render xray pass
+			const renderStates = scene.getRenderStates(camera);
+			const mainLayer = scene.getRenderQueue(camera).getLayer(0);
+			renderer.beginRender();
+			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
+			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
+			renderer.endRender();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(50 / 180 * Math.PI, width / height, 0.01, 100);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

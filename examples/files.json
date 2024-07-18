@@ -184,7 +184,8 @@
 		"custompass_transmission",
 		"custompass_shadow_planar",
 		"custompass_oit",
-		"custompass_rendertarget_3d"
+		"custompass_rendertarget_3d",
+		"custompass_xray"
 	],
 	"renderer": [
 		"renderer_deferred",
