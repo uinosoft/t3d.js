@@ -84,6 +84,7 @@
 		"material_flatshading",
 		"material_vertexcolors",
 		"material_alphamask",
+		"material_alphahash",
 		"material_clippingplanes",
 		"material_clearcoat"
 	],
