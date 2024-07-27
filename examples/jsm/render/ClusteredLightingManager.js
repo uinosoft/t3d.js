@@ -36,7 +36,8 @@ class ClusteredLightingManager {
 
 		this._cellsTransform = {
 			clips: [0, 0], // near, far
-			factors: [0, 0, 0, 0] // logFactor1, logFactor2, cameraFovTan, cameraAspect
+			factors: [0, 0, 0, 0], // logFactor1, logFactor2, persp:tan(fov/2)|ortho:-height/2, aspect
+			perspective: true
 		};
 	}
 
@@ -123,11 +124,13 @@ class ClusteredLightingManager {
 		factors[0] = cz / _logFarNear;
 		factors[1] = -cz * Math.log(fixedNear) / _logFarNear;
 
+		const perspective = _isPerspectiveMatrix(cameraData.projectionMatrix);
 		const elements = cameraData.projectionMatrix.elements;
-		const aspectFovTan = 1 / elements[0];
-		const fovTan = 1 / elements[5];
-		factors[2] = fovTan;
-		factors[3] = aspectFovTan / fovTan;
+
+		factors[2] = (perspective ? 1 : -1) / elements[5]; // persp: tan(fov / 2), ortho: -height / 2
+		factors[3] = elements[5] / elements[0]; // aspect: (width / height)
+
+		this._cellsTransform.perspective = perspective;
 	}
 
 }
@@ -334,10 +337,14 @@ function textureSize(pixelCount) {
 	return nextPowerOfTwo(Math.ceil(Math.sqrt(pixelCount)));
 }
 
+function _isPerspectiveMatrix(m) {
+	return m.elements[11] === -1.0;
+}
+
 function getCellsRange(lightSphere, cellsTable, cellsTransform, cellsRange) {
 	const { center, radius } = lightSphere;
 
-	const { clips, factors } = cellsTransform;
+	const { clips, factors, perspective } = cellsTransform;
 
 	let zMin = center.z - radius;
 	const zMax = center.z + radius;
@@ -350,11 +357,11 @@ function getCellsRange(lightSphere, cellsTable, cellsTransform, cellsRange) {
 	const zStart = Math.floor(Math.log(zMin) * factors[0] + factors[1]);
 	const zEnd = Math.min(Math.floor(Math.log(zMax) * factors[0] + factors[1]), cellsTable[2] - 1);
 
-	const halfFrustumHeight = Math.abs(center.z) * factors[2];
+	const halfFrustumHeight = (perspective ? Math.abs(center.z) : -1) * factors[2];
 	const invH = 1 / (2 * halfFrustumHeight);
 
-	const yMin = (center.y - radius + halfFrustumHeight) * invH;
-	const yMax = (center.y + radius + halfFrustumHeight) * invH;
+	const yMin = (center.y - radius) * invH + 0.5;
+	const yMax = (center.y + radius) * invH + 0.5;
 	if (yMin > 1 || yMax < 0) {
 		return false;
 	}
@@ -365,8 +372,8 @@ function getCellsRange(lightSphere, cellsTable, cellsTransform, cellsRange) {
 	const halfFrustumWidth = halfFrustumHeight * factors[3];
 	const invW = 1 / (2 * halfFrustumWidth);
 
-	const xMin = (center.x - radius + halfFrustumWidth) * invW;
-	const xMax = (center.x + radius + halfFrustumWidth) * invW;
+	const xMin = (center.x - radius) * invW + 0.5;
+	const xMax = (center.x + radius) * invW + 0.5;
 	if (xMin > 1 || xMax < 0) {
 		return false;
 	}

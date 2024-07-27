@@ -88,13 +88,14 @@ const clusterlight_frag = `
 #ifdef CLUSTER_LIGHT
 	vec4 positionView = u_View * vec4(v_modelPos, 1.0);
 
-	float halfFrustumHeight = -positionView.z * cellsTransformFactors.z;
+	float perspectiveFactor = step(0.0, cellsTransformFactors.z);
+	float halfFrustumHeight = -cellsTransformFactors.z * mix(1.0, positionView.z, perspectiveFactor);
 	float halfFrustumWidth = halfFrustumHeight * cellsTransformFactors.w;
 
 	vec3 cellCoords;
 	cellCoords.z = floor(log(-positionView.z) * cellsTransformFactors.x + cellsTransformFactors.y);
-	cellCoords.y = floor((positionView.y + halfFrustumHeight) / (2.0 * halfFrustumHeight) * cells.y);
-	cellCoords.x = floor((positionView.x + halfFrustumWidth) / (2.0 * halfFrustumWidth) * cells.x);
+	cellCoords.y = floor((positionView.y / (2.0 * halfFrustumHeight) + 0.5) * cells.y);
+	cellCoords.x = floor((positionView.x / (2.0 * halfFrustumWidth) + 0.5) * cells.x);
 
 	if(!(any(lessThan(cellCoords, vec3(0.0))) || any(greaterThanEqual(cellCoords, cells)))) {
 		float cellIndex = dot(cellsDotData, cellCoords);
