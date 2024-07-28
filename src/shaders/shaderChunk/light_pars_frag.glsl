@@ -200,7 +200,7 @@
 
         envMapColor = envMapTexelToLinear(envMapColor);
 
-        return PI * envMapColor.rgb * u_EnvMap_Intensity * u_EnvMapLight_Intensity;
+        return PI * envMapColor.rgb * u_EnvMapLight_Intensity;
     }
 
     // Trowbridge-Reitz distribution to Mip level, following the logic of http://casual-effects.blogspot.ca/2011/08/plausible-environment-lighting-in-two.html

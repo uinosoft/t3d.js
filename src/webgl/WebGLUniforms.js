@@ -14,7 +14,6 @@ const internalUniforms = {
 	'u_CameraPosition': [2, function(cameraData) { this.setValue(cameraData.position.x, cameraData.position.y, cameraData.position.z) }],
 	'logDepthBufFC': [2, function(cameraData) { this.set(cameraData.logDepthBufFC) }],
 	'logDepthCameraNear': [2, function(cameraData) { this.set(cameraData.logDepthCameraNear) }],
-	'u_EnvMapLight_Intensity': [3, function(sceneData) { this.set(sceneData.environmentLightIntensity) }],
 	'u_FogColor': [3, function(sceneData) { const color = sceneData.fog.color; this.setValue(color.r, color.g, color.b) }],
 	'u_FogDensity': [3, function(sceneData) { this.set(sceneData.fog.density) }],
 	'u_FogNear': [3, function(sceneData) { this.set(sceneData.fog.near) }],
@@ -29,7 +28,6 @@ const internalUniforms = {
 	'bumpMap': [4, function(material, textures) { this.set(material.bumpMap, textures) }],
 	'bumpScale': [4, function(material, textures) { this.set(material.bumpScale) }],
 	'cubeMap': [4, function(material, textures) { this.set(material.cubeMap, textures) }],
-	'u_EnvMap_Intensity': [4, function(material, textures) { this.set(material.envMapIntensity) }],
 	'u_Specular': [4, function(material, textures) { this.set(material.shininess) }],
 	'u_SpecularColor': [4, function(material, textures) { const color = material.specular; this.setValue(color.r, color.g, color.b) }],
 	'specularMap': [4, function(material, textures) { this.set(material.specularMap, textures) }],
@@ -53,10 +51,11 @@ const internalUniforms = {
 	'emissiveMapUVTransform': [4, function(material, textures) { this.set(material.emissiveMapTransform.elements) }],
 	'uvTransform': [4, function(material, textures) { this.set(material.diffuseMapTransform.elements) }],
 	'u_PointSize': [4, function(material, textures) { this.set(material.size) }],
-	'u_PointScale': [5, null],
-	'maxMipLevel': [5, function(envMap, textures) { this.set(textures.get(envMap).__maxMipLevel || 8) }], // TODO replace 8 with real mip level
-	'envMap': [5, function(envMap, textures) { this.set(envMap, textures) }],
-	'u_EnvMap_Flip': [5, function(envMap, textures) { this.set((envMap.images[0] && envMap.images[0].rtt) ? 1 : -1) }]
+	'envMap': [5, function(envData, textures) { this.set(envData.map, textures) }],
+	'maxMipLevel': [5, function(envData, textures) { this.set(textures.get(envData.map).__maxMipLevel || 8) }],
+	'u_EnvMap_Flip': [5, function(envData, textures) { this.set((envData.map.images[0] && envData.map.images[0].rtt) ? 1 : -1) }],
+	'u_EnvMapLight_Intensity': [5, function(envData, textures) { this.set(envData.diffuse) }],
+	'u_EnvMap_Intensity': [5, function(envData, textures) { this.set(envData.specular) }]
 };
 
 // Empty textures

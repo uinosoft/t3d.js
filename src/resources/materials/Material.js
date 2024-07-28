@@ -335,6 +335,7 @@ class Material extends EventDispatcher {
 
 		/**
 		 * Scales the effect of the environment map by multiplying its color.
+		 * This can effect both the diffuse and specular components of environment map.
 		 * @type {Number}
 		 * @default 1
 		 */

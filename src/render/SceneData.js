@@ -25,7 +25,8 @@ class SceneData {
 
 		this.fog = null;
 		this.environment = null;
-		this.environmentLightIntensity = 1;
+		this.envDiffuseIntensity = 1;
+		this.envSpecularIntensity = 1;
 		this.clippingPlanesData = new Float32Array([]);
 		this.numClippingPlanes = 0;
 	}
@@ -44,8 +45,10 @@ class SceneData {
 		this.logarithmicDepthBuffer = scene.logarithmicDepthBuffer;
 
 		this.fog = scene.fog;
+
 		this.environment = scene.environment;
-		this.environmentLightIntensity = scene.environmentLightIntensity;
+		this.envDiffuseIntensity = scene.envDiffuseIntensity;
+		this.envSpecularIntensity = scene.envSpecularIntensity;
 
 		if (this.clippingPlanesData.length < scene.clippingPlanes.length * 4) {
 			this.clippingPlanesData = new Float32Array(scene.clippingPlanes.length * 4);

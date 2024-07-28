@@ -109,11 +109,11 @@
 					scene.add(skyBox);
 
 					scene.environment = cubeTexture;
-					scene.environmentLightIntensity = 0;
+					scene.envDiffuseIntensity = 0;
 
 					const gui = new GUI();
 					gui.add(sphericalHarmonicsLight, 'intensity', 0, 1, 0.01).name('sphericalHarmonicsLight');
-					gui.add(scene, 'environmentLightIntensity', 0, 1, 0.01).name('environmentLight');
+					gui.add(scene, 'envDiffuseIntensity', 0, 1, 0.01).name('environmentLight');
 				}
 			);
 

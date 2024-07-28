@@ -20,6 +20,7 @@ const helpMatrix4 = new Matrix4();
 const influencesList = new WeakMap();
 const morphInfluences = new Float32Array(8);
 
+const _envData = { map: null, diffuse: 1, specular: 1 };
 let _clippingPlanesData = new Float32Array([]);
 
 function defaultGetGeometry(renderable) {
@@ -245,7 +246,10 @@ class WebGLRenderer extends ThinRenderer {
 		const geometry = getGeometry.call(this, renderable);
 		const group = renderable.group;
 		const fog = material.fog ? sceneData.fog : null;
-		const envMap = material.envMap !== undefined ? (material.envMap || sceneData.environment) : null;
+
+		_envData.map = material.envMap !== undefined ? (material.envMap || sceneData.environment) : null;
+		_envData.diffuse = sceneData.envDiffuseIntensity * material.envMapIntensity;
+		_envData.specular = sceneData.envSpecularIntensity * material.envMapIntensity;
 
 		let clippingPlanesData = sceneData.clippingPlanesData;
 		let numClippingPlanes = sceneData.numClippingPlanes;
@@ -268,7 +272,7 @@ class WebGLRenderer extends ThinRenderer {
 				material.needsUpdate = true;
 			} else if (materialProperties.fog !== fog) {
 				material.needsUpdate = true;
-			} else if (materialProperties.envMap !== envMap) {
+			} else if (materialProperties.envMap !== _envData.map) {
 				material.needsUpdate = true;
 			} else if (materialProperties.numClippingPlanes !== numClippingPlanes) {
 				material.needsUpdate = true;
@@ -304,7 +308,7 @@ class WebGLRenderer extends ThinRenderer {
 			}
 
 			materialProperties.fog = fog;
-			materialProperties.envMap = envMap;
+			materialProperties.envMap = _envData.map;
 			materialProperties.logarithmicDepthBuffer = sceneData.logarithmicDepthBuffer;
 
 			materialProperties.acceptLight = material.acceptLight;
@@ -418,18 +422,17 @@ class WebGLRenderer extends ThinRenderer {
 				continue;
 			}
 
-			// other internal uniforms
+			// uniforms about environment map
 			if (internalGroup === 5) {
-				if (key === 'u_PointScale') {
-					const scale = currentRenderTarget.height * 0.5; // three.js do this
-					uniform.set(scale);
-				} else {
-					uniform.internalFun(envMap, textures);
-				}
+				uniform.internalFun(_envData, textures);
 				continue;
 			}
 
-			if (key === 'clippingPlanes') {
+			// other internal uniforms
+			if (key === 'u_PointScale') {
+				const scale = currentRenderTarget.height * 0.5;
+				uniform.set(scale);
+			} else if (key === 'clippingPlanes') {
 				uniform.set(clippingPlanesData);
 			}
 		}

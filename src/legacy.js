@@ -2,6 +2,7 @@ import { PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, COMPARE_FUNC, O
 import { WebGLRenderer } from './webgl/WebGLRenderer.js';
 import { BoxGeometry } from './resources/geometries/BoxGeometry.js';
 import { Object3D } from './scenes/Object3D.js';
+import { Scene } from './scenes/Scene.js';
 import { BasicMaterial } from './resources/materials/BasicMaterial.js';
 
 // since 0.1.2
@@ -130,3 +131,18 @@ export class MatcapMaterial extends BasicMaterial {
 	}
 
 }
+
+Object.defineProperties(Scene.prototype, {
+	// since 0.2.7
+	environmentLightIntensity: {
+		configurable: true,
+		get: function() {
+			// console.warn("Scene: .environmentLightIntensity has been deprecated, use .envDiffuseIntensity instead.");
+			return this.envDiffuseIntensity;
+		},
+		set: function(value) {
+			// console.warn("Scene: .environmentLightIntensity has been deprecated, use .envDiffuseIntensity instead.");
+			this.envDiffuseIntensity = value;
+		}
+	}
+});

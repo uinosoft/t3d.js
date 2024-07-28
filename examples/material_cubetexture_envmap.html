@@ -55,16 +55,18 @@
 			cubeTexturePath + 'negz.jpg'
 		]);
 		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
 		const skyBox = new SkyBox(cubeTexture);
 		skyBox.gamma = true;
 		scene.add(skyBox);
+
+		scene.environment = cubeTexture;
 
 		const plane_geometry = new t3d.PlaneGeometry(60, 60);
 		const sphere_geometry = new t3d.SphereGeometry(20, 20, 20);
 
 		const material = new t3d.PBRMaterial();
 		material.diffuse.setHex(0xffffff);
-		material.envMap = cubeTexture;
 		material.roughness = 0;
 		material.metalness = 1;
 		material.side = t3d.DRAW_SIDE.DOUBLE;
@@ -77,9 +79,6 @@
 		sphere.position.set(-30, 0, 0);
 		scene.add(sphere);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff);
-		scene.add(ambientLight);
-
 		const camera = new t3d.Camera();
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(0, 50, 150);
@@ -90,8 +89,12 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		const gui = new GUI();
-		gui.add(material, 'roughness', 0, 1, 0.01);
-		gui.add(material, 'metalness', 0, 1, 0.01);
+		const envFolder = gui.addFolder('Environment');
+		envFolder.add(scene, 'envDiffuseIntensity', 0, 1, 0.01).name('Diffuse Intensity');
+		envFolder.add(scene, 'envSpecularIntensity', 0, 1, 0.01).name('Specular Intensity');
+		const materialFolder = gui.addFolder('Material');
+		materialFolder.add(material, 'roughness', 0, 1, 0.01);
+		materialFolder.add(material, 'metalness', 0, 1, 0.01);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
