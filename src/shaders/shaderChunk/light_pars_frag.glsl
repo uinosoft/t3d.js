@@ -189,7 +189,7 @@
         // TODO: replace with properly filtered cubemaps and access the irradiance LOD level, be it the last LOD level
     	// of a specular cubemap, or just the default level of a specially created irradiance cubemap.
 
-        vec3 coordVec = vec3(u_EnvMap_Flip * N.x, N.yz);
+        vec3 coordVec = vec3(envMapParams.z * N.x, N.yz);
 
     	#ifdef TEXTURE_LOD_EXT
     		vec4 envMapColor = textureCubeLodEXT(envMap, coordVec, float(maxMIPLevel));
@@ -200,7 +200,7 @@
 
         envMapColor = envMapTexelToLinear(envMapColor);
 
-        return PI * envMapColor.rgb * u_EnvMapLight_Intensity;
+        return PI * envMapColor.rgb * envMapParams.x;
     }
 
     // Trowbridge-Reitz distribution to Mip level, following the logic of http://casual-effects.blogspot.ca/2011/08/plausible-environment-lighting-in-two.html
@@ -220,7 +220,7 @@
         // Mixing the reflection with the normal is more accurate and keeps rough objects from gathering light from behind their tangent plane.
         vec3 coordVec = normalize(mix(envDir, normal, roughness * roughness));
 
-        coordVec.x *= u_EnvMap_Flip;
+        coordVec.x *= envMapParams.z;
 
         #ifdef TEXTURE_LOD_EXT
     		vec4 envMapColor = textureCubeLodEXT(envMap, coordVec, specularMIPLevel);
@@ -230,7 +230,7 @@
 
         envMapColor = envMapTexelToLinear(envMapColor);
 
-        return envMapColor.rgb * u_EnvMap_Intensity;
+        return envMapColor.rgb * envMapParams.y;
     }
 
     // ref: https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf

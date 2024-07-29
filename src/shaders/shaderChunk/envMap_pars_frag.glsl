@@ -4,8 +4,6 @@
     #endif
 
     uniform samplerCube envMap;
-    uniform float u_EnvMap_Flip;
-    uniform float u_EnvMap_Intensity;
-    uniform float u_EnvMapLight_Intensity;
+    uniform vec3 envMapParams;
     uniform int maxMipLevel;
 #endif

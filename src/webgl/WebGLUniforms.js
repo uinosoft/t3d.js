@@ -52,10 +52,8 @@ const internalUniforms = {
 	'uvTransform': [4, function(material, textures) { this.set(material.diffuseMapTransform.elements) }],
 	'u_PointSize': [4, function(material, textures) { this.set(material.size) }],
 	'envMap': [5, function(envData, textures) { this.set(envData.map, textures) }],
-	'maxMipLevel': [5, function(envData, textures) { this.set(textures.get(envData.map).__maxMipLevel || 8) }],
-	'u_EnvMap_Flip': [5, function(envData, textures) { this.set((envData.map.images[0] && envData.map.images[0].rtt) ? 1 : -1) }],
-	'u_EnvMapLight_Intensity': [5, function(envData, textures) { this.set(envData.diffuse) }],
-	'u_EnvMap_Intensity': [5, function(envData, textures) { this.set(envData.specular) }]
+	'envMapParams': [5, function(envData, textures) { this.setValue(envData.diffuse, envData.specular, (envData.map.images[0] && envData.map.images[0].rtt) ? 1 : -1) }],
+	'maxMipLevel': [5, function(envData, textures) { this.set(textures.get(envData.map).__maxMipLevel || 8) }]
 };
 
 // Empty textures
