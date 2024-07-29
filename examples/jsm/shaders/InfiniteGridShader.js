@@ -1,3 +1,4 @@
+// ref: https://github.com/galacean/engine-toolkit/blob/main/packages/custom-material/src/grid/Grid.shader
 const InfiniteGridShader = {
 	name: 'infinite_grid',
 
@@ -23,28 +24,25 @@ const InfiniteGridShader = {
         varying vec3 nearPoint;
         varying vec3 farPoint;
 
-        vec3 UnprojectPoint(float x, float y, float z, mat4 viewInvMat, mat4 projInvMat) {
-            vec4 unprojectedPoint = viewInvMat * projInvMat * vec4(x, y, z, 1.0);
+        vec3 unprojectPoint(float x, float y, float z, mat4 pvmInverse) {
+            vec4 unprojectedPoint = pvmInverse * vec4(x, y, z, 1.0);
             return unprojectedPoint.xyz / unprojectedPoint.w;
         }
 
         void main() {
-            float tol = 0.0001;
-            mat4 viewInvMat = inverseMat4(u_View);
-            if (abs(viewInvMat[3][1]) < tol) {
-                viewInvMat[3][1] = tol;
-            }
-            mat4 projInvMat = inverseMat4(u_Projection);
+            mat4 pvmInverse = inverseMat4(u_Projection * u_View * u_Model);
 
-            nearPoint = UnprojectPoint(a_Position.x, a_Position.y, -1.0, viewInvMat, projInvMat); // unprojecting on the near plane
-            farPoint = UnprojectPoint(a_Position.x, a_Position.y, 1.0, viewInvMat, projInvMat); // unprojecting on the far plane
+            nearPoint = unprojectPoint(a_Position.x, a_Position.y, -1.0, pvmInverse); // unprojecting on the near plane
+            farPoint = unprojectPoint(a_Position.x, a_Position.y, 1.0, pvmInverse); // unprojecting on the far plane
+
             gl_Position = vec4(a_Position, 1.0); // using directly the clipped coordinates
         }
     `,
 
 	fragmentShader: `
-        uniform mat4 u_Projection;
+        uniform mat4 u_ProjectionView;
         uniform mat4 u_View;
+        uniform mat4 u_Model;
 
         uniform float flipProgress;
         uniform float axisIntensity;
@@ -87,13 +85,12 @@ const InfiniteGridShader = {
         }
 
         float computeDepth(vec3 pos) {
-            vec4 clip_space_pos = u_Projection * u_View * vec4(pos.xyz, 1.0);
-            // map to 0-1
+            vec4 clip_space_pos = u_ProjectionView * u_Model * vec4(pos.xyz, 1.0);
             return (clip_space_pos.z / clip_space_pos.w) * 0.5 + 0.5;
         }
 
         float computeLinearDepth(vec3 pos) {
-            vec4 view_space_pos = u_View * vec4(pos.xyz, 1.0);
+            vec4 view_space_pos = u_View * u_Model * vec4(pos.xyz, 1.0);
             float view_space_depth = abs(view_space_pos.z) / view_space_pos.w;
             float linearDepth = max(0., view_space_depth - start) / (end - start);
             return linearDepth;
