@@ -981,25 +981,25 @@ class Matrix4 {
 		position.z = te[14];
 
 		// scale the rotation part
-		_mat4_1$4.copy(this);
+		_mat4_1$3.copy(this);
 
 		const invSX = 1 / sx;
 		const invSY = 1 / sy;
 		const invSZ = 1 / sz;
 
-		_mat4_1$4.elements[0] *= invSX;
-		_mat4_1$4.elements[1] *= invSX;
-		_mat4_1$4.elements[2] *= invSX;
+		_mat4_1$3.elements[0] *= invSX;
+		_mat4_1$3.elements[1] *= invSX;
+		_mat4_1$3.elements[2] *= invSX;
 
-		_mat4_1$4.elements[4] *= invSY;
-		_mat4_1$4.elements[5] *= invSY;
-		_mat4_1$4.elements[6] *= invSY;
+		_mat4_1$3.elements[4] *= invSY;
+		_mat4_1$3.elements[5] *= invSY;
+		_mat4_1$3.elements[6] *= invSY;
 
-		_mat4_1$4.elements[8] *= invSZ;
-		_mat4_1$4.elements[9] *= invSZ;
-		_mat4_1$4.elements[10] *= invSZ;
+		_mat4_1$3.elements[8] *= invSZ;
+		_mat4_1$3.elements[9] *= invSZ;
+		_mat4_1$3.elements[10] *= invSZ;
 
-		quaternion.setFromRotationMatrix(_mat4_1$4);
+		quaternion.setFromRotationMatrix(_mat4_1$3);
 
 		scale.x = sx;
 		scale.y = sy;
@@ -1158,7 +1158,7 @@ class Matrix4 {
 }
 
 const _vec3_1$5 = new Vector3();
-const _mat4_1$4 = new Matrix4();
+const _mat4_1$3 = new Matrix4();
 
 const _x = new Vector3();
 const _y = new Vector3();
@@ -5218,7 +5218,7 @@ class Matrix3 {
 
 const _vec3_1$3 = new Vector3();
 const _vec3_2 = new Vector3();
-const _mat4_1$3 = new Matrix3();
+const _mat3_1 = new Matrix3();
 
 /**
  * A two dimensional surface that extends infinitely in 3d space,
@@ -5228,12 +5228,37 @@ const _mat4_1$3 = new Matrix3();
 class Plane {
 
 	/**
+	 * Constructs a new Plane.
 	 * @param {t3d.Vector3} [normal=Vector3(1, 0, 0)] - A unit length Vector3 defining the normal of the plane.
 	 * @param {Number} [constant=0] - The signed distance from the origin to the plane.
 	 */
 	constructor(normal = new Vector3(1, 0, 0), constant = 0) {
 		this.normal = normal;
 		this.constant = constant;
+	}
+
+	/**
+	 * Solve a system of equations to find the point where the three planes intersect.
+	 * @param {t3d.Plane} p1 - The first plane.
+	 * @param {t3d.Plane} p2 - The second plane.
+	 * @param {t3d.Plane} p3 - The third plane.
+	 * @param {t3d.Vector3} target - The result will be copied into this Vector3.
+	 */
+	static intersectPlanes(p1, p2, p3, target) {
+		// Create the matrix using the normals of the planes as rows
+		_mat3_1.set(
+			p1.normal.x, p1.normal.y, p1.normal.z,
+			p2.normal.x, p2.normal.y, p2.normal.z,
+			p3.normal.x, p3.normal.y, p3.normal.z
+		);
+
+		// Create the vector using the constants of the planes
+		target.set(-p1.constant, -p2.constant, -p3.constant);
+
+		// Solve for X by applying the inverse matrix to vector
+		target.applyMatrix3(_mat3_1.inverse());
+
+		return target;
 	}
 
 	/**
@@ -5347,7 +5372,7 @@ class Plane {
 	 * @param {t3d.Matrix3} [optionalNormalMatrix] - (optional) pre-computed normal Matrix3 of the Matrix4 being applied.
 	 */
 	applyMatrix4(matrix, optionalNormalMatrix) {
-		const normalMatrix = optionalNormalMatrix || _mat4_1$3.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = optionalNormalMatrix || _mat3_1.setFromMatrix4(matrix).inverse().transpose();
 
 		const referencePoint = this.coplanarPoint(_vec3_1$3).applyMatrix4(matrix);
 

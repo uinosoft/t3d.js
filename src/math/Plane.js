@@ -3,7 +3,7 @@ import { Matrix3 } from './Matrix3.js';
 
 const _vec3_1 = new Vector3();
 const _vec3_2 = new Vector3();
-const _mat4_1 = new Matrix3();
+const _mat3_1 = new Matrix3();
 
 /**
  * A two dimensional surface that extends infinitely in 3d space,
@@ -13,12 +13,37 @@ const _mat4_1 = new Matrix3();
 class Plane {
 
 	/**
+	 * Constructs a new Plane.
 	 * @param {t3d.Vector3} [normal=Vector3(1, 0, 0)] - A unit length Vector3 defining the normal of the plane.
 	 * @param {Number} [constant=0] - The signed distance from the origin to the plane.
 	 */
 	constructor(normal = new Vector3(1, 0, 0), constant = 0) {
 		this.normal = normal;
 		this.constant = constant;
+	}
+
+	/**
+	 * Solve a system of equations to find the point where the three planes intersect.
+	 * @param {t3d.Plane} p1 - The first plane.
+	 * @param {t3d.Plane} p2 - The second plane.
+	 * @param {t3d.Plane} p3 - The third plane.
+	 * @param {t3d.Vector3} target - The result will be copied into this Vector3.
+	 */
+	static intersectPlanes(p1, p2, p3, target) {
+		// Create the matrix using the normals of the planes as rows
+		_mat3_1.set(
+			p1.normal.x, p1.normal.y, p1.normal.z,
+			p2.normal.x, p2.normal.y, p2.normal.z,
+			p3.normal.x, p3.normal.y, p3.normal.z
+		);
+
+		// Create the vector using the constants of the planes
+		target.set(-p1.constant, -p2.constant, -p3.constant);
+
+		// Solve for X by applying the inverse matrix to vector
+		target.applyMatrix3(_mat3_1.inverse());
+
+		return target;
 	}
 
 	/**
@@ -132,7 +157,7 @@ class Plane {
 	 * @param {t3d.Matrix3} [optionalNormalMatrix] - (optional) pre-computed normal Matrix3 of the Matrix4 being applied.
 	 */
 	applyMatrix4(matrix, optionalNormalMatrix) {
-		const normalMatrix = optionalNormalMatrix || _mat4_1.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = optionalNormalMatrix || _mat3_1.setFromMatrix4(matrix).inverse().transpose();
 
 		const referencePoint = this.coplanarPoint(_vec3_1).applyMatrix4(matrix);
 

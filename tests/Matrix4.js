@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+
 QUnit.module('Matrix4');
 
 function matrixEquals4(a, b, tolerance) {
