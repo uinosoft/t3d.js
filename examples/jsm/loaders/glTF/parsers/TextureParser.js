@@ -12,37 +12,49 @@ export class TextureParser {
 
 		if (!gltf.textures) return;
 
-		// TODO need to cache textures by source and samplers?
+		const textureCache = new Map();
 
 		return Promise.all(
 			gltf.textures.map((params, index) => {
 				const { sampler, source = 0, name: textureName } = params;
 
-				const texture = new Texture2D();
+				let sourceIndex = source, isTextureData = false;
 
 				if (params.extensions) {
 					const { KHR_texture_basisu } = params.extensions;
-					if (KHR_texture_basisu) {
-						const transcodeResult = images[KHR_texture_basisu.source];
 
-						const { image, mipmaps, type, format, minFilter, magFilter, generateMipmaps, encoding, premultiplyAlpha } = transcodeResult;
-						texture.image = image;
-						texture.mipmaps = mipmaps;
-						texture.type = type;
-						texture.format = format;
-						texture.minFilter = minFilter;
-						texture.magFilter = magFilter;
-						texture.generateMipmaps = generateMipmaps;
-						texture.encoding = encoding;
-						texture.premultiplyAlpha = premultiplyAlpha;
+					if (KHR_texture_basisu) {
+						sourceIndex = KHR_texture_basisu.source;
+						isTextureData = true;
 					} else if (Object.values(params.extensions).length && Object.values(params.extensions)[0].hasOwnProperty('source')) {
-						texture.image = images[Object.values(params.extensions)[0].source];
+						sourceIndex = Object.values(params.extensions)[0].source;
 					} else {
-						console.error('GLTFLoader: Couldn\'t load texture');
-						return null;
+						console.warn('GLTFLoader: unknown texture extension');
 					}
+				}
+
+				const cacheKey = sourceIndex + ':' + sampler;
+
+				if (textureCache.has(cacheKey)) {
+					return textureCache.get(cacheKey);
+				}
+
+				const texture = new Texture2D();
+
+				if (isTextureData) {
+					const { image, mipmaps, type, format, minFilter, magFilter, generateMipmaps, encoding, premultiplyAlpha } = images[sourceIndex];
+
+					texture.image = image;
+					texture.mipmaps = mipmaps;
+					texture.type = type;
+					texture.format = format;
+					texture.minFilter = minFilter;
+					texture.magFilter = magFilter;
+					texture.generateMipmaps = generateMipmaps;
+					texture.encoding = encoding;
+					texture.premultiplyAlpha = premultiplyAlpha;
 				} else {
-					texture.image = images[source];
+					texture.image = images[sourceIndex];
 				}
 
 				texture.version++;
@@ -52,10 +64,13 @@ export class TextureParser {
 				const samplers = gltf.samplers || {};
 				parseSampler(texture, samplers[sampler]);
 
+				textureCache.set(cacheKey, texture);
+
 				return texture;
 			})
 		).then(textures => {
 			context.textures = textures;
+			textureCache.clear();
 		});
 	}
 
