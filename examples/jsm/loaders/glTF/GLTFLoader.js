@@ -56,11 +56,16 @@ export class GLTFLoader {
 
 		this._fileLoader = new FileLoader();
 
-		const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) === true;
-		const isFirefox = navigator.userAgent.indexOf('Firefox') > -1;
-		const firefoxVersion = isFirefox ? navigator.userAgent.match(/Firefox\/([0-9]+)\./)[1] : -1;
+		const userAgent = navigator.userAgent;
 
-		if (typeof createImageBitmap === 'undefined' || isSafari || (isFirefox && firefoxVersion < 98)) {
+		const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent) === true;
+		const safariMatch = userAgent.match(/Version\/(\d+)/);
+		const safariVersion = isSafari && safariMatch ? parseInt(safariMatch[1], 10) : -1;
+
+		const isFirefox = userAgent.indexOf('Firefox') > -1;
+		const firefoxVersion = isFirefox ? userAgent.match(/Firefox\/([0-9]+)\./)[1] : -1;
+
+		if (typeof createImageBitmap === 'undefined' || (isSafari && safariVersion < 17) || (isFirefox && firefoxVersion < 98)) {
 			this._imageLoader = new ImageLoader();
 		} else {
 			this._imageLoader = new ImageBitmapLoader();
