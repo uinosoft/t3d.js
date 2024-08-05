@@ -41,18 +41,41 @@ class VirtualGroup {
 		return this._objects;
 	}
 
-	addObject(object) {
-		const index = this._objects.indexOf(object);
-		if (index > -1) return;
-		this._objects.push(object);
-		this._dirtyFlag |= DirtyFlag.All;
+	addObject(object, checkRelationship = false) {
+		let canAdd = true;
+
+		for (let i = this._objects.length - 1; i >= 0; i--) {
+			const existingObject = this._objects[i];
+
+			if (existingObject === object) {
+				canAdd = false;
+				break;
+			}
+
+			if (checkRelationship) {
+				if (isChildOf(existingObject, object)) {
+					canAdd = false;
+					break;
+				} else if (isChildOf(object, existingObject)) {
+					this.deleteObject(existingObject);
+				}
+			}
+		}
+
+		if (canAdd) {
+			this._objects.push(object);
+			this._dirtyFlag |= DirtyFlag.All;
+		}
+
+		return canAdd;
 	}
 
 	deleteObject(object) {
 		const index = this._objects.indexOf(object);
-		if (index === -1) return;
+		if (index === -1) return false;
 		this._objects.splice(index, 1);
 		this._dirtyFlag |= DirtyFlag.All;
+		return true;
 	}
 
 	reset() {
@@ -161,5 +184,13 @@ const _box3_1 = new Box3();
 const _box3_2 = new Box3();
 const _mat4_1 = new Matrix4();
 const _mat4_2 = new Matrix4();
+
+function isChildOf(parent, child) {
+	while (child.parent) {
+		if (parent === child.parent) return true;
+		child = child.parent;
+	}
+	return false;
+}
 
 export { VirtualGroup };
