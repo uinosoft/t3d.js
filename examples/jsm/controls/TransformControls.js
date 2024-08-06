@@ -313,6 +313,8 @@ const axisPlane = {
 	'xz': new Plane(new Vector3(0, 1, 0), 0)
 };
 
+const matchSign = (a, b) => Math.sign(b) * Math.abs(a);
+
 // Separate class for each control
 
 class BaseControl extends Object3D {
@@ -328,6 +330,8 @@ class BaseControl extends Object3D {
 		this._startGroupMatrix = new Matrix4();
 		this._startGroupMatrixInverse = new Matrix4();
 		this._startLocalMatrix = new Matrix4();
+
+		this._moving = false;
 
 		this.size = 1;
 
@@ -347,11 +351,15 @@ class BaseControl extends Object3D {
 		if (group.objects.length > 0) {
 			this._startLocalMatrix.copy(group.objects[0].matrix);
 		}
+
+		this._moving = true;
 	}
 
 	onMove(ray) {}
 
-	onMoveEnd() {}
+	onMoveEnd() {
+		this._moving = false;
+	}
 
 	update(isModify) {}
 
@@ -364,6 +372,7 @@ class TranslateControl extends BaseControl {
 
 		this._translateControlMap = new Map();
 		this._helperMap = new Map();
+		this._gizmoPlanes = [];
 
 		this._selectedAxis = null;
 
@@ -408,28 +417,34 @@ class TranslateControl extends BaseControl {
 		pickZ.visible = false;
 		this.add(pickZ);
 
-		const planeXY = new GizmoMesh('plane', 'xy', blueColor, new Vector3(0.15, 0.15, 0), new Euler(Math.PI / 2, 0, 0), 0.3);
+		const planeXY = new GizmoMesh('plane', 'xy', blueColor, new Vector3(0.18, 0.18, 0), new Euler(Math.PI / 2, 0, 0), 0.3);
 		this._translateControlMap.set('xy', [planeXY]);
+		this._gizmoPlanes.push(planeXY);
 		this.add(planeXY);
 
 		const pickXY = new GizmoMesh('plane', 'xy', whiteColor, new Vector3(0.25, 0.25, 0), new Euler(Math.PI / 2, 0, 0), 0.5);
 		pickXY.visible = false;
+		this._gizmoPlanes.push(pickXY);
 		this.add(pickXY);
 
-		const planeYZ = new GizmoMesh('plane', 'yz', redColor, new Vector3(0, 0.15, 0.15), new Euler(0, 0, Math.PI / 2), 0.3);
+		const planeYZ = new GizmoMesh('plane', 'yz', redColor, new Vector3(0, 0.18, 0.18), new Euler(0, 0, Math.PI / 2), 0.3);
 		this._translateControlMap.set('yz', [planeYZ]);
+		this._gizmoPlanes.push(planeYZ);
 		this.add(planeYZ);
 
 		const pickYZ = new GizmoMesh('plane', 'yz', whiteColor, new Vector3(0, 0.25, 0.25), new Euler(0, 0, Math.PI / 2), 0.5);
 		pickYZ.visible = false;
+		this._gizmoPlanes.push(pickYZ);
 		this.add(pickYZ);
 
-		const planeXZ = new GizmoMesh('plane', 'xz', greenColor, new Vector3(0.15, 0, 0.15), null, 0.3);
+		const planeXZ = new GizmoMesh('plane', 'xz', greenColor, new Vector3(0.18, 0, 0.18), null, 0.3);
 		this._translateControlMap.set('xz', [planeXZ]);
+		this._gizmoPlanes.push(planeXZ);
 		this.add(planeXZ);
 
 		const pickXZ = new GizmoMesh('plane', 'xz', whiteColor, new Vector3(0.25, 0, 0.25), null, 0.5);
 		pickXZ.visible = false;
+		this._gizmoPlanes.push(pickXZ);
 		this.add(pickXZ);
 
 		const helperX = new GizmoMesh('axishelper', 'x', yellowColor, new Vector3(-1e3, 0, 0), null);
@@ -524,6 +539,8 @@ class TranslateControl extends BaseControl {
 		this._helperMap.forEach(value => {
 			value.visible = false;
 		});
+
+		super.onMoveEnd();
 	}
 
 	_getHitPlane() {
@@ -558,6 +575,7 @@ class TranslateControl extends BaseControl {
 
 	update() {
 		this._resizeControl();
+		this._adaptPlanes();
 	}
 
 	_resizeControl() {
@@ -582,6 +600,27 @@ class TranslateControl extends BaseControl {
 		this.matrix.decompose(this.position, this.quaternion, this.scale);
 
 		this.scale.multiplyScalar(factor);
+	}
+
+	_adaptPlanes() {
+		if (this._moving) return;
+
+		_mat4_1.getInverse(this.worldMatrix).multiply(this._camera.worldMatrix);
+		const cameraVector = _vec3_1.setFromMatrixPosition(_mat4_1);
+
+		for (let i = 0, l = this._gizmoPlanes.length; i < l; i++) {
+			const plane = this._gizmoPlanes[i];
+			if (plane.name === 'xz') {
+				plane.position.x = matchSign(plane.position.x, cameraVector.x);
+				plane.position.z = matchSign(plane.position.z, cameraVector.z);
+			} else if (plane.name === 'xy') {
+				plane.position.x = matchSign(plane.position.x, cameraVector.x);
+				plane.position.y = matchSign(plane.position.y, cameraVector.y);
+			} else if (plane.name === 'yz') {
+				plane.position.y = matchSign(plane.position.y, cameraVector.y);
+				plane.position.z = matchSign(plane.position.z, cameraVector.z);
+			}
+		}
 	}
 
 	_applySnap(target) {
@@ -749,6 +788,8 @@ class ScaleControl extends BaseControl {
 				axis.visible = true;
 			});
 		});
+
+		super.onMoveEnd();
 	}
 
 	update(isModify) {
@@ -1035,6 +1076,8 @@ class RotateControl extends BaseControl {
 		});
 
 		this._needsUpdate = true;
+
+		super.onMoveEnd();
 	}
 
 	_calRayIntersection(ray, out) {
