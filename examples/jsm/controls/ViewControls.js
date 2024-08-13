@@ -45,7 +45,7 @@ class ViewControls {
 		this._q2 = new Quaternion();
 		this._lastQuaternion = new Quaternion();
 
-		this.needsUpdate = false;
+		this.needsUpdate = true;
 
 		const scope = this;
 
