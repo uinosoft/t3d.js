@@ -1,5 +1,6 @@
 import { Bone, Camera, Object3D, Mesh, SkinnedMesh, Vector4 } from 't3d';
 import { KHR_lights_punctual as _KHR_lights_punctual } from '../extensions/KHR_lights_punctual.js';
+import { EXT_mesh_gpu_instancing as _EXT_mesh_gpu_instancing } from '../extensions/EXT_mesh_gpu_instancing.js';
 
 export class NodeParser {
 
@@ -18,7 +19,7 @@ export class NodeParser {
 				camera: cameraID, mesh: meshID,
 				extensions = {}
 			} = gltfNode;
-			const { KHR_lights_punctual } = extensions;
+			const { KHR_lights_punctual, EXT_mesh_gpu_instancing } = extensions;
 
 			let node = null;
 
@@ -37,6 +38,10 @@ export class NodeParser {
 				lights.push(node);
 			} else {
 				node = new Object3D();
+			}
+
+			if (EXT_mesh_gpu_instancing) {
+				node = _EXT_mesh_gpu_instancing.getMesh(EXT_mesh_gpu_instancing, context.accessors, node, context.options);
 			}
 
 			node.name = gltfNode.name || '';
