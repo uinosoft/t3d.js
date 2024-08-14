@@ -15959,7 +15959,7 @@
 						if (mipmaps.length > 0 && !needFallback) {
 							for (let j = 0, jl = mipmaps.length; j < jl; j++) {
 								mipmap = mipmaps[j][i];
-								gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, glInternalFormat, glFormat, glType, mipmap);
+								gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glInternalFormat, glFormat, glType, mipmap);
 							}
 							textureProperties.__maxMipLevel = mipmaps.length - 1;
 							texture.generateMipmaps = false;
