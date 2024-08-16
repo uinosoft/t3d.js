@@ -62,6 +62,7 @@
 		"material_compressedtexture_pvr",
 		"material_cubetexture_skybox",
 		"material_cubetexture_skybox_tga",
+		"material_cubetexture_skybox_env",
 		"material_cubetexture_skybox_hdr",
 		"material_cubetexture_skybox_hdr_panorama",
 		"material_cubetexture_filter",
