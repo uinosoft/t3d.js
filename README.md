@@ -127,6 +127,12 @@ requestAnimationFrame(loop);
 * [t3d-dynamic-sky](https://github.com/uinosoft/t3d-dynamic-sky) - Dynamic sky addon for t3d.
 * [t3d-gaussian-splatting](https://github.com/uinosoft/t3d-gaussian-splatting) - A t3d-based implementation of 3D Gaussian Splatting.
 
+## Tools
+
+* [t3d-model-viewer](https://uinosoft.github.io/t3d-model-viewer/) - A Model Viewer based on t3d.js and t3d-effect-composer.
+* [t3d-particle-editor](https://uinosoft.github.io/t3d-particle/editor) - A particle editor based on t3d.js and t3d-particle.
+* [t3d-ibl-baker](https://uinosoft.github.io/t3d-ibl-baker/) - This is a simple tool to bake IBL maps for t3d.
+
 ## Contributing
 
 Please make sure to read the [Contributing Guide](./.github/contributing.md) before making a pull request.
