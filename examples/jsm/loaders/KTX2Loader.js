@@ -4,15 +4,19 @@ import {
 	TEXTURE_FILTER,
 	PIXEL_FORMAT,
 	PIXEL_TYPE,
-	TEXEL_ENCODING_TYPE
+	TEXEL_ENCODING_TYPE,
+	Texture2D
 } from 't3d';
 import { WorkerPool } from '../WorkerPool.js';
 
 const _taskCache = new WeakMap();
 
 let _activeLoaders = 0;
-let _zstd;
+
 let _ktxParser;
+let _zstdDecoder;
+
+let _zstd;
 
 class KTX2Loader extends Loader {
 
@@ -30,14 +34,13 @@ class KTX2Loader extends Loader {
 
 	static setKTXParser(ktxParser) {
 		_ktxParser = ktxParser;
-		setFORMAT_MAP(ktxParser);
-		setTYPE_MAP(ktxParser);
-		setENCODING_MAP(ktxParser);
+		setFORMAT_MAP();
+		setTYPE_MAP();
 		return this;
 	}
 
 	static setZSTDDecoder(zstdDecoder) {
-		_zstd = zstdDecoder;
+		_zstdDecoder = zstdDecoder;
 		return this;
 	}
 
@@ -61,12 +64,7 @@ class KTX2Loader extends Loader {
 			dxtSupported: capabilities.getExtension('WEBGL_compressed_texture_s3tc') ? true : false,
 			bptcSupported: capabilities.getExtension('EXT_texture_compression_bptc') ? true : false,
 			pvrtcSupported: capabilities.getExtension('WEBGL_compressed_texture_pvrtc') ? true : false
-				|| capabilities.getExtension('WEBKIT_WEBGL_compressed_texture_pvrtc') ? true : false
 		};
-
-		if (capabilities.isWebGL2) {
-			this.workerConfig.etc1Supported = false;
-		}
 
 		return this;
 	}
@@ -146,8 +144,8 @@ class KTX2Loader extends Loader {
 				return cachedTask.promise.then(onLoad).catch(onError);
 			}
 
-			this._createTexture(buffer)
-				.then(texture => onLoad ? onLoad(texture) : null)
+			this._createTextureData(buffer)
+				.then(textureData => onLoad ? onLoad(textureData) : null)
 				.catch(onError);
 		}, onProgress, onError);
 	}
@@ -157,10 +155,12 @@ class KTX2Loader extends Loader {
 	 * @param {object?} config
 	 * @return {Promise<Object>}
 	 */
-	async _createTexture(buffer, config = {}) {
-		const container = _ktxParser.read(new Uint8Array(buffer));
+	async _createTextureData(buffer, config = {}) {
+		const { read, VK_FORMAT_UNDEFINED, KHR_DF_FLAG_ALPHA_PREMULTIPLIED } = _ktxParser;
 
-		if (container.vkFormat !== _ktxParser.VK_FORMAT_UNDEFINED) {
+		const container = read(new Uint8Array(buffer));
+
+		if (container.vkFormat !== VK_FORMAT_UNDEFINED) {
 			return createTextureData(container);
 		}
 
@@ -168,22 +168,29 @@ class KTX2Loader extends Loader {
 		const texturePending = this.init().then(() => {
 			return this.workerPool.postMessage({ type: 'transcode', buffer, taskConfig: taskConfig }, [buffer]);
 		}).then(e => {
-			const { mipmaps, width, height, format, type, error, dfdTransferFn, dfdFlags } = e.data;
+			const { faces, width, height, format, type, error, dfdFlags } = e.data;
 
 			if (type === 'error') return Promise.reject(error);
 
+			const mipmaps = faces[0].mipmaps;
+
 			const textureData = {};
+
+			textureData.faces = faces;
+			textureData.layerCount = container.layerCount;
+
 			textureData.image = container.layerCount > 1
 				? { data: null, isCompressed: true, width: width, height: height, depth: container.layerCount }
 				: { data: null, isCompressed: true, width: width, height: height };
 			textureData.mipmaps = mipmaps;
+
 			textureData.format = format;
 			textureData.type = PIXEL_TYPE.UNSIGNED_BYTE;
 			textureData.minFilter = mipmaps.length === 1 ? TEXTURE_FILTER.LINEAR : TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
 			textureData.magFilter = TEXTURE_FILTER.LINEAR;
 			textureData.generateMipmaps = false;
-			textureData.encoding = dfdTransferFn === _ktxParser.KHR_DF_TRANSFER_SRGB ? TEXEL_ENCODING_TYPE.SRGB : TEXEL_ENCODING_TYPE.LINEAR;
-			textureData.premultiplyAlpha = !!(dfdFlags & _ktxParser.KHR_DF_FLAG_ALPHA_PREMULTIPLIED);
+			textureData.encoding = parseTextureEncoding(container);
+			textureData.premultiplyAlpha = !!(dfdFlags & KHR_DF_FLAG_ALPHA_PREMULTIPLIED);
 
 			return textureData;
 		});
@@ -204,7 +211,6 @@ class KTX2Loader extends Loader {
 	}
 
 }
-
 
 /* CONSTANTS */
 
@@ -237,15 +243,14 @@ KTX2Loader.EngineFormat = {
 	RGBAFormat: PIXEL_FORMAT.RGBA,
 	RGBA_ASTC_4x4_Format: PIXEL_FORMAT.RGBA_ASTC_4x4,
 	RGBA_BPTC_Format: PIXEL_FORMAT.RGBA_BPTC,
-	// RGBA_ETC2_EAC_Format: RGBA_ETC2_EAC_Format,
+	// RGBA_ETC2_EAC_Format: RGBA_ETC2_EAC_Format, TODO
 	RGBA_PVRTC_4BPPV1_Format: PIXEL_FORMAT.RGBA_PVRTC_4BPPV1,
 	RGBA_S3TC_DXT5_Format: PIXEL_FORMAT.RGBA_S3TC_DXT5,
 	RGB_ETC1_Format: PIXEL_FORMAT.RGB_ETC1,
-	// RGB_ETC2_Format: RGB_ETC2_Format,
+	// RGB_ETC2_Format: RGB_ETC2_Format, TODO
 	RGB_PVRTC_4BPPV1_Format: PIXEL_FORMAT.RGB_PVRTC_4BPPV1,
 	RGB_S3TC_DXT1_Format: PIXEL_FORMAT.RGB_S3TC_DXT1
 };
-
 
 /* WEB WORKER */
 
@@ -270,15 +275,9 @@ KTX2Loader.BasisWorker = function() {
 			case 'transcode':
 				transcoderPending.then(() => {
 					try {
-						const { width, height, hasAlpha, mipmaps, format, dfdTransferFn, dfdFlags } = transcode(message.buffer);
+						const { faces, buffers, width, height, hasAlpha, format, dfdFlags } = transcode(message.buffer);
 
-						const buffers = [];
-
-						for (let i = 0; i < mipmaps.length; ++i) {
-							buffers.push(mipmaps[i].data.buffer);
-						}
-
-						self.postMessage({ type: 'transcode', id: message.id, width, height, hasAlpha, mipmaps, format, dfdTransferFn, dfdFlags }, buffers);
+						self.postMessage({ type: 'transcode', id: message.id, faces, width, height, hasAlpha, format, dfdFlags }, buffers);
 					} catch (error) {
 						console.error(error);
 
@@ -318,15 +317,15 @@ KTX2Loader.BasisWorker = function() {
 		const basisFormat = ktx2File.isUASTC() ? BasisFormat.UASTC_4x4 : BasisFormat.ETC1S;
 		const width = ktx2File.getWidth();
 		const height = ktx2File.getHeight();
-		const layers = ktx2File.getLayers() || 1;
-		const levels = ktx2File.getLevels();
+		const layerCount = ktx2File.getLayers() || 1;
+		const levelCount = ktx2File.getLevels();
+		const faceCount = ktx2File.getFaces();
 		const hasAlpha = ktx2File.getHasAlpha();
-		const dfdTransferFn = ktx2File.getDFDTransferFunc();
 		const dfdFlags = ktx2File.getDFDFlags();
 
 		const { transcoderFormat, engineFormat } = getTranscoderFormat(basisFormat, width, height, hasAlpha);
 
-		if (!width || !height || !levels) {
+		if (!width || !height || !levelCount) {
 			cleanup();
 			throw new Error('KTX2Loader: Invalid texture');
 		}
@@ -336,42 +335,56 @@ KTX2Loader.BasisWorker = function() {
 			throw new Error('KTX2Loader: .startTranscoding failed');
 		}
 
-		const mipmaps = [];
+		const faces = [];
+		const buffers = [];
 
-		for (let mip = 0; mip < levels; mip++) {
-			const layerMips = [];
+		for (let face = 0; face < faceCount; face++) {
+			const mipmaps = [];
 
-			let mipWidth, mipHeight;
+			for (let mip = 0; mip < levelCount; mip++) {
+				const layerMips = [];
 
-			for (let layer = 0; layer < layers; layer++) {
-				const levelInfo = ktx2File.getImageLevelInfo(mip, layer, 0);
+				let mipWidth, mipHeight;
 
-				// refer to: github.com/mrdoob/three.js/issues/25908
-				if (levels > 1) {
-					mipWidth = levelInfo.origWidth;
-					mipHeight = levelInfo.origHeight;
-				} else {
-					mipWidth = levelInfo.width;
-					mipHeight = levelInfo.height;
+				for (let layer = 0; layer < layerCount; layer++) {
+					const levelInfo = ktx2File.getImageLevelInfo(mip, layer, face);
+
+					if (face === 0 && mip === 0 && layer === 0 && (levelInfo.origWidth % 4 !== 0 || levelInfo.origHeight % 4 !== 0)) {
+						console.warn('KTX2Loader: ETC1S and UASTC textures should use multiple-of-four dimensions.');
+					}
+
+					if (levelCount > 1) {
+						mipWidth = levelInfo.origWidth;
+						mipHeight = levelInfo.origHeight;
+					} else {
+						// refer to: github.com/mrdoob/three.js/issues/25908
+						mipWidth = levelInfo.width;
+						mipHeight = levelInfo.height;
+					}
+
+					const dst = new Uint8Array(ktx2File.getImageTranscodedSizeInBytes(mip, layer, 0, transcoderFormat));
+					const status = ktx2File.transcodeImage(dst, mip, layer, face, transcoderFormat, 0, -1, -1);
+
+					if (!status) {
+						cleanup();
+						throw new Error('KTX2Loader: .transcodeImage failed.');
+					}
+
+					layerMips.push(dst);
 				}
 
-				const dst = new Uint8Array(ktx2File.getImageTranscodedSizeInBytes(mip, layer, 0, transcoderFormat));
-				const status = ktx2File.transcodeImage(dst, mip, layer, 0, transcoderFormat, 0, -1, -1);
+				const mipData = concat(layerMips);
 
-				if (!status) {
-					cleanup();
-					throw new Error('KTX2Loader: .transcodeImage failed.');
-				}
-
-				layerMips.push(dst);
+				mipmaps.push({ data: mipData, width: mipWidth, height: mipHeight });
+				buffers.push(mipData.buffer);
 			}
 
-			mipmaps.push({ data: concat(layerMips), width: mipWidth, height: mipHeight });
+			faces.push({ mipmaps, width, height, format: engineFormat });
 		}
 
 		cleanup();
 
-		return { width, height, hasAlpha, mipmaps, format: engineFormat, dfdTransferFn, dfdFlags };
+		return { faces, buffers, width, height, hasAlpha, format: engineFormat, dfdFlags };
 	}
 
 	//
@@ -477,12 +490,13 @@ KTX2Loader.BasisWorker = function() {
 
 	function isPowerOfTwo(value) {
 		if (value <= 2) return true;
-
 		return (value & (value - 1)) === 0 && value !== 0;
 	}
 
 	/** Concatenates N byte arrays. */
 	function concat(arrays) {
+		if (arrays.length === 1) return arrays[0];
+
 		let totalByteLength = 0;
 
 		for (const array of arrays) {
@@ -495,7 +509,6 @@ KTX2Loader.BasisWorker = function() {
 
 		for (const array of arrays) {
 			result.set(array, byteOffset);
-
 			byteOffset += array.byteLength;
 		}
 
@@ -503,52 +516,51 @@ KTX2Loader.BasisWorker = function() {
 	}
 };
 
+//
+// Parsing for non-Basis textures. These textures are may have supercompression
+// like Zstd, but they do not require transcoding.
+
+const UNCOMPRESSED_FORMATS = new Set([PIXEL_FORMAT.RGBA, PIXEL_FORMAT.RG, PIXEL_FORMAT.Red]);
+
 let FORMAT_MAP = {};
-function setFORMAT_MAP(ktxParser) {
+function setFORMAT_MAP() {
 	FORMAT_MAP = {
-		[ktxParser.VK_FORMAT_R32G32B32A32_SFLOAT]: PIXEL_FORMAT.RGBA,
-		[ktxParser.VK_FORMAT_R16G16B16A16_SFLOAT]: PIXEL_FORMAT.RGBA,
-		[ktxParser.VK_FORMAT_R8G8B8A8_UNORM]: PIXEL_FORMAT.RGBA,
-		[ktxParser.VK_FORMAT_R8G8B8A8_SRGB]: PIXEL_FORMAT.RGBA,
+		[_ktxParser.VK_FORMAT_R32G32B32A32_SFLOAT]: PIXEL_FORMAT.RGBA,
+		[_ktxParser.VK_FORMAT_R16G16B16A16_SFLOAT]: PIXEL_FORMAT.RGBA,
+		[_ktxParser.VK_FORMAT_R8G8B8A8_UNORM]: PIXEL_FORMAT.RGBA,
+		[_ktxParser.VK_FORMAT_R8G8B8A8_SRGB]: PIXEL_FORMAT.RGBA,
 
-		[ktxParser.VK_FORMAT_R32G32_SFLOAT]: PIXEL_FORMAT.RG,
-		[ktxParser.VK_FORMAT_R16G16_SFLOAT]: PIXEL_FORMAT.RG,
-		[ktxParser.VK_FORMAT_R8G8_UNORM]: PIXEL_FORMAT.RG,
-		[ktxParser.VK_FORMAT_R8G8_SRGB]: PIXEL_FORMAT.RG,
+		[_ktxParser.VK_FORMAT_R32G32_SFLOAT]: PIXEL_FORMAT.RG,
+		[_ktxParser.VK_FORMAT_R16G16_SFLOAT]: PIXEL_FORMAT.RG,
+		[_ktxParser.VK_FORMAT_R8G8_UNORM]: PIXEL_FORMAT.RG,
+		[_ktxParser.VK_FORMAT_R8G8_SRGB]: PIXEL_FORMAT.RG,
 
-		[ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_FORMAT.Red,
-		[ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_FORMAT.Red,
-		[ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_FORMAT.Red,
-		[ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_FORMAT.Red
+		[_ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_FORMAT.Red,
+		[_ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_FORMAT.Red,
+		[_ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_FORMAT.Red,
+		[_ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_FORMAT.Red
+
+		// TODO: support ASTC formats
 	};
 }
 
 let TYPE_MAP = {};
-function setTYPE_MAP(ktxParser) {
+function setTYPE_MAP() {
 	TYPE_MAP = {
-		[ktxParser.VK_FORMAT_R32G32B32A32_SFLOAT]: PIXEL_TYPE.FLOAT,
-		[ktxParser.VK_FORMAT_R16G16B16A16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
-		[ktxParser.VK_FORMAT_R8G8B8A8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE,
-		[ktxParser.VK_FORMAT_R8G8B8A8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[_ktxParser.VK_FORMAT_R32G32B32A32_SFLOAT]: PIXEL_TYPE.FLOAT,
+		[_ktxParser.VK_FORMAT_R16G16B16A16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
+		[_ktxParser.VK_FORMAT_R8G8B8A8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[_ktxParser.VK_FORMAT_R8G8B8A8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
 
-		[ktxParser.VK_FORMAT_R32G32_SFLOAT]: PIXEL_TYPE.FLOAT,
-		[ktxParser.VK_FORMAT_R16G16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
-		[ktxParser.VK_FORMAT_R8G8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE,
-		[ktxParser.VK_FORMAT_R8G8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[_ktxParser.VK_FORMAT_R32G32_SFLOAT]: PIXEL_TYPE.FLOAT,
+		[_ktxParser.VK_FORMAT_R16G16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
+		[_ktxParser.VK_FORMAT_R8G8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[_ktxParser.VK_FORMAT_R8G8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
 
-		[ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_TYPE.FLOAT,
-		[ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
-		[ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
-		[ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE
-	};
-}
-
-let ENCODING_MAP = {};
-function setENCODING_MAP(ktxParser) {
-	ENCODING_MAP = {
-		[ktxParser.VK_FORMAT_R8G8B8A8_SRGB]: TEXEL_ENCODING_TYPE.SRGB,
-		[ktxParser.VK_FORMAT_R8G8_SRGB]: TEXEL_ENCODING_TYPE.SRGB,
-		[ktxParser.VK_FORMAT_R8_SRGB]: TEXEL_ENCODING_TYPE.SRGB
+		[_ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_TYPE.FLOAT,
+		[_ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
+		[_ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[_ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE
 	};
 }
 
@@ -559,60 +571,129 @@ async function createTextureData(container) {
 		throw new Error('KTX2Loader: Unsupported vkFormat.');
 	}
 
-	const level = container.levels[0];
-
-	let levelData;
-	let view;
-
-	let isZSTD = false;
-
-	if (container.supercompressionScheme === _ktxParser.KHR_SUPERCOMPRESSION_NONE) {
-		levelData = level.levelData;
-	} else if (container.supercompressionScheme === _ktxParser.KHR_SUPERCOMPRESSION_ZSTD) {
-		isZSTD = true;
-		levelData = _zstd.decode(level.levelData, level.uncompressedByteLength);
-	} else {
-		throw new Error('KTX2Loader: Unsupported supercompressionScheme.');
+	let isCompressed = true;
+	if (UNCOMPRESSED_FORMATS.has(FORMAT_MAP[vkFormat])) {
+		isCompressed = false;
 	}
 
-	if (TYPE_MAP[vkFormat] === PIXEL_TYPE.FLOAT) {
-		view = new Float32Array(
-			levelData.buffer,
-			levelData.byteOffset,
-			levelData.byteLength / Float32Array.BYTES_PER_ELEMENT
-		);
-	} else if (TYPE_MAP[vkFormat] === PIXEL_TYPE.HALF_FLOAT) {
-		view = new Uint16Array(
-			levelData.buffer,
-			levelData.byteOffset,
-			levelData.byteLength / Uint16Array.BYTES_PER_ELEMENT
-		);
-	} else {
-		view = levelData;
+	//
+
+	if (container.supercompressionScheme === _ktxParser.KHR_SUPERCOMPRESSION_ZSTD) {
+		if (!_zstd) {
+			if (!_zstdDecoder) {
+				throw new Error('KTX2Loader: ZSTDDecoder not set.');
+			}
+
+			_zstd = new _zstdDecoder();
+			await _zstd.init();
+		}
+	}
+
+	//
+
+	const mipmaps = [];
+
+	for (let levelIndex = 0; levelIndex < container.levels.length; levelIndex++) {
+		const levelWidth = Math.max(1, pixelWidth >> levelIndex);
+		const levelHeight = Math.max(1, pixelHeight >> levelIndex);
+		const levelDepth = pixelDepth ? Math.max(1, pixelDepth >> levelIndex) : 0;
+
+		const level = container.levels[levelIndex];
+
+		let levelData;
+
+		if (container.supercompressionScheme === _ktxParser.KHR_SUPERCOMPRESSION_NONE) {
+			levelData = level.levelData;
+		} else if (container.supercompressionScheme === _ktxParser.KHR_SUPERCOMPRESSION_ZSTD) {
+			levelData = _zstd.decode(level.levelData, level.uncompressedByteLength);
+		} else {
+			throw new Error('KTX2Loader: Unsupported supercompressionScheme.');
+		}
+
+		let data;
+
+		if (TYPE_MAP[vkFormat] === PIXEL_TYPE.FLOAT) {
+			data = new Float32Array(
+				levelData.buffer,
+				levelData.byteOffset,
+				levelData.byteLength / Float32Array.BYTES_PER_ELEMENT
+			);
+		} else if (TYPE_MAP[vkFormat] === PIXEL_TYPE.HALF_FLOAT) {
+			data = new Uint16Array(
+				levelData.buffer,
+				levelData.byteOffset,
+				levelData.byteLength / Uint16Array.BYTES_PER_ELEMENT
+			);
+		} else {
+			data = levelData;
+		}
+
+		mipmaps.push({ data, isCompressed, width: levelWidth, height: levelHeight, depth: levelDepth });
 	}
 
 	const textureData = {};
-	let image;
-	if (pixelDepth === 0) {
-		image = { data: view, width: pixelWidth, height: pixelHeight };
-	} else {
-		image = { data: view, width: pixelWidth, height: pixelHeight, depth: pixelDepth };
-	}
-	textureData.image = image;
-	textureData.mipmaps = [];
+	textureData.image = mipmaps[0];
+	textureData.mipmaps = mipmaps.length > 1 ? mipmaps : [];
 	textureData.type = TYPE_MAP[vkFormat];
 	textureData.format = FORMAT_MAP[vkFormat];
-	textureData.minFilter = TEXTURE_FILTER.LINEAR;
+	textureData.minFilter = mipmaps.length > 1 ? TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR : TEXTURE_FILTER.LINEAR;
 	textureData.magFilter = TEXTURE_FILTER.LINEAR;
 	textureData.generateMipmaps = false;
-	textureData.encoding = ENCODING_MAP[vkFormat] || TEXEL_ENCODING_TYPE.LINEAR;
+	textureData.encoding = parseTextureEncoding(container);
 	textureData.premultiplyAlpha = false;
-
-	if (isZSTD) {
-		textureData.image.isCompressed = true;
-	}
 
 	return Promise.resolve(textureData);
 }
 
-export { KTX2Loader };
+function parseTextureEncoding(container) {
+	const { KHR_DF_PRIMARIES_BT709, KHR_DF_TRANSFER_SRGB, KHR_DF_PRIMARIES_DISPLAYP3, KHR_DF_PRIMARIES_UNSPECIFIED } = _ktxParser;
+
+	const dfd = container.dataFormatDescriptor[0];
+
+	if (dfd.colorPrimaries === KHR_DF_PRIMARIES_BT709) {
+		return dfd.transferFunction === KHR_DF_TRANSFER_SRGB ? TEXEL_ENCODING_TYPE.SRGB : TEXEL_ENCODING_TYPE.LINEAR;
+	} else if (dfd.colorPrimaries === KHR_DF_PRIMARIES_DISPLAYP3) {
+		console.warn('KTX2Loader: DisplayP3 encoding is not supported.');
+		return dfd.transferFunction === KHR_DF_TRANSFER_SRGB ? TEXEL_ENCODING_TYPE.SRGB : TEXEL_ENCODING_TYPE.LINEAR;
+	} else if (dfd.colorPrimaries === KHR_DF_PRIMARIES_UNSPECIFIED) {
+		return TEXEL_ENCODING_TYPE.LINEAR;
+	} else {
+		console.warn(`KTX2Loader: Unsupported color primaries, "${dfd.colorPrimaries}"`);
+		return TEXEL_ENCODING_TYPE.LINEAR;
+	}
+}
+
+class KTX2TextureLoader extends KTX2Loader {
+
+	constructor(manager) {
+		super(manager);
+	}
+
+	load(url, onLoad, onProgress, onError) {
+		super.load(url, textureData => {
+			const texture = new Texture2D();
+
+			// TODO Texture3D or Texture2DArray
+			// TODO TextureCube
+
+			texture.image = textureData.image;
+			texture.mipmaps = textureData.mipmaps;
+			texture.type = textureData.type;
+			texture.format = textureData.format;
+			texture.minFilter = textureData.minFilter;
+			texture.magFilter = textureData.magFilter;
+			texture.generateMipmaps = textureData.generateMipmaps;
+			texture.encoding = textureData.encoding;
+			texture.premultiplyAlpha = textureData.premultiplyAlpha;
+
+			texture.flipY = false;
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}, onProgress, onError);
+	}
+
+}
+
+export { KTX2Loader, KTX2TextureLoader };

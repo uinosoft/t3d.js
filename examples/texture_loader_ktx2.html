@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - ktx2 loader</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - ktx2 texture loader
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { KTX2TextureLoader } from 't3d/addons/loaders/KTX2Loader.js';
+		import * as KTXParse from './libs/ktx-parse.module.js';
+		import { ZSTDDecoder } from './libs/zstddec.module.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.13, 0.13, 0.13, 1);
+
+		const scene = new t3d.Scene();
+		
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 0, 2.5);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const geometry = flipY(new t3d.PlaneGeometry(1, 1));
+		const material = new t3d.BasicMaterial();
+		const mesh = new t3d.Mesh(geometry, material);
+		mesh.euler.x = Math.PI / 2;
+		scene.add(mesh);
+
+		function flipY(geometry) {
+			const uvArray = geometry.attributes.a_Uv.buffer.array;
+			for (let i = 0; i < uvArray.length; i += 2) {
+				uvArray[i + 1] = 1 - uvArray[i + 1];
+			}
+			return geometry;
+		}
+
+		const SROUCES = {
+			'BasisU ETC1S': '2d_etc1s.ktx2',
+			'BasisU UASTC': '2d_uastc.ktx2',
+			'RGBA8 sRGB': '2d_rgba8.ktx2',
+			'RGBA8 Linear': '2d_rgba8_linear.ktx2',
+			// 'RGBA8 Display P3': '2d_rgba8_displayp3.ktx2',
+			'RGBA16 Linear': '2d_rgba16_linear.ktx2',
+			'RGBA32 Linear': '2d_rgba32_linear.ktx2'
+			// 'ASTC 6x6 (mobile)': '2d_astc_6x6.ktx2'
+		};
+
+		const params = { source: Object.values(SROUCES)[0] };
+
+		const capabilities = forwardRenderer.capabilities;
+		const isWebGL2 = capabilities.version > 1;
+		if (!isWebGL2) {
+			capabilities.getExtension('OES_texture_half_float');
+			capabilities.getExtension('OES_texture_half_float_linear');
+		}
+		capabilities.getExtension('OES_texture_float_linear');
+
+		KTX2TextureLoader.setKTXParser(KTXParse).setZSTDDecoder(ZSTDDecoder);
+		const ktx2TextureLoader = new KTX2TextureLoader()
+			.setTranscoderPath('./libs/basis/')
+			.detectSupport(forwardRenderer);
+
+		async function loadTexture(path) {
+			material.diffuseMap = await ktx2TextureLoader
+				.loadAsync(`./resources/compressed/${path}`);
+			material.needsUpdate = true;
+		}
+
+		(async function() {
+			await loadTexture(params.source);
+
+			const gui = new GUI();
+			gui.add(params, 'source', SROUCES).onChange(loadTexture);
+
+			requestAnimationFrame(loop);
+		})();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

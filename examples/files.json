@@ -85,6 +85,7 @@
 		"texture_loader_hdr_cube",
 		"texture_loader_exr",
 		"texture_loader_env",
+		"texture_loader_ktx2",
 		"texture_loader_compressed_dds",
 		"texture_loader_compressed_pvr",
 		"texture_loader_tga",
