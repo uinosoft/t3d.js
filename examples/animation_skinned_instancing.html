@@ -35,6 +35,7 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { SceneUtils } from 't3d/addons/SceneUtils.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
 
 		const devicePixelRatio = window.devicePixelRatio;
@@ -67,6 +68,16 @@
 		scene.fog = new t3d.Fog(undefined, 10, 100);
 		scene.fog.color.setRGB(0.6, 0.7, 0.8);
 		scene.environment = cubeTexture;
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 5, 18);
+		camera.lookAt(new t3d.Vector3(0, 1.5, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1.5, 0);
 
 		// fix depth material for instancing
 
@@ -138,27 +149,30 @@
 
 		// create shared instanceMatrixAttribute
 
-		const instanceCount = 100;
+		const maxInstanceCount = 1000;
+		const params = { instanceCount: 108 };
 
 		const matrices = [];
+		const geometries = [];
 
 		const position = new t3d.Vector3();
 		const orientation = new t3d.Quaternion();
-		const scale = new t3d.Vector3();
+		const scale = new t3d.Vector3(1, 1, 1);
 		const matrix = new t3d.Matrix4();
 
-		for (let i = 0; i < instanceCount; i++) {
-			position.x = (i % 10 - 4.5) * 2 + (Math.floor(i / 10) % 2 === 0 ? -0.5 : 0.5);
+		let rowLength = 8, row = 0, countInRow = 0;
+		for (let i = 0; i < maxInstanceCount; i++) {
+			position.x = (countInRow - (rowLength - 1) / 2) * 2;
 			position.y = 0;
-			position.z = (Math.floor(i / 10) - 4.5) * 2;
+			position.z = -row * 1.5 + 10;
 
-			orientation.x = 0;
-			orientation.y = 0;
-			orientation.z = 0;
-			orientation.w = 1;
-			orientation.normalize();
+			countInRow++;
 
-			scale.set(1, 1, 1);
+			if (countInRow >= rowLength) {
+				row++;
+				countInRow = 0;
+				rowLength++;
+			}
 
 			matrix.transform(position, scale, orientation);
 			matrix.toArray(matrices, i * 16);
@@ -226,9 +240,11 @@
 					}
 
 					node.geometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
-					node.geometry.instanceCount = instanceCount;
+					node.geometry.instanceCount = params.instanceCount;
 
 					node.material = material;
+
+					geometries.push(node.geometry);
 				}
 			});
 
@@ -259,18 +275,17 @@
 		directionalLight.shadow.cameraNear = 1;
 		directionalLight.shadow.cameraFar = 50;
 		directionalLight.shadow.mapSize.set(512, 512);
+		directionalLight.shadow.frustumEdgeFalloff = 0.2;
 		directionalLight.castShadow = true;
 		scene.add(directionalLight);
 
-		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(0, 5, 18);
-		camera.lookAt(new t3d.Vector3(0, 1.5, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
-
-		const controller = new OrbitControls(camera, canvas);
-		controller.target.set(0, 1.5, 0);
+		// gui
+		const gui = new GUI();
+		gui.add(params, 'instanceCount', 0, maxInstanceCount, 1).name('Instance Count').onChange(function(value) {
+			geometries.forEach(geometry => {
+				geometry.instanceCount = value;
+			});
+		});
 
 		// stats
 		const stats = new Stats();
