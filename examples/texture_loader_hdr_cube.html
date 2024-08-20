@@ -2,12 +2,13 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>t3d - skybox Panorama</title>
+	<title>t3d - hdr loader</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
 <body>
     <div id="info">
-        <a href="" target="_blank">t3d</a> - skybox Panorama
+        <a href="" target="_blank">t3d</a> - hdr loader for cube
     </div>
 
 	<!-- Import maps polyfill -->
@@ -44,26 +45,49 @@
 
 		const scene = new t3d.Scene();
 
-		const loader = new RGBELoader();
+		const rgbeLoader = new RGBELoader();
 
 		const capabilities = forwardRenderer.capabilities;
 		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
 			!!capabilities.getExtension('OES_texture_float_linear')) {
-			loader.type = t3d.PIXEL_TYPE.FLOAT;
+			rgbeLoader.type = t3d.PIXEL_TYPE.FLOAT;
 		}
 
-		loader.load('resources/hdr/pisa.hdr', function(textureData) {
-			let texture = new t3d.Texture2D();
-			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
-			texture.version++;
-		
-			texture.type = textureData.type;
-			texture.format = textureData.format;
+		const imageUrls = [
+			'resources/hdr/pisaHDR/px.hdr',
+			'resources/hdr/pisaHDR/nx.hdr',
+			'resources/hdr/pisaHDR/py.hdr',
+			'resources/hdr/pisaHDR/ny.hdr',
+			'resources/hdr/pisaHDR/pz.hdr',
+			'resources/hdr/pisaHDR/nz.hdr'
+		];
 
-			texture.magFilter = textureData.magFilter;
-			texture.minFilter = textureData.minFilter;
-			texture.flipY = textureData.flipY;
-			texture.generateMipmaps = textureData.generateMipmaps;
+		let texture = new t3d.TextureCube();
+
+		const promiseArray = [];
+		for (let i = 0; i < 6; i++) {
+			promiseArray.push(rgbeLoader.loadAsync(imageUrls[i]));
+		}
+		Promise.all(promiseArray).then(function(textureDatas) {
+			for (let i = 0; i < 6; i++) {
+				texture.images.push({
+					data: textureDatas[i].data,
+					width: textureDatas[i].width,
+					height: textureDatas[i].height
+				});
+			}
+
+			const textureData = textureDatas[0];
+			texture.type = textureData.type;
+
+			if (textureData.generateMipmaps !== undefined) {
+				texture.generateMipmaps = textureData.generateMipmaps;
+			}
+
+			texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : t3d.TEXTURE_FILTER.LINEAR;
+			texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : t3d.TEXTURE_FILTER.LINEAR;
+
+			texture.version++;
 
 			texture = (new PMREMGenerator()).prefilter(forwardRenderer, texture);
 		

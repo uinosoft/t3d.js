@@ -2,20 +2,20 @@
 <html>
 
 <head>
-	<meta charset="utf-8">
-	<title>t3d - compressed texture pvr</title>
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<link type="text/css" rel="stylesheet" href="main.css">
+    <meta charset="utf-8">
+    <title>t3d - compressed texture dds loader</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
 </head>
 
 <body>
-	<div id="info">
-		<a href="" target="_blank">t3d</a> - compressed texture pvr
-		<br />
-		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support pvr</div>
-	</div>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - compressed texture dds
+        <br />
+        <div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support dds</div>
+    </div>
 
-	<!-- Import maps polyfill -->
+    <!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
     <script async src="./libs/es-module-shims.js"></script>
 
@@ -31,7 +31,7 @@
     <script type="module">
         import * as t3d from 't3d';
         import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
-        import { PVRLoader } from 't3d/addons/loaders/PVRLoader.js';
+        import { DDSLoader } from 't3d/addons/loaders/DDSLoader.js';
         import { GUI } from './libs/lil-gui.esm.min.js';
 
         let width = window.innerWidth || 2;
@@ -53,12 +53,12 @@
         scene.add(camera);
 
         const capabilities = forwardRenderer.capabilities;
-        if ((!capabilities.getExtension('WEBGL_compressed_texture_pvrtc'))) {
+        if ((!capabilities.getExtension('WEBGL_compressed_texture_s3tc'))) {
         	document.getElementById('notSupported').style.display = '';
-        	console.error('Not supported pvr!');
+        	console.error('Not supported dds!');
         }
 
-        const loader = new PVRLoader();
+        const loader = new DDSLoader();
 
         const meshes = [];
 
@@ -80,7 +80,7 @@
 
         		compressedTexture.generateMipmaps = false;
 
-        		compressedTexture.image = { data: texData.mipmaps[0].data, width: texData.width, height: texData.height, isCompressed: true };
+        		compressedTexture.image = { data: texData.mipmaps[0].data, width: texData.width, height: texData.height, isCompressed: (texData.format !== t3d.PIXEL_FORMAT.RGBA) };
         		compressedTexture.version++;
 
         		compressedTexture.mipmaps = texData.mipmaps;
@@ -90,9 +90,6 @@
         		}
 
         		compressedTexture.format = texData.format;
-
-        		compressedTexture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
-        		compressedTexture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 
         		compressedTexture.anisotropy = 4;
 
@@ -104,12 +101,12 @@
         }
 
         const mapUrls = [
-        	'resources/compressed/disturb_4bpp_rgb.pvr',
-        	'resources/compressed/disturb_4bpp_rgb_v3.pvr',
-        	'resources/compressed/disturb_4bpp_rgb_mips.pvr',
-        	'resources/compressed/disturb_2bpp_rgb.pvr',
-        	'resources/compressed/flare_4bpp_rgba.pvr',
-        	'resources/compressed/flare_2bpp_rgba.pvr'
+        	'resources/compressed/disturb_dxt1_mip.dds',
+        	'resources/compressed/disturb_dxt1_nomip.dds',
+        	'resources/compressed/hepatica_dxt3_mip.dds',
+        	'resources/compressed/explosion_dxt5_mip.dds',
+        	'resources/compressed/disturb_argb_nomip.dds',
+        	'resources/compressed/disturb_argb_mip.dds'
         ];
 
         const cube_geometry = new t3d.BoxGeometry(2, 2, 2);
@@ -175,12 +172,8 @@
 
         		// generate image
         		for (let f = 0; f < faces; f++) {
-        			compressedTexture.images[f] = {};
-        			compressedTexture.images[f].data = texData.mipmaps[f * texData.mipmapCount]; // use first mipmap data
-        			compressedTexture.images[f].format = texData.format;
-        			compressedTexture.images[f].width = texData.width;
-        			compressedTexture.images[f].height = texData.height;
-        			compressedTexture.images[f].isCompressed = true;
+        			compressedTexture.images[f] = texData.mipmaps[f * texData.mipmapCount];
+        			compressedTexture.images[f].isCompressed = (texData.format !== t3d.PIXEL_FORMAT.RGBA);
         		}
 
         		// generate mipmaps
@@ -209,8 +202,8 @@
         }
 
         const envMapUrls = [
-        	'resources/compressed/park3_cube_nomip_4bpp_rgb.pvr',
-        	'resources/compressed/park3_cube_mip_2bpp_rgb_v3.pvr'
+        	'resources/compressed/Mountains_argb_mip.dds',
+        	'resources/compressed/Mountains_argb_nomip.dds'
         ];
 
         const cubeMat1 = new t3d.BasicMaterial();
