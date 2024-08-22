@@ -1105,7 +1105,8 @@ class RotateControl extends BaseControl {
 		const dot = p1.dot(p2);
 		_vec3_1.crossVectors(p1, p2);
 		const direction = _vec3_1.dot(rotateAxis);
-		const currentRad = Math.sign(direction) * Math.acos(dot / (radius * radius));
+		const currentCos = Math.min(1, Math.max(-1, dot / (radius * radius))); // clamp value to the range [-1, 1] to prevent NaN
+		const currentRad = Math.sign(direction) * Math.acos(currentCos);
 		const incrementRad = currentRad - this._previousRad;
 		if (this._previousRad * currentRad < 0) {
 			Math.abs(currentRad) < Math.PI / 2
