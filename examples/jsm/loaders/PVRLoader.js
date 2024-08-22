@@ -1,29 +1,23 @@
 import {
 	Loader,
 	FileLoader,
-	PIXEL_FORMAT
+	PIXEL_FORMAT,
+	Texture2D,
+	TEXTURE_FILTER,
+	TextureCube
 } from 't3d';
 
 class PVRLoader extends Loader {
 
-	constructor(manager) {
-		super(manager);
-	}
-
 	load(url, onLoad, onProgress, onError) {
-		const scope = this;
-
-		const loader = new FileLoader(this.manager);
-		loader.setResponseType('arraybuffer');
-		loader.setRequestHeader(this.requestHeader);
-		loader.setPath(this.path);
-		loader.setWithCredentials(this.withCredentials);
-
-		loader.load(url, function(buffer) {
-			if (onLoad !== undefined) {
-				onLoad(scope.parse(buffer, true));
-			}
-		}, onProgress, onError);
+		new FileLoader(this.manager)
+			.setResponseType('arraybuffer')
+			.setRequestHeader(this.requestHeader)
+			.setPath(this.path)
+			.setWithCredentials(this.withCredentials)
+			.load(url, buffer => {
+				onLoad && onLoad(this.parse(buffer, true));
+			}, onProgress, onError);
 	}
 
 	parse(buffer, loadMipmaps) {
@@ -36,13 +30,9 @@ class PVRLoader extends Loader {
 			loadMipmaps: loadMipmaps
 		};
 
-		if (header[0] === 0x03525650) {
-			// PVR v3
-
+		if (header[0] === 0x03525650) { // PVR v3
 			return _parseV3(pvrDatas);
-		} else if (header[11] === 0x21525650) {
-			// PVR v2
-
+		} else if (header[11] === 0x21525650) { // PVR v2
 			return _parseV2(pvrDatas);
 		} else {
 			console.error('PVRLoader: Unknown PVR format.');
@@ -54,7 +44,6 @@ class PVRLoader extends Loader {
 function _parseV3(pvrDatas) {
 	const header = pvrDatas.header;
 	let bpp, format;
-
 
 	const metaLen = header[12],
 		pixelFormat = header[2],
@@ -69,22 +58,18 @@ function _parseV3(pvrDatas) {
 			bpp = 2;
 			format = PIXEL_FORMAT.RGB_PVRTC_2BPPV1;
 			break;
-
 		case 1: // PVRTC 2bpp RGBA
 			bpp = 2;
 			format = PIXEL_FORMAT.RGBA_PVRTC_2BPPV1;
 			break;
-
 		case 2: // PVRTC 4bpp RGB
 			bpp = 4;
 			format = PIXEL_FORMAT.RGB_PVRTC_4BPPV1;
 			break;
-
 		case 3: // PVRTC 4bpp RGBA
 			bpp = 4;
 			format = PIXEL_FORMAT.RGBA_PVRTC_4BPPV1;
 			break;
-
 		default:
 			console.error('PVRLoader: Unsupported PVR format:', pixelFormat);
 	}
@@ -96,7 +81,7 @@ function _parseV3(pvrDatas) {
 	pvrDatas.height = height;
 	pvrDatas.numSurfaces = numFaces;
 	pvrDatas.numMipmaps = numMipmaps;
-	pvrDatas.isCubemap 	= (numFaces === 6);
+	pvrDatas.isCubemap = (numFaces === 6);
 
 	return _extract(pvrDatas);
 }
@@ -117,7 +102,6 @@ function _parseV2(pvrDatas) {
 		bitmaskAlpha = header[10],
 		// pvrTag = header[ 11 ],
 		numSurfs = header[12];
-
 
 	const TYPE_MASK = 0xff;
 	const PVRTC_2 = 24,
@@ -223,4 +207,56 @@ function _extract(pvrDatas) {
 	return pvr;
 }
 
-export { PVRLoader };
+class PVRTextureLoader extends PVRLoader {
+
+	load(url, onLoad, onProgress, onError) {
+		super.load(url, textureData => {
+			const { mipmaps, width, height, format, mipmapCount, isCubemap } = textureData;
+
+			let texture;
+
+			if (isCubemap) {
+				texture = new TextureCube();
+
+				const faces = mipmaps.length / mipmapCount;
+
+				for (let f = 0; f < faces; f++) {
+					texture.images[f] = { data: mipmaps[f * mipmapCount], width, height, isCompressed: true };
+				}
+
+				for (let i = 0; i < mipmapCount; i++) {
+					texture.mipmaps[i] = [];
+					for (let f = 0; f < faces; f++) {
+						texture.mipmaps[i].push(mipmaps[f * mipmapCount + i]);
+					}
+				}
+			} else {
+				texture = new Texture2D();
+				texture.image = { data: mipmaps[0].data, width, height, isCompressed: true };
+				texture.mipmaps = mipmaps;
+			}
+
+			texture.minFilter = mipmapCount === 1 ? TEXTURE_FILTER.LINEAR : TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+			texture.magFilter = TEXTURE_FILTER.LINEAR;
+
+			texture.format = format;
+
+			// no flipping for cube textures
+			// (also flipping doesn't work for compressed textures )
+
+			texture.flipY = false;
+
+			// can't generate mipmaps for compressed textures
+			// mips must be embedded in DDS files
+
+			texture.generateMipmaps = false;
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}, onProgress, onError);
+	}
+
+}
+
+export { PVRLoader, PVRTextureLoader };

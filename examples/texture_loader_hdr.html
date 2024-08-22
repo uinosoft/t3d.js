@@ -27,7 +27,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { RGBELoader } from 't3d/addons/loaders/RGBELoader.js';
+		import { RGBETexture2DLoader } from 't3d/addons/loaders/RGBELoader.js';
 		import { OutputShader } from 't3d/addons/shaders/OutputShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
@@ -62,7 +62,7 @@
 		camera.setOrtho(-aspect, aspect, -1, 1, 0, 1);
 		scene.add(camera);
 		
-		const loader = new RGBELoader();
+		const loader = new RGBETexture2DLoader();
 		const capabilities = renderer.capabilities;
 		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
 			!!capabilities.getExtension('OES_texture_float_linear')) {
@@ -79,22 +79,11 @@
 		capabilities.getExtension('OES_texture_float_linear');
 		capabilities.getExtension('EXT_color_buffer_half_float');
 
-		loader.load('./resources/hdr/memorial.hdr', function(textureData) {
-			const texture = new t3d.Texture2D();
-			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
-			texture.version++;
-		
-			texture.type = textureData.type;
-			texture.format = textureData.format;
-
-			texture.magFilter = textureData.magFilter;
-			texture.minFilter = textureData.minFilter;
-			texture.flipY = textureData.flipY;
-			texture.generateMipmaps = textureData.generateMipmaps;
-
-			const plane_geometry = new t3d.PlaneGeometry(textureData.width / textureData.height * 1.5, 1.5);
+		loader.load('./resources/hdr/memorial.hdr', function(texture) {
+			const plane_geometry = new t3d.PlaneGeometry(texture.image.width / texture.image.height * 1.5, 1.5);
 			const plane_material = new t3d.BasicMaterial();
 			plane_material.diffuseMap = texture;
+		
 			const mesh = new t3d.Mesh(plane_geometry, plane_material);
 			mesh.euler.x = Math.PI / 2;
 

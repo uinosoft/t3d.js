@@ -27,7 +27,7 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
-		import { RGBELoader } from 't3d/addons/loaders/RGBELoader.js';
+		import { RGBETexture2DLoader } from 't3d/addons/loaders/RGBELoader.js';
 		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
@@ -45,7 +45,7 @@
 
 		const scene = new t3d.Scene();
 
-		const loader = new RGBELoader();
+		const loader = new RGBETexture2DLoader();
 
 		const capabilities = forwardRenderer.capabilities;
 		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
@@ -53,19 +53,7 @@
 			loader.type = t3d.PIXEL_TYPE.FLOAT;
 		}
 
-		loader.load('resources/hdr/pisa.hdr', function(textureData) {
-			let texture = new t3d.Texture2D();
-			texture.image = { data: textureData.data, width: textureData.width, height: textureData.height };
-			texture.version++;
-		
-			texture.type = textureData.type;
-			texture.format = textureData.format;
-
-			texture.magFilter = textureData.magFilter;
-			texture.minFilter = textureData.minFilter;
-			texture.flipY = textureData.flipY;
-			texture.generateMipmaps = textureData.generateMipmaps;
-
+		loader.load('resources/hdr/pisa.hdr', function(texture) {
 			texture = (new PMREMGenerator()).prefilter(forwardRenderer, texture);
 		
 			const skyBox = new SkyBox(texture);
@@ -94,7 +82,6 @@
 			}
 
 			const gui = new GUI();
-			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 			gui.add(skyBox, 'level', 0, 8, 1);
 			gui.add(camera, 'gammaFactor', 0, 3, 0.01);
 		});

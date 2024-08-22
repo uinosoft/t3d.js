@@ -4,7 +4,8 @@ import {
 	PIXEL_TYPE,
 	PIXEL_FORMAT,
 	TEXTURE_FILTER,
-	TEXEL_ENCODING_TYPE
+	TEXEL_ENCODING_TYPE,
+	Texture2D
 } from 't3d';
 
 /**
@@ -95,19 +96,14 @@ class EXRLoader extends Loader {
 	}
 
 	load(url, onLoad, onProgress, onError) {
-		const scope = this;
-
-		const loader = new FileLoader(this.manager);
-		loader.setResponseType('arraybuffer');
-		loader.setRequestHeader(this.requestHeader);
-		loader.setPath(this.path);
-		loader.setWithCredentials(this.withCredentials);
-
-		loader.load(url, function(buffer) {
-			if (onLoad !== undefined) {
-				onLoad(scope.parse(buffer));
-			}
-		}, onProgress, onError);
+		new FileLoader(this.manager)
+			.setResponseType('arraybuffer')
+			.setRequestHeader(this.requestHeader)
+			.setPath(this.path)
+			.setWithCredentials(this.withCredentials)
+			.load(url, buffer => {
+				onLoad && onLoad(this.parse(buffer));
+			}, onProgress, onError);
 	}
 
 	parse(buffer) {
@@ -1840,16 +1836,20 @@ class EXRLoader extends Loader {
 
 		return {
 			header: EXRHeader,
+
 			width: EXRDecoder.width,
 			height: EXRDecoder.height,
 			data: EXRDecoder.byteArray,
-			format: EXRDecoder.format,
-			colorSpace: EXRDecoder.colorSpace,
+
 			type: this.type,
+			format: EXRDecoder.format,
 			generateMipmaps: false,
 			flipY: false,
 			minFilter: TEXTURE_FILTER.LINEAR,
-			magFilter: TEXTURE_FILTER.LINEAR
+			magFilter: TEXTURE_FILTER.LINEAR,
+			encoding: EXRDecoder.colorSpace,
+
+			colorSpace: EXRDecoder.colorSpace // deprecated
 		};
 	}
 
@@ -1907,4 +1907,38 @@ function toHalfFloat(val) {
 	return bits;
 }
 
-export { EXRLoader };
+class EXRTexture2DLoader extends EXRLoader {
+
+	load(url, onLoad, onProgress, onError) {
+		const texture = new Texture2D();
+
+		super.load(url, textureData => {
+			const {
+				header,
+				data, width, height,
+				type, format, generateMipmaps, flipY, magFilter, minFilter, encoding
+			} = textureData;
+
+			texture.image = { data, width, height };
+
+			texture.type = type;
+			texture.format = format;
+			texture.generateMipmaps = generateMipmaps;
+			texture.flipY = flipY;
+			texture.magFilter = magFilter;
+			texture.minFilter = minFilter;
+			texture.encoding = encoding;
+
+			texture.userData = { exrInfo: { header } };
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}, onProgress, onError);
+
+		return texture;
+	}
+
+}
+
+export { EXRLoader, EXRTexture2DLoader };

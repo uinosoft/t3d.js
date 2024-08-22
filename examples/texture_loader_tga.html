@@ -27,7 +27,7 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
-		import { TGALoader } from 't3d/addons/loaders/TGALoader.js';
+		import { TGATextureCubeLoader } from 't3d/addons/loaders/TGALoader.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
@@ -43,6 +43,10 @@
 
 		const scene = new t3d.Scene();
 
+		const camera = new t3d.Camera();
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
 		const cubeTexturePath = './resources/skybox/mp_cloud9/';
 		const imageUrls = [
 			cubeTexturePath + 'cloud9_rt.tga',
@@ -52,33 +56,14 @@
 			cubeTexturePath + 'cloud9_bk.tga',
 			cubeTexturePath + 'cloud9_ft.tga'
 		];
-		const cubeTexture = new t3d.TextureCube();
-		const tgaLoader = new TGALoader();
-		
-		const promiseArray = [];
-		for (let i = 0; i < 6; i++) {
-			promiseArray.push(tgaLoader.loadAsync(imageUrls[i]));
-		}
-		Promise.all(promiseArray).then(function(textureDatas) {
-			for (let i = 0; i < 6; i++) {
-				cubeTexture.images.push({
-					data: textureDatas[i].data,
-					width: textureDatas[i].width,
-					height: textureDatas[i].height
-				});
-			}
+		const tgaLoader = new TGATextureCubeLoader();
+		tgaLoader.loadAsync(imageUrls).then(function(texture) {
+			const skyBox = new SkyBox(texture);
+			scene.add(skyBox);
+
+			const gui = new GUI();
+			gui.add(skyBox, 'level', 0, 8, 1);
 		});
-
-		const skyBox = new SkyBox(cubeTexture);
-		scene.add(skyBox);
-
-		const camera = new t3d.Camera();
-		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 10000);
-		scene.add(camera);
-		
-		const gui = new GUI();
-		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
-		gui.add(skyBox, 'level', 0, 8, 1);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -94,7 +79,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 10000);
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}

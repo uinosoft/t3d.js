@@ -1,4 +1,4 @@
-import { Loader, FileLoader, PIXEL_TYPE, PIXEL_FORMAT, TEXTURE_FILTER } from 't3d';
+import { Loader, FileLoader, PIXEL_TYPE, PIXEL_FORMAT, TEXTURE_FILTER, Texture2D, TextureCube } from 't3d';
 
 class RGBELoader extends Loader {
 
@@ -9,19 +9,14 @@ class RGBELoader extends Loader {
 	}
 
 	load(url, onLoad, onProgress, onError) {
-		const scope = this;
-
-		const loader = new FileLoader(this.manager);
-		loader.setResponseType('arraybuffer');
-		loader.setRequestHeader(this.requestHeader);
-		loader.setPath(this.path);
-		loader.setWithCredentials(this.withCredentials);
-
-		loader.load(url, function(buffer) {
-			if (onLoad !== undefined) {
-				onLoad(scope.parse(buffer));
-			}
-		}, onProgress, onError);
+		new FileLoader(this.manager)
+			.setResponseType('arraybuffer')
+			.setRequestHeader(this.requestHeader)
+			.setPath(this.path)
+			.setWithCredentials(this.withCredentials)
+			.load(url, buffer => {
+				onLoad && onLoad(this.parse(buffer));
+			}, onProgress, onError);
 	}
 
 	// adapted from http://www.graphics.cornell.edu/~bjw/rgbe.html
@@ -31,66 +26,62 @@ class RGBELoader extends Loader {
 		byteArray.pos = 0;
 		const rgbe_header_info = RGBE_ReadHeader(byteArray);
 
-		if (RGBE_RETURN_FAILURE !== rgbe_header_info) {
-			const w = rgbe_header_info.width,
-				h = rgbe_header_info.height,
-				image_rgba_data = RGBE_ReadPixels_RLE(byteArray.subarray(byteArray.pos), w, h);
-			if (RGBE_RETURN_FAILURE !== image_rgba_data) {
-				let data, type;
-				let numElements;
-				if (this.type === PIXEL_TYPE.FLOAT) {
-					numElements = image_rgba_data.length / 4;
-					const floatArray = new Float32Array(numElements * 4);
+		const w = rgbe_header_info.width,
+			h = rgbe_header_info.height,
+			image_rgba_data = RGBE_ReadPixels_RLE(byteArray.subarray(byteArray.pos), w, h);
 
-					for (let j = 0; j < numElements; j++) {
-						RGBEByteToRGBFloat(image_rgba_data, j * 4, floatArray, j * 4);
-					}
+		let data, type;
+		let numElements;
+		if (this.type === PIXEL_TYPE.FLOAT) {
+			numElements = image_rgba_data.length / 4;
+			const floatArray = new Float32Array(numElements * 4);
 
-					data = floatArray;
-					type = PIXEL_TYPE.FLOAT;
-				} else if (this.type === PIXEL_TYPE.HALF_FLOAT) {
-					numElements = image_rgba_data.length / 4;
-					const halfArray = new Uint16Array(numElements * 4);
-
-					for (let j = 0; j < numElements; j++) {
-						RGBEByteToRGBHalf(image_rgba_data, j * 4, halfArray, j * 4);
-					}
-
-					data = halfArray;
-					type = PIXEL_TYPE.HALF_FLOAT;
-				} else if (this.type === PIXEL_TYPE.UNSIGNED_BYTE) {
-					data = image_rgba_data; // just copy
-					type = PIXEL_TYPE.UNSIGNED_BYTE;
-				} else {
-					console.error('RGBELoader: unsupported type: ', this.type);
-				}
-
-				const floatType = (type === PIXEL_TYPE.FLOAT) || (type === PIXEL_TYPE.HALF_FLOAT);
-
-				return {
-					width: w, height: h,
-					data: data,
-					header: rgbe_header_info.string,
-					gamma: rgbe_header_info.gamma,
-					exposure: rgbe_header_info.exposure,
-					format: PIXEL_FORMAT.RGBA, // deprecated
-					internalformat: null, // deprecated
-					type: type,
-					generateMipmaps: floatType ? false : undefined,
-					flipY: floatType ? true : undefined,
-					minFilter: floatType ? TEXTURE_FILTER.LINEAR : undefined,
-					magFilter: floatType ? TEXTURE_FILTER.LINEAR : undefined
-				};
+			for (let j = 0; j < numElements; j++) {
+				RGBEByteToRGBFloat(image_rgba_data, j * 4, floatArray, j * 4);
 			}
+
+			data = floatArray;
+			type = PIXEL_TYPE.FLOAT;
+		} else if (this.type === PIXEL_TYPE.HALF_FLOAT) {
+			numElements = image_rgba_data.length / 4;
+			const halfArray = new Uint16Array(numElements * 4);
+
+			for (let j = 0; j < numElements; j++) {
+				RGBEByteToRGBHalf(image_rgba_data, j * 4, halfArray, j * 4);
+			}
+
+			data = halfArray;
+			type = PIXEL_TYPE.HALF_FLOAT;
+		} else if (this.type === PIXEL_TYPE.UNSIGNED_BYTE) {
+			data = image_rgba_data; // just copy
+			type = PIXEL_TYPE.UNSIGNED_BYTE;
+		} else {
+			console.error('RGBELoader: unsupported type: ', this.type);
 		}
+
+		const floatType = (type === PIXEL_TYPE.FLOAT) || (type === PIXEL_TYPE.HALF_FLOAT);
+
+		return {
+			header: rgbe_header_info.string,
+			gamma: rgbe_header_info.gamma,
+			exposure: rgbe_header_info.exposure,
+
+			width: w, height: h, data: data,
+
+			type: type,
+			generateMipmaps: !floatType,
+			flipY: floatType,
+			minFilter: floatType ? TEXTURE_FILTER.LINEAR : TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR,
+			magFilter: TEXTURE_FILTER.LINEAR,
+
+			format: PIXEL_FORMAT.RGBA, // deprecated
+			internalformat: null // deprecated
+		};
 	}
 
 }
 
 const
-	// RGBE_RETURN_SUCCESS = 0,
-	RGBE_RETURN_FAILURE = -1,
-
 	/* default error routine.  change this to change error handling */
 	rgbe_read_error = 1,
 	rgbe_write_error = 2,
@@ -98,20 +89,12 @@ const
 	rgbe_memory_error = 4,
 	rgbe_error = function(rgbe_error_code, msg) {
 		switch (rgbe_error_code) {
-			case rgbe_read_error:
-				console.error('RGBELoader Read Error: ' + (msg || ''));
-				break;
-			case rgbe_write_error:
-				console.error('RGBELoader Write Error: ' + (msg || ''));
-				break;
-			case rgbe_format_error:
-				console.error('RGBELoader Bad File Format: ' + (msg || ''));
-				break;
-			case rgbe_memory_error:
+			case rgbe_read_error: throw new Error('RGBELoader: Read Error: ' + (msg || ''));
+			case rgbe_write_error: throw new Error('RGBELoader: Write Error: ' + (msg || ''));
+			case rgbe_format_error: throw new Error('RGBELoader: Bad File Format: ' + (msg || ''));
 			default:
-				console.error('RGBELoader: Error: ' + (msg || ''));
+			case rgbe_memory_error: throw new Error('RGBELoader: Memory Error: ' + (msg || ''));
 		}
-		return RGBE_RETURN_FAILURE;
 	},
 
 	/* offsets to red, green, and blue components in a data (float) pixel */
@@ -144,14 +127,15 @@ const
 
 		if (-1 < i) {
 			/* for (i=l-1; i>=0; i--) {
-			byteCode = m.charCodeAt(i);
-			if (byteCode > 0x7f && byteCode <= 0x7ff) byteLen++;
-			else if (byteCode > 0x7ff && byteCode <= 0xffff) byteLen += 2;
-			if (byteCode >= 0xDC00 && byteCode <= 0xDFFF) i--; //trail surrogate
-		} */
+				byteCode = m.charCodeAt(i);
+				if (byteCode > 0x7f && byteCode <= 0x7ff) byteLen++;
+				else if (byteCode > 0x7ff && byteCode <= 0xffff) byteLen += 2;
+				if (byteCode >= 0xDC00 && byteCode <= 0xDFFF) i--; //trail surrogate
+			} */
 			if (false !== consume) buffer.pos += len + i + 1;
 			return s + chunk.slice(0, i);
 		}
+
 		return false;
 	},
 
@@ -181,10 +165,12 @@ const
 		if (buffer.pos >= buffer.byteLength || !(line = fgets(buffer))) {
 			return rgbe_error(rgbe_read_error, 'no header found');
 		}
+
 		/* if you want to require the magic token then uncomment the next line */
 		if (!(match = line.match(magic_token_re))) {
 			return rgbe_error(rgbe_format_error, 'bad initial token');
 		}
+
 		header.valid |= RGBE_VALID_PROGRAMTYPE;
 		header.programtype = match[1];
 		header.string += line + '\n';
@@ -399,4 +385,77 @@ function toHalfFloat(val) {
 	return bits;
 }
 
-export { RGBELoader };
+class RGBETexture2DLoader extends RGBELoader {
+
+	load(url, onLoad, onProgress, onError) {
+		const texture = new Texture2D();
+
+		super.load(url, textureData => {
+			const {
+				header, gamma, exposure,
+				data, width, height,
+				type, generateMipmaps, flipY, magFilter, minFilter
+			} = textureData;
+
+			texture.image = { data, width, height };
+
+			texture.type = type;
+			texture.generateMipmaps = generateMipmaps;
+			texture.flipY = flipY;
+			texture.magFilter = magFilter;
+			texture.minFilter = minFilter;
+
+			texture.userData = { rgbeInfo: { header, gamma, exposure } };
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}, onProgress, onError);
+
+		return texture;
+	}
+
+}
+
+class RGBETextureCubeLoader extends RGBELoader {
+
+	load(urls, onLoad, _onProgress, onError) {
+		const texture = new TextureCube();
+
+		const promiseArray = [];
+		for (let i = 0; i < 6; i++) {
+			promiseArray.push(new Promise((resolve, reject) => {
+				super.load(urls[i], resolve, undefined, reject);
+			}));
+		}
+
+		Promise.all(promiseArray).then(textureDatas => {
+			for (let i = 0; i < 6; i++) {
+				texture.images.push({
+					data: textureDatas[i].data,
+					width: textureDatas[i].width,
+					height: textureDatas[i].height
+				});
+			}
+
+			const { type, generateMipmaps, magFilter, minFilter } = textureDatas[0];
+
+			texture.type = type;
+			texture.generateMipmaps = generateMipmaps;
+			// texture.flipY = flipY;
+			texture.magFilter = magFilter;
+			texture.minFilter = minFilter;
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}).catch(e => {
+			onError && onError(e);
+		});
+
+		return texture;
+	}
+
+}
+
+export { RGBELoader, RGBETexture2DLoader, RGBETextureCubeLoader };

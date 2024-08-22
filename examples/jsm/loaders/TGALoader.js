@@ -1,25 +1,16 @@
-import { Loader, FileLoader, TEXTURE_FILTER } from 't3d';
+import { Loader, FileLoader, TEXTURE_FILTER, Texture2D, TextureCube } from 't3d';
 
 class TGALoader extends Loader {
 
-	constructor(manager) {
-		super(manager);
-	}
-
 	load(url, onLoad, onProgress, onError) {
-		const scope = this;
-
-		const loader = new FileLoader(this.manager);
-		loader.setResponseType('arraybuffer');
-		loader.setRequestHeader(this.requestHeader);
-		loader.setPath(this.path);
-		loader.setWithCredentials(this.withCredentials);
-
-		loader.load(url, function(buffer) {
-			if (onLoad !== undefined) {
-				onLoad(scope.parse(buffer));
-			}
-		}, onProgress, onError);
+		new FileLoader(this.manager)
+			.setResponseType('arraybuffer')
+			.setRequestHeader(this.requestHeader)
+			.setPath(this.path)
+			.setWithCredentials(this.withCredentials)
+			.load(url, buffer => {
+				onLoad && onLoad(this.parse(buffer, true));
+			}, onProgress, onError);
 	}
 
 	parse(buffer) {
@@ -31,7 +22,7 @@ class TGALoader extends Loader {
 				case TGA_TYPE_INDEXED:
 				case TGA_TYPE_RLE_INDEXED:
 					if (header.colormap_length > 256 || header.colormap_size !== 24 || header.colormap_type !== 1) {
-						console.error('TGALoader.parse.tgaCheckHeader: Invalid type colormap data for indexed type.');
+						console.error('TGALoader: Invalid type colormap data for indexed type.');
 					}
 					break;
 				// Check colormap type
@@ -40,21 +31,21 @@ class TGALoader extends Loader {
 				case TGA_TYPE_RLE_RGB:
 				case TGA_TYPE_RLE_GREY:
 					if (header.colormap_type) {
-						console.error('TGALoader.parse.tgaCheckHeader: Invalid type colormap data for colormap type.');
+						console.error('TGALoader: Invalid type colormap data for colormap type.');
 					}
 					break;
 				// What the need of a file without data ?
 				case TGA_TYPE_NO_DATA:
-					console.error('TGALoader.parse.tgaCheckHeader: No data.');
+					console.error('TGALoader: No data.');
 					break;
 				// Invalid type ?
 				default:
-					console.error('TGALoader.parse.tgaCheckHeader: Invalid type " ' + header.image_type + '".');
+					console.error('TGALoader: Invalid type ' + header.image_type);
 			}
 
 			// Check image width and height
 			if (header.width <= 0 || header.height <= 0) {
-				console.error('TGALoader.parse.tgaCheckHeader: Invalid image size.');
+				console.error('TGALoader: Invalid image size.');
 			}
 
 			// Check image pixel size
@@ -62,7 +53,7 @@ class TGALoader extends Loader {
 				header.pixel_size !== 16 &&
 				header.pixel_size !== 24 &&
 				header.pixel_size !== 32) {
-				console.error('TGALoader.parse.tgaCheckHeader: Invalid pixel size "' + header.pixel_size + '".');
+				console.error('TGALoader: Invalid pixel size ' + header.pixel_size);
 			}
 		}
 
@@ -244,7 +235,6 @@ class TGALoader extends Loader {
 					y_step = -1;
 					y_end = -1;
 					break;
-
 				case TGA_ORIGIN_UR:
 					x_start = width - 1;
 					x_step = -1;
@@ -253,7 +243,6 @@ class TGALoader extends Loader {
 					y_step = 1;
 					y_end = height;
 					break;
-
 				case TGA_ORIGIN_BR:
 					x_start = width - 1;
 					x_step = -1;
@@ -262,7 +251,6 @@ class TGALoader extends Loader {
 					y_step = -1;
 					y_end = -1;
 					break;
-
 				case TGA_ORIGIN_UL:
 				default:
 					x_start = 0;
@@ -283,7 +271,7 @@ class TGALoader extends Loader {
 						tgaGetImageDataGrey16bits(data, y_start, y_step, y_end, x_start, x_step, x_end, image);
 						break;
 					default:
-						console.error('TGALoader.parse.getTgaRGBA: not support this format');
+						console.error('TGALoader: Format not supported.');
 						break;
 				}
 			} else {
@@ -305,7 +293,7 @@ class TGALoader extends Loader {
 						break;
 
 					default:
-						console.error('TGALoader.parse.getTgaRGBA: not support this format');
+						console.error('TGALoader: Format not supported.');
 						break;
 				}
 			}
@@ -334,7 +322,7 @@ class TGALoader extends Loader {
 			TGA_ORIGIN_UR = 0x03;
 
 		if (buffer.length < 19) {
-			console.error('TGALoader.parse: Not enough data to contain header.');
+			console.error('TGALoader: Not enough data to contain header.');
 		}
 
 		let offset = 0;
@@ -361,7 +349,7 @@ class TGALoader extends Loader {
 		tgaCheckHeader(header);
 
 		if (header.id_length + offset > buffer.length) {
-			console.error('TGALoader.parse: No data.');
+			console.error('TGALoader: No data.');
 		}
 
 		// Skip the needn't data
@@ -377,23 +365,18 @@ class TGALoader extends Loader {
 				use_rle = true;
 				use_pal = true;
 				break;
-
 			case TGA_TYPE_INDEXED:
 				use_pal = true;
 				break;
-
 			case TGA_TYPE_RLE_RGB:
 				use_rle = true;
 				break;
-
 			case TGA_TYPE_RGB:
 				break;
-
 			case TGA_TYPE_RLE_GREY:
 				use_rle = true;
 				use_grey = true;
 				break;
-
 			case TGA_TYPE_GREY:
 				use_grey = true;
 				break;
@@ -416,4 +399,66 @@ class TGALoader extends Loader {
 
 }
 
-export { TGALoader };
+class TGATexture2DLoader extends TGALoader {
+
+	load(url, onLoad, onProgress, onError) {
+		const texture = new Texture2D();
+
+		super.load(url, textureData => {
+			const { data, width, height, flipY, generateMipmaps, minFilter } = textureData;
+
+			texture.image = { data, width, height };
+
+			texture.flipY = flipY;
+			texture.generateMipmaps = generateMipmaps;
+			texture.minFilter = minFilter;
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}, onProgress, onError);
+
+		return texture;
+	}
+
+}
+
+class TGATextureCubeLoader extends TGALoader {
+
+	load(urls, onLoad, _onProgress, onError) {
+		const texture = new TextureCube();
+
+		const promiseArray = [];
+		for (let i = 0; i < 6; i++) {
+			promiseArray.push(new Promise((resolve, reject) => {
+				super.load(urls[i], resolve, undefined, reject);
+			}));
+		}
+
+		Promise.all(promiseArray).then(textureDatas => {
+			for (let i = 0; i < 6; i++) {
+				texture.images.push({
+					data: textureDatas[i].data,
+					width: textureDatas[i].width,
+					height: textureDatas[i].height
+				});
+			}
+
+			const { generateMipmaps, minFilter } = textureDatas[0];
+
+			texture.generateMipmaps = generateMipmaps;
+			texture.minFilter = minFilter;
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}).catch(e => {
+			onError && onError(e);
+		});
+
+		return texture;
+	}
+
+}
+
+export { TGALoader, TGATexture2DLoader, TGATextureCubeLoader };

@@ -27,7 +27,7 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
-		import { RGBELoader } from 't3d/addons/loaders/RGBELoader.js';
+		import { RGBETextureCubeLoader } from 't3d/addons/loaders/RGBELoader.js';
 		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
@@ -45,50 +45,24 @@
 
 		const scene = new t3d.Scene();
 
-		const rgbeLoader = new RGBELoader();
+		const loader = new RGBETextureCubeLoader();
 
 		const capabilities = forwardRenderer.capabilities;
 		if ((capabilities.version > 1 || !!capabilities.getExtension('OES_texture_float')) &&
 			!!capabilities.getExtension('OES_texture_float_linear')) {
-			rgbeLoader.type = t3d.PIXEL_TYPE.FLOAT;
+			loader.type = t3d.PIXEL_TYPE.FLOAT;
 		}
 
 		const imageUrls = [
-			'resources/hdr/pisaHDR/px.hdr',
-			'resources/hdr/pisaHDR/nx.hdr',
-			'resources/hdr/pisaHDR/py.hdr',
-			'resources/hdr/pisaHDR/ny.hdr',
-			'resources/hdr/pisaHDR/pz.hdr',
-			'resources/hdr/pisaHDR/nz.hdr'
+			'./resources/hdr/pisaHDR/px.hdr',
+			'./resources/hdr/pisaHDR/nx.hdr',
+			'./resources/hdr/pisaHDR/py.hdr',
+			'./resources/hdr/pisaHDR/ny.hdr',
+			'./resources/hdr/pisaHDR/pz.hdr',
+			'./resources/hdr/pisaHDR/nz.hdr'
 		];
 
-		let texture = new t3d.TextureCube();
-
-		const promiseArray = [];
-		for (let i = 0; i < 6; i++) {
-			promiseArray.push(rgbeLoader.loadAsync(imageUrls[i]));
-		}
-		Promise.all(promiseArray).then(function(textureDatas) {
-			for (let i = 0; i < 6; i++) {
-				texture.images.push({
-					data: textureDatas[i].data,
-					width: textureDatas[i].width,
-					height: textureDatas[i].height
-				});
-			}
-
-			const textureData = textureDatas[0];
-			texture.type = textureData.type;
-
-			if (textureData.generateMipmaps !== undefined) {
-				texture.generateMipmaps = textureData.generateMipmaps;
-			}
-
-			texture.magFilter = textureData.magFilter !== undefined ? textureData.magFilter : t3d.TEXTURE_FILTER.LINEAR;
-			texture.minFilter = textureData.minFilter !== undefined ? textureData.minFilter : t3d.TEXTURE_FILTER.LINEAR;
-
-			texture.version++;
-
+		loader.loadAsync(imageUrls).then(texture => {
 			texture = (new PMREMGenerator()).prefilter(forwardRenderer, texture);
 		
 			const skyBox = new SkyBox(texture);
@@ -117,7 +91,6 @@
 			}
 
 			const gui = new GUI();
-			gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 			gui.add(skyBox, 'level', 0, 8, 1);
 			gui.add(camera, 'gammaFactor', 0, 3, 0.01);
 		});

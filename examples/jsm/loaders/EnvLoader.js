@@ -2,7 +2,7 @@ import { Loader, FileLoader, TextureCube, ImageLoader, PIXEL_TYPE, PIXEL_FORMAT 
 import { ImageBitmapLoader } from './ImageBitmapLoader.js';
 import { RGBDDecoder } from '../textures/RGBDDecoder.js';
 
-export class EnvLoader extends Loader {
+class EnvLoader extends Loader {
 
 	constructor(manager) {
 		super(manager);
@@ -79,7 +79,7 @@ export class EnvLoader extends Loader {
 
 }
 
-export class EnvTextureCubeLoader extends EnvLoader {
+class EnvTextureCubeLoader extends EnvLoader {
 
 	constructor(manager) {
 		super(manager);
@@ -134,3 +134,5 @@ export class EnvTextureCubeLoader extends EnvLoader {
 	}
 
 }
+
+export { EnvLoader, EnvTextureCubeLoader };

@@ -1,33 +1,27 @@
 import {
 	Loader,
 	FileLoader,
-	PIXEL_FORMAT
+	PIXEL_FORMAT,
+	TextureCube,
+	Texture2D,
+	TEXTURE_FILTER
 } from 't3d';
 
-export class DDSLoader extends Loader {
-
-	constructor(manager) {
-		super(manager);
-	}
+class DDSLoader extends Loader {
 
 	load(url, onLoad, onProgress, onError) {
-		const scope = this;
-
-		const loader = new FileLoader(this.manager);
-		loader.setResponseType('arraybuffer');
-		loader.setRequestHeader(this.requestHeader);
-		loader.setPath(this.path);
-		loader.setWithCredentials(this.withCredentials);
-
-		loader.load(url, function(buffer) {
-			if (onLoad !== undefined) {
-				onLoad(scope.parse(buffer, true));
-			}
-		}, onProgress, onError);
+		new FileLoader(this.manager)
+			.setResponseType('arraybuffer')
+			.setRequestHeader(this.requestHeader)
+			.setPath(this.path)
+			.setWithCredentials(this.withCredentials)
+			.load(url, buffer => {
+				onLoad && onLoad(this.parse(buffer, true));
+			}, onProgress, onError);
 	}
 
 	parse(buffer, loadMipmaps) {
-		const dds = { mipmaps: [], width: 0, height: 0, format: null, mipmapCount: 1 };
+		const dds = { mipmaps: [], width: 0, height: 0, format: null, mipmapCount: 1, isCubemap: false };
 
 		// Adapted from @toji's DDS utils
 		// https://github.com/toji/webgl-texture-utils/blob/master/texture-util/dds.js
@@ -65,6 +59,10 @@ export class DDSLoader extends Loader {
 		// const DDPF_RGB = 0x40;
 		// const DDPF_YUV = 0x200;
 		// const DDPF_LUMINANCE = 0x20000;
+
+		// TODO: support DXGI formats
+		// const DXGI_FORMAT_BC6H_UF16 = 95;
+		// const DXGI_FORMAT_BC6H_SF16 = 96;
 
 		function fourCCToInt32(value) {
 			return value.charCodeAt(0) +
@@ -152,31 +150,22 @@ export class DDSLoader extends Loader {
 
 		switch (fourCC) {
 			case FOURCC_DXT1:
-
 				blockBytes = 8;
 				dds.format = PIXEL_FORMAT.RGB_S3TC_DXT1;
 				break;
-
 			case FOURCC_DXT3:
-
 				blockBytes = 16;
 				dds.format = PIXEL_FORMAT.RGBA_S3TC_DXT3;
 				break;
-
 			case FOURCC_DXT5:
-
 				blockBytes = 16;
 				dds.format = PIXEL_FORMAT.RGBA_S3TC_DXT5;
 				break;
-
 			case FOURCC_ETC1:
-
 				blockBytes = 8;
 				dds.format = PIXEL_FORMAT.RGB_ETC1;
 				break;
-
 			default:
-
 				if (header[off_RGBBitCount] === 32
 					&& header[off_RBitMask] & 0xff0000
 					&& header[off_GBitMask] & 0xff00
@@ -249,3 +238,57 @@ export class DDSLoader extends Loader {
 	}
 
 }
+
+class DDSTextureLoader extends DDSLoader {
+
+	load(url, onLoad, onProgress, onError) {
+		super.load(url, textureData => {
+			const { mipmaps, width, height, format, mipmapCount, isCubemap } = textureData;
+
+			let texture;
+
+			if (isCubemap) {
+				texture = new TextureCube();
+
+				const faces = mipmaps.length / mipmapCount;
+
+				for (let f = 0; f < faces; f++) {
+					texture.images[f] = { data: mipmaps[f * mipmapCount], width, height, isCompressed: format !== PIXEL_FORMAT.RGBA };
+				}
+
+				for (let i = 0; i < mipmapCount; i++) {
+					texture.mipmaps[i] = [];
+					for (let f = 0; f < faces; f++) {
+						texture.mipmaps[i].push(mipmaps[f * mipmapCount + i]);
+					}
+				}
+			} else {
+				texture = new Texture2D();
+				texture.image = { data: mipmaps[0].data, width, height, isCompressed: format !== PIXEL_FORMAT.RGBA };
+				texture.mipmaps = mipmaps;
+			}
+
+			texture.minFilter = mipmapCount === 1 ? TEXTURE_FILTER.LINEAR : TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+			texture.magFilter = TEXTURE_FILTER.LINEAR;
+
+			texture.format = format;
+
+			// no flipping for cube textures
+			// (also flipping doesn't work for compressed textures )
+
+			texture.flipY = false;
+
+			// can't generate mipmaps for compressed textures
+			// mips must be embedded in DDS files
+
+			texture.generateMipmaps = false;
+
+			texture.version++;
+
+			onLoad && onLoad(texture);
+		}, onProgress, onError);
+	}
+
+}
+
+export { DDSLoader, DDSTextureLoader };
