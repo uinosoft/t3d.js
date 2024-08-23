@@ -80,9 +80,9 @@ class Background extends Mesh {
 	}
 
 	_contain() {
-		let repeatX = 1, repeatY = 1, offsetX = 0, offsetY = 0;
-
 		const textureAspect = this._textureAspect, screenAspect = this._screenAspect;
+
+		let repeatX, repeatY, offsetX, offsetY;
 
 		if (textureAspect > screenAspect) {
 			repeatX = 1;
@@ -102,9 +102,9 @@ class Background extends Mesh {
 	}
 
 	_cover() {
-		let repeatX = 1, repeatY = 1, offsetX = 0, offsetY = 0;
-
 		const textureAspect = this._textureAspect, screenAspect = this._screenAspect;
+
+		let repeatX, repeatY, offsetX, offsetY;
 
 		if (textureAspect > screenAspect) {
 			repeatX = screenAspect / textureAspect;
