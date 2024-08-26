@@ -1,9 +1,8 @@
 import { TEXEL_ENCODING_TYPE, PBR2Material } from 't3d';
-import { KHR_texture_transform } from './KHR_texture_transform.js';
 
 /**
  * KHR_materials_pbrSpecularGlossiness extension
- * https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_pbrSpecularGlossiness
+ * https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Archived/KHR_materials_pbrSpecularGlossiness/README.md
  */
 export class KHR_materials_pbrSpecularGlossiness {
 
@@ -11,7 +10,7 @@ export class KHR_materials_pbrSpecularGlossiness {
 		return new PBR2Material();
 	}
 
-	static parseParams(material, params, textures) {
+	static parseParams(material, params, textures, transformExt) {
 		const { diffuseFactor, diffuseTexture, specularFactor, glossinessFactor, specularGlossinessTexture } = params;
 
 		if (Array.isArray(diffuseFactor)) {
@@ -24,8 +23,8 @@ export class KHR_materials_pbrSpecularGlossiness {
 			material.diffuseMapCoord = diffuseTexture.texCoord || 0;
 			if (material.diffuseMap) {
 				material.diffuseMap.encoding = TEXEL_ENCODING_TYPE.SRGB;
+				transformExt && transformExt.handleMaterialMap(material, 'diffuseMap', diffuseTexture);
 			}
-			parseTextureTransform(material, 'diffuseMap', diffuseTexture.extensions);
 		}
 
 		material.glossiness = glossinessFactor !== undefined ? glossinessFactor : 1.0;
@@ -37,17 +36,8 @@ export class KHR_materials_pbrSpecularGlossiness {
 		if (specularGlossinessTexture) {
 			material.glossinessMap = textures[specularGlossinessTexture.index];
 			material.specularMap = textures[specularGlossinessTexture.index];
-			// material does not yet support the transform of glossinessMap and specularMap.
-			// parseTextureTransform(material, 'glossinessMap', specularGlossinessTexture.extensions);
-			// parseTextureTransform(material, 'specularMap', specularGlossinessTexture.extensions);
+			// specularGlossinessTexture transform not supported yet
 		}
 	}
 
-}
-
-function parseTextureTransform(material, key, extensions = {}) {
-	const extension = extensions.KHR_texture_transform;
-	if (extension) {
-		material[key] = KHR_texture_transform.transform(material[key + 'Transform'], extension);
-	}
 }

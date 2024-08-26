@@ -1,14 +1,15 @@
 import { Bone, Camera, Object3D, Mesh, SkinnedMesh, Vector4 } from 't3d';
-import { KHR_lights_punctual as _KHR_lights_punctual } from '../extensions/KHR_lights_punctual.js';
 
 export class NodeParser {
 
-	static parse(context) {
+	static parse(context, loader) {
 		const {
 			gltf: { nodes: gltfNodes, cameras: gltfCameras, extensions: gltfExtensions }
 		} = context;
 
 		if (!gltfNodes) return;
+
+		const lightsExt = loader.extensions.get('KHR_lights_punctual');
 
 		const cameras = [];
 		const lights = [];
@@ -30,10 +31,10 @@ export class NodeParser {
 			} else if (cameraID !== undefined) {
 				node = createCamera(gltfCameras[cameraID]);
 				cameras.push(node);
-			} else if (KHR_lights_punctual) {
+			} else if (KHR_lights_punctual && lightsExt) {
 				const lightIndex = KHR_lights_punctual.light;
 				const gltfLights = gltfExtensions.KHR_lights_punctual.lights;
-				node = _KHR_lights_punctual.getLight(gltfLights[lightIndex]);
+				node = lightsExt.getLight(gltfLights[lightIndex]);
 				lights.push(node);
 			} else {
 				node = new Object3D();

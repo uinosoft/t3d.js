@@ -19,6 +19,15 @@ import { AnimationParser } from './parsers/AnimationParser.js';
 import { GLTFResource } from './GLTFResource.js';
 import { GLTFUtils } from './GLTFUtils.js';
 
+import { EXT_meshopt_compression } from './extensions/EXT_meshopt_compression.js';
+import { KHR_draco_mesh_compression } from './extensions/KHR_draco_mesh_compression.js';
+import { KHR_lights_punctual } from './extensions/KHR_lights_punctual.js';
+import { KHR_materials_clearcoat } from './extensions/KHR_materials_clearcoat.js';
+import { KHR_materials_pbrSpecularGlossiness } from './extensions/KHR_materials_pbrSpecularGlossiness.js';
+import { KHR_materials_unlit } from './extensions/KHR_materials_unlit.js';
+import { KHR_texture_basisu } from './extensions/KHR_texture_basisu.js';
+import { KHR_texture_transform } from './extensions/KHR_texture_transform.js';
+
 const DefaultParsePipeline = [
 	IndexParser,
 	ReferenceParser,
@@ -36,9 +45,21 @@ const DefaultParsePipeline = [
 	AnimationParser
 ];
 
+const DefaultExtensions = new Map([
+	['EXT_meshopt_compression', EXT_meshopt_compression],
+	['KHR_draco_mesh_compression', KHR_draco_mesh_compression],
+	['KHR_lights_punctual', KHR_lights_punctual],
+	['KHR_materials_clearcoat', KHR_materials_clearcoat],
+	['KHR_materials_pbrSpecularGlossiness', KHR_materials_pbrSpecularGlossiness],
+	['KHR_materials_unlit', KHR_materials_unlit],
+	['KHR_mesh_quantization', {}], // This is supported by default
+	['KHR_texture_basisu', KHR_texture_basisu],
+	['KHR_texture_transform', KHR_texture_transform]
+]);
+
 export class GLTFLoader {
 
-	constructor(manager = DefaultLoadingManager, parsers = DefaultParsePipeline) {
+	constructor(manager = DefaultLoadingManager, parsers = DefaultParsePipeline, extensions = DefaultExtensions) {
 		this.manager = manager;
 
 		// If ture, loading manager will dispatch progress for every buffer and image.
@@ -47,6 +68,8 @@ export class GLTFLoader {
 
 		// If set false, need add Promise.catch to catch errors.
 		this.autoLogError = true;
+
+		this.extensions = new Map(extensions);
 
 		this._parsers = parsers.slice(0);
 

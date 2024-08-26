@@ -1,5 +1,4 @@
 import { GLTFUtils } from '../GLTFUtils.js';
-import { KHR_texture_basisu as _KHR_texture_basisu } from '../extensions/KHR_texture_basisu.js';
 
 export class ImageParser {
 
@@ -7,6 +6,8 @@ export class ImageParser {
 		const { gltf, bufferViews, path, loadItems } = context;
 
 		if (!gltf.images) return;
+
+		const basisuExt = loader.extensions.get('KHR_texture_basisu');
 
 		return Promise.all(
 			gltf.images.map((params, index) => {
@@ -26,8 +27,8 @@ export class ImageParser {
 					loadItems.delete(imageUrl);
 				}
 				let promise;
-				if (mimeType && mimeType.includes('ktx2')) {
-					promise = _KHR_texture_basisu.loadTextureData(imageUrl, loader.getKTX2Loader()).then(transcodeResult => {
+				if (mimeType && mimeType.includes('ktx2') && basisuExt) {
+					promise = basisuExt.loadTextureData(imageUrl, loader.getKTX2Loader()).then(transcodeResult => {
 						if (loader.detailLoadProgress) {
 							if (isObjectURL) {
 								loader.manager.itemEnd(GLTFUtils.resolveURL('blob<' + index + '>', path));

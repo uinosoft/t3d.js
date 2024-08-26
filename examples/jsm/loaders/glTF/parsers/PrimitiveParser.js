@@ -1,7 +1,6 @@
 import { Geometry, PBRMaterial, VERTEX_COLOR, SHADING_TYPE, PointsMaterial, Material, BasicMaterial } from 't3d';
 import { GLTFUtils } from '../GLTFUtils.js';
 import { ATTRIBUTES, ACCESSOR_COMPONENT_TYPES, WEBGL_DRAW_MODES } from '../Constants.js';
-import { KHR_draco_mesh_compression as _KHR_draco_mesh_compression } from '../extensions/KHR_draco_mesh_compression.js';
 
 export class PrimitiveParser {
 
@@ -9,6 +8,8 @@ export class PrimitiveParser {
 		const { gltf, accessors, materials, bufferViews } = context;
 
 		if (!gltf.meshes) return;
+
+		const dracoExt = loader.extensions.get('KHR_draco_mesh_compression');
 
 		const materialCache = new Map();
 		const geometryPromiseCache = new Map();
@@ -33,8 +34,8 @@ export class PrimitiveParser {
 				if (geometryPromiseCache.has(geometryKey)) {
 					geometryPromise = geometryPromiseCache.get(geometryKey);
 				} else {
-					if (KHR_draco_mesh_compression) {
-						geometryPromise = _KHR_draco_mesh_compression.getGeometry(KHR_draco_mesh_compression, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getDRACOLoader());
+					if (KHR_draco_mesh_compression && dracoExt) {
+						geometryPromise = dracoExt.getGeometry(KHR_draco_mesh_compression, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getDRACOLoader());
 					} else {
 						geometryPromise = Promise.resolve(new Geometry());
 					}

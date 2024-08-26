@@ -4,27 +4,37 @@
  */
 export class KHR_texture_transform {
 
-	static transform(matrix, transform) {
+	static handleMaterialMap(material, mapType, textureDef) {
+		if (!textureDef.extensions) return;
+
+		const extDef = textureDef.extensions.KHR_texture_transform;
+
+		if (!extDef) return;
+
 		let offsetX = 0, offsetY = 0, repeatX = 1, repeatY = 1, rotation = 0;
 
-		if (transform.offset !== undefined) {
-			offsetX = transform.offset[0];
-			offsetY = transform.offset[1];
+		if (extDef.offset !== undefined) {
+			offsetX = extDef.offset[0];
+			offsetY = extDef.offset[1];
 		}
 
-		if (transform.rotation !== undefined) {
-			rotation = transform.rotation;
+		if (extDef.rotation !== undefined) {
+			rotation = extDef.rotation;
 		}
 
-		if (transform.scale !== undefined) {
-			repeatX = transform.scale[0];
-			repeatY = transform.scale[1];
+		if (extDef.scale !== undefined) {
+			repeatX = extDef.scale[0];
+			repeatY = extDef.scale[1];
 		}
 
-		matrix.setUvTransform(offsetX, offsetY, repeatX, repeatY, rotation, 0, 0);
+		const matrix = material[mapType + 'Transform'];
+		if (matrix) {
+			matrix.setUvTransform(offsetX, offsetY, repeatX, repeatY, rotation, 0, 0);
+		}
 
-		if (transform.texCoord !== undefined) {
-			console.warn('Custom UV sets in KHR_texture_transform extension not yet supported.');
+		// If texCoord is present, it overrides the texture's texCoord
+		if (extDef.texCoord !== undefined) {
+			material[mapType + 'Coord'] = extDef.texCoord;
 		}
 	}
 
