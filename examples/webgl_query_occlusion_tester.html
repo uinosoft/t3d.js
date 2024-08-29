@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - occlusion query tester</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - occlusion query tester<br />  
+        The sprite becomes translucent when it is occluded.<br />
+		Only available in WebGL2.0.<br />
+        <div id="notSupported" style="display:none">
+            Your browser does not support WebGL2.0,
+            but the occlusion query feature can only be used in WebGL2.0
+        </div>
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { Sprite } from 't3d/addons/objects/Sprite.js';
+		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
+		import { OcclusionTester, OcclusionIfRender, OcclusionBeforeRender, OcclusionAfterRender } from 't3d/addons/Objects/OcclusionTester.js';
+		import TWEEN from './libs/tween.module.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams);
+
+		if (!gl) {
+			document.getElementById('notSupported').style.display = '';
+		}
+
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(0.1, 0.1, 0.1, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const scene = new t3d.Scene();
+
+		// camera
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(-15, 10, -15);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 800);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// lights
+
+		const ambientLight = new t3d.AmbientLight(0x88aaff, 0.4);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-3, 4, 5);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		// sphere
+
+		const sphereGeometry = new t3d.SphereGeometry(5, 32, 32);
+		const sphereMaterial = new t3d.PBRMaterial();
+		sphereMaterial.roughness = 1;
+		const sphere = new t3d.Mesh(sphereGeometry, sphereMaterial);
+		scene.add(sphere);
+
+		// create sprites with occlusion tester
+
+		const testerGeometryData = PolyhedronBuilder.getTetrahedronGeometryData(1);
+		const tetrahedronGeometry = new t3d.Geometry();
+		tetrahedronGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(testerGeometryData.positions), 3)));
+		tetrahedronGeometry.computeBoundingSphere();
+
+		const testerMaterial = new t3d.BasicMaterial();
+		testerMaterial.depthWrite = false;
+		testerMaterial.colorWrite = false;
+		testerMaterial.diffuse.setHex(0xff00ff);
+
+		const spriteTexture = new Texture2DLoader().load('./resources/sprites/sprite0.png');
+
+		const sprites = new t3d.Object3D();
+		scene.add(sprites);
+
+		const tweenGroup = new TWEEN.Group();
+
+		for (let i = 0; i < 150; i++) {
+			const radius = 5 + Math.random() * 5;
+			const theta = Math.random() * Math.PI;
+			const phi = Math.random() * Math.PI * 2;
+
+			const sprite = createSprite(
+				radius * Math.sin(theta) * Math.cos(phi),
+				radius * Math.sin(theta) * Math.sin(phi),
+				radius * Math.cos(theta)
+			);
+
+			sprites.add(sprite);
+		}
+
+		function createSprite(x, y, z) {
+			const sprite = new Sprite();
+			sprite.position.set(x, y, z);
+
+			sprite.renderLayer = 2;
+			sprite.__occluded = false;
+		
+			sprite.material.diffuseMap = spriteTexture;
+			sprite.material.transparent = true;
+
+			// attach occlusion tester
+
+			const occlusionTester = new OcclusionTester(tetrahedronGeometry, testerMaterial);
+			occlusionTester.scale.setScalar(0.5); // fit the sprite size
+		
+			sprite.add(occlusionTester);
+
+			occlusionTester.onOcclusionChange = function(occluded) {
+				styleChange(sprite, occluded);
+			};
+
+			return sprite;
+		}
+
+		function styleChange(sprite, occluded) {
+			if (sprite.__occluded === occluded) return;
+			sprite.__occluded = occluded;
+
+			if (sprite.__tween && sprite.__tween.isPlaying) {
+				sprite.__tween.stop();
+			}
+
+			sprite.__tween = new TWEEN.Tween(sprite, tweenGroup)
+				.to({ rotation: occluded ? Math.PI : 0 }, 200)
+				.easing(TWEEN.Easing.Quadratic.Out)
+				.start();
+
+			sprite.material.diffuse.setHex(occluded ? 0x4D99FF : 0xFFFFFF);
+			sprite.material.opacity = occluded ? 0.3 : 1;
+		}
+
+		// gui
+
+		const params = { occlusionTest: true, debug: false };
+		const gui = new GUI();
+		gui.add(params, 'occlusionTest').name('Occlusion Test').onChange(function(value) {
+			// reset all sprites to front style
+			sprites.children.forEach(sprite => {
+				if (value) {
+					sprite.children[0].dispose();
+				} else {
+					styleChange(sprite, false);
+				}
+			});
+		});
+		gui.add(params, 'debug').name('Debug').onChange(function(value) {
+			// show or hide occlusion tester
+			testerMaterial.colorWrite = value;
+
+			// show or hide sprites
+			sprites.children.forEach(sprite => {
+				sprite.renderable = !value;
+			});
+		});
+
+		//
+
+		const renderOption = {};
+
+		const testerRenderOption = {
+			ifRender: OcclusionIfRender,
+			beforeRender: OcclusionBeforeRender,
+			afterRender: OcclusionAfterRender
+		};
+
+		let frames = 0;
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+			tweenGroup.update();
+
+			// update all occlusion testers every 5 frames
+			if (params.occlusionTest && frames > 5) {
+				sprites.children.forEach(sprite => {
+					sprite.children[0].update(renderer);
+				});
+				frames = 0;
+			}
+			frames++;
+
+			scene.updateMatrix();
+			const renderStates = scene.updateRenderStates(camera);
+			const renderQueue = scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+
+			// Main layer
+
+			const mainLayer = renderQueue.getLayer(0);
+			renderer.beginRender();
+			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
+			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
+			renderer.endRender();
+
+			// Occlusion layer
+
+			const occlusionLayer = renderQueue.getLayer(1);
+			if (occlusionLayer && occlusionLayer.opaqueCount > 0) {
+				renderer.beginRender();
+				renderer.renderRenderableList(occlusionLayer.opaque, renderStates, testerRenderOption);
+				renderer.endRender();
+			}
+
+			// Overlay layer
+
+			const overlayLayer = renderQueue.getLayer(2);
+			if (overlayLayer && (overlayLayer.opaqueCount + overlayLayer.transparentCount) > 0) {
+				renderer.clear(false, true, false);
+
+				renderer.beginRender();
+				renderer.renderRenderableList(overlayLayer.opaque, renderStates, renderOption);
+				renderer.renderRenderableList(overlayLayer.transparent, renderStates, renderOption);
+				renderer.endRender();
+			}
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 800);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+
+</html>
