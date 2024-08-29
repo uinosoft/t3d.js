@@ -35,8 +35,6 @@ function defaultIfRender(renderable) {
 	return true;
 }
 
-function noop() { }
-
 /**
  * The WebGL renderer.
  * @memberof t3d
@@ -221,8 +219,8 @@ class WebGLRenderer extends ThinRenderer {
 
 		const getGeometry = options.getGeometry || defaultGetGeometry;
 		const getMaterial = options.getMaterial || defaultGetMaterial;
-		const beforeRender = options.beforeRender || noop;
-		const afterRender = options.afterRender || noop;
+		const beforeRender = options.beforeRender;
+		const afterRender = options.afterRender;
 		const ifRender = options.ifRender || defaultIfRender;
 		const renderInfo = options.renderInfo;
 
@@ -262,7 +260,7 @@ class WebGLRenderer extends ThinRenderer {
 		}
 
 		object.onBeforeRender(renderable, material);
-		beforeRender.call(this, renderable, material);
+		beforeRender && beforeRender.call(this, renderable, material);
 
 		// Check material version
 
@@ -461,7 +459,7 @@ class WebGLRenderer extends ThinRenderer {
 
 		textures.resetTextureUnits();
 
-		afterRender(renderable);
+		afterRender && afterRender.call(this, renderable);
 		object.onAfterRender(renderable);
 	}
 

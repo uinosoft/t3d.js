@@ -16934,7 +16934,6 @@
 	function defaultIfRender(renderable) {
 		return true;
 	}
-	function noop() {}
 
 	/**
 	 * The WebGL renderer.
@@ -17088,8 +17087,8 @@
 			const passInfo = this._passInfo;
 			const getGeometry = options.getGeometry || defaultGetGeometry;
 			const getMaterial = options.getMaterial || defaultGetMaterial;
-			const beforeRender = options.beforeRender || noop;
-			const afterRender = options.afterRender || noop;
+			const beforeRender = options.beforeRender;
+			const afterRender = options.afterRender;
 			const ifRender = options.ifRender || defaultIfRender;
 			const renderInfo = options.renderInfo;
 			const sceneData = renderStates.scene;
@@ -17121,7 +17120,7 @@
 				numClippingPlanes = material.clippingPlanes.length;
 			}
 			object.onBeforeRender(renderable, material);
-			beforeRender.call(this, renderable, material);
+			beforeRender && beforeRender.call(this, renderable, material);
 
 			// Check material version
 
@@ -17291,7 +17290,7 @@
 			state.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
 			this._draw(geometry, material, group, renderInfo);
 			textures.resetTextureUnits();
-			afterRender(renderable);
+			afterRender && afterRender.call(this, renderable);
 			object.onAfterRender(renderable);
 		}
 		_uploadLights(uniforms, lights, disableShadowSampler, refresh) {
