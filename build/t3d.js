@@ -39,6 +39,21 @@
 		}
 
 		/**
+		 * Linearly interpolate between this vector and v,
+		 * where alpha is the percent distance along the line
+		 * - alpha = 0 will be this vector, and alpha = 1 will be v.
+		 * @param {t3d.Vector3} v
+		 * @param {Number} alpha
+		 * @return {t3d.Vector3}
+		 */
+		lerp(v, alpha) {
+			this.x += (v.x - this.x) * alpha;
+			this.y += (v.y - this.y) * alpha;
+			this.z += (v.z - this.z) * alpha;
+			return this;
+		}
+
+		/**
 		 * Sets the x, y and z components of this vector.
 		 * @param {Number} x
 		 * @param {Number} y
