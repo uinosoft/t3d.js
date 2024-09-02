@@ -22,6 +22,7 @@
 		"geometry_loader_gltf_lights",
 		"geometry_loader_gltf_skinning",
 		"geometry_loader_gltf_morphtargets",
+		"geometry_loader_gltf_instancing",
 		"geometry_loader_gltf_materials_unlit",
 		"geometry_loader_gltf_materials_clearcoat",
 		"geometry_loader_gltf_uvtransform",

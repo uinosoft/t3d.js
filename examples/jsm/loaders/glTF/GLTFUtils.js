@@ -1,6 +1,10 @@
+import { Vector4 } from 't3d';
+
 // Characters [].:/ are reserved for track binding syntax.
 const RESERVED_CHARS_RE = '\\[\\]\\.:\\/';
 const reservedRe = new RegExp('[' + RESERVED_CHARS_RE + ']', 'g');
+
+const _vec4_1 = new Vector4();
 
 export class GLTFUtils {
 
@@ -125,6 +129,22 @@ export class GLTFUtils {
 			return 1 / 65535;
 		} else {
 			throw new Error('Unsupported normalized accessor component type.');
+		}
+	}
+
+	static normalizeSkinWeights(skinWeight) {
+		const offset = skinWeight.offset;
+		const buffer = skinWeight.buffer;
+		const stride = buffer.stride;
+		for (let i = 0, l = buffer.count; i < l; i++) {
+			_vec4_1.fromArray(buffer.array, i * stride + offset);
+			const scale = 1.0 / _vec4_1.getManhattanLength();
+			if (scale !== Infinity) {
+				_vec4_1.multiplyScalar(scale);
+			} else {
+				_vec4_1.set(1, 0, 0, 0); // do something reasonable
+			}
+			_vec4_1.toArray(buffer.array, i * stride + offset);
 		}
 	}
 

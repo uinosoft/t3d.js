@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - gltf</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf instancing<br/>
+		Model from <a href="https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Vendor/EXT_mesh_gpu_instancing/samples/teapots_galore" target="_blank">teapots_galore</a>
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { EXT_mesh_gpu_instancing } from 't3d/addons/loaders/glTF/extensions/EXT_mesh_gpu_instancing.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { EnvTextureCubeLoader } from 't3d/addons/loaders/EnvLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const envTextureLoader = new EnvTextureCubeLoader();
+		envTextureLoader.setRenderer(forwardRenderer);
+		envTextureLoader.loadAsync('./resources/hdr/Grand_Canyon_C.env').then(cubeTexture => {
+			scene.environment = cubeTexture;
+
+			const skyBox = new SkyBox(cubeTexture);
+			skyBox.gamma = true;
+			scene.add(skyBox);
+		});
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
+		directionalLight.position.set(0, 10, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(200, 60, 200);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 8000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.autoLogError = true;
+
+		// Set extension as EXT_mesh_gpu_instancing is not included in GLTFLoader by default
+		loader.extensions.set('EXT_mesh_gpu_instancing', EXT_mesh_gpu_instancing);
+		
+		loader.load('./resources/models/gltf/teapots_galore/teapots_galore.gltf').then(result => {
+			scene.add(result.root);
+		}).catch(e => console.error(e));
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 8000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
