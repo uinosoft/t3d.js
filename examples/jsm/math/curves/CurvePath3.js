@@ -1,8 +1,4 @@
-/**
- * CurvePath3
- */
-
-import { Vector3, Matrix4 } from 't3d';
+import { Vector3, Matrix4, MathUtils } from 't3d';
 import { LineCurve3 } from './LineCurve3.js';
 import { QuadraticBezierCurve3 } from './QuadraticBezierCurve3.js';
 
@@ -10,6 +6,9 @@ const _vec3_1 = new Vector3();
 const _vec3_2 = new Vector3();
 const _mat4_1 = new Matrix4();
 
+/**
+ * CurvePath3
+ */
 class CurvePath3 {
 
 	constructor() {
@@ -238,7 +237,7 @@ class CurvePath3 {
 				const vec = binormal.crossVectors(tangents[i - 1], tangent);
 				if (vec.getLength() > Number.EPSILON) {
 					vec.normalize();
-					const theta = Math.acos(Math.min(Math.max(tangents[i - 1].dot(tangent), -1), 1)); // clamp for floating pt errors
+					const theta = Math.acos(MathUtils.clamp(tangents[i - 1].dot(tangent), -1, 1)); // clamp for floating pt errors
 					normal.applyMatrix4(_mat4_1.makeRotationAxis(vec, theta));
 				}
 
@@ -288,7 +287,7 @@ class CurvePath3 {
 		const vec = binormal.crossVectors(tangents[lastIndex - 1], tangent);
 		if (vec.getLength() > Number.EPSILON) { // see http://www.cs.indiana.edu/pub/techreports/TR425.pdf
 			vec.normalize();
-			const theta = Math.acos(Math.min(Math.max(tangents[lastIndex - 1].dot(tangent), -1), 1)); // clamp for floating pt errors
+			const theta = Math.acos(MathUtils.clamp(tangents[lastIndex - 1].dot(tangent), -1, 1)); // clamp for floating pt errors
 			normal.applyMatrix4(_mat4_1.makeRotationAxis(vec, theta));
 		}
 

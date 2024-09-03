@@ -1,4 +1,4 @@
-import { PIXEL_TYPE, PIXEL_FORMAT, Texture2D, TEXTURE_FILTER, nextPowerOfTwo, Sphere, Box3, Vector3 } from 't3d';
+import { PIXEL_TYPE, PIXEL_FORMAT, Texture2D, TEXTURE_FILTER, MathUtils, Sphere, Box3, Vector3 } from 't3d';
 
 /**
  * ClusteredLightingManager.
@@ -334,7 +334,7 @@ function getSpotLightBoundingSphere(light, sphere) {
 }
 
 function textureSize(pixelCount) {
-	return nextPowerOfTwo(Math.ceil(Math.sqrt(pixelCount)));
+	return MathUtils.nextPowerOfTwo(Math.ceil(Math.sqrt(pixelCount)));
 }
 
 function _isPerspectiveMatrix(m) {

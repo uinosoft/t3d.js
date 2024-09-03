@@ -1,6 +1,6 @@
 import { ATTACHMENT, TEXTURE_FILTER } from '../const.js';
-import { isPowerOfTwo } from '../base.js';
 import { PropertyMap } from '../render/PropertyMap.js';
+import { MathUtils } from '../math/MathUtils.js';
 
 class WebGLRenderTargets extends PropertyMap {
 
@@ -263,7 +263,7 @@ function drawBufferSort(a, b) {
 }
 
 function _isPowerOfTwo(renderTarget) {
-	return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
+	return MathUtils.isPowerOfTwo(renderTarget.width) && MathUtils.isPowerOfTwo(renderTarget.height);
 }
 
 export { WebGLRenderTargets };

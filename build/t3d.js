@@ -4191,6 +4191,86 @@
 	}
 
 	/**
+	 * An utility class for mathematical operations.
+	 */
+	class MathUtils {
+		/**
+		 * Method for generate uuid.
+		 * http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
+		 * @return {String} - The uuid.
+		 */
+		static generateUUID() {
+			const d0 = Math.random() * 0xffffffff | 0;
+			const d1 = Math.random() * 0xffffffff | 0;
+			const d2 = Math.random() * 0xffffffff | 0;
+			const d3 = Math.random() * 0xffffffff | 0;
+			const uuid = _lut[d0 & 0xff] + _lut[d0 >> 8 & 0xff] + _lut[d0 >> 16 & 0xff] + _lut[d0 >> 24 & 0xff] + '-' + _lut[d1 & 0xff] + _lut[d1 >> 8 & 0xff] + '-' + _lut[d1 >> 16 & 0x0f | 0x40] + _lut[d1 >> 24 & 0xff] + '-' + _lut[d2 & 0x3f | 0x80] + _lut[d2 >> 8 & 0xff] + '-' + _lut[d2 >> 16 & 0xff] + _lut[d2 >> 24 & 0xff] + _lut[d3 & 0xff] + _lut[d3 >> 8 & 0xff] + _lut[d3 >> 16 & 0xff] + _lut[d3 >> 24 & 0xff];
+
+			// .toUpperCase() here flattens concatenated strings to save heap memory space.
+			return uuid.toUpperCase();
+		}
+
+		/**
+		 * Clamps the value to be between min and max.
+		 * @param {Number} value - Value to be clamped.
+		 * @param {Number} min - The minimum value.
+		 * @param {Number} max - The maximum value.
+		 */
+		static clamp(value, min, max) {
+			return Math.max(min, Math.min(max, value));
+		}
+
+		/**
+		 * Compute euclidean modulo of m % n.
+		 * Refer to: https://en.wikipedia.org/wiki/Modulo_operation
+		 * @param {Number} n - The dividend.
+		 * @param {Number} m - The divisor.
+		 * @return {Number} - The result of the modulo operation.
+		 */
+		static euclideanModulo(n, m) {
+			return (n % m + m) % m;
+		}
+
+		/**
+		 * Is this number a power of two.
+		 * @param {Number} value - The input number.
+		 * @return {Boolean} - Is this number a power of two.
+		 */
+		static isPowerOfTwo(value) {
+			return (value & value - 1) === 0 && value !== 0;
+		}
+
+		/**
+		 * Return the nearest power of two number of this number.
+		 * @param {Number} value - The input number.
+		 * @return {Number} - The result number.
+		 */
+		static nearestPowerOfTwo(value) {
+			return Math.pow(2, Math.round(Math.log(value) / Math.LN2));
+		}
+
+		/**
+		 * Return the next power of two number of this number.
+		 * @param {Number} value - The input number.
+		 * @return {Number} - The result number.
+		 */
+		static nextPowerOfTwo(value) {
+			value--;
+			value |= value >> 1;
+			value |= value >> 2;
+			value |= value >> 4;
+			value |= value >> 8;
+			value |= value >> 16;
+			value++;
+			return value;
+		}
+	}
+	const _lut = [];
+	for (let i = 0; i < 256; i++) {
+		_lut[i] = (i < 16 ? '0' : '') + i.toString(16);
+	}
+
+	/**
 	 * Color3 Class.
 	 * @memberof t3d
 	 */
@@ -4274,7 +4354,7 @@
 		 * @return {Number}
 				*/
 		getHex() {
-			return clamp$1(this.r * 255, 0, 255) << 16 ^ clamp$1(this.g * 255, 0, 255) << 8 ^ clamp$1(this.b * 255, 0, 255) << 0;
+			return MathUtils.clamp(this.r * 255, 0, 255) << 16 ^ MathUtils.clamp(this.g * 255, 0, 255) << 8 ^ MathUtils.clamp(this.b * 255, 0, 255) << 0;
 		}
 
 		/**
@@ -4300,9 +4380,9 @@
 				*/
 		setHSL(h, s, l) {
 			// h,s,l ranges are in 0.0 - 1.0
-			h = euclideanModulo(h, 1);
-			s = Math.max(0, Math.min(1, s));
-			l = Math.max(0, Math.min(1, l));
+			h = MathUtils.euclideanModulo(h, 1);
+			s = MathUtils.clamp(s, 0, 1);
+			l = MathUtils.clamp(l, 0, 1);
 			if (s === 0) {
 				this.r = this.g = this.b = l;
 			} else {
@@ -4363,9 +4443,6 @@
 			return array;
 		}
 	}
-	function euclideanModulo(n, m) {
-		return (n % m + m) % m;
-	}
 	function hue2rgb(p, q, t) {
 		if (t < 0) t += 1;
 		if (t > 1) t -= 1;
@@ -4373,9 +4450,6 @@
 		if (t < 1 / 2) return q;
 		if (t < 2 / 3) return p + (q - p) * 6 * (2 / 3 - t);
 		return p;
-	}
-	function clamp$1(value, min, max) {
-		return Math.max(min, Math.min(max, value));
 	}
 	function SRGBToLinear(c) {
 		return c < 0.04045 ? c * 0.0773993808 : Math.pow(c * 0.9478672986 + 0.0521327014, 2.4);
@@ -4523,7 +4597,7 @@
 				m32 = te[6],
 				m33 = te[10];
 			if (order === 'XYZ') {
-				this._y = Math.asin(clamp(m13, -1, 1));
+				this._y = Math.asin(MathUtils.clamp(m13, -1, 1));
 				if (Math.abs(m13) < 0.99999) {
 					this._x = Math.atan2(-m23, m33);
 					this._z = Math.atan2(-m12, m11);
@@ -4532,7 +4606,7 @@
 					this._z = 0;
 				}
 			} else if (order === 'YXZ') {
-				this._x = Math.asin(-clamp(m23, -1, 1));
+				this._x = Math.asin(-MathUtils.clamp(m23, -1, 1));
 				if (Math.abs(m23) < 0.99999) {
 					this._y = Math.atan2(m13, m33);
 					this._z = Math.atan2(m21, m22);
@@ -4541,7 +4615,7 @@
 					this._z = 0;
 				}
 			} else if (order === 'ZXY') {
-				this._x = Math.asin(clamp(m32, -1, 1));
+				this._x = Math.asin(MathUtils.clamp(m32, -1, 1));
 				if (Math.abs(m32) < 0.99999) {
 					this._y = Math.atan2(-m31, m33);
 					this._z = Math.atan2(-m12, m22);
@@ -4550,7 +4624,7 @@
 					this._z = Math.atan2(m21, m11);
 				}
 			} else if (order === 'ZYX') {
-				this._y = Math.asin(-clamp(m31, -1, 1));
+				this._y = Math.asin(-MathUtils.clamp(m31, -1, 1));
 				if (Math.abs(m31) < 0.99999) {
 					this._x = Math.atan2(m32, m33);
 					this._z = Math.atan2(m21, m11);
@@ -4559,7 +4633,7 @@
 					this._z = Math.atan2(-m12, m22);
 				}
 			} else if (order === 'YZX') {
-				this._z = Math.asin(clamp(m21, -1, 1));
+				this._z = Math.asin(MathUtils.clamp(m21, -1, 1));
 				if (Math.abs(m21) < 0.99999) {
 					this._x = Math.atan2(-m23, m22);
 					this._y = Math.atan2(-m31, m11);
@@ -4568,7 +4642,7 @@
 					this._y = Math.atan2(m13, m33);
 				}
 			} else if (order === 'XZY') {
-				this._z = Math.asin(-clamp(m12, -1, 1));
+				this._z = Math.asin(-MathUtils.clamp(m12, -1, 1));
 				if (Math.abs(m12) < 0.99999) {
 					this._x = Math.atan2(m32, m22);
 					this._y = Math.atan2(m13, m11);
@@ -4618,9 +4692,6 @@
 		* @readonly
 		*/
 	Euler.DefaultOrder = 'XYZ';
-	function clamp(value, min, max) {
-		return Math.max(min, Math.min(max, value));
-	}
 
 	/**
 	 * The 3x3 matrix class.
@@ -5766,7 +5837,7 @@
 				this.phi = 0;
 			} else {
 				this.theta = Math.atan2(vec3.x, vec3.z); // equator angle around y-up axis
-				this.phi = Math.acos(Math.min(1, Math.max(-1, vec3.y / this.radius))); // polar angle
+				this.phi = Math.acos(MathUtils.clamp(vec3.y / this.radius, -1, 1)); // polar angle
 			}
 			return this;
 		}
@@ -6350,69 +6421,6 @@
 		}
 	}
 
-	const _lut = [];
-	for (let i = 0; i < 256; i++) {
-		_lut[i] = (i < 16 ? '0' : '') + i.toString(16);
-	}
-
-	/**
-	 * Method for generate uuid.
-	 * http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
-	 * @method
-	 * @name t3d.generateUUID
-	 * @return {String} - The uuid.
-	 */
-	function generateUUID() {
-		const d0 = Math.random() * 0xffffffff | 0;
-		const d1 = Math.random() * 0xffffffff | 0;
-		const d2 = Math.random() * 0xffffffff | 0;
-		const d3 = Math.random() * 0xffffffff | 0;
-		const uuid = _lut[d0 & 0xff] + _lut[d0 >> 8 & 0xff] + _lut[d0 >> 16 & 0xff] + _lut[d0 >> 24 & 0xff] + '-' + _lut[d1 & 0xff] + _lut[d1 >> 8 & 0xff] + '-' + _lut[d1 >> 16 & 0x0f | 0x40] + _lut[d1 >> 24 & 0xff] + '-' + _lut[d2 & 0x3f | 0x80] + _lut[d2 >> 8 & 0xff] + '-' + _lut[d2 >> 16 & 0xff] + _lut[d2 >> 24 & 0xff] + _lut[d3 & 0xff] + _lut[d3 >> 8 & 0xff] + _lut[d3 >> 16 & 0xff] + _lut[d3 >> 24 & 0xff];
-
-		// .toUpperCase() here flattens concatenated strings to save heap memory space.
-		return uuid.toUpperCase();
-	}
-
-	/**
-	 * Is this number a power of two.
-	 * @method
-	 * @name t3d.isPowerOfTwo
-	 * @param {Number} value - The input number.
-	 * @return {Boolean} - Is this number a power of two.
-	 */
-	function isPowerOfTwo(value) {
-		return (value & value - 1) === 0 && value !== 0;
-	}
-
-	/**
-	 * Return the nearest power of two number of this number.
-	 * @method
-	 * @name t3d.nearestPowerOfTwo
-	 * @param {Number} value - The input number.
-	 * @return {Number} - The result number.
-	 */
-	function nearestPowerOfTwo(value) {
-		return Math.pow(2, Math.round(Math.log(value) / Math.LN2));
-	}
-
-	/**
-	 * Return the next power of two number of this number.
-	 * @method
-	 * @name t3d.nextPowerOfTwo
-	 * @param {Number} value - The input number.
-	 * @return {Number} - The result number.
-	 */
-	function nextPowerOfTwo(value) {
-		value--;
-		value |= value >> 1;
-		value |= value >> 2;
-		value |= value >> 4;
-		value |= value >> 8;
-		value |= value >> 16;
-		value++;
-		return value;
-	}
-
 	/**
 	 * Clone uniforms.
 	 * @method
@@ -6475,7 +6483,7 @@
 			 * This gets automatically assigned, so this shouldn't be edited.
 			 * @type {String}
 			 */
-			this.uuid = generateUUID();
+			this.uuid = MathUtils.generateUUID();
 
 			/**
 			 * Optional name of the object (doesn't need to be unique).
@@ -8682,7 +8690,7 @@
 			 * @readonly
 			 * @type {String}
 			 */
-			this.uuid = generateUUID();
+			this.uuid = MathUtils.generateUUID();
 
 			/**
 			 * This hashmap has as id the name of the attribute to be set and as value the buffer to set it to.
@@ -8987,7 +8995,7 @@
 			 * This gets automatically assigned, so this shouldn't be edited.
 			 * @type {String}
 			 */
-			this.uuid = generateUUID();
+			this.uuid = MathUtils.generateUUID();
 
 			/**
 			 * Type of the material.
@@ -12708,7 +12716,7 @@
 		}
 		generateBoneTexture() {
 			let size = Math.sqrt(this.bones.length * 4);
-			size = nextPowerOfTwo(Math.ceil(size));
+			size = MathUtils.nextPowerOfTwo(Math.ceil(size));
 			size = Math.max(4, size);
 			const boneMatrices = new Float32Array(size * size * 4);
 			boneMatrices.set(this.boneMatrices);
@@ -16181,13 +16189,13 @@
 		return TEXTURE_FILTER.LINEAR;
 	}
 	function _isPowerOfTwo$1(image) {
-		return isPowerOfTwo(image.width) && isPowerOfTwo(image.height);
+		return MathUtils.isPowerOfTwo(image.width) && MathUtils.isPowerOfTwo(image.height);
 	}
 	function makePowerOf2(image) {
 		if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
 			const canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-			canvas.width = nearestPowerOfTwo(image.width);
-			canvas.height = nearestPowerOfTwo(image.height);
+			canvas.width = MathUtils.nearestPowerOfTwo(image.width);
+			canvas.height = MathUtils.nearestPowerOfTwo(image.height);
 			const context = canvas.getContext('2d');
 			context.drawImage(image, 0, 0, canvas.width, canvas.height);
 			console.warn('image is not power of two (' + image.width + 'x' + image.height + '). Resized to ' + canvas.width + 'x' + canvas.height, image);
@@ -16606,7 +16614,7 @@
 		return a - b;
 	}
 	function _isPowerOfTwo(renderTarget) {
-		return isPowerOfTwo(renderTarget.width) && isPowerOfTwo(renderTarget.height);
+		return MathUtils.isPowerOfTwo(renderTarget.width) && MathUtils.isPowerOfTwo(renderTarget.height);
 	}
 
 	class WebGLBuffers extends PropertyMap {
@@ -17627,6 +17635,13 @@
 		}
 	});
 
+	// since 0.2.8
+
+	const generateUUID = MathUtils.generateUUID;
+	const isPowerOfTwo = MathUtils.isPowerOfTwo;
+	const nearestPowerOfTwo = MathUtils.nearestPowerOfTwo;
+	const nextPowerOfTwo = MathUtils.nextPowerOfTwo;
+
 	exports.ATTACHMENT = ATTACHMENT;
 	exports.AmbientLight = AmbientLight;
 	exports.AnimationAction = AnimationAction;
@@ -17683,6 +17698,7 @@
 	exports.MATERIAL_TYPE = MATERIAL_TYPE;
 	exports.MatcapMaterial = MatcapMaterial;
 	exports.Material = Material;
+	exports.MathUtils = MathUtils;
 	exports.Matrix3 = Matrix3;
 	exports.Matrix4 = Matrix4;
 	exports.Mesh = Mesh;

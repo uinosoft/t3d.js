@@ -1,4 +1,4 @@
-import { Mesh, Geometry, Texture2D, Buffer, Attribute, Matrix4, nextPowerOfTwo, PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER } from 't3d';
+import { Mesh, Geometry, Texture2D, Buffer, Attribute, Matrix4, MathUtils, PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER } from 't3d';
 
 // reference: https://github.com/mrdoob/three.js/blob/dev/examples/jsm/objects/BatchedMesh.js
 // TODO: Implement geometry sorting for transparent and opaque materials
@@ -51,7 +51,7 @@ class BatchedMesh extends Mesh {
 		//       64x64 pixel texture max 1024 matrices * 4 pixels = (64 * 64)
 
 		let size = Math.sqrt(this._maxGeometryCount * 4); // 4 pixels needed for 1 matrix
-		size = nextPowerOfTwo(Math.ceil(size));
+		size = MathUtils.nextPowerOfTwo(Math.ceil(size));
 		size = Math.max(4, size);
 
 		const matricesArray = new Float32Array(size * size * 4); // 4 floats per RGBA pixel

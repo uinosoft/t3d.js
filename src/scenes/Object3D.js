@@ -1,9 +1,10 @@
-import { generateUUID, cloneJson } from '../base.js';
+import { cloneJson } from '../base.js';
 import { SHADOW_TYPE } from '../const.js';
 import { Vector3 } from '../math/Vector3.js';
 import { Euler } from '../math/Euler.js';
 import { Quaternion } from '../math/Quaternion.js';
 import { Matrix4 } from '../math/Matrix4.js';
+import { MathUtils } from '../math/MathUtils.js';
 
 let _object3DId = 0;
 
@@ -29,7 +30,7 @@ class Object3D {
 		 * This gets automatically assigned, so this shouldn't be edited.
 		 * @type {String}
 		 */
-		this.uuid = generateUUID();
+		this.uuid = MathUtils.generateUUID();
 
 		/**
 		 * Optional name of the object (doesn't need to be unique).

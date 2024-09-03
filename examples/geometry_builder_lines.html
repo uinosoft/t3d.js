@@ -26,7 +26,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { MathUtils } from 't3d/addons/math/MathUtils.js';
+		import { CurveUtils } from 't3d/addons/math/curves/CurveUtils.js';
 		import { CurvePath3 } from 't3d/addons/math/curves/Curves.js';
 		import { TubeBuilder } from 't3d/addons/geometries/builders/TubeBuilder.js';
 		import { RouteBuilder } from 't3d/addons/geometries/builders/RouteBuilder.js';
@@ -60,9 +60,9 @@
 		lambertMaterial.diffuseMap = texture;
 		lambertMaterial.side = t3d.DRAW_SIDE.DOUBLE;
 
-		const hilbert3DPoints = MathUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 3, 1, 0, 1, 2, 3, 4, 5, 6, 7);
+		const hilbert3DPoints = CurveUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 3, 1, 0, 1, 2, 3, 4, 5, 6, 7);
 
-		const hilbert2DPoints = MathUtils.hilbert2D(new t3d.Vector3(0, 0, 0), 3, 1, 0, 1, 2, 3);
+		const hilbert2DPoints = CurveUtils.hilbert2D(new t3d.Vector3(0, 0, 0), 3, 1, 0, 1, 2, 3);
 		hilbert2DPoints.forEach(p => {
 			p.y = p.z;
 			p.z = 0;

@@ -1,7 +1,7 @@
 import { Attribute } from './Attribute.js';
 import { Buffer } from './Buffer.js';
 import { EventDispatcher } from '../../EventDispatcher.js';
-import { generateUUID } from '../../base.js';
+import { MathUtils } from '../../math/MathUtils.js';
 import { Box3 } from '../../math/Box3.js';
 import { Sphere } from '../../math/Sphere.js';
 import { Vector3 } from '../../math/Vector3.js';
@@ -42,7 +42,7 @@ class Geometry extends EventDispatcher {
 		 * @readonly
 		 * @type {String}
 		 */
-		this.uuid = generateUUID();
+		this.uuid = MathUtils.generateUUID();
 
 		/**
 		 * This hashmap has as id the name of the attribute to be set and as value the buffer to set it to.

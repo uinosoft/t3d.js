@@ -1,4 +1,5 @@
 import { Matrix4 } from './Matrix4.js';
+import { MathUtils } from './MathUtils.js';
 
 const _matrix = new Matrix4();
 
@@ -139,7 +140,7 @@ class Euler {
 		const m31 = te[2], m32 = te[6], m33 = te[10];
 
 		if (order === 'XYZ') {
-			this._y = Math.asin(clamp(m13, -1, 1));
+			this._y = Math.asin(MathUtils.clamp(m13, -1, 1));
 
 			if (Math.abs(m13) < 0.99999) {
 				this._x = Math.atan2(-m23, m33);
@@ -149,7 +150,7 @@ class Euler {
 				this._z = 0;
 			}
 		} else if (order === 'YXZ') {
-			this._x = Math.asin(-clamp(m23, -1, 1));
+			this._x = Math.asin(-MathUtils.clamp(m23, -1, 1));
 
 			if (Math.abs(m23) < 0.99999) {
 				this._y = Math.atan2(m13, m33);
@@ -159,7 +160,7 @@ class Euler {
 				this._z = 0;
 			}
 		} else if (order === 'ZXY') {
-			this._x = Math.asin(clamp(m32, -1, 1));
+			this._x = Math.asin(MathUtils.clamp(m32, -1, 1));
 
 			if (Math.abs(m32) < 0.99999) {
 				this._y = Math.atan2(-m31, m33);
@@ -169,7 +170,7 @@ class Euler {
 				this._z = Math.atan2(m21, m11);
 			}
 		} else if (order === 'ZYX') {
-			this._y = Math.asin(-clamp(m31, -1, 1));
+			this._y = Math.asin(-MathUtils.clamp(m31, -1, 1));
 
 			if (Math.abs(m31) < 0.99999) {
 				this._x = Math.atan2(m32, m33);
@@ -179,7 +180,7 @@ class Euler {
 				this._z = Math.atan2(-m12, m22);
 			}
 		} else if (order === 'YZX') {
-			this._z = Math.asin(clamp(m21, -1, 1));
+			this._z = Math.asin(MathUtils.clamp(m21, -1, 1));
 
 			if (Math.abs(m21) < 0.99999) {
 				this._x = Math.atan2(-m23, m22);
@@ -189,7 +190,7 @@ class Euler {
 				this._y = Math.atan2(m13, m33);
 			}
 		} else if (order === 'XZY') {
-			this._z = Math.asin(-clamp(m12, -1, 1));
+			this._z = Math.asin(-MathUtils.clamp(m12, -1, 1));
 
 			if (Math.abs(m12) < 0.99999) {
 				this._x = Math.atan2(m32, m22);
@@ -245,9 +246,5 @@ Euler.RotationOrders = ['XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX'];
   * @readonly
   */
 Euler.DefaultOrder = 'XYZ';
-
-function clamp(value, min, max) {
-	return Math.max(min, Math.min(max, value));
-}
 
 export { Euler };

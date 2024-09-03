@@ -1,3 +1,5 @@
+import { MathUtils } from './MathUtils.js';
+
 /**
  * Color3 Class.
  * @memberof t3d
@@ -88,7 +90,7 @@ class Color3 {
 	 * @return {Number}
      */
 	getHex() {
-		return clamp(this.r * 255, 0, 255) << 16 ^ clamp(this.g * 255, 0, 255) << 8 ^ clamp(this.b * 255, 0, 255) << 0;
+		return MathUtils.clamp(this.r * 255, 0, 255) << 16 ^ MathUtils.clamp(this.g * 255, 0, 255) << 8 ^ MathUtils.clamp(this.b * 255, 0, 255) << 0;
 	}
 
 	/**
@@ -115,9 +117,9 @@ class Color3 {
      */
 	setHSL(h, s, l) {
 		// h,s,l ranges are in 0.0 - 1.0
-		h = euclideanModulo(h, 1);
-		s = Math.max(0, Math.min(1, s));
-		l = Math.max(0, Math.min(1, l));
+		h = MathUtils.euclideanModulo(h, 1);
+		s = MathUtils.clamp(s, 0, 1);
+		l = MathUtils.clamp(l, 0, 1);
 
 		if (s === 0) {
 			this.r = this.g = this.b = l;
@@ -184,10 +186,6 @@ class Color3 {
 
 }
 
-function euclideanModulo(n, m) {
-	return ((n % m) + m) % m;
-}
-
 function hue2rgb(p, q, t) {
 	if (t < 0) t += 1;
 	if (t > 1) t -= 1;
@@ -195,10 +193,6 @@ function hue2rgb(p, q, t) {
 	if (t < 1 / 2) return q;
 	if (t < 2 / 3) return p + (q - p) * 6 * (2 / 3 - t);
 	return p;
-}
-
-function clamp(value, min, max) {
-	return Math.max(min, Math.min(max, value));
 }
 
 function SRGBToLinear(c) {

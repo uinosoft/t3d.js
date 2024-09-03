@@ -1,6 +1,6 @@
 import { TEXTURE_FILTER, TEXTURE_WRAP, PIXEL_FORMAT, PIXEL_TYPE } from '../const.js';
-import { isPowerOfTwo, nearestPowerOfTwo } from '../base.js';
 import { PropertyMap } from '../render/PropertyMap.js';
+import { MathUtils } from '../math/MathUtils.js';
 
 class WebGLTextures extends PropertyMap {
 
@@ -496,14 +496,14 @@ function filterFallback(filter) {
 }
 
 function _isPowerOfTwo(image) {
-	return isPowerOfTwo(image.width) && isPowerOfTwo(image.height);
+	return MathUtils.isPowerOfTwo(image.width) && MathUtils.isPowerOfTwo(image.height);
 }
 
 function makePowerOf2(image) {
 	if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
 		const canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-		canvas.width = nearestPowerOfTwo(image.width);
-		canvas.height = nearestPowerOfTwo(image.height);
+		canvas.width = MathUtils.nearestPowerOfTwo(image.width);
+		canvas.height = MathUtils.nearestPowerOfTwo(image.height);
 
 		const context = canvas.getContext('2d');
 		context.drawImage(image, 0, 0, canvas.width, canvas.height);

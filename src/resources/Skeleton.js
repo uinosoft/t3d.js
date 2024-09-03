@@ -1,7 +1,7 @@
 import { Texture2D } from './textures/Texture2D.js';
-import { nextPowerOfTwo } from '../base.js';
 import { PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER } from '../const.js';
 import { Matrix4 } from '../math/Matrix4.js';
+import { MathUtils } from '../math/MathUtils.js';
 
 const _offsetMatrix = new Matrix4();
 
@@ -103,7 +103,7 @@ class Skeleton {
 
 	generateBoneTexture() {
 		let size = Math.sqrt(this.bones.length * 4);
-		size = nextPowerOfTwo(Math.ceil(size));
+		size = MathUtils.nextPowerOfTwo(Math.ceil(size));
 		size = Math.max(4, size);
 
 		const boneMatrices = new Float32Array(size * size * 4);

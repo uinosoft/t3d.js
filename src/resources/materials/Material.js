@@ -1,9 +1,10 @@
 import { BLEND_TYPE, BLEND_EQUATION, BLEND_FACTOR, ENVMAP_COMBINE_TYPE, DRAW_SIDE, SHADING_TYPE, DRAW_MODE, COMPARE_FUNC, OPERATION, VERTEX_COLOR, MATERIAL_TYPE } from '../../const.js';
-import { cloneUniforms, generateUUID } from '../../base.js';
+import { cloneUniforms } from '../../base.js';
 import { EventDispatcher } from '../../EventDispatcher.js';
 import { Color3 } from '../../math/Color3.js';
 import { Vector2 } from '../../math/Vector2.js';
 import { Matrix3 } from '../../math/Matrix3.js';
+import { MathUtils } from '../../math/MathUtils.js';
 
 let _materialId = 0;
 
@@ -33,7 +34,7 @@ class Material extends EventDispatcher {
 		 * This gets automatically assigned, so this shouldn't be edited.
 		 * @type {String}
 		 */
-		this.uuid = generateUUID();
+		this.uuid = MathUtils.generateUUID();
 
 		/**
 		 * Type of the material.

@@ -6,7 +6,7 @@ import {
 	Vector3
 } from 't3d';
 import { Curve } from './Curve.js';
-import { MathUtils } from '../MathUtils.js';
+import { CurveUtils } from './CurveUtils.js';
 
 class CubicBezierCurve3 extends Curve {
 
@@ -25,9 +25,9 @@ class CubicBezierCurve3 extends Curve {
 		const v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
 
 		point.set(
-			MathUtils.cubicBezier(t, v0.x, v1.x, v2.x, v3.x),
-			MathUtils.cubicBezier(t, v0.y, v1.y, v2.y, v3.y),
-			MathUtils.cubicBezier(t, v0.z, v1.z, v2.z, v3.z)
+			CurveUtils.cubicBezier(t, v0.x, v1.x, v2.x, v3.x),
+			CurveUtils.cubicBezier(t, v0.y, v1.y, v2.y, v3.y),
+			CurveUtils.cubicBezier(t, v0.z, v1.z, v2.z, v3.z)
 		);
 
 		return point;

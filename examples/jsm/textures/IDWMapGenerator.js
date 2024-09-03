@@ -6,7 +6,7 @@ import {
 	PIXEL_TYPE,
 	PIXEL_FORMAT,
 	ATTACHMENT,
-	nextPowerOfTwo
+	MathUtils
 } from 't3d';
 
 /**
@@ -131,7 +131,7 @@ class IDWMapGenerator {
 		if (this._dataLength !== dataLength) {
 			this._dataLength = dataLength;
 			textureSize = Math.sqrt(dataLength);
-			textureSize = nextPowerOfTwo(Math.ceil(textureSize));
+			textureSize = MathUtils.nextPowerOfTwo(Math.ceil(textureSize));
 			textureSize = Math.max(4, textureSize);
 			this._pointTextureSize = textureSize;
 		}

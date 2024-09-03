@@ -1,4 +1,4 @@
-import { Vector3, Quaternion, Euler, Object3D } from 't3d';
+import { Vector3, Quaternion, Euler, MathUtils, Object3D } from 't3d';
 
 class ViewControls {
 
@@ -277,7 +277,7 @@ function rotateTowards(q, step, target) {
 }
 
 function angleTo(q1, q2) {
-	return 2 * Math.acos(Math.abs(Math.max(-1, Math.min(1, q1.dot(q2)))));
+	return 2 * Math.acos(Math.abs(MathUtils.clamp(q1.dot(q2), -1, 1)));
 }
 
 export { ViewControls };

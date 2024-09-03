@@ -27,7 +27,7 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { CubicBezierCurve3, QuadraticBezierCurve3, CurvePath3 } from 't3d/addons/math/curves/Curves.js';
-		import { MathUtils } from 't3d/addons/math/MathUtils.js';
+		import { CurveUtils } from 't3d/addons/math/curves/CurveUtils.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -120,7 +120,7 @@
 				scene.remove(line3);
 			}
 
-			const hilbert3DPoints = MathUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 50, 1, 0, 1, 2, 3, 4, 5, 6, 7);
+			const hilbert3DPoints = CurveUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 50, 1, 0, 1, 2, 3, 4, 5, 6, 7);
 			const curvePath3_1 = new CurvePath3();
 			curvePath3_1.setFromPoints(hilbert3DPoints, { close: false, bevelRadius: params.bevelRadius });
 			const points_1 = curvePath3_1.getPoints(params.sampleNum);

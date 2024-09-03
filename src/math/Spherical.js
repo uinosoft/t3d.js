@@ -1,3 +1,5 @@
+import { MathUtils } from './MathUtils.js';
+
 /**
  * Ref: https://en.wikipedia.org/wiki/Spherical_coordinate_system
  *
@@ -77,7 +79,7 @@ class Spherical {
 			this.phi = 0;
 		} else {
 			this.theta = Math.atan2(vec3.x, vec3.z); // equator angle around y-up axis
-			this.phi = Math.acos(Math.min(1, Math.max(-1, vec3.y / this.radius))); // polar angle
+			this.phi = Math.acos(MathUtils.clamp(vec3.y / this.radius, -1, 1)); // polar angle
 		}
 
 		return this;

@@ -26,6 +26,7 @@ export { Box3 } from './math/Box3.js';
 export { Color3 } from './math/Color3.js';
 export { Euler } from './math/Euler.js';
 export { Frustum } from './math/Frustum.js';
+export { MathUtils } from './math/MathUtils.js';
 export { Matrix3 } from './math/Matrix3.js';
 export { Matrix4 } from './math/Matrix4.js';
 export { Plane } from './math/Plane.js';

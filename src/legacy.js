@@ -4,6 +4,7 @@ import { BoxGeometry } from './resources/geometries/BoxGeometry.js';
 import { Object3D } from './scenes/Object3D.js';
 import { Scene } from './scenes/Scene.js';
 import { BasicMaterial } from './resources/materials/BasicMaterial.js';
+import { MathUtils } from './math/MathUtils.js';
 
 // since 0.1.2
 export { PIXEL_FORMAT as WEBGL_PIXEL_FORMAT };
@@ -146,3 +147,10 @@ Object.defineProperties(Scene.prototype, {
 		}
 	}
 });
+
+// since 0.2.8
+
+export const generateUUID = MathUtils.generateUUID;
+export const isPowerOfTwo = MathUtils.isPowerOfTwo;
+export const nearestPowerOfTwo = MathUtils.nearestPowerOfTwo;
+export const nextPowerOfTwo = MathUtils.nextPowerOfTwo;

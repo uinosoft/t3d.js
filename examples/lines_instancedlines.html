@@ -27,7 +27,7 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { InstancedLine } from 't3d/addons/objects/InstancedLine.js';
-		import { MathUtils } from 't3d/addons/math/MathUtils.js';
+		import { CurveUtils } from 't3d/addons/math/curves/CurveUtils.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
@@ -54,7 +54,7 @@
 
 		const params = { lineWidth: 5, cornerThreshold: 0.3 };
 
-		const points = MathUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 80, 2, 0, 1, 2, 3, 4, 5, 6, 7);
+		const points = CurveUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 80, 2, 0, 1, 2, 3, 4, 5, 6, 7);
 
 		const instancedLine = new InstancedLine();
 		instancedLine.material.uniforms.lineWidth = params.lineWidth;

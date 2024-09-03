@@ -1,12 +1,10 @@
+
+import { Vector3 } from 't3d';
+
 /**
- * MathUtils
+ * CurveUtils
  */
-
-import {
-	Vector3
-} from 't3d';
-
-class MathUtils {
+class CurveUtils {
 
 	/**
 	 * Generates 2D-Coordinates in a very fast way.
@@ -164,4 +162,4 @@ function cubicBezierP3(t, p) {
 	return t * t * t * p;
 }
 
-export { MathUtils };
+export { CurveUtils };
