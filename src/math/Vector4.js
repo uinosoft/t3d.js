@@ -1,3 +1,5 @@
+import { MathUtils } from './MathUtils.js';
+
 /**
  * The vector 4 class
  * @memberof t3d
@@ -179,13 +181,24 @@ class Vector4 {
 	 * and w value to be array[ offset + 3 ].
 	 * @param {Number[]} array - the source array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Vector4}
 	 */
-	fromArray(array, offset = 0) {
-		this.x = array[offset];
-		this.y = array[offset + 1];
-		this.z = array[offset + 2];
-		this.w = array[offset + 3];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1],
+			z = array[offset + 2], w = array[offset + 3];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+			z = MathUtils.denormalize(z, array);
+			w = MathUtils.denormalize(w, array);
+		}
+
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
 
 		return this;
 	}
@@ -194,13 +207,24 @@ class Vector4 {
 	 * Returns an array [x, y, z, w], or copies x, y, z and w into the provided array.
 	 * @param {Number[]} [array] - array to store this vector to. If this is not provided, a new array will be created.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
 	 */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.x;
-		array[offset + 1] = this.y;
-		array[offset + 2] = this.z;
-		array[offset + 3] = this.w;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this.x, y = this.y,
+			z = this.z, w = this.w;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+			z = MathUtils.normalize(z, array);
+			w = MathUtils.normalize(w, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
+		array[offset + 2] = z;
+		array[offset + 3] = w;
 
 		return array;
 	}

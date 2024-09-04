@@ -1,4 +1,4 @@
-import { Vector3, Plane, Geometry, Buffer, Attribute } from 't3d';
+import { Vector3, Plane, Geometry, Buffer, Attribute, MathUtils } from 't3d';
 import { isPointInPoly } from './Utils.js';
 
 class Zone {
@@ -116,8 +116,8 @@ const _plane = new Plane();
 function _buildPolygonsFromGeometry(geometry) {
 	const polygons = [];
 	const vertices = [];
-	const position = geometry.getAttribute('a_Position').buffer;
-	const index = geometry.index.buffer;
+	const positionAttribute = geometry.getAttribute('a_Position');
+	const indexAttribute = geometry.index;
 
 	// Constructing the neighbor graph brute force is O(n²). To avoid that,
 	// create a map from vertices to the polygons that contain them, and use it
@@ -127,16 +127,27 @@ function _buildPolygonsFromGeometry(geometry) {
 	/** Array of polygon objects by vertex index. */
 	const vertexPolygonMap = [];
 
-	for (let i = 0; i < position.count; i++) {
-		vertices.push(new Vector3(getBufferValue(position, i, 0), getBufferValue(position, i, 1), getBufferValue(position, i, 2)));
+	for (let i = 0; i < positionAttribute.buffer.count; i++) {
+		const vertex = new Vector3();
+		vertex.fromArray(
+			positionAttribute.buffer.array,
+			i * positionAttribute.buffer.stride + positionAttribute.offset,
+			positionAttribute.normalized
+		);
+		vertices.push(vertex);
 		vertexPolygonMap[i] = [];
 	}
 
 	// Convert the faces into a custom format that supports more than 3 vertices
-	for (let i = 0; i < geometry.index.buffer.count; i += 3) {
-		const a = getBufferValue(index, i);
-		const b = getBufferValue(index, i + 1);
-		const c = getBufferValue(index, i + 2);
+	for (let i = 0; i < indexAttribute.buffer.count; i += 3) {
+		_vector1.fromArray(
+			indexAttribute.buffer.array,
+			i,
+			indexAttribute.normalized
+		);
+		const a = _vector1.x;
+		const b = _vector1.y;
+		const c = _vector1.z;
 		const poly = { vertexIds: [a, b, c], neighbours: null };
 		polygons.push(poly);
 		vertexPolygonMap[a].push(poly);
@@ -247,16 +258,17 @@ function _getSharedVerticesInOrder(a, b) {
 	}
 }
 
+// TODO move this to GeometryUtils
 function mergeVertices(geometry, tolerance = 1e-4) {
 	tolerance = Math.max(tolerance, Number.EPSILON);
 
 	// Generate an index buffer if the geometry doesn't have one, or optimize it
 	// if it's already available.
 	const hashToIndex = {};
-	const indices = geometry.index.buffer;
+	const indices = geometry.index;
 	const positions = geometry.getAttribute('a_Position');
 	const positionBuffer = positions.buffer;
-	const vertexCount = indices ? indices.count : positionBuffer.count;
+	const vertexCount = indices ? indices.buffer.count : positionBuffer.count;
 
 	// Next value for triangle indices.
 	let nextIndex = 0;
@@ -269,23 +281,32 @@ function mergeVertices(geometry, tolerance = 1e-4) {
 	const shiftMultiplier = Math.pow(10, decimalShift);
 
 	for (let i = 0; i < vertexCount; i++) {
-		const index = indices ? getBufferValue(indices, i) : i;
+		let index = indices ? indices.buffer.array[i * indices.buffer.stride + indices.offset] : i;
+		if (indices && indices.normalized) {
+			index = MathUtils.denormalize(index, indices.buffer.array);
+		}
+
+		_vector1.fromArray(
+			positionBuffer.array,
+			index * positionBuffer.stride + positions.offset,
+			positions.normalized
+		);
 
 		// Generate a hash for the vertex attributes at the current index 'i'.
 		let hash = '';
 		// Double tilde truncates the decimal value.
-		hash += `${~~(getBufferValue(positionBuffer, index, 0) * shiftMultiplier)},`;
-		hash += `${~~(getBufferValue(positionBuffer, index, 1) * shiftMultiplier)},`;
-		hash += `${~~(getBufferValue(positionBuffer, index, 2) * shiftMultiplier)},`;
+		hash += `${~~(_vector1.x * shiftMultiplier)},`;
+		hash += `${~~(_vector1.y * shiftMultiplier)},`;
+		hash += `${~~(_vector1.z * shiftMultiplier)},`;
 
 		// Add another reference to the vertex if it's already
 		// used by another index.
 		if (hash in hashToIndex) {
 			newIndices.push(hashToIndex[hash]);
 		} else {
-			newPositions.push(getBufferValue(positionBuffer, index, 0));
-			newPositions.push(getBufferValue(positionBuffer, index, 1));
-			newPositions.push(getBufferValue(positionBuffer, index, 2));
+			newPositions.push(_vector1.x);
+			newPositions.push(_vector1.y);
+			newPositions.push(_vector1.z);
 
 			hashToIndex[hash] = nextIndex;
 			newIndices.push(nextIndex);
@@ -310,29 +331,4 @@ function mergeVertices(geometry, tolerance = 1e-4) {
 function roundNumber(value, decimals) {
 	const factor = Math.pow(10, decimals);
 	return Math.round(value * factor) / factor;
-}
-
-function getBufferValue(buffer, index, offset = 0) {
-	let v = buffer.array[index * buffer.stride + offset];
-	if (buffer.normalized) {
-		v = denormalize(v, buffer.array);
-	}
-	return v;
-}
-
-function denormalize(value, array) {
-	switch (array.constructor) {
-		case Float32Array:
-			return value;
-		case Uint16Array:
-			return value / 65535.0;
-		case Uint8Array:
-			return value / 255.0;
-		case Int16Array:
-			return Math.max(value / 32767.0, -1.0);
-		case Int8Array:
-			return Math.max(value / 127.0, -1.0);
-		default:
-			throw new Error('Invalid component type.');
-	}
 }

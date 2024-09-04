@@ -160,12 +160,21 @@ class Color3 {
 	 * Sets this color's components based on an array formatted like [ r, g, b ].
      * @param {Number[]} array - Array of floats in the form [ r, g, b ].
 	 * @param {Number} [offset=0] - An offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Color3}
      */
-	fromArray(array, offset = 0) {
-		this.r = array[offset];
-		this.g = array[offset + 1];
-		this.b = array[offset + 2];
+	fromArray(array, offset = 0, denormalize = false) {
+		let r = array[offset], g = array[offset + 1], b = array[offset + 2];
+
+		if (denormalize) {
+			r = MathUtils.denormalize(r, array);
+			g = MathUtils.denormalize(g, array);
+			b = MathUtils.denormalize(b, array);
+		}
+
+		this.r = r;
+		this.g = g;
+		this.b = b;
 
 		return this;
 	}
@@ -174,12 +183,21 @@ class Color3 {
 	 * Returns an array of the form [ r, g, b ].
      * @param {Number[]} [array] - An array to store the color to.
 	 * @param {Number} [offset=0] - An offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
      */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.r;
-		array[offset + 1] = this.g;
-		array[offset + 2] = this.b;
+	toArray(array = [], offset = 0, normalize = false) {
+		let r = this.r, g = this.g, b = this.b;
+
+		if (normalize) {
+			r = MathUtils.normalize(r, array);
+			g = MathUtils.normalize(g, array);
+			b = MathUtils.normalize(b, array);
+		}
+
+		array[offset] = r;
+		array[offset + 1] = g;
+		array[offset + 2] = b;
 
 		return array;
 	}

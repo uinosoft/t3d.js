@@ -4,6 +4,149 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 /**
+ * An utility class for mathematical operations.
+ */
+class MathUtils {
+
+	/**
+	 * Method for generate uuid.
+	 * http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
+	 * @return {String} - The uuid.
+	 */
+	static generateUUID() {
+		const d0 = Math.random() * 0xffffffff | 0;
+		const d1 = Math.random() * 0xffffffff | 0;
+		const d2 = Math.random() * 0xffffffff | 0;
+		const d3 = Math.random() * 0xffffffff | 0;
+		const uuid = _lut[d0 & 0xff] + _lut[d0 >> 8 & 0xff] + _lut[d0 >> 16 & 0xff] + _lut[d0 >> 24 & 0xff] + '-' +
+			_lut[d1 & 0xff] + _lut[d1 >> 8 & 0xff] + '-' + _lut[d1 >> 16 & 0x0f | 0x40] + _lut[d1 >> 24 & 0xff] + '-' +
+			_lut[d2 & 0x3f | 0x80] + _lut[d2 >> 8 & 0xff] + '-' + _lut[d2 >> 16 & 0xff] + _lut[d2 >> 24 & 0xff] +
+			_lut[d3 & 0xff] + _lut[d3 >> 8 & 0xff] + _lut[d3 >> 16 & 0xff] + _lut[d3 >> 24 & 0xff];
+
+		// .toUpperCase() here flattens concatenated strings to save heap memory space.
+		return uuid.toUpperCase();
+	}
+
+	/**
+	 * Clamps the value to be between min and max.
+	 * @param {Number} value - Value to be clamped.
+	 * @param {Number} min - The minimum value.
+	 * @param {Number} max - The maximum value.
+	 */
+	static clamp(value, min, max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	/**
+	 * Compute euclidean modulo of m % n.
+	 * Refer to: https://en.wikipedia.org/wiki/Modulo_operation
+	 * @param {Number} n - The dividend.
+	 * @param {Number} m - The divisor.
+	 * @return {Number} - The result of the modulo operation.
+	 */
+	static euclideanModulo(n, m) {
+		return ((n % m) + m) % m;
+	}
+
+	/**
+	 * Is this number a power of two.
+	 * @param {Number} value - The input number.
+	 * @return {Boolean} - Is this number a power of two.
+	 */
+	static isPowerOfTwo(value) {
+		return (value & (value - 1)) === 0 && value !== 0;
+	}
+
+	/**
+	 * Return the nearest power of two number of this number.
+	 * @param {Number} value - The input number.
+	 * @return {Number} - The result number.
+	 */
+	static nearestPowerOfTwo(value) {
+		return Math.pow(2, Math.round(Math.log(value) / Math.LN2));
+	}
+
+	/**
+	 * Return the next power of two number of this number.
+	 * @param {Number} value - The input number.
+	 * @return {Number} - The result number.
+	 */
+	static nextPowerOfTwo(value) {
+		value--;
+		value |= value >> 1;
+		value |= value >> 2;
+		value |= value >> 4;
+		value |= value >> 8;
+		value |= value >> 16;
+		value++;
+
+		return value;
+	}
+
+	/**
+	 * Denormalizes a value based on the type of the provided array.
+	 * @param {Number} value - The value to be denormalized.
+	 * @param {TypedArray} array - The typed array to determine the normalization factor.
+	 * @returns {Number} - The denormalized value.
+	 * @throws {Error} - Throws an error if the array type is invalid.
+	 */
+	static denormalize(value, array) {
+		switch (array.constructor) {
+			case Float32Array:
+				return value;
+			case Uint32Array:
+				return value / 4294967295.0;
+			case Uint16Array:
+				return value / 65535.0;
+			case Uint8Array:
+				return value / 255.0;
+			case Int32Array:
+				return Math.max(value / 2147483647.0, -1.0);
+			case Int16Array:
+				return Math.max(value / 32767.0, -1.0);
+			case Int8Array:
+				return Math.max(value / 127.0, -1.0);
+			default:
+				throw new Error('Invalid component type.');
+		}
+	}
+
+	/**
+	 * Normalizes a value based on the type of the provided array.
+	 * @param {Number} value - The value to be normalized.
+	 * @param {TypedArray} array - The typed array to determine the normalization factor.
+	 * @returns {Number} - The normalized value.
+	 * @throws {Error} - Throws an error if the array type is invalid.
+	 */
+	static normalize(value, array) {
+		switch (array.constructor) {
+			case Float32Array:
+				return value;
+			case Uint32Array:
+				return Math.round(value * 4294967295.0);
+			case Uint16Array:
+				return Math.round(value * 65535.0);
+			case Uint8Array:
+				return Math.round(value * 255.0);
+			case Int32Array:
+				return Math.round(value * 2147483647.0);
+			case Int16Array:
+				return Math.round(value * 32767.0);
+			case Int8Array:
+				return Math.round(value * 127.0);
+			default:
+				throw new Error('Invalid component type.');
+		}
+	}
+
+}
+
+const _lut = [];
+for (let i = 0; i < 256; i++) {
+	_lut[i] = (i < 16 ? '0' : '') + (i).toString(16);
+}
+
+/**
  * The vector 3 class.
  * @memberof t3d
  */
@@ -319,12 +462,21 @@ class Vector3 {
 	 * Sets this vector's x value to be array[ offset + 0 ], y value to be array[ offset + 1 ] and z value to be array[ offset + 2 ].
 	 * @param {Number[]} array - the source array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Vector3}
 	 */
-	fromArray(array, offset = 0) {
-		this.x = array[offset];
-		this.y = array[offset + 1];
-		this.z = array[offset + 2];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1], z = array[offset + 2];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+			z = MathUtils.denormalize(z, array);
+		}
+
+		this.x = x;
+		this.y = y;
+		this.z = z;
 
 		return this;
 	}
@@ -333,12 +485,21 @@ class Vector3 {
 	 * Returns an array [x, y, z], or copies x, y and z into the provided array.
 	 * @param {Number[]} [array] - array to store this vector to. If this is not provided a new array will be created.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
 	 */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.x;
-		array[offset + 1] = this.y;
-		array[offset + 2] = this.z;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this.x, y = this.y, z = this.z;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+			z = MathUtils.normalize(z, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
+		array[offset + 2] = z;
 
 		return array;
 	}
@@ -1808,13 +1969,24 @@ class Quaternion {
 	 * Sets this quaternion's x, y, z and w properties from an array.
 	 * @param {Number[]} - array of format (x, y, z, w) used to construct the quaternion.
 	 * @param {Number} [offset=0] - an offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Quaternion}
 	 */
-	fromArray(array, offset = 0) {
-		this._x = array[offset];
-		this._y = array[offset + 1];
-		this._z = array[offset + 2];
-		this._w = array[offset + 3];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1],
+			z = array[offset + 2], w = array[offset + 3];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+			z = MathUtils.denormalize(z, array);
+			w = MathUtils.denormalize(w, array);
+		}
+
+		this._x = x;
+		this._y = y;
+		this._z = z;
+		this._w = w;
 
 		this.onChangeCallback();
 
@@ -1825,13 +1997,24 @@ class Quaternion {
 	 * Returns the numerical elements of this quaternion in an array of format [x, y, z, w].
 	 * @param {Number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
 	 * @param {Number} [offset=0] - An offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {t3d.Quaternion}
 	 */
-	toArray(array = [], offset = 0) {
-		array[offset] = this._x;
-		array[offset + 1] = this._y;
-		array[offset + 2] = this._z;
-		array[offset + 3] = this._w;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this._x, y = this._y,
+			z = this._z, w = this._w;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+			z = MathUtils.normalize(z, array);
+			w = MathUtils.normalize(w, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
+		array[offset + 2] = z;
+		array[offset + 3] = w;
 
 		return array;
 	}
@@ -3961,11 +4144,19 @@ class Vector2 {
      * Sets this vector's x value to be array[ offset ] and y value to be array[ offset + 1 ].
 	 * @param {Number[]} array - the source array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Vector2}
      */
-	fromArray(array, offset = 0) {
-		this.x = array[offset];
-		this.y = array[offset + 1];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+		}
+
+		this.x = x;
+		this.y = y;
 
 		return this;
 	}
@@ -3974,11 +4165,19 @@ class Vector2 {
 	 * Sets this array[ offset ] value to be vector's x and array[ offset + 1 ] to be vector's y.
 	 * @param {Number[]} [array] - the target array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
      */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.x;
-		array[offset + 1] = this.y;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this.x, y = this.y;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
 
 		return array;
 	}
@@ -4456,93 +4655,6 @@ function satForAxes(axes, v0, v1, v2, extents) {
 }
 
 /**
- * An utility class for mathematical operations.
- */
-class MathUtils {
-
-	/**
-	 * Method for generate uuid.
-	 * http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
-	 * @return {String} - The uuid.
-	 */
-	static generateUUID() {
-		const d0 = Math.random() * 0xffffffff | 0;
-		const d1 = Math.random() * 0xffffffff | 0;
-		const d2 = Math.random() * 0xffffffff | 0;
-		const d3 = Math.random() * 0xffffffff | 0;
-		const uuid = _lut[d0 & 0xff] + _lut[d0 >> 8 & 0xff] + _lut[d0 >> 16 & 0xff] + _lut[d0 >> 24 & 0xff] + '-' +
-			_lut[d1 & 0xff] + _lut[d1 >> 8 & 0xff] + '-' + _lut[d1 >> 16 & 0x0f | 0x40] + _lut[d1 >> 24 & 0xff] + '-' +
-			_lut[d2 & 0x3f | 0x80] + _lut[d2 >> 8 & 0xff] + '-' + _lut[d2 >> 16 & 0xff] + _lut[d2 >> 24 & 0xff] +
-			_lut[d3 & 0xff] + _lut[d3 >> 8 & 0xff] + _lut[d3 >> 16 & 0xff] + _lut[d3 >> 24 & 0xff];
-
-		// .toUpperCase() here flattens concatenated strings to save heap memory space.
-		return uuid.toUpperCase();
-	}
-
-	/**
-	 * Clamps the value to be between min and max.
-	 * @param {Number} value - Value to be clamped.
-	 * @param {Number} min - The minimum value.
-	 * @param {Number} max - The maximum value.
-	 */
-	static clamp(value, min, max) {
-		return Math.max(min, Math.min(max, value));
-	}
-
-	/**
-	 * Compute euclidean modulo of m % n.
-	 * Refer to: https://en.wikipedia.org/wiki/Modulo_operation
-	 * @param {Number} n - The dividend.
-	 * @param {Number} m - The divisor.
-	 * @return {Number} - The result of the modulo operation.
-	 */
-	static euclideanModulo(n, m) {
-		return ((n % m) + m) % m;
-	}
-
-	/**
-	 * Is this number a power of two.
-	 * @param {Number} value - The input number.
-	 * @return {Boolean} - Is this number a power of two.
-	 */
-	static isPowerOfTwo(value) {
-		return (value & (value - 1)) === 0 && value !== 0;
-	}
-
-	/**
-	 * Return the nearest power of two number of this number.
-	 * @param {Number} value - The input number.
-	 * @return {Number} - The result number.
-	 */
-	static nearestPowerOfTwo(value) {
-		return Math.pow(2, Math.round(Math.log(value) / Math.LN2));
-	}
-
-	/**
-	 * Return the next power of two number of this number.
-	 * @param {Number} value - The input number.
-	 * @return {Number} - The result number.
-	 */
-	static nextPowerOfTwo(value) {
-		value--;
-		value |= value >> 1;
-		value |= value >> 2;
-		value |= value >> 4;
-		value |= value >> 8;
-		value |= value >> 16;
-		value++;
-
-		return value;
-	}
-
-}
-
-const _lut = [];
-for (let i = 0; i < 256; i++) {
-	_lut[i] = (i < 16 ? '0' : '') + (i).toString(16);
-}
-
-/**
  * Color3 Class.
  * @memberof t3d
  */
@@ -4702,12 +4814,21 @@ class Color3 {
 	 * Sets this color's components based on an array formatted like [ r, g, b ].
      * @param {Number[]} array - Array of floats in the form [ r, g, b ].
 	 * @param {Number} [offset=0] - An offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Color3}
      */
-	fromArray(array, offset = 0) {
-		this.r = array[offset];
-		this.g = array[offset + 1];
-		this.b = array[offset + 2];
+	fromArray(array, offset = 0, denormalize = false) {
+		let r = array[offset], g = array[offset + 1], b = array[offset + 2];
+
+		if (denormalize) {
+			r = MathUtils.denormalize(r, array);
+			g = MathUtils.denormalize(g, array);
+			b = MathUtils.denormalize(b, array);
+		}
+
+		this.r = r;
+		this.g = g;
+		this.b = b;
 
 		return this;
 	}
@@ -4716,12 +4837,21 @@ class Color3 {
 	 * Returns an array of the form [ r, g, b ].
      * @param {Number[]} [array] - An array to store the color to.
 	 * @param {Number} [offset=0] - An offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
      */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.r;
-		array[offset + 1] = this.g;
-		array[offset + 2] = this.b;
+	toArray(array = [], offset = 0, normalize = false) {
+		let r = this.r, g = this.g, b = this.b;
+
+		if (normalize) {
+			r = MathUtils.normalize(r, array);
+			g = MathUtils.normalize(g, array);
+			b = MathUtils.normalize(b, array);
+		}
+
+		array[offset] = r;
+		array[offset + 1] = g;
+		array[offset + 2] = b;
 
 		return array;
 	}
@@ -6804,13 +6934,24 @@ class Vector4 {
 	 * and w value to be array[ offset + 3 ].
 	 * @param {Number[]} array - the source array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Vector4}
 	 */
-	fromArray(array, offset = 0) {
-		this.x = array[offset];
-		this.y = array[offset + 1];
-		this.z = array[offset + 2];
-		this.w = array[offset + 3];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1],
+			z = array[offset + 2], w = array[offset + 3];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+			z = MathUtils.denormalize(z, array);
+			w = MathUtils.denormalize(w, array);
+		}
+
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
 
 		return this;
 	}
@@ -6819,13 +6960,24 @@ class Vector4 {
 	 * Returns an array [x, y, z, w], or copies x, y, z and w into the provided array.
 	 * @param {Number[]} [array] - array to store this vector to. If this is not provided, a new array will be created.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
 	 */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.x;
-		array[offset + 1] = this.y;
-		array[offset + 2] = this.z;
-		array[offset + 3] = this.w;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this.x, y = this.y,
+			z = this.z, w = this.w;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+			z = MathUtils.normalize(z, array);
+			w = MathUtils.normalize(w, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
+		array[offset + 2] = z;
+		array[offset + 3] = w;
 
 		return array;
 	}

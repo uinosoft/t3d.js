@@ -284,90 +284,22 @@ DRACOLoader.releaseDecoderModule = function() {
 
 /* Helpers */
 
-function denormalize(value, array) {
-	switch (array.constructor) {
-		case Float32Array:
-			return value;
-		case Uint16Array:
-			return value / 65535.0;
-		case Uint8Array:
-			return value / 255.0;
-		case Int16Array:
-			return Math.max(value / 32767.0, -1.0);
-		case Int8Array:
-			return Math.max(value / 127.0, -1.0);
-		default:
-			throw new Error('Invalid component type.');
-	}
-}
-
-function normalize(value, array) {
-	switch (array.constructor) {
-		case Float32Array:
-			return value;
-		case Uint16Array:
-			return Math.round(value * 65535.0);
-		case Uint8Array:
-			return Math.round(value * 255.0);
-		case Int16Array:
-			return Math.round(value * 32767.0);
-		case Int8Array:
-			return Math.round(value * 127.0);
-		default:
-			throw new Error('Invalid component type.');
-	}
-}
-
-function getX(attribute, index) {
-	let x = attribute.buffer.array[index * attribute.size];
-	if (attribute.normalized) x = denormalize(x, attribute.buffer.array);
-	return x;
-}
-
-function getY(attribute, index) {
-	let y = attribute.buffer.array[index * attribute.size + 1];
-	if (attribute.normalized) y = denormalize(y, attribute.buffer.array);
-	return y;
-}
-
-function getZ(attribute, index) {
-	let z = attribute.buffer.array[index * attribute.size + 2];
-	if (attribute.normalized) z = denormalize(z, attribute.buffer.array);
-	return z;
-}
-
-function setXYZ(attribute, index, x, y, z) {
-	index *= attribute.size;
-
-	if (attribute.normalized) {
-		x = normalize(x, attribute.buffer.array);
-		y = normalize(y, attribute.buffer.array);
-		z = normalize(z, attribute.buffer.array);
-	}
-
-	attribute.buffer.array[index + 0] = x;
-	attribute.buffer.array[index + 1] = y;
-	attribute.buffer.array[index + 2] = z;
-
-	return attribute;
-}
-
-function fromBufferAttribute(color, attribute, index) {
-	const r = getX(attribute, index);
-	const g = getY(attribute, index);
-	const b = getZ(attribute, index);
-	color.setRGB(r, g, b);
-	return color;
-}
-
 function assignVertexColorSpace(attribute, inputColorSpace) {
 	if (inputColorSpace !== SRGBColorSpace) return;
 
 	const _color = new Color3();
 	for (let i = 0, il = attribute.buffer.count; i < il; i++) {
-		fromBufferAttribute(_color, attribute, i);
+		_color.fromArray(
+			attribute.buffer.array,
+			i * attribute.buffer.stride + attribute.offset,
+			attribute.normalized
+		);
 		_color.convertSRGBToLinear();
-		setXYZ(attribute, i, _color.r, _color.g, _color.b);
+		_color.toArray(
+			attribute.buffer.array,
+			i * attribute.buffer.stride + attribute.offset,
+			attribute.normalized
+		);
 	}
 }
 

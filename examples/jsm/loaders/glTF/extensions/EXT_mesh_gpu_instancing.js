@@ -64,7 +64,7 @@ function setInstancedAttributes(geometry, instancingDef, accessors) {
 
 	// get instance count
 	// all attributes should have the same count
-	const attributes = [];
+	const attributes = {};
 	let count = 0;
 	for (const key in attributesDef) {
 		attributes[key] = accessors[attributesDef[key]];
@@ -80,18 +80,31 @@ function setInstancedAttributes(geometry, instancingDef, accessors) {
 	q.set(0, 0, 0, 1);
 	s.set(1, 1, 1);
 
+	const { TRANSLATION, ROTATION, SCALE } = attributes;
+
 	for (let i = 0; i < count; i++) {
-		// TODO denormalize
-		if (attributes.TRANSLATION) {
-			p.fromArray(attributes.TRANSLATION.buffer.array, i * 3);
+		if (TRANSLATION) {
+			p.fromArray(
+				TRANSLATION.buffer.array,
+				i * TRANSLATION.buffer.stride + TRANSLATION.offset,
+				TRANSLATION.normalized
+			);
 		}
 
-		if (attributes.ROTATION) {
-			q.fromArray(attributes.ROTATION.buffer.array, i * 4);
+		if (ROTATION) {
+			q.fromArray(
+				ROTATION.buffer.array,
+				i * ROTATION.buffer.stride + ROTATION.offset,
+				ROTATION.normalized
+			);
 		}
 
-		if (attributes.SCALE) {
-			s.fromArray(attributes.SCALE.buffer.array, i * 3);
+		if (SCALE) {
+			s.fromArray(
+				SCALE.buffer.array,
+				i * SCALE.buffer.stride + SCALE.offset,
+				SCALE.normalized
+			);
 		}
 
 		m.transform(p, s, q).toArray(matrices, i * 16);

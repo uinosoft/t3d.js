@@ -2,6 +2,24 @@
 
 QUnit.module('Color3');
 
+QUnit.test('fromArray', assert => {
+	const array = new Uint8Array([255, 255, 0]);
+	const a = new t3d.Color3();
+	a.fromArray(array, 0, true);
+	assert.ok(a.r == 1, 'Passed!');
+	assert.ok(a.g == 1, 'Passed!');
+	assert.ok(a.b == 0, 'Passed!');
+});
+
+QUnit.test('toArray', assert => {
+	const array = new Uint8Array(3);
+	const a = new t3d.Color3(1, 1, 0);
+	a.toArray(array, 0, true);
+	assert.ok(array[0] == 255, 'Passed!');
+	assert.ok(array[1] == 255, 'Passed!');
+	assert.ok(array[2] == 0, 'Passed!');
+});
+
 QUnit.test('clone', assert => {
 	const a = new t3d.Color3().clone();
 	assert.ok(a.r == 0, 'Passed!');

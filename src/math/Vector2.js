@@ -1,3 +1,5 @@
+import { MathUtils } from './MathUtils.js';
+
 /**
  * The vector 2 class
  * @memberof t3d
@@ -194,11 +196,19 @@ class Vector2 {
      * Sets this vector's x value to be array[ offset ] and y value to be array[ offset + 1 ].
 	 * @param {Number[]} array - the source array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Vector2}
      */
-	fromArray(array, offset = 0) {
-		this.x = array[offset];
-		this.y = array[offset + 1];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+		}
+
+		this.x = x;
+		this.y = y;
 
 		return this;
 	}
@@ -207,11 +217,19 @@ class Vector2 {
 	 * Sets this array[ offset ] value to be vector's x and array[ offset + 1 ] to be vector's y.
 	 * @param {Number[]} [array] - the target array.
 	 * @param {Number} [offset=0] - offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {Number[]}
      */
-	toArray(array = [], offset = 0) {
-		array[offset] = this.x;
-		array[offset + 1] = this.y;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this.x, y = this.y;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
 
 		return array;
 	}

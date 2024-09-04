@@ -27,6 +27,26 @@ QUnit.test('setFromUnitVectors', assert => {
 	assert.ok(Math.abs(a.w - 0) < 0.000001, 'Passed!');
 });
 
+QUnit.test('fromArray', assert => {
+	const array = new Float32Array([1, 2, 3, 4]);
+	const a = new t3d.Quaternion();
+	a.fromArray(array, 0, true);
+	assert.ok(a.x == 1, 'Passed!');
+	assert.ok(a.y == 2, 'Passed!');
+	assert.ok(a.z == 3, 'Passed!');
+	assert.ok(a.w == 4, 'Passed!');
+});
+
+QUnit.test('toArray', assert => {
+	const array = new Float32Array(4);
+	const a = new t3d.Quaternion(1, 2, 3, 4);
+	a.toArray(array, 0, true);
+	assert.ok(array[0] == 1, 'Passed!');
+	assert.ok(array[1] == 2, 'Passed!');
+	assert.ok(array[2] == 3, 'Passed!');
+	assert.ok(array[3] == 4, 'Passed!');
+});
+
 QUnit.test('clone', assert => {
 	const a = new t3d.Quaternion().clone();
 	assert.ok(a.x == 0, 'Passed!');

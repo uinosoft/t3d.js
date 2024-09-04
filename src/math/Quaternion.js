@@ -1,3 +1,4 @@
+import { MathUtils } from './MathUtils.js';
 import { Matrix4 } from './Matrix4.js';
 
 /**
@@ -628,13 +629,24 @@ class Quaternion {
 	 * Sets this quaternion's x, y, z and w properties from an array.
 	 * @param {Number[]} - array of format (x, y, z, w) used to construct the quaternion.
 	 * @param {Number} [offset=0] - an offset into the array.
+	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
 	 * @return {t3d.Quaternion}
 	 */
-	fromArray(array, offset = 0) {
-		this._x = array[offset];
-		this._y = array[offset + 1];
-		this._z = array[offset + 2];
-		this._w = array[offset + 3];
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1],
+			z = array[offset + 2], w = array[offset + 3];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+			z = MathUtils.denormalize(z, array);
+			w = MathUtils.denormalize(w, array);
+		}
+
+		this._x = x;
+		this._y = y;
+		this._z = z;
+		this._w = w;
 
 		this.onChangeCallback();
 
@@ -645,13 +657,24 @@ class Quaternion {
 	 * Returns the numerical elements of this quaternion in an array of format [x, y, z, w].
 	 * @param {Number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
 	 * @param {Number} [offset=0] - An offset into the array.
+	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
 	 * @return {t3d.Quaternion}
 	 */
-	toArray(array = [], offset = 0) {
-		array[offset] = this._x;
-		array[offset + 1] = this._y;
-		array[offset + 2] = this._z;
-		array[offset + 3] = this._w;
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this._x, y = this._y,
+			z = this._z, w = this._w;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+			z = MathUtils.normalize(z, array);
+			w = MathUtils.normalize(w, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
+		array[offset + 2] = z;
+		array[offset + 3] = w;
 
 		return array;
 	}
