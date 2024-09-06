@@ -111,7 +111,8 @@
 		"controls_transform"
 	],
 	"probes": [
-		"probes_reflection"
+		"probes_reflection",
+		"probes_reflection_planar"
 	],
 	"math": [
 		"math_frustum_test",

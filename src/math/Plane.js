@@ -124,6 +124,27 @@ class Plane {
 	}
 
 	/**
+	 * Projects a point onto the plane.
+	 * @param {t3d.Vector3} point - the Vector3 to project onto the plane.
+	 * @param {t3d.Vector3} [target] - the result will be copied into this Vector3.
+	 * @return {t3d.Vector3}
+	 */
+	projectPoint(point, target = new Vector3()) {
+		return target.copy(point).addScaledVector(this.normal, -this.distanceToPoint(point));
+	}
+
+	/**
+	 * Reflects a point through the plane.
+	 * @param {t3d.Vector3} point - the Vector3 to reflect through the plane.
+	 * @param {t3d.Vector3} [target] - the result will be copied into this Vector3.
+	 * @return {t3d.Vector3}
+	 */
+	mirrorPoint(point, target = new Vector3()) {
+		const distance = this.distanceToPoint(point);
+		return target.copy(point).addScaledVector(this.normal, -2 * distance);
+	}
+
+	/**
 	 * Returns a Vector3 coplanar to the plane, by calculating the projection of the normal vector at the origin onto the plane.
 	 * @param {t3d.Vector3} [target]
 	 * @return {t3d.Vector3}

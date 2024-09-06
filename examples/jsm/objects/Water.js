@@ -1,16 +1,12 @@
 import {
-	Camera,
 	Color3,
 	DRAW_SIDE,
-	Matrix4,
 	Mesh,
-	Plane,
-	RenderTarget2D,
 	ShaderMaterial,
-	Vector3,
-	Vector4,
-	TEXTURE_FILTER
+	Vector3
 } from 't3d';
+import { PlanarReflectionProbe } from '../probes/PlanarReflectionProbe.js';
+
 
 /**
  * @author jbouny / https://github.com/jbouny
@@ -23,48 +19,18 @@ import {
 class Water extends Mesh {
 
 	constructor(geometry, options = {}) {
-		const textureWidth = options.textureWidth !== undefined ? options.textureWidth : 512;
-		const textureHeight = options.textureHeight !== undefined ? options.textureHeight : 512;
-
-		const clipBias = options.clipBias !== undefined ? options.clipBias : 0.0;
 		const alpha = options.alpha !== undefined ? options.alpha : 1.0;
 		const time = options.time !== undefined ? options.time : 0.0;
 		const normalSampler = options.waterNormals !== undefined ? options.waterNormals : null;
 		const sunDirection = options.sunDirection !== undefined ? options.sunDirection : new Vector3(0.70707, 0.70707, 0.0);
 		const sunColor = new Color3(options.sunColor !== undefined ? options.sunColor : 0xffffff);
 		const waterColor = new Color3(options.waterColor !== undefined ? options.waterColor : 0x7F7F7F);
-		const eye = options.eye !== undefined ? options.eye : new Vector3(0, 0, 0);
 		const distortionScale = options.distortionScale !== undefined ? options.distortionScale : 20.0;
 		const side = options.side !== undefined ? options.side : DRAW_SIDE.FRONT;
-
-		//
-
-		const mirrorPlane = new Plane();
-		const normal = new Vector3();
-		const mirrorWorldPosition = new Vector3();
-		const cameraWorldPosition = new Vector3();
-		const rotationMatrix = new Matrix4();
-		const lookAtPosition = new Vector3(0, 0, -1);
-		const clipPlane = new Vector4();
-
-		const view = new Vector3();
-		const target = new Vector3();
-		const mirrorCameraUp = new Vector3();
-		const q = new Vector4();
-
-		const textureMatrix = new Matrix4();
-
-		const mirrorCamera = new Camera();
-
-		const renderTarget = new RenderTarget2D(textureWidth, textureHeight);
-		renderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
-		renderTarget.texture.magFilter = TEXTURE_FILTER.LINEAR;
 
 		const material = new ShaderMaterial(mirrorShader);
 		material.side = side;
 
-		material.uniforms['mirrorSampler'] = renderTarget.texture;
-		material.uniforms['textureMatrix'] = textureMatrix.elements;
 		material.uniforms['alpha'] = alpha;
 		material.uniforms['time'] = time;
 		material.uniforms['normalSampler'] = normalSampler;
@@ -75,97 +41,22 @@ class Water extends Mesh {
 
 		super(geometry, material);
 
+		const planarReflectionProbe = new PlanarReflectionProbe();
+
+		material.uniforms['mirrorSampler'] = planarReflectionProbe.renderTarget.texture;
+		material.uniforms['textureMatrix'] = planarReflectionProbe.textureMatrix.elements;
+
+		this.skipReflectionProbe = true;
+
+		const planeNormal = new Vector3(0, 1, 0);
+		const coplanarPoint = new Vector3();
+
 		const scope = this;
-
 		scope.updateReflect = function(renderer, scene, camera) {
-			mirrorWorldPosition.setFromMatrixPosition(scope.worldMatrix);
-			cameraWorldPosition.setFromMatrixPosition(camera.worldMatrix);
-
-			rotationMatrix.extractRotation(scope.worldMatrix);
-
-			normal.set(0, 1, 0);
-			normal.applyMatrix4(rotationMatrix);
-
-			view.subVectors(mirrorWorldPosition, cameraWorldPosition);
-
-			// Avoid rendering when mirror is facing away
-
-			if (view.dot(normal) > 0) return;
-
-			view.reflect(normal).negate();
-			view.add(mirrorWorldPosition);
-
-			rotationMatrix.extractRotation(camera.worldMatrix);
-
-			lookAtPosition.set(0, 0, -1);
-			lookAtPosition.applyMatrix4(rotationMatrix);
-			lookAtPosition.add(cameraWorldPosition);
-
-			target.subVectors(mirrorWorldPosition, lookAtPosition);
-			target.reflect(normal).negate();
-			target.add(mirrorWorldPosition);
-
-			mirrorCamera.position.copy(view);
-			mirrorCameraUp.set(0, 1, 0);
-			mirrorCameraUp.applyMatrix4(rotationMatrix);
-			mirrorCameraUp.reflect(normal);
-			mirrorCamera.lookAt(target, mirrorCameraUp);
-
-			mirrorCamera.updateMatrix();
-			mirrorCamera.projectionMatrix.copy(camera.projectionMatrix);
-
-			// Update the texture matrix
-			textureMatrix.set(
-				0.5, 0.0, 0.0, 0.5,
-				0.0, 0.5, 0.0, 0.5,
-				0.0, 0.0, 0.5, 0.5,
-				0.0, 0.0, 0.0, 1.0
-			);
-			textureMatrix.multiply(mirrorCamera.projectionMatrix);
-			textureMatrix.multiply(mirrorCamera.viewMatrix);
-
-			// Now update projection matrix with new clip plane, implementing code from: http://www.terathon.com/code/oblique.html
-			// Paper explaining this technique: http://www.terathon.com/lengyel/Lengyel-Oblique.pdf
-			mirrorPlane.setFromNormalAndCoplanarPoint(normal, mirrorWorldPosition);
-			mirrorPlane.applyMatrix4(mirrorCamera.viewMatrix);
-
-			clipPlane.set(mirrorPlane.normal.x, mirrorPlane.normal.y, mirrorPlane.normal.z, mirrorPlane.constant);
-
-			const projectionMatrix = mirrorCamera.projectionMatrix;
-
-			q.x = (Math.sign(clipPlane.x) + projectionMatrix.elements[8]) / projectionMatrix.elements[0];
-			q.y = (Math.sign(clipPlane.y) + projectionMatrix.elements[9]) / projectionMatrix.elements[5];
-			q.z = -1.0;
-			q.w = (1.0 + projectionMatrix.elements[10]) / projectionMatrix.elements[14];
-
-			// Calculate the scaled plane vector
-			clipPlane.multiplyScalar(2.0 / clipPlane.dot(q));
-
-			// Replacing the third row of the projection matrix
-			projectionMatrix.elements[2] = clipPlane.x;
-			projectionMatrix.elements[6] = clipPlane.y;
-			projectionMatrix.elements[10] = clipPlane.z + 1.0 - clipBias;
-			projectionMatrix.elements[14] = clipPlane.w;
-
-			eye.setFromMatrixPosition(camera.worldMatrix);
-			eye.toArray(material.uniforms['eye']);
-
-			scope.visible = false;
-			scene.add(mirrorCamera);
-
-			mirrorCamera.updateMatrix();
-			scene.updateRenderStates(mirrorCamera, false);
-			scene.updateRenderQueue(mirrorCamera, false, false);
-
-			renderer.setRenderTarget(renderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(scene, mirrorCamera);
-
-			scope.visible = true;
-			scene.remove(mirrorCamera);
+			planeNormal.setFromMatrixColumn(scope.worldMatrix, 1).normalize();
+			coplanarPoint.setFromMatrixPosition(scope.worldMatrix);
+			planarReflectionProbe.plane.setFromNormalAndCoplanarPoint(planeNormal, coplanarPoint);
+			planarReflectionProbe.render(renderer, scene, camera);
 		};
 	}
 
@@ -189,7 +80,6 @@ const mirrorShader = {
 		textureMatrix: new Float32Array(16),
 		sunColor: [0.8, 0.8, 0.8],
 		sunDirection: [0.70707, 0.70707, 0],
-		eye: [0, 0, 0],
 		waterColor: [0.4, 0.4, 0.4]
 	},
 
@@ -203,10 +93,10 @@ const mirrorShader = {
 		'#include <common_vert>',
 
 		'void main() {',
-		'	mirrorCoord = u_Model * vec4( a_Position, 1.0 );',
+		'	mirrorCoord = u_Model * vec4(a_Position, 1.0);',
 		'	worldPosition = mirrorCoord.xyzw;',
 		'	mirrorCoord = textureMatrix * mirrorCoord;',
-		'	gl_Position = u_ProjectionView * u_Model * vec4( a_Position, 1.0 );',
+		'	gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);',
 		'}'
 	].join('\n'),
 
@@ -219,7 +109,7 @@ const mirrorShader = {
 		'uniform sampler2D normalSampler;',
 		'uniform vec3 sunColor;',
 		'uniform vec3 sunDirection;',
-		'uniform vec3 eye;',
+		'uniform vec3 u_CameraPosition;',
 		'uniform vec3 waterColor;',
 
 		'varying vec4 mirrorCoord;',
@@ -253,7 +143,7 @@ const mirrorShader = {
 		'	vec3 diffuseLight = vec3(0.0);',
 		'	vec3 specularLight = vec3(0.0);',
 
-		'	vec3 worldToEye = eye-worldPosition.xyz;',
+		'	vec3 worldToEye = u_CameraPosition - worldPosition.xyz;',
 		'	vec3 eyeDirection = normalize( worldToEye );',
 		'	sunLight( surfaceNormal, eyeDirection, 100.0, 2.0, 0.5, diffuseLight, specularLight );',
 
