@@ -152,7 +152,7 @@ class TransformControls extends Object3D {
 	}
 
 	_onPointDown(e) {
-		if (!this.visible) return;
+		if (!this.visible || e.button !== 0) return;
 
 		const selectedObject = this._selectGizmoMesh(e.clientX, e.clientY);
 		if (selectedObject) {
