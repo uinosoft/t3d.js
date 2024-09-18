@@ -64,6 +64,7 @@
 		"material_shader_skybox_groundprojected",
 		"material_shader_sky",
 		"material_shader_sky2",
+		"material_shader_sky_gradient",
 		"material_shader_water",
 		"material_shader_water_pbr",
 		"material_shader_xray",
