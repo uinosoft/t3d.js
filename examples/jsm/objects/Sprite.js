@@ -113,6 +113,7 @@ const spriteShader = {
 			varying vec2 vUV;
 		#endif
 
+		#include <alphaTest_pars_frag>
 		#include <fog_pars_frag>
 		#include <logdepthbuf_pars_frag>
 
@@ -125,9 +126,7 @@ const spriteShader = {
 				outColor *= texture2D(diffuseMap, vUV);
 			#endif
 
-			#ifdef ALPHATEST
-				if (outColor.a < ALPHATEST) discard;
-			#endif
+			#include <alphaTest_frag>
 
 			gl_FragColor = outColor;
 

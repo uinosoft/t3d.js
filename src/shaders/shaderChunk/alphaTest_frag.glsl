@@ -1,10 +1,6 @@
 #ifdef ALPHATEST
+	if (outColor.a < u_AlphaTest) discard;
 
-	if ( outColor.a < ALPHATEST ) {
-		discard;
-	} else {
-		// Prevent alpha test edge gradient
-		outColor.a = u_Opacity;
-	}
-
+	// prevent alpha test edge gradient
+	outColor.a = u_Opacity;
 #endif

@@ -3,6 +3,7 @@
 #include <color_pars_frag>
 #include <diffuseMap_pars_frag>
 #include <alphamap_pars_frag>
+#include <alphaTest_pars_frag>
 #include <modelPos_pars_frag>
 
 #if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)

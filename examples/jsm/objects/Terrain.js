@@ -174,6 +174,7 @@ const terrainShader = {
 		#include <uv_pars_frag>
 		#include <color_pars_frag>
 		#include <diffuseMap_pars_frag>
+		#include <alphaTest_pars_frag>
 		#include <normalMap_pars_frag>
 		#include <bumpMap_pars_frag>
 		#include <light_pars_frag>

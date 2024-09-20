@@ -20,6 +20,7 @@ const internalUniforms = {
 	'u_FogFar': [3, function(sceneData) { this.set(sceneData.fog.far) }],
 	'u_Color': [4, function(material, textures) { const color = material.diffuse; this.setValue(color.r, color.g, color.b) }],
 	'u_Opacity': [4, function(material, textures) { this.set(material.opacity) }],
+	'u_AlphaTest': [4, function(material, textures) { this.set(material.alphaTest) }],
 	'diffuseMap': [4, function(material, textures) { this.set(material.diffuseMap, textures) }],
 	'alphaMap': [4, function(material, textures) { this.set(material.alphaMap, textures) }],
 	'alphaMapUVTransform': [4, function(material, textures) { this.set(material.alphaMapTransform.elements) }],

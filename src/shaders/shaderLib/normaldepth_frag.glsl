@@ -1,5 +1,6 @@
 #include <common_frag>
 #include <diffuseMap_pars_frag>
+#include <alphaTest_pars_frag>
 
 #include <uv_pars_frag>
 
@@ -13,7 +14,7 @@ void main() {
         vec4 texelColor = texture2D( diffuseMap, v_Uv );
 
         float alpha = texelColor.a * u_Opacity;
-        if(alpha < ALPHATEST) discard;
+        if(alpha < u_AlphaTest) discard;
     #endif
 
     #include <logdepthbuf_frag>

@@ -1,4 +1,5 @@
 import alphaTest_frag from './shaderChunk/alphaTest_frag.glsl';
+import alphaTest_pars_frag from './shaderChunk/alphaTest_pars_frag.glsl';
 import aoMap_pars_frag from './shaderChunk/aoMap_pars_frag.glsl';
 import aoMap_pars_vert from './shaderChunk/aoMap_pars_vert.glsl';
 import aoMap_vert from './shaderChunk/aoMap_vert.glsl';
@@ -76,6 +77,7 @@ import clearcoat_pars_frag from './shaderChunk/clearcoat_pars_frag.glsl';
 
 export const ShaderChunk = {
 	alphaTest_frag: alphaTest_frag,
+	alphaTest_pars_frag: alphaTest_pars_frag,
 	aoMap_pars_frag: aoMap_pars_frag,
 	aoMap_pars_vert: aoMap_pars_vert,
 	aoMap_vert: aoMap_vert,

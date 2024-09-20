@@ -21,6 +21,7 @@ uniform vec3 emissive;
 #include <color_pars_frag>
 #include <diffuseMap_pars_frag>
 #include <alphamap_pars_frag>
+#include <alphaTest_pars_frag>
 #include <normalMap_pars_frag>
 #include <bumpMap_pars_frag>
 #include <envMap_pars_frag>

@@ -370,7 +370,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
 		props.fog ? '#define USE_FOG' : '',
 		props.fogExp2 ? '#define USE_EXP2_FOG' : '',
-		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '',
+		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
 		props.useEnvMap ? '#define ' + props.envMapCombine : '',
 		'#define GAMMA_FACTOR ' + props.gammaFactor,
 
