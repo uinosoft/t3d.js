@@ -29,6 +29,7 @@
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { CircleGeometry } from 't3d/addons/geometries/CircleGeometry.js';
 		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 
@@ -45,7 +46,7 @@
 		const scene = new t3d.Scene();
 
 		const camera = new t3d.Camera();
-		camera.position.set(0, 0, 100);
+		camera.position.set(0, 0, 120);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
@@ -78,6 +79,7 @@
 			new t3d.SphereGeometry(7, 20, 20),
 			new t3d.CylinderGeometry(5, 5, 10, 20, 1),
 			new t3d.TorusKnotGeometry(5, 1.5),
+			new CircleGeometry(7),
 			createGeometryByData(PolyhedronBuilder.getTetrahedronGeometryData(8)),
 			createGeometryByData(PolyhedronBuilder.getOctahedronGeometryData(8)),
 			createGeometryByData(PolyhedronBuilder.getIcosahedronGeometryData(8)),
@@ -92,7 +94,7 @@
 
 			mesh.position.set(
 				(i % 3 - 1) * 18,
-				-(Math.floor(i / 3) - 1) * 22,
+				-(Math.floor(i / 3) - 1.5) * 22,
 				0
 			);
 
