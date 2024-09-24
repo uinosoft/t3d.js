@@ -36,8 +36,7 @@
     <script type="module">
         import * as t3d from 't3d';
         import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-        import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
-        import { Clock } from 't3d/addons/Clock.js';
+        import { Timer } from 't3d/addons/misc/Timer.js';
         import { GUI } from './libs/lil-gui.esm.min.js';
 
         let width = window.innerWidth || 2;
@@ -79,43 +78,39 @@
         const planeTopMaterial = new t3d.PhongMaterial();
         planeTopMaterial.diffuse.setHex(0xffffff);
 
-        const planeBottomMaterial = new t3d.PhongMaterial();
-        const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
-        planeBottomMaterial.diffuseMap = texture;
+        const floorMaterial = new t3d.PhongMaterial();
+        floorMaterial.diffuse.setHex(0x8F8F8F);
 
-        const planeBackMaterial = new t3d.PhongMaterial();
-        planeBackMaterial.diffuse.setHex(0x7f7fff);
-
-        const planeRightMaterial = new t3d.PhongMaterial();
-        planeRightMaterial.diffuse.setHex(0xffff00);
+        const wallMaterial = new t3d.PhongMaterial();
+        wallMaterial.diffuse.setHex(0x989898);
 
         const planeTop = new t3d.Mesh(planeGeometry, planeTopMaterial);
         planeTop.euler.set(Math.PI, 0, 0);
         planeTop.position.y = 100;
         scene.add(planeTop);
 
-        const planeBottom = new t3d.Mesh(planeGeometry, planeBottomMaterial);
+        const planeBottom = new t3d.Mesh(planeGeometry, floorMaterial);
         scene.add(planeBottom);
 
-        const planeBack = new t3d.Mesh(planeGeometry, planeBackMaterial);
+        const planeBack = new t3d.Mesh(planeGeometry, wallMaterial);
         planeBack.euler.set(90 / 180 * Math.PI, 0, 0);
         planeBack.position.z = -50;
         planeBack.position.y = 50;
         scene.add(planeBack);
 
-        const planeFront = new t3d.Mesh(planeGeometry, planeBackMaterial);
+        const planeFront = new t3d.Mesh(planeGeometry, wallMaterial);
         planeFront.euler.set(-90 / 180 * Math.PI, 0, 0);
         planeFront.position.z = 50;
         planeFront.position.y = 50;
         scene.add(planeFront);
 
-        const planeRight = new t3d.Mesh(planeGeometry, planeRightMaterial);
+        const planeRight = new t3d.Mesh(planeGeometry, wallMaterial);
         planeRight.position.x = 50;
         planeRight.position.y = 50;
         planeRight.euler.set(0, 0, 90 / 180 * Math.PI);
         scene.add(planeRight);
 
-        const planeLeft = new t3d.Mesh(planeGeometry, planeRightMaterial);
+        const planeLeft = new t3d.Mesh(planeGeometry, wallMaterial);
         planeLeft.position.x = -50;
         planeLeft.position.y = 50;
         planeLeft.euler.set(0, 0, -90 / 180 * Math.PI);
@@ -146,20 +141,12 @@
 
         // lights
 
-        const mainLight = new t3d.PointLight(0xcccccc, 0.8, 250);
+        const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
+        camera.add(directionalLight);
+
+        const mainLight = new t3d.PointLight(0xffffff, 1, 250, 0.1);
         mainLight.position.y = 60;
         scene.add(mainLight);
-
-        const yellowLight = new t3d.PointLight(0xffff00, 0.25, 1000);
-        yellowLight.position.set(-550, 50, 0);
-        scene.add(yellowLight);
-
-        const blueLight = new t3d.PointLight(0x7f7fff, 0.25, 1000);
-        blueLight.position.set(0, 50, -550);
-        scene.add(blueLight);
-
-        const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
-        scene.add(ambientLight);
 
         const controller = new OrbitControls(camera, canvas);
         controller.target.set(0, 50, 0);
@@ -167,7 +154,7 @@
         const gui = new GUI();
         gui.add(params, 'enabled');
 
-        const clock = new Clock();
+        const timer = new Timer();
 
         const renderOption = {
         	beforeRender: renderable => {
@@ -187,11 +174,13 @@
         	}
         };
 
-        function loop(count) {
+        function loop(timestamp) {
         	requestAnimationFrame(loop);
 
-        	const elapsedTime = clock.getElapsedTime();
-        	sphere.position.set(Math.cos(elapsedTime) * 30, Math.abs(Math.cos(elapsedTime * 2)) * 20 + 5, Math.sin(elapsedTime) * 30);
+        	timer.update(timestamp);
+
+        	const elapsedTime = timer.getElapsed();
+        	sphere.position.set(Math.cos(elapsedTime * 2) * 30, Math.abs(Math.cos(elapsedTime * 4)) * 20 + 5, Math.sin(elapsedTime * 2) * 30);
 
         	controller.update();
 
@@ -220,9 +209,9 @@
         	}
 
         	if (sphereIsOccluded) {
-        		mainLight.color.setHex(0xcc0000);
+        		mainLight.color.setHex(0xFF9898);
         	} else {
-        		mainLight.color.setHex(0xcccccc);
+        		mainLight.color.setHex(0x98FB98);
         	}
         }
         requestAnimationFrame(loop);

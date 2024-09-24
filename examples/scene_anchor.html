@@ -28,7 +28,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/addons/Clock.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
@@ -108,8 +108,8 @@
 
 		const plane_geometry = new t3d.PlaneGeometry(10, 10);
 		const plane_material = new t3d.PBRMaterial();
-		plane_material.roughness = 0.3;
-		plane_material.metalness = 0.7;
+		plane_material.roughness = 0.8;
+		plane_material.metalness = 0.2;
 		plane_material.diffuse.setHex(0x888888);
 		const plane = new t3d.Mesh(plane_geometry, plane_material);
 		plane.receiveShadow = true;
@@ -155,18 +155,20 @@
 
 		updateAnchor();
 		
-		const clock = new Clock();
+		const timer = new Timer();
 
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
+			timer.update(timestamp);
+
 			if (animation) {
-				animation.update(clock.getDelta());
+				animation.update(timer.getDelta());
 			}
 
 			// rotate camera
-			camera.position.x = 4 * Math.sin(count / 1000 * .2);
-			camera.position.z = 4 * Math.cos(count / 1000 * .2);
+			camera.position.x = 4 * Math.sin(timer.getElapsed() * .2);
+			camera.position.z = 4 * Math.cos(timer.getElapsed() * .2);
 			camera.lookAt(new t3d.Vector3(0, 1, 0), new t3d.Vector3(0, 1, 0));
 
 			forwardRenderer.render(scene, camera);
