@@ -1,4 +1,4 @@
-import { BLEND_TYPE, ShaderPostPass, RenderTarget2D, TEXTURE_FILTER, PIXEL_TYPE } from 't3d';
+import { BLEND_TYPE, ShaderPostPass, RenderTarget2D, TEXTURE_FILTER, PIXEL_TYPE, PIXEL_FORMAT, ATTACHMENT } from 't3d';
 import { CopyShader } from '../shaders/CopyShader.js';
 import { LuminosityHighPassShader } from '../shaders/LuminosityHighPassShader.js';
 
@@ -22,9 +22,9 @@ class UnrealBloomPass {
 
 		this.highlightPass = new ShaderPostPass(LuminosityHighPassShader);
 
-		this.tempRenderTarget = new RenderTarget2D(width, height);
-		this.tempRenderTarget.texture.type = PIXEL_TYPE.HALF_FLOAT;
-		this.tempRenderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
+		this.tempRenderTarget = createTempRenderTarget(width, height);
+
+		//
 
 		this.separableBlurPasses = [];
 		for (let i = 0; i < 5; i++) {
@@ -47,16 +47,10 @@ class UnrealBloomPass {
 		let resx = Math.round(width / 2);
 		let resy = Math.round(height / 2);
 		for (let i = 0; i < 5; i++) {
-			const renderTargetHorizonal = new RenderTarget2D(resx, resy);
-			renderTargetHorizonal.texture.type = PIXEL_TYPE.HALF_FLOAT;
-			renderTargetHorizonal.texture.generateMipmaps = false;
-			renderTargetHorizonal.texture.minFilter = TEXTURE_FILTER.LINEAR;
+			const renderTargetHorizonal = createTempRenderTarget(resx, resy);
 			this.renderTargetsHorizontal.push(renderTargetHorizonal);
 
-			const renderTargetVertical = new RenderTarget2D(resx, resy);
-			renderTargetVertical.texture.type = PIXEL_TYPE.HALF_FLOAT;
-			renderTargetVertical.texture.generateMipmaps = false;
-			renderTargetVertical.texture.minFilter = TEXTURE_FILTER.LINEAR;
+			const renderTargetVertical = createTempRenderTarget(resx, resy);
 			this.renderTargetsVertical.push(renderTargetVertical);
 
 			this.separableBlurPasses[i].uniforms.invSize[0] = 1 / resx;
@@ -177,7 +171,24 @@ class UnrealBloomPass {
 
 }
 
+UnrealBloomPass.supportWebGL1 = false;
+
 const kernelSizeArray = [3, 5, 7, 9, 11];
+
+function createTempRenderTarget(width, height) {
+	const renderTarget = new RenderTarget2D(width, height);
+	renderTarget.texture.type = PIXEL_TYPE.HALF_FLOAT;
+
+	if (!UnrealBloomPass.supportWebGL1) {
+		renderTarget.texture.format = PIXEL_FORMAT.RGB;
+		renderTarget.texture.internalformat = PIXEL_FORMAT.R11F_G11F_B10F;
+	}
+
+	renderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
+	renderTarget.texture.generateMipmaps = false;
+	renderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+	return renderTarget;
+}
 
 const seperableBlurShader = {
 	name: 'seperableBlur',

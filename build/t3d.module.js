@@ -2630,6 +2630,7 @@ const PIXEL_FORMAT = {
 	DEPTH_COMPONENT16: 1116,
 	DEPTH24_STENCIL8: 1117,
 	DEPTH32F_STENCIL8: 1118,
+	R11F_G11F_B10F: 1119,
 	/** For compressed texture formats */
 	RGB_S3TC_DXT1: 1200,
 	RGBA_S3TC_DXT1: 1201,
@@ -16922,7 +16923,9 @@ class WebGLConstants {
 			if (internalFormat === PIXEL_FORMAT.R16F || internalFormat === PIXEL_FORMAT.RG16F ||
 				internalFormat === PIXEL_FORMAT.RGB16F || internalFormat === PIXEL_FORMAT.RGBA16F ||
 				internalFormat === PIXEL_FORMAT.R32F || internalFormat === PIXEL_FORMAT.RG32F ||
-				internalFormat === PIXEL_FORMAT.RGB32F || internalFormat === PIXEL_FORMAT.RGBA32F) {
+				internalFormat === PIXEL_FORMAT.RGB32F || internalFormat === PIXEL_FORMAT.RGBA32F ||
+				internalFormat === PIXEL_FORMAT.R11F_G11F_B10F
+			) {
 				extension = capabilities.getExtension('EXT_color_buffer_float');
 				if (extension) {
 					if (internalFormat === PIXEL_FORMAT.R16F) return gl.R16F;
@@ -16933,8 +16936,7 @@ class WebGLConstants {
 					if (internalFormat === PIXEL_FORMAT.RG32F) return gl.RG32F;
 					if (internalFormat === PIXEL_FORMAT.RGB32F) return gl.RGB32F;
 					if (internalFormat === PIXEL_FORMAT.RGBA32F) return gl.RGBA32F;
-					// does not include:
-					// R11F_G11F_B10F
+					if (internalFormat === PIXEL_FORMAT.R11F_G11F_B10F) return gl.R11F_G11F_B10F;
 				} else {
 					console.warn('extension EXT_color_buffer_float is not support.');
 					return null;
