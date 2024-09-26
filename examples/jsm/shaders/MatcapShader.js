@@ -16,6 +16,7 @@ const MatcapShader = {
 		#include <normal_pars_vert>
 		#include <uv_pars_vert>
 		#include <color_pars_vert>
+		#include <diffuseMap_pars_vert>
 		#include <alphamap_pars_vert>
 		#include <modelPos_pars_vert>
 		#include <morphtarget_pars_vert>
@@ -32,6 +33,7 @@ const MatcapShader = {
 			#include <logdepthbuf_vert>
 			#include <uv_vert>
 			#include <color_vert>
+			#include <diffuseMap_vert>
 			#include <alphamap_vert>
 			#include <modelPos_vert>
 

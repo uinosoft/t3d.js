@@ -18,6 +18,8 @@ import common_frag from './shaderChunk/common_frag.glsl';
 import common_vert from './shaderChunk/common_vert.glsl';
 import diffuseMap_frag from './shaderChunk/diffuseMap_frag.glsl';
 import diffuseMap_pars_frag from './shaderChunk/diffuseMap_pars_frag.glsl';
+import diffuseMap_vert from './shaderChunk/diffuseMap_vert.glsl';
+import diffuseMap_pars_vert from './shaderChunk/diffuseMap_pars_vert.glsl';
 import emissiveMap_frag from './shaderChunk/emissiveMap_frag.glsl';
 import emissiveMap_pars_frag from './shaderChunk/emissiveMap_pars_frag.glsl';
 import emissiveMap_vert from './shaderChunk/emissiveMap_vert.glsl';
@@ -96,6 +98,8 @@ export const ShaderChunk = {
 	common_vert: common_vert,
 	diffuseMap_frag: diffuseMap_frag,
 	diffuseMap_pars_frag: diffuseMap_pars_frag,
+	diffuseMap_vert: diffuseMap_vert,
+	diffuseMap_pars_vert: diffuseMap_pars_vert,
 	emissiveMap_frag: emissiveMap_frag,
 	emissiveMap_pars_frag: emissiveMap_pars_frag,
 	emissiveMap_vert: emissiveMap_vert,

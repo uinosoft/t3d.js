@@ -1,6 +1,7 @@
 #include <common_vert>
 #include <uv_pars_vert>
 #include <color_pars_vert>
+#include <diffuseMap_pars_vert>
 #include <modelPos_pars_vert>
 
 #if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)
@@ -21,6 +22,7 @@ void main() {
     #include <logdepthbuf_vert>
     #include <uv_vert>
     #include <color_vert>
+    #include <diffuseMap_vert>
     #include <modelPos_vert>
 
     #ifdef USE_ENV_MAP

@@ -32,8 +32,6 @@ export class TransmissionPBRMaterial extends PBRMaterial {
 
 		// KHR_materials_ior
 		this.uniforms.ior = 1.5;
-
-		this.defines.USE_UV1 = false;
 	}
 
 }

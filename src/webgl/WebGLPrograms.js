@@ -97,6 +97,16 @@ function generateDefines(defines) {
 	return chunks.join('\n');
 }
 
+let _activeMapCoords = 0; // bit mask
+
+function getUVChannel(coord) {
+	_activeMapCoords |= (1 << coord);
+
+	if (coord === 0) return 'a_Uv';
+
+	return `a_Uv${coord + 1}`; // a_Uv2, a_Uv3, a_Uv4, ...
+}
+
 function generateProps(state, capabilities, material, object, renderStates) {
 	const lights = material.acceptLight ? renderStates.lights : null;
 	const fog = material.fog ? renderStates.scene.fog : null;
@@ -105,39 +115,72 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	const disableShadowSampler = renderStates.scene.disableShadowSampler;
 	const numClippingPlanes = (material.clippingPlanes && material.clippingPlanes.length > 0) ? material.clippingPlanes.length : renderStates.scene.numClippingPlanes;
 
+	const HAS_CLEARCOAT = material.clearcoat > 0;
+
+	const HAS_DIFFUSEMAP = !!material.diffuseMap;
+	const HAS_ALPHAMAP = !!material.alphaMap;
+	const HAS_EMISSIVEMAP = !!material.emissiveMap;
+	const HAS_AOMAP = !!material.aoMap;
+	const HAS_NORMALMAP = !!material.normalMap;
+	const HAS_BUMPMAP = !!material.bumpMap;
+	const HAS_SPECULARMAP = !!material.specularMap;
+	const HAS_ROUGHNESSMAP = !!material.roughnessMap;
+	const HAS_METALNESSMAP = !!material.metalnessMap;
+	const HAS_GLOSSINESSMAP = !!material.glossinessMap;
+
+	const HAS_ENVMAP = !!envMap;
+
+	const HAS_CLEARCOATMAP = HAS_CLEARCOAT && !!material.clearcoatMap;
+	const HAS_CLEARCOAT_ROUGHNESSMAP = HAS_CLEARCOAT && !!material.clearcoatRoughnessMap;
+	const HAS_CLEARCOAT_NORMALMAP = HAS_CLEARCOAT && !!material.clearcoatNormalMap;
+
+	_activeMapCoords = 0; // reset
+
 	const props = {}; // cache this props?
 
 	props.shaderName = (material.type === MATERIAL_TYPE.SHADER && material.shaderName) ? material.shaderName : material.type;
 
 	// capabilities
+
 	props.version = capabilities.version;
 	props.precision = material.precision || capabilities.maxPrecision;
 	props.useStandardDerivatives = capabilities.version >= 2 || !!capabilities.getExtension('OES_standard_derivatives') || !!capabilities.getExtension('GL_OES_standard_derivatives');
 	props.useShaderTextureLOD = capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
+
 	// maps
-	props.useDiffuseMap = material.diffuseMap ? (material.diffuseMapCoord + 1) : 0;
-	props.useAlphaMap = material.alphaMap ? (material.alphaMapCoord + 1) : 0;
-	props.useEmissiveMap = material.emissiveMap ? (material.emissiveMapCoord + 1) : 0;
-	props.useAOMap = material.aoMap ? (material.aoMapCoord + 1) : 0;
-	props.useNormalMap = !!material.normalMap;
-	props.useBumpMap = !!material.bumpMap;
-	props.useSpecularMap = !!material.specularMap;
-	props.useRoughnessMap = !!material.roughnessMap;
-	props.useMetalnessMap = !!material.metalnessMap;
-	props.useGlossinessMap = !!material.glossinessMap;
-	props.useEnvMap = !!envMap;
-	props.envMapCombine = material.envMapCombine;
 
-	props.useClearcoat = material.clearcoat > 0;
-	props.useClearcoatMap = props.useClearcoat && !!material.clearcoatMap;
-	props.useClearcoatRoughnessMap = props.useClearcoat && !!material.clearcoatRoughnessMap;
-	props.useClearcoatNormalMap = props.useClearcoat && !!material.clearcoatNormalMap;
+	props.useDiffuseMap = HAS_DIFFUSEMAP;
+	props.useAlphaMap = HAS_ALPHAMAP;
+	props.useEmissiveMap = HAS_EMISSIVEMAP;
+	props.useAOMap = HAS_AOMAP;
+	props.useNormalMap = HAS_NORMALMAP;
+	props.useBumpMap = HAS_BUMPMAP;
+	props.useSpecularMap = HAS_SPECULARMAP;
+	props.useRoughnessMap = HAS_ROUGHNESSMAP;
+	props.useMetalnessMap = HAS_METALNESSMAP;
+	props.useGlossinessMap = HAS_GLOSSINESSMAP;
 
-	props.useUv1 = props.useDiffuseMap === 1 || props.useAlphaMap === 1 || props.useEmissiveMap === 1 || props.useAOMap === 1 || props.useNormalMap || props.useBumpMap || props.useSpecularMap || props.useRoughnessMap || props.useMetalnessMap || props.useGlossinessMap || props.useClearcoatMap || props.useClearcoatNormalMap || props.useClearcoatRoughnessMap;
-	props.useUv2 = props.useDiffuseMap === 2 || props.useAlphaMap === 2 || props.useEmissiveMap === 2 || props.useAOMap === 2;
+	props.useEnvMap = HAS_ENVMAP;
+	props.envMapCombine = HAS_ENVMAP && material.envMapCombine;
 
-	// props.useVertexEnvDir = false;
+	props.useClearcoat = HAS_CLEARCOAT;
+	props.useClearcoatMap = HAS_CLEARCOATMAP;
+	props.useClearcoatRoughnessMap = HAS_CLEARCOAT_ROUGHNESSMAP;
+	props.useClearcoatNormalMap = HAS_CLEARCOAT_NORMALMAP;
+
+	props.diffuseMapUv = HAS_DIFFUSEMAP && getUVChannel(material.diffuseMapCoord);
+	props.alphaMapUv = HAS_ALPHAMAP && getUVChannel(material.alphaMapCoord);
+	props.emissiveMapUv = HAS_EMISSIVEMAP && getUVChannel(material.emissiveMapCoord);
+	props.aoMapUv = HAS_AOMAP && getUVChannel(material.aoMapCoord);
+
+	if (HAS_NORMALMAP || HAS_BUMPMAP || HAS_SPECULARMAP || HAS_ROUGHNESSMAP || HAS_METALNESSMAP || HAS_GLOSSINESSMAP || HAS_CLEARCOATMAP || HAS_CLEARCOAT_ROUGHNESSMAP || HAS_CLEARCOAT_NORMALMAP) {
+		_activeMapCoords |= 1 << 0; // these maps use uv coord 0 by default
+	}
+
+	props.activeMapCoords = _activeMapCoords;
+
 	// lights
+
 	props.useAmbientLight = !!lights && lights.useAmbient;
 	props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
 	props.hemisphereLightNum = lights ? lights.hemisNum : 0;
@@ -155,14 +198,18 @@ function generateProps(state, capabilities, material, object, renderStates) {
 		props.shadowType = SHADOW_TYPE.POISSON_SOFT;
 	}
 	props.dithering = material.dithering;
+
 	// encoding
+
 	const currentRenderTarget = state.currentRenderTarget;
 	props.gammaFactor = renderStates.gammaFactor;
 	props.outputEncoding = currentRenderTarget.texture ? getTextureEncodingFromMap(currentRenderTarget.texture) : renderStates.outputEncoding;
 	props.diffuseMapEncoding = getTextureEncodingFromMap(material.diffuseMap || material.cubeMap);
 	props.envMapEncoding = getTextureEncodingFromMap(envMap);
 	props.emissiveMapEncoding = getTextureEncodingFromMap(material.emissiveMap);
+
 	// other
+
 	props.alphaTest = material.alphaTest;
 	props.premultipliedAlpha = material.premultipliedAlpha;
 	props.useVertexColors = material.vertexColors;
@@ -177,10 +224,14 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.packDepthToRGBA = material.packToRGBA;
 	props.logarithmicDepthBuffer = !!logarithmicDepthBuffer;
 	props.rendererExtensionFragDepth = capabilities.version >= 2 || !!capabilities.getExtension('EXT_frag_depth');
+
 	// morph targets
+
 	props.morphTargets = !!object.morphTargetInfluences;
 	props.morphNormals = !!object.morphTargetInfluences && object.geometry.morphAttributes.normal;
+
 	// skinned mesh
+
 	const useSkinning = object.isSkinnedMesh && object.skeleton;
 	const maxVertexUniformVectors = capabilities.maxVertexUniformVectors;
 	const useVertexTexture = capabilities.maxVertexTextures > 0 && (!!capabilities.getExtension('OES_texture_float') || capabilities.version >= 2);
@@ -238,6 +289,17 @@ function getTexelEncodingFunction(functionName, encoding) {
 	return 'vec4 ' + functionName + '(vec4 value) { return LinearTo' + components[0] + components[1] + '; }';
 }
 
+function uvAttributes(activeMapCoords) {
+	let str = '';
+	for (let i = 1; i < 8; i++) { // skip uv0
+		if (activeMapCoords & (1 << i)) {
+			str += 'attribute vec2 a_Uv' + (i + 1) + ';';
+			if (i !== 7) str += '\n';
+		}
+	}
+	return str;
+}
+
 function createProgram(gl, defines, props, vertex, fragment) {
 	let prefixVertex = [
 		'precision ' + props.precision + ' float;',
@@ -253,44 +315,59 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		(props.version >= 2) ? '#define WEBGL2' : '',
 
+		// maps
+
+		props.useDiffuseMap ? '#define USE_DIFFUSE_MAP' : '',
+		props.useAlphaMap ? '#define USE_ALPHA_MAP' : '',
+		props.useEmissiveMap ? '#define USE_EMISSIVEMAP' : '',
+		props.useAOMap ? '#define USE_AOMAP' : '',
+		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
+		props.useBumpMap ? '#define USE_BUMPMAP' : '',
+		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
 		props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '',
 		props.useMetalnessMap ? '#define USE_METALNESSMAP' : '',
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
 
+		props.useEnvMap ? '#define USE_ENV_MAP' : '',
+
+		props.diffuseMapUv ? '#define DIFFUSEMAP_UV ' + props.diffuseMapUv : '',
+		props.alphaMapUv ? '#define ALPHAMAP_UV ' + props.alphaMapUv : '',
+		props.emissiveMapUv ? '#define EMISSIVEMAP_UV ' + props.emissiveMapUv : '',
+		props.aoMapUv ? '#define AOMAP_UV ' + props.aoMapUv : '',
+
+		props.activeMapCoords > 0 ? '#define USE_UV' : '',
+		props.activeMapCoords & 1 ? '#define USE_UV1' : '',
+
+		uvAttributes(props.activeMapCoords),
+
+		// lights
+
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
-		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
-		props.useBumpMap ? '#define USE_BUMPMAP' : '',
-		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
-		props.useEmissiveMap ? ('#define USE_EMISSIVEMAP ' + props.useEmissiveMap) : '',
 		props.useShadow ? '#define USE_SHADOW' : '',
-		props.flatShading ? '#define FLAT_SHADED' : '',
-		props.flipSided ? '#define FLIP_SIDED' : '',
 
-		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' + props.useDiffuseMap) : '',
-		props.useAlphaMap ? ('#define USE_ALPHA_MAP ' + props.useAlphaMap) : '',
-		props.useEnvMap ? '#define USE_ENV_MAP' : '',
-		props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
-		props.useAOMap ? ('#define USE_AOMAP ' + props.useAOMap) : '',
+		// other
+
 		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
 		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
 		props.useVertexTangents ? '#define USE_TANGENT' : '',
-		props.useUv1 ? '#define USE_UV1' : '',
-		props.useUv2 ? '#define USE_UV2' : '',
-
-		// (props.useVertexEnvDir && !props.useNormalMap && !props.useBumpMap) ? '#define USE_VERTEX_ENVDIR' : '',
-
+		props.flatShading ? '#define FLAT_SHADED' : '',
 		props.fog ? '#define USE_FOG' : '',
+		props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
+		props.flipSided ? '#define FLIP_SIDED' : '',
+		props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
+		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
+
+		// morph targets
 
 		props.morphTargets ? '#define USE_MORPHTARGETS' : '',
 		props.morphNormals && props.flatShading === false ? '#define USE_MORPHNORMALS' : '',
 
+		// skinned mesh
+
 		props.useSkinning ? '#define USE_SKINNING' : '',
 		(props.bonesNum > 0) ? ('#define MAX_BONES ' + props.bonesNum) : '',
 		props.useVertexTexture ? '#define BONE_TEXTURE' : '',
-		props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
-
 		'\n'
 	].filter(filterEmptyLine).join('\n');
 
@@ -331,22 +408,35 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		(props.version >= 2) ? '#define WEBGL2' : '',
 		props.useShadowSampler ? '#define USE_SHADOW_SAMPLER' : '#define sampler2DShadow sampler2D',
+		props.useShaderTextureLOD ? '#define TEXTURE_LOD_EXT' : '',
 
+		// maps
+
+		props.useDiffuseMap ? '#define USE_DIFFUSE_MAP' : '',
+		props.useAlphaMap ? '#define USE_ALPHA_MAP' : '',
+		props.useEmissiveMap ? '#define USE_EMISSIVEMAP' : '',
+		props.useAOMap ? '#define USE_AOMAP' : '',
+		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
+		props.useBumpMap ? '#define USE_BUMPMAP' : '',
+		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
 		props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '',
 		props.useMetalnessMap ? '#define USE_METALNESSMAP' : '',
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
+
+		props.useEnvMap ? '#define USE_ENV_MAP' : '',
+		props.envMapCombine ? '#define ' + props.envMapCombine : '',
 
 		props.useClearcoat ? '#define USE_CLEARCOAT' : '',
 		props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 		props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 		props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
 
+		props.activeMapCoords & 1 ? '#define USE_UV1' : '',
+
+		// lights
+
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
-		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
-		props.useBumpMap ? '#define USE_BUMPMAP' : '',
-		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
-		props.useEmissiveMap ? ('#define USE_EMISSIVEMAP ' + props.useEmissiveMap) : '',
 		props.useShadow ? '#define USE_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '',
@@ -356,42 +446,32 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '',
 		(props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT) ? '#define USE_PCSS_SOFT_SHADOW' : '',
-		props.flatShading ? '#define FLAT_SHADED' : '',
-		props.doubleSided ? '#define DOUBLE_SIDED' : '',
-		props.useShaderTextureLOD ? '#define TEXTURE_LOD_EXT' : '',
-
-		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' + props.useDiffuseMap) : '',
-		props.useAlphaMap ? ('#define USE_ALPHA_MAP ' + props.useAlphaMap) : '',
-		props.useEnvMap ? '#define USE_ENV_MAP' : '',
-		props.useAOMap ? ('#define USE_AOMAP ' + props.useAOMap) : '',
-		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
-		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
-		props.useVertexTangents ? '#define USE_TANGENT' : '',
-		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
-		props.fog ? '#define USE_FOG' : '',
-		props.fogExp2 ? '#define USE_EXP2_FOG' : '',
-		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
-		props.useEnvMap ? '#define ' + props.envMapCombine : '',
-		'#define GAMMA_FACTOR ' + props.gammaFactor,
-
-		props.useUv1 ? '#define USE_UV1' : '',
-		props.useUv2 ? '#define USE_UV2' : '',
-
-		// (props.useVertexEnvDir && !props.useNormalMap && !props.useBumpMap) ? '#define USE_VERTEX_ENVDIR' : '',
 
 		props.dithering ? '#define DITHERING' : '',
 
+		// encoding
+
 		ShaderChunk['encodings_pars_frag'],
+		'#define GAMMA_FACTOR ' + props.gammaFactor,
+		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 		getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding),
 		props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '',
 		props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
-		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 
+		// other
+
+		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
+		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
+		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
+		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
+		props.useVertexTangents ? '#define USE_TANGENT' : '',
+		props.flatShading ? '#define FLAT_SHADED' : '',
+		props.fog ? '#define USE_FOG' : '',
+		props.fogExp2 ? '#define USE_EXP2_FOG' : '',
+		props.doubleSided ? '#define DOUBLE_SIDED' : '',
 		props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '',
-
 		props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
 		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
-
 		'\n'
 	].filter(filterEmptyLine).join('\n');
 

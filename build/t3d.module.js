@@ -14754,7 +14754,7 @@ var aoMap_pars_frag = "#ifdef USE_AOMAP\n\tuniform sampler2D aoMap;\n\tuniform f
 
 var aoMap_pars_vert = "#ifdef USE_AOMAP\n\tuniform mat3 aoMapUVTransform;\n\tvarying vec2 vAOMapUV;\n#endif";
 
-var aoMap_vert = "#ifdef USE_AOMAP\n\t#if (USE_AOMAP == 2)\n        vAOMapUV = (aoMapUVTransform * vec3(a_Uv2, 1.)).xy;\n    #else\n        vAOMapUV = (aoMapUVTransform * vec3(a_Uv, 1.)).xy;\n    #endif\n#endif";
+var aoMap_vert = "#ifdef USE_AOMAP\n\tvAOMapUV = (aoMapUVTransform * vec3(AOMAP_UV, 1.)).xy;\n#endif";
 
 var aoMap_frag = "\n#ifdef USE_AOMAP\n    float ambientOcclusion = (texture2D(aoMap, vAOMapUV).r - 1.0) * aoMapIntensity + 1.0;\n    \n    reflectedLight.indirectDiffuse *= ambientOcclusion;\n    #if defined(USE_ENV_MAP) && defined(USE_PBR)\n        float dotNV = saturate(dot(N, V));\n        reflectedLight.indirectSpecular *= computeSpecularOcclusion(dotNV, ambientOcclusion, roughness);\n    #endif\n#endif";
 
@@ -14782,15 +14782,19 @@ var common_frag = "uniform mat4 u_View;\nuniform float u_Opacity;\nuniform vec3 
 
 var common_vert = "attribute vec3 a_Position;\nattribute vec3 a_Normal;\n#ifdef USE_TANGENT\n\tattribute vec4 a_Tangent;\n#endif\n#include <transpose>\n#include <inverse>\nuniform mat4 u_Projection;\nuniform mat4 u_View;\nuniform mat4 u_Model;\nuniform mat4 u_ProjectionView;\nuniform vec3 u_CameraPosition;\n#define EPSILON 1e-6\n#ifdef USE_MORPHTARGETS\n    attribute vec3 morphTarget0;\n    attribute vec3 morphTarget1;\n    attribute vec3 morphTarget2;\n    attribute vec3 morphTarget3;\n    #ifdef USE_MORPHNORMALS\n    \tattribute vec3 morphNormal0;\n    \tattribute vec3 morphNormal1;\n    \tattribute vec3 morphNormal2;\n    \tattribute vec3 morphNormal3;\n    #else\n    \tattribute vec3 morphTarget4;\n    \tattribute vec3 morphTarget5;\n    \tattribute vec3 morphTarget6;\n    \tattribute vec3 morphTarget7;\n    #endif\n#endif\nbool isPerspectiveMatrix( mat4 m ) {\n\treturn m[ 2 ][ 3 ] == - 1.0;\n}";
 
-var diffuseMap_frag = "#ifdef USE_DIFFUSE_MAP\n    #if (USE_DIFFUSE_MAP == 2)\n        vec4 texelColor = texture2D(diffuseMap, v_Uv2);\n    #else \n        vec4 texelColor = texture2D(diffuseMap, v_Uv);\n    #endif\n    \n    texelColor = mapTexelToLinear(texelColor);\n    outColor *= texelColor;\n#endif";
+var diffuseMap_frag = "#ifdef USE_DIFFUSE_MAP\n    outColor *= mapTexelToLinear(texture2D(diffuseMap, vDiffuseMapUV));\n#endif";
 
-var diffuseMap_pars_frag = "#ifdef USE_DIFFUSE_MAP\n    uniform sampler2D diffuseMap;\n#endif";
+var diffuseMap_pars_frag = "#ifdef USE_DIFFUSE_MAP\n    uniform sampler2D diffuseMap;\n    varying vec2 vDiffuseMapUV;\n#endif";
+
+var diffuseMap_vert = "#ifdef USE_DIFFUSE_MAP\n    vDiffuseMapUV = (uvTransform * vec3(DIFFUSEMAP_UV, 1.)).xy;\n#endif";
+
+var diffuseMap_pars_vert = "#ifdef USE_DIFFUSE_MAP\n    varying vec2 vDiffuseMapUV;\n#endif";
 
 var emissiveMap_frag = "#ifdef USE_EMISSIVEMAP\n\tvec4 emissiveColor = emissiveMapTexelToLinear(texture2D(emissiveMap, vEmissiveMapUV));\n\ttotalEmissiveRadiance *= emissiveColor.rgb;\n#endif";
 
 var emissiveMap_pars_frag = "#ifdef USE_EMISSIVEMAP\n\tuniform sampler2D emissiveMap;\n\tvarying vec2 vEmissiveMapUV;\n#endif";
 
-var emissiveMap_vert = "#ifdef USE_EMISSIVEMAP\n\t#if (USE_EMISSIVEMAP == 2)\n        vEmissiveMapUV = (emissiveMapUVTransform * vec3(a_Uv2, 1.)).xy;\n    #else\n        vEmissiveMapUV = (emissiveMapUVTransform * vec3(a_Uv, 1.)).xy;\n    #endif\n#endif";
+var emissiveMap_vert = "#ifdef USE_EMISSIVEMAP\n\tvEmissiveMapUV = (emissiveMapUVTransform * vec3(EMISSIVEMAP_UV, 1.)).xy;\n#endif";
 
 var emissiveMap_pars_vert = "#ifdef USE_EMISSIVEMAP\n\tuniform mat3 emissiveMapUVTransform;\n\tvarying vec2 vEmissiveMapUV;\n#endif";
 
@@ -14824,7 +14828,7 @@ var alphamap_frag = "#ifdef USE_ALPHA_MAP\n\toutColor.a *= texture2D(alphaMap, v
 
 var alphamap_pars_vert = "#ifdef USE_ALPHA_MAP\n    uniform mat3 alphaMapUVTransform;\n\tvarying vec2 vAlphaMapUV;\n#endif";
 
-var alphamap_vert = "#ifdef USE_ALPHA_MAP\n\t#if (USE_ALPHA_MAP == 2)\n        vAlphaMapUV = (alphaMapUVTransform * vec3(a_Uv2, 1.)).xy;\n    #else\n        vAlphaMapUV = (alphaMapUVTransform * vec3(a_Uv, 1.)).xy;\n    #endif\n#endif";
+var alphamap_vert = "#ifdef USE_ALPHA_MAP\n\tvAlphaMapUV = (alphaMapUVTransform * vec3(ALPHAMAP_UV, 1.)).xy;\n#endif";
 
 var normalMap_pars_frag = "#ifdef USE_NORMAL_MAP\n    uniform sampler2D normalMap;\n    uniform vec2 normalScale;\n#endif\n#if defined(USE_NORMAL_MAP) || defined(USE_CLEARCOAT_NORMALMAP)\n    #if defined(USE_TANGENT) && !defined(FLAT_SHADED)\n        #define USE_TBN\n    #else\n        #include <tsn>\n    #endif\n#endif";
 
@@ -14876,11 +14880,11 @@ var transpose = "mat4 transposeMat4(mat4 inMatrix) {\n    vec4 i0 = inMatrix[0];
 
 var tsn = "mat3 tsn(vec3 N, vec3 V, vec2 uv) {\n    vec3 q0 = dFdx(V.xyz);\n    vec3 q1 = dFdy(V.xyz);\n    vec2 st0 = dFdx(uv.xy);\n    vec2 st1 = dFdy(uv.xy);\n    float scale = sign(st1.y * st0.x - st0.y * st1.x);\n    vec3 S = normalize((q0 * st1.y - q1 * st0.y) * scale);\n    vec3 T = normalize((-q0 * st1.x + q1 * st0.x) * scale);\n    return mat3(S, T, N);\n}";
 
-var uv_pars_frag = "#ifdef USE_UV1\n    varying vec2 v_Uv;\n#endif\n#ifdef USE_UV2\n    varying vec2 v_Uv2;\n#endif";
+var uv_pars_frag = "#ifdef USE_UV1\n    varying vec2 v_Uv;\n#endif";
 
-var uv_pars_vert = "#if defined(USE_UV1) || defined(USE_UV2)\n    uniform mat3 uvTransform;\n#endif\n#ifdef USE_UV1\n    attribute vec2 a_Uv;\n    varying vec2 v_Uv;\n#endif\n#ifdef USE_UV2\n    attribute vec2 a_Uv2;\n    varying vec2 v_Uv2;\n#endif";
+var uv_pars_vert = "#if defined(USE_UV) || defined(USE_UV1)\n    uniform mat3 uvTransform;\n#endif\n#ifdef USE_UV1\n    attribute vec2 a_Uv;\n    varying vec2 v_Uv;\n#endif";
 
-var uv_vert = "#ifdef USE_UV1\n    v_Uv = (uvTransform * vec3(a_Uv, 1.)).xy;\n#endif\n#ifdef USE_UV2\n    v_Uv2 = (uvTransform * vec3(a_Uv2, 1.)).xy;\n#endif";
+var uv_vert = "#ifdef USE_UV1\n    v_Uv = (uvTransform * vec3(a_Uv, 1.)).xy;\n#endif";
 
 var modelPos_pars_frag = "varying vec3 v_modelPos;";
 
@@ -14919,6 +14923,8 @@ const ShaderChunk = {
 	common_vert: common_vert,
 	diffuseMap_frag: diffuseMap_frag,
 	diffuseMap_pars_frag: diffuseMap_pars_frag,
+	diffuseMap_vert: diffuseMap_vert,
+	diffuseMap_pars_vert: diffuseMap_pars_vert,
 	emissiveMap_frag: emissiveMap_frag,
 	emissiveMap_pars_frag: emissiveMap_pars_frag,
 	emissiveMap_vert: emissiveMap_vert,
@@ -14979,7 +14985,7 @@ const ShaderChunk = {
 
 var basic_frag = "#include <common_frag>\n#include <uv_pars_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <alphamap_pars_frag>\n#include <alphaTest_pars_frag>\n#include <modelPos_pars_frag>\n#if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)\n    #include <normalMap_pars_frag>\n    #include <normal_pars_frag>    \n#endif\n#include <envMap_pars_frag>\n#include <aoMap_pars_frag>\n#include <fog_pars_frag>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #include <logdepthbuf_frag>\n    #include <begin_frag>\n    #include <color_frag>\n    #include <diffuseMap_frag>\n    #include <alphamap_frag>\n    #include <alphaTest_frag>\n    ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));\n    reflectedLight.indirectDiffuse += vec3(1.0);\n    #include <aoMap_frag>\n    reflectedLight.indirectDiffuse *= outColor.xyz;\n    outColor.xyz = reflectedLight.indirectDiffuse;\n    #if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)\n        #include <normal_frag>\n    #endif\n    #include <envMap_frag>\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n}";
 
-var basic_vert = "#include <common_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <modelPos_pars_vert>\n#if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)\n    #include <normal_pars_vert>\n#endif\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <skinning_vert>\n    #include <pvm_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <modelPos_vert>\n    #ifdef USE_ENV_MAP\n        #include <morphnormal_vert>\n        #include <skinnormal_vert>\n        #ifndef USE_VERTEX_ENVDIR\n            #include <normal_vert>\n        #endif  \n    #endif\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n}";
+var basic_vert = "#include <common_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <diffuseMap_pars_vert>\n#include <modelPos_pars_vert>\n#if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)\n    #include <normal_pars_vert>\n#endif\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <skinning_vert>\n    #include <pvm_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <diffuseMap_vert>\n    #include <modelPos_vert>\n    #ifdef USE_ENV_MAP\n        #include <morphnormal_vert>\n        #include <skinnormal_vert>\n        #ifndef USE_VERTEX_ENVDIR\n            #include <normal_vert>\n        #endif  \n    #endif\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n}";
 
 var depth_frag = "#include <common_frag>\n#include <diffuseMap_pars_frag>\n#include <alphaTest_pars_frag>\n#include <modelPos_pars_frag>\n#include <uv_pars_frag>\n#include <packing>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #if defined(USE_DIFFUSE_MAP) && defined(ALPHATEST)\n        vec4 texelColor = texture2D( diffuseMap, v_Uv );\n        float alpha = texelColor.a * u_Opacity;\n        if(alpha < u_AlphaTest) discard;\n    #endif\n    #include <logdepthbuf_frag>\n    \n    #ifdef DEPTH_PACKING_RGBA\n        gl_FragColor = packDepthToRGBA(gl_FragCoord.z);\n    #else\n        gl_FragColor = vec4( vec3( 1.0 - gl_FragCoord.z ), u_Opacity );\n    #endif\n}";
 
@@ -14991,7 +14997,7 @@ var distance_vert = "#include <common_vert>\n#include <modelPos_pars_vert>\n#inc
 
 var lambert_frag = "#define USE_LAMBERT\n#include <common_frag>\n#include <dithering_pars_frag>\nuniform vec3 emissive;\n#include <uv_pars_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <normalMap_pars_frag>\n#include <alphamap_pars_frag>\n#include <alphaTest_pars_frag>\n#include <bumpMap_pars_frag>\n#include <light_pars_frag>\n#include <normal_pars_frag>\n#include <modelPos_pars_frag>\n#include <bsdfs>\n#include <envMap_pars_frag>\n#include <aoMap_pars_frag>\n#include <shadowMap_pars_frag>\n#include <fog_pars_frag>\n#include <emissiveMap_pars_frag>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #include <logdepthbuf_frag>\n    #include <begin_frag>\n    #include <color_frag>\n    #include <diffuseMap_frag>\n    #include <alphamap_frag>\n    #include <alphaTest_frag>\n    #include <normal_frag>\n    ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));\n    #include <light_frag>\n    #include <aoMap_frag>\n    outColor.xyz = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;\n    #include <envMap_frag>\n    #include <shadowMap_frag>\n    vec3 totalEmissiveRadiance = emissive;\n    #include <emissiveMap_frag>\n    outColor.xyz += totalEmissiveRadiance;\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n    #include <dithering_frag>\n}";
 
-var lambert_vert = "#define USE_LAMBERT\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
+var lambert_vert = "#define USE_LAMBERT\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <diffuseMap_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <diffuseMap_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
 
 var normaldepth_frag = "#include <common_frag>\n#include <diffuseMap_pars_frag>\n#include <alphaTest_pars_frag>\n#include <uv_pars_frag>\n#include <packing>\n#include <normal_pars_frag>\n#include <logdepthbuf_pars_frag>\nvoid main() {\n    #if defined(USE_DIFFUSE_MAP) && defined(ALPHATEST)\n        vec4 texelColor = texture2D( diffuseMap, v_Uv );\n        float alpha = texelColor.a * u_Opacity;\n        if(alpha < u_AlphaTest) discard;\n    #endif\n    #include <logdepthbuf_frag>\n    vec4 packedNormalDepth;\n    packedNormalDepth.xyz = normalize(v_Normal) * 0.5 + 0.5;\n    packedNormalDepth.w = gl_FragCoord.z;\n    gl_FragColor = packedNormalDepth;\n}";
 
@@ -15001,11 +15007,11 @@ var pbr_frag = "#define USE_PBR\n#include <common_frag>\n#include <dithering_par
 
 var pbr2_frag = "#define USE_PBR\n#define USE_PBR2\n#include <common_frag>\n#include <dithering_pars_frag>\nuniform vec3 u_SpecularColor;\n#ifdef USE_SPECULARMAP\n\tuniform sampler2D specularMap;\n#endif\nuniform float glossiness;\n#ifdef USE_GLOSSINESSMAP\n\tuniform sampler2D glossinessMap;\n#endif\nuniform vec3 emissive;\n#include <uv_pars_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <alphamap_pars_frag>\n#include <alphaTest_pars_frag>\n#include <normalMap_pars_frag>\n#include <bumpMap_pars_frag>\n#include <envMap_pars_frag>\n#include <aoMap_pars_frag>\n#include <light_pars_frag>\n#include <normal_pars_frag>\n#include <modelPos_pars_frag>\n#include <bsdfs>\n#include <shadowMap_pars_frag>\n#include <fog_pars_frag>\n#include <emissiveMap_pars_frag>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #include <logdepthbuf_frag>\n    #include <begin_frag>\n    #include <color_frag>\n    #include <diffuseMap_frag>\n    #include <alphamap_frag>\n    #include <alphaTest_frag>\n    #include <normal_frag>\n    vec3 specularFactor = u_SpecularColor;\n    #ifdef USE_SPECULARMAP\n        vec4 texelSpecular = texture2D(specularMap, v_Uv);\n        texelSpecular = sRGBToLinear(texelSpecular);\n        specularFactor *= texelSpecular.rgb;\n    #endif\n    float glossinessFactor = glossiness;\n    #ifdef USE_GLOSSINESSMAP\n        vec4 texelGlossiness = texture2D(glossinessMap, v_Uv);\n        glossinessFactor *= texelGlossiness.a;\n    #endif\n    ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));\n    #include <light_frag>\n    #include <aoMap_frag>\n    outColor.xyz = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;\n    #include <shadowMap_frag>\n    vec3 totalEmissiveRadiance = emissive;\n    #include <emissiveMap_frag>\n    outColor.xyz += totalEmissiveRadiance;\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n    #include <dithering_frag>\n}";
 
-var pbr_vert = "#define USE_PBR\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
+var pbr_vert = "#define USE_PBR\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <diffuseMap_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <diffuseMap_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
 
 var phong_frag = "#define USE_PHONG\n#include <common_frag>\n#include <dithering_pars_frag>\nuniform float u_Specular;\nuniform vec3 u_SpecularColor;\n#include <specularMap_pars_frag>\nuniform vec3 emissive;\n#include <uv_pars_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <alphamap_pars_frag>\n#include <alphaTest_pars_frag>\n#include <normalMap_pars_frag>\n#include <bumpMap_pars_frag>\n#include <light_pars_frag>\n#include <normal_pars_frag>\n#include <modelPos_pars_frag>\n#include <bsdfs>\n#include <envMap_pars_frag>\n#include <aoMap_pars_frag>\n#include <shadowMap_pars_frag>\n#include <fog_pars_frag>\n#include <emissiveMap_pars_frag>\n#include <logdepthbuf_pars_frag>\n#include <clippingPlanes_pars_frag>\nvoid main() {\n    #include <clippingPlanes_frag>\n    #include <logdepthbuf_frag>\n    #include <begin_frag>\n    #include <color_frag>\n    #include <diffuseMap_frag>\n    #include <alphamap_frag>\n    #include <alphaTest_frag>\n    #include <normal_frag>\n    #include <specularMap_frag>\n    ReflectedLight reflectedLight = ReflectedLight(vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0));\n    #include <light_frag>\n    #include <aoMap_frag>\n    outColor.xyz = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;\n    #include <envMap_frag>\n    #include <shadowMap_frag>\n    vec3 totalEmissiveRadiance = emissive;\n    #include <emissiveMap_frag>\n    outColor.xyz += totalEmissiveRadiance;\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n    #include <dithering_frag>\n}";
 
-var phong_vert = "#define USE_PHONG\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
+var phong_vert = "#define USE_PHONG\n#include <common_vert>\n#include <normal_pars_vert>\n#include <uv_pars_vert>\n#include <color_pars_vert>\n#include <diffuseMap_pars_vert>\n#include <modelPos_pars_vert>\n#include <envMap_pars_vert>\n#include <aoMap_pars_vert>\n#include <alphamap_pars_vert>\n#include <emissiveMap_pars_vert>\n#include <shadowMap_pars_vert>\n#include <morphtarget_pars_vert>\n#include <skinning_pars_vert>\n#include <logdepthbuf_pars_vert>\nvoid main() {\n    #include <begin_vert>\n    #include <morphtarget_vert>\n    #include <morphnormal_vert>\n    #include <skinning_vert>\n    #include <skinnormal_vert>\n    #include <pvm_vert>\n    #include <normal_vert>\n    #include <logdepthbuf_vert>\n    #include <uv_vert>\n    #include <color_vert>\n    #include <diffuseMap_vert>\n    #include <modelPos_vert>\n    #include <envMap_vert>\n    #include <aoMap_vert>\n    #include <alphamap_vert>\n    #include <emissiveMap_vert>\n    #include <shadowMap_vert>\n}";
 
 var point_frag = "#include <common_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <fog_pars_frag>\n#include <logdepthbuf_pars_frag>\nvoid main() {\n    #include <begin_frag>\n    #include <color_frag>\n    #include <logdepthbuf_frag>\n    #ifdef USE_DIFFUSE_MAP\n        outColor *= texture2D(diffuseMap, vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));\n    #endif\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n}";
 
@@ -16160,6 +16166,16 @@ function generateDefines(defines) {
 	return chunks.join('\n');
 }
 
+let _activeMapCoords = 0; // bit mask
+
+function getUVChannel(coord) {
+	_activeMapCoords |= (1 << coord);
+
+	if (coord === 0) return 'a_Uv';
+
+	return `a_Uv${coord + 1}`; // a_Uv2, a_Uv3, a_Uv4, ...
+}
+
 function generateProps(state, capabilities, material, object, renderStates) {
 	const lights = material.acceptLight ? renderStates.lights : null;
 	const fog = material.fog ? renderStates.scene.fog : null;
@@ -16168,39 +16184,72 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	const disableShadowSampler = renderStates.scene.disableShadowSampler;
 	const numClippingPlanes = (material.clippingPlanes && material.clippingPlanes.length > 0) ? material.clippingPlanes.length : renderStates.scene.numClippingPlanes;
 
+	const HAS_CLEARCOAT = material.clearcoat > 0;
+
+	const HAS_DIFFUSEMAP = !!material.diffuseMap;
+	const HAS_ALPHAMAP = !!material.alphaMap;
+	const HAS_EMISSIVEMAP = !!material.emissiveMap;
+	const HAS_AOMAP = !!material.aoMap;
+	const HAS_NORMALMAP = !!material.normalMap;
+	const HAS_BUMPMAP = !!material.bumpMap;
+	const HAS_SPECULARMAP = !!material.specularMap;
+	const HAS_ROUGHNESSMAP = !!material.roughnessMap;
+	const HAS_METALNESSMAP = !!material.metalnessMap;
+	const HAS_GLOSSINESSMAP = !!material.glossinessMap;
+
+	const HAS_ENVMAP = !!envMap;
+
+	const HAS_CLEARCOATMAP = HAS_CLEARCOAT && !!material.clearcoatMap;
+	const HAS_CLEARCOAT_ROUGHNESSMAP = HAS_CLEARCOAT && !!material.clearcoatRoughnessMap;
+	const HAS_CLEARCOAT_NORMALMAP = HAS_CLEARCOAT && !!material.clearcoatNormalMap;
+
+	_activeMapCoords = 0; // reset
+
 	const props = {}; // cache this props?
 
 	props.shaderName = (material.type === MATERIAL_TYPE.SHADER && material.shaderName) ? material.shaderName : material.type;
 
 	// capabilities
+
 	props.version = capabilities.version;
 	props.precision = material.precision || capabilities.maxPrecision;
 	props.useStandardDerivatives = capabilities.version >= 2 || !!capabilities.getExtension('OES_standard_derivatives') || !!capabilities.getExtension('GL_OES_standard_derivatives');
 	props.useShaderTextureLOD = capabilities.version >= 2 || !!capabilities.getExtension('EXT_shader_texture_lod');
+
 	// maps
-	props.useDiffuseMap = material.diffuseMap ? (material.diffuseMapCoord + 1) : 0;
-	props.useAlphaMap = material.alphaMap ? (material.alphaMapCoord + 1) : 0;
-	props.useEmissiveMap = material.emissiveMap ? (material.emissiveMapCoord + 1) : 0;
-	props.useAOMap = material.aoMap ? (material.aoMapCoord + 1) : 0;
-	props.useNormalMap = !!material.normalMap;
-	props.useBumpMap = !!material.bumpMap;
-	props.useSpecularMap = !!material.specularMap;
-	props.useRoughnessMap = !!material.roughnessMap;
-	props.useMetalnessMap = !!material.metalnessMap;
-	props.useGlossinessMap = !!material.glossinessMap;
-	props.useEnvMap = !!envMap;
-	props.envMapCombine = material.envMapCombine;
 
-	props.useClearcoat = material.clearcoat > 0;
-	props.useClearcoatMap = props.useClearcoat && !!material.clearcoatMap;
-	props.useClearcoatRoughnessMap = props.useClearcoat && !!material.clearcoatRoughnessMap;
-	props.useClearcoatNormalMap = props.useClearcoat && !!material.clearcoatNormalMap;
+	props.useDiffuseMap = HAS_DIFFUSEMAP;
+	props.useAlphaMap = HAS_ALPHAMAP;
+	props.useEmissiveMap = HAS_EMISSIVEMAP;
+	props.useAOMap = HAS_AOMAP;
+	props.useNormalMap = HAS_NORMALMAP;
+	props.useBumpMap = HAS_BUMPMAP;
+	props.useSpecularMap = HAS_SPECULARMAP;
+	props.useRoughnessMap = HAS_ROUGHNESSMAP;
+	props.useMetalnessMap = HAS_METALNESSMAP;
+	props.useGlossinessMap = HAS_GLOSSINESSMAP;
 
-	props.useUv1 = props.useDiffuseMap === 1 || props.useAlphaMap === 1 || props.useEmissiveMap === 1 || props.useAOMap === 1 || props.useNormalMap || props.useBumpMap || props.useSpecularMap || props.useRoughnessMap || props.useMetalnessMap || props.useGlossinessMap || props.useClearcoatMap || props.useClearcoatNormalMap || props.useClearcoatRoughnessMap;
-	props.useUv2 = props.useDiffuseMap === 2 || props.useAlphaMap === 2 || props.useEmissiveMap === 2 || props.useAOMap === 2;
+	props.useEnvMap = HAS_ENVMAP;
+	props.envMapCombine = HAS_ENVMAP && material.envMapCombine;
 
-	// props.useVertexEnvDir = false;
+	props.useClearcoat = HAS_CLEARCOAT;
+	props.useClearcoatMap = HAS_CLEARCOATMAP;
+	props.useClearcoatRoughnessMap = HAS_CLEARCOAT_ROUGHNESSMAP;
+	props.useClearcoatNormalMap = HAS_CLEARCOAT_NORMALMAP;
+
+	props.diffuseMapUv = HAS_DIFFUSEMAP && getUVChannel(material.diffuseMapCoord);
+	props.alphaMapUv = HAS_ALPHAMAP && getUVChannel(material.alphaMapCoord);
+	props.emissiveMapUv = HAS_EMISSIVEMAP && getUVChannel(material.emissiveMapCoord);
+	props.aoMapUv = HAS_AOMAP && getUVChannel(material.aoMapCoord);
+
+	if (HAS_NORMALMAP || HAS_BUMPMAP || HAS_SPECULARMAP || HAS_ROUGHNESSMAP || HAS_METALNESSMAP || HAS_GLOSSINESSMAP || HAS_CLEARCOATMAP || HAS_CLEARCOAT_ROUGHNESSMAP || HAS_CLEARCOAT_NORMALMAP) {
+		_activeMapCoords |= 1 << 0; // these maps use uv coord 0 by default
+	}
+
+	props.activeMapCoords = _activeMapCoords;
+
 	// lights
+
 	props.useAmbientLight = !!lights && lights.useAmbient;
 	props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
 	props.hemisphereLightNum = lights ? lights.hemisNum : 0;
@@ -16218,14 +16267,18 @@ function generateProps(state, capabilities, material, object, renderStates) {
 		props.shadowType = SHADOW_TYPE.POISSON_SOFT;
 	}
 	props.dithering = material.dithering;
+
 	// encoding
+
 	const currentRenderTarget = state.currentRenderTarget;
 	props.gammaFactor = renderStates.gammaFactor;
 	props.outputEncoding = currentRenderTarget.texture ? getTextureEncodingFromMap(currentRenderTarget.texture) : renderStates.outputEncoding;
 	props.diffuseMapEncoding = getTextureEncodingFromMap(material.diffuseMap || material.cubeMap);
 	props.envMapEncoding = getTextureEncodingFromMap(envMap);
 	props.emissiveMapEncoding = getTextureEncodingFromMap(material.emissiveMap);
+
 	// other
+
 	props.alphaTest = material.alphaTest;
 	props.premultipliedAlpha = material.premultipliedAlpha;
 	props.useVertexColors = material.vertexColors;
@@ -16240,10 +16293,14 @@ function generateProps(state, capabilities, material, object, renderStates) {
 	props.packDepthToRGBA = material.packToRGBA;
 	props.logarithmicDepthBuffer = !!logarithmicDepthBuffer;
 	props.rendererExtensionFragDepth = capabilities.version >= 2 || !!capabilities.getExtension('EXT_frag_depth');
+
 	// morph targets
+
 	props.morphTargets = !!object.morphTargetInfluences;
 	props.morphNormals = !!object.morphTargetInfluences && object.geometry.morphAttributes.normal;
+
 	// skinned mesh
+
 	const useSkinning = object.isSkinnedMesh && object.skeleton;
 	const maxVertexUniformVectors = capabilities.maxVertexUniformVectors;
 	const useVertexTexture = capabilities.maxVertexTextures > 0 && (!!capabilities.getExtension('OES_texture_float') || capabilities.version >= 2);
@@ -16301,6 +16358,17 @@ function getTexelEncodingFunction(functionName, encoding) {
 	return 'vec4 ' + functionName + '(vec4 value) { return LinearTo' + components[0] + components[1] + '; }';
 }
 
+function uvAttributes(activeMapCoords) {
+	let str = '';
+	for (let i = 1; i < 8; i++) { // skip uv0
+		if (activeMapCoords & (1 << i)) {
+			str += 'attribute vec2 a_Uv' + (i + 1) + ';';
+			if (i !== 7) str += '\n';
+		}
+	}
+	return str;
+}
+
 function createProgram(gl, defines, props, vertex, fragment) {
 	let prefixVertex = [
 		'precision ' + props.precision + ' float;',
@@ -16316,44 +16384,59 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		(props.version >= 2) ? '#define WEBGL2' : '',
 
+		// maps
+
+		props.useDiffuseMap ? '#define USE_DIFFUSE_MAP' : '',
+		props.useAlphaMap ? '#define USE_ALPHA_MAP' : '',
+		props.useEmissiveMap ? '#define USE_EMISSIVEMAP' : '',
+		props.useAOMap ? '#define USE_AOMAP' : '',
+		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
+		props.useBumpMap ? '#define USE_BUMPMAP' : '',
+		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
 		props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '',
 		props.useMetalnessMap ? '#define USE_METALNESSMAP' : '',
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
 
+		props.useEnvMap ? '#define USE_ENV_MAP' : '',
+
+		props.diffuseMapUv ? '#define DIFFUSEMAP_UV ' + props.diffuseMapUv : '',
+		props.alphaMapUv ? '#define ALPHAMAP_UV ' + props.alphaMapUv : '',
+		props.emissiveMapUv ? '#define EMISSIVEMAP_UV ' + props.emissiveMapUv : '',
+		props.aoMapUv ? '#define AOMAP_UV ' + props.aoMapUv : '',
+
+		props.activeMapCoords > 0 ? '#define USE_UV' : '',
+		props.activeMapCoords & 1 ? '#define USE_UV1' : '',
+
+		uvAttributes(props.activeMapCoords),
+
+		// lights
+
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
-		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
-		props.useBumpMap ? '#define USE_BUMPMAP' : '',
-		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
-		props.useEmissiveMap ? ('#define USE_EMISSIVEMAP ' + props.useEmissiveMap) : '',
 		props.useShadow ? '#define USE_SHADOW' : '',
-		props.flatShading ? '#define FLAT_SHADED' : '',
-		props.flipSided ? '#define FLIP_SIDED' : '',
 
-		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' + props.useDiffuseMap) : '',
-		props.useAlphaMap ? ('#define USE_ALPHA_MAP ' + props.useAlphaMap) : '',
-		props.useEnvMap ? '#define USE_ENV_MAP' : '',
-		props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
-		props.useAOMap ? ('#define USE_AOMAP ' + props.useAOMap) : '',
+		// other
+
 		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
 		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
 		props.useVertexTangents ? '#define USE_TANGENT' : '',
-		props.useUv1 ? '#define USE_UV1' : '',
-		props.useUv2 ? '#define USE_UV2' : '',
-
-		// (props.useVertexEnvDir && !props.useNormalMap && !props.useBumpMap) ? '#define USE_VERTEX_ENVDIR' : '',
-
+		props.flatShading ? '#define FLAT_SHADED' : '',
 		props.fog ? '#define USE_FOG' : '',
+		props.sizeAttenuation ? '#define USE_SIZEATTENUATION' : '',
+		props.flipSided ? '#define FLIP_SIDED' : '',
+		props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
+		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
+
+		// morph targets
 
 		props.morphTargets ? '#define USE_MORPHTARGETS' : '',
 		props.morphNormals && props.flatShading === false ? '#define USE_MORPHNORMALS' : '',
 
+		// skinned mesh
+
 		props.useSkinning ? '#define USE_SKINNING' : '',
 		(props.bonesNum > 0) ? ('#define MAX_BONES ' + props.bonesNum) : '',
 		props.useVertexTexture ? '#define BONE_TEXTURE' : '',
-		props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
-		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
-
 		'\n'
 	].filter(filterEmptyLine).join('\n');
 
@@ -16394,22 +16477,35 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		(props.version >= 2) ? '#define WEBGL2' : '',
 		props.useShadowSampler ? '#define USE_SHADOW_SAMPLER' : '#define sampler2DShadow sampler2D',
+		props.useShaderTextureLOD ? '#define TEXTURE_LOD_EXT' : '',
 
+		// maps
+
+		props.useDiffuseMap ? '#define USE_DIFFUSE_MAP' : '',
+		props.useAlphaMap ? '#define USE_ALPHA_MAP' : '',
+		props.useEmissiveMap ? '#define USE_EMISSIVEMAP' : '',
+		props.useAOMap ? '#define USE_AOMAP' : '',
+		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
+		props.useBumpMap ? '#define USE_BUMPMAP' : '',
+		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
 		props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '',
 		props.useMetalnessMap ? '#define USE_METALNESSMAP' : '',
 		props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '',
+
+		props.useEnvMap ? '#define USE_ENV_MAP' : '',
+		props.envMapCombine ? '#define ' + props.envMapCombine : '',
 
 		props.useClearcoat ? '#define USE_CLEARCOAT' : '',
 		props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '',
 		props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '',
 		props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '',
 
+		props.activeMapCoords & 1 ? '#define USE_UV1' : '',
+
+		// lights
+
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
-		props.useNormalMap ? '#define USE_NORMAL_MAP' : '',
-		props.useBumpMap ? '#define USE_BUMPMAP' : '',
-		props.useSpecularMap ? '#define USE_SPECULARMAP' : '',
-		props.useEmissiveMap ? ('#define USE_EMISSIVEMAP ' + props.useEmissiveMap) : '',
 		props.useShadow ? '#define USE_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '',
@@ -16419,42 +16515,32 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '',
 		(props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT) ? '#define USE_PCSS_SOFT_SHADOW' : '',
-		props.flatShading ? '#define FLAT_SHADED' : '',
-		props.doubleSided ? '#define DOUBLE_SIDED' : '',
-		props.useShaderTextureLOD ? '#define TEXTURE_LOD_EXT' : '',
-
-		props.useDiffuseMap ? ('#define USE_DIFFUSE_MAP ' + props.useDiffuseMap) : '',
-		props.useAlphaMap ? ('#define USE_ALPHA_MAP ' + props.useAlphaMap) : '',
-		props.useEnvMap ? '#define USE_ENV_MAP' : '',
-		props.useAOMap ? ('#define USE_AOMAP ' + props.useAOMap) : '',
-		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
-		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
-		props.useVertexTangents ? '#define USE_TANGENT' : '',
-		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
-		props.fog ? '#define USE_FOG' : '',
-		props.fogExp2 ? '#define USE_EXP2_FOG' : '',
-		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
-		props.useEnvMap ? '#define ' + props.envMapCombine : '',
-		'#define GAMMA_FACTOR ' + props.gammaFactor,
-
-		props.useUv1 ? '#define USE_UV1' : '',
-		props.useUv2 ? '#define USE_UV2' : '',
-
-		// (props.useVertexEnvDir && !props.useNormalMap && !props.useBumpMap) ? '#define USE_VERTEX_ENVDIR' : '',
 
 		props.dithering ? '#define DITHERING' : '',
 
+		// encoding
+
 		ShaderChunk['encodings_pars_frag'],
+		'#define GAMMA_FACTOR ' + props.gammaFactor,
+		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 		getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding),
 		props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '',
 		props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
-		getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding),
 
+		// other
+
+		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
+		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
+		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
+		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
+		props.useVertexTangents ? '#define USE_TANGENT' : '',
+		props.flatShading ? '#define FLAT_SHADED' : '',
+		props.fog ? '#define USE_FOG' : '',
+		props.fogExp2 ? '#define USE_EXP2_FOG' : '',
+		props.doubleSided ? '#define DOUBLE_SIDED' : '',
 		props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '',
-
 		props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
 		(props.logarithmicDepthBuffer && props.rendererExtensionFragDepth) ? '#define USE_LOGDEPTHBUF_EXT' : '',
-
 		'\n'
 	].filter(filterEmptyLine).join('\n');
 

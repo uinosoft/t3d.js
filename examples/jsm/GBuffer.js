@@ -552,6 +552,7 @@ const albedoMetalnessShader = {
 		#include <skinning_pars_vert>
 		#include <uv_pars_vert>
 		#include <color_pars_vert>
+		#include <diffuseMap_pars_vert>
 		void main() {
 			#include <begin_vert>
 			#include <morphtarget_vert>
@@ -559,6 +560,7 @@ const albedoMetalnessShader = {
 			#include <pvm_vert>
 			#include <uv_vert>
 			#include <color_vert>
+			#include <diffuseMap_vert>
 		}
 	`,
 
@@ -727,6 +729,7 @@ const mrtShader = {
 		#include <uv_pars_vert>
 		#include <normal_pars_vert>
 		#include <color_pars_vert>
+		#include <diffuseMap_pars_vert>
 		#include <modelPos_pars_vert>
 		void main() {
 			#include <begin_vert>
@@ -739,6 +742,7 @@ const mrtShader = {
 			#include <modelPos_vert>
 			#include <uv_vert>
 			#include <color_vert>
+			#include <diffuseMap_vert>
 		}
 	`,
 
