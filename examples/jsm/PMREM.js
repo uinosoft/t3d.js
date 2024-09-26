@@ -16,9 +16,8 @@ import {
 
 import { ReflectionProbe } from './probes/ReflectionProbe.js';
 
-// deprecated since v0.2.5
-// add warning in v0.3.0, remove in v0.4.0
-// console.warn('PMREM has been deprecated. Use PMREMGenerator instead.');
+// deprecated since v0.2.5, add warning since v0.3.0, will be removed in v0.4.0
+console.warn('PMREM has been deprecated. Use PMREMGenerator instead.');
 
 /**
  * This class generates a Prefiltered, Mipmapped Radiance Environment Map

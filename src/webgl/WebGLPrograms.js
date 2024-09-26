@@ -210,7 +210,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 
 	// other
 
-	props.alphaTest = material.alphaTest;
+	props.alphaTest = material.alphaTest > 0;
 	props.premultipliedAlpha = material.premultipliedAlpha;
 	props.useVertexColors = material.vertexColors;
 	props.useVertexTangents = !!material.normalMap && material.vertexTangents;
@@ -460,7 +460,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		// other
 
-		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
+		props.alphaTest ? '#define ALPHATEST' : '',
 		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
 		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
 		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',

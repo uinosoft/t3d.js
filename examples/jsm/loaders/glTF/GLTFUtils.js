@@ -1,19 +1,10 @@
 import { Vector4 } from 't3d';
 
-// Characters [].:/ are reserved for track binding syntax.
-const RESERVED_CHARS_RE = '\\[\\]\\.:\\/';
-const reservedRe = new RegExp('[' + RESERVED_CHARS_RE + ']', 'g');
-
 const _vec4_1 = new Vector4();
 
 export class GLTFUtils {
 
 	constructor() {}
-
-	// deprecated since v0.2.0
-	static sanitizeNodeName(name) {
-		return name.replace(/\s/g, '_').replace(reservedRe, '');
-	}
 
 	static extractUrlBase(url) {
 		const parts = url.split('/');

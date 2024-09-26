@@ -15079,7 +15079,7 @@
 
 		// other
 
-		props.alphaTest = material.alphaTest;
+		props.alphaTest = material.alphaTest > 0;
 		props.premultipliedAlpha = material.premultipliedAlpha;
 		props.useVertexColors = material.vertexColors;
 		props.useVertexTangents = !!material.normalMap && material.vertexTangents;
@@ -15200,9 +15200,7 @@
 		ShaderChunk['encodings_pars_frag'], '#define GAMMA_FACTOR ' + props.gammaFactor, getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding), getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding), props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '', props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
 		// other
 
-		props.alphaTest ? '#define ALPHATEST ' + props.alphaTest : '',
-		// ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
-		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '', props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '', props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '', props.useVertexTangents ? '#define USE_TANGENT' : '', props.flatShading ? '#define FLAT_SHADED' : '', props.fog ? '#define USE_FOG' : '', props.fogExp2 ? '#define USE_EXP2_FOG' : '', props.doubleSided ? '#define DOUBLE_SIDED' : '', props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '', props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '', props.logarithmicDepthBuffer && props.rendererExtensionFragDepth ? '#define USE_LOGDEPTHBUF_EXT' : '', '\n'].filter(filterEmptyLine).join('\n');
+		props.alphaTest ? '#define ALPHATEST' : '', props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '', props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '', props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '', props.useVertexTangents ? '#define USE_TANGENT' : '', props.flatShading ? '#define FLAT_SHADED' : '', props.fog ? '#define USE_FOG' : '', props.fogExp2 ? '#define USE_EXP2_FOG' : '', props.doubleSided ? '#define DOUBLE_SIDED' : '', props.packDepthToRGBA ? '#define DEPTH_PACKING_RGBA' : '', props.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '', props.logarithmicDepthBuffer && props.rendererExtensionFragDepth ? '#define USE_LOGDEPTHBUF_EXT' : '', '\n'].filter(filterEmptyLine).join('\n');
 		let vshader = vertex;
 		let fshader = fragment;
 		vshader = parseIncludes(vshader);
@@ -17777,109 +17775,50 @@
 		}
 	}
 
-	// since 0.1.2
+	// deprecated since 0.1.2, add warning since 0.3.0, will be removed in 0.4.0
+	class CubeGeometry extends BoxGeometry {
+		constructor(width, height, depth, widthSegments, heightSegments, depthSegments) {
+			super(width, height, depth, widthSegments, heightSegments, depthSegments);
+			console.warn('CubeGeometry has been deprecated, use BoxGeometry instead.');
+		}
+	}
+
+	// deprecated since 0.1.2, add warning since 0.3.0, will be removed in 0.4.0
 	class Group extends Object3D {
 		constructor() {
 			super();
-			// console.warn("Group has been removed, use Object3D instead.");
+			console.warn('Group has been deprecated, use Object3D instead.');
 		}
 	}
 	Group.prototype.isGroup = true;
 	Object.defineProperties(WebGLRenderer.prototype, {
-		// since 0.2.0
+		// deprecated since 0.2.0, add warning since 0.3.0, will be removed in 0.4.0
 		gl: {
 			configurable: true,
 			get: function () {
-				// console.warn("WebGLRenderer: .gl has been deprecated, use .context instead.");
+				console.warn('WebGLRenderer: .gl has been deprecated, use .context instead.');
 				return this.context;
-			}
-		},
-		// since 0.1.2
-		renderTarget: {
-			configurable: true,
-			get: function () {
-				console.warn('WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.');
-				return this._renderTargets;
-			}
-		},
-		// since 0.1.2
-		state: {
-			configurable: true,
-			get: function () {
-				console.warn('WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.');
-				return this._state;
-			}
-		},
-		// since 0.1.2
-		vertexArrayBindings: {
-			configurable: true,
-			get: function () {
-				console.warn('WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.');
-				return this._vertexArrayBindings;
 			}
 		}
 	});
 
-	// since 0.1.6
+	// deprecated since 0.1.6, add warning since 0.3.0, will be removed in 0.4.0
 	WebGLRenderer.prototype.render = function (renderable, renderStates, options) {
-		// console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
+		console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
 		this.renderRenderableItem(renderable, renderStates, options);
 	};
-
-	// since 0.2.0
-	// WebGLRenderPass is renamed to WebGLRenderer.
-	const WebGLRenderPass = WebGLRenderer;
 
 	// Renderer, as an alias of WebGLRenderer, will exist for a long time.
 	// When the compatibility of renderPass is removed, it can be moved to main.js
 	class Renderer extends WebGLRenderer {
-		// since 0.2.0
-		// renderer.renderPass is deprecated, use WebGLRenderer instead.
+		// deprecated since 0.2.0, add warning since 0.3.0, will be removed in 0.4.0
 		get renderPass() {
+			console.warn('Renderer: .renderPass has been deprecated, use WebGLRenderer instead.');
 			return this;
 		}
 	}
-
-	// since 0.2.0
-	class WebGLProperties {
-		constructor(passId) {
-			this._key = '__webgl$' + passId;
-			this._count = 0;
-		}
-		get(object) {
-			const key = this._key;
-			let properties = object[key];
-			if (properties === undefined) {
-				properties = {};
-				object[key] = properties;
-				this._count++;
-			}
-			return properties;
-		}
-		delete(object) {
-			const key = this._key;
-			const properties = object[key];
-			if (properties) {
-				this._count--;
-				delete object[key];
-			}
-		}
-		size() {
-			return this._count;
-		}
-	}
-
-	// since 0.2.1, moved matcap shader to addons.
-
-	MATERIAL_TYPE.MATCAP = 'matcap';
-	class MatcapMaterial extends BasicMaterial {
-		constructor() {
-			super();
-			console.warn('MatcapMaterial has been removed and fallback to BasicMaterial, use addons/shaders/MatcapShader instead.');
-		}
-	}
 	Object.defineProperties(Scene.prototype, {
-		// since 0.2.7
+		// deprecated since 0.2.7
 		environmentLightIntensity: {
 			configurable: true,
 			get: function () {
@@ -17893,7 +17832,7 @@
 		}
 	});
 
-	// since 0.2.8
+	// deprecated since 0.2.8
 
 	const generateUUID = MathUtils.generateUUID;
 	const isPowerOfTwo = MathUtils.isPowerOfTwo;
@@ -17921,7 +17860,7 @@
 	exports.Camera = Camera;
 	exports.Color3 = Color3;
 	exports.ColorKeyframeTrack = ColorKeyframeTrack;
-	exports.CubeGeometry = BoxGeometry;
+	exports.CubeGeometry = CubeGeometry;
 	exports.CubicSplineInterpolant = CubicSplineInterpolant;
 	exports.CylinderGeometry = CylinderGeometry;
 	exports.DRAW_MODE = DRAW_MODE;
@@ -17954,7 +17893,6 @@
 	exports.Loader = Loader;
 	exports.LoadingManager = LoadingManager;
 	exports.MATERIAL_TYPE = MATERIAL_TYPE;
-	exports.MatcapMaterial = MatcapMaterial;
 	exports.Material = Material;
 	exports.MathUtils = MathUtils;
 	exports.Matrix3 = Matrix3;
@@ -18031,21 +17969,13 @@
 	exports.Vector3 = Vector3;
 	exports.Vector4 = Vector4;
 	exports.VectorKeyframeTrack = VectorKeyframeTrack;
-	exports.WEBGL_COMPARE_FUNC = COMPARE_FUNC;
-	exports.WEBGL_OP = OPERATION;
-	exports.WEBGL_PIXEL_FORMAT = PIXEL_FORMAT;
-	exports.WEBGL_PIXEL_TYPE = PIXEL_TYPE;
-	exports.WEBGL_TEXTURE_FILTER = TEXTURE_FILTER;
-	exports.WEBGL_TEXTURE_WRAP = TEXTURE_WRAP;
 	exports.WebGLAttribute = WebGLAttribute;
 	exports.WebGLCapabilities = WebGLCapabilities;
 	exports.WebGLGeometries = WebGLGeometries;
 	exports.WebGLProgram = WebGLProgram;
 	exports.WebGLPrograms = WebGLPrograms;
-	exports.WebGLProperties = WebGLProperties;
 	exports.WebGLQueries = WebGLQueries;
 	exports.WebGLRenderBuffers = WebGLRenderBuffers;
-	exports.WebGLRenderPass = WebGLRenderPass;
 	exports.WebGLRenderer = WebGLRenderer;
 	exports.WebGLState = WebGLState;
 	exports.WebGLTextures = WebGLTextures;

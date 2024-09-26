@@ -16279,7 +16279,7 @@ function generateProps(state, capabilities, material, object, renderStates) {
 
 	// other
 
-	props.alphaTest = material.alphaTest;
+	props.alphaTest = material.alphaTest > 0;
 	props.premultipliedAlpha = material.premultipliedAlpha;
 	props.useVertexColors = material.vertexColors;
 	props.useVertexTangents = !!material.normalMap && material.vertexTangents;
@@ -16529,7 +16529,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		// other
 
-		props.alphaTest ? ('#define ALPHATEST ' + props.alphaTest) : '', // ALPHA_TEST value deprecated since v0.2.8, use u_AlphaTest instead
+		props.alphaTest ? '#define ALPHATEST' : '',
 		props.premultipliedAlpha ? '#define USE_PREMULTIPLIED_ALPHA' : '',
 		props.useVertexColors == VERTEX_COLOR.RGB ? '#define USE_VCOLOR_RGB' : '',
 		props.useVertexColors == VERTEX_COLOR.RGBA ? '#define USE_VCOLOR_RGBA' : '',
@@ -19821,12 +19821,22 @@ class WebGLRenderer extends ThinRenderer {
 
 }
 
-// since 0.1.2
+// deprecated since 0.1.2, add warning since 0.3.0, will be removed in 0.4.0
+class CubeGeometry extends BoxGeometry {
+
+	constructor(width, height, depth, widthSegments, heightSegments, depthSegments) {
+		super(width, height, depth, widthSegments, heightSegments, depthSegments);
+		console.warn('CubeGeometry has been deprecated, use BoxGeometry instead.');
+	}
+
+}
+
+// deprecated since 0.1.2, add warning since 0.3.0, will be removed in 0.4.0
 class Group extends Object3D {
 
 	constructor() {
 		super();
-		// console.warn("Group has been removed, use Object3D instead.");
+		console.warn('Group has been deprecated, use Object3D instead.');
 	}
 
 }
@@ -19834,111 +19844,36 @@ class Group extends Object3D {
 Group.prototype.isGroup = true;
 
 Object.defineProperties(WebGLRenderer.prototype, {
-	// since 0.2.0
+	// deprecated since 0.2.0, add warning since 0.3.0, will be removed in 0.4.0
 	gl: {
 		configurable: true,
 		get: function() {
-			// console.warn("WebGLRenderer: .gl has been deprecated, use .context instead.");
+			console.warn('WebGLRenderer: .gl has been deprecated, use .context instead.');
 			return this.context;
-		}
-	},
-	// since 0.1.2
-	renderTarget: {
-		configurable: true,
-		get: function() {
-			console.warn('WebGLRenderer: .renderTarget has been deprecated. All methods are moved to WebGLRenderer.');
-			return this._renderTargets;
-		}
-	},
-	// since 0.1.2
-	state: {
-		configurable: true,
-		get: function() {
-			console.warn('WebGLRenderer: .state has been deprecated. All methods are moved to WebGLRenderer.');
-			return this._state;
-		}
-	},
-	// since 0.1.2
-	vertexArrayBindings: {
-		configurable: true,
-		get: function() {
-			console.warn('WebGLRenderer: .vertexArrayBindings has been deprecated. All methods are moved to WebGLRenderer.');
-			return this._vertexArrayBindings;
 		}
 	}
 });
 
-// since 0.1.6
+// deprecated since 0.1.6, add warning since 0.3.0, will be removed in 0.4.0
 WebGLRenderer.prototype.render = function(renderable, renderStates, options) {
-	// console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
+	console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
 	this.renderRenderableItem(renderable, renderStates, options);
 };
-
-// since 0.2.0
-// WebGLRenderPass is renamed to WebGLRenderer.
-const WebGLRenderPass = WebGLRenderer;
 
 // Renderer, as an alias of WebGLRenderer, will exist for a long time.
 // When the compatibility of renderPass is removed, it can be moved to main.js
 class Renderer extends WebGLRenderer {
 
-	// since 0.2.0
-	// renderer.renderPass is deprecated, use WebGLRenderer instead.
+	// deprecated since 0.2.0, add warning since 0.3.0, will be removed in 0.4.0
 	get renderPass() {
+		console.warn('Renderer: .renderPass has been deprecated, use WebGLRenderer instead.');
 		return this;
 	}
 
 }
 
-// since 0.2.0
-class WebGLProperties {
-
-	constructor(passId) {
-		this._key = '__webgl$' + passId;
-		this._count = 0;
-	}
-
-	get(object) {
-		const key = this._key;
-		let properties = object[key];
-		if (properties === undefined) {
-			properties = {};
-			object[key] = properties;
-			this._count++;
-		}
-		return properties;
-	}
-
-	delete(object) {
-		const key = this._key;
-		const properties = object[key];
-		if (properties) {
-			this._count--;
-			delete object[key];
-		}
-	}
-
-	size() {
-		return this._count;
-	}
-
-}
-
-// since 0.2.1, moved matcap shader to addons.
-
-MATERIAL_TYPE.MATCAP = 'matcap';
-
-class MatcapMaterial extends BasicMaterial {
-
-	constructor() {
-		super();
-		console.warn('MatcapMaterial has been removed and fallback to BasicMaterial, use addons/shaders/MatcapShader instead.');
-	}
-
-}
-
 Object.defineProperties(Scene.prototype, {
-	// since 0.2.7
+	// deprecated since 0.2.7
 	environmentLightIntensity: {
 		configurable: true,
 		get: function() {
@@ -19952,11 +19887,11 @@ Object.defineProperties(Scene.prototype, {
 	}
 });
 
-// since 0.2.8
+// deprecated since 0.2.8
 
 const generateUUID = MathUtils.generateUUID;
 const isPowerOfTwo = MathUtils.isPowerOfTwo;
 const nearestPowerOfTwo = MathUtils.nearestPowerOfTwo;
 const nextPowerOfTwo = MathUtils.nextPowerOfTwo;
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, BoxGeometry as CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, MatcapMaterial, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, COMPARE_FUNC as WEBGL_COMPARE_FUNC, OPERATION as WEBGL_OP, PIXEL_FORMAT as WEBGL_PIXEL_FORMAT, PIXEL_TYPE as WEBGL_PIXEL_TYPE, TEXTURE_FILTER as WEBGL_TEXTURE_FILTER, TEXTURE_WRAP as WEBGL_TEXTURE_WRAP, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLProperties, WebGLQueries, WebGLRenderBuffers, WebGLRenderPass, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
