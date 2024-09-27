@@ -3460,7 +3460,7 @@
 				* This method needs to be implement by all concrete loaders.
 				* It holds the logic for loading the asset from the backend.
 				*/
-		load( /* url, onLoad, onProgress, onError */) {}
+		load(/* url, onLoad, onProgress, onError */) {}
 
 		/**
 				* This method is equivalent to .load, but returns a Promise.
