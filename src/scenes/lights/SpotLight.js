@@ -58,6 +58,17 @@ class SpotLight extends Light {
 		this.shadow = new SpotLightShadow();
 	}
 
+	set power(power) {
+		// ref: equation (17) from https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+		// compute the light's luminous power (in lumens) from its intensity (in candela)
+		// by convention for a spotlight, luminous power (lm) = π * luminous intensity (cd)
+		this.intensity = power / Math.PI;
+	}
+
+	get power() {
+		return this.intensity * Math.PI;
+	}
+
 	copy(source) {
 		super.copy(source);
 

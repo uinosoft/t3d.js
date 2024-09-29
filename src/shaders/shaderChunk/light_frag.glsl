@@ -48,7 +48,7 @@ vec3 L;
 float falloff;
 float dotNL;
 vec3 irradiance;
-
+float lightDistance;
 float clearcoatDHR;
 
 #ifdef USE_CLEARCOAT
@@ -97,14 +97,12 @@ float clearcoatDHR;
 #endif
 
 #if NUM_POINT_LIGHTS > 0
-    vec3 worldV;
 
     #pragma unroll_loop_start
     for (int i = 0; i < NUM_POINT_LIGHTS; i++) {
-        worldV = v_modelPos - u_Point[i].position;
-
-        L = -worldV;
-        falloff = pow(clamp(1. - length(L) / u_Point[i].distance, 0.0, 1.0), u_Point[i].decay);
+        L = u_Point[i].position - v_modelPos;
+        lightDistance = length(L);
+        falloff = getDistanceAttenuation(lightDistance, u_Point[i].distance, u_Point[i].decay);
         L = normalize(L);
 
         #if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_POINT_SHADOWS)
@@ -137,7 +135,6 @@ float clearcoatDHR;
 #endif
 
 #if NUM_SPOT_LIGHTS > 0
-    float lightDistance;
     float angleCos;
 
     #pragma unroll_loop_start
@@ -148,7 +145,7 @@ float clearcoatDHR;
         angleCos = dot(L, -normalize(u_Spot[i].direction));
 
         falloff = smoothstep(u_Spot[i].coneCos, u_Spot[i].penumbraCos, angleCos);
-        falloff *= pow(clamp(1. - lightDistance / u_Spot[i].distance, 0.0, 1.0), u_Spot[i].decay);
+        falloff *= getDistanceAttenuation(lightDistance, u_Spot[i].distance, u_Spot[i].decay);
 
         #if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_SPOT_SHADOWS)
             #ifdef USE_PCSS_SOFT_SHADOW

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - pointlight</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - physical point light
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { PointLightHelper } from 't3d/addons/objects/PointLightHelper.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		// ref for lumens: http://www.power-sure.com/lumens.htm
+		const bulbLuminousPowers = {
+			'110000 lm (1000W)': 110000,
+			'3500 lm (300W)': 3500,
+			'1700 lm (100W)': 1700,
+			'800 lm (60W)': 800,
+			'400 lm (40W)': 400,
+			'180 lm (25W)': 180,
+			'20 lm (4W)': 20,
+			'Off': 0
+		};
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		let model;
+
+		console.time('Load glTF');
+		const gltfUri = './resources/models/gltf/bust_of_woman/glTF-Binary/bust_of_woman.glb';
+		new GLTFLoader(loadingManager).load(gltfUri).then(function(result) {
+			console.timeEnd('Load glTF');
+
+			model = result.root;
+
+			model.traverse(node => {
+				if (node.isMesh) {
+					node.castShadow = true;
+					node.receiveShadow = true;
+					node.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+				}
+			});
+
+			model.position.set(-1, 0, -2.5);
+			model.scale.set(0.05, 0.05, 0.05);
+			scene.add(model);
+		}).catch(function(e) { console.error(e) });
+
+		const sphere_geometry = new t3d.SphereGeometry(0.5, 32, 16);
+		const sphere_material = new t3d.PBRMaterial();
+		sphere_material.diffuse.setHex(0xBBBBBB);
+		sphere_material.metalness = 0.5;
+		sphere_material.roughness = 0.1;
+		sphere_material.side = t3d.DRAW_SIDE.DOUBLE;
+		const sphere = new t3d.Mesh(sphere_geometry, sphere_material);
+		sphere.position.set(0, 0.5, 4);
+		sphere.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		sphere.castShadow = true;
+		sphere.receiveShadow = true;
+		scene.add(sphere);
+
+		const box_geometry = new t3d.BoxGeometry(0.5, 2, 0.5);
+		const box_material = new t3d.PBRMaterial();
+		box_material.diffuse.setHex(0xBBBBBB);
+		box_material.metalness = 0.1;
+		box_material.roughness = 0.1;
+		box_material.side = t3d.DRAW_SIDE.DOUBLE;
+		const box = new t3d.Mesh(box_geometry, box_material);
+		box.position.set(10, 1, -2.5);
+		box.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		box.castShadow = true;
+		box.receiveShadow = true;
+		scene.add(box);
+
+		const textureLoader = new Texture2DLoader
+
+		const plane_geometry = new t3d.PlaneGeometry(1, 1);
+		const plane_material = new t3d.PBRMaterial();
+		plane_material.metalness = 0.2;
+		plane_material.roughness = 0.8;
+		plane_material.diffuseMap = textureLoader.load('./resources/floors/FloorsCheckerboard_S_Diffuse.jpg');
+		plane_material.diffuseMap.wrapS = plane_material.diffuseMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		plane_material.normalMap = textureLoader.load('./resources/floors/FloorsCheckerboard_S_Normal.jpg');
+		plane_material.normalMap.wrapS = plane_material.normalMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		plane_material.diffuseMapTransform.setUvTransform(0, 0, 10, 10, 0, 0.5, 0.5)
+		plane_material.dithering = true;
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.scale.set(40, 40, 40);
+		plane.position.set(5, 0, 0);
+		plane.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.002);
+		scene.add(ambientLight);
+
+		const pointLight = new t3d.PointLight(0xffee88, 1, 100, 2);
+		pointLight.power = bulbLuminousPowers['400 lm (40W)'];
+		pointLight.castShadow = true;
+		pointLight.shadow.mapSize.set(1024, 1024);
+		pointLight.shadow.bias = -0.001;
+		pointLight.shadow.normalBias = 0.2;
+		pointLight.shadow.cameraNear = 10;
+		scene.add(pointLight);
+		
+		const pointLightHelper = new PointLightHelper(pointLight, 0.1);
+		pointLight.add(pointLightHelper);
+
+		const camera = new t3d.Camera();
+		camera.position.set(-10, 5, 10);
+		camera.lookAt(new t3d.Vector3(0, 26, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
+
+		function setLightPosition(angle) {
+			pointLight.position.x = -Math.sin(angle / 180 * Math.PI) * 6;
+			pointLight.position.y = 3;
+			pointLight.position.z = -Math.cos(angle / 180 * Math.PI) * 6;
+		}
+
+		setLightPosition(90);
+
+		const gui = new GUI();
+		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
+		gui.add({ power:  '400 lm (40W)'}, 'power', Object.keys( bulbLuminousPowers )).onChange(function(value) {
+			const lumens = bulbLuminousPowers[value];
+			pointLight.power = lumens;
+		});
+		gui.addColor(pointLight, 'color');
+		gui.add(pointLightHelper, 'visible').name('helper');
+		const shadowFolder = gui.addFolder('Shadow');
+		shadowFolder.add(pointLight, 'castShadow').name('enable');
+		shadowFolder.add(scene, 'disableShadowSampler');
+		const shadowTypes = ['hard', 'poisson_soft', 'pcf3_soft', 'pcf5_soft', 'pcss16_soft', 'pcss32_soft', 'pcss64_soft'];
+		shadowFolder.add(plane, 'shadowType', shadowTypes).onChange(function(value) {
+			if (model) {
+				model.traverse(node => {
+					if (node.isMesh) {
+						node.shadowType = value;
+					}
+				});
+			}
+			sphere.shadowType = value;
+			box.shadowType = value;
+		});
+		shadowFolder.add(pointLight.shadow, 'radius', 0, 5, 0.01);
+		shadowFolder.add(pointLight.shadow, 'bias', -0.002, 0.002, 0.0001);
+		shadowFolder.add(pointLight.shadow, 'normalBias', -0.5, 0.5, 0.001);
+		shadowFolder.close();
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+		
+			controller.update();
+			pointLightHelper.update();
+
+			setLightPosition(90 + Math.sin(count / 1000) * 180);
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

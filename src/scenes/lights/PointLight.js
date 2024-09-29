@@ -41,6 +41,17 @@ class PointLight extends Light {
 		this.shadow = new PointLightShadow();
 	}
 
+	set power(value) {
+		// ref: equation (17) from https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
+		// compute the light's luminous power (in lumens) from its intensity (in candela)
+		// for an isotropic light source, luminous power (lm) = 4 π * luminous intensity (cd)
+		this.intensity = value / (Math.PI * 4);
+	}
+
+	get power() {
+		return this.intensity * Math.PI * 4;
+	}
+
 	copy(source) {
 		super.copy(source);
 
