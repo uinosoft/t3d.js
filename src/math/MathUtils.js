@@ -23,10 +23,22 @@ class MathUtils {
 	}
 
 	/**
+	 * Returns a value linearly interpolated from two known points based on the given interval - t = 0 will return x and t = 1 will return y.
+	 * @param {Number} x - The first value.
+	 * @param {Number} y - The second value.
+	 * @param {Number} t - The interpolation factor.
+	 * @return {Number} - The interpolated value.
+	 */
+	static lerp(x, y, t) {
+		return x + (y - x) * t;
+	}
+
+	/**
 	 * Clamps the value to be between min and max.
 	 * @param {Number} value - Value to be clamped.
 	 * @param {Number} min - The minimum value.
 	 * @param {Number} max - The maximum value.
+	 * @return {Number} - The clamped value.
 	 */
 	static clamp(value, min, max) {
 		return Math.max(min, Math.min(max, value));
