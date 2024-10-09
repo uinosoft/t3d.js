@@ -129,6 +129,44 @@ class Camera extends Object3D {
 		this.projectionMatrixInverse.getInverse(this.projectionMatrix);
 	}
 
+	/**
+	 * Set Off-axis perspective projection matrix.
+	 * @param {Number} fov - Camera frustum vertical field of view in degrees.
+	 * @param {Number} aspect - Camera frustum aspect ratio.
+	 * @param {Number} near - Camera frustum near plane.
+	 * @param {Number} far - Camera frustum far plane.
+	 * @param {Number} xmin - Left boundary of the viewport in normalized device coordinates, range [-1, 1]. -1 represents the leftmost edge of the screen.
+	 * @param {Number} ymin - Bottom boundary of the viewport in normalized device coordinates, range [-1, 1]. -1 represents the bottom edge of the screen.
+	 * @param {Number} xmax - Right boundary of the viewport in normalized device coordinates, range [-1, 1]. 1 represents the rightmost edge of the screen.
+	 * @param {Number} ymax - Top boundary of the viewport in normalized device coordinates, range [-1, 1]. 1 represents the top edge of the screen.
+	 */
+	setMagnifyRegion(fov, aspect, near, far, xmin, ymin, xmax, ymax) {
+		const ogT = Math.tan(fov / 2) * near;
+		const ogR = ogT * aspect;
+
+		const left = ogR * xmin;
+		const right = ogR * xmax;
+		const bottom = ogT * ymin;
+		const top = ogT * ymax;
+
+		const x = 2 * near / (right - left);
+		const y = 2 * near / (top - bottom);
+
+		const a = (right + left) / (right - left);
+		const b = (top + bottom) / (top - bottom);
+
+		const c = -(far + near) / (far - near);
+		const d = (-2 * far * near) / (far - near);
+
+		this.projectionMatrix.set(
+			x, 0, a, 0,
+			0, y, b, 0,
+			0, 0, c, d,
+			0, 0, -1, 0
+		);
+		this.projectionMatrixInverse.getInverse(this.projectionMatrix);
+	}
+
 	getWorldDirection(optionalTarget = new Vector3()) {
 		return super.getWorldDirection(optionalTarget).negate();
 	}

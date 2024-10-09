@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - multiple cameras</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - multiple cameras
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+
+		let width = Math.round(window.innerWidth / 2) || 2;
+		let height = Math.round(window.innerHeight / 2) || 2;
+
+		const canvasArea1 = document.createElement('canvas');
+		canvasArea1.width = width;
+		canvasArea1.height = height;
+		canvasArea1.style.position = 'absolute';
+		canvasArea1.style.top = '0';
+		canvasArea1.style.left = '0';
+		document.body.appendChild(canvasArea1);
+
+		const canvasArea2 = document.createElement('canvas');
+		canvasArea2.width = width;
+		canvasArea2.height = height;
+		canvasArea2.style.position = 'absolute';
+		canvasArea2.style.top = '0';
+		canvasArea2.style.right = '0';
+		document.body.appendChild(canvasArea2);
+
+		const canvasArea3 = document.createElement('canvas');
+		canvasArea3.width = width;
+		canvasArea3.height = height;
+		canvasArea3.style.position = 'absolute';
+		canvasArea3.style.bottom = '0';
+		canvasArea3.style.left = '0';
+		document.body.appendChild(canvasArea3);
+
+		const canvasArea4 = document.createElement('canvas');
+		canvasArea4.width = width;
+		canvasArea4.height = height;
+		canvasArea4.style.position = 'absolute';
+		canvasArea4.style.bottom = '0';
+		canvasArea4.style.right = '0';
+		document.body.appendChild(canvasArea4);
+
+		const controlCanvas = document.createElement('canvas');
+		controlCanvas.width = width * 2;
+		controlCanvas.height = height * 2;
+		controlCanvas.style.position = 'absolute';
+		controlCanvas.style.top = '0';
+		controlCanvas.style.left = '0';
+		document.body.appendChild(controlCanvas);
+
+		const forwardRendererArea1 = new ForwardRenderer(canvasArea1);
+		const forwardRendererArea2 = new ForwardRenderer(canvasArea2);
+		const forwardRendererArea3 = new ForwardRenderer(canvasArea3);
+		const forwardRendererArea4 = new ForwardRenderer(canvasArea4);
+
+		const scene = new t3d.Scene();
+
+		const sphere_geometry = new t3d.SphereGeometry(10, 20, 20);
+		const phong = new t3d.PhongMaterial();
+		phong.diffuse.setHex(0xffffff);
+
+		const sphere = new t3d.Mesh(sphere_geometry, phong);
+		scene.add(sphere);
+
+		const plane_geometry = new t3d.PlaneGeometry(100, 100);
+		const lambert = new t3d.LambertMaterial();
+		lambert.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(plane_geometry, lambert);
+		plane.position.y = -10;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
+		directionalLight.position.set(20, 30, 40);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 100;
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 0, 100);
+		scene.add(camera);
+		const controllerArea1 = new OrbitControls(camera, controlCanvas);
+
+		const params = {
+			Area1: true,
+			Area2: true,
+			Area3: true,
+			Area4: true
+		};
+		
+		const gui = new GUI();
+		gui.add(params, 'Area1');
+		gui.add(params, 'Area2');
+		gui.add(params, 'Area3');
+		gui.add(params, 'Area4');
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+			controllerArea1.update();
+
+			forwardRendererArea1.setClearColor(1, 0, 0, 1);
+			forwardRendererArea1.clear(false, true, true);
+			if (params.Area1) {
+				camera.setMagnifyRegion(45 / 180 * Math.PI, width / height, 1, 10000, -1, 0, 0, 1);
+				forwardRendererArea1.render(scene, camera);
+			}
+		
+			forwardRendererArea2.setClearColor(1, 0, 0, 1);
+			forwardRendererArea2.clear(false, true, true);
+			if (params.Area2) {
+				camera.setMagnifyRegion(45 / 180 * Math.PI, width / height, 1, 10000, 0, 0, 1, 1);
+				forwardRendererArea2.render(scene, camera);
+			}
+
+			forwardRendererArea3.setClearColor(1, 0, 0, 1);
+			forwardRendererArea3.clear(false, true, true);
+			if (params.Area3) {
+				camera.setMagnifyRegion(45 / 180 * Math.PI, width / height, 1, 10000, -1, -1, 0, 0);
+				forwardRendererArea3.render(scene, camera);
+			}
+
+			forwardRendererArea4.setClearColor(1, 0, 0, 1);
+			forwardRendererArea4.clear(false, true, true);
+			if (params.Area4) {
+				camera.setMagnifyRegion(45 / 180 * Math.PI, width / height, 1, 10000, 0, -1, 1, 0);
+				forwardRendererArea4.render(scene, camera);
+			}
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = Math.round(window.innerWidth / 2) || 2;
+			height = Math.round(window.innerHeight / 2) || 2;
+			controlCanvas.width = width * 2;
+			controlCanvas.height = height * 2;
+			forwardRendererArea1.backRenderTarget.resize(width, height);
+			forwardRendererArea2.backRenderTarget.resize(width, height);
+			forwardRendererArea3.backRenderTarget.resize(width, height);
+			forwardRendererArea4.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
