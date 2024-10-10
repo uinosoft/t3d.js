@@ -31,8 +31,10 @@
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { PointLightHelper } from 't3d/addons/objects/PointLightHelper.js';
 		import { ShadowShader } from 't3d/addons/shaders/ShadowShader.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -47,6 +49,15 @@
 		forwardRenderer.shadowAutoUpdate = false;
 
 		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 5, 15);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -80,29 +91,31 @@
 		plane.receiveShadow = true;
 		scene.add(plane);
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0);
 		scene.add(ambientLight);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
-		directionalLight.position.set(-3, 3, 0);
+		directionalLight.position.set(-3, 3, 3);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		directionalLight.shadow.windowSize = 10;
 		directionalLight.shadow.cameraFar = 20;
-		directionalLight.shadow.mapSize.set(1024, 1024);
 		directionalLight.castShadow = true;
 		scene.add(directionalLight);
-		
+
 		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 0.5);
 		directionalLight.add(directionalLightHelper);
 
-		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(3, 5, 15);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
+		const pointLight = new t3d.PointLight(0xffffff, 1, 20);
+		pointLight.position.set(3, 3, 3);
+		pointLight.castShadow = true;
+		pointLight.shadow.cameraFar = 20;
+		scene.add(pointLight);
 
-		const controller = new OrbitControls(camera, canvas);
+		const pointLightHelper = new PointLightHelper(pointLight, 0.5);
+		pointLight.add(pointLightHelper);
+
+		const gui = new GUI();
+		gui.add(shadowMaterial, 'opacity', 0, 1).name('Shadow Intensity');
 
 		function loop(count) {
 			requestAnimationFrame(loop);

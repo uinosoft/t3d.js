@@ -137,28 +137,40 @@ float textureCubeCompare(samplerCube depths, vec3 uv, float compare) {
 }
 
 float getPointShadow(samplerCube shadowMap, vec4 shadowCoord, vec2 shadowMapSize, vec2 shadowBias, vec2 shadowParams, vec2 shadowCameraRange) {
-    vec3 V = shadowCoord.xyz;
+    float shadow = 1.0;
 
-    // depth = normalized distance from light to fragment position
-    float depth = (length(V) - shadowCameraRange.x) / (shadowCameraRange.y - shadowCameraRange.x); // need to clamp?
-    depth += shadowBias.x;
+    vec3 lightToPosition = shadowCoord.xyz;
+    float lightToPositionLength = length(lightToPosition);
 
-    #ifdef USE_HARD_SHADOW
-        return textureCubeCompare(shadowMap, normalize(V), depth);
-    #else
-        float texelSize = shadowParams.x * 0.5 / shadowMapSize.x;
+    if (lightToPositionLength - shadowCameraRange.y <= 0.0 && lightToPositionLength - shadowCameraRange.x >= 0.0) {
+        // dp = normalized distance from light to fragment position
+        float dp = (lightToPositionLength - shadowCameraRange.x) / (shadowCameraRange.y - shadowCameraRange.x);
+        dp += shadowBias.x;
 
-        vec3 poissonDisk[4];
-        poissonDisk[0] = vec3(-1.0, 1.0, -1.0);
-        poissonDisk[1] = vec3(1.0, -1.0, -1.0);
-        poissonDisk[2] = vec3(-1.0, -1.0, -1.0);
-        poissonDisk[3] = vec3(1.0, -1.0, 1.0);
+        // bd3D = base direction 3D
+		vec3 bd3D = normalize(lightToPosition);
 
-        return textureCubeCompare(shadowMap, normalize(V) + poissonDisk[0] * texelSize, depth) * 0.25 +
-            textureCubeCompare(shadowMap, normalize(V) + poissonDisk[1] * texelSize, depth) * 0.25 +
-            textureCubeCompare(shadowMap, normalize(V) + poissonDisk[2] * texelSize, depth) * 0.25 +
-            textureCubeCompare(shadowMap, normalize(V) + poissonDisk[3] * texelSize, depth) * 0.25;
-    #endif
+        #ifdef USE_HARD_SHADOW
+            shadow = textureCubeCompare(shadowMap, bd3D, dp);
+        #else
+            float texelSize = shadowParams.x * 0.5 / shadowMapSize.x;
+            vec2 offset = vec2(-1.0, 1.0) * texelSize;
+
+            shadow = (
+                textureCubeCompare(shadowMap, bd3D + offset.xyy, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.yyy, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.xyx, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.yyx, dp) +
+                textureCubeCompare(shadowMap, bd3D, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.xxy, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.yxy, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.xxx, dp) +
+                textureCubeCompare(shadowMap, bd3D + offset.yxx, dp)
+            ) * (1.0 / 9.0);
+        #endif
+    }
+
+    return shadow;
 }
 
 #ifdef USE_PCSS_SOFT_SHADOW
