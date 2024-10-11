@@ -33,6 +33,7 @@
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -130,16 +131,19 @@
 		gui.add(motionBlurPass.uniforms, 'velocityFactor', 0, 2, 0.01);
 		gui.add(params, 'fps', 1, 60, 1);
 
-		let lastTime = Date.now();
+		const timer = new Timer();
+		let lastTime = 0;
 
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			const t = Date.now();
-			if (t - lastTime < (1000 / params.fps)) {
+			timer.update(timestamp);
+
+			if ((timer.getElapsed() - lastTime) < (1 / params.fps)) {
 				return;
 			}
-			lastTime = t;
+
+			lastTime = timer.getElapsed();
 
 			controller.update();
 

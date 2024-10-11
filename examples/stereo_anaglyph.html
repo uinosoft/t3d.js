@@ -98,12 +98,12 @@
 		
 		requestAnimationFrame(loop);
 		
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 		
 			controller.update();
 
-			const timer = 0.0001 * Date.now();
+			const timer = 0.0001 * timestamp;
 			for (let i = 0, il = spheres.length; i < il; i++) {
 				const sphere = spheres[i];
 

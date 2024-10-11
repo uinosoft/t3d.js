@@ -101,18 +101,14 @@
 		camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 2000);
 		scene.add(camera);
 
-		// const controller = new OrbitControls(camera, canvas);
-
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			const time = Date.now() * 0.00005;
+			const time = timestamp * 0.00005;
 
 			for (let i = 0; i < pointsArray.length; i++) {
 				pointsArray[i].euler.y = time * (i < 4 ? i + 1 : -(i + 1));
 			}
-
-			// controller.update();
 
 			forwardRenderer.render(scene, camera);
 		}

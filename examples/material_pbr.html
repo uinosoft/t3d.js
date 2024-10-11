@@ -132,10 +132,10 @@
 		// add a hover controller
 		const controller = new OrbitControls(camera, canvas);
 
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			const timer = Date.now() * 0.00025;
+			const timer = timestamp * 0.00025;
 
 			particleLight.position.x = Math.sin(timer * 7) * 300;
 			particleLight.position.y = Math.cos(timer * 5) * 400;

@@ -63,6 +63,7 @@
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -150,7 +151,6 @@
 		scene.add(camera);
 
 		let mouseX = 0, mouseY = 0;
-		const start_time = Date.now();
 
 		const windowHalfX = window.innerWidth / 2;
 		const windowHalfY = window.innerHeight / 2;
@@ -161,10 +161,14 @@
 		}
 		document.addEventListener('mousemove', onDocumentMouseMove, false);
 
-		function loop(count) {
+		const timer = new Timer();
+
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 		
-			const position = ((Date.now() - start_time) * 0.03) % 8000;
+			timer.update(timestamp);
+
+			const position = (timer.getElapsed() * 30) % 8000;
 
 			camera.position.x += (mouseX - camera.position.x) * 0.01;
 			camera.position.y += (-mouseY - camera.position.y) * 0.01;

@@ -111,10 +111,10 @@
 		gui.add(funcs, 'restoreBuffer').name('Restore buffer');
 		gui.add(funcs, 'setExternalBuffer').name('Set external glBuffer');
 
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			const time = Date.now() * 0.001;
+			const time = timestamp * 0.001;
 
 			points.euler.x = time * 0.1;
 			points.euler.y = time * 0.2;
