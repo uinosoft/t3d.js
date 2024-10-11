@@ -130,12 +130,15 @@ class CylinderGeometry extends Geometry {
 
 					// faces
 
-					indices.push(a, b, d);
-					indices.push(b, c, d);
+					if (radiusTop > 0) {
+						indices.push(a, b, d);
+						groupCount += 3;
+					}
 
-					// update group counter
-
-					groupCount += 6;
+					if (radiusBottom > 0) {
+						indices.push(b, c, d);
+						groupCount += 3;
+					}
 				}
 			}
 
