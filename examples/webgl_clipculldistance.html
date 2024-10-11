@@ -162,7 +162,7 @@
 		if (capabilities.version < 2 || !capabilities.getExtension('WEBGL_clip_cull_distance')) {
 			document.getElementById('notSupported').style.display = '';
 		} else {
-			forwardRenderer.gl.enable(capabilities.getExtension('WEBGL_clip_cull_distance').CLIP_DISTANCE0_WEBGL);
+			forwardRenderer.context.enable(capabilities.getExtension('WEBGL_clip_cull_distance').CLIP_DISTANCE0_WEBGL);
 			requestAnimationFrame(loop);
 		}
 

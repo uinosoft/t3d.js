@@ -27,7 +27,7 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
-		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { TransformControls } from 't3d/addons/controls/TransformControls.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -41,48 +41,55 @@
 
 		const scene = new t3d.Scene();
 
-		const spheres = [];
+		const spheresRoot = new t3d.Object3D();
+		spheresRoot.position.set(0, 8, 8);
+		scene.add(spheresRoot);
+
+		const sphereGeometry = new t3d.SphereGeometry(1, 20, 20);
 		for (let i = 0; i < 4; i++) {
-			const sphere_geometry = new t3d.SphereGeometry(i * 5 + 10, 20, 20);
-			const basicMat = new t3d.BasicMaterial();
-			basicMat.diffuse.setHex(0xffffcc);
-			basicMat.side = t3d.DRAW_SIDE.BACK;
-			basicMat.depthFunc = t3d.COMPARE_FUNC.GREATER;
-			basicMat.depthWrite = false;
-			basicMat.transparent = true;
-			basicMat.opacity = 0.3 - i / 4 * 0.3;
-			const sphere = new t3d.Mesh(sphere_geometry, basicMat);
-			sphere.position.set(0, 8, 8);
+			const material = new t3d.BasicMaterial();
+			material.diffuse.setHex(0xffffcc);
+			material.side = t3d.DRAW_SIDE.BACK;
+			material.depthFunc = t3d.COMPARE_FUNC.GREATER;
+			material.depthWrite = false;
+			material.transparent = true;
+			material.opacity = 0.3 - i / 4 * 0.3;
+		
+			const sphere = new t3d.Mesh(sphereGeometry, material);
+			sphere.scale.setScalar(i * 5 + 10);
 			sphere.renderOrder = 1;
-			scene.add(sphere);
-			spheres.push(sphere);
+			spheresRoot.add(sphere);
 		}
 
-		const plane_geometry = new t3d.PlaneGeometry(70, 70);
-		const basicMat = new t3d.BasicMaterial();
-		basicMat.diffuse.setHex(0x888888);
-		basicMat.side = t3d.DRAW_SIDE.DOUBLE;
+		const planeGeometry = new t3d.PlaneGeometry(70, 70);
+		const planeMaterial = new t3d.BasicMaterial();
+		planeMaterial.diffuse.setHex(0x888888);
+		planeMaterial.side = t3d.DRAW_SIDE.DOUBLE;
 		
-		const plane1 = new t3d.Mesh(plane_geometry, basicMat);
+		const plane1 = new t3d.Mesh(planeGeometry, planeMaterial);
 		scene.add(plane1);
 		
-		const plane2 = new t3d.Mesh(plane_geometry, basicMat);
+		const plane2 = new t3d.Mesh(planeGeometry, planeMaterial);
 		plane2.euler.x = Math.PI / 2;
 		scene.add(plane2);
 
 		const camera = new t3d.Camera();
-		camera.position.set(0, 80, 100);
+		camera.position.set(1, 80, 100);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
-		const gui = new GUI();
-		gui.add({ pos: 8 }, 'pos', 5, 15, 0.01).onChange(val => {
-			spheres.forEach(sphere => sphere.position.set(0, val, val));
-		});
+		const transformControls = new TransformControls(camera, canvas);
+		scene.add(transformControls);
+
+		spheresRoot.updateMatrix();
+		transformControls.group.addObject(spheresRoot);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
+
+			camera.updateMatrix();
+			transformControls.update();
 
 			forwardRenderer.render(scene, camera);
 		}
