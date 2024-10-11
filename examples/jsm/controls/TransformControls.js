@@ -313,7 +313,7 @@ const axisPlane = {
 	'xz': new Plane(new Vector3(0, 1, 0), 0)
 };
 
-const matchSign = (a, b) => Math.sign(b) * Math.abs(a);
+const matchSign = (a, b) => (b < 0 ? -1 : 1) * Math.abs(a);
 
 // Separate class for each control
 
