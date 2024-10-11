@@ -9665,6 +9665,9 @@ class Geometry extends EventDispatcher {
 		this.groups = [];
 
 		/**
+		 * The number of instances to be rendered. If set to -1 (default), instanced rendering is disabled.
+         * This property is used for instanced rendering, where multiple copies of the geometry
+         * are drawn with a single draw call.
 		 * @type {Number}
 		 * @default -1
 		 */
