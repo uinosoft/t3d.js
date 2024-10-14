@@ -27,6 +27,10 @@ class WebGLRenderTargets extends PropertyMap {
 				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 			}
 
+			if (renderTargetProperties.__readBuffer) {
+				gl.deleteBuffer(renderTargetProperties.__readBuffer);
+			}
+
 			that.delete(renderTarget);
 
 			if (state.currentRenderTarget === renderTarget) {
@@ -213,6 +217,45 @@ class WebGLRenderTargets extends PropertyMap {
 		}
 	}
 
+	readRenderTargetPixelsAsync(x, y, width, height, buffer) {
+		const gl = this._gl;
+		const state = this._state;
+		const constants = this._constants;
+
+		const renderTarget = state.currentRenderTarget;
+
+		if (renderTarget && renderTarget.texture) {
+			if ((x >= 0 && x <= (renderTarget.width - width)) && (y >= 0 && y <= (renderTarget.height - height))) {
+				const renderTargetProperties = this.get(renderTarget);
+				if (renderTargetProperties.__readBuffer === undefined) {
+					renderTargetProperties.__readBuffer = gl.createBuffer();
+				}
+				gl.bindBuffer(gl.PIXEL_PACK_BUFFER, renderTargetProperties.__readBuffer);
+				gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.STREAM_READ);
+
+				const glType = constants.getGLType(renderTarget.texture.type);
+				const glFormat = constants.getGLFormat(renderTarget.texture.format);
+				gl.readPixels(x, y, width, height, glFormat, glType, 0);
+
+				return _clientWaitAsync(gl).then(() => {
+					if (!renderTargetProperties.__readBuffer) {
+						return Promise.reject('Read Buffer is not valid.');
+					}
+
+					gl.bindBuffer(gl.PIXEL_PACK_BUFFER, renderTargetProperties.__readBuffer);
+					gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buffer);
+					gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+					return buffer;
+				});
+			} else {
+				return Promise.resolve(buffer);
+			}
+		} else {
+			console.warn('WebGLRenderTargets.readRenderTargetPixelsAsync: readPixels from renderTarget failed. Framebuffer not bound or texture not attached.');
+			return Promise.reject();
+		}
+	}
+
 	updateRenderTargetMipmap(renderTarget) {
 		const gl = this._gl;
 		const state = this._state;
@@ -264,6 +307,35 @@ function drawBufferSort(a, b) {
 
 function _isPowerOfTwo(renderTarget) {
 	return MathUtils.isPowerOfTwo(renderTarget.width) && MathUtils.isPowerOfTwo(renderTarget.height);
+}
+
+function _clientWaitAsync(gl) {
+	const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+	gl.flush();
+
+	return new Promise(function(resolve, reject) {
+		function test() {
+			const res = gl.clientWaitSync(sync, gl.SYNC_FLUSH_COMMANDS_BIT, 0);
+
+			if (res === gl.WAIT_FAILED) {
+				gl.deleteSync(sync);
+				reject();
+				return;
+			}
+
+			if (res === gl.TIMEOUT_EXPIRED) {
+				requestAnimationFrame(test);
+				return;
+			}
+
+			gl.deleteSync(sync);
+
+			resolve();
+		}
+
+		test();
+	});
 }
 
 export { WebGLRenderTargets };

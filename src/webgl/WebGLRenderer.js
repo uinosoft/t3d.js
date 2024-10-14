@@ -157,8 +157,12 @@ class WebGLRenderer extends ThinRenderer {
 	}
 
 	readRenderTargetPixels(x, y, width, height, buffer) {
-		this._renderTargets.readRenderTargetPixels(x, y, width, height, buffer);
-		return Promise.resolve(buffer);
+		if (this.asyncReadPixel) {
+			return this._renderTargets.readRenderTargetPixelsAsync(x, y, width, height, buffer);
+		} else {
+			this._renderTargets.readRenderTargetPixels(x, y, width, height, buffer);
+			return Promise.resolve(buffer);
+		}
 	}
 
 	updateRenderTargetMipmap(renderTarget) {

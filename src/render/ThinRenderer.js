@@ -35,6 +35,13 @@ class ThinRenderer {
 			compileAsynchronously: false
 		};
 
+		/**
+         * Whether to perform readPixel operations asynchronously.
+         * @type {Boolean}
+		 * @default false
+         */
+		this.asyncReadPixel = false;
+
 		this._passInfo = {
 			// Whether the renderer is in the process of pass rendering.
 			// If true, means that the beginRender method has been called but the endRender method has not been called.
@@ -163,7 +170,9 @@ class ThinRenderer {
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {}
 
 	/**
-	 * Reads the pixel data from the current renderTarget into the buffer you pass in.
+	 * Reads the pixel data from the current render target into the provided buffer.
+	 * The Renderer.asyncReadPixel property determines whether this operation is synchronous or asynchronous.
+	 * To maintain consistency, this method always returns a Promise object.
 	 * @param {Number} x - The x coordinate of the rectangle to read from.
 	 * @param {Number} y - The y coordinate of the rectangle to read from.
 	 * @param {Number} width - The width of the rectangle to read from.
