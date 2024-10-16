@@ -31,6 +31,7 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { CircleGeometry } from 't3d/addons/geometries/CircleGeometry.js';
 		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
+		import { TorusBuilder } from 't3d/addons/geometries/builders/TorusBuilder.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 
 		let width = window.innerWidth || 2;
@@ -81,6 +82,7 @@
 			new t3d.CylinderGeometry(0, 5, 10, 20, 1),
 			new t3d.TorusKnotGeometry(5, 1.5),
 			new CircleGeometry(7),
+			createGeometryByData(TorusBuilder.getGeometryData(5, 2, 16, 16)),
 			createGeometryByData(PolyhedronBuilder.getTetrahedronGeometryData(8)),
 			createGeometryByData(PolyhedronBuilder.getOctahedronGeometryData(8)),
 			createGeometryByData(PolyhedronBuilder.getIcosahedronGeometryData(8)),
@@ -107,6 +109,10 @@
 
 			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(data.positions), 3)));
 			geometry.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(data.uvs), 2)));
+
+			if (data.indices) {
+				geometry.setIndex(data.indices);
+			}
 
 			GeometryUtils.computeNormals(geometry);
 
