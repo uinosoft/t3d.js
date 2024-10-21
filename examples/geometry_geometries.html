@@ -32,6 +32,7 @@
 		import { CircleGeometry } from 't3d/addons/geometries/CircleGeometry.js';
 		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
 		import { TorusBuilder } from 't3d/addons/geometries/builders/TorusBuilder.js';
+		import { LatheBuilder } from 't3d/addons/geometries/builders/LatheBuilder.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 
 		let width = window.innerWidth || 2;
@@ -47,7 +48,7 @@
 		const scene = new t3d.Scene();
 
 		const camera = new t3d.Camera();
-		camera.position.set(0, 0, 120);
+		camera.position.set(0, 0, 150);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
@@ -82,6 +83,7 @@
 			new t3d.CylinderGeometry(0, 5, 10, 20, 1),
 			new t3d.TorusKnotGeometry(5, 1.5),
 			new CircleGeometry(7),
+			createGeometryByData(LatheBuilder.getGeometryData([[0, -7], [5, -2], [5, 2], [0, 7]])),
 			createGeometryByData(TorusBuilder.getGeometryData(5, 2, 16, 16)),
 			createGeometryByData(PolyhedronBuilder.getTetrahedronGeometryData(8)),
 			createGeometryByData(PolyhedronBuilder.getOctahedronGeometryData(8)),
@@ -96,8 +98,8 @@
 			const mesh = new t3d.Mesh(geometries[i], material);
 
 			mesh.position.set(
-				(i % 3 - 1) * 18,
-				-(Math.floor(i / 3) - 1.5) * 22,
+				(i % 4 - 1.5) * 18,
+				-(Math.floor(i / 4) - 1.5) * 22,
 				0
 			);
 
@@ -114,7 +116,11 @@
 				geometry.setIndex(data.indices);
 			}
 
-			GeometryUtils.computeNormals(geometry);
+			if (data.normals) {
+				geometry.addAttribute('a_Normal', new t3d.Attribute(new t3d.Buffer(new Float32Array(data.normals), 3)));
+			} else {
+				GeometryUtils.computeNormals(geometry);
+			}
 
 			geometry.computeBoundingBox();
 			geometry.computeBoundingSphere();
