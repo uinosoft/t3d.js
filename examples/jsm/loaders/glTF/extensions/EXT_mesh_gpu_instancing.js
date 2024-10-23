@@ -1,6 +1,6 @@
-import { Object3D, Mesh, SkinnedMesh, Matrix4, Vector3, Quaternion, Attribute, Buffer } from 't3d';
+import { Object3D, Mesh, SkinnedMesh, Matrix4, Vector3, Quaternion, Attribute, Buffer, MATERIAL_TYPE } from 't3d';
 import { GLTFUtils } from '../GLTFUtils.js';
-import { InstancedPBRMaterial } from '../../../materials/InstancedPBRMaterial.js';
+import { InstancedPBRMaterial, InstancedBasicMaterial } from '../../../materials/InstancedMaterial.js';
 
 /**
  * EXT_mesh_gpu_instancing
@@ -20,7 +20,12 @@ export class EXT_mesh_gpu_instancing {
 			const instancedGeometry = geometry.clone();
 			setInstancedAttributes(instancedGeometry, EXT_mesh_gpu_instancing, accessors);
 
-			const instancedMaterial = new InstancedPBRMaterial(material);
+			let instancedMaterial;
+			if (material.type === MATERIAL_TYPE.BASIC) {
+				instancedMaterial = new InstancedBasicMaterial(material);
+			} else {
+				instancedMaterial = new InstancedPBRMaterial(material);
+			}
 
 			let mesh;
 

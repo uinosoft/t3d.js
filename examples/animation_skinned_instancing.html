@@ -31,7 +31,7 @@
 		import { Clock } from 't3d/addons/Clock.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
-		import { InstancedPBRMaterial } from 't3d/addons/materials/InstancedPBRMaterial.js';
+		import { InstancedPBRMaterial, InstancedDepthMaterial } from 't3d/addons/materials/InstancedMaterial.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { SceneUtils } from 't3d/addons/SceneUtils.js';
@@ -79,40 +79,6 @@
 		const controller = new OrbitControls(camera, canvas);
 		controller.target.set(0, 1.5, 0);
 
-		// fix depth material for instancing
-
-		const instancingParsVert = `
-			#ifdef USE_INSTANCING
-				attribute mat4 instanceMatrix;
-				uniform mat4 instanceOffset;
-			#endif
-		`;
-
-		const instancingPositionVert = `
-			#ifdef USE_INSTANCING
-				mat4 localInstanceMatrix = inverseMat4(instanceOffset) * instanceMatrix * instanceOffset;
-				transformed = (localInstanceMatrix * vec4(transformed, 1.0)).xyz;
-			#endif
-		`;
-
-		const depthVertexShader = `
-			#include <common_vert>
-			#include <morphtarget_pars_vert>
-			#include <skinning_pars_vert>
-			#include <uv_pars_vert>
-			#include <logdepthbuf_pars_vert>
-			${instancingParsVert}
-			void main() {
-				#include <uv_vert>
-				#include <begin_vert>
-				#include <morphtarget_vert>
-				#include <skinning_vert>
-				${instancingPositionVert}
-				#include <pvm_vert>
-				#include <logdepthbuf_vert>
-			}
-		`;
-
 		// override shadowMapPass.getDepthMaterial
 
 		const depthMaterials = [];
@@ -126,23 +92,17 @@
 
 			let material = depthMaterials[index];
 			if (material === undefined) {
-				material = new t3d.DepthMaterial();
-				material.type = t3d.MATERIAL_TYPE.SHADER;
+				material = useInstancing ? new InstancedDepthMaterial() : new t3d.DepthMaterial();
 				material.packToRGBA = true;
-				material.shaderName = 'CUSTOM_DEPTH';
-				material.vertexShader = depthVertexShader;
-				material.fragmentShader = t3d.ShaderLib.depth_frag;
-
-				if (useInstancing) {
-					material.defines.USE_INSTANCING = true;
-					material.uniforms.instanceOffset = new Float32Array(16);
-				}
 
 				depthMaterials[index] = material;
 			}
 
 			material.side = shadowSide[renderable.material.side];
-			material.uniforms.instanceOffset.set(renderable.material.uniforms.instanceOffset);
+
+			if (useInstancing) {
+				material.uniforms.instanceOffset.set(renderable.material.uniforms.instanceOffset);
+			}
 
 			return material;
 		};

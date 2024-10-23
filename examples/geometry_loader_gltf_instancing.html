@@ -31,6 +31,7 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { EXT_mesh_gpu_instancing } from 't3d/addons/loaders/glTF/extensions/EXT_mesh_gpu_instancing.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { InstancedDepthMaterial } from 't3d/addons/materials/InstancedMaterial.js';
 		import { EnvTextureCubeLoader } from 't3d/addons/loaders/EnvLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
@@ -61,7 +62,12 @@
 		});
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
-		directionalLight.position.set(0, 10, 30);
+		directionalLight.position.set(0, 300, 300);
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 650;
+		directionalLight.shadow.cameraNear = 10;
+		directionalLight.shadow.cameraFar = 800;
+		directionalLight.shadow.mapSize.set(1024, 1024);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		scene.add(directionalLight);
 
@@ -94,6 +100,12 @@
 		
 		loader.load('./resources/models/gltf/teapots_galore/teapots_galore.gltf').then(result => {
 			scene.add(result.root);
+			result.root.traverse(node => {
+				if (node.isMesh) {
+					node.castShadow = true;
+					node.receiveShadow = true;
+				}
+			});
 		}).catch(e => console.error(e));
 
 		const stats = new Stats();
@@ -125,6 +137,34 @@
 			canvas.style.height = height + 'px';
 		}
 		window.addEventListener('resize', onWindowResize, false);
+
+		// override shadowMapPass.getDepthMaterial
+
+		const depthMaterials = [];
+		const shadowSide = { 'front': t3d.DRAW_SIDE.BACK, 'back': t3d.DRAW_SIDE.FRONT, 'double': t3d.DRAW_SIDE.DOUBLE };
+		forwardRenderer.shadowMapPass.getDepthMaterial = function(renderable) {
+			const useSkinning = !!renderable.object.skeleton;
+			const useMorphing = renderable.geometry.morphAttributes.position && renderable.geometry.morphAttributes.position.length > 0;
+			const useInstancing = renderable.material.defines.USE_INSTANCING;
+
+			const index = useMorphing << 0 | useSkinning << 1 | useInstancing << 2;
+
+			let material = depthMaterials[index];
+			if (material === undefined) {
+				material = useInstancing ? new InstancedDepthMaterial() : new t3d.DepthMaterial();
+				material.packToRGBA = true;
+
+				depthMaterials[index] = material;
+			}
+
+			material.side = shadowSide[renderable.material.side];
+
+			if (useInstancing) {
+				material.uniforms.instanceOffset.set(renderable.material.uniforms.instanceOffset);
+			}
+
+			return material;
+		};
 	</script>
 </body>
 </html>
