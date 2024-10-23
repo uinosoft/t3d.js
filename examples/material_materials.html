@@ -30,6 +30,8 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { AttenuationPBRMaterial } from 't3d/addons/materials/AttenuationMaterial.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -42,8 +44,6 @@
 		const forwardRenderer = new ForwardRenderer(canvas);
 
 		const scene = new t3d.Scene();
-
-		const sphere_geometry = new t3d.SphereGeometry(9, 20, 20);
 
 		const textureLoader = new Texture2DLoader();
 
@@ -63,29 +63,62 @@
 			cubeTexturePath + 'nz.jpg'
 		]);
 		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
 		const skyBox = new SkyBox(cubeTexture);
 		skyBox.gamma = true;
 		scene.add(skyBox);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 0, 12);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+		directionalLight.position.set(20, 30, 40);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		// materials
+
+		const points = new t3d.PointsMaterial();
+		points.size = 0.1;
+
+		const line = new t3d.LineMaterial();
+
+		const lineloop = new t3d.LineMaterial();
+		lineloop.drawMode = t3d.DRAW_MODE.LINE_LOOP;
 
 		const baisc = new t3d.BasicMaterial();
 		baisc.diffuse.setHex(0xffffff);
 		baisc.diffuseMap = texture;
 		baisc.aoMap = ao_texture;
+
 		const lambert = new t3d.LambertMaterial();
 		lambert.diffuse.setHex(0xffffff);
 		lambert.diffuseMap = texture;
+
 		const phong = new t3d.PhongMaterial();
 		phong.diffuse.setHex(0xffffff);
 		phong.diffuseMap = texture;
+
 		const pbr = new t3d.PBRMaterial();
 		pbr.diffuse.setHex(0xffffff);
 		pbr.diffuseMap = texture;
-		const line = new t3d.LineMaterial();
-		const points = new t3d.PointsMaterial();
-		const lineloop = new t3d.LineMaterial();
-		lineloop.drawMode = t3d.DRAW_MODE.LINE_LOOP;
 
-		const materials = [points, line, lineloop, baisc, lambert, phong, pbr];
+		const attenuation = new AttenuationPBRMaterial();
+		attenuation.diffuseMap = texture;
+
+		// spheres
+
+		const geometry = new t3d.SphereGeometry(1, 20, 20);
+		const materials = [
+			points, line, lineloop, baisc,
+			lambert, phong, pbr, attenuation
+		];
 
 		for (let i = 0, l = materials.length; i < l; i++) {
 			for (let j = 0; j < 2; j++) {
@@ -95,34 +128,19 @@
 					material.envMap = cubeTexture;
 					material.envMapIntensity = i < 6 ? 0.5 : 1;
 				}
-				const sphere = new t3d.Mesh(sphere_geometry, material);
-				sphere.position.set((i - l / 2) * 20 + 10, 0, j * 30 - 15);
+				const sphere = new t3d.Mesh(geometry, material);
+				sphere.position.x = i % 4 * 2.5 - 3.5;
+				sphere.position.y = (-Math.floor(i / 4) * 5 + 3.5) - (j * 2.5);
 				scene.add(sphere);
 			}
 		}
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
-		scene.add(ambientLight);
+		//
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
-		directionalLight.position.set(20, 30, 40);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		scene.add(directionalLight);
-
-		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(0, 60, 120);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
-
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			// rotate camera
-			camera.position.x = 120 * Math.sin(count / 1000 * .3);
-			camera.position.z = 120 * Math.cos(count / 1000 * .3);
-			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			controller.update();
 
 			forwardRenderer.render(scene, camera);
 		}
