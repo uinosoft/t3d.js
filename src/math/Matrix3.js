@@ -61,6 +61,17 @@ class Matrix3 {
 	}
 
 	/**
+	 * Checks if the matrix is an identity matrix.
+	 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
+	 */
+	isIdentity() {
+		const te = this.elements;
+		return te[0] === 1 && te[3] === 0 && te[6] === 0
+			&& te[1] === 0 && te[4] === 1 && te[7] === 0
+			&& te[2] === 0 && te[5] === 0 && te[8] === 1;
+	}
+
+	/**
 	 * Take the inverse of this matrix
 	 * @return {t3d.Matrix3}
 	 */

@@ -35,8 +35,8 @@ class Matrix4 {
 	}
 
 	/**
-	 * Check if the current matrix is identity.
-	 * @returns {Boolean} true is the matrix is the identity matrix
+	 * Checks if the matrix is an identity matrix.
+	 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
 	 */
 	isIdentity() {
 		const te = this.elements;

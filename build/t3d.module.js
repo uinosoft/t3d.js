@@ -744,8 +744,8 @@ class Matrix4 {
 	}
 
 	/**
-	 * Check if the current matrix is identity.
-	 * @returns {Boolean} true is the matrix is the identity matrix
+	 * Checks if the matrix is an identity matrix.
+	 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
 	 */
 	isIdentity() {
 		const te = this.elements;
@@ -5194,6 +5194,17 @@ class Matrix3 {
 			0, 1, 0,
 			0, 0, 1
 		);
+	}
+
+	/**
+	 * Checks if the matrix is an identity matrix.
+	 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
+	 */
+	isIdentity() {
+		const te = this.elements;
+		return te[0] === 1 && te[3] === 0 && te[6] === 0
+			&& te[1] === 0 && te[4] === 1 && te[7] === 0
+			&& te[2] === 0 && te[5] === 0 && te[8] === 1;
 	}
 
 	/**
