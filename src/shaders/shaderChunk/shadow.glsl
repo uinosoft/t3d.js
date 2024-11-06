@@ -90,7 +90,8 @@ float computeShadowWithPCF5(sampler2DShadow shadowSampler, vec3 shadowCoord, vec
 }
 
 float computeFallOff(float value, vec2 clipSpace, float frustumEdgeFalloff) {
-    float mask = smoothstep(1.0 - frustumEdgeFalloff, 1.00000012, clamp(dot(clipSpace, clipSpace), 0., 1.));
+    float factor = mix(clipSpace.y * abs(clipSpace.y), dot(clipSpace, clipSpace), step(0., frustumEdgeFalloff));
+    float mask = smoothstep(1.0 - abs(frustumEdgeFalloff), 1.00000012, clamp(factor, 0., 1.));
     return mix(value, 1.0, mask);
 }
 

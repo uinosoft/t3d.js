@@ -24,6 +24,8 @@ class DirectionalLightShadow extends LightShadow {
 
 		/**
 		 * Controls the extent to which the shadows fade out at the edge of the frustum.
+		 * If the value is greater than 0, the shadow fades out from center to all sides of shadow texture (radial fade out),
+		 * if the value is less than 0, the shadow will fade out from the y+ direction (vertical fade out).
 		 * @type {Number}
 		 * @default 0
 		 */
