@@ -14163,10 +14163,6 @@ class DirectionalLightShadow extends LightShadow {
 		 */
 		this.frustumEdgeFalloff = 0.0;
 
-		// direct light is just a direction
-		// we would not do camera frustum cull, because this light could be any where
-		this.camera.frustumCulled = false;
-
 		this.renderTarget = new RenderTarget2D(this.mapSize.x, this.mapSize.y);
 
 		const map = this.renderTarget.texture;
