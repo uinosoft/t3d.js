@@ -3,7 +3,6 @@ import { TEXTURE_FILTER, PIXEL_FORMAT, PIXEL_TYPE, ATTACHMENT, COMPARE_FUNC } fr
 import { Texture2D } from '../../resources/textures/Texture2D.js';
 import { RenderTarget2D } from '../../resources/targets/RenderTarget2D.js';
 import { RenderBuffer } from '../../resources/RenderBuffer.js';
-import { Vector3 } from '../../math/Vector3.js';
 
 /**
  * This is used internally by DirectionalLights for calculating shadows.
@@ -55,10 +54,6 @@ class DirectionalLightShadow extends LightShadow {
 		this.depthMap = depthTexture;
 
 		this._depthBuffer = depthBuffer;
-
-		this._lookTarget = new Vector3();
-
-		this._up = new Vector3(0, 1, 0);
 	}
 
 	update(light) {
@@ -71,18 +66,11 @@ class DirectionalLightShadow extends LightShadow {
 
 	_updateCamera(light) {
 		const camera = this.camera;
-		const lookTarget = this._lookTarget;
 
-		// set camera position and lookAt(rotation)
-		light.getWorldDirection(lookTarget);
-		camera.position.setFromMatrixPosition(light.worldMatrix);
-		lookTarget.multiplyScalar(-1).add(camera.position);
-		camera.lookAt(lookTarget, this._up);
-
-		// update view matrix
+		camera.matrix.copy(light.worldMatrix);
+		camera.matrix.decompose(camera.position, camera.quaternion, camera.scale);
 		camera.updateMatrix();
 
-		// update projection
 		const halfWindowSize = this.windowSize / 2;
 		camera.setOrtho(-halfWindowSize, halfWindowSize, -halfWindowSize, halfWindowSize, this.cameraNear, this.cameraFar);
 	}
