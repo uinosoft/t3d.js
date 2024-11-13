@@ -92,7 +92,8 @@
 		"texture_loader_compressed_pvr",
 		"texture_loader_tga",
 		"texture_generator_heatmap",
-		"texture_generator_idwmap"
+		"texture_generator_idwmap",
+		"texture_pmrem_test"
 	],
 	"scene": [
 		"scene_fog",
