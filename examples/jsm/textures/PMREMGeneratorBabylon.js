@@ -71,9 +71,10 @@ class PMREMGenerator2 {
 
 		this.NnrmalDistributionPass = new ShaderPostPass(NnrmalDistributionShader);
 		this.tempRenderTarget = new RenderTarget2D(1024, 256);
-		this.tempRenderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
-		this.tempRenderTarget.texture.magFilter = TEXTURE_FILTER.LINEAR;
-		this.tempRenderTarget.generateMipmaps = false;
+		this.tempRenderTarget.texture.type = PIXEL_TYPE.FLOAT;
+		this.tempRenderTarget.texture.minFilter = TEXTURE_FILTER.NEAREST;
+		this.tempRenderTarget.texture.magFilter = TEXTURE_FILTER.NEAREST;
+		this.tempRenderTarget.texture.generateMipmaps = false;
 	}
 
 	/**
@@ -112,6 +113,7 @@ class PMREMGenerator2 {
 			this._generateCubeTexture = new CubeTxtureGenerator();
 		}
 		source = this._generateCubeTexture.generate(renderer, source);
+		// return source;
 
 		// Calculate mipmaps number and cube size
 
@@ -166,7 +168,7 @@ class PMREMGenerator2 {
 		// Render mipmaps
 
 		this._dummyScene.updateRenderStates(reflectionProbe.camera);
-		this._envMesh.material.uniforms.resolution = Math.pow(2, mipmapNum + 1);
+		this._envMesh.material.uniforms.resolution = cubeSize;
 		for (let i = 0; i < mipmapNum + 1; i++) {
 			if (i === 0) {
 				this._envMesh.material.uniforms.roughness = 0.000001;
@@ -255,7 +257,7 @@ const prefilterShader = {
 		uniform float envMapFlip;
 		uniform float resolution;
 		varying vec3 vDir;
-		
+
 		const float K = 4.;
 
 		vec3 importanceSampleNormal(float i, float roughness) {
@@ -265,8 +267,8 @@ const prefilterShader = {
 
 		float normalDistributionFunction_TrowbridgeReitzGGX(float NdotH, float alphaG) {
 			float a2 = alphaG * alphaG;
-			float d = NdotH*NdotH*(a2-1.0)+1.0;
-			return a2/(PI*d*d);
+			float d = NdotH * NdotH * (a2 - 1.0) + 1.0;
+			return a2 / (PI * d * d);
 		}
 
 		float log4(float x) {
@@ -277,29 +279,40 @@ const prefilterShader = {
 			vec3 V = normalize(vDir);
 
 			vec3 N = V;
+
 			mat3 R;
-			vec3 up =abs(N.y) > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+
+			vec3 up = abs(N.y) > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
 			R[0] = normalize(cross(up, N));
-			R[1] = cross(N, R[0]);
-			R[2] = N;
+			R[2] = cross(N, R[0]);
+			R[1] = N;
+
 			vec3 prefilteredColor = vec3(0.0);
 			float totalWeight = 0.0;
 			float fMaxSampleNumber = float(SAMPLE_NUMBER);
 			float dim0 = resolution;
 			float omegaP = (4. * PI) / (6. * dim0 * dim0);
 			for (int i = 0; i < SAMPLE_NUMBER; i++) {
-				vec3 H = texture2D(normalDistribution, vec2(float(i) / fMaxSampleNumber,roughness)).rgb;
-				float NoY = H.y;	
-				float NoY2 = H.y * H.y;
-				float NoL = 2. * NoY2 - 1.;
-				vec3 L = vec3(2. * NoY * H.x, 2. * NoY * H.z, -NoL);
-				L = normalize(L);
+				vec3 H = texture2D(normalDistribution, vec2(float(i) / fMaxSampleNumber, roughness)).rgb;
+				H = normalize(R * H);
+
+				vec3 L = normalize(reflect(-V, H));
+
+				// float NoY = H.y;
+				// float NoY2 = H.y * H.y;
+				// float NoL = 2. * NoY2 - 1.;
+
+				float NoL = clamp(dot(N, L), 0.0, 1.0);
+				float NoH = normalize(dot(N, H));
+
+				// vec3 L = vec3(2. * NoY * H.x, 2. * NoY * H.z, -NoL);
+				// L = normalize(L);
 				if (NoL > 0.0) {
-					float pdf_inversed = 4. / normalDistributionFunction_TrowbridgeReitzGGX(NoY, roughness);
+					float pdf_inversed = 4. / normalDistributionFunction_TrowbridgeReitzGGX(NoH, roughness);
 					float omegaS = 1./ fMaxSampleNumber * pdf_inversed;
 					float l = log4(omegaS) - log4(omegaP) + log4(K);
-					float mipLevel = clamp(float(l), 0.0, log2(resolution) - 1.0);
-					prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3((-envMapFlip * R * L).x,(envMapFlip * R * L).yz),mipLevel )).rgb * NoL;
+					float mipLevel = clamp(float(l), 0.0, log2(resolution) - 2.0);
+					prefilteredColor += mapTexelToLinear(textureCube(environmentMap, vec3(envMapFlip * L.x, L.yz), mipLevel)).rgb * NoL;
 					totalWeight += NoL;
 				}
 			}
@@ -345,13 +358,13 @@ const NnrmalDistributionShader = {
 		}
 		vec2 hammersley(uint i, uint N) {
 			return vec2(float(i)/float(N), radicalInverse_VdC(i));
-		}	
+		}
 
 		vec3 hemisphereImportanceSampleDggx(vec2 u, float a) {
 			// pdf = D(a) * cosTheta
 			float phi = 2. * PI * u.x;
 			// NOTE: (aa-1) == (a-1)(a+1) produces better fp accuracy
-			
+
 			float cosTheta2 = (1. - u.y) / (1. + (a + 1.) * ((a - 1.) * u.y));
 			float cosTheta = sqrt(cosTheta2);
 			float sinTheta = sqrt(1. - cosTheta2);
@@ -361,10 +374,10 @@ const NnrmalDistributionShader = {
 		vec3 getValue(vec2 uv){
 			float i = uv.x * float(sampleSize);
 			vec2 b = hammersley(uint(i), uint(sampleSize));
-			vec3 value = hemisphereImportanceSampleDggx(b, uv.y); 
+			vec3 value = hemisphereImportanceSampleDggx(b, uv.y);
 			return value;
 		}
-		void main() {                                                                                                                                                   
+		void main() {
 			vec3 data = getValue(v_Uv);
 			gl_FragColor = vec4(data, 1.0);
 		}

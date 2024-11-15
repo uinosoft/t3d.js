@@ -33,6 +33,7 @@
 		import * as t3d from 't3d';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { RGBETexture2DLoader } from 't3d/addons/loaders/RGBELoader.js';
+		import { PMREMGenerator2 } from 't3d/addons/textures/PMREMGeneratorBabylon.js';
 		import { PMREMGenerator } from 't3d/addons/textures/PMREMGenerator.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
@@ -83,7 +84,7 @@
 
 		const loader = new RGBETexture2DLoader();
 
-		const pmremGenerator = new PMREMGenerator();
+		const pmremGenerator = new PMREMGenerator2();
 		pmremGenerator.rotation.y = Math.PI;
 
 		loader.load('resources/hdr/spot1Lux.hdr', function(texture) {

@@ -73,6 +73,8 @@ class CubeTxtureGenerator {
 		target.type = PIXEL_TYPE.HALF_FLOAT;
 		target.format = PIXEL_FORMAT.RGBA;
 		target.generateMipmaps = true;
+		target.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+		target.magFilter = TEXTURE_FILTER.LINEAR;
 
 		// Prepare render target
 
@@ -97,15 +99,17 @@ class CubeTxtureGenerator {
 		this._dummyScene.updateRenderStates(reflectionProbe.camera);
 
 		reflectionProbe.render(renderer, this._dummyScene);
-		for (let j = 0; j < 6; j++) {
-			const imagesData = target.images[j];
-			imagesData.data = new Uint16Array(imagesData.width * imagesData.height * 4);
-			renderTarget.activeCubeFace = j;
-			renderer.setRenderTarget(renderTarget);
-			renderer.readRenderTargetPixels(0, 0, imagesData.width, imagesData.height, imagesData.data);
-		}
+		// for (let j = 0; j < 6; j++) {
+		// 	const imagesData = target.images[j];
+		// 	imagesData.data = new Uint16Array(imagesData.width * imagesData.height * 4);
+		// 	renderTarget.activeCubeFace = j;
+		// 	renderer.setRenderTarget(renderTarget);
+		// 	renderer.readRenderTargetPixels(0, 0, imagesData.width, imagesData.height, imagesData.data);
+		// }
 
-		target.version++;
+		// renderer.updateRenderTargetMipmap(renderTarget);
+
+		// target.version++;
 
 		// Clear render stuff
 
