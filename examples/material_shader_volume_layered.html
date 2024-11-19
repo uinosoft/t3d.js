@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - shader Layered Volume</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - shader Layered Volume
+    </div>
+
+	<script src="./libs/nanobar.min.js"></script>
+	<script src="./libs/simplex-noise.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { LayeredVolumeMesh } from 't3d/addons/objects/LayeredVolumeMesh.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.position.set(20, 20, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// textures
+
+		const SIZE = 128;
+		const simplex = new SimplexNoise(Math.random);
+		const scale = 0.02;
+		const src = new Uint8Array(SIZE * SIZE * SIZE);
+		for (let k = 0; k < SIZE; k += 1) {
+			for (let j = 0; j < SIZE; j += 1) {
+				for (let i = 0; i < SIZE; i += 1) {
+					src[i + j * SIZE + k * SIZE * SIZE] = Math.abs(simplex.noise3D(i * scale, j * scale, k * scale)) * 255;
+				}
+			}
+		}
+
+		const texture3d = new t3d.Texture3D();
+		texture3d.image = { data: src, width: SIZE, height: SIZE, depth: SIZE };
+
+		const platteTexture = new Texture2DLoader().load('./resources/platte.png');
+
+		// volume mesh
+
+		const volumeMesh = new LayeredVolumeMesh({
+			width: 10,
+			height: 10,
+			depth: 5,
+			layer: 50,
+			densityTexture: texture3d,
+			platteTexture: platteTexture,
+			diskSize: 0.018,
+			diskSpacing: 0.002
+		});
+		volumeMesh.position.y = -2.5;
+		scene.add(volumeMesh);
+		
+		// gui
+
+		const gui = new GUI();
+		gui.add(volumeMesh.material, 'opacity', 0, 1, 0.01);
+		gui.add(volumeMesh.material.uniforms, 'diskSize', 0.001, 0.05, 0.001);
+		gui.add(volumeMesh.material.uniforms, 'diskSpacing', 0.001, 0.01, 0.001);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

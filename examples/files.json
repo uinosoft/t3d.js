@@ -71,7 +71,8 @@
 		"material_shader_grid",
 		"material_shader_extend",
 		"material_shader_fakeInterior",
-		"material_shader_volume"
+		"material_shader_volume",
+		"material_shader_volume_layered"
 	],
 	"texture": [
 		"texture_anisotropic",
