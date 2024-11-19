@@ -221,6 +221,9 @@
 		"webgl_shader_compile",
 		"webgl_shader_precompile"
 	],
+	"exporter": [
+		"exporter_gltf"
+	],
 	"lab": [
 		"lab_clouds",
 		"lab_earth",
