@@ -222,7 +222,8 @@
 		"webgl_shader_precompile"
 	],
 	"exporter": [
-		"exporter_gltf"
+		"exporter_gltf",
+		"exporter_draco"
 	],
 	"lab": [
 		"lab_clouds",
