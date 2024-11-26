@@ -1125,7 +1125,9 @@ class GLTFWriter {
 
 		// TODO compressed texture
 
-		const mimeType = map.userData ? map.userData.mimeType : 'image/png';
+		let mimeType = map.userData.mimeType;
+
+		if (mimeType === 'image/webp') mimeType = 'image/png';
 
 		const textureDef = {
 			sampler: this.processSampler(map),

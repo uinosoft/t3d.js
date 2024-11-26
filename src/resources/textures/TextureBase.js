@@ -1,3 +1,4 @@
+import { cloneJson } from '../../base.js';
 import { PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, TEXEL_ENCODING_TYPE } from '../../const.js';
 import { EventDispatcher } from '../../EventDispatcher.js';
 
@@ -20,6 +21,14 @@ class TextureBase extends EventDispatcher {
 		 * @type {Number}
 		 */
 		this.id = _textureId++;
+
+		/**
+		 * An object that can be used to store custom data about the {@link t3d.TextureBase}.
+		 * It should not hold references to functions as these will not be cloned.
+		 * @type {Object}
+		 * @default {}
+		 */
+		this.userData = {};
 
 		/**
 		 * Array of user-specified mipmaps (optional).
@@ -165,6 +174,8 @@ class TextureBase extends EventDispatcher {
 	 * @return {t3d.TextureBase}
 	 */
 	copy(source) {
+		this.userData = cloneJson(source.userData);
+
 		this.mipmaps = source.mipmaps.slice(0);
 
 		this.border = source.border;

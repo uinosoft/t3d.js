@@ -405,7 +405,7 @@ class RGBETexture2DLoader extends RGBELoader {
 			texture.magFilter = magFilter;
 			texture.minFilter = minFilter;
 
-			texture.userData = { rgbeInfo: { header, gamma, exposure } };
+			texture.userData.rgbeInfo = { header, gamma, exposure };
 
 			texture.version++;
 

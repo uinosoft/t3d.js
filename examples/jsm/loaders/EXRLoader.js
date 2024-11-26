@@ -1929,7 +1929,7 @@ class EXRTexture2DLoader extends EXRLoader {
 			texture.minFilter = minFilter;
 			texture.encoding = encoding;
 
-			texture.userData = { exrInfo: { header } };
+			texture.userData.exrInfo = { header };
 
 			texture.version++;
 

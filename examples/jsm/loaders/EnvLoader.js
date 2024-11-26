@@ -125,7 +125,7 @@ class EnvTextureCubeLoader extends EnvLoader {
 			tempCubeTexture.dispose();
 
 			// Attach the environment information to the texture
-			texture.userData = { envInfo: { version, json } };
+			texture.userData.envInfo = { version, json };
 
 			onLoad && onLoad(texture);
 		}, onProgress, onError);

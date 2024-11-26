@@ -11816,6 +11816,14 @@
 			this.id = _textureId++;
 
 			/**
+			 * An object that can be used to store custom data about the {@link t3d.TextureBase}.
+			 * It should not hold references to functions as these will not be cloned.
+			 * @type {Object}
+			 * @default {}
+			 */
+			this.userData = {};
+
+			/**
 			 * Array of user-specified mipmaps (optional).
 			 * @type {HTMLImageElement[]|Object[]}
 			 * @default []
@@ -11959,6 +11967,7 @@
 		 * @return {t3d.TextureBase}
 		 */
 		copy(source) {
+			this.userData = cloneJson(source.userData);
 			this.mipmaps = source.mipmaps.slice(0);
 			this.border = source.border;
 			this.format = source.format;
