@@ -61,6 +61,9 @@ export class TextureParser {
 				texture.name = textureName || texture.image.__name || `texture_${index}`;
 				texture.flipY = false;
 
+				const { mimeType, uri } = gltf.images[sourceIndex];
+				texture.userData.mimeType = mimeType || getImageURIMimeType(uri);
+
 				const samplers = gltf.samplers || {};
 				parseSampler(texture, samplers[sampler]);
 
@@ -83,4 +86,18 @@ function parseSampler(texture, sampler = {}) {
 	texture.minFilter = WEBGL_FILTERS[minFilter] || TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
 	texture.wrapS = WEBGL_WRAPPINGS[wrapS] || TEXTURE_WRAP.REPEAT;
 	texture.wrapT = WEBGL_WRAPPINGS[wrapT] || TEXTURE_WRAP.REPEAT;
+}
+
+// only for jpeg, png, webp
+// because other should get mimeType from glTF image object
+function getImageURIMimeType(uri) {
+	if (uri.startsWith('data:image/')) { // early return for data URIs
+		if (uri.startsWith('data:image/jpeg')) return 'image/jpeg';
+		if (uri.startsWith('data:image/webp')) return 'image/webp';
+		return 'image/png';
+	} else {
+		if (uri.search(/\.jpe?g($|\?)/i) > 0) return 'image/jpeg';
+		if (uri.search(/\.webp($|\?)/i) > 0) return 'image/webp';
+		return 'image/png';
+	}
 }
