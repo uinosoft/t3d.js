@@ -6,10 +6,9 @@ import { Attribute, Buffer, CubicSplineInterpolant, DRAW_MODE, DRAW_SIDE, MATERI
  * more:
  * - add wrapRoot option
  * - support ignoreForExport flag on Object3D
- * - add draco compression option (todo)
+ * - add draco compression option
  * - support GLTF_SEPARATE format (todo)
  * todo:
- * - add draco compression option
  * - support compressed texture
  * - support GLTF_SEPARATE format
  * - support GLTFMeshGpuInstancing
@@ -23,6 +22,9 @@ class GLTFExporter {
 
 	constructor() {
 		this.extensions = [];
+
+		this.dracoOptions = {};
+		this._dracoExporter = null;
 
 		this.register(GLTFMaterialsUnlitExtension);
 	}
@@ -42,6 +44,15 @@ class GLTFExporter {
 		return this;
 	}
 
+	setDRACOExporter(dracoExporter) {
+		this._dracoExporter = dracoExporter;
+		return this;
+	}
+
+	getDRACOExporter() {
+		return this._dracoExporter;
+	}
+
 	/**
 	 * Parse input root object(s) and generate GLTF output
 	 * @param {Object3D or [Object3D]} input root object(s)
@@ -55,6 +66,10 @@ class GLTFExporter {
 		const plugins = this.extensions.map(_ext => new _ext(writer));
 
 		writer.setPlugins(plugins);
+
+		writer.dracoOptions = this.dracoOptions;
+		writer.setDRACOExporter(this._dracoExporter);
+
 		writer.writeAsync(input, onDone, options).catch(onError);
 	}
 
@@ -204,6 +219,18 @@ const GLB_CHUNK_TYPE_BIN = 0x004E4942;
 // ------------------------------------------------------------------------------
 // Utility functions
 // ------------------------------------------------------------------------------
+
+function createAttributesKey(attributes) {
+	let attributesKey = '';
+
+	const keys = Object.keys(attributes).sort();
+
+	for (let i = 0, il = keys.length; i < il; i++) {
+		attributesKey += keys[i] + ':' + attributes[keys[i]] + ';';
+	}
+
+	return attributesKey;
+}
 
 function decompose(matrix3) {
 	const tx = matrix3.elements[2];
@@ -376,14 +403,22 @@ class GLTFWriter {
 		this.cache = {
 			meshes: new Map(),
 			attributes: new Map(),
+			bufferViews: new Map(),
 			materials: new Map(),
 			textures: new Map(),
 			images: new Map()
 		};
+
+		this.dracoOptions = null;
+		this.dracoExporter = null;
 	}
 
 	setPlugins(plugins) {
 		this.plugins = plugins;
+	}
+
+	setDRACOExporter(dracoExporter) {
+		this.dracoExporter = dracoExporter;
 	}
 
 	/**
@@ -394,7 +429,10 @@ class GLTFWriter {
 	 */
 	async writeAsync(input, onDone, options) {
 		this.options = Object.assign({
+			// Export format
 			format: GLTF_FORMAT.GLTF,
+			// Draco compression
+			draco: false,
 			// Export position, rotation and scale instead of matrix per node. Default is false
 			trs: false,
 			// Export only visible objects.
@@ -410,6 +448,11 @@ class GLTFWriter {
 			// It is recommended to set this to true if the root object(s) have transformations.
 			wrapRoot: false
 		}, options);
+
+		if (this.options.draco && this.dracoExporter === null) {
+			console.warn('GLTFExporter: DRACOExporter is not set but options.draco is true. Ignoring Draco compression.');
+			this.options.draco = false;
+		}
 
 		if (this.options.animations.length > 0) {
 			// Only TRS properties, and not matrices, may be targeted by animation.
@@ -684,6 +727,15 @@ class GLTFWriter {
 		const drawMode = Array.isArray(mesh.material) ? mesh.material[0].drawMode : mesh.material.drawMode;
 		const mode = DRAW_MODE_TO_GLTF[drawMode];
 
+		const morphTargets = mesh.morphTargetInfluences !== null && mesh.morphTargetInfluences.length > 0;
+
+		// KHR_draco_mesh_compression
+		// Only TRIANGLES and TRIANGLE_STRIP are supported.
+		// Morph targets are not supported because glTF does not support Draco compression with morph targets.
+		const draco = this.options.draco &&
+			(drawMode === DRAW_MODE.TRIANGLES || drawMode === DRAW_MODE.TRIANGLE_STRIP) &&
+			!morphTargets;
+
 		const meshDef = {};
 		const attributes = {};
 		const primitives = [];
@@ -707,7 +759,7 @@ class GLTFWriter {
 			// - JOINTS_0 must be UNSIGNED_BYTE or UNSIGNED_SHORT
 			// - Only custom attributes may be INT or UNSIGNED_INT
 
-			const accessor = this.processAccessor(attribute, geometry);
+			const accessor = this.processAccessor(attribute, geometry, undefined, undefined, draco);
 
 			if (accessor !== null) {
 				this.detectMeshQuantization(attributeName, attribute);
@@ -721,7 +773,7 @@ class GLTFWriter {
 		if (Object.keys(attributes).length === 0) return null;
 
 		// Morph targets
-		if (mesh.morphTargetInfluences !== null && mesh.morphTargetInfluences.length > 0) {
+		if (morphTargets) {
 			// glTF 2.0 Specification:
 			// https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#morph-targets
 
@@ -765,6 +817,21 @@ class GLTFWriter {
 		const materials = isMultiMaterial ? mesh.material : [mesh.material];
 		const groups = isMultiMaterial ? geometry.groups : [{ materialIndex: 0, start: undefined, count: undefined }];
 
+		let extensions;
+		if (draco) {
+			let dracoBufferView;
+
+			const attributesKey = createAttributesKey(attributes);
+			if (cache.bufferViews.has(attributesKey)) {
+				dracoBufferView = cache.bufferViews.get(attributesKey);
+			} else {
+				dracoBufferView = this.processDracoBufferView(geometry);
+				cache.bufferViews.set(attributesKey, dracoBufferView);
+			}
+
+			extensions = { KHR_draco_mesh_compression: dracoBufferView };
+		}
+
 		for (let i = 0, il = groups.length; i < il; i++) {
 			const primitive = {
 				mode: mode,
@@ -774,6 +841,8 @@ class GLTFWriter {
 			this.serializeUserData(geometry, primitive);
 
 			if (targets.length > 0) primitive.targets = targets;
+
+			if (extensions) primitive.extensions = extensions;
 
 			if (geometry.index !== null) {
 				let cacheKey = this.getUID(geometry.index);
@@ -818,9 +887,10 @@ class GLTFWriter {
 	 * @param  {Geometry} geometry (Optional) Geometry used for truncated draw range
 	 * @param  {Integer} start (Optional)
 	 * @param  {Integer} count (Optional)
+	 * @param  {Boolean} skipBufferView (Optional) Skip creating a bufferView and return the accessor
 	 * @return {Integer|null} Index of the processed accessor on the "accessors" array
 	 */
-	processAccessor(attribute, geometry, start, count) {
+	processAccessor(attribute, geometry, start, count, skipBufferView = false) {
 		const json = this.json;
 
 		const types = {
@@ -860,23 +930,27 @@ class GLTFWriter {
 		if (count === 0) return null;
 
 		const minMax = getMinMax(attribute, start, count);
-		let bufferViewTarget;
-
-		// If geometry isn't provided, don't infer the target usage of the bufferView. For
-		// animation samplers, target must not be set.
-		if (geometry !== undefined) {
-			bufferViewTarget = attribute === geometry.index ? GLTF_CONSTANTS.ELEMENT_ARRAY_BUFFER : GLTF_CONSTANTS.ARRAY_BUFFER;
-		}
 
 		const accessorDef = {
-			bufferView: this.processBufferView(attribute, componentType, start, count, bufferViewTarget),
-			// byteOffset: 0,
 			componentType: componentType,
 			count: count,
 			max: minMax.max,
 			min: minMax.min,
 			type: types[attribute.size]
 		};
+
+		if (!skipBufferView) {
+			let bufferViewTarget;
+
+			// If geometry isn't provided, don't infer the target usage of the bufferView. For
+			// animation samplers, target must not be set.
+			if (geometry !== undefined) {
+				bufferViewTarget = attribute === geometry.index ? GLTF_CONSTANTS.ELEMENT_ARRAY_BUFFER : GLTF_CONSTANTS.ARRAY_BUFFER;
+			}
+
+			accessorDef.bufferView = this.processBufferView(attribute, componentType, start, count, bufferViewTarget);
+			// accessorDef.byteOffset = 0;
+		}
 
 		if (attribute.normalized === true) accessorDef.normalized = true;
 		if (!json.accessors) json.accessors = [];
@@ -891,7 +965,7 @@ class GLTFWriter {
 	 * @param  {number} start
 	 * @param  {number} count
 	 * @param  {number} target (Optional) Target usage of the BufferView
-	 * @return {Object}
+	 * @return {Integer|null} Index of the processed BufferView on the "bufferViews" array
 	 */
 	processBufferView(attribute, componentType, start, count, target) {
 		const json = this.json;
@@ -971,6 +1045,38 @@ class GLTFWriter {
 		this.byteOffset += byteLength;
 
 		return json.bufferViews.push(bufferViewDef) - 1;
+	}
+
+	/**
+	 * Process and generate a draco compressed BufferView
+	 * @param  {Geometry} geometry
+	 * @return {Object}
+	 */
+	processDracoBufferView(geometry) {
+		const json = this.json;
+
+		if (!json.bufferViews) json.bufferViews = [];
+
+		const { buffer, attributes } = this.dracoExporter.parse(geometry, this.dracoOptions);
+
+		const paddedBuffer = getPaddedArrayBuffer(buffer);
+		const byteLength = paddedBuffer.byteLength;
+
+		const bufferViewDef = {
+			buffer: this.processBuffer(paddedBuffer),
+			byteOffset: this.byteOffset,
+			byteLength: byteLength
+		};
+
+		this.byteOffset += byteLength;
+
+		this.extensionsUsed['KHR_draco_mesh_compression'] = true;
+		this.extensionsRequired['KHR_draco_mesh_compression'] = true;
+
+		return {
+			bufferView: json.bufferViews.push(bufferViewDef) - 1,
+			attributes
+		};
 	}
 
 	/**

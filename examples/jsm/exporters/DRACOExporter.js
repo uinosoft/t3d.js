@@ -62,6 +62,11 @@ class DRACOExporter {
 		for (const attributeName in geometry.attributes) {
 			if (attributeName === 'a_Position') continue;
 
+			const gltfAttributeName = ATTRIBUTE_NAME_TO_GLTF[attributeName] || attributeName;
+
+			// Skip custom attributes
+			if (validVertexAttributes.test(gltfAttributeName) === false) continue;
+
 			let attributeType;
 			if (attributeName === 'a_Normal') attributeType = dracoEncoder.NORMAL;
 			else if (attributeName === 'a_Color') attributeType = dracoEncoder.COLOR;
@@ -88,7 +93,6 @@ class DRACOExporter {
 				builder.AddFloatAttribute(dracoObject, attributeType, buffer.count, attribute.size, buffer.array);
 			}
 
-			const gltfAttributeName = ATTRIBUTE_NAME_TO_GLTF[attributeName] || attributeName;
 			dracoAttributes[gltfAttributeName] = darcoAttributeID++;
 		}
 
@@ -168,5 +172,9 @@ const ATTRIBUTE_NAME_TO_GLTF = {
 	skinWeight: 'WEIGHTS_0',
 	skinIndex: 'JOINTS_0'
 };
+
+// Prefix all geometry attributes except the ones specifically
+// listed in the spec; non-spec attributes are considered custom.
+const validVertexAttributes = /^(POSITION|NORMAL|TANGENT|TEXCOORD_\d+|COLOR_\d+|JOINTS_\d+|WEIGHTS_\d+)$/;
 
 export { DRACOExporter, ENCODER_METHOD };

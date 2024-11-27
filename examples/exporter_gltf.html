@@ -9,6 +9,9 @@
 <body>
     <div id="info">
         <a href="" target="_blank">t3d</a> - gltf exporter
+	</div>
+
+	<script src="./libs/draco/draco_encoder.js"></script>
 
 	<script src="./libs/nanobar.js"></script>
 
@@ -31,6 +34,7 @@
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
 		import { GLTFExporter, GLTF_FORMAT } from 't3d/addons/exporters/GLTFExporter.js';
+		import { DRACOExporter } from 't3d/addons/exporters/DRACOExporter.js';
 		import { EnvTextureCubeLoader } from 't3d/addons/loaders/EnvLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
@@ -188,18 +192,32 @@
 
 		const exportOptions = {
 			format: GLTF_FORMAT.GLTF,
+			draco: false,
 			onlyVisible: true,
 			maxTextureSize: Infinity,
 			wrapRoot: false
 		};
 
 		const exporter = new GLTFExporter();
+		exporter.setDRACOExporter(new DRACOExporter());
+		exporter.dracoOptions.decodeSpeed = 5;
+		exporter.dracoOptions.encodeSpeed = 5;
+		exporter.dracoOptions.quantization = [16, 8, 8, 8, 8];
 
 		const gui = new GUI();
 		gui.add(exportOptions, 'format', [GLTF_FORMAT.GLTF, GLTF_FORMAT.GLB]);
 		gui.add(exportOptions, 'onlyVisible');
 		gui.add(exportOptions, 'maxTextureSize', [64, 128, 256, 512, 1024, 2048, Infinity]);
 		gui.add(exportOptions, 'wrapRoot');
+		gui.add(exportOptions, 'draco');
+		const dracoFolder = gui.addFolder('DRACO').close();
+		dracoFolder.add(exporter.dracoOptions, 'decodeSpeed', 0, 10, 1);
+		dracoFolder.add(exporter.dracoOptions, 'encodeSpeed', 0, 10, 1);
+		dracoFolder.add(exporter.dracoOptions.quantization, '0', 4, 16, 1).name('position');
+		dracoFolder.add(exporter.dracoOptions.quantization, '1', 4, 16, 1).name('normal');
+		dracoFolder.add(exporter.dracoOptions.quantization, '2', 4, 16, 1).name('color');
+		dracoFolder.add(exporter.dracoOptions.quantization, '3', 4, 16, 1).name('texcoord');
+		dracoFolder.add(exporter.dracoOptions.quantization, '4', 4, 16, 1).name('generic');
 		const button = gui.add({
 			export: async function() {
 				plane.ignoreForExport = true;
@@ -234,6 +252,8 @@
 		function saveArrayBuffer(buffer, filename) {
 			save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
 		}
+
+		//
 
 		const timer = new Timer();
 
