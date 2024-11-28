@@ -5,15 +5,14 @@ import { Attribute, Buffer, CubicSplineInterpolant, DRAW_MODE, DRAW_SIDE, MATERI
  * ref: https://github.com/mrdoob/three.js/blob/master/examples/jsm/exporters/GLTFExporter.js
  * more:
  * - add wrapRoot option
- * - support ignoreForExport flag on Object3D
  * - add draco compression option
- * - support GLTF_SEPARATE format (todo)
+ * - add support for `GLTF_SEPARATE` format
+ * - add support for ignoreForExport flag on Object3D
  * todo:
+ * - export cameras
  * - support compressed texture
- * - support GLTF_SEPARATE format
  * - support GLTFMaterialsClearcoatExtension
  * - support GLTFMaterialsSpecularExtension
- * - export cameras
  */
 class GLTFExporter {
 
@@ -407,6 +406,11 @@ class GLTFWriter {
 			images: new Map()
 		};
 
+		this.resources = [];
+
+		// Track file names, to ensure no duplicates
+		this.fileNamesUsed = {};
+
 		this.dracoOptions = null;
 		this.dracoExporter = null;
 	}
@@ -431,6 +435,8 @@ class GLTFWriter {
 			format: GLTF_FORMAT.GLTF,
 			// Draco compression
 			draco: false,
+			// Resource directory, defualt is './'
+			resourcePath: './',
 			// Export position, rotation and scale instead of matrix per node. Default is false
 			trs: false,
 			// Export only visible objects.
@@ -526,6 +532,20 @@ class GLTFWriter {
 				glbReader.onloadend = function() {
 					onDone(glbReader.result);
 				};
+			};
+		} else if (options.format === GLTF_FORMAT.GLTF_SEPARATE) {
+			const reader = new FileReader();
+			reader.readAsArrayBuffer(blob);
+			reader.onloadend = function() {
+				const resources = writer.resources;
+
+				const ext = 'bin';
+				const name = writer.getUniqueFileName('all', ext);
+				resources.push({ name, ext, content: getPaddedArrayBuffer(reader.result) });
+
+				json.buffers[0].uri = options.resourcePath + name + '.' + ext;
+
+				onDone({ json, resources });
 			};
 		} else {
 			if (json.buffers && json.buffers.length > 0) {
@@ -1279,6 +1299,8 @@ class GLTFWriter {
 
 		const imageDef = { mimeType: mimeType };
 
+		if (image.__name) imageDef.name = image.__name;
+
 		const canvas = getCanvas();
 
 		canvas.width = Math.min(image.width, options.maxTextureSize);
@@ -1333,13 +1355,14 @@ class GLTFWriter {
 			);
 		} else {
 			if (canvas.toDataURL !== undefined) {
-				imageDef.uri = canvas.toDataURL(mimeType);
+				const dataURL = canvas.toDataURL(mimeType);
+				this.setImageUri(imageDef, dataURL);
 			} else {
 				pending.push(
 					getToBlobPromise(canvas, mimeType)
 						.then(blob => new FileReader().readAsDataURL(blob))
 						.then(dataURL => {
-							imageDef.uri = dataURL;
+							this.setImageUri(imageDef, dataURL);
 						})
 				);
 			}
@@ -1641,6 +1664,42 @@ class GLTFWriter {
 		}
 
 		return this.uids.get(attribute);
+	}
+
+	/**
+	 * Returns unique file names.
+	 * @param {string} originalName
+	 * @return {string} unique name
+	 */
+	getUniqueFileName(originalName, ext) {
+		if (!this.fileNamesUsed[ext]) this.fileNamesUsed[ext] = {};
+
+		const namesUsed = this.fileNamesUsed[ext];
+
+		if (originalName in namesUsed) {
+			return originalName + '_' + (++namesUsed[originalName]);
+		} else {
+			namesUsed[originalName] = 0;
+			return originalName;
+		}
+	}
+
+	/**
+	 * Set uri to imageDef by dataURL.
+	 * @param {Object} imageDef
+	 * @param {string} dataURL
+	 */
+	setImageUri(imageDef, dataURL) {
+		const options = this.options;
+
+		if (options.format !== GLTF_FORMAT.GLTF_SEPARATE) return dataURL;
+
+		const ext = imageDef.mimeType === 'image/jpeg' ? 'jpg' : 'png';
+		const name = this.getUniqueFileName(imageDef.name || 'image', ext);
+
+		this.resources.push({ name, ext, content: dataURL });
+
+		imageDef.uri = options.resourcePath + name + '.' + ext;
 	}
 
 	/**

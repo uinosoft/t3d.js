@@ -13,6 +13,8 @@
 
 	<script src="./libs/draco/draco_encoder.js"></script>
 
+	<script src="./libs/jszip.min.js"></script>
+
 	<script src="./libs/nanobar.js"></script>
 
 	<!-- Import maps polyfill -->
@@ -205,7 +207,7 @@
 		exporter.dracoOptions.quantization = [16, 8, 8, 8, 8];
 
 		const gui = new GUI();
-		gui.add(exportOptions, 'format', [GLTF_FORMAT.GLTF, GLTF_FORMAT.GLB]);
+		gui.add(exportOptions, 'format', [GLTF_FORMAT.GLTF, GLTF_FORMAT.GLB, GLTF_FORMAT.GLTF_SEPARATE]);
 		gui.add(exportOptions, 'onlyVisible');
 		gui.add(exportOptions, 'maxTextureSize', [64, 128, 256, 512, 1024, 2048, Infinity]);
 		gui.add(exportOptions, 'wrapRoot');
@@ -222,12 +224,15 @@
 			export: async function() {
 				plane.ignoreForExport = true;
 				exportOptions.animations = clips;
+		
 				const result = await exporter.parseAsync(scene, exportOptions);
-				if (result instanceof ArrayBuffer) {
-					saveArrayBuffer(result, 'scene.glb');
+		
+				if (exportOptions.format === GLTF_FORMAT.GLB) {
+					saveGLB(result, 'scene');
+				} else if (exportOptions.format === GLTF_FORMAT.GLTF_SEPARATE) {
+					saveZIP(result, 'scene');
 				} else {
-					const output = JSON.stringify(result, null, 2);
-					saveString(output, 'scene.gltf');
+					saveGLTF(result, 'scene');
 				}
 			}
 		}, 'export').disable();
@@ -244,13 +249,36 @@
 			// URL.revokeObjectURL( url ); breaks Firefox...
 		}
 
-		function saveString(text, filename) {
-			save(new Blob([text], { type: 'text/plain' }), filename);
+		function saveGLTF(json, filename) {
+			const text = JSON.stringify(json, null, 2);
+			save(new Blob([text], { type: 'text/plain' }), filename + '.gltf');
 		}
 
+		function saveGLB(buffer, filename) {
+			save(new Blob([buffer], { type: 'application/octet-stream' }), filename + '.glb');
+		}
 
-		function saveArrayBuffer(buffer, filename) {
-			save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
+		function saveZIP(result, filename) {
+			const zip = new JSZip(); // eslint-disable-line no-undef
+
+			zip.file(filename + '.gltf', JSON.stringify(result.json, null, 2));
+
+			result.resources.forEach(({ name, ext, content }) => {
+				if (ext === 'bin') {
+					zip.file(name + '.' + ext, content);
+				} else {
+					zip.file(name + '.' + ext, dataURLToBase64(content), { base64: true });
+				}
+			});
+
+			zip.generateAsync({ type: 'blob' }).then(function(content) {
+				save(content, filename + '.zip');
+			});
+		}
+
+		function dataURLToBase64(dataURL) {
+			const base64Index = dataURL.indexOf(',');
+			return dataURL.slice(base64Index + 1);
 		}
 
 		//
