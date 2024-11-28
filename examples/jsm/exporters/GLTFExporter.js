@@ -1,4 +1,4 @@
-import { Attribute, Buffer, CubicSplineInterpolant, DRAW_MODE, DRAW_SIDE, MATERIAL_TYPE, Matrix4, Object3D, PIXEL_FORMAT, QuaternionCubicSplineInterpolant, StepInterpolant, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP } from 't3d';
+import { Attribute, Buffer, CubicSplineInterpolant, DRAW_MODE, DRAW_SIDE, MATERIAL_TYPE, Matrix4, Object3D, PIXEL_FORMAT, Quaternion, QuaternionCubicSplineInterpolant, StepInterpolant, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Vector3 } from 't3d';
 
 /**
  * GLTF Exporter
@@ -11,11 +11,8 @@ import { Attribute, Buffer, CubicSplineInterpolant, DRAW_MODE, DRAW_SIDE, MATERI
  * todo:
  * - support compressed texture
  * - support GLTF_SEPARATE format
- * - support GLTFMeshGpuInstancing
  * - support GLTFMaterialsClearcoatExtension
  * - support GLTFMaterialsSpecularExtension
- * - support original interleaved buffer
- * - export lights
  * - export cameras
  */
 class GLTFExporter {
@@ -27,6 +24,7 @@ class GLTFExporter {
 		this._dracoExporter = null;
 
 		this.register(GLTFMaterialsUnlitExtension);
+		this.register(GLTFMeshGpuInstancingExtension);
 	}
 
 	register(extension) {
@@ -1697,6 +1695,74 @@ class GLTFWriter {
 }
 
 /**
+ * Punctual Lights Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual
+ */
+class GLTFLightExtension {
+
+	constructor(writer) {
+		this.writer = writer;
+		this.name = 'KHR_lights_punctual';
+	}
+
+	writeNode(light, nodeDef) {
+		if (!light.isLight) return;
+
+		if (!light.isDirectionalLight && !light.isPointLight && !light.isSpotLight) {
+			console.warn('GLTFExporter: Only directional, point, and spot lights are supported.', light);
+			return;
+		}
+
+		const writer = this.writer;
+		const json = writer.json;
+		const extensionsUsed = writer.extensionsUsed;
+
+		const lightDef = {};
+
+		if (light.name) lightDef.name = light.name;
+
+		lightDef.color = light.color.toArray();
+
+		lightDef.intensity = light.intensity;
+
+		if (light.isDirectionalLight) {
+			lightDef.type = 'directional';
+		} else if (light.isPointLight) {
+			lightDef.type = 'point';
+
+			if (light.distance > 0) lightDef.range = light.distance;
+		} else if (light.isSpotLight) {
+			lightDef.type = 'spot';
+
+			if (light.distance > 0) lightDef.range = light.distance;
+
+			lightDef.spot = {};
+			lightDef.spot.innerConeAngle = (1.0 - light.penumbra) * light.angle;
+			lightDef.spot.outerConeAngle = light.angle;
+		}
+
+		if (light.decay !== undefined && light.decay !== 2) {
+			console.warn('GLTFExporter: Light decay may be lost. glTF is physically-based, '
+				+ 'and expects light.decay=2.');
+		}
+
+		if (!extensionsUsed[this.name]) {
+			json.extensions = json.extensions || {};
+			json.extensions[this.name] = { lights: [] };
+			extensionsUsed[this.name] = true;
+		}
+
+		const lights = json.extensions[this.name].lights;
+		lights.push(lightDef);
+
+		nodeDef.extensions = nodeDef.extensions || {};
+		nodeDef.extensions[this.name] = { light: lights.length - 1 };
+	}
+
+}
+
+/**
  * Unlit Materials Extension
  *
  * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_unlit
@@ -1725,4 +1791,65 @@ class GLTFMaterialsUnlitExtension {
 
 }
 
-export { GLTFExporter, GLTF_FORMAT, GLTFMaterialsUnlitExtension };
+/**
+ * GPU Instancing Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Vendor/EXT_mesh_gpu_instancing
+ */
+
+class GLTFMeshGpuInstancingExtension {
+
+	constructor(writer) {
+		this.writer = writer;
+		this.name = 'EXT_mesh_gpu_instancing';
+	}
+
+	writeNode(object, nodeDef) {
+		if (!object.isMesh) return;
+
+		const geometry = object.geometry;
+
+		if (geometry.instanceCount === -1) return;
+
+		const instanceMatrixAttribute = geometry.attributes.instanceMatrix;
+
+		if (!instanceMatrixAttribute || instanceMatrixAttribute.divisor === 0) return;
+
+		const writer = this.writer;
+
+		const count = geometry.instanceCount;
+
+		const translationAttr = new Float32Array(count * 3);
+		const rotationAttr = new Float32Array(count * 4);
+		const scaleAttr = new Float32Array(count * 3);
+
+		const matrix = new Matrix4();
+		const position = new Vector3();
+		const quaternion = new Quaternion();
+		const scale = new Vector3();
+
+		for (let i = 0; i < count; i++) {
+			matrix.fromArray(instanceMatrixAttribute.buffer.array, i * 16);
+			matrix.decompose(position, quaternion, scale);
+
+			position.toArray(translationAttr, i * 3);
+			quaternion.toArray(rotationAttr, i * 4);
+			scale.toArray(scaleAttr, i * 3);
+		}
+
+		const attributes = {
+			TRANSLATION: writer.processAccessor(new Attribute(new Buffer(translationAttr, 3))),
+			ROTATION: writer.processAccessor(new Attribute(new Buffer(rotationAttr, 4))),
+			SCALE: writer.processAccessor(new Attribute(new Buffer(scaleAttr, 3)))
+		};
+
+		nodeDef.extensions = nodeDef.extensions || {};
+		nodeDef.extensions[this.name] = { attributes };
+
+		writer.extensionsUsed[this.name] = true;
+		writer.extensionsRequired[this.name] = true;
+	}
+
+}
+
+export { GLTFExporter, GLTF_FORMAT, GLTFMaterialsUnlitExtension, GLTFMeshGpuInstancingExtension, GLTFLightExtension };
