@@ -10,92 +10,103 @@ import {
 	QuaternionCubicSplineInterpolant
 } from 't3d';
 import { GLTFUtils } from '../GLTFUtils.js';
-import { PATH_PROPERTIES } from '../Constants.js';
 
 export class AnimationParser {
 
-	static parse(context) {
+	static parse(context, loader) {
 		const { gltf, nodes, accessors } = context;
 		const { animations } = gltf;
 
 		if (!animations) return;
 
+		const pointerExt = loader.extensions.get('KHR_animation_pointer');
+
 		const animationClips = animations.map((gltfAnimation, index) => {
 			const { channels, samplers, name = `animation_${index}` } = gltfAnimation;
 
-			const tracks = [];
+			const trackInfos = [];
 			let duration = 0;
 
 			for (let i = 0; i < channels.length; i++) {
 				const gltfChannel = channels[i];
 				const gltfSampler = samplers[gltfChannel.sampler];
-				if (gltfSampler) {
-					const target = gltfChannel.target;
-					const name = target.node !== undefined ? target.node : target.id; // Note: target.id is deprecated.
-					const inputAccessor = accessors[gltfSampler.input];
-					const outputAccessor = accessors[gltfSampler.output];
 
-					const node = nodes[name];
+				if (!gltfSampler) continue;
 
-					if (!node) continue;
+				const targetDef = gltfChannel.target;
 
-					node.updateMatrix();
-					node.matrixAutoUpdate = true;
+				const inputAccessor = accessors[gltfSampler.input];
+				const input = new inputAccessor.buffer.array.constructor(inputAccessor.buffer.array);
 
-					let TypedKeyframeTrack;
-
-					switch (PATH_PROPERTIES[target.path]) {
-						case PATH_PROPERTIES.rotation:
-							TypedKeyframeTrack = QuaternionKeyframeTrack;
-							break;
-						case PATH_PROPERTIES.weights:
-							TypedKeyframeTrack = NumberKeyframeTrack;
-							break;
-						case PATH_PROPERTIES.position:
-						case PATH_PROPERTIES.scale:
-						default:
-							TypedKeyframeTrack = VectorKeyframeTrack;
-							break;
+				const outputAccessor = accessors[gltfSampler.output];
+				const output = new Float32Array(outputAccessor.buffer.array);
+				if (outputAccessor.normalized) {
+					const scale = GLTFUtils.getNormalizedComponentScale(outputAccessor.buffer.array.constructor);
+					for (let j = 0, jl = output.length; j < jl; j++) {
+						output[j] *= scale;
 					}
+				}
 
-					if (!TypedKeyframeTrack) {
+				duration = Math.max(duration, input[input.length - 1]);
+
+				if (pointerExt && targetDef.extensions && targetDef.extensions['KHR_animation_pointer']) {
+					pointerExt.getTrackInfos(
+						context, targetDef.extensions['KHR_animation_pointer'],
+						input, output, gltfSampler.interpolation, trackInfos
+					);
+				} else {
+					const target = nodes[targetDef.node !== undefined ? targetDef.node : targetDef.id]; // Note: targetDef.id is deprecated.
+
+					if (!target) continue;
+
+					let TypedKeyframeTrack, propertyPath;
+
+					if (targetDef.path === 'rotation') {
+						TypedKeyframeTrack = QuaternionKeyframeTrack;
+						propertyPath = 'quaternion';
+					} else if (targetDef.path === 'weights') {
+						TypedKeyframeTrack = NumberKeyframeTrack;
+						propertyPath = 'morphTargetInfluences';
+					} else if (targetDef.path === 'translation') {
+						TypedKeyframeTrack = VectorKeyframeTrack;
+						propertyPath = 'position';
+					} else if (targetDef.path === 'scale') {
+						TypedKeyframeTrack = VectorKeyframeTrack;
+						propertyPath = 'scale';
+					} else {
 						continue;
 					}
 
-					const input = new inputAccessor.buffer.array.constructor(inputAccessor.buffer.array);
-					const output = new Float32Array(outputAccessor.buffer.array);
-
-					if (outputAccessor.normalized) {
-						const scale = GLTFUtils.getNormalizedComponentScale(outputAccessor.buffer.array.constructor);
-						for (let j = 0, jl = output.length; j < jl; j++) {
-							output[j] *= scale;
-						}
-					}
-
-					const targetNodes = [];
-					if (PATH_PROPERTIES[target.path] === PATH_PROPERTIES.weights) {
-						// Node may be a Object3D (glTF mesh with several primitives) or a Mesh.
-						node.traverse(function(object) {
-							if (object.isMesh && object.morphTargetInfluences) {
-								targetNodes.push(object);
-							}
-						});
-					} else {
-						targetNodes.push(node);
-					}
-
-					for (let j = 0, jl = targetNodes.length; j < jl; j++) {
-						const interpolant = getInterpolant(gltfSampler.interpolation, TypedKeyframeTrack === QuaternionKeyframeTrack);
-						const track = new TypedKeyframeTrack(targetNodes[j], PATH_PROPERTIES[target.path], input, output, interpolant);
-						tracks.push(track);
-					}
-
-					const maxTime = input[input.length - 1];
-					if (duration < maxTime) {
-						duration = maxTime;
-					}
+					trackInfos.push({
+						TypedKeyframeTrack,
+						target,
+						propertyPath,
+						times: input,
+						values: output,
+						interpolation: gltfSampler.interpolation
+					});
 				}
 			}
+
+			const tracks = [];
+			trackInfos.forEach(trackInfo => {
+				const { TypedKeyframeTrack, target, propertyPath, times, values, interpolation } = trackInfo;
+
+				const interpolant = getInterpolant(interpolation, TypedKeyframeTrack === QuaternionKeyframeTrack);
+
+				if (propertyPath === 'weights') {
+					// node may be a Object3D (glTF mesh with several primitives) or a Mesh.
+					target.traverse(object => {
+						if (object.isMesh && object.morphTargetInfluences) {
+							const track = new TypedKeyframeTrack(object, propertyPath, times, values, interpolant);
+							tracks.push(track);
+						}
+					});
+				} else {
+					const track = new TypedKeyframeTrack(target, propertyPath, times, values, interpolant);
+					tracks.push(track);
+				}
+			});
 
 			return new KeyframeClip(name, tracks, duration);
 		});

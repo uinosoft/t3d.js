@@ -2247,7 +2247,7 @@ const _q = new Quaternion();
 class KeyframeTrack {
 
 	/**
-	 * @param {t3d.Object3D} target
+	 * @param {t3d.Object3D|t3d.Material} target
 	 * @param {String} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
@@ -3016,7 +3016,7 @@ class AnimationAction extends EventDispatcher {
 class PropertyBindingMixer {
 
 	/**
-	 * @param {Object3D} target
+	 * @param {Object3D|t3d.Material} target
 	 * @param {String} propertyPath
 	 * @param {String} typeName - vector/bool/string/quaternion/number/color
 	 * @param {Number} valueSize

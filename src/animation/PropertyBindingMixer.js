@@ -8,7 +8,7 @@ import { Quaternion } from '../math/Quaternion.js';
 class PropertyBindingMixer {
 
 	/**
-	 * @param {Object3D} target
+	 * @param {Object3D|t3d.Material} target
 	 * @param {String} propertyPath
 	 * @param {String} typeName - vector/bool/string/quaternion/number/color
 	 * @param {Number} valueSize
