@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - reverseZ depth buffer</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - reverseZ depth buffer
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OutputShader } from 't3d/addons/shaders/OutputShader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(0.6, 0.6, 0.6, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const renderTarget2D = new t3d.RenderTarget2D(width, height);
+		renderTarget2D.detach(t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		renderTarget2D.attach(
+			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH_COMPONENT32F),
+			t3d.ATTACHMENT.DEPTH_ATTACHMENT
+		);
+
+		const outputPass = new t3d.ShaderPostPass(OutputShader);
+		outputPass.material.defines.SRGB_COLOR_SPACE = true;
+		outputPass.material.defines.REINHARD_TONE_MAPPING = true;
+
+		const scene = new t3d.Scene();
+
+		const redPlane_geometry = new t3d.PlaneGeometry(100, 100);
+		const red_material = new t3d.BasicMaterial();
+		red_material.diffuse.setHex(0xff0000);
+		const red_plane = new t3d.Mesh(redPlane_geometry, red_material);
+		scene.add(red_plane);
+		
+		const bluePlane_geometry = new t3d.PlaneGeometry(50, 50);
+		const blue_material = new t3d.BasicMaterial();
+		blue_material.diffuse.setHex(0x0000ff);
+		const blue_plane = new t3d.Mesh(bluePlane_geometry, blue_material);
+		blue_plane.position.y = 0.001;
+		scene.add(blue_plane);
+		
+		scene.logarithmicDepthBuffer = true;
+
+		const camera = new t3d.Camera();
+		camera.position.set(10, 500, 200);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const params = {
+			state: 'logarithmicDepthBuffer'
+		};
+		
+		const gui = new GUI();
+		gui.add({ version: 'WebGL ' + renderer.capabilities.version }, 'version').disable();
+		gui.add(params, 'state', ['null', 'logarithmicDepthBuffer', 'reverseZDepthBuffer']).onChange(value => {
+			if (value === 'logarithmicDepthBuffer') {
+				red_material.depthFunc = t3d.COMPARE_FUNC.LEQUAL;
+				blue_material.depthFunc = t3d.COMPARE_FUNC.LEQUAL;
+				outputPass.material.depthFunc = t3d.COMPARE_FUNC.LEQUAL;
+				const ext = renderer.capabilities.getExtension('EXT_clip_control');
+				ext.clipControlEXT(ext.LOWER_LEFT_EXT, ext.NEGATIVE_ONE_TO_ONE_EXT);
+				scene.logarithmicDepthBuffer = true;
+				renderer._state.depthBuffer.setClear(1.0);
+			} else if (value === 'reverseZDepthBuffer') {
+				red_material.depthFunc = t3d.COMPARE_FUNC.GREATER;
+				blue_material.depthFunc = t3d.COMPARE_FUNC.GREATER;
+				outputPass.material.depthFunc = t3d.COMPARE_FUNC.GREATER;
+
+				scene.logarithmicDepthBuffer = false;
+				const ext = renderer.capabilities.getExtension('EXT_clip_control');
+				ext.clipControlEXT(ext.LOWER_LEFT_EXT, ext.ZERO_TO_ONE_EXT);
+				renderer._state.depthBuffer.setClear(0.0);
+			} else {
+				red_material.depthFunc = t3d.COMPARE_FUNC.LEQUAL;
+				blue_material.depthFunc = t3d.COMPARE_FUNC.LEQUAL;
+				outputPass.material.depthFunc = t3d.COMPARE_FUNC.LEQUAL;
+				const ext = renderer.capabilities.getExtension('EXT_clip_control');
+				ext.clipControlEXT(ext.LOWER_LEFT_EXT, ext.NEGATIVE_ONE_TO_ONE_EXT);
+				scene.reverseZDepthBuffer = false;
+				renderer._state.depthBuffer.setClear(1.0);
+			}
+		});
+		const mat_1 = new t3d.Matrix4();
+		const mat_2 = new t3d.Matrix4();
+
+		const mat_3 = new t3d.Matrix4();
+		const mat_4 = new t3d.Matrix4();
+		
+		function loop(count) {
+			requestAnimationFrame(loop);
+			if (params.state === 'reverseZDepthBuffer') {
+				mat_1.copy(camera.projectionMatrix);
+				toNormalizedProjectionMatrix(mat_1);
+				toReversedProjectionMatrix(mat_1);
+				mat_2.copy(mat_1).multiply(camera.viewMatrix);
+				red_material.uniforms.u_ProjectionView = mat_2.toArray();
+				blue_material.uniforms.u_ProjectionView = mat_2.toArray();
+
+				mat_3.copy(outputPass.camera.projectionMatrix);
+				toNormalizedProjectionMatrix(mat_3);
+				toReversedProjectionMatrix(mat_3);
+				mat_4.copy(mat_3).multiply(outputPass.camera.viewMatrix);
+				outputPass.uniforms.u_ProjectionView = mat_4.toArray();
+			} else {
+				red_material.uniforms.u_ProjectionView = undefined;
+				blue_material.uniforms.u_ProjectionView = undefined;
+				outputPass.uniforms.u_ProjectionView = undefined;
+			}
+			controller.update();
+		
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(renderTarget2D);
+			renderer.clear(true, true, true);
+			renderer.renderScene(scene, camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, true);
+			outputPass.uniforms.tDiffuse = renderTarget2D.texture;
+			outputPass.render(renderer);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+
+			backRenderTarget.resize(width, height);
+		}
+
+		function toNormalizedProjectionMatrix(projectionMatrix) {
+			const m = projectionMatrix.elements;
+
+			// Convert [-1, 1] to [0, 1] projection matrix
+			m[2] = 0.5 * m[2] + 0.5 * m[3];
+			m[6] = 0.5 * m[6] + 0.5 * m[7];
+			m[10] = 0.5 * m[10] + 0.5 * m[11];
+			m[14] = 0.5 * m[14] + 0.5 * m[15];
+		}
+
+		function toReversedProjectionMatrix(projectionMatrix) {
+			const m = projectionMatrix.elements;
+			const isPerspectiveMatrix = m[11] === -1;
+
+			// Reverse [0, 1] projection matrix
+			if (isPerspectiveMatrix) {
+				m[10] = -m[10] - 1;
+				m[14] = -m[14];
+			} else {
+				m[10] = -m[10];
+				m[14] = -m[14] + 1;
+			}
+}
+
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
