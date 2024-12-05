@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - obb test</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - obb test
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
+		import { OBB } from 't3d/addons/math/OBB.js';
+		import { Raycaster } from 't3d/addons/Raycaster.js';
+		import { EdgesBuilder } from 't3d/addons/geometries/builders/EdgesBuilder.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 0, 75);
+		camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
+		directionalLight.position.set(40, 40, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		// create objects
+
+		const objects = [];
+
+		const size = new t3d.Vector3(10, 5, 6);
+		const geometry = new t3d.BoxGeometry(size.x, size.y, size.z);
+
+		geometry.userData = { obb: new OBB() };
+		geometry.userData.obb.halfSize.copy(size).multiplyScalar(0.5);
+
+		for (let i = 0; i < 100; i++) {
+			const object = new t3d.Mesh(geometry, new t3d.LambertMaterial());
+			object.matrixAutoUpdate = false;
+
+			object.position.x = Math.random() * 80 - 40;
+			object.position.y = Math.random() * 80 - 40;
+			object.position.z = Math.random() * 80 - 40;
+
+			object.euler.x = Math.random() * 2 * Math.PI;
+			object.euler.y = Math.random() * 2 * Math.PI;
+			object.euler.z = Math.random() * 2 * Math.PI;
+
+			object.scale.x = Math.random() + 0.5;
+			object.scale.y = Math.random() + 0.5;
+			object.scale.z = Math.random() + 0.5;
+
+			object.material.diffuse.setHex(0x00ff00);
+
+			scene.add(object);
+
+			// bounding volume on object level (this will reflect the current world transform)
+
+			object.userData.obb = new OBB();
+
+			objects.push(object);
+		}
+
+		// mouse picking
+
+		const geometryData = EdgesBuilder.getGeometryData(
+			geometry.attributes.a_Position.buffer.array,
+			geometry.index.buffer.array,
+			{ thresholdAngle: 0.5 }
+		);
+		const hitboxGeometry = new t3d.Geometry();
+		hitboxGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(geometryData.positions), 3)));
+		hitboxGeometry.computeBoundingBox();
+		hitboxGeometry.computeBoundingSphere();
+		const hitboxMaterial = new t3d.BasicMaterial();
+		hitboxMaterial.diffuse.setHex(0xffffff);
+		hitboxMaterial.drawMode = t3d.DRAW_MODE.LINES;
+		const hitbox = new t3d.Mesh(hitboxGeometry, hitboxMaterial);
+
+		const raycaster = new Raycaster();
+
+		const mouse = new t3d.Vector2();
+
+		function sortIntersections(a, b) {
+			return a.distance - b.distance;
+		}
+
+		function onClick(event) {
+			event.preventDefault();
+
+			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+			raycaster.setFromCamera(mouse, camera);
+
+			const intersectionPoint = new t3d.Vector3();
+			const intersections = [];
+
+			for (let i = 0, il = objects.length; i < il; i++) {
+				const object = objects[i];
+				const obb = object.userData.obb;
+
+				const ray = raycaster.ray;
+
+				if (obb.intersectRay(ray, intersectionPoint) !== null) {
+					const distance = ray.origin.distanceTo(intersectionPoint);
+					intersections.push({ distance: distance, object: object });
+				}
+			}
+
+			if (intersections.length > 0) {
+				// determine closest intersection and highlight the respective 3D object
+
+				intersections.sort(sortIntersections);
+
+				intersections[0].object.add(hitbox);
+			} else {
+				const parent = hitbox.parent;
+
+				if (parent) parent.remove(hitbox);
+			}
+		}
+
+		document.addEventListener('click', onClick);
+
+		//
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const timer = new Timer();
+
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			timer.update(timestamp);
+
+			controller.update();
+
+			// transform boxes
+
+			const delta = timer.getDelta();
+
+			for (let i = 0, il = objects.length; i < il; i++) {
+				const object = objects[i];
+
+				object.euler.x += delta * Math.PI * 0.20;
+				object.euler.y += delta * Math.PI * 0.1;
+
+				object.matrixNeedsUpdate = true;
+
+				// update OBB
+
+				object.userData.obb.copy(object.geometry.userData.obb);
+				object.userData.obb.applyMatrix4(object.worldMatrix);
+
+				// reset
+
+				object.material.diffuse.setHex(0x00ff00);
+			}
+
+			// collision detection
+
+			for (let i = 0, il = objects.length; i < il; i++) {
+				const object = objects[i];
+				const obb = object.userData.obb;
+
+				for (let j = i + 1, jl = objects.length; j < jl; j++) {
+					const objectToTest = objects[j];
+					const obbToTest = objectToTest.userData.obb;
+
+					// now perform intersection test
+
+					if (obb.intersectsOBB(obbToTest) === true) {
+						object.material.diffuse.setHex(0xff0000);
+						objectToTest.material.diffuse.setHex(0xff0000);
+					}
+				}
+			}
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(70 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

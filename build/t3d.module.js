@@ -5271,6 +5271,22 @@ class Matrix3 {
 	}
 
 	/**
+	 * Return true if this matrix and m are equal.
+	 * @param {t3d.Matrix3} matrix
+	 * @return {Boolean}
+	 */
+	equals(matrix) {
+		const te = this.elements;
+		const me = matrix.elements;
+
+		for (let i = 0; i < 9; i++) {
+			if (te[i] !== me[i]) return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Sets the elements of this matrix based on an array in column-major format.
 	 * @param {Number[]} array
 	 * @param {Number} [offset=0]
@@ -5457,6 +5473,23 @@ class Matrix3 {
 			me[1], me[5], me[9],
 			me[2], me[6], me[10]
 		);
+	}
+
+	/**
+	 * Extracts the basis vectors from the matrix.
+	 * @param {t3d.Vector3} xAxis
+	 * @param {t3d.Vector3} yAxis
+	 * @param {t3d.Vector3} zAxis
+	 * @return {t3d.Matrix3}
+	 */
+	extractBasis(xAxis, yAxis, zAxis) {
+		const te = this.elements;
+
+		xAxis.fromArray(te);
+		yAxis.fromArray(te, 3);
+		zAxis.fromArray(te, 6);
+
+		return this;
 	}
 
 }
