@@ -4499,6 +4499,34 @@ class Box3 {
 	}
 
 	/**
+     * Get the 8 corner points of the bounding box, the order is as follows:
+	 *   7-------3
+	 *  /|      /|
+	 * 4-------0 |
+	 * | |     | |
+	 * | 6-----|-2
+	 * |/      |/
+	 * 5-------1
+     * @param {t3d.Vector3[]} points - The array to store the points.
+     * @return {t3d.Vector3[]} The array of points.
+     */
+	getPoints(points) {
+		const minX = this.min.x, minY = this.min.y, minZ = this.min.z;
+		const maxX = this.max.x, maxY = this.max.y, maxZ = this.max.z;
+
+		points[0].set(maxX, maxY, maxZ);
+		points[1].set(maxX, minY, maxZ);
+		points[2].set(maxX, minY, minZ);
+		points[3].set(maxX, maxY, minZ);
+		points[4].set(minX, maxY, maxZ);
+		points[5].set(minX, minY, maxZ);
+		points[6].set(minX, minY, minZ);
+		points[7].set(minX, maxY, minZ);
+
+		return points;
+	}
+
+	/**
 	 * Computes the union of this box and box,
 	 * setting the upper bound of this box to the greater of the two boxes' upper bounds and the lower bound of this box to the lesser of the two boxes' lower bounds.
 	 * @param {t3d.Box3} box - Box that will be unioned with this box.
@@ -5496,7 +5524,7 @@ class Matrix3 {
 
 const _vec3_1$3 = new Vector3();
 const _vec3_2 = new Vector3();
-const _mat3_1 = new Matrix3();
+const _mat3_1$1 = new Matrix3();
 
 /**
  * A two dimensional surface that extends infinitely in 3d space,
@@ -5524,7 +5552,7 @@ class Plane {
 	 */
 	static intersectPlanes(p1, p2, p3, target) {
 		// Create the matrix using the normals of the planes as rows
-		_mat3_1.set(
+		_mat3_1$1.set(
 			p1.normal.x, p1.normal.y, p1.normal.z,
 			p2.normal.x, p2.normal.y, p2.normal.z,
 			p3.normal.x, p3.normal.y, p3.normal.z
@@ -5534,7 +5562,7 @@ class Plane {
 		target.set(-p1.constant, -p2.constant, -p3.constant);
 
 		// Solve for X by applying the inverse matrix to vector
-		target.applyMatrix3(_mat3_1.inverse());
+		target.applyMatrix3(_mat3_1$1.inverse());
 
 		return target;
 	}
@@ -5671,7 +5699,7 @@ class Plane {
 	 * @param {t3d.Matrix3} [optionalNormalMatrix] - (optional) pre-computed normal Matrix3 of the Matrix4 being applied.
 	 */
 	applyMatrix4(matrix, optionalNormalMatrix) {
-		const normalMatrix = optionalNormalMatrix || _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = optionalNormalMatrix || _mat3_1$1.setFromMatrix4(matrix).inverse().transpose();
 
 		const referencePoint = this.coplanarPoint(_vec3_1$3).applyMatrix4(matrix);
 
@@ -5685,6 +5713,7 @@ class Plane {
 }
 
 const _vec3_1$2 = new Vector3();
+const _mat3_1 = new Matrix3();
 
 /**
  * Frustums are used to determine what is inside the camera's field of view.
@@ -5809,6 +5838,23 @@ class Frustum {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Apply a matrix4x4 to the frustum.
+	 * @param {t3d.Matrix4} matrix - Matrix4 to apply to the frustum.
+	 * @return {t3d.Frustum}
+	 */
+	applyMatrix4(matrix) {
+		const planes = this.planes;
+
+		const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+
+		for (let i = 0; i < 6; i++) {
+			planes[i].applyMatrix4(matrix, normalMatrix);
+		}
+
+		return this;
 	}
 
 	/**

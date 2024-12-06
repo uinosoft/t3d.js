@@ -198,6 +198,34 @@ class Box3 {
 	}
 
 	/**
+     * Get the 8 corner points of the bounding box, the order is as follows:
+	 *   7-------3
+	 *  /|      /|
+	 * 4-------0 |
+	 * | |     | |
+	 * | 6-----|-2
+	 * |/      |/
+	 * 5-------1
+     * @param {t3d.Vector3[]} points - The array to store the points.
+     * @return {t3d.Vector3[]} The array of points.
+     */
+	getPoints(points) {
+		const minX = this.min.x, minY = this.min.y, minZ = this.min.z;
+		const maxX = this.max.x, maxY = this.max.y, maxZ = this.max.z;
+
+		points[0].set(maxX, maxY, maxZ);
+		points[1].set(maxX, minY, maxZ);
+		points[2].set(maxX, minY, minZ);
+		points[3].set(maxX, maxY, minZ);
+		points[4].set(minX, maxY, maxZ);
+		points[5].set(minX, minY, maxZ);
+		points[6].set(minX, minY, minZ);
+		points[7].set(minX, maxY, minZ);
+
+		return points;
+	}
+
+	/**
 	 * Computes the union of this box and box,
 	 * setting the upper bound of this box to the greater of the two boxes' upper bounds and the lower bound of this box to the lesser of the two boxes' lower bounds.
 	 * @param {t3d.Box3} box - Box that will be unioned with this box.

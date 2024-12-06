@@ -1,4 +1,5 @@
-import { Box3, Frustum, Matrix3, Matrix4, Plane, Spherical, Vector3, Vector2 } from 't3d';
+import { Box3, Matrix3, Matrix4, Plane, Spherical, Vector3, Vector2 } from 't3d';
+import { OBB } from '../math/OBB.js';
 
 /**
  * LightShadowAdapter is a tool to help you calculate the shadow range of the light source.
@@ -23,10 +24,8 @@ export class LightShadowAdapter {
 		// which is used to calculate the orientation of the light source.
 		this.up = new Vector3(0, 1, 0);
 
-		// The bounding box of the object to be adapted.
-		this.bindBox = new Box3();
-		// The rotation matrix of the bounding box
-		this.bindBoxRotation = new Matrix3();
+		// The oriented bounding box of the object to be adapted.
+		this.bindBox = new OBB();
 
 		// The camera to be adapted.
 		this.bindCamera = null;
@@ -50,8 +49,10 @@ export class LightShadowAdapter {
 
 		// Some stats for debugging
 		this.stats = {
-			type: 0, // 1: box3 + camera, 2: box3, 3: camera, 4: null
+			type: 0, // 1: box + camera, 2: box, 3: camera, 4: null
 			bindBoxRotated: false,
+			bindAABB: new Box3(),
+			bindAABBTransform: new Matrix4(),
 			lightUp: new Vector3(),
 			shadowBox: new Box3(),
 			thinShadowBox: new Box3().copy(UNIT_BOX3),
@@ -74,10 +75,10 @@ export class LightShadowAdapter {
 
 		const { type, thinShadowBox } = this.stats;
 
-		if (type === SHADOW_UPDATE_TYPE.BOX3_CAMERA) {
-			this._setShadowBoxByBox3Camera();
-		} else if (type === SHADOW_UPDATE_TYPE.BOX3) {
-			this._setShadowBoxByBox3();
+		if (type === SHADOW_UPDATE_TYPE.BOX_CAMERA) {
+			this._setShadowBoxByBoxCamera();
+		} else if (type === SHADOW_UPDATE_TYPE.BOX) {
+			this._setShadowBoxByBox();
 		} else if (type === SHADOW_UPDATE_TYPE.CAMERA) {
 			this._setShadowBoxByCamera();
 		} else {
@@ -88,16 +89,16 @@ export class LightShadowAdapter {
 	}
 
 	_setUpdateType() {
-		const { bindBox, bindBoxRotation, bindCamera, stats } = this;
+		const { bindBox, bindCamera, stats } = this;
 
 		const hasBindBox = !bindBox.isEmpty();
-		const bindBoxRotated = !bindBoxRotation.isIdentity();
 		const hasBindCamera = !!bindCamera;
+		const bindBoxRotated = !bindBox.rotation.isIdentity();
 
 		if (hasBindBox && hasBindCamera) {
-			stats.type = SHADOW_UPDATE_TYPE.BOX3_CAMERA;
+			stats.type = SHADOW_UPDATE_TYPE.BOX_CAMERA;
 		} else if (hasBindBox) {
-			stats.type = SHADOW_UPDATE_TYPE.BOX3;
+			stats.type = SHADOW_UPDATE_TYPE.BOX;
 		} else if (hasBindCamera) {
 			stats.type = SHADOW_UPDATE_TYPE.CAMERA;
 		} else {
@@ -105,6 +106,17 @@ export class LightShadowAdapter {
 		}
 
 		stats.bindBoxRotated = bindBoxRotated;
+
+		if (!hasBindBox) {
+			stats.bindAABB.makeEmpty();
+			stats.bindAABBTransform.identity();
+		} else if (bindBoxRotated) {
+			bindBox.toBoundingBoxAndTransform(stats.bindAABB, stats.bindAABBTransform);
+		} else {
+			stats.bindAABB.max.copy(bindBox.center).add(bindBox.halfSize);
+			stats.bindAABB.min.copy(bindBox.center).sub(bindBox.halfSize);
+			stats.bindAABBTransform.identity();
+		}
 	}
 
 	_setShadowBoxRotation() {
@@ -126,68 +138,67 @@ export class LightShadowAdapter {
 		shadowBoxRotationInverse.copy(shadowBoxRotation).inverse();
 	}
 
-	_setShadowBoxByBox3Camera() {
-		const { bindBox, bindBoxRotation, bindCamera, bindCameraDistance, stats, _polygonPool } = this;
-		const { bindBoxRotated, thinShadowBox, shadowBoxRotationInverse, polygons } = stats;
+	_setShadowBoxByBoxCamera() {
+		const { bindBox, bindCamera, bindCameraDistance, stats, _polygonPool } = this;
+		const { bindBoxRotated, bindAABB, thinShadowBox, shadowBoxRotationInverse, boundaryPoints, polygons } = stats;
 
-		let frustumInBoxSpace = bindCamera.frustum;
-		if (bindBoxRotated) {
-			_mat4_1.setFromMatrix3(bindBoxRotation).premultiply(bindCamera.projectionViewMatrix);
-			frustumInBoxSpace = _frustum_1.setFromMatrix(_mat4_1);
+		const frustumIntersectsBox = bindBoxRotated ? bindBox.intersectsFrustum(bindCamera.frustum) : bindCamera.frustum.intersectsBox(bindAABB);
+
+		if (!frustumIntersectsBox) return;
+
+		// Reset polygons
+		_polygonPool.reset();
+		polygons.clear();
+
+		// Set the polygons by box
+		const points = bindBoxRotated ? bindBox.getPoints(boundaryPoints) : bindAABB.getPoints(boundaryPoints);
+		polygons.setFromBoxPoints(points);
+
+		// Clip the polygons using the frustum (not including the near and far planes)
+		const frustumPlanes = bindCamera.frustum.planes;
+		for (let i = 0, l = frustumPlanes.length - 2; i < l; i++) {
+			const plane = frustumPlanes[i];
+			polygons.clipByPlane(plane);
 		}
 
-		if (frustumInBoxSpace.intersectsBox(bindBox)) {
-			// Reset polygons
-			_polygonPool.reset();
-			polygons.clear();
-
-			// Set the polygons by box3
-			polygons.setFromBox3(bindBox, bindBoxRotated ? bindBoxRotation : undefined);
-
-			// Clip the polygons using the frustum (not including the near and far planes)
-			const frustumPlanes = bindCamera.frustum.planes;
-			for (let i = 0, l = frustumPlanes.length - 2; i < l; i++) {
-				const plane = frustumPlanes[i];
-				polygons.clipByPlane(plane);
+		// Convert the intersection point to view space and find the closest intersection point to the camera
+		let minZ = -Infinity;
+		polygons.polygons.forEach(polygon => {
+			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
+				_vec3_1.copy(polygon.vertices[i]).applyMatrix4(bindCamera.viewMatrix);
+				minZ = Math.max(minZ, _vec3_1.z);
 			}
+		});
 
-			// Convert the intersection point to view space and find the closest intersection point to the camera
-			let minZ = -Infinity;
-			polygons.polygons.forEach(polygon => {
-				for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
-					_vec3_1.copy(polygon.vertices[i]).applyMatrix4(bindCamera.viewMatrix);
-					minZ = Math.max(minZ, _vec3_1.z);
-				}
-			});
+		// Based on the nearest intersection point of the near plane,
+		// push back the length of distance, determine the position of the far plane,
+		// and convert the far plane to the world coordinate system.
+		const { near } = extractCameraNearFar(bindCamera);
+		_plane_1.constant = Math.max(Math.abs(minZ), near) + bindCameraDistance;
+		_plane_1.normal.set(0, 0, 1);
+		_plane_1.applyMatrix4(bindCamera.worldMatrix);
 
-			// Based on the nearest intersection point of the near plane,
-			// push back the length of distance, determine the position of the far plane,
-			// and convert the far plane to the world coordinate system.
-			const { near } = extractCameraNearFar(bindCamera);
-			_plane_1.constant = Math.max(Math.abs(minZ), near) + bindCameraDistance;
-			_plane_1.normal.set(0, 0, 1);
-			_plane_1.applyMatrix4(bindCamera.worldMatrix);
+		// Using the far plane determined in the previous step, cut the curPolygons.
+		polygons.clipByPlane(_plane_1);
 
-			// Using the far plane determined in the previous step, cut the curPolygons.
-			polygons.clipByPlane(_plane_1);
-
-			// Calculate shadow box by polygon vertices
-			thinShadowBox.makeEmpty();
-			polygons.polygons.forEach(polygon => {
-				for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
-					_vec3_1.copy(polygon.vertices[i]).applyMatrix3(shadowBoxRotationInverse);
-					thinShadowBox.expandByPoint(_vec3_1);
-				}
-			});
-		}
+		// Calculate shadow box by polygon vertices
+		thinShadowBox.makeEmpty();
+		polygons.polygons.forEach(polygon => {
+			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
+				_vec3_1.copy(polygon.vertices[i]).applyMatrix3(shadowBoxRotationInverse);
+				thinShadowBox.expandByPoint(_vec3_1);
+			}
+		});
 	}
 
-	_setShadowBoxByBox3() {
-		const { bindBox, bindBoxRotation, stats } = this;
-		const { bindBoxRotated, thinShadowBox, shadowBoxRotationInverse, boundaryPoints } = stats;
+	_setShadowBoxByBox() {
+		const { bindBox, stats } = this;
+		const { bindBoxRotated, bindAABB, thinShadowBox, shadowBoxRotationInverse, boundaryPoints } = stats;
+
+		const points = bindBoxRotated ? bindBox.getPoints(boundaryPoints) : bindAABB.getPoints(boundaryPoints);
 
 		thinShadowBox.makeEmpty();
-		getBox3Points(bindBox, bindBoxRotated ? bindBoxRotation : undefined, boundaryPoints).forEach(point => {
+		points.forEach(point => {
 			_vec3_1.copy(point).applyMatrix3(shadowBoxRotationInverse);
 			thinShadowBox.expandByPoint(_vec3_1);
 		});
@@ -263,16 +274,14 @@ export class LightShadowAdapter {
 
 const _vec3_1 = new Vector3();
 const _vec3_2 = new Vector3();
-const _mat4_1 = new Matrix4();
-const _frustum_1 = new Frustum();
 const _plane_1 = new Plane();
 
 const EPSILON = 1e-5;
 const UNIT_BOX3 = new Box3(new Vector3(-0.5, -0.5, -0.5), new Vector3(0.5, 0.5, 0.5));
 
 const SHADOW_UPDATE_TYPE = {
-	BOX3_CAMERA: 1,
-	BOX3: 2,
+	BOX_CAMERA: 1,
+	BOX: 2,
 	CAMERA: 3,
 	NULL: 4
 };
@@ -293,28 +302,6 @@ function extractCameraNearFar(camera) {
 		frustumNearFar.far = (projectionMatrix.elements[14] - 1) / projectionMatrix.elements[10];
 	}
 	return frustumNearFar;
-}
-
-function getBox3Points(box3, rotationMatrix, points) {
-	const minX = box3.min.x, minY = box3.min.y, minZ = box3.min.z;
-	const maxX = box3.max.x, maxY = box3.max.y, maxZ = box3.max.z;
-
-	points[0].set(maxX, maxY, maxZ);
-	points[1].set(maxX, minY, maxZ);
-	points[2].set(maxX, minY, minZ);
-	points[3].set(maxX, maxY, minZ);
-	points[4].set(minX, maxY, maxZ);
-	points[5].set(minX, minY, maxZ);
-	points[6].set(minX, minY, minZ);
-	points[7].set(minX, maxY, minZ);
-
-	if (rotationMatrix) {
-		for (let i = 0; i < 8; i++) {
-			points[i].applyMatrix3(rotationMatrix);
-		}
-	}
-
-	return points;
 }
 
 // LightDirection class
@@ -389,11 +376,6 @@ function getClipedViewVertices(camera, clipNear, clipFar, points) {
 
 // Polygon classes
 
-const boxPoints = [];
-for (let i = 0; i < 8; i++) {
-	boxPoints.push(new Vector3());
-}
-
 class Polygons {
 
 	constructor(pool) {
@@ -407,10 +389,8 @@ class Polygons {
 		this.polygons.length = 0;
 	}
 
-	setFromBox3(box3, rotationMatrix) {
+	setFromBoxPoints(points) {
 		const { polygons, _pool } = this;
-
-		const points = getBox3Points(box3, rotationMatrix, boxPoints);
 
 		polygons[0] = _pool.allocate().begin().pushVertex(points[0]).pushVertex(points[1]).pushVertex(points[2]).pushVertex(points[3]).end();
 		polygons[1] = _pool.allocate().begin().pushVertex(points[4]).pushVertex(points[7]).pushVertex(points[6]).pushVertex(points[5]).end();

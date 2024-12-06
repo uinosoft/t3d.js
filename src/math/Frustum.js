@@ -1,7 +1,9 @@
+import { Matrix3 } from './Matrix3.js';
 import { Plane } from './Plane.js';
 import { Vector3 } from './Vector3.js';
 
 const _vec3_1 = new Vector3();
+const _mat3_1 = new Matrix3();
 
 /**
  * Frustums are used to determine what is inside the camera's field of view.
@@ -126,6 +128,23 @@ class Frustum {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Apply a matrix4x4 to the frustum.
+	 * @param {t3d.Matrix4} matrix - Matrix4 to apply to the frustum.
+	 * @return {t3d.Frustum}
+	 */
+	applyMatrix4(matrix) {
+		const planes = this.planes;
+
+		const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+
+		for (let i = 0; i < 6; i++) {
+			planes[i].applyMatrix4(matrix, normalMatrix);
+		}
+
+		return this;
 	}
 
 	/**

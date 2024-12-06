@@ -68,6 +68,25 @@ class OBB {
 	}
 
 	/**
+	 * Check if the OBB is empty.
+	 * @return {Boolean} Whether the OBB is empty.
+	 */
+	isEmpty() {
+		return this.halfSize.x <= 0 || this.halfSize.y <= 0 || this.halfSize.z <= 0;
+	}
+
+	/**
+	 * Make the OBB empty.
+	 * @return {t3d.OBB}
+	 */
+	makeEmpty() {
+		this.center.set(0, 0, 0);
+		this.halfSize.set(0, 0, 0);
+		this.rotation.identity();
+		return this;
+	}
+
+	/**
 	 * Get the closest point on the OBB to the given point.
 	 * Reference: Closest Point on OBB to Point in Real-Time Collision Detection
 	 * by Christer Ericson (chapter 5.1.4)
@@ -461,31 +480,17 @@ class OBB {
 	}
 
 	/**
-     * Get the 8 corner points of the OBB.
+     * Get the 8 corner points of the OBB, the order is same as Box3.getPoints().
      * @param {t3d.Vector3[]} points - The array to store the points.
      * @return {t3d.Vector3[]} The array of points.
      */
 	getPoints(points) {
 		this.toBoundingBoxAndTransform(aabb, matrix);
 
-		const min = aabb.min;
-		const max = aabb.max;
+		aabb.getPoints(points);
 
-		let index = 0;
-
-		for (let x = -1; x <= 1; x += 2) {
-			for (let y = -1; y <= 1; y += 2) {
-				for (let z = -1; z <= 1; z += 2) {
-					points[index]
-						.set(
-							x < 0 ? min.x : max.x,
-							y < 0 ? min.y : max.y,
-							z < 0 ? min.z : max.z
-						)
-						.applyMatrix4(matrix);
-					index++;
-				}
-			}
+		for (let i = 0; i < 8; i++) {
+			points[i].applyMatrix4(matrix);
 		}
 
 		return points;
