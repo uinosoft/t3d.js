@@ -111,7 +111,7 @@
 		shadowBox.max.set(10000, 200, 10000);
 
 		const shadowAdapter = new LightShadowAdapter(directionalLight);
-		shadowAdapter.bindBox.copy(shadowBox);
+		shadowAdapter.bindBox.fromBox3(shadowBox);
 		shadowAdapter.bindCamera = camera;
 		shadowAdapter.bindCameraDistance = 3500;
 
@@ -176,10 +176,10 @@
 		const adapterFolder = gui.addFolder('Shadow Adapter');
 		adapterFolder.add(params, 'type', ['BOX3+CAMERA', 'BOX3', 'CAMERA']).onChange(value => {
 			if (value === 'BOX3+CAMERA') {
-				shadowAdapter.bindBox.copy(shadowBox);
+				shadowAdapter.bindBox.fromBox3(shadowBox);
 				shadowAdapter.bindCamera = camera;
 			} else if (value === 'BOX3') {
-				shadowAdapter.bindBox.copy(shadowBox);
+				shadowAdapter.bindBox.fromBox3(shadowBox);
 				shadowAdapter.bindCamera = null;
 			} else if (value === 'CAMERA') {
 				shadowAdapter.bindBox.makeEmpty();

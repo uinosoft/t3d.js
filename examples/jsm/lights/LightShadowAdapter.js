@@ -161,20 +161,26 @@ export class LightShadowAdapter {
 			polygons.clipByPlane(plane);
 		}
 
-		// Convert the intersection point to view space and find the closest intersection point to the camera
-		let minZ = -Infinity;
-		polygons.polygons.forEach(polygon => {
-			for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
-				_vec3_1.copy(polygon.vertices[i]).applyMatrix4(bindCamera.viewMatrix);
-				minZ = Math.max(minZ, _vec3_1.z);
-			}
-		});
+		const cameraInsideBox = bindBox.containsPoint(_vec3_1.setFromMatrixPosition(bindCamera.worldMatrix));
+		const { near } = extractCameraNearFar(bindCamera);
+
+		let minZ = cameraInsideBox ? near : -Infinity;
+		if (!cameraInsideBox) {
+			// Convert the intersection point to view space and find the closest intersection point to the camera
+			polygons.polygons.forEach(polygon => {
+				for (let i = 0, l = polygon.verticesIndex; i < l; i++) {
+					_vec3_1.copy(polygon.vertices[i]).applyMatrix4(bindCamera.viewMatrix);
+					minZ = Math.max(minZ, _vec3_1.z);
+				}
+			});
+
+			minZ = Math.max(Math.abs(minZ), near);
+		}
 
 		// Based on the nearest intersection point of the near plane,
 		// push back the length of distance, determine the position of the far plane,
 		// and convert the far plane to the world coordinate system.
-		const { near } = extractCameraNearFar(bindCamera);
-		_plane_1.constant = Math.max(Math.abs(minZ), near) + bindCameraDistance;
+		_plane_1.constant = minZ + bindCameraDistance;
 		_plane_1.normal.set(0, 0, 1);
 		_plane_1.applyMatrix4(bindCamera.worldMatrix);
 
@@ -189,6 +195,16 @@ export class LightShadowAdapter {
 				thinShadowBox.expandByPoint(_vec3_1);
 			}
 		});
+
+		// Polygons.clipByPlane does not add new polygon for the newly generated sections,
+		// so when the camera is inside the bind box, result will be incorrect.
+		// The current solution is to extend shadow box by the camera's near plane vertices.
+		if (cameraInsideBox) {
+			clipVertices.near.forEach(v => {
+				_vec3_1.copy(v).unproject(bindCamera).applyMatrix3(shadowBoxRotationInverse);
+				thinShadowBox.expandByPoint(_vec3_1);
+			});
+		}
 	}
 
 	_setShadowBoxByBox() {
