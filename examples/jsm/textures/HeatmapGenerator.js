@@ -228,6 +228,9 @@ class HeatmapGenerator {
 	dispose() {
 		this._grayRenderTarget.dispose();
 		this._colorizeRenderTarget.dispose();
+
+		this._colorizePass.dispose();
+
 		this._points.geometry.dispose();
 		this._points.material.dispose();
 	}
@@ -290,7 +293,7 @@ const heatmapPointsShader = {
 				float rate = clamp(1.0 - 2.0 * sqrt(dx * dx + dy * dy), 0.0, 1.0);
 				gray *= 1. - cos(rate * 3.141592653 / 2.);
 			#endif
-			
+
 			gl_FragColor = vec4(gray, gray, gray, 1.0);
 		}
 	`
@@ -319,7 +322,7 @@ const heatmapColorizeShader = {
 		varying vec2 vUv;
 		void main() {
 			float value = texture2D(tDiffuse, vUv).r;
-			
+
 			vec3 color = texture2D(colormap, vec2(value, 0.5)).rgb;
 			float alpha = max(1.0 - alphaLerp, min(value * 2.0, 1.0));
 

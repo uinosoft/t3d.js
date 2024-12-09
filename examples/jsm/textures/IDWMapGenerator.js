@@ -238,8 +238,11 @@ class IDWMapGenerator {
 	dispose() {
 		this._grayRenderTarget.dispose();
 		this._colorizeRenderTarget.dispose();
-		this._points.geometry.dispose();
-		this._points.material.dispose();
+
+		this._grayPass.dispose();
+		this._colorizePass.dispose();
+
+		this._pointTexture.dispose();
 	}
 
 }
@@ -280,39 +283,39 @@ const idwmapPointsShader = {
         float GetWeightedAverage(Accumulator acc) {
             return acc.m_sumOfWeightedValues / acc.m_sumOfWeights;
         }
-            
+
         void main() {
             float exactThreshold = 0.01; // if we are very close to a point then avoid a divide by zero and set to exact weight of the point
-    
+
             Accumulator acc = Accumulator(0.0, 0.0);
-    
+
             vec2 fragCoord = v_Uv;
 			fragCoord.x -= 0.5;
 			fragCoord.y -= 0.5;
 
             float interpolatedValue = 0.;
-            
+
             for (int i = 0; i < POINTS_NUM; ++i) {
                 float i_float = float(i);
                 float j = i_float * 1.0;
                 float x = mod(j, pointTextureSize);
                 float y = floor(j / pointTextureSize);
-    
+
                 float dx = 1.0 / pointTextureSize;
                 float dy = 1.0 / pointTextureSize;
-    
+
                 vec4 pointSampler = texture2D(pointTexture, vec2(dx * (x + 0.5), dy * (y + 0.5)));
-    
-                float dist = max(exactThreshold, length(fragCoord.xy - pointSampler.xy));  
+
+                float dist = max(exactThreshold, length(fragCoord.xy - pointSampler.xy));
 
                 float weight = 1.0 / pow(dist, idw_exponent);
-    
+
                 acc.m_sumOfWeights += weight;
                 acc.m_sumOfWeightedValues += weight * pointSampler.z;
             }
-    
+
             interpolatedValue = GetWeightedAverage(acc);
-            
+
 			interpolatedValue = clamp(interpolatedValue, 0.0, 1.0);
 
             gl_FragColor = vec4(interpolatedValue, interpolatedValue, interpolatedValue, 1.0);
@@ -341,7 +344,7 @@ const idwmapColorizeShader = {
 	fragmentShader: `
 		uniform sampler2D tDiffuse;
 		uniform sampler2D colormap;
-		
+
 		varying vec2 vUv;
 
 		#ifdef ISOLINE
