@@ -6066,7 +6066,7 @@
 		 */
 		makeSafe() {
 			const EPS = 0.000001;
-			this.phi = Math.max(EPS, Math.min(Math.PI - EPS, this.phi));
+			this.phi = MathUtils.clamp(this.phi, EPS, Math.PI - EPS);
 			return this;
 		}
 
