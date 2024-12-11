@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - alpha mask</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - subsurface scattering
+		<br/>
+    </div>
+
+	<script src="./libs/nanobar.min.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { SubsurfaceScatteringPBRMaterial } from 't3d/addons/materials/SubsurfaceScatteringPBRMaterial.js';
+		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas, {
+			antialias: true
+		});
+		const scene = new t3d.Scene();
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+		const loader = new GLTFLoader(loadingManager);
+		const baseUri = './resources/models/gltf/DragonAttenuation/';
+
+		const textureLoader = new Texture2DLoader();
+		const thicknessMap = textureLoader.load(baseUri + 'Image_1.jpg');
+		thicknessMap.wrapS = thicknessMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		thicknessMap.flipY = false;
+
+		let material;
+		loader.load(baseUri + 'DragonAttenuation.gltf').then(function(result) {
+			const root = result.root;
+
+			root.traverse(node => {
+				if (node.isMesh && node.name === 'Dragon') {
+					material = new SubsurfaceScatteringPBRMaterial(node.material);
+					material.diffuse.setRGB(1.0, 0.2, 0.2);
+					material.uniforms.thicknessMap = thicknessMap;
+					material.uniforms.thicknessColor = [0.3, 0.3, 0.3];
+					material.uniforms.thicknessDistortion = 0.1;
+					material.uniforms.thicknessAmbient = 0.0;
+					material.uniforms.thicknessAttenuation = 0.1;
+					material.uniforms.thicknessPower = 2.0;
+					material.uniforms.thicknessScale = 10.0;
+					material.defines.USE_UV1 = true;
+
+					node.material = material;
+				}
+			});
+			const gui = new GUI();
+			const basicFolder = gui.addFolder('Basic');
+			basicFolder.addColor(material, 'diffuse');
+			basicFolder.add(material, 'opacity', 0, 1, 0.01);
+			basicFolder.add(material, 'metalness', 0, 1, 0.01);
+			basicFolder.add(material, 'roughness', 0, 1, 0.01);
+			basicFolder.close();
+			const transmissionFolder = gui.addFolder('Transmission');
+			transmissionFolder.addColor(material.uniforms, 'thicknessColor');
+			transmissionFolder.add(material.uniforms, 'thicknessDistortion', 0, 1, 0.01);
+			transmissionFolder.add(material.uniforms, 'thicknessAmbient', 0, 1, 0.01);
+			transmissionFolder.add(material.uniforms, 'thicknessAttenuation', 0, 1, 0.01);
+			transmissionFolder.add(material.uniforms, 'thicknessPower', 0, 1, 0.01);
+			transmissionFolder.add(material.uniforms, 'thicknessScale', 0, 20, 0.01);
+			transmissionFolder.close();
+			const lightFolder = gui.addFolder('Light');
+			lightFolder.add(directionalLight, 'visible').name('directionalLight');
+			lightFolder.add(pointLight, 'visible').name('redPointLight');
+			lightFolder.add(pointLight2, 'visible').name('yellowPointLight');
+			lightFolder.close();
+
+			scene.add(root);
+		});
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.08);
+		directionalLight.position.set(0, 3, 6);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 0.2);
+		directionalLight.add(directionalLightHelper);
+		scene.add(directionalLight);
+
+		const pointLight = new t3d.PointLight(0xff0000, 0.8, 3, 2);
+		pointLight.position.set(0, 1.5, 0);
+		scene.add(pointLight);
+
+		const lightBall = new t3d.Mesh(new t3d.SphereGeometry(0.03, 20, 20), new t3d.BasicMaterial());
+		lightBall.material.diffuse.setHex(0xff0000);
+		pointLight.add(lightBall);
+
+		const pointLight2 = new t3d.PointLight(0xc1c100, 0.8, 3, 2);
+		pointLight2.position.set(0, 1.5, 0);
+		scene.add(pointLight2);
+
+		const lightBall2 = new t3d.Mesh(new t3d.SphereGeometry(0.03, 20, 20), new t3d.BasicMaterial());
+		lightBall2.material.diffuse.setHex(0xc1c100);
+		pointLight2.add(lightBall2);
+
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 2, 11);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+			pointLight.position.z = 1.8 * Math.sin(count / 1000);
+			pointLight.position.y = 1.8 * Math.sin(count / 1000);
+
+			pointLight2.position.z = 1.8 * Math.sin(count / 1000);
+			pointLight2.position.x = 1.8 * Math.sin(count / 1000);
+		
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
