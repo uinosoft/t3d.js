@@ -46,9 +46,9 @@ light_frag = light_frag.replace(
 	'irradiance = u_Point[i].color * falloff * dotNL * PI;',
 	`
 	irradiance = u_Point[i].color * falloff * dotNL * PI;
-	
+
 	#if defined( SUBSURFACE ) && defined( USE_UV1 )
-		RE_Direct_Scattering(u_Point[i].color, u_Point[i].position, v_Uv, N, -v_modelPos, reflectedLight);
+		RE_Direct_Scattering(u_Point[i].color, u_Point[i].position, v_Uv, N, normalize(-v_modelPos), reflectedLight);
 	#endif
 	`
 );

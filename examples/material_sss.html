@@ -2,13 +2,13 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>t3d - alpha mask</title>
+	<title>t3d - subsurface scattering material</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
     <div id="info">
-        <a href="" target="_blank">t3d</a> - subsurface scattering
+        <a href="" target="_blank">t3d</a> - subsurface scattering material
 		<br/>
     </div>
 
@@ -47,10 +47,48 @@
 		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
-		const forwardRenderer = new ForwardRenderer(canvas, {
-			antialias: true
-		});
+		const forwardRenderer = new ForwardRenderer(canvas, { antialias: true });
 		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 5, 15);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.y = 0.5;
+
+		// lights
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.08);
+		directionalLight.position.set(0, 10, 20);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 0.2);
+		directionalLight.add(directionalLightHelper);
+
+		const pointLight = new t3d.PointLight(0xff0000, 0.8, 3 * 3, 2);
+		pointLight.position.set(0, 1.5, 0);
+		scene.add(pointLight);
+
+		const lightBall = new t3d.Mesh(new t3d.SphereGeometry(0.08, 20, 20), new t3d.BasicMaterial());
+		lightBall.material.diffuse.setHex(0xff0000);
+		pointLight.add(lightBall);
+
+		const pointLight2 = new t3d.PointLight(0xc1c100, 0.8, 3 * 3, 2);
+		pointLight2.position.set(0, 1.5, 0);
+		scene.add(pointLight2);
+
+		const lightBall2 = new t3d.Mesh(new t3d.SphereGeometry(0.08, 20, 20), new t3d.BasicMaterial());
+		lightBall2.material.diffuse.setHex(0xc1c100);
+		pointLight2.add(lightBall2);
+
+		// load model
 
 		const nanobar = new Nanobar();
 		nanobar.el.style.background = 'gray';
@@ -91,6 +129,10 @@
 					node.material = material;
 				}
 			});
+
+			root.scale.set(3, 3, 3);
+			scene.add(root);
+
 			const gui = new GUI();
 			const basicFolder = gui.addFolder('Basic');
 			basicFolder.addColor(material, 'diffuse');
@@ -115,52 +157,19 @@
 			scene.add(root);
 		});
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
-		scene.add(ambientLight);
+		//
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.08);
-		directionalLight.position.set(0, 3, 6);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-
-		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 0.2);
-		directionalLight.add(directionalLightHelper);
-		scene.add(directionalLight);
-
-		const pointLight = new t3d.PointLight(0xff0000, 0.8, 3, 2);
-		pointLight.position.set(0, 1.5, 0);
-		scene.add(pointLight);
-
-		const lightBall = new t3d.Mesh(new t3d.SphereGeometry(0.03, 20, 20), new t3d.BasicMaterial());
-		lightBall.material.diffuse.setHex(0xff0000);
-		pointLight.add(lightBall);
-
-		const pointLight2 = new t3d.PointLight(0xc1c100, 0.8, 3, 2);
-		pointLight2.position.set(0, 1.5, 0);
-		scene.add(pointLight2);
-
-		const lightBall2 = new t3d.Mesh(new t3d.SphereGeometry(0.03, 20, 20), new t3d.BasicMaterial());
-		lightBall2.material.diffuse.setHex(0xc1c100);
-		pointLight2.add(lightBall2);
-
-
-		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(0, 2, 11);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
-		scene.add(camera);
-
-		const controller = new OrbitControls(camera, canvas);
-
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
 			controller.update();
-			pointLight.position.z = 1.8 * Math.sin(count / 1000);
-			pointLight.position.y = 1.8 * Math.sin(count / 1000);
 
-			pointLight2.position.z = 1.8 * Math.sin(count / 1000);
-			pointLight2.position.x = 1.8 * Math.sin(count / 1000);
+			pointLight.position.z = 1.8 * 2 * Math.sin(timestamp / 1000);
+			pointLight.position.y = 1.8 * 2 * Math.cos(timestamp / 1000) + 1;
+
+			pointLight2.position.z = 1.8 * 3 * Math.sin(timestamp / 1000);
+			pointLight2.position.x = 1.8 * 3 * Math.cos(timestamp / 1000);
+			pointLight2.position.y = 4.5;
 		
 			forwardRenderer.render(scene, camera);
 		}
