@@ -9,7 +9,6 @@
 <body>
     <div id="info">
         <a href="" target="_blank">t3d</a> - subsurface scattering material
-		<br/>
     </div>
 
 	<script src="./libs/nanobar.min.js"></script>
@@ -33,7 +32,7 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
-		import { SubsurfaceScatteringPBRMaterial } from 't3d/addons/materials/SubsurfaceScatteringPBRMaterial.js';
+		import { SSSPBRMaterial } from 't3d/addons/materials/SSSMaterial.js';
 		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
@@ -115,7 +114,7 @@
 
 			root.traverse(node => {
 				if (node.isMesh && node.name === 'Dragon') {
-					material = new SubsurfaceScatteringPBRMaterial(node.material);
+					material = new SSSPBRMaterial(node.material);
 					material.diffuse.setRGB(1.0, 0.2, 0.2);
 					material.uniforms.thicknessMap = thicknessMap;
 					material.uniforms.thicknessColor = [0.3, 0.3, 0.3];
@@ -153,8 +152,6 @@
 			lightFolder.add(pointLight, 'visible').name('redPointLight');
 			lightFolder.add(pointLight2, 'visible').name('yellowPointLight');
 			lightFolder.close();
-
-			scene.add(root);
 		});
 
 		//
