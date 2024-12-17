@@ -1,5 +1,5 @@
 import { RenderQueueLayer } from './RenderQueueLayer.js';
-import { Vector3 } from '../math/Vector3.js';
+import { Vector4 } from '../math/Vector4.js';
 
 /**
  * RenderQueue is used to collect all renderable items, lights and skeletons from the scene.
@@ -43,10 +43,10 @@ class RenderQueue {
 			this.skeletons.add(object.skeleton);
 		}
 
-		// calculate depth for sorting
-		helpVector3.setFromMatrixPosition(object.worldMatrix);
-		helpVector3.applyMatrix4(camera.projectionViewMatrix);
-		const depth = helpVector3.z;
+		_vec4.setFromMatrixPosition(object.worldMatrix)
+			.applyMatrix4(camera.projectionViewMatrix);
+
+		const clipZ = _vec4.z;
 
 		const layerId = object.renderLayer || 0;
 
@@ -66,11 +66,11 @@ class RenderQueue {
 				const group = groups[i];
 				const groupMaterial = object.material[group.materialIndex];
 				if (groupMaterial) {
-					layer.addRenderable(object, object.geometry, groupMaterial, depth, group);
+					layer.addRenderable(object, object.geometry, groupMaterial, clipZ, group);
 				}
 			}
 		} else {
-			layer.addRenderable(object, object.geometry, object.material, depth);
+			layer.addRenderable(object, object.geometry, object.material, clipZ);
 		}
 	}
 
@@ -132,7 +132,7 @@ class RenderQueue {
 
 }
 
-const helpVector3 = new Vector3();
+const _vec4 = new Vector4();
 
 function sortLayer(a, b) {
 	return a.id - b.id;

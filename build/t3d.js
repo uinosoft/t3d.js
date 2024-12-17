@@ -439,7 +439,11 @@
 		 * @return {t3d.Vector3}
 		 */
 		setFromMatrixPosition(m) {
-			return this.setFromMatrixColumn(m, 3);
+			const e = m.elements;
+			this.x = e[12];
+			this.y = e[13];
+			this.z = e[14];
+			return this;
 		}
 
 		/**
@@ -6566,6 +6570,20 @@
 		}
 
 		/**
+		 * Sets this vector to the position represented by the matrix m.
+		 * @param {t3d.Matrix4} m
+		 * @return {t3d.Vector4}
+		 */
+		setFromMatrixPosition(m) {
+			const e = m.elements;
+			this.x = e[12];
+			this.y = e[13];
+			this.z = e[14];
+			this.w = e[15];
+			return this;
+		}
+
+		/**
 		 * Checks for strict equality of this vector and v.
 		 * @param {t3d.Vector4} v
 		 * @return {Boolean}
@@ -7230,7 +7248,7 @@
 	 */
 	RectAreaLight.LTC2 = null;
 
-	const helpVector3$1 = new Vector3();
+	const helpVector3 = new Vector3();
 	const helpMatrix4$1 = new Matrix4();
 	const tempDirectionalShadowMatrices = [];
 	const tempPointShadowMatrices = [];
@@ -7421,7 +7439,7 @@
 			cache.groundColor[1] = groundColor.g * intensity;
 			cache.groundColor[2] = groundColor.b * intensity;
 			const e = object.worldMatrix.elements;
-			const direction = helpVector3$1.set(e[4], e[5], e[6]).normalize();
+			const direction = helpVector3.set(e[4], e[5], e[6]).normalize();
 			if (useAnchorMatrix) {
 				direction.transformDirection(sceneData.anchorMatrixInverse);
 			}
@@ -7436,7 +7454,7 @@
 			cache.color[0] = color.r * intensity;
 			cache.color[1] = color.g * intensity;
 			cache.color[2] = color.b * intensity;
-			const direction = object.getWorldDirection(helpVector3$1);
+			const direction = object.getWorldDirection(helpVector3);
 			if (useAnchorMatrix) {
 				direction.transformDirection(sceneData.anchorMatrixInverse);
 			}
@@ -7474,7 +7492,7 @@
 			cache.color[2] = color.b * intensity;
 			cache.distance = distance;
 			cache.decay = decay;
-			const position = helpVector3$1.setFromMatrixPosition(object.worldMatrix);
+			const position = helpVector3.setFromMatrixPosition(object.worldMatrix);
 			if (useAnchorMatrix) {
 				position.applyMatrix4(sceneData.anchorMatrixInverse);
 			}
@@ -7513,14 +7531,14 @@
 			cache.color[2] = color.b * intensity;
 			cache.distance = distance;
 			cache.decay = decay;
-			const position = helpVector3$1.setFromMatrixPosition(object.worldMatrix);
+			const position = helpVector3.setFromMatrixPosition(object.worldMatrix);
 			if (useAnchorMatrix) {
 				position.applyMatrix4(sceneData.anchorMatrixInverse);
 			}
 			cache.position[0] = position.x;
 			cache.position[1] = position.y;
 			cache.position[2] = position.z;
-			const direction = object.getWorldDirection(helpVector3$1);
+			const direction = object.getWorldDirection(helpVector3);
 			if (useAnchorMatrix) {
 				direction.transformDirection(sceneData.anchorMatrixInverse);
 			}
@@ -7560,7 +7578,7 @@
 			cache.color[0] = color.r * intensity;
 			cache.color[1] = color.g * intensity;
 			cache.color[2] = color.b * intensity;
-			const position = helpVector3$1.setFromMatrixPosition(object.worldMatrix);
+			const position = helpVector3.setFromMatrixPosition(object.worldMatrix);
 			if (useAnchorMatrix) {
 				position.applyMatrix4(sceneData.anchorMatrixInverse);
 			}
@@ -7574,12 +7592,12 @@
 				helpMatrix4$1.premultiply(sceneData.anchorMatrixInverse);
 			}
 			helpMatrix4$1.extractRotation(helpMatrix4$1);
-			const halfWidthPos = helpVector3$1.set(halfWidth * 0.5, 0.0, 0.0);
+			const halfWidthPos = helpVector3.set(halfWidth * 0.5, 0.0, 0.0);
 			halfWidthPos.applyMatrix4(helpMatrix4$1);
 			cache.halfWidth[0] = halfWidthPos.x;
 			cache.halfWidth[1] = halfWidthPos.y;
 			cache.halfWidth[2] = halfWidthPos.z;
-			const halfHeightPos = helpVector3$1.set(0.0, halfHeight * 0.5, 0.0);
+			const halfHeightPos = helpVector3.set(0.0, halfHeight * 0.5, 0.0);
 			halfHeightPos.applyMatrix4(helpMatrix4$1);
 			cache.halfHeight[0] = halfHeightPos.x;
 			cache.halfHeight[1] = halfHeightPos.y;
@@ -7954,11 +7972,8 @@
 			if (object.skeleton) {
 				this.skeletons.add(object.skeleton);
 			}
-
-			// calculate depth for sorting
-			helpVector3.setFromMatrixPosition(object.worldMatrix);
-			helpVector3.applyMatrix4(camera.projectionViewMatrix);
-			const depth = helpVector3.z;
+			_vec4.setFromMatrixPosition(object.worldMatrix).applyMatrix4(camera.projectionViewMatrix);
+			const clipZ = _vec4.z;
 			const layerId = object.renderLayer || 0;
 			let layer = this._lastLayer;
 			if (layer.id !== layerId) {
@@ -7974,11 +7989,11 @@
 					const group = groups[i];
 					const groupMaterial = object.material[group.materialIndex];
 					if (groupMaterial) {
-						layer.addRenderable(object, object.geometry, groupMaterial, depth, group);
+						layer.addRenderable(object, object.geometry, groupMaterial, clipZ, group);
 					}
 				}
 			} else {
-				layer.addRenderable(object, object.geometry, object.material, depth);
+				layer.addRenderable(object, object.geometry, object.material, clipZ);
 			}
 		}
 		pushLight(light) {
@@ -8034,7 +8049,7 @@
 			}
 		}
 	}
-	const helpVector3 = new Vector3();
+	const _vec4 = new Vector4();
 	function sortLayer(a, b) {
 		return a.id - b.id;
 	}

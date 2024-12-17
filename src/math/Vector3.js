@@ -287,7 +287,13 @@ class Vector3 {
 	 * @return {t3d.Vector3}
 	 */
 	setFromMatrixPosition(m) {
-		return this.setFromMatrixColumn(m, 3);
+		const e = m.elements;
+
+		this.x = e[12];
+		this.y = e[13];
+		this.z = e[14];
+
+		return this;
 	}
 
 	/**

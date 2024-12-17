@@ -124,6 +124,22 @@ class Vector4 {
 	}
 
 	/**
+	 * Sets this vector to the position represented by the matrix m.
+	 * @param {t3d.Matrix4} m
+	 * @return {t3d.Vector4}
+	 */
+	setFromMatrixPosition(m) {
+		const e = m.elements;
+
+		this.x = e[12];
+		this.y = e[13];
+		this.z = e[14];
+		this.w = e[15];
+
+		return this;
+	}
+
+	/**
 	 * Checks for strict equality of this vector and v.
 	 * @param {t3d.Vector4} v
 	 * @return {Boolean}
