@@ -6685,6 +6685,18 @@
 		}
 
 		/**
+		 * Rounds the x, y, z and w values of this vector to the nearest integer value.
+		 * @return {t3d.Vector4}
+		 */
+		round() {
+			this.x = Math.round(this.x);
+			this.y = Math.round(this.y);
+			this.z = Math.round(this.z);
+			this.w = Math.round(this.w);
+			return this;
+		}
+
+		/**
 		 * Returns a new Vector4 with the same x, y, z and w values as this one.
 		 * @return {t3d.Vector4}
 		 */
@@ -16028,13 +16040,11 @@
 			}
 			this.currentCullFace = cullFace;
 		}
-		viewport(x, y, width, height) {
+		viewport(viewport) {
 			const currentViewport = this.currentViewport;
-			if (currentViewport.x !== x || currentViewport.y !== y || currentViewport.z !== width || currentViewport.w !== height) {
-				const gl = this.gl;
-				gl.viewport(x, y, width, height);
-				currentViewport.set(x, y, width, height);
-			}
+			if (currentViewport.equals(viewport)) return;
+			this.gl.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
+			currentViewport.copy(viewport);
 		}
 		setLineWidth(width) {
 			if (width !== this.currentLineWidth) {
@@ -17716,11 +17726,7 @@
 			const viewport = helpVector4.set(currentRenderTarget.width, currentRenderTarget.height, currentRenderTarget.width, currentRenderTarget.height).multiply(cameraData.rect);
 			viewport.z -= viewport.x;
 			viewport.w -= viewport.y;
-			viewport.x = Math.round(viewport.x);
-			viewport.y = Math.round(viewport.y);
-			viewport.z = Math.round(viewport.z);
-			viewport.w = Math.round(viewport.w);
-			state.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
+			state.viewport(viewport.round());
 			this._draw(geometry, material, group, renderInfo);
 			textures.resetTextureUnits();
 			afterRender && afterRender.call(this, renderable);

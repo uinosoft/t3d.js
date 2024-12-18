@@ -246,6 +246,19 @@ class Vector4 {
 	}
 
 	/**
+	 * Rounds the x, y, z and w values of this vector to the nearest integer value.
+	 * @return {t3d.Vector4}
+	 */
+	round() {
+		this.x = Math.round(this.x);
+		this.y = Math.round(this.y);
+		this.z = Math.round(this.z);
+		this.w = Math.round(this.w);
+
+		return this;
+	}
+
+	/**
 	 * Returns a new Vector4 with the same x, y, z and w values as this one.
 	 * @return {t3d.Vector4}
 	 */

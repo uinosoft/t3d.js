@@ -452,12 +452,7 @@ class WebGLRenderer extends ThinRenderer {
 		viewport.z -= viewport.x;
 		viewport.w -= viewport.y;
 
-		viewport.x = Math.round(viewport.x);
-		viewport.y = Math.round(viewport.y);
-		viewport.z = Math.round(viewport.z);
-		viewport.w = Math.round(viewport.w);
-
-		state.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
+		state.viewport(viewport.round());
 
 		this._draw(geometry, material, group, renderInfo);
 

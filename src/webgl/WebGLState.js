@@ -436,18 +436,13 @@ class WebGLState {
 		this.currentCullFace = cullFace;
 	}
 
-	viewport(x, y, width, height) {
+	viewport(viewport) {
 		const currentViewport = this.currentViewport;
 
-		if (currentViewport.x !== x ||
-            currentViewport.y !== y ||
-            currentViewport.z !== width ||
-            currentViewport.w !== height
-		) {
-			const gl = this.gl;
-			gl.viewport(x, y, width, height);
-			currentViewport.set(x, y, width, height);
-		}
+		if (currentViewport.equals(viewport)) return;
+
+		this.gl.viewport(viewport.x, viewport.y, viewport.z, viewport.w);
+		currentViewport.copy(viewport);
 	}
 
 	setLineWidth(width) {
