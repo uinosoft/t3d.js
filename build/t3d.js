@@ -8666,16 +8666,7 @@
 	const _vB = new Vector3();
 	const _vC = new Vector3();
 	const _tempA = new Vector3();
-	const _tempB = new Vector3();
-	const _tempC = new Vector3();
 	const _morphA = new Vector3();
-	const _morphB = new Vector3();
-	const _morphC = new Vector3();
-	const _basePosition = new Vector3();
-	const _skinIndex = new Vector4();
-	const _skinWeight = new Vector4();
-	const _vector$1 = new Vector3();
-	const _matrix = new Matrix4();
 	const _uvA = new Vector2();
 	const _uvB = new Vector2();
 	const _uvC = new Vector2();
@@ -8715,6 +8706,33 @@
 			 */
 			this.morphTargetInfluences = null;
 		}
+
+		/**
+		 * Get the local-space position of the vertex at the given index,
+		 * taking into account the current animation state of both morph targets and skinning.
+		 * @param {Number} index - The index of the vertex.
+		 * @param {t3d.Vector3} target - The target vector.
+		 * @return {t3d.Vector3} The target vector.
+		 */
+		getVertexPosition(index, target) {
+			const geometry = this.geometry;
+			const position = geometry.getAttribute('a_Position');
+			const morphPosition = geometry.morphAttributes.position;
+			target.fromArray(position.buffer.array, index * position.buffer.stride + position.offset);
+			const morphInfluences = this.morphTargetInfluences;
+			if (morphPosition && morphInfluences) {
+				_morphA.set(0, 0, 0);
+				for (let i = 0, il = morphPosition.length; i < il; i++) {
+					const influence = morphInfluences[i];
+					const morphAttribute = morphPosition[i];
+					if (influence === 0) continue;
+					_tempA.fromArray(morphAttribute.buffer.array, index * morphAttribute.buffer.stride + morphAttribute.offset);
+					_morphA.addScaledVector(_tempA, influence);
+				}
+				target.add(_morphA);
+			}
+			return target;
+		}
 		raycast(ray, intersects) {
 			const geometry = this.geometry;
 			const worldMatrix = this.worldMatrix;
@@ -8733,7 +8751,6 @@
 				return;
 			}
 			const uv = geometry.getAttribute('a_Uv');
-			const morphPosition = geometry.morphAttributes.position;
 			let intersection;
 			if (geometry.index) {
 				const index = geometry.index.buffer.array;
@@ -8741,7 +8758,7 @@
 					const a = index[i];
 					const b = index[i + 1];
 					const c = index[i + 2];
-					intersection = checkGeometryIntersection(this, ray, _ray, position, morphPosition, uv, a, b, c);
+					intersection = checkGeometryIntersection(this, ray, _ray, uv, a, b, c);
 					if (intersection) {
 						intersection.faceIndex = Math.floor(i / 3);
 						intersects.push(intersection);
@@ -8752,7 +8769,7 @@
 					const a = i;
 					const b = i + 1;
 					const c = i + 2;
-					intersection = checkGeometryIntersection(this, ray, _ray, position, morphPosition, uv, a, b, c);
+					intersection = checkGeometryIntersection(this, ray, _ray, uv, a, b, c);
 					if (intersection) {
 						intersection.faceIndex = Math.floor(i / 3);
 						intersects.push(intersection);
@@ -8778,49 +8795,15 @@
 	 * @default true
 	 */
 	Mesh.prototype.isMesh = true;
-	function checkGeometryIntersection(object, ray, _ray, position, morphPosition, uv, a, b, c) {
-		let array;
-		let bufferStride;
-		let attributeOffset;
-		array = position.buffer.array;
-		bufferStride = position.buffer.stride;
-		attributeOffset = position.offset;
-		_vA.fromArray(array, a * bufferStride + attributeOffset);
-		_vB.fromArray(array, b * bufferStride + attributeOffset);
-		_vC.fromArray(array, c * bufferStride + attributeOffset);
-		const morphInfluences = object.morphTargetInfluences;
-		if (morphPosition && morphInfluences) {
-			_morphA.set(0, 0, 0);
-			_morphB.set(0, 0, 0);
-			_morphC.set(0, 0, 0);
-			for (let i = 0; i < morphPosition.length; i++) {
-				const influence = morphInfluences[i];
-				const morphAttribute = morphPosition[i];
-				if (influence === 0) continue;
-				array = morphAttribute.buffer.array;
-				bufferStride = morphAttribute.buffer.stride;
-				attributeOffset = morphAttribute.offset;
-				_tempA.fromArray(array, a * bufferStride + attributeOffset);
-				_tempB.fromArray(array, b * bufferStride + attributeOffset);
-				_tempC.fromArray(array, c * bufferStride + attributeOffset);
-				_morphA.addScaledVector(_tempA, influence);
-				_morphB.addScaledVector(_tempB, influence);
-				_morphC.addScaledVector(_tempC, influence);
-			}
-			_vA.add(_morphA);
-			_vB.add(_morphB);
-			_vC.add(_morphC);
-		}
-
-		// Skinning : only raycast in incorrect skinnedMesh boundingBox!
-
-		if (object.isSkinnedMesh) {
-			boneTransform(object, a, _vA);
-			boneTransform(object, b, _vB);
-			boneTransform(object, c, _vC);
-		}
+	function checkGeometryIntersection(object, ray, _ray, uv, a, b, c) {
+		object.getVertexPosition(a, _vA);
+		object.getVertexPosition(b, _vB);
+		object.getVertexPosition(c, _vC);
 		const intersection = checkIntersection(object, ray, _ray, _vA, _vB, _vC, _intersectionPoint);
 		if (intersection) {
+			let array;
+			let bufferStride;
+			let attributeOffset;
 			if (uv) {
 				array = uv.buffer.array;
 				bufferStride = uv.buffer.stride;
@@ -8866,38 +8849,6 @@
 			point: _intersectionPointWorld.clone(),
 			object: object
 		};
-	}
-	function boneTransform(object, index, target) {
-		const skeleton = object.skeleton;
-		const skinIndex = object.geometry.attributes['skinIndex'];
-		const skinWeight = object.geometry.attributes['skinWeight'];
-		_skinIndex.fromArray(skinIndex.buffer.array, index * skinIndex.size);
-		_skinWeight.fromArray(skinWeight.buffer.array, index * skinWeight.size);
-		_basePosition.copy(target).applyMatrix4(object.bindMatrix);
-		target.set(0, 0, 0);
-		for (let i = 0; i < 4; i++) {
-			const weight = getComponent(_skinWeight, i);
-			if (weight < Number.EPSILON) continue;
-			const boneIndex = getComponent(_skinIndex, i);
-			if (!skeleton.bones[boneIndex]) continue;
-			_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
-			target.addScaledVector(_vector$1.copy(_basePosition).applyMatrix4(_matrix), weight);
-		}
-		return target.applyMatrix4(object.bindMatrixInverse);
-	}
-	function getComponent(vec, index) {
-		switch (index) {
-			case 0:
-				return vec.x;
-			case 1:
-				return vec.y;
-			case 2:
-				return vec.z;
-			case 3:
-				return vec.w;
-			default:
-				throw new Error('index is out of range: ' + index);
-		}
 	}
 
 	/**
@@ -9071,7 +9022,7 @@
 	}
 
 	let _geometryId = 0;
-	const _vector = new Vector3();
+	const _vector$1 = new Vector3();
 	const _offset = new Vector3();
 	const _sum = new Vector3();
 	const _box3 = new Box3();
@@ -9242,10 +9193,10 @@
 				for (let i = 0; i < morphAttributesPosition.length; i++) {
 					const morphAttribute = morphAttributesPosition[i];
 					_box3.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
-					_vector.addVectors(this.boundingBox.min, _box3.min);
-					this.boundingBox.expandByPoint(_vector);
-					_vector.addVectors(this.boundingBox.max, _box3.max);
-					this.boundingBox.expandByPoint(_vector);
+					_vector$1.addVectors(this.boundingBox.min, _box3.min);
+					this.boundingBox.expandByPoint(_vector$1);
+					_vector$1.addVectors(this.boundingBox.max, _box3.max);
+					this.boundingBox.expandByPoint(_vector$1);
 				}
 			}
 		}
@@ -9267,10 +9218,10 @@
 				for (let i = 0; i < morphAttributesPosition.length; i++) {
 					const morphAttribute = morphAttributesPosition[i];
 					_boxMorphTargets.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
-					_vector.addVectors(_box3.min, _boxMorphTargets.min);
-					_box3.expandByPoint(_vector);
-					_vector.addVectors(_box3.max, _boxMorphTargets.max);
-					_box3.expandByPoint(_vector);
+					_vector$1.addVectors(_box3.min, _boxMorphTargets.min);
+					_box3.expandByPoint(_vector$1);
+					_vector$1.addVectors(_box3.max, _boxMorphTargets.max);
+					_box3.expandByPoint(_vector$1);
 				}
 				const center = this.boundingSphere.center;
 				_box3.getCenter(center);
@@ -9280,14 +9231,14 @@
 					maxRadiusSq = center.distanceToSquared(_offset);
 					for (let j = 0; j < morphAttributesPosition.length; j++) {
 						const morphAttribute = morphAttributesPosition[j];
-						_vector.fromArray(morphAttribute.buffer.array, i * morphAttribute.buffer.stride + morphAttribute.offset);
-						_sum.addVectors(_offset, _vector);
+						_vector$1.fromArray(morphAttribute.buffer.array, i * morphAttribute.buffer.stride + morphAttribute.offset);
+						_sum.addVectors(_offset, _vector$1);
 						const offsetLengthSq = center.distanceToSquared(_sum);
 
 						// TODO The maximum radius cannot be obtained here
 						if (offsetLengthSq > maxRadiusSq) {
 							maxRadiusSq = offsetLengthSq;
-							_offset.add(_vector);
+							_offset.add(_vector$1);
 						}
 					}
 				}
@@ -13831,6 +13782,38 @@
 			this.skeleton = source.skeleton;
 			return this;
 		}
+		getVertexPosition(index, target) {
+			super.getVertexPosition(index, target);
+			this.applyBoneTransform(index, target);
+			return target;
+		}
+
+		/**
+		 * Applies the bone transform associated with the given index to the given position vector.
+		 * Returns the updated vector.
+		 * @param {Number} index - The index of the vertex.
+		 * @param {t3d.Vector3} target - The target vector.
+		 * @return {t3d.Vector3} The target vector.
+		 */
+		applyBoneTransform(index, target) {
+			const skeleton = this.skeleton;
+			const geometry = this.geometry;
+			const skinIndex = geometry.attributes.skinIndex;
+			const skinWeight = geometry.attributes.skinWeight;
+			_skinIndex.fromArray(skinIndex.buffer.array, index * skinIndex.size);
+			_skinWeight.fromArray(skinWeight.buffer.array, index * skinWeight.size);
+			_basePosition.copy(target).applyMatrix4(this.bindMatrix);
+			target.set(0, 0, 0);
+			for (let i = 0; i < 4; i++) {
+				const weight = getComponent(_skinWeight, i);
+				if (weight < Number.EPSILON) continue;
+				const boneIndex = getComponent(_skinIndex, i);
+				if (!skeleton.bones[boneIndex]) continue;
+				_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
+				target.addScaledVector(_vector.copy(_basePosition).applyMatrix4(_matrix), weight);
+			}
+			return target.applyMatrix4(this.bindMatrixInverse);
+		}
 	}
 
 	/**
@@ -13839,6 +13822,25 @@
 	 * @default true
 	 */
 	SkinnedMesh.prototype.isSkinnedMesh = true;
+	const _basePosition = new Vector3();
+	const _skinIndex = new Vector4();
+	const _skinWeight = new Vector4();
+	const _vector = new Vector3();
+	const _matrix = new Matrix4();
+	function getComponent(vec, index) {
+		switch (index) {
+			case 0:
+				return vec.x;
+			case 1:
+				return vec.y;
+			case 2:
+				return vec.z;
+			case 3:
+				return vec.w;
+			default:
+				throw new Error('index is out of range: ' + index);
+		}
+	}
 
 	var alphaTest_frag = "#ifdef ALPHATEST\n\tif (outColor.a < u_AlphaTest) discard;\n\toutColor.a = u_Opacity;\n#endif";
 

@@ -1,5 +1,7 @@
 import { Mesh } from './Mesh.js';
 import { Matrix4 } from '../math/Matrix4.js';
+import { Vector3 } from '../math/Vector3.js';
+import { Vector4 } from '../math/Vector4.js';
 
 /**
  * A mesh that has a {@link t3d.Skeleton} with bones that can then be used to animate the vertices of the geometry.
@@ -83,6 +85,51 @@ class SkinnedMesh extends Mesh {
 		return this;
 	}
 
+	getVertexPosition(index, target) {
+		super.getVertexPosition(index, target);
+
+		this.applyBoneTransform(index, target);
+
+		return target;
+	}
+
+	/**
+	 * Applies the bone transform associated with the given index to the given position vector.
+	 * Returns the updated vector.
+	 * @param {Number} index - The index of the vertex.
+	 * @param {t3d.Vector3} target - The target vector.
+	 * @return {t3d.Vector3} The target vector.
+	 */
+	applyBoneTransform(index, target) {
+		const skeleton = this.skeleton;
+		const geometry = this.geometry;
+
+		const skinIndex = geometry.attributes.skinIndex;
+		const skinWeight = geometry.attributes.skinWeight;
+
+		_skinIndex.fromArray(skinIndex.buffer.array, index * skinIndex.size);
+		_skinWeight.fromArray(skinWeight.buffer.array, index * skinWeight.size);
+
+		_basePosition.copy(target).applyMatrix4(this.bindMatrix);
+
+		target.set(0, 0, 0);
+
+		for (let i = 0; i < 4; i++) {
+			const weight = getComponent(_skinWeight, i);
+
+			if (weight < Number.EPSILON) continue;
+
+			const boneIndex = getComponent(_skinIndex, i);
+
+			if (!skeleton.bones[boneIndex]) continue;
+
+			_matrix.multiplyMatrices(skeleton.bones[boneIndex].worldMatrix, skeleton.boneInverses[boneIndex]);
+			target.addScaledVector(_vector.copy(_basePosition).applyMatrix4(_matrix), weight);
+		}
+
+		return target.applyMatrix4(this.bindMatrixInverse);
+	}
+
 }
 
 /**
@@ -91,5 +138,22 @@ class SkinnedMesh extends Mesh {
  * @default true
  */
 SkinnedMesh.prototype.isSkinnedMesh = true;
+
+const _basePosition = new Vector3();
+const _skinIndex = new Vector4();
+const _skinWeight = new Vector4();
+
+const _vector = new Vector3();
+const _matrix = new Matrix4();
+
+function getComponent(vec, index) {
+	switch (index) {
+		case 0: return vec.x;
+		case 1: return vec.y;
+		case 2: return vec.z;
+		case 3: return vec.w;
+		default: throw new Error('index is out of range: ' + index);
+	}
+}
 
 export { SkinnedMesh };
