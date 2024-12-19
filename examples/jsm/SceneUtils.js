@@ -1,4 +1,4 @@
-import { Box3, Matrix4 } from 't3d';
+import { Box3, Matrix4, Vector3 } from 't3d';
 
 class SceneUtils {
 
@@ -22,7 +22,7 @@ class SceneUtils {
 		return target;
 	}
 
-	static expandBox3ByObject(object, root, target) {
+	static expandBox3ByObject(object, root, target, precise) {
 		const geometry = object.geometry;
 
 		if (geometry) {
@@ -30,27 +30,46 @@ class SceneUtils {
 				this.getRelativeMatrixFromRoot(object, root, _mat4_1)
 				: object.worldMatrix;
 
-			_box3_1.copy(geometry.boundingBox);
-			_box3_1.applyMatrix4(matrix);
+			const box = precise ?
+				this.computeMeshAccurateBoundings(object, _box3_1)
+				: _box3_1.copy(geometry.boundingBox);
 
-			target.expandByBox3(_box3_1);
+			box.applyMatrix4(matrix);
+
+			target.expandByBox3(box);
 		}
 
 		const children = object.children;
 
 		for (let i = 0, l = children.length; i < l; i++) {
-			this.expandBox3ByObject(children[i], root, target);
+			this.expandBox3ByObject(children[i], root, target, precise);
 		}
+
+		return target;
 	}
 
-	static setBox3FromObject(object, root, target = new Box3()) {
+	static setBox3FromObject(object, root, target = new Box3(), precise = false) {
 		target.makeEmpty();
-		return this.expandBox3ByObject(object, root, target);
+		return this.expandBox3ByObject(object, root, target, precise);
+	}
+
+	static computeMeshAccurateBoundings(mesh, target) {
+		target.makeEmpty();
+
+		const positionAttribute = mesh.geometry.attributes.a_Position;
+
+		for (let i = 0; i < positionAttribute.buffer.count; i++) {
+			mesh.getVertexPosition(i, _vec3_1);
+			target.expandByPoint(_vec3_1);
+		}
+
+		return target;
 	}
 
 }
 
 const _box3_1 = new Box3();
 const _mat4_1 = new Matrix4();
+const _vec3_1 = new Vector3();
 
 export { SceneUtils };
