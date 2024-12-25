@@ -9,6 +9,7 @@ import { WebGLBuffers } from './WebGLBuffers.js';
 import { WebGLGeometries } from './WebGLGeometries.js';
 import { WebGLMaterials } from './WebGLMaterials.js';
 import { WebGLVertexArrayBindings } from './WebGLVertexArrayBindings.js';
+import { WebGLTransformFeedback } from './WebGLTransformFeedback.js';
 import { WebGLQueries } from './WebGLQueries.js';
 import { Vector4 } from '../math/Vector4.js';
 import { Matrix4 } from '../math/Matrix4.js';
@@ -90,6 +91,7 @@ class WebGLRenderer extends ThinRenderer {
 		const renderTargets = new WebGLRenderTargets(prefix, gl, state, capabilities, textures, renderBuffers, constants);
 		const buffers = new WebGLBuffers(prefix, gl, capabilities);
 		const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, gl, capabilities, buffers);
+		const transformFeedback = new WebGLTransformFeedback(prefix, gl, capabilities, buffers);
 		const geometries = new WebGLGeometries(prefix, gl, buffers, vertexArrayBindings);
 		const programs = new WebGLPrograms(gl, state, capabilities);
 		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
@@ -106,6 +108,7 @@ class WebGLRenderer extends ThinRenderer {
 		this._materials = materials;
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
+		this._transformFeedback = transformFeedback;
 		this._queries = queries;
 	}
 
@@ -217,6 +220,7 @@ class WebGLRenderer extends ThinRenderer {
 		const state = this._state;
 		const capabilities = this.capabilities;
 		const vertexArrayBindings = this._vertexArrayBindings;
+		const transformFeedback = this._transformFeedback;
 		const textures = this._textures;
 		const programs = this._programs;
 		const passInfo = this._passInfo;
@@ -340,6 +344,7 @@ class WebGLRenderer extends ThinRenderer {
 		}
 
 		vertexArrayBindings.setup(object, geometry, program);
+		transformFeedback.setup(geometry, program);
 
 		let refreshLights = false;
 		if (program.lightId !== lightData.id || program.lightVersion !== lightData.version) {
@@ -455,9 +460,8 @@ class WebGLRenderer extends ThinRenderer {
 		state.viewport(viewport.round());
 
 		this._draw(geometry, material, group, renderInfo);
-
+		transformFeedback.reset();
 		textures.resetTextureUnits();
-
 		afterRender && afterRender.call(this, renderable);
 		object.onAfterRender(renderable);
 	}
@@ -634,6 +638,8 @@ class WebGLRenderer extends ThinRenderer {
 		const useMultiDraw = useGroup && group.multiDrawCount !== undefined;
 		const useIndexBuffer = geometry.index !== null;
 
+		const useTransformFeedback = geometry.outBuffer !== undefined;
+
 		let drawStart = 0;
 		let drawCount = Infinity;
 
@@ -713,6 +719,10 @@ class WebGLRenderer extends ThinRenderer {
 				}
 
 				extension.multiDrawArraysWEBGL(material.drawMode, group.multiDrawStarts, 0, group.multiDrawCounts, 0, group.multiDrawCount);
+			} else if (useTransformFeedback) {
+				gl.beginTransformFeedback(material.drawMode);
+				gl.drawArrays(material.drawMode, drawStart, drawCount);
+				gl.endTransformFeedback();
 			} else {
 				gl.drawArrays(material.drawMode, drawStart, drawCount);
 			}

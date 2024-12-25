@@ -5,7 +5,7 @@ let programIdCount = 0;
 
 class WebGLProgram {
 
-	constructor(gl, vshader, fshader) {
+	constructor(gl, vshader, fshader, geometry) {
 		this.gl = gl;
 		this.vshaderSource = vshader;
 		this.fshaderSource = fshader;
@@ -43,6 +43,9 @@ class WebGLProgram {
 			program = gl.createProgram();
 			gl.attachShader(program, vertexShader);
 			gl.attachShader(program, fragmentShader);
+			if (geometry && geometry.outBuffer) {
+				gl.transformFeedbackVaryings(program, Object.keys(geometry.outBuffer), gl.SEPARATE_ATTRIBS);
+			}
 			gl.linkProgram(program);
 
 			this.program = program;

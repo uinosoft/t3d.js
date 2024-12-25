@@ -35,7 +35,7 @@ class WebGLPrograms {
 			const vertexShader = ShaderLib[material.type + '_vert'] || material.vertexShader || ShaderLib.basic_vert;
 			const fragmentShader = ShaderLib[material.type + '_frag'] || material.fragmentShader || ShaderLib.basic_frag;
 
-			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader);
+			program = createProgram(this._gl, customDefines, props, vertexShader, fragmentShader, object.geometry);
 			program.name = props.shaderName;
 			program.compile(compileOptions);
 			program.code = code;
@@ -300,7 +300,7 @@ function uvAttributes(activeMapCoords) {
 	return str;
 }
 
-function createProgram(gl, defines, props, vertex, fragment) {
+function createProgram(gl, defines, props, vertex, fragment, geometry) {
 	let prefixVertex = [
 		'precision ' + props.precision + ' float;',
 		'precision ' + props.precision + ' int;',
@@ -540,7 +540,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 	vshader = prefixVertex + vshader;
 	fshader = prefixFragment + fshader;
 
-	return new WebGLProgram(gl, vshader, fshader);
+	return new WebGLProgram(gl, vshader, fshader, geometry);
 }
 
 const parseIncludes = function(string) {
