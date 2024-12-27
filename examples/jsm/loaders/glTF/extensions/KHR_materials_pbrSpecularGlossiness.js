@@ -11,6 +11,8 @@ export class KHR_materials_pbrSpecularGlossiness {
 	}
 
 	static parseParams(material, params, textures, transformExt) {
+		if (material.constructor !== PBR2Material) return;
+
 		const { diffuseFactor, diffuseTexture, specularFactor, glossinessFactor, specularGlossinessTexture } = params;
 
 		if (Array.isArray(diffuseFactor)) {

@@ -1,6 +1,6 @@
 import { PBRMaterial, Vector2 } from 't3d';
 /**
- * Clearcoat Materials Extension
+ * KHR_materials_clearcoat extension
  * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_materials_clearcoat
  */
 export class KHR_materials_clearcoat {
@@ -10,6 +10,8 @@ export class KHR_materials_clearcoat {
 	}
 
 	static parseParams(material, extension, textures) {
+		if (material.constructor !== PBRMaterial) return;
+
 		const { clearcoatFactor, clearcoatTexture, clearcoatRoughnessFactor, clearcoatRoughnessTexture, clearcoatNormalTexture } = extension;
 
 		if (clearcoatFactor) {

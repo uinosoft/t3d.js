@@ -13,9 +13,6 @@ export class MaterialParser {
 		if (!gltf.materials) return;
 
 		const transformExt = loader.extensions.get('KHR_texture_transform');
-		const unlitExt = loader.extensions.get('KHR_materials_unlit');
-		const pbrSpecularGlossinessExt = loader.extensions.get('KHR_materials_pbrSpecularGlossiness');
-		const clearcoatExt = loader.extensions.get('KHR_materials_clearcoat');
 
 		const materials = [];
 		for (let i = 0; i < gltf.materials.length; i++) {
@@ -32,22 +29,38 @@ export class MaterialParser {
 				name = ''
 			} = gltf.materials[i];
 
-			const { KHR_materials_unlit, KHR_materials_pbrSpecularGlossiness, KHR_materials_clearcoat } = extensions;
-
 			let material = null;
-			if (KHR_materials_unlit && unlitExt) {
-				material = unlitExt.getMaterial();
-			} else if (KHR_materials_pbrSpecularGlossiness && pbrSpecularGlossinessExt) {
-				material = pbrSpecularGlossinessExt.getMaterial();
-				pbrSpecularGlossinessExt.parseParams(material, KHR_materials_pbrSpecularGlossiness, textures, transformExt);
-			} else if (KHR_materials_clearcoat && clearcoatExt) {
-				material = clearcoatExt.getMaterial();
-				clearcoatExt.parseParams(material, KHR_materials_clearcoat, textures);
-			} else {
-				material = new PBRMaterial();
+
+			const materialExtNames = loader.autoParseConfig.materials;
+
+			// TODO: refactor invoke method
+			for (let j = 0; j < materialExtNames.length; j++) {
+				const extName = materialExtNames[j];
+
+				const extParams = extensions[extName];
+				const ext = loader.extensions.get(extName);
+
+				if (extParams && ext && ext.getMaterial) {
+					material = ext.getMaterial();
+					break;
+				}
 			}
 
+			material = material || new PBRMaterial();
 			material.name = name;
+
+			for (let j = 0; j < materialExtNames.length; j++) {
+				const extName = materialExtNames[j];
+
+				const extParams = extensions[extName];
+				const ext = loader.extensions.get(extName);
+
+				if (extParams && ext && ext.parseParams) {
+					ext.parseParams(material, extParams, textures, transformExt);
+				}
+			}
+
+			const { KHR_materials_unlit, KHR_materials_pbrSpecularGlossiness } = extensions;
 
 			if (pbrMetallicRoughness) {
 				const { baseColorFactor, baseColorTexture, metallicFactor, roughnessFactor, metallicRoughnessTexture } = pbrMetallicRoughness;

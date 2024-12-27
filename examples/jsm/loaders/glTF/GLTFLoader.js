@@ -73,6 +73,11 @@ export class GLTFLoader {
 
 		this.extensions = new Map(extensions);
 
+		// Indicate which extensions can be parsed in a uniform way.
+		this.autoParseConfig = {
+			materials: ['KHR_materials_clearcoat', 'KHR_materials_pbrSpecularGlossiness', 'KHR_materials_unlit', 'KHR_materials_transmission', 'KHR_materials_ior', 'KHR_materials_volume']
+		};
+
 		this._parsers = parsers.slice(0);
 
 		this._dracoLoader = null;

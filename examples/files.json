@@ -25,6 +25,7 @@
 		"geometry_loader_gltf_instancing",
 		"geometry_loader_gltf_materials_unlit",
 		"geometry_loader_gltf_materials_clearcoat",
+		"geometry_loader_gltf_materials_transmission",
 		"geometry_loader_gltf_uvtransform",
 		"geometry_loader_gltf_draco",
 		"geometry_loader_gltf_meshopt",
