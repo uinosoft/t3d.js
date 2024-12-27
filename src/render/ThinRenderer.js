@@ -29,10 +29,12 @@ class ThinRenderer {
 		 * @type {Object}
 		 * @property {Boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
 		 * @property {Boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
+		 * @property {Number} maxMaterialPrograms - The maximum number of programs that one material can cache, defaults to 5.
 		 */
 		this.shaderCompileOptions = {
 			checkErrors: true,
-			compileAsynchronously: false
+			compileAsynchronously: false,
+			maxMaterialPrograms: 5
 		};
 
 		/**

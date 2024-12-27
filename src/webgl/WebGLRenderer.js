@@ -218,7 +218,6 @@ class WebGLRenderer extends ThinRenderer {
 		const capabilities = this.capabilities;
 		const vertexArrayBindings = this._vertexArrayBindings;
 		const textures = this._textures;
-		const programs = this._programs;
 		const passInfo = this._passInfo;
 
 		const getGeometry = options.getGeometry || defaultGetGeometry;
@@ -269,8 +268,9 @@ class WebGLRenderer extends ThinRenderer {
 		// Check material version
 
 		const materialProperties = this._materials.setMaterial(material);
+
 		if (material.needsUpdate === false) {
-			if (materialProperties.program === undefined) {
+			if (materialProperties.currentProgram === undefined) {
 				material.needsUpdate = true;
 			} else if (materialProperties.fog !== fog) {
 				material.needsUpdate = true;
@@ -302,12 +302,7 @@ class WebGLRenderer extends ThinRenderer {
 		// Update program if needed.
 
 		if (material.needsUpdate) {
-			const oldProgram = materialProperties.program;
-			materialProperties.program = programs.getProgram(material, object, renderStates, this.shaderCompileOptions);
-			if (oldProgram) { // release after new program is created.
-				vertexArrayBindings.releaseByProgram(oldProgram);
-				programs.releaseProgram(oldProgram);
-			}
+			this._materials.updateProgram(material, object, renderStates, this.shaderCompileOptions);
 
 			materialProperties.fog = fog;
 			materialProperties.envMap = _envData.map;
@@ -326,7 +321,7 @@ class WebGLRenderer extends ThinRenderer {
 			material.needsUpdate = false;
 		}
 
-		const program = materialProperties.program;
+		const program = materialProperties.currentProgram;
 
 		if (options.onlyCompile || !program.isReady(capabilities.parallelShaderCompileExt)) return;
 
