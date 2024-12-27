@@ -16,6 +16,9 @@ export class MaterialParser {
 		const unlitExt = loader.extensions.get('KHR_materials_unlit');
 		const pbrSpecularGlossinessExt = loader.extensions.get('KHR_materials_pbrSpecularGlossiness');
 		const clearcoatExt = loader.extensions.get('KHR_materials_clearcoat');
+		const transmissionExt = loader.extensions.get('KHR_materials_transmission');
+		const iorExt = loader.extensions.get('KHR_materials_ior');
+		const volumeExt = loader.extensions.get('KHR_materials_volume');
 
 		const materials = [];
 		for (let i = 0; i < gltf.materials.length; i++) {
@@ -32,20 +35,37 @@ export class MaterialParser {
 				name = ''
 			} = gltf.materials[i];
 
-			const { KHR_materials_unlit, KHR_materials_pbrSpecularGlossiness, KHR_materials_clearcoat } = extensions;
+			const { KHR_materials_unlit, KHR_materials_pbrSpecularGlossiness, KHR_materials_clearcoat, KHR_materials_transmission, KHR_materials_ior, KHR_materials_volume } = extensions;
 
 			let material = null;
-			if (KHR_materials_unlit && unlitExt) {
-				material = unlitExt.getMaterial();
-			} else if (KHR_materials_pbrSpecularGlossiness && pbrSpecularGlossinessExt) {
-				material = pbrSpecularGlossinessExt.getMaterial();
-				pbrSpecularGlossinessExt.parseParams(material, KHR_materials_pbrSpecularGlossiness, textures, transformExt);
-			} else if (KHR_materials_clearcoat && clearcoatExt) {
-				material = clearcoatExt.getMaterial();
-				clearcoatExt.parseParams(material, KHR_materials_clearcoat, textures);
+			if ((KHR_materials_transmission && transmissionExt) || (KHR_materials_ior && iorExt)) {
+				if (KHR_materials_transmission && transmissionExt) {
+					material = transmissionExt.getMaterial();
+					transmissionExt.parseParams(material, KHR_materials_transmission, textures);
+					if (KHR_materials_volume && volumeExt) {
+						volumeExt.parseParams(material, KHR_materials_volume, textures);
+					}
+				}
+				if (KHR_materials_ior && iorExt) {
+					if (!material) {
+						material = iorExt.getMaterial();
+					}
+					iorExt.parseParams(material, KHR_materials_ior);
+				}
 			} else {
-				material = new PBRMaterial();
+				if (KHR_materials_unlit && unlitExt) {
+					material = unlitExt.getMaterial();
+				} else if (KHR_materials_pbrSpecularGlossiness && pbrSpecularGlossinessExt) {
+					material = pbrSpecularGlossinessExt.getMaterial();
+					pbrSpecularGlossinessExt.parseParams(material, KHR_materials_pbrSpecularGlossiness, textures, transformExt);
+				} else if (KHR_materials_clearcoat && clearcoatExt) {
+					material = clearcoatExt.getMaterial();
+					clearcoatExt.parseParams(material, KHR_materials_clearcoat, textures);
+				} else {
+					material = new PBRMaterial();
+				}
 			}
+
 
 			material.name = name;
 
