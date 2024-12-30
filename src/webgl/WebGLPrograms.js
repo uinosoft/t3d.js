@@ -88,7 +88,7 @@ class WebGLPrograms {
 		const HAS_CLEARCOAT_ROUGHNESSMAP = HAS_CLEARCOAT && !!material.clearcoatRoughnessMap;
 		const HAS_CLEARCOAT_NORMALMAP = HAS_CLEARCOAT && !!material.clearcoatNormalMap;
 
-		_activeMapCoords = 0; // reset
+		_activeMapCoords = material.extUvCoordMask; // reset
 
 		const props = {}; // cache this props?
 

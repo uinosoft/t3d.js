@@ -93,6 +93,15 @@ class Material extends EventDispatcher {
 		this.precision = null;
 
 		/**
+		 * The bitmask of UV coordinate channels to use for the external texture.
+		 * This will be combined with the internal UV coordinate mask collected from the renderer by default.
+		 * Finally, it will be used to determine which UV coordinate attribute to use and to generate the shader code.
+		 * @type {Number}
+		 * @default 0
+		 */
+		this.extUvCoordMask = 0;
+
+		/**
 		 * Defines whether this material is transparent.
 		 * This has an effect on rendering as transparent objects need special treatment and are rendered after non-transparent objects.
 		 * When set to true, the extent to which the material is transparent is controlled by setting it's blending property.
@@ -613,6 +622,8 @@ class Material extends EventDispatcher {
 		this.fragmentShader = source.fragmentShader;
 
 		this.precision = source.precision;
+		this.extUvCoordMask = source.extUvCoordMask;
+
 		this.transparent = source.transparent;
 		this.blending = source.blending;
 		this.blendSrc = source.blendSrc;
