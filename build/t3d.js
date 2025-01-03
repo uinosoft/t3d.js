@@ -9336,6 +9336,79 @@
 		return max;
 	}
 
+	/**
+	 * A transform object for UV coordinates.
+	 * @memberof t3d
+	 * @extends t3d.Matrix3
+	 */
+	class TransformUV extends Matrix3 {
+		/**
+		 * Create a new TransformUV object.
+		 */
+		constructor() {
+			super();
+			this.offset = new Vector2(0, 0);
+			this.scale = new Vector2(1, 1);
+			this.center = new Vector2(0, 0);
+			this.rotation = 0;
+			this.needsUpdate = false;
+		}
+
+		/**
+		 * Update the matrix for UV transformation based on the offset, scale, rotation and center.
+		 * If needsUpdate is false, this method will do nothing.
+		 * @return {t3d.TransformUV} This object.
+		 */
+		update() {
+			if (!this.needsUpdate) return this;
+			this.needsUpdate = false;
+			this.updateMatrix();
+			return this;
+		}
+
+		/**
+		 * Update the matrix for UV transformation based on the offset, scale, rotation and center.
+		 * This method will always update the matrix regardless of the needsUpdate flag.
+		 * @return {t3d.TransformUV} This object.
+		 */
+		updateMatrix() {
+			return this.setUvTransform(this.offset.x, this.offset.y, this.scale.x, this.scale.y, this.rotation, this.center.x, this.center.y);
+		}
+
+		/**
+		 * Copy the properties of another TransformUV object.
+		 * @param {t3d.TransformUV|t3d.Matrix3} source - The object to copy the properties from.
+		 * @return {t3d.TransformUV} This object.
+		 */
+		copy(source) {
+			super.copy(source);
+
+			// in case source is only a Matrix3 object (without additional properties)
+			if (!source.isTransformUV) return this;
+			this.offset.copy(source.offset);
+			this.scale.copy(source.scale);
+			this.center.copy(source.center);
+			this.rotation = source.rotation;
+			this.needsUpdate = source.needsUpdate;
+			return this;
+		}
+
+		/**
+		 * Clone this TransformUV object.
+		 * @return {t3d.TransformUV} The cloned object.
+		 */
+		clone() {
+			return new this.constructor().copy(this);
+		}
+	}
+
+	/**
+	 * @readonly
+	 * @type {Boolean}
+	 * @default true
+	 */
+	TransformUV.prototype.isTransformUV = true;
+
 	let _materialId = 0;
 
 	/**
@@ -9550,10 +9623,10 @@
 			/**
 			 * The uv-transform matrix of diffuse map.
 			 * This will also affect other maps that cannot be individually specified uv transform, such as normalMap, bumpMap, etc.
-			 * @type {t3d.Matrix3}
-			 * @default t3d.Matrix3()
+			 * @type {t3d.TransformUV}
+			 * @default t3d.TransformUV()
 			 */
-			this.diffuseMapTransform = new Matrix3();
+			this.diffuseMapTransform = new TransformUV();
 
 			/**
 			 * The alpha map.
@@ -9571,10 +9644,10 @@
 
 			/**
 			 * The uv-transform matrix of alpha map.
-			 * @type {t3d.Matrix3}
-			 * @default t3d.Matrix3()
+			 * @type {t3d.TransformUV}
+			 * @default t3d.TransformUV()
 			 */
-			this.alphaMapTransform = new Matrix3();
+			this.alphaMapTransform = new TransformUV();
 
 			/**
 			 * Emissive (light) color of the material, essentially a solid color unaffected by other lighting.
@@ -9601,10 +9674,10 @@
 
 			/**
 			 * The uv-transform matrix of emissive map.
-			 * @type {t3d.Matrix3}
-			 * @default t3d.Matrix3()
+			 * @type {t3d.TransformUV}
+			 * @default t3d.TransformUV()
 			 */
-			this.emissiveMapTransform = new Matrix3();
+			this.emissiveMapTransform = new TransformUV();
 
 			/**
 			 * The red channel of this texture is used as the ambient occlusion map.
@@ -9629,10 +9702,10 @@
 
 			/**
 			 * The uv-transform matrix of ao map.
-			 * @type {t3d.Matrix3}
-			 * @default t3d.Matrix3()
+			 * @type {t3d.TransformUV}
+			 * @default t3d.TransformUV()
 			 */
-			this.aoMapTransform = new Matrix3();
+			this.aoMapTransform = new TransformUV();
 
 			/**
 			 * The normal map.
@@ -14406,7 +14479,9 @@
 			this.set(material.alphaMap, textures);
 		}],
 		'alphaMapUVTransform': [4, function (material, textures) {
-			this.set(material.alphaMapTransform.elements);
+			const transform = material.alphaMapTransform;
+			transform.isTransformUV && transform.update();
+			this.set(transform.elements);
 		}],
 		'normalMap': [4, function (material, textures) {
 			this.set(material.normalMap, textures);
@@ -14440,7 +14515,9 @@
 			this.set(material.aoMapIntensity);
 		}],
 		'aoMapUVTransform': [4, function (material, textures) {
-			this.set(material.aoMapTransform.elements);
+			const transform = material.aoMapTransform;
+			transform.isTransformUV && transform.update();
+			this.set(transform.elements);
 		}],
 		'u_Roughness': [4, function (material, textures) {
 			this.set(material.roughness);
@@ -14486,10 +14563,14 @@
 			this.set(material.emissiveMap, textures);
 		}],
 		'emissiveMapUVTransform': [4, function (material, textures) {
-			this.set(material.emissiveMapTransform.elements);
+			const transform = material.emissiveMapTransform;
+			transform.isTransformUV && transform.update();
+			this.set(transform.elements);
 		}],
 		'uvTransform': [4, function (material, textures) {
-			this.set(material.diffuseMapTransform.elements);
+			const transform = material.diffuseMapTransform;
+			transform.isTransformUV && transform.update();
+			this.set(transform.elements);
 		}],
 		'u_PointSize': [4, function (material, textures) {
 			this.set(material.size);
@@ -18308,6 +18389,7 @@
 	exports.TextureCube = TextureCube;
 	exports.ThinRenderer = ThinRenderer;
 	exports.TorusKnotGeometry = TorusKnotGeometry;
+	exports.TransformUV = TransformUV;
 	exports.Triangle = Triangle;
 	exports.VERTEX_COLOR = VERTEX_COLOR;
 	exports.Vector2 = Vector2;

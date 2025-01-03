@@ -46,10 +46,9 @@
 		texture.anisotropy = forwardRenderer.capabilities.maxAnisotropy;
 		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 
-		const cube_geometry = new t3d.BoxGeometry(8, 8, 8);
 		const material = new t3d.BasicMaterial();
 		material.diffuseMap = texture;
-		const cube = new t3d.Mesh(cube_geometry, material);
+		const cube = new t3d.Mesh(new t3d.BoxGeometry(8, 8, 8), material);
 		scene.add(cube);
 
 		const camera = new t3d.Camera();
@@ -57,32 +56,22 @@
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
+
+		const diffuseMapTransform = material.diffuseMapTransform;
+		diffuseMapTransform.center.set(0.5, 0.5);
 		
 		function updateUvTransform() {
-			material.diffuseMapTransform.setUvTransform(API.offsetX, API.offsetY, API.repeatX, API.repeatY, API.rotation, API.centerX, API.centerY);
+			diffuseMapTransform.needsUpdate = true;
 		}
 
-		// gui
-		const API = {
-			offsetX: 0,
-			offsetY: 0,
-			repeatX: 1,
-			repeatY: 1,
-			rotation: 0, // positive is counter-clockwise
-			centerX: 0.5,
-			centerY: 0.5
-		};
 		const gui = new GUI();
-		gui.add(API, 'offsetX', 0.0, 1.0, 0.01).name('offset.x').onChange(updateUvTransform);
-		gui.add(API, 'offsetY', 0.0, 1.0, 0.01).name('offset.y').onChange(updateUvTransform);
-		gui.add(API, 'repeatX', 0.25, 2.0, 0.1).name('repeat.x').onChange(updateUvTransform);
-		gui.add(API, 'repeatY', 0.25, 2.0, 0.1).name('repeat.y').onChange(updateUvTransform);
-		gui.add(API, 'rotation', -2.0, 2.0, 0.1).name('rotation').onChange(updateUvTransform);
-		gui.add(API, 'centerX', 0.0, 1.0, 0.01).name('center.x').onChange(updateUvTransform);
-		gui.add(API, 'centerY', 0.0, 1.0, 0.01).name('center.y').onChange(updateUvTransform);
-		// gui.close();
-
-		updateUvTransform();
+		gui.add(diffuseMapTransform.offset, 'x', 0.0, 1.0, 0.01).name('offset.x').onChange(updateUvTransform);
+		gui.add(diffuseMapTransform.offset, 'y', 0.0, 1.0, 0.01).name('offset.y').onChange(updateUvTransform);
+		gui.add(diffuseMapTransform.scale, 'x', 0.25, 2.0, 0.1).name('scale.x').onChange(updateUvTransform);
+		gui.add(diffuseMapTransform.scale, 'y', 0.25, 2.0, 0.1).name('scale.y').onChange(updateUvTransform);
+		gui.add(diffuseMapTransform, 'rotation', -2.0, 2.0, 0.1).name('rotation').onChange(updateUvTransform);
+		gui.add(diffuseMapTransform.center, 'x', 0.0, 1.0, 0.01).name('center.x').onChange(updateUvTransform);
+		gui.add(diffuseMapTransform.center, 'y', 0.0, 1.0, 0.01).name('center.y').onChange(updateUvTransform);
 
 		function loop(count) {
 			requestAnimationFrame(loop);

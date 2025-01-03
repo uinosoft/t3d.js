@@ -3,7 +3,7 @@ import { cloneUniforms } from '../../base.js';
 import { EventDispatcher } from '../../EventDispatcher.js';
 import { Color3 } from '../../math/Color3.js';
 import { Vector2 } from '../../math/Vector2.js';
-import { Matrix3 } from '../../math/Matrix3.js';
+import { TransformUV } from '../TransformUV.js';
 import { MathUtils } from '../../math/MathUtils.js';
 
 let _materialId = 0;
@@ -221,10 +221,10 @@ class Material extends EventDispatcher {
 		/**
 		 * The uv-transform matrix of diffuse map.
 		 * This will also affect other maps that cannot be individually specified uv transform, such as normalMap, bumpMap, etc.
-		 * @type {t3d.Matrix3}
-		 * @default t3d.Matrix3()
+		 * @type {t3d.TransformUV}
+		 * @default t3d.TransformUV()
 		 */
-		this.diffuseMapTransform = new Matrix3();
+		this.diffuseMapTransform = new TransformUV();
 
 		/**
 		 * The alpha map.
@@ -242,10 +242,10 @@ class Material extends EventDispatcher {
 
 		/**
 		 * The uv-transform matrix of alpha map.
-		 * @type {t3d.Matrix3}
-		 * @default t3d.Matrix3()
+		 * @type {t3d.TransformUV}
+		 * @default t3d.TransformUV()
 		 */
-		this.alphaMapTransform = new Matrix3();
+		this.alphaMapTransform = new TransformUV();
 
 		/**
 		 * Emissive (light) color of the material, essentially a solid color unaffected by other lighting.
@@ -272,10 +272,10 @@ class Material extends EventDispatcher {
 
 		/**
 		 * The uv-transform matrix of emissive map.
-		 * @type {t3d.Matrix3}
-		 * @default t3d.Matrix3()
+		 * @type {t3d.TransformUV}
+		 * @default t3d.TransformUV()
 		 */
-		this.emissiveMapTransform = new Matrix3();
+		this.emissiveMapTransform = new TransformUV();
 
 		/**
 		 * The red channel of this texture is used as the ambient occlusion map.
@@ -300,10 +300,10 @@ class Material extends EventDispatcher {
 
 		/**
 		 * The uv-transform matrix of ao map.
-		 * @type {t3d.Matrix3}
-		 * @default t3d.Matrix3()
+		 * @type {t3d.TransformUV}
+		 * @default t3d.TransformUV()
 		 */
-		this.aoMapTransform = new Matrix3();
+		this.aoMapTransform = new TransformUV();
 
 		/**
 		 * The normal map.

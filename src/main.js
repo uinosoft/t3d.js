@@ -92,6 +92,7 @@ export { TextureCube } from './resources/textures/TextureCube.js';
 export { Query } from './resources/Query.js';
 export { RenderBuffer } from './resources/RenderBuffer.js';
 export { Skeleton } from './resources/Skeleton.js';
+export { TransformUV } from './resources/TransformUV.js';
 
 export { AmbientLight } from './scenes/lights/AmbientLight.js';
 export { DirectionalLight } from './scenes/lights/DirectionalLight.js';

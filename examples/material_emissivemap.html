@@ -67,21 +67,23 @@
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
 		scene.add(camera);
 
-		const params = { scaleX: 4, scaleY: 2 };
-		const gui = new GUI();
-		gui.add(params, 'scaleX', 0.1, 5.0, 0.01);
-		gui.add(params, 'scaleY', 0.1, 5.0, 0.01);
+		const emissiveMapTransform = material.emissiveMapTransform;
+		emissiveMapTransform.scale.set(4, 2);
+		emissiveMapTransform.center.set(0.5, 0.5);
 
-		let offsetY = 0;
+		const gui = new GUI();
+		gui.add(emissiveMapTransform.scale, 'x', 0.1, 5.0, 0.01).name('scale.x');
+		gui.add(emissiveMapTransform.scale, 'y', 0.1, 5.0, 0.01).name('scale.y');
+
 		let randomCount = 0;
 		function loop(count) {
 			requestAnimationFrame(loop);
 
 			const intensity = Math.abs(Math.sin(randomCount += Math.random() * 0.1 - 0.04)) * 0.5 + 0.3;
-			offsetY += 0.01;
-
 			material.emissive.setRGB(intensity, intensity, intensity);
-			material.emissiveMapTransform.setUvTransform(0, offsetY, params.scaleX, params.scaleY, 0, 0.5, 0.5);
+
+			emissiveMapTransform.offset.y += 0.01;
+			emissiveMapTransform.needsUpdate = true;
 
 			pointLight.position.x = 40 * Math.sin(count / 1000 * .7);
 			pointLight.position.z = 40 * Math.cos(count / 1000 * .7);
