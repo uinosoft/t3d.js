@@ -3187,6 +3187,9 @@
 			} else {
 				this.target[this.property] = buffer[stride];
 			}
+			if (this.target.isTransformUV) {
+				this.target.needsUpdate = true;
+			}
 		}
 	}
 

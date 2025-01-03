@@ -26,7 +26,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { Clock } from 't3d/addons/Clock.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -43,61 +43,11 @@
 
 		const scene = new t3d.Scene();
 
-		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
-
-		const cube_geometry = new t3d.BoxGeometry(10, 10, 10);
-		const phong = new t3d.PhongMaterial();
-		phong.diffuse.setHex(0xffffff);
-		phong.diffuseMap = texture;
-		const cube = new t3d.Mesh(cube_geometry, phong);
-		scene.add(cube);
-
-		const times = [0, 1, 2, 3, 4];
-		const track = new t3d.VectorKeyframeTrack(cube, 'position', times, [
-			20, 0, 20,
-			20, 0, -20,
-			-20, 0, -20,
-			-20, 0, 20,
-			20, 0, 20
-		]);
-		const track2 = new t3d.VectorKeyframeTrack(cube, 'scale', times, [
-			0.8, 0.8, 0.8,
-			1.5, 0.8, 0.8,
-			1.5, 1.5, 0.8,
-			1.5, 0.8, 0.8,
-			0.8, 0.8, 0.8
-		]);
-		const track3 = new t3d.QuaternionKeyframeTrack(cube, 'quaternion', times, [
-			0, 0, 0, 1,
-			0.5, 0.5, 0.5, 0.5,
-			0, 0, 0, 1,
-			-0.5, -0.5, 0.5, 0.5,
-			0, 0, 0, 1
-		]);
-		const track4 = new t3d.ColorKeyframeTrack(cube, 'material.diffuse', times, [
-			1, 1, 1,
-			1, 0, 0,
-			0, 1, 0,
-			0, 0, 1,
-			1, 1, 1
-		]);
-
-		const clip1 = new t3d.KeyframeClip('run', [track, track2]);
-		const clip2 = new t3d.KeyframeClip('change', [track3, track4]);
-
-		const action1 = new t3d.AnimationAction(clip1);
-		const action2 = new t3d.AnimationAction(clip2);
-
-		const animation = new t3d.AnimationMixer();
-		animation.addAction(action1);
-		animation.addAction(action2);
-
-		const plane_geometry = new t3d.PlaneGeometry(100, 100);
-		const lambert = new t3d.LambertMaterial();
-		lambert.diffuse.setHex(0xffffff);
-		const plane = new t3d.Mesh(plane_geometry, lambert);
-		plane.position.y = -10;
-		scene.add(plane);
+		const camera = new t3d.Camera();
+		camera.position.set(0, 80, 130);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
 
 		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
 		scene.add(ambientLight);
@@ -107,13 +57,86 @@
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		scene.add(directionalLight);
 
-		const camera = new t3d.Camera();
-		camera.position.set(0, 80, 130);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
+		// create box and plane
+
+		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+		texture.wrapS = texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+
+		const boxMaterial = new t3d.PhongMaterial();
+		boxMaterial.diffuse.setHex(0xffffff);
+		boxMaterial.diffuseMap = texture;
+		const box = new t3d.Mesh(new t3d.BoxGeometry(10, 10, 10), boxMaterial);
+		scene.add(box);
+
+		const planeMaterial = new t3d.LambertMaterial();
+		planeMaterial.diffuse.setHex(0xffffff);
+		const plane = new t3d.Mesh(new t3d.PlaneGeometry(100, 100), planeMaterial);
+		plane.position.y = -10;
+		scene.add(plane);
+
+		// create keyframe animation
+
+		const times = [0, 1, 2, 3, 4];
+
+		const track = new t3d.VectorKeyframeTrack(box, 'position', times, [
+			20, 0, 20,
+			20, 0, -20,
+			-20, 0, -20,
+			-20, 0, 20,
+			20, 0, 20
+		]);
+
+		const track2 = new t3d.VectorKeyframeTrack(box, 'scale', times, [
+			0.8, 0.8, 0.8,
+			1.5, 0.8, 0.8,
+			1.5, 1.5, 0.8,
+			1.5, 0.8, 0.8,
+			0.8, 0.8, 0.8
+		]);
+
+		const track3 = new t3d.QuaternionKeyframeTrack(box, 'quaternion', times, [
+			0, 0, 0, 1,
+			0.5, 0.5, 0.5, 0.5,
+			0, 0, 0, 1,
+			-0.5, -0.5, 0.5, 0.5,
+			0, 0, 0, 1
+		]);
+
+		const track4 = new t3d.ColorKeyframeTrack(box.material, 'diffuse', times, [
+			1, 1, 1,
+			1, 0, 0,
+			0, 1, 0,
+			0, 0, 1,
+			1, 1, 1
+		]);
+
+		const track5 = new t3d.VectorKeyframeTrack(box.material, 'diffuseMapTransform.offset', times, [
+			0, 0,
+			1, 1,
+			2, 2,
+			3, 3,
+			4, 4
+		]);
+
+		const tracks = [track, track2, track3, track4, track5];
+
+		const clip1 = new t3d.KeyframeClip('run', [track, track2]);
+		const clip2 = new t3d.KeyframeClip('change', [track3, track4, track5]);
+
+		const action1 = new t3d.AnimationAction(clip1);
+		const action2 = new t3d.AnimationAction(clip2);
+
+		const animation = new t3d.AnimationMixer();
+		animation.addAction(action1);
+		animation.addAction(action2);
+
+		action1.time = 0;
+		action1.weight = 1;
+		action2.time = 0;
+		action2.weight = 1;
 
 		// gui
+
 		const params = { anim1: true, anim2: true, speedFactor: 1, interpolant: 'Linear' };
 		const gui = new GUI();
 		gui.add(params, 'anim1').onChange(value => {
@@ -134,31 +157,20 @@
 		});
 		gui.add(params, 'speedFactor', 0, 2, 0.01);
 		gui.add(params, 'interpolant', ['Linear', 'Step']).onChange(value => {
-			if (value === 'Linear') {
-				track.setInterpolant(t3d.LinearInterpolant);
-				track2.setInterpolant(t3d.LinearInterpolant);
-				track3.setInterpolant(t3d.QuaternionLinearInterpolant);
-				track4.setInterpolant(t3d.LinearInterpolant);
-			} else {
-				track.setInterpolant(t3d.StepInterpolant);
-				track2.setInterpolant(t3d.StepInterpolant);
-				track3.setInterpolant(t3d.StepInterpolant);
-				track4.setInterpolant(t3d.StepInterpolant);
-			}
+			const interpolant = value === 'Linear' ? t3d.LinearInterpolant : t3d.StepInterpolant;
+			tracks.forEach(track => track.setInterpolant(interpolant));
 		});
 
-		action1.time = 0;
-		action1.weight = 1;
-		action2.time = 0;
-		action2.weight = 1;
+		//
 
-		const clock = new Clock();
+		const timer = new Timer();
 
-		function loop(count) {
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			// update animation
-			animation.update(clock.getDelta() * params.speedFactor);
+			timer.update(timestamp);
+
+			animation.update(timer.getDelta() * params.speedFactor);
 
 			forwardRenderer.render(scene, camera);
 		}
