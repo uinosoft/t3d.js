@@ -8,29 +8,31 @@ import {
 	TextureCube,
 	Euler,
 	Quaternion,
-	PIXEL_FORMAT,
-	PIXEL_TYPE,
 	TEXTURE_FILTER,
 	ATTACHMENT
 } from 't3d';
 import { ReflectionProbe } from '../probes/ReflectionProbe.js';
 
-class CubeTxtureGenerator {
+class CubeTextureGenerator {
 
-	/**
-	 * Constructs a new CubeTxtureGenerator.
-	 */
 	constructor() {
 		/**
-		 * Add rotation to Texture2D.
+		 * Add rotation to texture.
 		 * @type {Euler}
 		 */
 		this.rotation = new Euler();
 
+		/**
+		 * Whether to generate mipmaps for the cube texture.
+		 * @type {Boolean}
+		 * @default true
+		 */
+		this.generateMipmaps = true;
+
 		// init
 
 		const geometry = new BoxGeometry(1, 1, 1);
-		const material = new ShaderMaterial(cubeTxtureShader);
+		const material = new ShaderMaterial(EquirectangularToCubeShader);
 		material.side = DRAW_SIDE.BACK;
 
 		const envMesh = new Mesh(geometry, material);
@@ -50,30 +52,60 @@ class CubeTxtureGenerator {
 	}
 
 	/**
-	 * Generate a CubeTxtureGenerator from a Texture2D.
-	 * @param {ThinRenderer} renderer - The renderer.
-	 * @param {TextureCube|Texture2D} envMap - The Texture2D map.
+	 * Generate a new CubeTexture from TextureCube.
+	 * @param {TextureCube} source - The source texture.
 	 * @param {TextureCube} [target] - The output texture. If not provided, a new cube texture will be created.
 	 */
-	generate(renderer, source, target = new TextureCube()) {
+	fromTextureCube(source, target = new TextureCube()) {
+		const generateMipmaps = this.generateMipmaps;
+
+		target.copy(source);
+		target.mipmaps = []; // clear old mipmaps
+
+		target.generateMipmaps = generateMipmaps;
+		target.minFilter = generateMipmaps ? TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR : TEXTURE_FILTER.LINEAR;
+		target.magFilter = TEXTURE_FILTER.LINEAR;
+
+		target.version++;
+
+		return target;
+	}
+
+	/**
+	 * Generate a new CubeTexture from Texture2D.
+	 * @param {ThinRenderer} renderer - The renderer.
+	 * @param {Texture2D} source - The source texture.
+	 * @param {TextureCube} [target] - The output texture. If not provided, a new cube texture will be created.
+	 */
+	fromTexture2D(renderer, source, target = new TextureCube()) {
+		const generateMipmaps = this.generateMipmaps;
+
 		// Check capabilities
-		let cubeSize;
-		if (source.isTextureCube) {
-			target.copy(source);
-			target.generateMipmaps = true;
-			target.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
-			target.magFilter = TEXTURE_FILTER.LINEAR;
-			target.version++;
-			return target;
+
+		const capabilities = renderer.capabilities;
+		const isWebGL2 = capabilities.version > 1;
+
+		if (isWebGL2) {
+			capabilities.getExtension('EXT_color_buffer_float');
 		} else {
-			cubeSize = source.image.width / 4;
+			capabilities.getExtension('OES_texture_half_float');
+			capabilities.getExtension('OES_texture_half_float_linear');
 		}
+
+		capabilities.getExtension('OES_texture_float_linear');
+		capabilities.getExtension('EXT_color_buffer_half_float');
+
+		// Calculate cube size
+
+		const cubeSize = source.image.width / 4;
+
 		// Prepare the target texture
 
-		target.type = PIXEL_TYPE.HALF_FLOAT;
-		target.format = PIXEL_FORMAT.RGBA;
-		target.generateMipmaps = true;
-		target.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
+		target.type = source.type;
+		target.format = source.format;
+
+		target.generateMipmaps = generateMipmaps;
+		target.minFilter = generateMipmaps ? TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR : TEXTURE_FILTER.LINEAR;
 		target.magFilter = TEXTURE_FILTER.LINEAR;
 
 		// Prepare render target
@@ -88,28 +120,15 @@ class CubeTxtureGenerator {
 		const reflectionProbe = new ReflectionProbe(renderTarget);
 		this._dummyScene.add(reflectionProbe.camera);
 
-		const envMapFlip = -1;
-
 		this._envMesh.material.cubeMap = source;
 		this._envMesh.material.uniforms.environmentMap = source;
-		this._envMesh.material.uniforms.envMapFlip = envMapFlip;
+		this._envMesh.material.uniforms.envMapFlip = -1;
 
 		// Render
 
 		this._dummyScene.updateRenderStates(reflectionProbe.camera);
 
 		reflectionProbe.render(renderer, this._dummyScene);
-		// for (let j = 0; j < 6; j++) {
-		// 	const imagesData = target.images[j];
-		// 	imagesData.data = new Uint16Array(imagesData.width * imagesData.height * 4);
-		// 	renderTarget.activeCubeFace = j;
-		// 	renderer.setRenderTarget(renderTarget);
-		// 	renderer.readRenderTargetPixels(0, 0, imagesData.width, imagesData.height, imagesData.data);
-		// }
-
-		// renderer.updateRenderTargetMipmap(renderTarget);
-
-		// target.version++;
 
 		// Clear render stuff
 
@@ -123,19 +142,17 @@ class CubeTxtureGenerator {
 	}
 
 	/**
-	 * Dispose of the CubeTxtureGenerator.
+	 * Dispose of the CubeTextureGenerator.
 	 */
 	dispose() {
-		this._envMesh.material.uniforms.normalDistribution.dispose();
-
 		this._envMesh.geometry.dispose();
 		this._envMesh.material.dispose();
 	}
 
 }
 
-const cubeTxtureShader = {
-	name: 'cube_render',
+const EquirectangularToCubeShader = {
+	name: 'equirectangularToCube',
 
 	uniforms: {
 		environmentMap: null,
@@ -154,21 +171,24 @@ const cubeTxtureShader = {
 
 	fragmentShader: `
 		#include <common_frag>
+
         uniform sampler2D environmentMap;
         uniform float envMapFlip;
+
 		varying vec3 vDir;
 
 		void main() {
 			vec3 V = normalize(vDir);
+
 			V.x = -V.x;
+
 			float phi = acos(V.y);
             float theta = envMapFlip * atan(V.x, V.z) + PI * 0.5;
             vec2 uv = vec2(theta / 2.0 / PI, -phi / PI);
 
-			gl_FragColor =  mapTexelToLinear(texture2D(environmentMap, fract(uv)));
-			#include <encodings_frag>
+			gl_FragColor = texture2D(environmentMap, fract(uv));
 		}
 	`
 };
 
-export { CubeTxtureGenerator };
+export { CubeTextureGenerator };

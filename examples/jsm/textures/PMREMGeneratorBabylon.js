@@ -16,7 +16,7 @@ import {
 	ATTACHMENT
 } from 't3d';
 import { ReflectionProbe } from '../probes/ReflectionProbe.js';
-import { CubeTxtureGenerator } from './CubeTxtureGenerator.js';
+import { CubeTextureGenerator } from './CubeTextureGenerator.js';
 
 
 /**
@@ -110,10 +110,14 @@ class PMREMGenerator2 {
 		// Generate textureCube
 
 		if (!this._generateCubeTexture) {
-			this._generateCubeTexture = new CubeTxtureGenerator();
+			this._generateCubeTexture = new CubeTextureGenerator();
 		}
-		source = this._generateCubeTexture.generate(renderer, source);
-		// return source;
+
+		if (source.isTextureCube) {
+			source = this._generateCubeTexture.fromTextureCube(renderer, source);
+		} else {
+			source = this._generateCubeTexture.fromTexture2D(renderer, source);
+		}
 
 		// Calculate mipmaps number and cube size
 
