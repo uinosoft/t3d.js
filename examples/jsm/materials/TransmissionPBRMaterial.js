@@ -22,6 +22,7 @@ export class TransmissionPBRMaterial extends PBRMaterial {
 		this.uniforms.transmissionSamplerMap = null;
 		this.uniforms.transmissionSamplerSize = [512, 512];
 		this.defines.USE_TRANSMISSIONMAP = false;
+		this.defines.SAMPLERMAP_SRGB = true;
 
 		// KHR_materials_volume
 		this.uniforms.thickness = 0;
@@ -56,6 +57,16 @@ fragmentShader = fragmentShader.replace(
     uniform vec2 transmissionSamplerSize;
     uniform sampler2D transmissionSamplerMap;
 
+	#ifdef SAMPLERMAP_SRGB
+		vec4 samplerTexelToLinear(vec4 value) {
+			return sRGBToLinear(value);
+		}
+	#else
+		vec4 samplerTexelToLinear(vec4 value) {
+			return value;
+		}
+	#endif
+
     uniform float thickness;
     #ifdef USE_THICKNESSMAP
         uniform sampler2D thicknessMap;
@@ -76,7 +87,7 @@ fragmentShader = fragmentShader.replace(
         vec3 attenuationColor;
     };
     ExtendMaterial material;
-    
+
     vec3 inverseTransformDirection(in vec3 dir, in mat4 matrix) {
         return normalize((vec4(dir, 0.0) * matrix).xyz);
     }
@@ -136,8 +147,8 @@ fragmentShader = fragmentShader.replace(
         vec2 p2 = ( vec2( iuv.x + h0x, iuv.y + h1y ) - 0.5 ) * texelSize.xy;
         vec2 p3 = ( vec2( iuv.x + h1x, iuv.y + h1y ) - 0.5 ) * texelSize.xy;
 
-        return g0( fuv.y ) * ( g0x * textureLod( tex, p0, lod ) + g1x * textureLod( tex, p1, lod ) ) +
-            g1( fuv.y ) * ( g0x * textureLod( tex, p2, lod ) + g1x * textureLod( tex, p3, lod ) );
+        return g0( fuv.y ) * ( g0x * samplerTexelToLinear(textureLod( tex, p0, lod )) + g1x * samplerTexelToLinear(textureLod( tex, p1, lod )) ) +
+            g1( fuv.y ) * ( g0x * samplerTexelToLinear(textureLod( tex, p2, lod )) + g1x * samplerTexelToLinear(textureLod( tex, p3, lod )) );
     }
 
     vec4 textureBicubic( sampler2D sampler, vec2 uv, float lod ) {
@@ -201,7 +212,7 @@ fragmentShader = fragmentShader.replace(
         vec2 fab = DFGApprox( normal, viewDir, roughness );
         return specularColor * fab.x + specularF90 * fab.y;
     }
-    
+
     vec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,
         const in vec3 specularColor, const in float specularF90, const in vec3 position, const in mat4 modelMatrix,
         const in mat4 viewMatrix, const in mat4 projMatrix, const in float ior, const in float thickness,
@@ -225,7 +236,7 @@ fragmentShader = fragmentShader.replace(
         // Get the specular component.
         vec3 F = EnvironmentBRDF( n, v, specularColor, specularF90, roughness );
 
-        // As less light is transmitted, the opacity should be increased. This simple approximation does a decent job 
+        // As less light is transmitted, the opacity should be increased. This simple approximation does a decent job
         // of modulating a CSS background, and has no effect when the buffer is opaque, due to a solid object or clear color.
         float transmittanceFactor = ( transmittance.r + transmittance.g + transmittance.b ) / 3.0;
         return vec4( ( 1.0 - F ) * attenuatedColor, 1.0 - ( 1.0 - transmittedLight.a ) * transmittanceFactor );
