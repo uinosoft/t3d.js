@@ -33,6 +33,7 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { FXAAShader } from 't3d/addons/shaders/FXAAShader.js';
+		import { CopyShader } from 't3d/addons/shaders/CopyShader.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { TransmissionPBRMaterial } from 't3d/addons/materials/TransmissionPBRMaterial.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -112,7 +113,7 @@
 					material.uniforms.ior = 1.5;
 
 					material.defines.USE_THICKNESSMAP = true;
-					material.defines.USE_UV1 = true;
+					material.extUvCoordMask = 1;
 		
 					node.material = material;
 
@@ -165,6 +166,11 @@
 		transmissionRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		transmissionRenderTarget.texture.generateMipmaps = false;
 
+		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		resultRenderTarget.texture.generateMipmaps = false;
+
 		const depthTexture = new t3d.Texture2D();
 		depthTexture.type = t3d.PIXEL_TYPE.UNSIGNED_INT_24_8;
 		depthTexture.format = t3d.PIXEL_FORMAT.DEPTH_STENCIL;
@@ -186,8 +192,10 @@
 			}
 		};
 
-		const copyPass = new t3d.ShaderPostPass(FXAAShader);
-		copyPass.uniforms.resolution = [1 / width, 1 / height];
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+
+		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
+		fxaaPass.uniforms.resolution = [1 / width, 1 / height];
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -218,7 +226,7 @@
 			// Step2: render transmission to transmissionRenderTarget
 
 			renderer.setRenderTarget(transmissionRenderTarget);
-			renderer.setClearColor(1, 1, 1, 0);
+			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, false, false);
 
 			renderer.beginRender();
@@ -228,17 +236,23 @@
 
 			renderer.endRender();
 
-			// Step3: blend sceneRenderTarget and transmissionRenderTarget to backRenderTarget
+			// Step3: blend sceneRenderTarget and transmissionRenderTarget to resultRenderTarget
+
+			renderer.setRenderTarget(resultRenderTarget);
 
 			copyPass.material.transparent = false;
 			copyPass.material.uniforms.tDiffuse = sceneRenderTarget.texture;
-			renderer.setRenderTarget(backRenderTarget);
 			copyPass.render(renderer);
 
 			copyPass.material.transparent = true;
 			copyPass.material.uniforms.tDiffuse = transmissionRenderTarget.texture;
-			renderer.setRenderTarget(backRenderTarget);
 			copyPass.render(renderer);
+
+			// Step4: render resultRenderTarget to screen
+
+			renderer.setRenderTarget(backRenderTarget);
+			fxaaPass.material.uniforms.tDiffuse = resultRenderTarget.texture;
+			fxaaPass.render(renderer);
 		}
 
 		function onWindowResize() {
@@ -250,8 +264,9 @@
 			backRenderTarget.resize(width, height);
 			sceneRenderTarget.resize(width, height);
 			transmissionRenderTarget.resize(width, height);
+			resultRenderTarget.resize(width, height);
 
-			copyPass.uniforms.resolution = [1 / width, 1 / height];
+			fxaaPass.uniforms.resolution = [1 / width, 1 / height];
 		}
 		window.addEventListener('resize', onWindowResize, false);
     </script>
