@@ -18,6 +18,7 @@ export class KHR_materials_volume {
 		if (thicknessTexture !== undefined) {
 			material.uniforms.thicknessMap = textures[thicknessTexture.index];
 			material.defines.USE_THICKNESSMAP = true;
+			material.extUvCoordMask = material.extUvCoordMask | (1 << 0);
 		}
 
 		if (attenuationDistance !== undefined) {

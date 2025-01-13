@@ -23,6 +23,7 @@ export class KHR_materials_transmission {
 		if (transmissionTexture !== undefined) {
 			material.uniforms.transmissionMap = textures[transmissionTexture.index];
 			material.defines.USE_TRANSMISSIONMAP = true;
+			material.extUvCoordMask = material.extUvCoordMask | (1 << 0);
 		}
 	}
 
