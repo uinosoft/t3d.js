@@ -5,7 +5,11 @@ export class KHR_animation_pointer {
 	static getTrackInfos(context, extensionDef, input, output, interpolation, trackInfos) {
 		const { pointer } = extensionDef;
 
-		const { type, index, property } = parseAnimationPointer(pointer);
+		const segments = pointer.replace(/^\//, '').split('/');
+
+		const type = segments[0];
+		const index = parseInt(segments[1]);
+		const property = segments[segments.length - 1];
 
 		const searchArray = context[type];
 
@@ -44,6 +48,17 @@ export class KHR_animation_pointer {
 		} else if (property === 'emissiveFactor') {
 			TypedKeyframeTrack = VectorKeyframeTrack;
 			propertyPath = 'emissive';
+		} else if (segments[segments.length - 2] === 'KHR_texture_transform') {
+			TypedKeyframeTrack = VectorKeyframeTrack;
+
+			const textureProperty = segments[segments.length - 4];
+			if (textureProperty === 'baseColorTexture') {
+				propertyPath = 'diffuseMapTransform.' + property;
+			} else if (textureProperty === 'emissiveTexture') {
+				propertyPath = 'emissiveMapTransform.' + property;
+			} else {
+				return;
+			}
 		} else {
 			return;
 		}
@@ -88,14 +103,4 @@ export class KHR_animation_pointer {
 		}
 	}
 
-}
-
-function parseAnimationPointer(pointer) {
-	const segments = pointer.replace(/^\//, '').split('/');
-
-	return {
-		type: segments[0],
-		index: parseInt(segments[1]),
-		property: segments[segments.length - 1]
-	};
 }
