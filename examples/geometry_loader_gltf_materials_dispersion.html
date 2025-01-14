@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>t3d - gltf materials dispersion</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - gltf materials dispersion
+    </div>
+
+    <script src="./libs/nanobar.js"></script>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { FXAAShader } from 't3d/addons/shaders/FXAAShader.js';
+		import { CopyShader } from 't3d/addons/shaders/CopyShader.js';
+		import { KHR_materials_transmission } from 't3d/addons/loaders/glTF/extensions/KHR_materials_transmission.js';
+		import { KHR_materials_ior } from 't3d/addons/loaders/glTF/extensions/KHR_materials_ior.js';
+		import { KHR_materials_volume } from 't3d/addons/loaders/glTF/extensions/KHR_materials_volume.js';
+		import { KHR_materials_dispersion } from 't3d/addons/loaders/glTF/extensions/KHR_materials_dispersion.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+		const scene = new t3d.Scene();
+		scene.environment = cubeTexture;
+
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.gamma = true;
+		scene.add(skyBox);
+
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0.1, 0.05, 0.15);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.01, 5);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
+		directionalLight.position.set(0, 10, 30);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.autoLogError = false;
+		loader.extensions.set('KHR_materials_transmission', KHR_materials_transmission);
+		loader.extensions.set('KHR_materials_ior', KHR_materials_ior);
+		loader.extensions.set('KHR_materials_volume', KHR_materials_volume);
+		loader.extensions.set('KHR_materials_dispersion', KHR_materials_dispersion);
+		
+		loader.load('./resources/models/gltf/DispersionTest.glb').then(function(result) {
+			const object = result.root;
+			object.traverse(node => {
+				if (!node.isMesh) return;
+				if (node.material.shaderName == 'TransmissionPBR') {
+					node.renderLayer = 1;
+				}
+			});
+			requestAnimationFrame(loop);
+
+			scene.add(object);
+		}).catch(e => console.error(e));
+
+		const sceneRenderTarget = new t3d.RenderTarget2D(width, height);
+		sceneRenderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+		const transmissionRenderTarget = new t3d.RenderTarget2D(width, height);
+		transmissionRenderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		transmissionRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		transmissionRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		transmissionRenderTarget.texture.generateMipmaps = false;
+
+		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		resultRenderTarget.texture.generateMipmaps = false;
+
+		const depthTexture = new t3d.Texture2D();
+		depthTexture.type = t3d.PIXEL_TYPE.UNSIGNED_INT_24_8;
+		depthTexture.format = t3d.PIXEL_FORMAT.DEPTH_STENCIL;
+		depthTexture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+		depthTexture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+		depthTexture.generateMipmaps = false;
+		depthTexture.flipY = false;
+
+		sceneRenderTarget.attach(depthTexture, t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		transmissionRenderTarget.attach(depthTexture, t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+
+		const renderOptions = {
+			getMaterial: function(renderable) {
+				const material = renderable.material;
+				material.uniforms.transmissionSamplerMap = sceneRenderTarget.texture;
+				material.uniforms.transmissionSamplerSize[0] = sceneRenderTarget.texture.image.width;
+				material.uniforms.transmissionSamplerSize[1] = sceneRenderTarget.texture.image.height;
+				return material;
+			}
+		};
+
+		const copyPass = new t3d.ShaderPostPass(CopyShader);
+
+		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
+		fxaaPass.uniforms.resolution = [1 / width, 1 / height];
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+		
+			scene.updateMatrix();
+			const renderStates = scene.updateRenderStates(camera);
+			const renderQueue = scene.updateRenderQueue(camera);
+			const mainRenderQueueLayer = renderQueue.getLayer(0);
+			const transmissionRenderQueueLayer = renderQueue.getLayer(1);
+
+			// Step1: render scene to sceneRenderTarget
+
+			renderer.setRenderTarget(sceneRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
+
+			renderer.beginRender();
+
+			renderer.renderRenderableList(mainRenderQueueLayer.opaque, renderStates, {});
+			renderer.renderRenderableList(mainRenderQueueLayer.transparent, renderStates, {});
+
+			renderer.endRender();
+
+			renderer.updateRenderTargetMipmap(sceneRenderTarget);
+
+			// Step2: render transmission to transmissionRenderTarget
+
+			renderer.setRenderTarget(transmissionRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, false, false);
+
+			renderer.beginRender();
+
+			renderer.renderRenderableList(transmissionRenderQueueLayer.opaque, renderStates, renderOptions);
+			renderer.renderRenderableList(transmissionRenderQueueLayer.transparent, renderStates, renderOptions);
+
+			renderer.endRender();
+
+			// Step3: blend sceneRenderTarget and transmissionRenderTarget to resultRenderTarget
+
+			renderer.setRenderTarget(resultRenderTarget);
+
+			copyPass.material.transparent = false;
+			copyPass.material.uniforms.tDiffuse = sceneRenderTarget.texture;
+			copyPass.render(renderer);
+
+			copyPass.material.transparent = true;
+			copyPass.material.uniforms.tDiffuse = transmissionRenderTarget.texture;
+			copyPass.render(renderer);
+
+			// Step4: render resultRenderTarget to screen
+
+			renderer.setRenderTarget(backRenderTarget);
+			fxaaPass.material.uniforms.tDiffuse = resultRenderTarget.texture;
+			fxaaPass.render(renderer);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.01, 5);
+
+			backRenderTarget.resize(width, height);
+			sceneRenderTarget.resize(width, height);
+			transmissionRenderTarget.resize(width, height);
+			resultRenderTarget.resize(width, height);
+
+			fxaaPass.uniforms.resolution = [1 / width, 1 / height];
+		}
+		window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+</html>

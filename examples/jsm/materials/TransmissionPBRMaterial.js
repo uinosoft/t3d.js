@@ -33,29 +33,38 @@ export class TransmissionPBRMaterial extends PBRMaterial {
 
 		// KHR_materials_ior
 		this.uniforms.ior = 1.5;
+
+		// KHR_materials_dispersion
+		this.uniforms.dispersion = 0;
+		this.defines.USE_DISPERSION = false;
 	}
 
 }
 
-let fragmentShader = ShaderLib.pbr_frag;
+// Transmission code is based on glTF-Sampler-Viewer
+// https://github.com/KhronosGroup/glTF-Sample-Viewer
+const transmission_pars_frag = `
+	uniform float transmission;
+	uniform float thickness;
+	uniform float attenuationDistance;
+    uniform vec3 attenuationColor;
 
-fragmentShader = fragmentShader.replace(
-	'#include <clippingPlanes_pars_frag>',
-	`
-    #include <clippingPlanes_pars_frag>
-
-    // Transmission code is based on glTF-Sampler-Viewer
-    // https://github.com/KhronosGroup/glTF-Sample-Viewer
-
-    uniform mat4 u_Model;
-    uniform mat4 u_Projection;
-
-    uniform float transmission;
-    #ifdef USE_TRANSMISSIONMAP
+	#ifdef USE_TRANSMISSIONMAP
         uniform sampler2D transmissionMap;
     #endif
-    uniform vec2 transmissionSamplerSize;
+
+	#ifdef USE_THICKNESSMAP
+        uniform sampler2D thicknessMap;
+    #endif
+
+	uniform float dispersion;
+    uniform float ior;
+
+	uniform vec2 transmissionSamplerSize;
     uniform sampler2D transmissionSamplerMap;
+
+	uniform mat4 u_Model;
+    uniform mat4 u_Projection;
 
 	#ifdef SAMPLERMAP_SRGB
 		vec4 samplerTexelToLinear(vec4 value) {
@@ -67,16 +76,7 @@ fragmentShader = fragmentShader.replace(
 		}
 	#endif
 
-    uniform float thickness;
-    #ifdef USE_THICKNESSMAP
-        uniform sampler2D thicknessMap;
-    #endif
-    uniform float attenuationDistance;
-    uniform vec3 attenuationColor;
-
-    uniform float ior;
-
-    struct ExtendMaterial {
+	struct TransmissionParams {
         float specularF90;
         vec3  specularColor;
         float ior;
@@ -86,13 +86,9 @@ fragmentShader = fragmentShader.replace(
         float attenuationDistance;
         vec3 attenuationColor;
     };
-    ExtendMaterial material;
+    TransmissionParams transParams;
 
-    vec3 inverseTransformDirection(in vec3 dir, in mat4 matrix) {
-        return normalize((vec4(dir, 0.0) * matrix).xyz);
-    }
-
-    // Mipped Bicubic Texture Filtering by N8
+	// Mipped Bicubic Texture Filtering by N8
     // https://www.shadertoy.com/view/Dl2SDW
 
     float w0( float a ) {
@@ -161,7 +157,7 @@ fragmentShader = fragmentShader.replace(
         return mix( fSample, cSample, fract( lod ) );
     }
 
-    vec3 getVolumeTransmissionRay( const in vec3 n, const in vec3 v, const in float thickness, const in float ior, const in mat4 modelMatrix ) {
+	vec3 getVolumeTransmissionRay( const in vec3 n, const in vec3 v, const in float thickness, const in float ior, const in mat4 modelMatrix ) {
         // Direction of refracted light.
         vec3 refractionVector = refract( - v, normalize( n ), 1.0 / ior );
 
@@ -213,24 +209,52 @@ fragmentShader = fragmentShader.replace(
         return specularColor * fab.x + specularF90 * fab.y;
     }
 
-    vec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,
-        const in vec3 specularColor, const in float specularF90, const in vec3 position, const in mat4 modelMatrix,
-        const in mat4 viewMatrix, const in mat4 projMatrix, const in float ior, const in float thickness,
-        const in vec3 attenuationColor, const in float attenuationDistance ) {
+	vec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,
+		const in vec3 specularColor, const in float specularF90, const in vec3 position, const in mat4 modelMatrix,
+		const in mat4 viewMatrix, const in mat4 projMatrix, const in float dispersion, const in float ior, const in float thickness,
+		const in vec3 attenuationColor, const in float attenuationDistance ) {
 
-        vec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, ior, modelMatrix );
-        vec3 refractedRayExit = position + transmissionRay;
+        vec4 transmittedLight;
+        vec3 transmittance;
 
-        // Project refracted vector on the framebuffer, while mapping to normalized device coordinates.
-        vec4 ndcPos = projMatrix  * viewMatrix *vec4( refractedRayExit, 1.0 );
-        vec2 refractionCoords = ndcPos.xy / ndcPos.w;
-        refractionCoords += 1.0;
-        refractionCoords /= 2.0;
+        #ifdef USE_DISPERSION
+            float halfSpread = ( ior - 1.0 ) * 0.025 * dispersion;
+            vec3 iors = vec3( ior - halfSpread, ior, ior + halfSpread );
 
-        // Sample framebuffer to get pixel the refracted ray hits.
-        vec4 transmittedLight = getTransmissionSample( refractionCoords, roughness, ior );
+            for ( int i = 0; i < 3; i ++ ) {
+                vec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, iors[ i ], modelMatrix );
+                vec3 refractedRayExit = position + transmissionRay;
 
-        vec3 transmittance = diffuseColor * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance );
+                // Project refracted vector on the framebuffer, while mapping to normalized device coordinates.
+                vec4 ndcPos = projMatrix * viewMatrix * vec4( refractedRayExit, 1.0 );
+                vec2 refractionCoords = ndcPos.xy / ndcPos.w;
+                refractionCoords += 1.0;
+                refractionCoords /= 2.0;
+
+                // Sample framebuffer to get pixel the refracted ray hits.
+                vec4 transmissionSample = getTransmissionSample( refractionCoords, roughness, iors[ i ] );
+                transmittedLight[ i ] = transmissionSample[ i ];
+                transmittedLight.a += transmissionSample.a;
+
+                transmittance[ i ] = diffuseColor[ i ] * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance )[ i ];
+            }
+
+            transmittedLight.a /= 3.0;
+        #else
+            vec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, ior, modelMatrix );
+            vec3 refractedRayExit = position + transmissionRay;
+
+            // Project refracted vector on the framebuffer, while mapping to normalized device coordinates.
+            vec4 ndcPos = projMatrix * viewMatrix * vec4( refractedRayExit, 1.0 );
+            vec2 refractionCoords = ndcPos.xy / ndcPos.w;
+            refractionCoords += 1.0;
+            refractionCoords /= 2.0;
+
+            // Sample framebuffer to get pixel the refracted ray hits.
+            transmittedLight = getTransmissionSample( refractionCoords, roughness, ior );
+            transmittance = diffuseColor * volumeAttenuation( length( transmissionRay ), attenuationColor, attenuationDistance );
+        #endif
+
         vec3 attenuatedColor = transmittance * transmittedLight.rgb;
 
         // Get the specular component.
@@ -239,36 +263,33 @@ fragmentShader = fragmentShader.replace(
         // As less light is transmitted, the opacity should be increased. This simple approximation does a decent job
         // of modulating a CSS background, and has no effect when the buffer is opaque, due to a solid object or clear color.
         float transmittanceFactor = ( transmittance.r + transmittance.g + transmittance.b ) / 3.0;
+
         return vec4( ( 1.0 - F ) * attenuatedColor, 1.0 - ( 1.0 - transmittedLight.a ) * transmittanceFactor );
     }
-    `
-);
+`;
 
-fragmentShader = fragmentShader.replace(
-	'#include <aoMap_frag>',
-	`
-    vec3 totalDiffuse = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+const transmission_frag = `
+	vec3 totalDiffuse = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
     vec3 totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;
-    #include <aoMap_frag>
 
-    material.ior = ior;
+    transParams.ior = ior;
     float specularIntensityFactor = 1.0;
     vec3 specularColorFactor = vec3( 1.0 );
-    material.specularF90 = 1.0;
-    material.specularColor = mix( min( pow2( ( material.ior - 1.0 ) / ( material.ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularIntensityFactor, u_Color.rgb, metalnessFactor );
+    transParams.specularF90 = 1.0;
+    transParams.specularColor = mix( min( pow2( ( transParams.ior - 1.0 ) / ( transParams.ior + 1.0 ) ) * specularColorFactor, vec3( 1.0 ) ) * specularIntensityFactor, u_Color.rgb, metalnessFactor );
 
-    material.transmission = transmission;
-    material.transmissionAlpha = 1.0;
-    material.thickness = thickness;
-    material.attenuationDistance = attenuationDistance;
-    material.attenuationColor = attenuationColor;
+    transParams.transmission = transmission;
+    transParams.transmissionAlpha = 1.0;
+    transParams.thickness = thickness;
+    transParams.attenuationDistance = attenuationDistance;
+    transParams.attenuationColor = attenuationColor;
 
     #ifdef USE_TRANSMISSIONMAP
-        material.transmission *= texture2D( transmissionMap, v_Uv ).r;
+        transParams.transmission *= texture2D( transmissionMap, v_Uv ).r;
     #endif
 
     #ifdef USE_THICKNESSMAP
-        material.thickness *= texture2D( thicknessMap, v_Uv ).g;
+        transParams.thickness *= texture2D( thicknessMap, v_Uv ).g;
     #endif
 
     vec3 pos = v_modelPos;
@@ -276,19 +297,26 @@ fragmentShader = fragmentShader.replace(
     vec3 n = N;
 
     vec4 transmitted = getIBLVolumeRefraction(
-        n, v,roughness, u_Color, specularColor, material.specularF90,
-        pos, u_Model, u_View, u_Projection, material.ior, material.thickness,
-        material.attenuationColor, material.attenuationDistance );
+        n, v,roughness, u_Color, specularColor, transParams.specularF90,
+        pos, u_Model, u_View, u_Projection, dispersion, transParams.ior, transParams.thickness,
+        transParams.attenuationColor, transParams.attenuationDistance );
 
-    material.transmissionAlpha = mix( material.transmissionAlpha, transmitted.a, material.transmission );
-    totalDiffuse  = mix(  totalDiffuse ,transmitted.rgb, material.transmission );
-    `
+    transParams.transmissionAlpha = mix( transParams.transmissionAlpha, transmitted.a, transParams.transmission );
+    totalDiffuse = mix( totalDiffuse, transmitted.rgb, transParams.transmission );
+
+    outColor.xyz = totalDiffuse + totalSpecular;
+    outColor.a = outColor.a * transParams.transmissionAlpha;
+`;
+
+let fragmentShader = ShaderLib.pbr_frag;
+
+fragmentShader = fragmentShader.replace(
+	'#include <clippingPlanes_pars_frag>',
+	`#include <clippingPlanes_pars_frag>
+	${transmission_pars_frag}`
 );
 
 fragmentShader = fragmentShader.replace(
 	'outColor.xyz = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular;',
-	`
-    outColor.xyz = totalDiffuse + totalSpecular;
-    outColor.a = outColor.a * material.transmissionAlpha;
-    `
+	transmission_frag
 );
