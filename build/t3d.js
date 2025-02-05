@@ -2895,37 +2895,31 @@
 		 * Adds a listener to an event type.
 		 * @param {String} type - The type of event to listen to.
 		 * @param {Function} listener - The function that gets called when the event is fired.
-		 * @param {Object} [thisObject = this] - The Object of calling listener method.
 		 */
-		addEventListener(type, listener, thisObject) {
-			if (this._eventMap === undefined) this._eventMap = {};
-			const eventMap = this._eventMap;
-			if (eventMap[type] === undefined) {
-				eventMap[type] = [];
+		addEventListener(type, listener) {
+			if (this._listeners === undefined) this._listeners = {};
+			const listeners = this._listeners;
+			if (listeners[type] === undefined) {
+				listeners[type] = [];
 			}
-			eventMap[type].push({
-				listener: listener,
-				thisObject: thisObject || this
-			});
+			if (listeners[type].indexOf(listener) === -1) {
+				listeners[type].push(listener);
+			}
 		}
 
 		/**
 		 * Removes a listener from an event type.
 		 * @param {String} type - The type of the listener that gets removed.
 		 * @param {Function} listener - The listener function that gets removed.
-		 * @param {Object} [thisObject = this] thisObject - The Object of calling listener method.
 		 */
-		removeEventListener(type, listener, thisObject) {
-			if (this._eventMap === undefined) return;
-			const eventMap = this._eventMap;
-			const eventArray = eventMap[type];
-			if (eventArray !== undefined) {
-				for (let i = 0, len = eventArray.length; i < len; i++) {
-					const bin = eventArray[i];
-					if (bin.listener === listener && bin.thisObject === (thisObject || this)) {
-						eventArray.splice(i, 1);
-						break;
-					}
+		removeEventListener(type, listener) {
+			const listeners = this._listeners;
+			if (listeners === undefined) return;
+			const listenerArray = listeners[type];
+			if (listenerArray !== undefined) {
+				const index = listenerArray.indexOf(listener);
+				if (index !== -1) {
+					listenerArray.splice(index, 1);
 				}
 			}
 		}
@@ -2935,17 +2929,16 @@
 		 * @param {Object} event - The event that gets fired.
 		 */
 		dispatchEvent(event) {
-			if (this._eventMap === undefined) return;
-			const eventMap = this._eventMap;
-			const eventArray = eventMap[event.type];
-			if (eventArray !== undefined) {
+			const listeners = this._listeners;
+			if (listeners === undefined) return;
+			const listenerArray = listeners[event.type];
+			if (listenerArray !== undefined) {
 				event.target = this;
 
 				// Make a copy, in case listeners are removed while iterating.
-				const array = eventArray.slice(0);
-				for (let i = 0, len = array.length; i < len; i++) {
-					const bin = array[i];
-					bin.listener.call(bin.thisObject, event);
+				const array = listenerArray.slice(0);
+				for (let i = 0, l = array.length; i < l; i++) {
+					array[i].call(this, event);
 				}
 				event.target = null;
 			}
