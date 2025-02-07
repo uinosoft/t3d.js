@@ -294,18 +294,18 @@
 			const renderStates = scene.updateRenderStates(camera);
 
 			if (params.renderMode !== 'Forward') {
-				const lightData = renderStates.lights;
+				const lightingGroup = renderStates.lighting.getGroup(0);
 				const cameraData = renderStates.camera;
 
-				clustersManager.update(cameraData, lightData, true);
+				clustersManager.update(cameraData, lightingGroup, true);
 
-				// remove point and spot lights from lightData
-				lightData.totalNum -= lightData.pointsNum;
-				lightData.totalNum -= lightData.spotsNum;
-				lightData.pointsNum = 0;
-				lightData.spotsNum = 0;
-				lightData.hash._factor[4] = 0;
-				lightData.hash._factor[5] = 0;
+				// remove point and spot lights from lighting group
+				lightingGroup.totalNum -= lightingGroup.pointsNum;
+				lightingGroup.totalNum -= lightingGroup.spotsNum;
+				lightingGroup.pointsNum = 0;
+				lightingGroup.spotsNum = 0;
+				lightingGroup.hash._factor[4] = 0;
+				lightingGroup.hash._factor[5] = 0;
 			}
 
 			if (supportTimerQuery && !queryInProgress) {

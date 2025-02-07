@@ -141,12 +141,14 @@ class DeferredRenderer extends WebGLRenderer {
 
 		let lights, shadows, count, shadowCount;
 
+		const lightingGroup = renderStates.lighting.getGroup(0);
+
 		// directional
 
-		lights = renderStates.lights.directional;
-		shadows = renderStates.lights.directionalShadow;
-		count = renderStates.lights.directsNum;
-		shadowCount = renderStates.lights.directShadowNum;
+		lights = lightingGroup.directional;
+		shadows = lightingGroup.directionalShadow;
+		count = lightingGroup.directsNum;
+		shadowCount = lightingGroup.directShadowNum;
 
 		for (let i = 0; i < count; i++) {
 			const light = lights[i];
@@ -167,8 +169,8 @@ class DeferredRenderer extends WebGLRenderer {
 				pass.uniforms['shadowMapSize'][0] = shadow.shadowMapSize[0];
 				pass.uniforms['shadowMapSize'][1] = shadow.shadowMapSize[1];
 
-				pass.uniforms['shadowMap'] = this.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
-				pass.uniforms['shadowMatrix'].set(renderStates.lights.directionalShadowMatrix, i * 16);
+				pass.uniforms['shadowMap'] = this.capabilities.version >= 2 ? lightingGroup.directionalShadowDepthMap[i] : lightingGroup.directionalShadowMap[i];
+				pass.uniforms['shadowMatrix'].set(lightingGroup.directionalShadowMatrix, i * 16);
 			}
 
 			pass.render(this);
@@ -176,10 +178,10 @@ class DeferredRenderer extends WebGLRenderer {
 
 		// point
 
-		lights = renderStates.lights.point;
-		shadows = renderStates.lights.pointShadow;
-		count = renderStates.lights.pointsNum;
-		shadowCount = renderStates.lights.pointShadowNum;
+		lights = lightingGroup.point;
+		shadows = lightingGroup.pointShadow;
+		count = lightingGroup.pointsNum;
+		shadowCount = lightingGroup.pointShadowNum;
 
 		for (let i = 0; i < count; i++) {
 			const light = lights[i];
@@ -202,7 +204,7 @@ class DeferredRenderer extends WebGLRenderer {
 				pass.uniforms['shadowMapSize'][0] = shadow.shadowMapSize[0];
 				pass.uniforms['shadowMapSize'][1] = shadow.shadowMapSize[1];
 
-				pass.uniforms['shadowMap'] = renderStates.lights.pointShadowMap[i];
+				pass.uniforms['shadowMap'] = lightingGroup.pointShadowMap[i];
 
 				pass.uniforms['shadowCameraRange'][0] = shadow.shadowCameraRange[0];
 				pass.uniforms['shadowCameraRange'][1] = shadow.shadowCameraRange[1];
@@ -213,10 +215,10 @@ class DeferredRenderer extends WebGLRenderer {
 
 		// spot
 
-		lights = renderStates.lights.spot;
-		shadows = renderStates.lights.spotShadow;
-		count = renderStates.lights.spotsNum;
-		shadowCount = renderStates.lights.spotShadowNum;
+		lights = lightingGroup.spot;
+		shadows = lightingGroup.spotShadow;
+		count = lightingGroup.spotsNum;
+		shadowCount = lightingGroup.spotShadowNum;
 
 		for (let i = 0; i < count; i++) {
 			const light = lights[i];
@@ -242,8 +244,8 @@ class DeferredRenderer extends WebGLRenderer {
 				pass.uniforms['shadowMapSize'][0] = shadow.shadowMapSize[0];
 				pass.uniforms['shadowMapSize'][1] = shadow.shadowMapSize[1];
 
-				pass.uniforms['shadowMap'] = this.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
-				pass.uniforms['shadowMatrix'].set(renderStates.lights.spotShadowMatrix, i * 16);
+				pass.uniforms['shadowMap'] = this.capabilities.version >= 2 ? lightingGroup.spotShadowDepthMap[i] : lightingGroup.spotShadowMap[i];
+				pass.uniforms['shadowMatrix'].set(lightingGroup.spotShadowMatrix, i * 16);
 			}
 
 			pass.render(this);
@@ -684,7 +686,7 @@ DeferredRenderer.DeferredShader = {
 				// Diffuse term
 				// TODO
 				gl_FragColor.rgb = intensity * (cubeMapColor2.xyz * F_Schlick(ndv, specularColor) + cubeMapColor1.xyz * diffuseColor / PI);
-				
+
 				gl_FragColor.a = 1.0;
 			}
 		`

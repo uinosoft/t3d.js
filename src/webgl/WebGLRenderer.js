@@ -228,7 +228,6 @@ class WebGLRenderer extends ThinRenderer {
 		const renderInfo = options.renderInfo;
 
 		const sceneData = renderStates.scene;
-		const lightData = renderStates.lights;
 		const cameraData = renderStates.camera;
 
 		const currentRenderTarget = state.currentRenderTarget;
@@ -247,6 +246,8 @@ class WebGLRenderer extends ThinRenderer {
 		const geometry = getGeometry.call(this, renderable);
 		const group = renderable.group;
 		const fog = material.fog ? sceneData.fog : null;
+		const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
+		const hasLighting = lightingGroup.isValid();
 
 		_envData.map = material.envMap !== undefined ? (material.envMap || sceneData.environment) : null;
 		_envData.diffuse = sceneData.envDiffuseIntensity * material.envMapIntensity;
@@ -286,11 +287,10 @@ class WebGLRenderer extends ThinRenderer {
 			} else if (capabilities.version > 1 && sceneData.disableShadowSampler !== materialProperties.disableShadowSampler) {
 				material.needsUpdate = true;
 			} else {
-				const acceptLight = material.acceptLight && lightData.totalNum > 0;
-				if (acceptLight !== materialProperties.acceptLight) {
+				if (hasLighting !== materialProperties.hasLighting) {
 					material.needsUpdate = true;
-				} else if (acceptLight) {
-					if (!lightData.hash.compare(materialProperties.lightsHash) ||
+				} else if (hasLighting) {
+					if (!lightingGroup.hash.compare(materialProperties.lightsHash) ||
 						object.receiveShadow !== materialProperties.receiveShadow ||
 						object.shadowType !== materialProperties.shadowType) {
 						material.needsUpdate = true;
@@ -308,8 +308,8 @@ class WebGLRenderer extends ThinRenderer {
 			materialProperties.envMap = _envData.map;
 			materialProperties.logarithmicDepthBuffer = sceneData.logarithmicDepthBuffer;
 
-			materialProperties.acceptLight = material.acceptLight;
-			materialProperties.lightsHash = lightData.hash.copyTo(materialProperties.lightsHash);
+			materialProperties.hasLighting = hasLighting;
+			materialProperties.lightsHash = lightingGroup.hash.copyTo(materialProperties.lightsHash);
 			materialProperties.receiveShadow = object.receiveShadow;
 			materialProperties.shadowType = object.shadowType;
 
@@ -337,10 +337,10 @@ class WebGLRenderer extends ThinRenderer {
 		vertexArrayBindings.setup(object, geometry, program);
 
 		let refreshLights = false;
-		if (program.lightId !== lightData.id || program.lightVersion !== lightData.version) {
+		if (program.lightId !== lightingGroup.id || program.lightVersion !== lightingGroup.version) {
 			refreshLights = true;
-			program.lightId = lightData.id;
-			program.lightVersion = lightData.version;
+			program.lightId = lightingGroup.id;
+			program.lightVersion = lightingGroup.version;
 		}
 
 		let refreshCamera = false;
@@ -370,8 +370,8 @@ class WebGLRenderer extends ThinRenderer {
 		const uniforms = program.getUniforms();
 
 		// upload light uniforms
-		if (material.acceptLight) {
-			this._uploadLights(uniforms, lightData, sceneData.disableShadowSampler, refreshLights);
+		if (hasLighting) {
+			this._uploadLights(uniforms, lightingGroup, sceneData.disableShadowSampler, refreshLights);
 		}
 
 		// upload bone matrices
@@ -457,80 +457,80 @@ class WebGLRenderer extends ThinRenderer {
 		object.onAfterRender(renderable);
 	}
 
-	_uploadLights(uniforms, lights, disableShadowSampler, refresh) {
+	_uploadLights(uniforms, lightingGroup, disableShadowSampler, refresh) {
 		const textures = this._textures;
 
-		if (lights.useAmbient && refresh) {
-			uniforms.set('u_AmbientLightColor', lights.ambient);
+		if (lightingGroup.useAmbient && refresh) {
+			uniforms.set('u_AmbientLightColor', lightingGroup.ambient);
 		}
-		if (lights.useSphericalHarmonics && refresh) {
-			uniforms.set('u_SphericalHarmonicsLightData', lights.sh);
+		if (lightingGroup.useSphericalHarmonics && refresh) {
+			uniforms.set('u_SphericalHarmonicsLightData', lightingGroup.sh);
 		}
-		if (lights.hemisNum > 0 && refresh) {
-			uniforms.set('u_Hemi', lights.hemisphere);
+		if (lightingGroup.hemisNum > 0 && refresh) {
+			uniforms.set('u_Hemi', lightingGroup.hemisphere);
 		}
 
-		if (lights.directsNum > 0) {
-			if (refresh) uniforms.set('u_Directional', lights.directional);
+		if (lightingGroup.directsNum > 0) {
+			if (refresh) uniforms.set('u_Directional', lightingGroup.directional);
 
-			if (lights.directShadowNum > 0) {
-				if (refresh) uniforms.set('u_DirectionalShadow', lights.directionalShadow);
+			if (lightingGroup.directShadowNum > 0) {
+				if (refresh) uniforms.set('u_DirectionalShadow', lightingGroup.directionalShadow);
 
 				if (uniforms.has('directionalShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set('directionalShadowMap', lights.directionalShadowDepthMap, textures);
+						uniforms.set('directionalShadowMap', lightingGroup.directionalShadowDepthMap, textures);
 					} else {
-						uniforms.set('directionalShadowMap', lights.directionalShadowMap, textures);
+						uniforms.set('directionalShadowMap', lightingGroup.directionalShadowMap, textures);
 					}
-					uniforms.set('directionalShadowMatrix', lights.directionalShadowMatrix);
+					uniforms.set('directionalShadowMatrix', lightingGroup.directionalShadowMatrix);
 				}
 
 				if (uniforms.has('directionalDepthMap')) {
-					uniforms.set('directionalDepthMap', lights.directionalShadowMap, textures);
+					uniforms.set('directionalDepthMap', lightingGroup.directionalShadowMap, textures);
 				}
 			}
 		}
 
-		if (lights.pointsNum > 0) {
-			if (refresh) uniforms.set('u_Point', lights.point);
+		if (lightingGroup.pointsNum > 0) {
+			if (refresh) uniforms.set('u_Point', lightingGroup.point);
 
-			if (lights.pointShadowNum > 0) {
-				if (refresh) uniforms.set('u_PointShadow', lights.pointShadow);
+			if (lightingGroup.pointShadowNum > 0) {
+				if (refresh) uniforms.set('u_PointShadow', lightingGroup.pointShadow);
 
 				if (uniforms.has('pointShadowMap')) {
-					uniforms.set('pointShadowMap', lights.pointShadowMap, textures);
-					uniforms.set('pointShadowMatrix', lights.pointShadowMatrix);
+					uniforms.set('pointShadowMap', lightingGroup.pointShadowMap, textures);
+					uniforms.set('pointShadowMatrix', lightingGroup.pointShadowMatrix);
 				}
 			}
 		}
 
-		if (lights.spotsNum > 0) {
-			if (refresh) uniforms.set('u_Spot', lights.spot);
+		if (lightingGroup.spotsNum > 0) {
+			if (refresh) uniforms.set('u_Spot', lightingGroup.spot);
 
-			if (lights.spotShadowNum > 0) {
-				if (refresh) uniforms.set('u_SpotShadow', lights.spotShadow);
+			if (lightingGroup.spotShadowNum > 0) {
+				if (refresh) uniforms.set('u_SpotShadow', lightingGroup.spotShadow);
 
 				if (uniforms.has('spotShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set('spotShadowMap', lights.spotShadowDepthMap, textures);
+						uniforms.set('spotShadowMap', lightingGroup.spotShadowDepthMap, textures);
 					} else {
-						uniforms.set('spotShadowMap', lights.spotShadowMap, textures);
+						uniforms.set('spotShadowMap', lightingGroup.spotShadowMap, textures);
 					}
-					uniforms.set('spotShadowMatrix', lights.spotShadowMatrix);
+					uniforms.set('spotShadowMatrix', lightingGroup.spotShadowMatrix);
 				}
 
 				if (uniforms.has('spotDepthMap')) {
-					uniforms.set('spotDepthMap', lights.spotShadowMap, textures);
+					uniforms.set('spotDepthMap', lightingGroup.spotShadowMap, textures);
 				}
 			}
 		}
 
-		if (lights.rectAreaNum > 0) {
-			if (refresh) uniforms.set('u_RectArea', lights.rectArea);
+		if (lightingGroup.rectAreaNum > 0) {
+			if (refresh) uniforms.set('u_RectArea', lightingGroup.rectArea);
 
-			if (lights.LTC1 && lights.LTC2) {
-				uniforms.set('ltc_1', lights.LTC1, textures);
-				uniforms.set('ltc_2', lights.LTC2, textures);
+			if (lightingGroup.LTC1 && lightingGroup.LTC2) {
+				uniforms.set('ltc_1', lightingGroup.LTC1, textures);
+				uniforms.set('ltc_2', lightingGroup.LTC2, textures);
 			} else {
 				console.warn('WebGLRenderer: RectAreaLight.LTC1 and LTC2 need to be set before use.');
 			}

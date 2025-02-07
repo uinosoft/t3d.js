@@ -62,7 +62,9 @@ class WebGLPrograms {
 		const state = this._state;
 		const capabilities = this._capabilities;
 
-		const lights = material.acceptLight ? renderStates.lights : null;
+		const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
+		const hasLighting = lightingGroup.isValid();
+		const hasShadows = hasLighting && (lightingGroup.shadowsNum > 0) && object.receiveShadow;
 		const fog = material.fog ? renderStates.scene.fog : null;
 		const envMap = material.envMap !== undefined ? (material.envMap || renderStates.scene.environment) : null;
 		const logarithmicDepthBuffer = renderStates.scene.logarithmicDepthBuffer;
@@ -135,17 +137,17 @@ class WebGLPrograms {
 
 		// lights
 
-		props.useAmbientLight = !!lights && lights.useAmbient;
-		props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
-		props.hemisphereLightNum = lights ? lights.hemisNum : 0;
-		props.directLightNum = lights ? lights.directsNum : 0;
-		props.pointLightNum = lights ? lights.pointsNum : 0;
-		props.spotLightNum = lights ? lights.spotsNum : 0;
-		props.rectAreaLightNum = lights ? lights.rectAreaNum : 0;
-		props.directShadowNum = (object.receiveShadow && !!lights) ? lights.directShadowNum : 0;
-		props.pointShadowNum = (object.receiveShadow && !!lights) ? lights.pointShadowNum : 0;
-		props.spotShadowNum = (object.receiveShadow && !!lights) ? lights.spotShadowNum : 0;
-		props.useShadow = object.receiveShadow && !!lights && lights.shadowsNum > 0;
+		props.useAmbientLight = hasLighting && lightingGroup.useAmbient;
+		props.useSphericalHarmonicsLight = hasLighting && lightingGroup.useSphericalHarmonics;
+		props.hemisphereLightNum = hasLighting ? lightingGroup.hemisNum : 0;
+		props.directLightNum = hasLighting ? lightingGroup.directsNum : 0;
+		props.pointLightNum = hasLighting ? lightingGroup.pointsNum : 0;
+		props.spotLightNum = hasLighting ? lightingGroup.spotsNum : 0;
+		props.rectAreaLightNum = hasLighting ? lightingGroup.rectAreaNum : 0;
+		props.directShadowNum = hasShadows ? lightingGroup.directShadowNum : 0;
+		props.pointShadowNum = hasShadows ? lightingGroup.pointShadowNum : 0;
+		props.spotShadowNum = hasShadows ? lightingGroup.spotShadowNum : 0;
+		props.useShadow = hasShadows;
 		props.useShadowSampler = capabilities.version >= 2 && !disableShadowSampler;
 		props.shadowType = object.shadowType;
 		if (!props.useShadowSampler && props.shadowType !== SHADOW_TYPE.HARD) {

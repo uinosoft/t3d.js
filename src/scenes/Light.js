@@ -32,6 +32,15 @@ class Light extends Object3D {
 		 * @default 1
 		 */
 		this.intensity = intensity;
+
+		/**
+		 * Group mask of the light, indicating which lighting group the light belongs to. Default is 1 (binary 0001), meaning the light belongs to lighting group 0.
+		 * For example, to make the light effective in both lighting group 0 and lighting group 1, set groupMask to 3 (binary 0011).
+		 * Used in conjunction with {@link t3d.Material#lightingGroup}.
+		 * @type {Number}
+		 * @default 1
+		 */
+		this.groupMask = 1;
 	}
 
 	/**
@@ -54,6 +63,7 @@ class Light extends Object3D {
 
 		this.color.copy(source.color);
 		this.intensity = source.intensity;
+		this.groupMask = source.groupMask;
 
 		return this;
 	}

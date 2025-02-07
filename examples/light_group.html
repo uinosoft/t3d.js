@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - light group</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - light group<br/>
+		Select the lighting group for the center mesh material.
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { PointLightHelper } from 't3d/addons/objects/PointLightHelper.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+
+		const scene = new t3d.Scene();
+		scene.maxLightingGroups = 5;
+		scene.fog = new t3d.Fog(0x000000, 50, 1000);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 24, 130);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 26, 0);
+
+		// Prepare scene
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		console.time('Load glTF');
+		const gltfUri = './resources/models/gltf/bust_of_woman/glTF-Binary/bust_of_woman.glb';
+		new GLTFLoader(loadingManager).load(gltfUri).then(function(result) {
+			console.timeEnd('Load glTF');
+
+			const tempMesh = result.root.children[0];
+			tempMesh.castShadow = true;
+			tempMesh.receiveShadow = true;
+
+			function cloneMesh() {
+				const mesh = tempMesh.clone();
+				mesh.material = tempMesh.material.clone();
+				return mesh;
+			}
+
+			const meshLeft = cloneMesh();
+			meshLeft.position.x = -40;
+			meshLeft.material.lightingGroup = 2;
+			scene.add(meshLeft);
+
+			const meshCenter = cloneMesh();
+			meshCenter.material.lightingGroup = 1;
+			scene.add(meshCenter);
+
+			const meshRight = cloneMesh();
+			meshRight.position.x = 40;
+			meshRight.material.lightingGroup = 3;
+			scene.add(meshRight);
+
+			// GUI
+
+			const gui = new GUI();
+			gui.add(meshCenter.material, 'lightingGroup', {
+				'All': 0,
+				'Only White': 1,
+				'Only Blue': 2,
+				'Only Red': 3
+			}).name('Lighting');
+		}).catch(function(e) { console.error(e) });
+
+		const plane_geometry = new t3d.PlaneGeometry(2000, 2000);
+		const plane_material = new t3d.LambertMaterial();
+		plane_material.diffuse.setHex(0x999999);
+		plane_material.dithering = true;
+		const plane = new t3d.Mesh(plane_geometry, plane_material);
+		plane.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		const bg_geometry = new t3d.PlaneGeometry(250, 250);
+		const bg_material = new t3d.PBRMaterial();
+		bg_material.roughness = 0.8;
+		bg_material.metalness = 0;
+		bg_material.diffuse.setHex(0xffffff);
+		bg_material.dithering = true;
+		bg_material.side = t3d.DRAW_SIDE.DOUBLE;
+		const bg = new t3d.Mesh(bg_geometry, bg_material);
+		bg.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
+		bg.receiveShadow = true;
+		bg.castShadow = true;
+		bg.euler.x = Math.PI / 2;
+		bg.position.z = -25;
+		scene.add(bg);
+
+		// Prepare lights
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
+		directionalLight.position.set(10, 35, 30);
+		directionalLight.lookAt(new t3d.Vector3(0, 30, 0), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 150;
+		directionalLight.shadow.cameraFar = 300;
+		directionalLight.shadow.mapSize.set(1024, 1024);
+		directionalLight.shadow.bias = -0.003;
+		directionalLight.castShadow = true;
+		directionalLight.groupMask = 1 << 0 | 1 << 1;
+		scene.add(directionalLight);
+		
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 1);
+		directionalLight.add(directionalLightHelper);
+
+		const pointLightBlue = new t3d.PointLight(0x0000ff, 0.7, 80);
+		pointLightBlue.position.set(0, 30, 0);
+		pointLightBlue.groupMask = 1 << 0 | 1 << 2;
+		scene.add(pointLightBlue);
+		
+		const pointLightBlueHelper = new PointLightHelper(pointLightBlue, 1);
+		pointLightBlue.add(pointLightBlueHelper);
+
+		const pointLightRed = new t3d.PointLight(0xff0000, 0.7, 80);
+		pointLightRed.position.set(0, 30, 0);
+		pointLightRed.groupMask = 1 << 0 | 1 << 3;
+		scene.add(pointLightRed);
+		
+		const pointLightRedHelper = new PointLightHelper(pointLightRed, 1);
+		pointLightRed.add(pointLightRedHelper);
+
+		//
+
+		const timer = new Timer();
+
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
+
+			timer.update(timestamp);
+
+			controller.update();
+
+			const elapsedTime = timer.getElapsed();
+
+			pointLightBlue.position.x = 24 * Math.cos(elapsedTime);
+			pointLightBlue.position.z = 24 * Math.sin(elapsedTime);
+
+			pointLightRed.position.x = 24 * Math.cos(elapsedTime + Math.PI);
+			pointLightRed.position.z = 24 * Math.sin(elapsedTime + Math.PI);
+
+			pointLightBlueHelper.update();
+			pointLightRedHelper.update();
+			directionalLightHelper.update();
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

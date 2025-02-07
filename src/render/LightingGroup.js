@@ -2,25 +2,10 @@ import { Vector3 } from '../math/Vector3.js';
 import { Matrix4 } from '../math/Matrix4.js';
 import { RectAreaLight } from '../scenes/lights/RectAreaLight.js';
 
-const helpVector3 = new Vector3();
-const helpMatrix4 = new Matrix4();
-
-const tempDirectionalShadowMatrices = [];
-const tempPointShadowMatrices = [];
-const tempSpotShadowMatrices = [];
-
-let _lightDataId = 0;
-
-/**
- * The LightData class is used to collect lights,
- * and process them into a data format suitable for uploading to the GPU.
- * @ignore
- */
-class LightData {
+class LightingGroup {
 
 	constructor() {
-		this.id = _lightDataId++;
-		this.version = 0;
+		this.id = _lightingGroupId++;
 
 		// Light collection array
 
@@ -71,6 +56,10 @@ class LightData {
 		this.totalNum = 0;
 		this.shadowsNum = 0;
 
+		// Version
+
+		this.version = 0;
+
 		// Hash
 
 		this.hash = new LightHash();
@@ -81,23 +70,26 @@ class LightData {
 		this.shadowsNum = 0;
 	}
 
-	push(light) {
+	push(light, shadow) {
 		this.lights[this.totalNum++] = light;
 
-		if (castShadow(light)) {
+		if (shadow) {
 			this.shadowsNum++;
 		}
 	}
 
 	end(sceneData) {
 		this.lights.length = this.totalNum;
-		this.lights.sort(shadowCastingLightsFirst);
 
 		this._setupCache(sceneData);
 
 		this.hash.update(this);
 
 		this.version++;
+	}
+
+	isValid() {
+		return this.totalNum > 0;
 	}
 
 	_setupCache(sceneData) {
@@ -447,6 +439,17 @@ class LightData {
 
 }
 
+// Variables
+
+let _lightingGroupId = 0;
+
+const helpVector3 = new Vector3();
+const helpMatrix4 = new Matrix4();
+
+const tempDirectionalShadowMatrices = [];
+const tempPointShadowMatrices = [];
+const tempSpotShadowMatrices = [];
+
 // Light caches
 
 const lightCaches = new WeakMap();
@@ -583,14 +586,4 @@ class LightHash {
 
 }
 
-function shadowCastingLightsFirst(lightA, lightB) {
-	const a = castShadow(lightA) ? 1 : 0;
-	const b = castShadow(lightB) ? 1 : 0;
-	return b - a;
-}
-
-function castShadow(light) {
-	return light.shadow && light.castShadow;
-}
-
-export { LightData };
+export { LightingGroup };

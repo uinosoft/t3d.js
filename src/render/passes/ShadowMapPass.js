@@ -93,11 +93,11 @@ class ShadowMapPass {
 		oldClearColor.copy(renderer.getClearColor());
 		renderer.setClearColor(1, 1, 1, 1);
 
-		const lights = scene._lightData.lights;
-		const shadowsNum = scene._lightData.shadowsNum;
+		const lightsArray = scene._lightingData.lightsArray;
+		const shadowsNum = scene._lightingData.shadowsNum;
 
 		for (let i = 0; i < shadowsNum; i++) {
-			const light = lights[i];
+			const light = lightsArray[i];
 			const shadow = light.shadow;
 
 			if (shadow.autoUpdate === false && shadow.needsUpdate === false) continue;

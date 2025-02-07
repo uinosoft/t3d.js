@@ -15,9 +15,9 @@ let _cameraDataId = 0;
  */
 class RenderStates {
 
-	constructor(sceneData, lightsData) {
+	constructor(sceneData, lightingData) {
 		this.scene = sceneData;
-		this.lights = lightsData;
+		this.lighting = lightingData;
 
 		this.camera = {
 			id: _cameraDataId++,

@@ -12,8 +12,6 @@ class RenderQueue {
 		this.layerMap = new Map();
 		this.layerList = [];
 
-		this.lightsArray = [];
-
 		this.skeletons = new Set();
 
 		// to optimize the performance of the next push, cache the last layer used
@@ -24,8 +22,6 @@ class RenderQueue {
 		for (let i = 0, l = this.layerList.length; i < l; i++) {
 			this.layerList[i].begin();
 		}
-
-		this.lightsArray.length = 0;
 
 		this.skeletons.clear();
 	}
@@ -72,10 +68,6 @@ class RenderQueue {
 		} else {
 			layer.addRenderable(object, object.geometry, object.material, clipZ);
 		}
-	}
-
-	pushLight(light) {
-		this.lightsArray.push(light);
 	}
 
 	/**

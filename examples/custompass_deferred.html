@@ -372,6 +372,8 @@
 				matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).inverse();
 				cameraPos.copy(renderStates.camera.position);
 
+				const lightingGroup = renderStates.lighting.getGroup(0);
+
 				// directional
 				const d_Pass = params.render == 'prelight-deferred' ? directionalLightPrePass : directionalLightPass;
 				if (params.render !== 'prelight-deferred') {
@@ -385,10 +387,10 @@
 				d_Pass.uniforms['matProjViewInverse'].set(matProjViewInverse.elements);
 				d_Pass.uniforms['cameraPos'] = [cameraPos.x, cameraPos.y, cameraPos.z];
 
-				const directionalLights = renderStates.lights.directional;
-				const directionalShadows = renderStates.lights.directionalShadow;
-				const directsNum = renderStates.lights.directsNum;
-				const directShadowNum = renderStates.lights.directShadowNum;
+				const directionalLights = lightingGroup.directional;
+				const directionalShadows = lightingGroup.directionalShadow;
+				const directsNum = lightingGroup.directsNum;
+				const directShadowNum = lightingGroup.directShadowNum;
 
 				for (let i = 0; i < directsNum; i++) {
 					const directionalLight = directionalLights[i];
@@ -405,8 +407,8 @@
 						d_Pass.uniforms['shadowMapSize'][0] = directionalShadow.shadowMapSize[0];
 						d_Pass.uniforms['shadowMapSize'][1] = directionalShadow.shadowMapSize[1];
 
-						d_Pass.uniforms['shadowMap'] = renderer.capabilities.version >= 2 ? renderStates.lights.directionalShadowDepthMap[i] : renderStates.lights.directionalShadowMap[i];
-						d_Pass.uniforms['shadowMatrix'].set(renderStates.lights.directionalShadowMatrix, i * 16);
+						d_Pass.uniforms['shadowMap'] = renderer.capabilities.version >= 2 ? lightingGroup.directionalShadowDepthMap[i] : lightingGroup.directionalShadowMap[i];
+						d_Pass.uniforms['shadowMatrix'].set(lightingGroup.directionalShadowMatrix, i * 16);
 					} else {
 						d_Pass.material.defines['SHADOW'] = 0;
 					}
@@ -427,10 +429,10 @@
 				p_Pass.uniforms['matProjViewInverse'].set(matProjViewInverse.elements);
 				p_Pass.uniforms['cameraPos'] = [cameraPos.x, cameraPos.y, cameraPos.z];
 
-				const pointLights = renderStates.lights.point;
-				const pointShadows = renderStates.lights.pointShadow;
-				const pointsNum = renderStates.lights.pointsNum;
-				const pointShadowNum = renderStates.lights.pointShadowNum;
+				const pointLights = lightingGroup.point;
+				const pointShadows = lightingGroup.pointShadow;
+				const pointsNum = lightingGroup.pointsNum;
+				const pointShadowNum = lightingGroup.pointShadowNum;
 
 				for (let i = 0; i < pointsNum; i++) {
 					const pointLight = pointLights[i];
@@ -449,7 +451,7 @@
 						p_Pass.uniforms['shadowMapSize'][0] = pointShadow.shadowMapSize[0];
 						p_Pass.uniforms['shadowMapSize'][1] = pointShadow.shadowMapSize[1];
 
-						p_Pass.uniforms['shadowMap'] = renderStates.lights.pointShadowMap[i];
+						p_Pass.uniforms['shadowMap'] = lightingGroup.pointShadowMap[i];
 
 						p_Pass.uniforms['shadowCameraNear'] = pointShadow.shadowCameraRange[0];
 						p_Pass.uniforms['shadowCameraFar'] = pointShadow.shadowCameraRange[1];
@@ -473,10 +475,10 @@
 				s_Pass.uniforms['matProjViewInverse'].set(matProjViewInverse.elements);
 				s_Pass.uniforms['cameraPos'] = [cameraPos.x, cameraPos.y, cameraPos.z];
 
-				const spotLights = renderStates.lights.spot;
-				const spotShadows = renderStates.lights.spotShadow;
-				const spotsNum = renderStates.lights.spotsNum;
-				const spotShadowNum = renderStates.lights.spotShadowNum;
+				const spotLights = lightingGroup.spot;
+				const spotShadows = lightingGroup.spotShadow;
+				const spotsNum = lightingGroup.spotsNum;
+				const spotShadowNum = lightingGroup.spotShadowNum;
 
 				for (let i = 0; i < spotsNum; i++) {
 					const spotLight = spotLights[i];
@@ -498,8 +500,8 @@
 						s_Pass.uniforms['shadowMapSize'][0] = spotShadow.shadowMapSize[0];
 						s_Pass.uniforms['shadowMapSize'][1] = spotShadow.shadowMapSize[1];
 
-						s_Pass.uniforms['shadowMap'] = renderer.capabilities.version >= 2 ? renderStates.lights.spotShadowDepthMap[i] : renderStates.lights.spotShadowMap[i];
-						s_Pass.uniforms['shadowMatrix'].set(renderStates.lights.spotShadowMatrix, i * 16);
+						s_Pass.uniforms['shadowMap'] = renderer.capabilities.version >= 2 ? lightingGroup.spotShadowDepthMap[i] : lightingGroup.spotShadowMap[i];
+						s_Pass.uniforms['shadowMatrix'].set(lightingGroup.spotShadowMatrix, i * 16);
 					} else {
 						s_Pass.material.defines['SHADOW'] = 0;
 					}

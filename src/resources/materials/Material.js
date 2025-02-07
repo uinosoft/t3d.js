@@ -579,6 +579,14 @@ class Material extends EventDispatcher {
 		this.acceptLight = false;
 
 		/**
+		 * The lighting group of the material.
+		 * Used in conjunction with {@link t3d.Light#groupMask}.
+		 * @type {Number}
+		 * @default 0
+		 */
+		this.lightingGroup = 0;
+
+		/**
 		 * Whether the material is affected by fog.
 		 * @type {Boolean}
 		 * @default true
@@ -693,6 +701,7 @@ class Material extends EventDispatcher {
 		this.shading = source.shading;
 		this.dithering = source.dithering;
 		this.acceptLight = source.acceptLight;
+		this.lightingGroup = source.lightingGroup;
 		this.fog = source.fog;
 		this.drawMode = source.drawMode;
 

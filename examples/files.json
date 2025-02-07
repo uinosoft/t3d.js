@@ -8,7 +8,8 @@
 		"light_sphericalharmonicslight",
 		"light_shadow",
 		"light_shadow_adapter",
-		"light_softshadow"
+		"light_softshadow",
+		"light_group"
 	],
 	"geometry": [
 		"geometry_geometries",

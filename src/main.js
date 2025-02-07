@@ -43,7 +43,6 @@ export { Vector4 } from './math/Vector4.js';
 export { ShaderPostPass } from './render/passes/ShaderPostPass.js';
 export { ShadowMapPass } from './render/passes/ShadowMapPass.js';
 
-export { LightData } from './render/LightData.js';
 export { PropertyMap } from './render/PropertyMap.js';
 export { RenderInfo } from './render/RenderInfo.js';
 export { RenderQueue } from './render/RenderQueue.js';

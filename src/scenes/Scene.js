@@ -1,6 +1,6 @@
 import { Object3D } from './Object3D.js';
 import { Matrix4 } from '../math/Matrix4.js';
-import { LightData } from '../render/LightData.js';
+import { LightingData } from '../render/LightingData.js';
 import { RenderQueue } from '../render/RenderQueue.js';
 import { SceneData } from '../render/SceneData.js';
 import { RenderStates } from '../render/RenderStates.js';
@@ -87,7 +87,7 @@ class Scene extends Object3D {
 		this.anchorMatrix = new Matrix4();
 
 		this._sceneData = new SceneData();
-		this._lightData = new LightData();
+		this._lightingData = new LightingData();
 
 		this._renderQueueMap = new WeakMap();
 		this._renderStatesMap = new WeakMap();
@@ -96,15 +96,27 @@ class Scene extends Object3D {
 	}
 
 	/**
+	 * The maximum number of lighting groups.
+	 * @type {Number}
+	 * @default 1
+	 */
+	set maxLightingGroups(value) {
+		this._lightingData.setMaxGroupCount(value);
+	}
+	get maxLightingGroups() {
+		return this._lightingData.groupList.length;
+	}
+
+	/**
 	 * Update {@link t3d.RenderStates} for the scene and camera.
-	 * The light data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
+	 * The lighting data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
 	 * @param {t3d.Camera} camera - The camera.
 	 * @param {Boolean} [updateScene=true] - Whether to update scene data.
 	 * @return {t3d.RenderStates} - The result render states.
 	 */
 	updateRenderStates(camera, updateScene = true) {
 		if (!this._renderStatesMap.has(camera)) {
-			this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightData));
+			this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightingData));
 		}
 
 		const renderStates = this._renderStatesMap.get(camera);
@@ -144,18 +156,15 @@ class Scene extends Object3D {
 		}
 
 		const renderQueue = this._renderQueueMap.get(camera);
+		const lightingData = this._lightingData;
 
+		lightingData.begin(!collectLights);
 		renderQueue.begin();
-		this._pushToRenderQueue(this, camera, renderQueue);
-		renderQueue.end();
 
-		if (collectLights) {
-			this._lightData.begin();
-			for (const light of renderQueue.lightsArray) {
-				this._lightData.push(light);
-			}
-			this._lightData.end(this._sceneData);
-		}
+		this._pushToRenderQueue(this, camera, renderQueue);
+
+		renderQueue.end();
+		lightingData.end(this._sceneData);
 
 		if (updateSkeletons) {
 			this._skeletonVersion++;
@@ -199,7 +208,7 @@ class Scene extends Object3D {
 				renderQueue.push(object, camera);
 			}
 		} else if (object.isLight) {
-			renderQueue.pushLight(object);
+			this._lightingData.collect(object);
 		}
 
 		const children = object.children;

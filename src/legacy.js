@@ -3,6 +3,7 @@ import { BoxGeometry } from './resources/geometries/BoxGeometry.js';
 import { Object3D } from './scenes/Object3D.js';
 import { Scene } from './scenes/Scene.js';
 import { MathUtils } from './math/MathUtils.js';
+import { RenderStates } from './render/RenderStates.js';
 
 // deprecated since 0.1.2, add warning since 0.3.0, will be removed in 0.4.0
 export class CubeGeometry extends BoxGeometry {
@@ -66,6 +67,25 @@ Object.defineProperties(Scene.prototype, {
 		set: function(value) {
 			// console.warn("Scene: .environmentLightIntensity has been deprecated, use .envDiffuseIntensity instead.");
 			this.envDiffuseIntensity = value;
+		}
+	},
+	// deprecated since 0.3.2
+	_lightData: {
+		configurable: true,
+		get: function() {
+			// console.warn('Scene: ._lightData has been deprecated, use ._lightingData.getGroup(0) instead.');
+			return this._lightingData.getGroup(0);
+		}
+	}
+});
+
+Object.defineProperties(RenderStates.prototype, {
+	// deprecated since 0.3.2
+	lights: {
+		configurable: true,
+		get: function() {
+			// console.warn('RenderStates: .lights has been deprecated, use .lighting.getGroup(0) instead.');
+			return this.lighting.getGroup(0);
 		}
 	}
 });

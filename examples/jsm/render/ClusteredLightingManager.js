@@ -67,7 +67,7 @@ class ClusteredLightingManager {
 		this.lightsTexture.dispose();
 	}
 
-	update(cameraData, lightData, lightsNeedsUpdate = true) {
+	update(cameraData, lightingGroup, lightsNeedsUpdate = true) {
 		this._updateCellsTransform(cameraData);
 
 		this.cellsTexture.resetLightIndices();
@@ -77,8 +77,8 @@ class ClusteredLightingManager {
 
 		let lightIndicesWritten = false;
 
-		for (let i = 0; i < lightData.pointsNum; i++) {
-			const pointLight = lightData.point[i];
+		for (let i = 0; i < lightingGroup.pointsNum; i++) {
+			const pointLight = lightingGroup.point[i];
 
 			getPointLightBoundingSphere(pointLight, _lightSphere);
 			_lightSphere.center.applyMatrix4(cameraData.viewMatrix);
@@ -90,16 +90,16 @@ class ClusteredLightingManager {
 			}
 		}
 
-		for (let i = 0; i < lightData.spotsNum; i++) {
-			const spotLight = lightData.spot[i];
+		for (let i = 0; i < lightingGroup.spotsNum; i++) {
+			const spotLight = lightingGroup.spot[i];
 
 			getSpotLightBoundingSphere(spotLight, _lightSphere);
 			_lightSphere.center.applyMatrix4(cameraData.viewMatrix);
 			_lightSphere.center.z *= -1;
 
 			if (getCellsRange(_lightSphere, cellsTable, cellsTransform, _cellsRange)) {
-				lightIndicesWritten = this.cellsTexture.setLightIndex(_cellsRange, i + lightData.pointsNum) || lightIndicesWritten;
-				lightsNeedsUpdate && this.lightsTexture.setSpotLight(i + lightData.pointsNum, spotLight);
+				lightIndicesWritten = this.cellsTexture.setLightIndex(_cellsRange, i + lightingGroup.pointsNum) || lightIndicesWritten;
+				lightsNeedsUpdate && this.lightsTexture.setSpotLight(i + lightingGroup.pointsNum, spotLight);
 			}
 		}
 
@@ -246,12 +246,12 @@ class LightsTexture extends Texture2D {
 		this.flipY = false;
 	}
 
-	setPointLight(index, lightData) {
+	setPointLight(index, lightInfo) {
 		const data = this.image.data;
 		const halfFloat = this.type === PIXEL_TYPE.HALF_FLOAT;
 
 		const start = index * LIGHT_STRIDE * 4;
-		const { color, decay, position, distance } = lightData;
+		const { color, decay, position, distance } = lightInfo;
 
 		// pixel 0 - R: lightType, G: -, B: -, A: -
 
@@ -274,12 +274,12 @@ class LightsTexture extends Texture2D {
 		// pixel 3 - R: -, G: -, B: -, A: -
 	}
 
-	setSpotLight(index, lightData) {
+	setSpotLight(index, lightInfo) {
 		const data = this.image.data;
 		const halfFloat = this.type === PIXEL_TYPE.HALF_FLOAT;
 
 		const start = index * LIGHT_STRIDE * 4;
-		const { color, decay, position, distance, direction, coneCos, penumbraCos } = lightData;
+		const { color, decay, position, distance, direction, coneCos, penumbraCos } = lightInfo;
 
 		// pixel 0 - R: lightType, G: penumbraCos, B: -, A: -
 

@@ -7757,6 +7757,15 @@ class Light extends Object3D {
 		 * @default 1
 		 */
 		this.intensity = intensity;
+
+		/**
+		 * Group mask of the light, indicating which lighting group the light belongs to. Default is 1 (binary 0001), meaning the light belongs to lighting group 0.
+		 * For example, to make the light effective in both lighting group 0 and lighting group 1, set groupMask to 3 (binary 0011).
+		 * Used in conjunction with {@link t3d.Material#lightingGroup}.
+		 * @type {Number}
+		 * @default 1
+		 */
+		this.groupMask = 1;
 	}
 
 	/**
@@ -7779,6 +7788,7 @@ class Light extends Object3D {
 
 		this.color.copy(source.color);
 		this.intensity = source.intensity;
+		this.groupMask = source.groupMask;
 
 		return this;
 	}
@@ -7878,25 +7888,10 @@ RectAreaLight.LTC1 = null;
  */
 RectAreaLight.LTC2 = null;
 
-const helpVector3 = new Vector3();
-const helpMatrix4$1 = new Matrix4();
-
-const tempDirectionalShadowMatrices = [];
-const tempPointShadowMatrices = [];
-const tempSpotShadowMatrices = [];
-
-let _lightDataId = 0;
-
-/**
- * The LightData class is used to collect lights,
- * and process them into a data format suitable for uploading to the GPU.
- * @ignore
- */
-class LightData {
+class LightingGroup {
 
 	constructor() {
-		this.id = _lightDataId++;
-		this.version = 0;
+		this.id = _lightingGroupId++;
 
 		// Light collection array
 
@@ -7947,6 +7942,10 @@ class LightData {
 		this.totalNum = 0;
 		this.shadowsNum = 0;
 
+		// Version
+
+		this.version = 0;
+
 		// Hash
 
 		this.hash = new LightHash();
@@ -7957,23 +7956,26 @@ class LightData {
 		this.shadowsNum = 0;
 	}
 
-	push(light) {
+	push(light, shadow) {
 		this.lights[this.totalNum++] = light;
 
-		if (castShadow(light)) {
+		if (shadow) {
 			this.shadowsNum++;
 		}
 	}
 
 	end(sceneData) {
 		this.lights.length = this.totalNum;
-		this.lights.sort(shadowCastingLightsFirst);
 
 		this._setupCache(sceneData);
 
 		this.hash.update(this);
 
 		this.version++;
+	}
+
+	isValid() {
+		return this.totalNum > 0;
 	}
 
 	_setupCache(sceneData) {
@@ -8323,6 +8325,17 @@ class LightData {
 
 }
 
+// Variables
+
+let _lightingGroupId = 0;
+
+const helpVector3 = new Vector3();
+const helpMatrix4$1 = new Matrix4();
+
+const tempDirectionalShadowMatrices = [];
+const tempPointShadowMatrices = [];
+const tempSpotShadowMatrices = [];
+
 // Light caches
 
 const lightCaches = new WeakMap();
@@ -8458,6 +8471,105 @@ class LightHash {
 	}
 
 }
+
+class LightingData {
+
+	constructor() {
+		this.lightsArray = [];
+		this.shadowsNum = 0;
+
+		this.groupList = [];
+		this.groupList.push(new LightingGroup()); // create default group 0
+
+		this._locked = false;
+	}
+
+	getGroup(id) {
+		return this.groupList[id] || _emptyLightingGroup;
+	}
+
+	setMaxGroupCount(max) {
+		max = Math.max(1, max); // at least one group
+
+		const groupList = this.groupList;
+		const oldMax = groupList.length;
+
+		if (max < oldMax) {
+			groupList.length = max;
+		} else if (max > oldMax) {
+			for (let i = oldMax; i < max; i++) {
+				this.groupList.push(new LightingGroup());
+			}
+		}
+	}
+
+	begin(lock) {
+		this._locked = lock;
+
+		if (lock) return;
+
+		this.lightsArray.length = 0;
+		this.shadowsNum = 0;
+	}
+
+	collect(light) {
+		if (this._locked) return;
+
+		this.lightsArray.push(light);
+
+		if (castShadow(light)) {
+			this.shadowsNum++;
+		}
+	}
+
+	end(sceneData) {
+		if (this._locked) return;
+
+		const lightsArray = this.lightsArray;
+		const shadowsNum = this.shadowsNum;
+		const groupList = this.groupList;
+
+		lightsArray.sort(shadowCastingLightsFirst);
+
+		let i, l;
+
+		for (i = 0, l = groupList.length; i < l; i++) {
+			groupList[i].begin();
+		}
+
+		for (i = 0, l = lightsArray.length; i < l; i++) {
+			this._distribute(lightsArray[i], i < shadowsNum);
+		}
+
+		for (i = 0, l = groupList.length; i < l; i++) {
+			groupList[i].end(sceneData);
+		}
+	}
+
+	_distribute(light, shadow) {
+		const groupMask = light.groupMask;
+		const groupList = this.groupList;
+
+		// optimize for single group
+		if (groupList.length === 1 && (groupMask & 1)) {
+			groupList[0].push(light, shadow);
+			return;
+		}
+
+		for (let i = 0, l = groupList.length; i < l; i++) {
+			const mask = 1 << i;
+
+			if (groupMask < mask) break;
+
+			if (groupMask & mask) {
+				groupList[i].push(light, shadow);
+			}
+		}
+	}
+
+}
+
+const _emptyLightingGroup = new LightingGroup();
 
 function shadowCastingLightsFirst(lightA, lightB) {
 	const a = castShadow(lightA) ? 1 : 0;
@@ -8698,8 +8810,6 @@ class RenderQueue {
 		this.layerMap = new Map();
 		this.layerList = [];
 
-		this.lightsArray = [];
-
 		this.skeletons = new Set();
 
 		// to optimize the performance of the next push, cache the last layer used
@@ -8710,8 +8820,6 @@ class RenderQueue {
 		for (let i = 0, l = this.layerList.length; i < l; i++) {
 			this.layerList[i].begin();
 		}
-
-		this.lightsArray.length = 0;
 
 		this.skeletons.clear();
 	}
@@ -8758,10 +8866,6 @@ class RenderQueue {
 		} else {
 			layer.addRenderable(object, object.geometry, object.material, clipZ);
 		}
-	}
-
-	pushLight(light) {
-		this.lightsArray.push(light);
 	}
 
 	/**
@@ -8911,9 +9015,9 @@ let _cameraDataId = 0;
  */
 class RenderStates {
 
-	constructor(sceneData, lightsData) {
+	constructor(sceneData, lightingData) {
 		this.scene = sceneData;
-		this.lights = lightsData;
+		this.lighting = lightingData;
 
 		this.camera = {
 			id: _cameraDataId++,
@@ -9066,7 +9170,7 @@ class Scene extends Object3D {
 		this.anchorMatrix = new Matrix4();
 
 		this._sceneData = new SceneData();
-		this._lightData = new LightData();
+		this._lightingData = new LightingData();
 
 		this._renderQueueMap = new WeakMap();
 		this._renderStatesMap = new WeakMap();
@@ -9075,15 +9179,27 @@ class Scene extends Object3D {
 	}
 
 	/**
+	 * The maximum number of lighting groups.
+	 * @type {Number}
+	 * @default 1
+	 */
+	set maxLightingGroups(value) {
+		this._lightingData.setMaxGroupCount(value);
+	}
+	get maxLightingGroups() {
+		return this._lightingData.groupList.length;
+	}
+
+	/**
 	 * Update {@link t3d.RenderStates} for the scene and camera.
-	 * The light data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
+	 * The lighting data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
 	 * @param {t3d.Camera} camera - The camera.
 	 * @param {Boolean} [updateScene=true] - Whether to update scene data.
 	 * @return {t3d.RenderStates} - The result render states.
 	 */
 	updateRenderStates(camera, updateScene = true) {
 		if (!this._renderStatesMap.has(camera)) {
-			this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightData));
+			this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightingData));
 		}
 
 		const renderStates = this._renderStatesMap.get(camera);
@@ -9123,18 +9239,15 @@ class Scene extends Object3D {
 		}
 
 		const renderQueue = this._renderQueueMap.get(camera);
+		const lightingData = this._lightingData;
 
+		lightingData.begin(!collectLights);
 		renderQueue.begin();
-		this._pushToRenderQueue(this, camera, renderQueue);
-		renderQueue.end();
 
-		if (collectLights) {
-			this._lightData.begin();
-			for (const light of renderQueue.lightsArray) {
-				this._lightData.push(light);
-			}
-			this._lightData.end(this._sceneData);
-		}
+		this._pushToRenderQueue(this, camera, renderQueue);
+
+		renderQueue.end();
+		lightingData.end(this._sceneData);
 
 		if (updateSkeletons) {
 			this._skeletonVersion++;
@@ -9178,7 +9291,7 @@ class Scene extends Object3D {
 				renderQueue.push(object, camera);
 			}
 		} else if (object.isLight) {
-			renderQueue.pushLight(object);
+			this._lightingData.collect(object);
 		}
 
 		const children = object.children;
@@ -10790,6 +10903,14 @@ class Material extends EventDispatcher {
 		this.acceptLight = false;
 
 		/**
+		 * The lighting group of the material.
+		 * Used in conjunction with {@link t3d.Light#groupMask}.
+		 * @type {Number}
+		 * @default 0
+		 */
+		this.lightingGroup = 0;
+
+		/**
 		 * Whether the material is affected by fog.
 		 * @type {Boolean}
 		 * @default true
@@ -10904,6 +11025,7 @@ class Material extends EventDispatcher {
 		this.shading = source.shading;
 		this.dithering = source.dithering;
 		this.acceptLight = source.acceptLight;
+		this.lightingGroup = source.lightingGroup;
 		this.fog = source.fog;
 		this.drawMode = source.drawMode;
 
@@ -11160,11 +11282,11 @@ class ShadowMapPass {
 		oldClearColor.copy(renderer.getClearColor());
 		renderer.setClearColor(1, 1, 1, 1);
 
-		const lights = scene._lightData.lights;
-		const shadowsNum = scene._lightData.shadowsNum;
+		const lightsArray = scene._lightingData.lightsArray;
+		const shadowsNum = scene._lightingData.shadowsNum;
 
 		for (let i = 0; i < shadowsNum; i++) {
-			const light = lights[i];
+			const light = lightsArray[i];
 			const shadow = light.shadow;
 
 			if (shadow.autoUpdate === false && shadow.needsUpdate === false) continue;
@@ -16505,7 +16627,9 @@ class WebGLPrograms {
 		const state = this._state;
 		const capabilities = this._capabilities;
 
-		const lights = material.acceptLight ? renderStates.lights : null;
+		const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
+		const hasLighting = lightingGroup.isValid();
+		const hasShadows = hasLighting && (lightingGroup.shadowsNum > 0) && object.receiveShadow;
 		const fog = material.fog ? renderStates.scene.fog : null;
 		const envMap = material.envMap !== undefined ? (material.envMap || renderStates.scene.environment) : null;
 		const logarithmicDepthBuffer = renderStates.scene.logarithmicDepthBuffer;
@@ -16578,17 +16702,17 @@ class WebGLPrograms {
 
 		// lights
 
-		props.useAmbientLight = !!lights && lights.useAmbient;
-		props.useSphericalHarmonicsLight = !!lights && lights.useSphericalHarmonics;
-		props.hemisphereLightNum = lights ? lights.hemisNum : 0;
-		props.directLightNum = lights ? lights.directsNum : 0;
-		props.pointLightNum = lights ? lights.pointsNum : 0;
-		props.spotLightNum = lights ? lights.spotsNum : 0;
-		props.rectAreaLightNum = lights ? lights.rectAreaNum : 0;
-		props.directShadowNum = (object.receiveShadow && !!lights) ? lights.directShadowNum : 0;
-		props.pointShadowNum = (object.receiveShadow && !!lights) ? lights.pointShadowNum : 0;
-		props.spotShadowNum = (object.receiveShadow && !!lights) ? lights.spotShadowNum : 0;
-		props.useShadow = object.receiveShadow && !!lights && lights.shadowsNum > 0;
+		props.useAmbientLight = hasLighting && lightingGroup.useAmbient;
+		props.useSphericalHarmonicsLight = hasLighting && lightingGroup.useSphericalHarmonics;
+		props.hemisphereLightNum = hasLighting ? lightingGroup.hemisNum : 0;
+		props.directLightNum = hasLighting ? lightingGroup.directsNum : 0;
+		props.pointLightNum = hasLighting ? lightingGroup.pointsNum : 0;
+		props.spotLightNum = hasLighting ? lightingGroup.spotsNum : 0;
+		props.rectAreaLightNum = hasLighting ? lightingGroup.rectAreaNum : 0;
+		props.directShadowNum = hasShadows ? lightingGroup.directShadowNum : 0;
+		props.pointShadowNum = hasShadows ? lightingGroup.pointShadowNum : 0;
+		props.spotShadowNum = hasShadows ? lightingGroup.spotShadowNum : 0;
+		props.useShadow = hasShadows;
 		props.useShadowSampler = capabilities.version >= 2 && !disableShadowSampler;
 		props.shadowType = object.shadowType;
 		if (!props.useShadowSampler && props.shadowType !== SHADOW_TYPE.HARD) {
@@ -19817,7 +19941,6 @@ class WebGLRenderer extends ThinRenderer {
 		const renderInfo = options.renderInfo;
 
 		const sceneData = renderStates.scene;
-		const lightData = renderStates.lights;
 		const cameraData = renderStates.camera;
 
 		const currentRenderTarget = state.currentRenderTarget;
@@ -19836,6 +19959,8 @@ class WebGLRenderer extends ThinRenderer {
 		const geometry = getGeometry.call(this, renderable);
 		const group = renderable.group;
 		const fog = material.fog ? sceneData.fog : null;
+		const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
+		const hasLighting = lightingGroup.isValid();
 
 		_envData.map = material.envMap !== undefined ? (material.envMap || sceneData.environment) : null;
 		_envData.diffuse = sceneData.envDiffuseIntensity * material.envMapIntensity;
@@ -19875,11 +20000,10 @@ class WebGLRenderer extends ThinRenderer {
 			} else if (capabilities.version > 1 && sceneData.disableShadowSampler !== materialProperties.disableShadowSampler) {
 				material.needsUpdate = true;
 			} else {
-				const acceptLight = material.acceptLight && lightData.totalNum > 0;
-				if (acceptLight !== materialProperties.acceptLight) {
+				if (hasLighting !== materialProperties.hasLighting) {
 					material.needsUpdate = true;
-				} else if (acceptLight) {
-					if (!lightData.hash.compare(materialProperties.lightsHash) ||
+				} else if (hasLighting) {
+					if (!lightingGroup.hash.compare(materialProperties.lightsHash) ||
 						object.receiveShadow !== materialProperties.receiveShadow ||
 						object.shadowType !== materialProperties.shadowType) {
 						material.needsUpdate = true;
@@ -19897,8 +20021,8 @@ class WebGLRenderer extends ThinRenderer {
 			materialProperties.envMap = _envData.map;
 			materialProperties.logarithmicDepthBuffer = sceneData.logarithmicDepthBuffer;
 
-			materialProperties.acceptLight = material.acceptLight;
-			materialProperties.lightsHash = lightData.hash.copyTo(materialProperties.lightsHash);
+			materialProperties.hasLighting = hasLighting;
+			materialProperties.lightsHash = lightingGroup.hash.copyTo(materialProperties.lightsHash);
 			materialProperties.receiveShadow = object.receiveShadow;
 			materialProperties.shadowType = object.shadowType;
 
@@ -19926,10 +20050,10 @@ class WebGLRenderer extends ThinRenderer {
 		vertexArrayBindings.setup(object, geometry, program);
 
 		let refreshLights = false;
-		if (program.lightId !== lightData.id || program.lightVersion !== lightData.version) {
+		if (program.lightId !== lightingGroup.id || program.lightVersion !== lightingGroup.version) {
 			refreshLights = true;
-			program.lightId = lightData.id;
-			program.lightVersion = lightData.version;
+			program.lightId = lightingGroup.id;
+			program.lightVersion = lightingGroup.version;
 		}
 
 		let refreshCamera = false;
@@ -19959,8 +20083,8 @@ class WebGLRenderer extends ThinRenderer {
 		const uniforms = program.getUniforms();
 
 		// upload light uniforms
-		if (material.acceptLight) {
-			this._uploadLights(uniforms, lightData, sceneData.disableShadowSampler, refreshLights);
+		if (hasLighting) {
+			this._uploadLights(uniforms, lightingGroup, sceneData.disableShadowSampler, refreshLights);
 		}
 
 		// upload bone matrices
@@ -20046,80 +20170,80 @@ class WebGLRenderer extends ThinRenderer {
 		object.onAfterRender(renderable);
 	}
 
-	_uploadLights(uniforms, lights, disableShadowSampler, refresh) {
+	_uploadLights(uniforms, lightingGroup, disableShadowSampler, refresh) {
 		const textures = this._textures;
 
-		if (lights.useAmbient && refresh) {
-			uniforms.set('u_AmbientLightColor', lights.ambient);
+		if (lightingGroup.useAmbient && refresh) {
+			uniforms.set('u_AmbientLightColor', lightingGroup.ambient);
 		}
-		if (lights.useSphericalHarmonics && refresh) {
-			uniforms.set('u_SphericalHarmonicsLightData', lights.sh);
+		if (lightingGroup.useSphericalHarmonics && refresh) {
+			uniforms.set('u_SphericalHarmonicsLightData', lightingGroup.sh);
 		}
-		if (lights.hemisNum > 0 && refresh) {
-			uniforms.set('u_Hemi', lights.hemisphere);
+		if (lightingGroup.hemisNum > 0 && refresh) {
+			uniforms.set('u_Hemi', lightingGroup.hemisphere);
 		}
 
-		if (lights.directsNum > 0) {
-			if (refresh) uniforms.set('u_Directional', lights.directional);
+		if (lightingGroup.directsNum > 0) {
+			if (refresh) uniforms.set('u_Directional', lightingGroup.directional);
 
-			if (lights.directShadowNum > 0) {
-				if (refresh) uniforms.set('u_DirectionalShadow', lights.directionalShadow);
+			if (lightingGroup.directShadowNum > 0) {
+				if (refresh) uniforms.set('u_DirectionalShadow', lightingGroup.directionalShadow);
 
 				if (uniforms.has('directionalShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set('directionalShadowMap', lights.directionalShadowDepthMap, textures);
+						uniforms.set('directionalShadowMap', lightingGroup.directionalShadowDepthMap, textures);
 					} else {
-						uniforms.set('directionalShadowMap', lights.directionalShadowMap, textures);
+						uniforms.set('directionalShadowMap', lightingGroup.directionalShadowMap, textures);
 					}
-					uniforms.set('directionalShadowMatrix', lights.directionalShadowMatrix);
+					uniforms.set('directionalShadowMatrix', lightingGroup.directionalShadowMatrix);
 				}
 
 				if (uniforms.has('directionalDepthMap')) {
-					uniforms.set('directionalDepthMap', lights.directionalShadowMap, textures);
+					uniforms.set('directionalDepthMap', lightingGroup.directionalShadowMap, textures);
 				}
 			}
 		}
 
-		if (lights.pointsNum > 0) {
-			if (refresh) uniforms.set('u_Point', lights.point);
+		if (lightingGroup.pointsNum > 0) {
+			if (refresh) uniforms.set('u_Point', lightingGroup.point);
 
-			if (lights.pointShadowNum > 0) {
-				if (refresh) uniforms.set('u_PointShadow', lights.pointShadow);
+			if (lightingGroup.pointShadowNum > 0) {
+				if (refresh) uniforms.set('u_PointShadow', lightingGroup.pointShadow);
 
 				if (uniforms.has('pointShadowMap')) {
-					uniforms.set('pointShadowMap', lights.pointShadowMap, textures);
-					uniforms.set('pointShadowMatrix', lights.pointShadowMatrix);
+					uniforms.set('pointShadowMap', lightingGroup.pointShadowMap, textures);
+					uniforms.set('pointShadowMatrix', lightingGroup.pointShadowMatrix);
 				}
 			}
 		}
 
-		if (lights.spotsNum > 0) {
-			if (refresh) uniforms.set('u_Spot', lights.spot);
+		if (lightingGroup.spotsNum > 0) {
+			if (refresh) uniforms.set('u_Spot', lightingGroup.spot);
 
-			if (lights.spotShadowNum > 0) {
-				if (refresh) uniforms.set('u_SpotShadow', lights.spotShadow);
+			if (lightingGroup.spotShadowNum > 0) {
+				if (refresh) uniforms.set('u_SpotShadow', lightingGroup.spotShadow);
 
 				if (uniforms.has('spotShadowMap')) {
 					if (this.capabilities.version >= 2 && !disableShadowSampler) {
-						uniforms.set('spotShadowMap', lights.spotShadowDepthMap, textures);
+						uniforms.set('spotShadowMap', lightingGroup.spotShadowDepthMap, textures);
 					} else {
-						uniforms.set('spotShadowMap', lights.spotShadowMap, textures);
+						uniforms.set('spotShadowMap', lightingGroup.spotShadowMap, textures);
 					}
-					uniforms.set('spotShadowMatrix', lights.spotShadowMatrix);
+					uniforms.set('spotShadowMatrix', lightingGroup.spotShadowMatrix);
 				}
 
 				if (uniforms.has('spotDepthMap')) {
-					uniforms.set('spotDepthMap', lights.spotShadowMap, textures);
+					uniforms.set('spotDepthMap', lightingGroup.spotShadowMap, textures);
 				}
 			}
 		}
 
-		if (lights.rectAreaNum > 0) {
-			if (refresh) uniforms.set('u_RectArea', lights.rectArea);
+		if (lightingGroup.rectAreaNum > 0) {
+			if (refresh) uniforms.set('u_RectArea', lightingGroup.rectArea);
 
-			if (lights.LTC1 && lights.LTC2) {
-				uniforms.set('ltc_1', lights.LTC1, textures);
-				uniforms.set('ltc_2', lights.LTC2, textures);
+			if (lightingGroup.LTC1 && lightingGroup.LTC2) {
+				uniforms.set('ltc_1', lightingGroup.LTC1, textures);
+				uniforms.set('ltc_2', lightingGroup.LTC2, textures);
 			} else {
 				console.warn('WebGLRenderer: RectAreaLight.LTC1 and LTC2 need to be set before use.');
 			}
@@ -20378,6 +20502,25 @@ Object.defineProperties(Scene.prototype, {
 			// console.warn("Scene: .environmentLightIntensity has been deprecated, use .envDiffuseIntensity instead.");
 			this.envDiffuseIntensity = value;
 		}
+	},
+	// deprecated since 0.3.2
+	_lightData: {
+		configurable: true,
+		get: function() {
+			// console.warn('Scene: ._lightData has been deprecated, use ._lightingData.getGroup(0) instead.');
+			return this._lightingData.getGroup(0);
+		}
+	}
+});
+
+Object.defineProperties(RenderStates.prototype, {
+	// deprecated since 0.3.2
+	lights: {
+		configurable: true,
+		get: function() {
+			// console.warn('RenderStates: .lights has been deprecated, use .lighting.getGroup(0) instead.');
+			return this.lighting.getGroup(0);
+		}
 	}
 });
 
@@ -20388,4 +20531,4 @@ const isPowerOfTwo = MathUtils.isPowerOfTwo;
 const nearestPowerOfTwo = MathUtils.nearestPowerOfTwo;
 const nextPowerOfTwo = MathUtils.nextPowerOfTwo;
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightData, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
