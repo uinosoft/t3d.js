@@ -1,4 +1,5 @@
 import { PlaneGeometry, Mesh, LambertMaterial, MATERIAL_TYPE, cloneUniforms } from 't3d';
+import { GeometryUtils } from '../geometries/GeometryUtils.js';
 
 // Reference: github.com/IceCreamYou/THREE.Terrains
 
@@ -29,12 +30,13 @@ class Terrain extends Mesh {
 
 		this.heightmap = options.heightmap;
 
-		this._fromHeightMap();
+		this.context = this._fromHeightMap();
 	}
 
 	// url or image
 	_fromHeightMap() {
 		const vertices = this.geometry.getAttribute('a_Position').buffer.array;
+		const uvs = this.geometry.getAttribute('a_Uv').buffer.array;
 
 		const canvas = document.createElement('canvas'),
 			context = canvas.getContext('2d'),
@@ -48,16 +50,28 @@ class Terrain extends Mesh {
 		context.drawImage(this.heightmap, 0, 0, canvas.width, canvas.height);
 		const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
 
+		const TEX_SCALE = 128.0;
+
 		for (let row = 0; row < rows; row++) {
 			for (let col = 0; col < cols; col++) {
-				const i = row * cols + col, idx = i * 4;
+				const i = row * cols + col;
+				const idx = i * 4;
+
 				vertices[i * 3 + 1] = (data[idx] + data[idx + 1] + data[idx + 2]) / 765 * spread + this.minHeight;
+
+				uvs[i * 2 + 0] = (col / (cols - 1)) * TEX_SCALE;
+				uvs[i * 2 + 1] = (row / (rows - 1)) * TEX_SCALE;
 			}
 		}
 
 		this.geometry.getAttribute('a_Position').buffer.version++;
+		this.geometry.getAttribute('a_Uv').buffer.version++;
 		this.geometry.computeBoundingBox();
 		this.geometry.computeBoundingSphere();
+
+		GeometryUtils.computeNormals(this.geometry);
+
+		return canvas;
 	}
 
 	getHeightAt(x, z) {
@@ -167,36 +181,53 @@ const terrainShader = {
 		uniform sampler2D texture_4;
 
 		#include <common_frag>
-		#include <dithering_pars_frag>
+        #include <dithering_pars_frag>
 
-		uniform vec3 emissive;
+        uniform vec3 emissive;
 
-		#include <uv_pars_frag>
-		#include <color_pars_frag>
-		#include <diffuseMap_pars_frag>
-		#include <alphaTest_pars_frag>
-		#include <normalMap_pars_frag>
-		#include <bumpMap_pars_frag>
-		#include <light_pars_frag>
-		#include <normal_pars_frag>
-		#include <modelPos_pars_frag>
-		#include <bsdfs>
-		#include <aoMap_pars_frag>
-		#include <shadowMap_pars_frag>
-		#include <fog_pars_frag>
-		#include <logdepthbuf_pars_frag>
+        #include <uv_pars_frag>
+        #include <color_pars_frag>
+        #include <diffuseMap_pars_frag>
+        #include <alphaTest_pars_frag>
+        #include <normalMap_pars_frag>
+        #include <bumpMap_pars_frag>
+        #include <light_pars_frag>
+        #include <normal_pars_frag>
+        #include <modelPos_pars_frag>
+        #include <bsdfs>
+        #include <aoMap_pars_frag>
+        #include <shadowMap_pars_frag>
+        #include <fog_pars_frag>
+        #include <logdepthbuf_pars_frag>
+
 		void main() {
 			#include <logdepthbuf_frag>
 			#include <begin_frag>
 			#include <color_frag>
 
 			float slope = acos(max(min(dot(myNormal, vec3(0.0, 1.0, 0.0)), 1.0), -1.0));
-			vec4 color = texture2D( texture_0, MyvUv * vec2( 1.0, 1.0 ) + vec2( 0.0, 0.0 ) ); // base
-			
-			color = mix( texture2D( texture_1, MyvUv * vec2( 1.0, 1.0 ) + vec2( 0.0, 0.0 ) ), color, max(min(1.0 - smoothstep(-80.0, -35.0, vPosition.y) + smoothstep(20.0, 50.0, vPosition.y), 1.0), 0.0));
-			color = mix( texture2D( texture_2, MyvUv * vec2( 1.0, 1.0 ) + vec2( 0.0, 0.0 ) ), color, max(min(1.0 - smoothstep(20.0, 50.0, vPosition.y) + smoothstep(60.0, 85.0, vPosition.y), 1.0), 0.0));
-			color = mix( texture2D( texture_3, MyvUv * vec2( 1.0, 1.0 ) + vec2( 0.0, 0.0 ) ), color, max(min(1.0 - smoothstep(65.0 + smoothstep(-256.0, 256.0, vPosition.x) * 10.0, 80.0, vPosition.y), 1.0), 0.0));
-			color = mix( texture2D( texture_4, MyvUv * vec2( 1.0, 1.0 ) + vec2( 0.0, 0.0 ) ), color, max(min(slope > 0.7853981633974483 ? 0.2 : 1.0 - smoothstep(0.47123889803846897, 0.7853981633974483, slope) + 0.2, 1.0), 0.0));
+			vec4 color = texture2D(texture_0, MyvUv * vec2(1.0, 1.0));
+
+			// Grass transition (-175 to -155 start, 80 to 150 end)
+			color = mix(texture2D(texture_1, MyvUv * vec2(1.0, 1.0)), color, 
+				max(min(1.0 - smoothstep(-175.0, -155.0, vPosition.y) + 
+					smoothstep(80.0, 150.0, vPosition.y), 1.0), 0.0));
+
+			// Stone transition (120 to 150 start, 150 to 180 end)
+			color = mix(texture2D(texture_2, MyvUv * vec2(1.0, 1.0)), color,
+				max(min(1.0 - smoothstep(120.0, 150.0, vPosition.y) + 
+					smoothstep(150.0, 180.0, vPosition.y), 1.0), 0.0));
+
+			// Snow transition (with terrain variation)
+			color = mix(texture2D(texture_3, MyvUv * vec2(1.0, 1.0)), color,
+				max(min(1.0 - smoothstep(150.0 + smoothstep(-256.0, 256.0, vPosition.x) * 20.0, 
+					200.0, vPosition.y), 1.0), 0.0));
+
+			// Steep slope stone (angle based)
+			color = mix(texture2D(texture_4, MyvUv * vec2(1.0, 1.0)), color,
+				max(min(slope > 0.9472 ? 0.1 : 
+					1.0 - smoothstep(0.785398, 0.9472, slope) + 0.2, 1.0), 0.0));
+
 			outColor *= color;
 
 			#include <alphaTest_frag>

@@ -82,6 +82,7 @@
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { Grass } from 't3d/addons/objects/Grass.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -99,9 +100,6 @@
 
 		const scene = new t3d.Scene();
 
-		scene.fog = new t3d.Fog(undefined, 10, 1200);
-		scene.fog.color.setRGB(0.83, 0.78, 0.68);
-
 		const cubeTexturePath = './resources/skybox/skyboxsun25deg/';
 		const cubeTexture = new TextureCubeLoader().load([
 			cubeTexturePath + 'px.jpg',
@@ -112,34 +110,89 @@
 			cubeTexturePath + 'nz.jpg'
 		]);
 
+		const fogColor = 0xBDC4E8;
+
+		const fog = new t3d.Fog(fogColor, 1, 1000);
+		const fogExp2 = new t3d.FogExp2(fogColor, 0.0007);
+		scene.fog = fogExp2;
+
 		const skyBox = new SkyBox(cubeTexture);
+		skyBox.gamma = true;
+		skyBox.fog = true;
+		fog.color.toArray(skyBox.material.uniforms.fogColor);
 		scene.add(skyBox);
+		scene.environment = cubeTexture;
 
 		const texture2DLoader = new Texture2DLoader();
 
 		const snow = texture2DLoader.load('./resources/terrain/snow.jpg');
-		const grass = texture2DLoader.load('./resources/terrain/grass.jpg');
+
+		const grassland = texture2DLoader.load('./resources/terrain/terrain1.jpg');
+		grassland.wrapS = grassland.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 		const sand = texture2DLoader.load('./resources/terrain/sand.jpg');
+
+		sand.wrapS = sand.wrapT = t3d.TEXTURE_WRAP.REPEAT;
 		const stone = texture2DLoader.load('./resources/terrain/stone.jpg');
 
+		const grassTexture = texture2DLoader.load('./resources/terrain/grass2.jpg');
+
+		let grass;
+
 		const heightmapImage = new Image();
-		heightmapImage.src = './resources/terrain/heightmap.png';
+
+		heightmapImage.src = './resources/terrain/heightmap.jpg';
 		heightmapImage.onload = function() {
 			const terrain = new Terrain({
-				width: 1024,
-				height: 1024,
+				width: 3072,
+				height: 3072,
 				heightmap: heightmapImage,
-				maxHeight: 100,
-				minHeight: -100
+				maxHeight: 300,
+				minHeight: -300,
+				widthSegments: 512,
+				heightSegments: 512
 			});
 
+			terrain.castShadow = true;
+			terrain.receiveShadow = true;
+
+			const ctx = terrain.context;
+
+			const heightMap = new t3d.Texture2D();
+
+			heightMap.image = ctx;
+			heightMap.wrapS = heightMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+			heightMap.flipY = false;
+
+			heightMap.version++;
+
 			terrain.material.uniforms.texture_0 = sand;
-			terrain.material.uniforms.texture_1 = grass;
+			terrain.material.uniforms.texture_1 = grassland;
 			terrain.material.uniforms.texture_2 = stone;
 			terrain.material.uniforms.texture_3 = snow;
 			terrain.material.uniforms.texture_4 = stone;
 
 			scene.add(terrain);
+
+			grass = new Grass({
+				bladeHeightMax: 8.5,
+				bladeHeightMin: 4.5,
+				bladeWidth: 0.25,
+				numBlades: 5000000.0,
+				patchRadius: 1600.0
+			});
+
+			grass.material.transparent = true;
+			grass.material.uniforms.heightMap = heightMap;
+			grass.material.uniforms.heightMapScale = [
+				1.0 / terrain.width,
+				1.0 / terrain.height,
+				terrain.maxHeight - terrain.minHeight
+			];
+
+			grass.material.uniforms.map = grassTexture;
+			grass.material.uniforms.lightDir = [-50.0, 50.0, -50.0];
+			grass.material.needsUpdate = true;
+			scene.add(grass);
 
 			// build random position tree
 			buildTree(terrain);
@@ -155,10 +208,12 @@
 		scene.add(ambientLight);
 
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.8);
-		directionalLight.position.set(-10, 20, 30);
+		directionalLight.position.set(-50, 50, -50);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		directionalLight.castShadow = true;
-		directionalLight.shadow.windowSize = 15;
+		directionalLight.shadow.mapSize.set(2048, 2048);
+		directionalLight.shadow.bias = -0.013;
+		directionalLight.shadow.normalBias = 0.01;
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
@@ -168,15 +223,14 @@
 		scene.add(camera);
 
 		function createWater() {
-			const geo = new t3d.PlaneGeometry(1024, 1024, 16, 16);
+			const geo = new t3d.PlaneGeometry(3072, 3072, 16, 16);
 			const mat = new t3d.LambertMaterial();
 			mat.diffuse.setHex(0x006ba0);
 			mat.transparent = true;
 			mat.opacity = 0.6;
 
 			const water = new t3d.Mesh(geo, mat);
-
-			water.position.y = -67;
+			water.position.y = -155;
 
 			return water;
 		}
@@ -268,6 +322,8 @@
 
 		let lastUpdate = 0;
 
+		const cameraDir = new t3d.Vector3();
+
 		function loop(count) {
 			requestAnimationFrame(loop);
 
@@ -275,7 +331,15 @@
 
 			const delta = time - lastUpdate;
 
+			grass && (grass.material.uniforms['time'] = count * 0.001);
+
 			controls && controls.update(delta);
+		
+			grass && (grass.material.uniforms['drawPos'] = [controls.position.x, controls.position.z]);
+
+			camera.getWorldDirection(cameraDir);
+
+			grass && (grass.material.uniforms['camDir'] = [cameraDir.x, cameraDir.y, cameraDir.z]);
 
 			lastUpdate = time;
 
@@ -292,8 +356,6 @@
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
-
-		// Reference: github.com/wybiral/terrain
 
 		const K_FORWARD = 'KeyW';
 		const K_BACKWARD = 'KeyS';
