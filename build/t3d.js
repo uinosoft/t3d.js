@@ -1214,9 +1214,9 @@
 
 			const te = this.elements;
 			const me = m.elements;
-			const scaleX = 1 / _vec3_1$5.setFromMatrixColumn(m, 0).getLength();
-			const scaleY = 1 / _vec3_1$5.setFromMatrixColumn(m, 1).getLength();
-			const scaleZ = 1 / _vec3_1$5.setFromMatrixColumn(m, 2).getLength();
+			const scaleX = 1 / _vec3_1$6.setFromMatrixColumn(m, 0).getLength();
+			const scaleY = 1 / _vec3_1$6.setFromMatrixColumn(m, 1).getLength();
+			const scaleZ = 1 / _vec3_1$6.setFromMatrixColumn(m, 2).getLength();
 			te[0] = me[0] * scaleX;
 			te[1] = me[1] * scaleX;
 			te[2] = me[2] * scaleX;
@@ -1286,9 +1286,9 @@
 		 */
 		decompose(position, quaternion, scale) {
 			const te = this.elements;
-			let sx = _vec3_1$5.set(te[0], te[1], te[2]).getLength();
-			const sy = _vec3_1$5.set(te[4], te[5], te[6]).getLength();
-			const sz = _vec3_1$5.set(te[8], te[9], te[10]).getLength();
+			let sx = _vec3_1$6.set(te[0], te[1], te[2]).getLength();
+			const sy = _vec3_1$6.set(te[4], te[5], te[6]).getLength();
+			const sz = _vec3_1$6.set(te[8], te[9], te[10]).getLength();
 
 			// if determine is negative, we need to invert one scale
 			const det = this.determinant();
@@ -1460,7 +1460,7 @@
 			return array;
 		}
 	}
-	const _vec3_1$5 = new Vector3();
+	const _vec3_1$6 = new Vector3();
 	const _mat4_1$3 = new Matrix4();
 	const _x = new Vector3();
 	const _y = new Vector3();
@@ -4314,7 +4314,7 @@
 		 * @return {Number}
 		 */
 		distanceToPoint(point) {
-			return this.clampPoint(point, _vec3_1$4).distanceTo(point);
+			return this.clampPoint(point, _vec3_1$5).distanceTo(point);
 		}
 
 		/**
@@ -4327,7 +4327,7 @@
 				target.makeEmpty();
 			} else {
 				this.getCenter(target.center);
-				target.radius = this.getSize(_vec3_1$4).getLength() * 0.5;
+				target.radius = this.getSize(_vec3_1$5).getLength() * 0.5;
 			}
 			return target;
 		}
@@ -4507,7 +4507,7 @@
 		}
 	}
 	const _points = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
-	const _vec3_1$4 = new Vector3();
+	const _vec3_1$5 = new Vector3();
 
 	// triangle centered vertices
 
@@ -5312,7 +5312,7 @@
 		}
 	}
 
-	const _vec3_1$3 = new Vector3();
+	const _vec3_1$4 = new Vector3();
 	const _vec3_2 = new Vector3();
 	const _mat3_1$1 = new Matrix3();
 
@@ -5396,7 +5396,7 @@
 		 * @return {t3d.Plane}
 		 */
 		setFromCoplanarPoints(a, b, c) {
-			const normal = _vec3_1$3.subVectors(c, b).cross(_vec3_2.subVectors(a, b)).normalize();
+			const normal = _vec3_1$4.subVectors(c, b).cross(_vec3_2.subVectors(a, b)).normalize();
 			// Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
 			this.setFromNormalAndCoplanarPoint(normal, a);
 			return this;
@@ -5480,14 +5480,14 @@
 		 */
 		applyMatrix4(matrix, optionalNormalMatrix) {
 			const normalMatrix = optionalNormalMatrix || _mat3_1$1.setFromMatrix4(matrix).inverse().transpose();
-			const referencePoint = this.coplanarPoint(_vec3_1$3).applyMatrix4(matrix);
+			const referencePoint = this.coplanarPoint(_vec3_1$4).applyMatrix4(matrix);
 			const normal = this.normal.applyMatrix3(normalMatrix).normalize();
 			this.constant = -referencePoint.dot(normal);
 			return this;
 		}
 	}
 
-	const _vec3_1$2 = new Vector3();
+	const _vec3_1$3 = new Vector3();
 	const _mat3_1 = new Matrix3();
 
 	/**
@@ -5592,13 +5592,13 @@
 
 				// corner at max distance
 
-				_vec3_1$2.x = plane.normal.x > 0 ? box.max.x : box.min.x;
-				_vec3_1$2.y = plane.normal.y > 0 ? box.max.y : box.min.y;
-				_vec3_1$2.z = plane.normal.z > 0 ? box.max.z : box.min.z;
+				_vec3_1$3.x = plane.normal.x > 0 ? box.max.x : box.min.x;
+				_vec3_1$3.y = plane.normal.y > 0 ? box.max.y : box.min.y;
+				_vec3_1$3.z = plane.normal.z > 0 ? box.max.z : box.min.z;
 
 				// if both outside plane, no intersection
 
-				if (plane.distanceToPoint(_vec3_1$2) < 0) {
+				if (plane.distanceToPoint(_vec3_1$3) < 0) {
 					return false;
 				}
 			}
@@ -5641,7 +5641,7 @@
 		}
 	}
 
-	const _vec3_1$1 = new Vector3();
+	const _vec3_1$2 = new Vector3();
 	const _diff = new Vector3();
 	const _edge1 = new Vector3();
 	const _edge2 = new Vector3();
@@ -5713,12 +5713,12 @@
 		 * @return {Number}
 		 */
 		distanceSqToPoint(point) {
-			const directionDistance = _vec3_1$1.subVectors(point, this.origin).dot(this.direction);
+			const directionDistance = _vec3_1$2.subVectors(point, this.origin).dot(this.direction);
 			if (directionDistance < 0) {
 				return this.origin.distanceToSquared(point);
 			}
-			_vec3_1$1.copy(this.direction).multiplyScalar(directionDistance).add(this.origin);
-			return _vec3_1$1.distanceToSquared(point);
+			_vec3_1$2.copy(this.direction).multiplyScalar(directionDistance).add(this.origin);
+			return _vec3_1$2.distanceToSquared(point);
 		}
 
 		/**
@@ -5783,7 +5783,7 @@
 		 * @return {Boolean}
 		 */
 		intersectsBox(box) {
-			return this.intersectBox(box, _vec3_1$1) !== null;
+			return this.intersectBox(box, _vec3_1$2) !== null;
 		}
 
 		/**
@@ -5852,9 +5852,9 @@
 		 * @return {t3d.Vector3}
 		 */
 		intersectSphere(sphere, optionalTarget) {
-			_vec3_1$1.subVectors(sphere.center, this.origin);
-			const tca = _vec3_1$1.dot(this.direction);
-			const d2 = _vec3_1$1.dot(_vec3_1$1) - tca * tca;
+			_vec3_1$2.subVectors(sphere.center, this.origin);
+			const tca = _vec3_1$2.dot(this.direction);
+			const d2 = _vec3_1$2.dot(_vec3_1$2) - tca * tca;
 			const radius2 = sphere.radius * sphere.radius;
 			if (d2 > radius2) {
 				return null;
@@ -5950,7 +5950,7 @@
 	}
 
 	const _box3_1 = new Box3();
-	const _vec3_1 = new Vector3();
+	const _vec3_1$1 = new Vector3();
 
 	/**
 	 * A sphere defined by a center and radius.
@@ -6013,8 +6013,8 @@
 			_box3_1.setFromArray(array, gap).getCenter(center);
 			let maxRadiusSq = 0;
 			for (let i = 0, l = array.length; i < l; i += gap) {
-				_vec3_1.fromArray(array, i + offset);
-				maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vec3_1));
+				_vec3_1$1.fromArray(array, i + offset);
+				maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vec3_1$1));
 			}
 			this.radius = Math.sqrt(maxRadiusSq);
 			return this;
@@ -6096,13 +6096,13 @@
 				this.radius = 0;
 				return this;
 			}
-			_vec3_1.subVectors(point, this.center);
-			const lengthSq = _vec3_1.getLengthSquared();
+			_vec3_1$1.subVectors(point, this.center);
+			const lengthSq = _vec3_1$1.getLengthSquared();
 			if (lengthSq > this.radius * this.radius) {
 				// calculate the minimal sphere
 				const length = Math.sqrt(lengthSq);
 				const delta = (length - this.radius) * 0.5;
-				this.center.addScaledVector(_vec3_1, delta / length);
+				this.center.addScaledVector(_vec3_1$1, delta / length);
 				this.radius += delta;
 			}
 			return this;
@@ -7386,8 +7386,9 @@
 	 */
 	RectAreaLight.LTC2 = null;
 
-	class LightingGroup {
+	class LightingGroup extends EventDispatcher {
 		constructor() {
+			super();
 			this.id = _lightingGroupId++;
 
 			// Light collection array
@@ -7435,10 +7436,6 @@
 			// Version
 
 			this.version = 0;
-
-			// Hash
-
-			this.hash = new LightHash();
 		}
 		begin() {
 			this.totalNum = 0;
@@ -7453,11 +7450,12 @@
 		end(sceneData) {
 			this.lights.length = this.totalNum;
 			this._setupCache(sceneData);
-			this.hash.update(this);
 			this.version++;
 		}
-		isValid() {
-			return this.totalNum > 0;
+		dispose() {
+			this.dispatchEvent({
+				type: 'dispose'
+			});
 		}
 		_setupCache(sceneData) {
 			for (let i = 0; i < 3; i++) {
@@ -7833,44 +7831,6 @@
 		return cache;
 	}
 
-	// Light hash
-
-	class LightHash {
-		constructor() {
-			this._factor = new Uint16Array(10);
-		}
-		update(lights) {
-			this._factor[0] = lights.useAmbient ? 1 : 0;
-			this._factor[1] = lights.useSphericalHarmonics ? 1 : 0;
-			this._factor[2] = lights.hemisNum;
-			this._factor[3] = lights.directsNum;
-			this._factor[4] = lights.pointsNum;
-			this._factor[5] = lights.spotsNum;
-			this._factor[6] = lights.rectAreaNum;
-			this._factor[7] = lights.directShadowNum;
-			this._factor[8] = lights.pointShadowNum;
-			this._factor[9] = lights.spotShadowNum;
-		}
-		compare(factor) {
-			if (!factor) {
-				return false;
-			}
-			for (let i = 0, l = factor.length; i < l; i++) {
-				if (this._factor[i] !== factor[i]) {
-					return false;
-				}
-			}
-			return true;
-		}
-		copyTo(factor) {
-			if (!factor) {
-				factor = new this._factor.constructor(this._factor.length);
-			}
-			factor.set(this._factor);
-			return factor;
-		}
-	}
-
 	class LightingData {
 		constructor() {
 			this.lightsArray = [];
@@ -7881,7 +7841,7 @@
 			this._locked = false;
 		}
 		getGroup(id) {
-			return this.groupList[id] || _emptyLightingGroup;
+			return this.groupList[id];
 		}
 		setMaxGroupCount(max) {
 			max = Math.max(1, max); // at least one group
@@ -7889,10 +7849,13 @@
 			const groupList = this.groupList;
 			const oldMax = groupList.length;
 			if (max < oldMax) {
+				for (let i = max; i < oldMax; i++) {
+					groupList[i].dispose();
+				}
 				groupList.length = max;
 			} else if (max > oldMax) {
 				for (let i = oldMax; i < max; i++) {
-					this.groupList.push(new LightingGroup());
+					groupList.push(new LightingGroup());
 				}
 			}
 		}
@@ -7944,7 +7907,6 @@
 			}
 		}
 	}
-	const _emptyLightingGroup = new LightingGroup();
 	function shadowCastingLightsFirst(lightA, lightB) {
 		const a = castShadow(lightA) ? 1 : 0;
 		const b = castShadow(lightB) ? 1 : 0;
@@ -8324,7 +8286,7 @@
 		}
 	}
 
-	function _isPerspectiveMatrix(m) {
+	function _isPerspectiveMatrix$1(m) {
 		return m.elements[11] === -1.0;
 	}
 	let _cameraDataId = 0;
@@ -8364,7 +8326,7 @@
 			const projectionMatrix = camera.projectionMatrix;
 			let cameraNear = 0,
 				cameraFar = 0;
-			if (_isPerspectiveMatrix(projectionMatrix)) {
+			if (_isPerspectiveMatrix$1(projectionMatrix)) {
 				cameraNear = projectionMatrix.elements[14] / (projectionMatrix.elements[10] - 1);
 				cameraFar = projectionMatrix.elements[14] / (projectionMatrix.elements[10] + 1);
 			} else {
@@ -10672,6 +10634,30 @@
 				checkErrors: true,
 				compileAsynchronously: false,
 				maxMaterialPrograms: 5
+			};
+
+			/**
+			 * The lighting options.
+			 * @type {Object}
+			 * @property {Object} clustered - The clustered lighting options.
+			 * @property {Boolean} clustered.enabled - Whether to use clustered lighting, defaults to false.
+			 * @property {Number} clustered.maxClusterLights - The maximum number of lights, defaults to 1024.
+			 * @property {Boolean} clustered.useFloatPrecision - Whether the lights are stored as floats, defaults to false (half floats).
+			 * @property {Vector3} clustered.gridDimensions - The number of cells in each dimension, defaults to Vector3(16, 8, 32).
+			 * @property {Number} clustered.maxLightsPerCell - The maximum number of lights per cell, defaults to 256.
+			 * @property {Vector2} clustered.zClip - The near and far clipping planes for the cells, defaults to Vector2(-1, -1) (clip based on camera near and far planes).
+			 * @property {Number} clustered.version - The version of the clustered lighting options. If the options change, the version should be incremented, defaults to 0.
+			 */
+			this.lightingOptions = {
+				clustered: {
+					enabled: false,
+					maxClusterLights: 1024,
+					useFloatPrecision: false,
+					gridDimensions: new Vector3(16, 8, 32),
+					maxLightsPerCell: 256,
+					zClip: new Vector2(-1, -1),
+					version: 0
+				}
 			};
 
 			/**
@@ -14094,9 +14080,9 @@
 
 	var inverse = "mat4 inverseMat4(mat4 m) {\n		float\n		a00 = m[0][0], a01 = m[0][1], a02 = m[0][2], a03 = m[0][3],\n		a10 = m[1][0], a11 = m[1][1], a12 = m[1][2], a13 = m[1][3],\n		a20 = m[2][0], a21 = m[2][1], a22 = m[2][2], a23 = m[2][3],\n		a30 = m[3][0], a31 = m[3][1], a32 = m[3][2], a33 = m[3][3],\n		b00 = a00 * a11 - a01 * a10,\n		b01 = a00 * a12 - a02 * a10,\n		b02 = a00 * a13 - a03 * a10,\n		b03 = a01 * a12 - a02 * a11,\n		b04 = a01 * a13 - a03 * a11,\n		b05 = a02 * a13 - a03 * a12,\n		b06 = a20 * a31 - a21 * a30,\n		b07 = a20 * a32 - a22 * a30,\n		b08 = a20 * a33 - a23 * a30,\n		b09 = a21 * a32 - a22 * a31,\n		b10 = a21 * a33 - a23 * a31,\n		b11 = a22 * a33 - a23 * a32,\n		det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n		return mat4(\n				a11 * b11 - a12 * b10 + a13 * b09,\n				a02 * b10 - a01 * b11 - a03 * b09,\n				a31 * b05 - a32 * b04 + a33 * b03,\n				a22 * b04 - a21 * b05 - a23 * b03,\n				a12 * b08 - a10 * b11 - a13 * b07,\n				a00 * b11 - a02 * b08 + a03 * b07,\n				a32 * b02 - a30 * b05 - a33 * b01,\n				a20 * b05 - a22 * b02 + a23 * b01,\n				a10 * b10 - a11 * b08 + a13 * b06,\n				a01 * b08 - a00 * b10 - a03 * b06,\n				a30 * b04 - a31 * b02 + a33 * b00,\n				a21 * b02 - a20 * b04 - a23 * b00,\n				a11 * b07 - a10 * b09 - a12 * b06,\n				a00 * b09 - a01 * b07 + a02 * b06,\n				a31 * b01 - a30 * b03 - a32 * b00,\n				a20 * b03 - a21 * b01 + a22 * b00) / det;\n}";
 
-	var light_frag = "\n#if (defined(USE_PHONG) || defined(USE_PBR))\n		vec3 V = normalize(u_CameraPosition - v_modelPos);\n#endif\n#ifdef USE_PBR\n		#ifdef USE_PBR2\n				vec3 diffuseColor = outColor.xyz;\n				vec3 specularColor = specularFactor.xyz;\n				float roughness = max(1.0 - glossinessFactor, 0.0525);\n		#else\n				vec3 diffuseColor = outColor.xyz * (1.0 - metalnessFactor);\n				vec3 specularColor = mix(vec3(0.04), outColor.xyz, metalnessFactor);\n				float roughness = max(roughnessFactor, 0.0525);\n		#endif\n		vec3 dxy = max(abs(dFdx(geometryNormal)), abs(dFdy(geometryNormal)));\n		float geometryRoughness = max(max(dxy.x, dxy.y), dxy.z);\n		roughness += geometryRoughness;\n		roughness = min(roughness, 1.0);\n		#ifdef USE_CLEARCOAT\n				float clearcoat = u_Clearcoat;\n				float clearcoatRoughness = u_ClearcoatRoughness;\n				#ifdef USE_CLEARCOATMAP\n\t\t		clearcoat *= texture2D(clearcoatMap, v_Uv).x;\n				#endif\n				#ifdef USE_CLEARCOAT_ROUGHNESSMAP\n\t\t		clearcoatRoughness *= texture2D(clearcoatRoughnessMap, v_Uv).y;\n\t		#endif\n				clearcoat = saturate(clearcoat);\n				clearcoatRoughness = max(clearcoatRoughness, 0.0525);\n\t		clearcoatRoughness += geometryRoughness;\n\t		clearcoatRoughness = min(clearcoatRoughness, 1.0);\n		#endif\n#else\n		vec3 diffuseColor = outColor.xyz;\n		#ifdef USE_PHONG\n				vec3 specularColor = u_SpecularColor.xyz;\n				float shininess = u_Specular;\n		#endif\n#endif\nvec3 L;\nfloat falloff;\nfloat dotNL;\nvec3 irradiance;\nfloat clearcoatDHR;\n#ifdef USE_CLEARCOAT\n		float ccDotNL;\n		vec3 ccIrradiance;\n#endif\n#if NUM_DIR_LIGHTS > 0\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_DIR_LIGHTS; i++) {\n				L = normalize(-u_Directional[i].direction);\n				falloff = 1.0;\n				#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_DIR_SHADOWS)\n						#ifdef USE_PCSS_SOFT_SHADOW\n								falloff *= getShadowWithPCSS(directionalDepthMap[i], directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n						#else\n								falloff *= getShadow(directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n						#endif\n				#endif\n				dotNL = saturate(dot(N, L));\n				irradiance = u_Directional[i].color * falloff * dotNL * PI;\n				#ifdef USE_CLEARCOAT				\n						ccDotNL = saturate(dot(clearcoatNormal, L));\n						ccIrradiance = ccDotNL * u_Directional[i].color * falloff	* PI;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n						reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n				#ifdef USE_PHONG\n						reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n				#endif\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#if NUM_POINT_LIGHTS > 0\n		vec3 worldV;\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_POINT_LIGHTS; i++) {\n				worldV = v_modelPos - u_Point[i].position;\n				L = -worldV;\n				falloff = pow(clamp(1. - length(L) / u_Point[i].distance, 0.0, 1.0), u_Point[i].decay);\n				L = normalize(L);\n				#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_POINT_SHADOWS)\n						falloff *= getPointShadow(pointShadowMap[i], vPointShadowCoord[i], u_PointShadow[i].shadowMapSize, u_PointShadow[i].shadowBias, u_PointShadow[i].shadowParams, u_PointShadow[i].shadowCameraRange);\n				#endif\n				dotNL = saturate(dot(N, L));\n				irradiance = u_Point[i].color * falloff * dotNL * PI;\n				#ifdef USE_CLEARCOAT				\n						ccDotNL = saturate(dot(clearcoatNormal, L));\n						ccIrradiance = ccDotNL *	u_Point[i].color * falloff	* PI;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n						reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n				#ifdef USE_PHONG\n						reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n				#endif\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#if NUM_SPOT_LIGHTS > 0\n		float lightDistance;\n		float angleCos;\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {\n				L = u_Spot[i].position - v_modelPos;\n				lightDistance = length(L);\n				L = normalize(L);\n				angleCos = dot(L, -normalize(u_Spot[i].direction));\n				falloff = smoothstep(u_Spot[i].coneCos, u_Spot[i].penumbraCos, angleCos);\n				falloff *= pow(clamp(1. - lightDistance / u_Spot[i].distance, 0.0, 1.0), u_Spot[i].decay);\n				#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_SPOT_SHADOWS)\n						#ifdef USE_PCSS_SOFT_SHADOW\n								falloff *= getShadowWithPCSS(spotDepthMap[i], spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n						#else\n								falloff *= getShadow(spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n						#endif\n				#endif\n				dotNL = saturate(dot(N, L));\n				irradiance = u_Spot[i].color * falloff * dotNL * PI;\n				#ifdef USE_CLEARCOAT				\n						ccDotNL = saturate(dot(clearcoatNormal, L));\n						ccIrradiance = ccDotNL *	u_Spot[i].color * falloff	* PI;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n						reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n				#ifdef USE_PHONG\n						reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n				#endif\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#if NUM_RECT_AREA_LIGHTS > 0\n		vec3 RectAreaLightDirectSpecular;\n		vec3 RectAreaLightDirectDiffuse;\n		vec3 rectCoords[4];\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_RECT_AREA_LIGHTS; i++) {\n				LTC_RectCoords(u_RectArea[i].position, u_RectArea[i].halfWidth, u_RectArea[i].halfHeight, rectCoords);\n				reflectedLight.directDiffuse += u_RectArea[i].color * LTC_Diffuse(diffuseColor, N, V, v_modelPos, rectCoords);\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += u_RectArea[i].color * LTC_Specular(specularColor, N, V, v_modelPos, rectCoords, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\nvec3 indirectIrradiance = vec3(0., 0., 0.);	 \n#ifdef USE_AMBIENT_LIGHT\n		indirectIrradiance += u_AmbientLightColor * PI;\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		indirectIrradiance += getLightProbeIrradiance(u_SphericalHarmonicsLightData, N);\n#endif\n#if NUM_HEMI_LIGHTS > 0\n		float hemiDiffuseWeight;\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_HEMI_LIGHTS; i++) {\n				L = normalize(u_Hemi[i].direction);\n				dotNL = dot(N, L);\n				hemiDiffuseWeight = 0.5 * dotNL + 0.5;\n				indirectIrradiance += mix(u_Hemi[i].groundColor, u_Hemi[i].skyColor, hemiDiffuseWeight) * PI;\n		}\n		#pragma unroll_loop_end\n#endif\nreflectedLight.indirectDiffuse += indirectIrradiance * BRDF_Diffuse_Lambert(diffuseColor);\n#if defined(USE_ENV_MAP) && defined(USE_PBR)\n		vec3 iblIrradiance = vec3(0., 0., 0.);\n		vec3 indirectRadiance = vec3(0., 0., 0.);\n		vec3 clearcoatRadiance = vec3(0., 0., 0.);\n		vec3 envDir;\n		#ifdef USE_VERTEX_ENVDIR\n				envDir = v_EnvDir;\n		#else\n				envDir = reflect(normalize(v_modelPos - u_CameraPosition), N);\n		#endif\n		iblIrradiance += getLightProbeIndirectIrradiance(maxMipLevel, N);\n		indirectRadiance += getLightProbeIndirectRadiance(roughness, maxMipLevel, N, envDir);\n		#ifdef USE_CLEARCOAT\n				vec3 clearcoatDir = reflect(normalize(v_modelPos - u_CameraPosition), clearcoatNormal);\n				clearcoatRadiance += getLightProbeIndirectRadiance(clearcoatRoughness, maxMipLevel, clearcoatNormal, clearcoatDir);\n		#endif\n		#ifdef USE_CLEARCOAT\n				float ccDotNV = saturate(dot(clearcoatNormal, V));\n				reflectedLight.indirectSpecular += clearcoatRadiance * clearcoat * BRDF_Specular_GGX_Environment(clearcoatNormal, V, specularColor, clearcoatRoughness);\n				ccDotNL = ccDotNV;\n				clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n		#else\n				clearcoatDHR = 0.0;\n		#endif\n		float clearcoatInv = 1.0 - clearcoatDHR;\n		vec3 singleScattering = vec3(0.0);\n		vec3 multiScattering = vec3(0.0);\n		vec3 cosineWeightedIrradiance = iblIrradiance * RECIPROCAL_PI;\n		BRDF_Specular_Multiscattering_Environment(N, V, specularColor, roughness, singleScattering, multiScattering);\n		vec3 diffuse = diffuseColor * (1.0 - (singleScattering + multiScattering));\n		reflectedLight.indirectSpecular += clearcoatInv * indirectRadiance * singleScattering;\n		reflectedLight.indirectSpecular += multiScattering * cosineWeightedIrradiance;\n		reflectedLight.indirectDiffuse += diffuse * cosineWeightedIrradiance;\n#endif";
+	var light_frag = "\n#if (defined(USE_PHONG) || defined(USE_PBR))\n		vec3 V = normalize(u_CameraPosition - v_modelPos);\n#endif\n#ifdef USE_PBR\n		#ifdef USE_PBR2\n				vec3 diffuseColor = outColor.xyz;\n				vec3 specularColor = specularFactor.xyz;\n				float roughness = max(1.0 - glossinessFactor, 0.0525);\n		#else\n				vec3 diffuseColor = outColor.xyz * (1.0 - metalnessFactor);\n				vec3 specularColor = mix(vec3(0.04), outColor.xyz, metalnessFactor);\n				float roughness = max(roughnessFactor, 0.0525);\n		#endif\n		vec3 dxy = max(abs(dFdx(geometryNormal)), abs(dFdy(geometryNormal)));\n		float geometryRoughness = max(max(dxy.x, dxy.y), dxy.z);\n		roughness += geometryRoughness;\n		roughness = min(roughness, 1.0);\n		#ifdef USE_CLEARCOAT\n				float clearcoat = u_Clearcoat;\n				float clearcoatRoughness = u_ClearcoatRoughness;\n				#ifdef USE_CLEARCOATMAP\n\t\t		clearcoat *= texture2D(clearcoatMap, v_Uv).x;\n				#endif\n				#ifdef USE_CLEARCOAT_ROUGHNESSMAP\n\t\t		clearcoatRoughness *= texture2D(clearcoatRoughnessMap, v_Uv).y;\n\t		#endif\n				clearcoat = saturate(clearcoat);\n				clearcoatRoughness = max(clearcoatRoughness, 0.0525);\n\t		clearcoatRoughness += geometryRoughness;\n\t		clearcoatRoughness = min(clearcoatRoughness, 1.0);\n		#endif\n#else\n		vec3 diffuseColor = outColor.xyz;\n		#ifdef USE_PHONG\n				vec3 specularColor = u_SpecularColor.xyz;\n				float shininess = u_Specular;\n		#endif\n#endif\nvec3 L;\nfloat falloff;\nfloat dotNL;\nvec3 irradiance;\nfloat clearcoatDHR;\n#ifdef USE_CLEARCOAT\n		float ccDotNL;\n		vec3 ccIrradiance;\n#endif\n#if NUM_DIR_LIGHTS > 0\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_DIR_LIGHTS; i++) {\n				L = normalize(-u_Directional[i].direction);\n				falloff = 1.0;\n				#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_DIR_SHADOWS)\n						#ifdef USE_PCSS_SOFT_SHADOW\n								falloff *= getShadowWithPCSS(directionalDepthMap[i], directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n						#else\n								falloff *= getShadow(directionalShadowMap[i], vDirectionalShadowCoord[i], u_DirectionalShadow[i].shadowMapSize, u_DirectionalShadow[i].shadowBias, u_DirectionalShadow[i].shadowParams);\n						#endif\n				#endif\n				dotNL = saturate(dot(N, L));\n				irradiance = u_Directional[i].color * falloff * dotNL * PI;\n				#ifdef USE_CLEARCOAT				\n						ccDotNL = saturate(dot(clearcoatNormal, L));\n						ccIrradiance = ccDotNL * u_Directional[i].color * falloff	* PI;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n						reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n				#ifdef USE_PHONG\n						reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n				#endif\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#if NUM_POINT_LIGHTS > 0\n		vec3 worldV;\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_POINT_LIGHTS; i++) {\n				worldV = v_modelPos - u_Point[i].position;\n				L = -worldV;\n				falloff = pow(clamp(1. - length(L) / u_Point[i].distance, 0.0, 1.0), u_Point[i].decay);\n				L = normalize(L);\n				#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_POINT_SHADOWS)\n						falloff *= getPointShadow(pointShadowMap[i], vPointShadowCoord[i], u_PointShadow[i].shadowMapSize, u_PointShadow[i].shadowBias, u_PointShadow[i].shadowParams, u_PointShadow[i].shadowCameraRange);\n				#endif\n				dotNL = saturate(dot(N, L));\n				irradiance = u_Point[i].color * falloff * dotNL * PI;\n				#ifdef USE_CLEARCOAT				\n						ccDotNL = saturate(dot(clearcoatNormal, L));\n						ccIrradiance = ccDotNL *	u_Point[i].color * falloff	* PI;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n						reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n				#ifdef USE_PHONG\n						reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n				#endif\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#if NUM_SPOT_LIGHTS > 0\n		float lightDistance;\n		float angleCos;\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_SPOT_LIGHTS; i++) {\n				L = u_Spot[i].position - v_modelPos;\n				lightDistance = length(L);\n				L = normalize(L);\n				angleCos = dot(L, -normalize(u_Spot[i].direction));\n				falloff = smoothstep(u_Spot[i].coneCos, u_Spot[i].penumbraCos, angleCos);\n				falloff *= pow(clamp(1. - lightDistance / u_Spot[i].distance, 0.0, 1.0), u_Spot[i].decay);\n				#if defined(USE_SHADOW) && (UNROLLED_LOOP_INDEX < NUM_SPOT_SHADOWS)\n						#ifdef USE_PCSS_SOFT_SHADOW\n								falloff *= getShadowWithPCSS(spotDepthMap[i], spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n						#else\n								falloff *= getShadow(spotShadowMap[i], vSpotShadowCoord[i], u_SpotShadow[i].shadowMapSize, u_SpotShadow[i].shadowBias, u_SpotShadow[i].shadowParams);\n						#endif\n				#endif\n				dotNL = saturate(dot(N, L));\n				irradiance = u_Spot[i].color * falloff * dotNL * PI;\n				#ifdef USE_CLEARCOAT				\n						ccDotNL = saturate(dot(clearcoatNormal, L));\n						ccIrradiance = ccDotNL *	u_Spot[i].color * falloff	* PI;\n						clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n						reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n				#else\n						clearcoatDHR = 0.0;\n				#endif\n				reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n				#ifdef USE_PHONG\n						reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n				#endif\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#if NUM_RECT_AREA_LIGHTS > 0\n		vec3 RectAreaLightDirectSpecular;\n		vec3 RectAreaLightDirectDiffuse;\n		vec3 rectCoords[4];\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_RECT_AREA_LIGHTS; i++) {\n				LTC_RectCoords(u_RectArea[i].position, u_RectArea[i].halfWidth, u_RectArea[i].halfHeight, rectCoords);\n				reflectedLight.directDiffuse += u_RectArea[i].color * LTC_Diffuse(diffuseColor, N, V, v_modelPos, rectCoords);\n				#ifdef USE_PBR\n						reflectedLight.directSpecular += u_RectArea[i].color * LTC_Specular(specularColor, N, V, v_modelPos, rectCoords, roughness);\n				#endif\n		}\n		#pragma unroll_loop_end\n#endif\n#ifdef USE_CLUSTERED_LIGHTS\n		vec4 positionView = u_View * vec4(v_modelPos, 1.0);\n		float perspectiveFactor = step(0.0, cellsTransformFactors.z);\n		float halfFrustumHeight = -cellsTransformFactors.z * mix(1.0, positionView.z, perspectiveFactor);\n		float halfFrustumWidth = halfFrustumHeight * cellsTransformFactors.w;\n		vec3 cellCoords;\n		cellCoords.z = floor(log(-positionView.z) * cellsTransformFactors.x + cellsTransformFactors.y);\n		cellCoords.y = floor((positionView.y / (2.0 * halfFrustumHeight) + 0.5) * cells.y);\n		cellCoords.x = floor((positionView.x / (2.0 * halfFrustumWidth) + 0.5) * cells.x);\n		if(!(any(lessThan(cellCoords, vec3(0.0))) || any(greaterThanEqual(cellCoords, cells)))) {\n				float cellIndex = dot(cellsDotData, cellCoords);\n				float clusterV = floor(cellIndex * cellsTextureSize.y);\n				float clusterU = cellIndex - (clusterV * cellsTextureSize.x);\n				int size = textureSize(lightsTexture, 0).x;\n				ClusteredPointLight clusteredPointLight;\n				ClusteredSpotLight clusteredSpotLight;\n				vec3 clusteredLightColor;\n				float clusteredLightDistance;\n				float clusteredAngleCos;\n				for (int lightCellIndex = 0; lightCellIndex < maxLightsPerCell; lightCellIndex++) {\n						float lightIndex = texelFetch(cellsTexture, ivec2(int(clusterU) + lightCellIndex, clusterV), 0).x;\n						if (lightIndex <= 0.0) break;\n						int lightOffset = int(lightIndex - 1.) * 4;\n						ivec2 lightDataCoords = ivec2(lightOffset % size, lightOffset / size);\n						vec4 lightData0 = texelFetch(lightsTexture, lightDataCoords, 0);\n						if (lightData0.x == 1.0) {\n								getPointLightFromTexture(lightDataCoords, lightData0, clusteredPointLight);\n								L = clusteredPointLight.position - v_modelPos;\n								clusteredLightDistance = length(L);\n								L = normalize(L);\n								falloff = pow(clamp(1. - clusteredLightDistance / clusteredPointLight.distance, 0.0, 1.0), clusteredPointLight.decay);\n								clusteredLightColor = clusteredPointLight.color;\n						} else if (lightData0.x == 2.0) {\n								getSpotLightFromTexture(lightDataCoords, lightData0, clusteredSpotLight);\n								L = clusteredSpotLight.position - v_modelPos;\n								clusteredLightDistance = length(L);\n								L = normalize(L);\n								clusteredAngleCos = dot(L, -normalize(clusteredSpotLight.direction));\n								falloff = smoothstep(clusteredSpotLight.coneCos, clusteredSpotLight.penumbraCos, clusteredAngleCos);\n								falloff *= pow(clamp(1. - clusteredLightDistance / clusteredSpotLight.distance, 0.0, 1.0), clusteredSpotLight.decay);\n								clusteredLightColor = clusteredSpotLight.color;\n						}\n						dotNL = saturate(dot(N, L));\n						irradiance = clusteredLightColor * falloff * dotNL * PI;\n						#ifdef USE_CLEARCOAT\n								ccDotNL = saturate(dot(clearcoatNormal, L));\n								ccIrradiance = ccDotNL * clusteredLightColor * falloff * PI;\n								clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n								reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);\n						#else\n								clearcoatDHR = 0.0;\n						#endif\n						reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);\n						#ifdef USE_PHONG\n								reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;\n						#endif\n						#ifdef USE_PBR\n								reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);\n						#endif\n				}\n		}\n#endif\nvec3 indirectIrradiance = vec3(0., 0., 0.);	 \n#ifdef USE_AMBIENT_LIGHT\n		indirectIrradiance += u_AmbientLightColor * PI;\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		indirectIrradiance += getLightProbeIrradiance(u_SphericalHarmonicsLightData, N);\n#endif\n#if NUM_HEMI_LIGHTS > 0\n		float hemiDiffuseWeight;\n		#pragma unroll_loop_start\n		for (int i = 0; i < NUM_HEMI_LIGHTS; i++) {\n				L = normalize(u_Hemi[i].direction);\n				dotNL = dot(N, L);\n				hemiDiffuseWeight = 0.5 * dotNL + 0.5;\n				indirectIrradiance += mix(u_Hemi[i].groundColor, u_Hemi[i].skyColor, hemiDiffuseWeight) * PI;\n		}\n		#pragma unroll_loop_end\n#endif\nreflectedLight.indirectDiffuse += indirectIrradiance * BRDF_Diffuse_Lambert(diffuseColor);\n#if defined(USE_ENV_MAP) && defined(USE_PBR)\n		vec3 iblIrradiance = vec3(0., 0., 0.);\n		vec3 indirectRadiance = vec3(0., 0., 0.);\n		vec3 clearcoatRadiance = vec3(0., 0., 0.);\n		vec3 envDir;\n		#ifdef USE_VERTEX_ENVDIR\n				envDir = v_EnvDir;\n		#else\n				envDir = reflect(normalize(v_modelPos - u_CameraPosition), N);\n		#endif\n		iblIrradiance += getLightProbeIndirectIrradiance(maxMipLevel, N);\n		indirectRadiance += getLightProbeIndirectRadiance(roughness, maxMipLevel, N, envDir);\n		#ifdef USE_CLEARCOAT\n				vec3 clearcoatDir = reflect(normalize(v_modelPos - u_CameraPosition), clearcoatNormal);\n				clearcoatRadiance += getLightProbeIndirectRadiance(clearcoatRoughness, maxMipLevel, clearcoatNormal, clearcoatDir);\n		#endif\n		#ifdef USE_CLEARCOAT\n				float ccDotNV = saturate(dot(clearcoatNormal, V));\n				reflectedLight.indirectSpecular += clearcoatRadiance * clearcoat * BRDF_Specular_GGX_Environment(clearcoatNormal, V, specularColor, clearcoatRoughness);\n				ccDotNL = ccDotNV;\n				clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);\n		#else\n				clearcoatDHR = 0.0;\n		#endif\n		float clearcoatInv = 1.0 - clearcoatDHR;\n		vec3 singleScattering = vec3(0.0);\n		vec3 multiScattering = vec3(0.0);\n		vec3 cosineWeightedIrradiance = iblIrradiance * RECIPROCAL_PI;\n		BRDF_Specular_Multiscattering_Environment(N, V, specularColor, roughness, singleScattering, multiScattering);\n		vec3 diffuse = diffuseColor * (1.0 - (singleScattering + multiScattering));\n		reflectedLight.indirectSpecular += clearcoatInv * indirectRadiance * singleScattering;\n		reflectedLight.indirectSpecular += multiScattering * cosineWeightedIrradiance;\n		reflectedLight.indirectDiffuse += diffuse * cosineWeightedIrradiance;\n#endif";
 
-	var light_pars_frag = "#ifdef USE_AMBIENT_LIGHT\n		uniform vec3 u_AmbientLightColor;\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		uniform vec3 u_SphericalHarmonicsLightData[9];\n#endif\n#ifdef USE_CLEARCOAT\n		float clearcoatDHRApprox(const in float roughness, const in float dotNL) {\n				return 0.04 + (1.0 - 0.16) * (pow(1.0 - dotNL, 5.0) * pow(1.0 - roughness, 2.0));\n		}\n#endif\n#if NUM_HEMI_LIGHTS > 0\n		struct HemisphereLight {\n				vec3 direction;\n				vec3 skyColor;\n\t\tvec3 groundColor;\n		};\n		uniform HemisphereLight u_Hemi[NUM_HEMI_LIGHTS];\n#endif\n#if NUM_DIR_LIGHTS > 0\n		struct DirectLight {\n				vec3 direction;\n				vec3 color;\n		};\n		uniform DirectLight u_Directional[NUM_DIR_LIGHTS];\n#endif\n#if NUM_POINT_LIGHTS > 0\n		struct PointLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n		};\n		uniform PointLight u_Point[NUM_POINT_LIGHTS];\n#endif\n#if NUM_SPOT_LIGHTS > 0\n		struct SpotLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n				float coneCos;\n				float penumbraCos;\n				vec3 direction;\n		};\n		uniform SpotLight u_Spot[NUM_SPOT_LIGHTS];\n#endif\n#if NUM_RECT_AREA_LIGHTS > 0\n		struct RectAreaLight {\n				vec3 position;\n				vec3 color;\n\t\tvec3 halfWidth;\n\t\tvec3 halfHeight;\n		};\n		uniform RectAreaLight u_RectArea[NUM_RECT_AREA_LIGHTS];\n\tuniform sampler2D ltc_1;\tuniform sampler2D ltc_2;\n		void LTC_RectCoords(const in vec3 lightPos, const in vec3 halfWidth, const in vec3 halfHeight, inout vec3 rectCoords[4]) {\n				rectCoords[0] = lightPos + halfWidth - halfHeight;				rectCoords[1] = lightPos - halfWidth - halfHeight;\n				rectCoords[2] = lightPos - halfWidth + halfHeight;\n				rectCoords[3] = lightPos + halfWidth + halfHeight;\n		}\n		vec2 LTC_Uv(const in vec3 N, const in vec3 V, const in float roughness) {\n				const float LUT_SIZE = 64.0; \n				const float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;\n				const float LUT_BIAS = 0.5 / LUT_SIZE;\n				float dotNV = saturate(dot(N, V));\n				vec2 uv = vec2(roughness, sqrt(1.0 - dotNV));\n				uv = uv * LUT_SCALE + LUT_BIAS;\n				return uv;\n		}\n		vec3 LTC_EdgeVectorFormFactor(const in vec3 v1, const in vec3 v2) {\n				float x = dot(v1, v2);\n				float y = abs(x);\n				float a = 0.8543985 + (0.4965155 + 0.0145206 * y) * y;\n				float b = 3.4175940 + (4.1616724 + y) * y;\n				float v = a / b;\n				float theta_sintheta = (x > 0.0) ? v : 0.5 * inversesqrt(max(1.0 - x * x, 1e-7)) - v;\n				return cross(v1, v2) * theta_sintheta;\n		}\n		float LTC_ClippedSphereFormFactor(const in vec3 f) {\n				float l = length(f);\n				return max((l * l + f.z) / (l + 1.0), 0.0);\n		}\n		vec3 LTC_Evaluate(const in vec3 N, const in vec3 V, const in vec3 P, const in mat3 mInv, const in vec3 rectCoords[4]) {\n				vec3 v1 = rectCoords[1] - rectCoords[0];\n				vec3 v2 = rectCoords[3] - rectCoords[0];\n				vec3 lightNormal = cross(v1, v2);\n				if(dot(lightNormal, P - rectCoords[0]) < 0.0) return vec3(0.0);\n				vec3 T1, T2;\n				T1 = normalize(V - N * dot(V, N));\n				T2 = - cross(N, T1);\n				mat3 mat = mInv * mat3(\n						T1.x, T2.x, N.x,\n						T1.y, T2.y, N.y,\n						T1.z, T2.z, N.z\n				);\n				vec3 coords[4];\n				coords[0] = mat * (rectCoords[0] - P);\n				coords[1] = mat * (rectCoords[1] - P);\n				coords[2] = mat * (rectCoords[2] - P);\n				coords[3] = mat * (rectCoords[3] - P);\n				coords[0] = normalize(coords[0]);\n				coords[1] = normalize(coords[1]);\n				coords[2] = normalize(coords[2]);\n				coords[3] = normalize(coords[3]);\n				vec3 vectorFormFactor = vec3(0.0);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[0], coords[1]);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[1], coords[2]);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[2], coords[3]);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[3], coords[0]);\n				float result = LTC_ClippedSphereFormFactor(vectorFormFactor);\n				return vec3(result);\n		}\n		vec3 LTC_Diffuse(const in vec3 diffuseColor, const in vec3 N, const in vec3 V, const in vec3 P, const in vec3 rectCoords[4]) {\n				return diffuseColor * LTC_Evaluate(N, V, P, mat3(1.0), rectCoords);\n		}\n		vec3 LTC_Specular(const in vec3 specularColor, const in vec3 N, const in vec3 V, const in vec3 P, const in vec3 rectCoords[4], const in float roughness) {\n				vec2 ltc_uv = LTC_Uv(N, V, roughness);\n				vec4 t1 = texture2D(ltc_1, ltc_uv);\n				vec4 t2 = texture2D(ltc_2, ltc_uv);\n				mat3 mInv = mat3(\n						vec3(t1.x, 0, t1.y),\n						vec3(0, 1, 0),\n						vec3(t1.z, 0, t1.w)\n				);\n				vec3 fresnel = (specularColor * t2.x + (vec3(1.0) - specularColor) * t2.y);\n				return fresnel * LTC_Evaluate(N, V, P, mInv, rectCoords);\n		}\n#endif\n#if defined(USE_PBR) && defined(USE_ENV_MAP)\n		vec3 getLightProbeIndirectIrradiance(const in int maxMIPLevel, const in vec3 N) {\n				vec3 coordVec = vec3(envMapParams.z * N.x, N.yz);\n		\t#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, float(maxMIPLevel));\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, float(maxMIPLevel));\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return PI * envMapColor.rgb * envMapParams.x;\n		}\n		float getSpecularMIPLevel(const in float roughness, const in int maxMIPLevel) {\n		\tfloat maxMIPLevelScalar = float(maxMIPLevel);\n				float sigma = PI * roughness * roughness / (1.0 + roughness);\n				float desiredMIPLevel = maxMIPLevelScalar + log2(sigma);\n		\treturn clamp(desiredMIPLevel, 0.0, maxMIPLevelScalar);\n		}\n		vec3 getLightProbeIndirectRadiance(const in float roughness, const in int maxMIPLevel, const in vec3 normal, const in vec3 envDir) {\n				float specularMIPLevel = getSpecularMIPLevel(roughness, maxMIPLevel);\n				vec3 coordVec = normalize(mix(envDir, normal, roughness * roughness));\n				coordVec.x *= envMapParams.z;\n				#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, specularMIPLevel);\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, specularMIPLevel);\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return envMapColor.rgb * envMapParams.y;\n		}\n		float computeSpecularOcclusion(const in float dotNV, const in float ambientOcclusion, const in float roughness) {\n		\treturn saturate(pow(dotNV + ambientOcclusion, exp2(-16.0 * roughness - 1.0)) - 1.0 + ambientOcclusion);\n		}\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		vec3 shGetIrradianceAt(in vec3 normal, in vec3 shCoefficients[9]) {\n				float x = normal.x, y = normal.y, z = normal.z;\n				vec3 result = shCoefficients[0] * 0.886227;\n				result += shCoefficients[1] * 2.0 * 0.511664 * y;\n				result += shCoefficients[2] * 2.0 * 0.511664 * z;\n				result += shCoefficients[3] * 2.0 * 0.511664 * x;\n				result += shCoefficients[4] * 2.0 * 0.429043 * x * y;\n				result += shCoefficients[5] * 2.0 * 0.429043 * y * z;\n				result += shCoefficients[6] * (0.743125 * z * z - 0.247708);\n				result += shCoefficients[7] * 2.0 * 0.429043 * x * z;\n				result += shCoefficients[8] * 0.429043 * (x * x - y * y);\n				return result;\n		}\n		vec3 getLightProbeIrradiance(const in vec3 lightProbe[9], const in vec3 normal) {\n				vec3 irradiance = shGetIrradianceAt(normal, lightProbe);\n				return irradiance;\n		}\n#endif";
+	var light_pars_frag = "#ifdef USE_AMBIENT_LIGHT\n		uniform vec3 u_AmbientLightColor;\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		uniform vec3 u_SphericalHarmonicsLightData[9];\n#endif\n#ifdef USE_CLEARCOAT\n		float clearcoatDHRApprox(const in float roughness, const in float dotNL) {\n				return 0.04 + (1.0 - 0.16) * (pow(1.0 - dotNL, 5.0) * pow(1.0 - roughness, 2.0));\n		}\n#endif\n#if NUM_HEMI_LIGHTS > 0\n		struct HemisphereLight {\n				vec3 direction;\n				vec3 skyColor;\n\t\tvec3 groundColor;\n		};\n		uniform HemisphereLight u_Hemi[NUM_HEMI_LIGHTS];\n#endif\n#if NUM_DIR_LIGHTS > 0\n		struct DirectLight {\n				vec3 direction;\n				vec3 color;\n		};\n		uniform DirectLight u_Directional[NUM_DIR_LIGHTS];\n#endif\n#if NUM_POINT_LIGHTS > 0\n		struct PointLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n		};\n		uniform PointLight u_Point[NUM_POINT_LIGHTS];\n#endif\n#if NUM_SPOT_LIGHTS > 0\n		struct SpotLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n				float coneCos;\n				float penumbraCos;\n				vec3 direction;\n		};\n		uniform SpotLight u_Spot[NUM_SPOT_LIGHTS];\n#endif\n#if NUM_RECT_AREA_LIGHTS > 0\n		struct RectAreaLight {\n				vec3 position;\n				vec3 color;\n\t\tvec3 halfWidth;\n\t\tvec3 halfHeight;\n		};\n		uniform RectAreaLight u_RectArea[NUM_RECT_AREA_LIGHTS];\n\tuniform sampler2D ltc_1;\tuniform sampler2D ltc_2;\n		void LTC_RectCoords(const in vec3 lightPos, const in vec3 halfWidth, const in vec3 halfHeight, inout vec3 rectCoords[4]) {\n				rectCoords[0] = lightPos + halfWidth - halfHeight;				rectCoords[1] = lightPos - halfWidth - halfHeight;\n				rectCoords[2] = lightPos - halfWidth + halfHeight;\n				rectCoords[3] = lightPos + halfWidth + halfHeight;\n		}\n		vec2 LTC_Uv(const in vec3 N, const in vec3 V, const in float roughness) {\n				const float LUT_SIZE = 64.0; \n				const float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;\n				const float LUT_BIAS = 0.5 / LUT_SIZE;\n				float dotNV = saturate(dot(N, V));\n				vec2 uv = vec2(roughness, sqrt(1.0 - dotNV));\n				uv = uv * LUT_SCALE + LUT_BIAS;\n				return uv;\n		}\n		vec3 LTC_EdgeVectorFormFactor(const in vec3 v1, const in vec3 v2) {\n				float x = dot(v1, v2);\n				float y = abs(x);\n				float a = 0.8543985 + (0.4965155 + 0.0145206 * y) * y;\n				float b = 3.4175940 + (4.1616724 + y) * y;\n				float v = a / b;\n				float theta_sintheta = (x > 0.0) ? v : 0.5 * inversesqrt(max(1.0 - x * x, 1e-7)) - v;\n				return cross(v1, v2) * theta_sintheta;\n		}\n		float LTC_ClippedSphereFormFactor(const in vec3 f) {\n				float l = length(f);\n				return max((l * l + f.z) / (l + 1.0), 0.0);\n		}\n		vec3 LTC_Evaluate(const in vec3 N, const in vec3 V, const in vec3 P, const in mat3 mInv, const in vec3 rectCoords[4]) {\n				vec3 v1 = rectCoords[1] - rectCoords[0];\n				vec3 v2 = rectCoords[3] - rectCoords[0];\n				vec3 lightNormal = cross(v1, v2);\n				if(dot(lightNormal, P - rectCoords[0]) < 0.0) return vec3(0.0);\n				vec3 T1, T2;\n				T1 = normalize(V - N * dot(V, N));\n				T2 = - cross(N, T1);\n				mat3 mat = mInv * mat3(\n						T1.x, T2.x, N.x,\n						T1.y, T2.y, N.y,\n						T1.z, T2.z, N.z\n				);\n				vec3 coords[4];\n				coords[0] = mat * (rectCoords[0] - P);\n				coords[1] = mat * (rectCoords[1] - P);\n				coords[2] = mat * (rectCoords[2] - P);\n				coords[3] = mat * (rectCoords[3] - P);\n				coords[0] = normalize(coords[0]);\n				coords[1] = normalize(coords[1]);\n				coords[2] = normalize(coords[2]);\n				coords[3] = normalize(coords[3]);\n				vec3 vectorFormFactor = vec3(0.0);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[0], coords[1]);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[1], coords[2]);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[2], coords[3]);\n				vectorFormFactor += LTC_EdgeVectorFormFactor(coords[3], coords[0]);\n				float result = LTC_ClippedSphereFormFactor(vectorFormFactor);\n				return vec3(result);\n		}\n		vec3 LTC_Diffuse(const in vec3 diffuseColor, const in vec3 N, const in vec3 V, const in vec3 P, const in vec3 rectCoords[4]) {\n				return diffuseColor * LTC_Evaluate(N, V, P, mat3(1.0), rectCoords);\n		}\n		vec3 LTC_Specular(const in vec3 specularColor, const in vec3 N, const in vec3 V, const in vec3 P, const in vec3 rectCoords[4], const in float roughness) {\n				vec2 ltc_uv = LTC_Uv(N, V, roughness);\n				vec4 t1 = texture2D(ltc_1, ltc_uv);\n				vec4 t2 = texture2D(ltc_2, ltc_uv);\n				mat3 mInv = mat3(\n						vec3(t1.x, 0, t1.y),\n						vec3(0, 1, 0),\n						vec3(t1.z, 0, t1.w)\n				);\n				vec3 fresnel = (specularColor * t2.x + (vec3(1.0) - specularColor) * t2.y);\n				return fresnel * LTC_Evaluate(N, V, P, mInv, rectCoords);\n		}\n#endif\n#if defined(USE_PBR) && defined(USE_ENV_MAP)\n		vec3 getLightProbeIndirectIrradiance(const in int maxMIPLevel, const in vec3 N) {\n				vec3 coordVec = vec3(envMapParams.z * N.x, N.yz);\n		\t#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, float(maxMIPLevel));\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, float(maxMIPLevel));\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return PI * envMapColor.rgb * envMapParams.x;\n		}\n		float getSpecularMIPLevel(const in float roughness, const in int maxMIPLevel) {\n		\tfloat maxMIPLevelScalar = float(maxMIPLevel);\n				float sigma = PI * roughness * roughness / (1.0 + roughness);\n				float desiredMIPLevel = maxMIPLevelScalar + log2(sigma);\n		\treturn clamp(desiredMIPLevel, 0.0, maxMIPLevelScalar);\n		}\n		vec3 getLightProbeIndirectRadiance(const in float roughness, const in int maxMIPLevel, const in vec3 normal, const in vec3 envDir) {\n				float specularMIPLevel = getSpecularMIPLevel(roughness, maxMIPLevel);\n				vec3 coordVec = normalize(mix(envDir, normal, roughness * roughness));\n				coordVec.x *= envMapParams.z;\n				#ifdef TEXTURE_LOD_EXT\n		\t\tvec4 envMapColor = textureCubeLodEXT(envMap, coordVec, specularMIPLevel);\n		\t#else\n		\t\tvec4 envMapColor = textureCube(envMap, coordVec, specularMIPLevel);\n		\t#endif\n				envMapColor = envMapTexelToLinear(envMapColor);\n				return envMapColor.rgb * envMapParams.y;\n		}\n		float computeSpecularOcclusion(const in float dotNV, const in float ambientOcclusion, const in float roughness) {\n		\treturn saturate(pow(dotNV + ambientOcclusion, exp2(-16.0 * roughness - 1.0)) - 1.0 + ambientOcclusion);\n		}\n#endif\n#ifdef USE_SPHERICALHARMONICS_LIGHT\n		vec3 shGetIrradianceAt(in vec3 normal, in vec3 shCoefficients[9]) {\n				float x = normal.x, y = normal.y, z = normal.z;\n				vec3 result = shCoefficients[0] * 0.886227;\n				result += shCoefficients[1] * 2.0 * 0.511664 * y;\n				result += shCoefficients[2] * 2.0 * 0.511664 * z;\n				result += shCoefficients[3] * 2.0 * 0.511664 * x;\n				result += shCoefficients[4] * 2.0 * 0.429043 * x * y;\n				result += shCoefficients[5] * 2.0 * 0.429043 * y * z;\n				result += shCoefficients[6] * (0.743125 * z * z - 0.247708);\n				result += shCoefficients[7] * 2.0 * 0.429043 * x * z;\n				result += shCoefficients[8] * 0.429043 * (x * x - y * y);\n				return result;\n		}\n		vec3 getLightProbeIrradiance(const in vec3 lightProbe[9], const in vec3 normal) {\n				vec3 irradiance = shGetIrradianceAt(normal, lightProbe);\n				return irradiance;\n		}\n#endif\n#ifdef USE_CLUSTERED_LIGHTS\n		uniform vec3 cells;\n		uniform int maxLightsPerCell;\n		uniform vec3 cellsDotData;\n		uniform vec3 cellsTextureSize;\n		uniform vec4 cellsTransformFactors;\n		uniform sampler2D cellsTexture;\n		uniform sampler2D lightsTexture;\n		struct ClusteredPointLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n		};\n		struct ClusteredSpotLight {\n				vec3 position;\n				vec3 color;\n				float distance;\n				float decay;\n				vec3 direction;\n				float coneCos;\n				float penumbraCos;\n		};\n		void getPointLightFromTexture(ivec2 lightDataCoords, vec4 lightData0, inout ClusteredPointLight pointLight) {\n				vec4 lightData1 = texelFetch(lightsTexture, lightDataCoords + ivec2(1, 0), 0);\n				vec4 lightData2 = texelFetch(lightsTexture, lightDataCoords + ivec2(2, 0), 0);\n				pointLight.color = lightData1.xyz;\n				pointLight.decay = lightData1.w;\n				pointLight.position = lightData2.xyz;\n				pointLight.distance = lightData2.w;\n		}\n		void getSpotLightFromTexture(ivec2 lightDataCoords, vec4 lightData0, inout ClusteredSpotLight spotLight) {\n				vec4 lightData1 = texelFetch(lightsTexture, lightDataCoords + ivec2(1, 0), 0);\n				vec4 lightData2 = texelFetch(lightsTexture, lightDataCoords + ivec2(2, 0), 0);\n				vec4 lightData3 = texelFetch(lightsTexture, lightDataCoords + ivec2(3, 0), 0);\n				spotLight.color = lightData1.xyz;\n				spotLight.decay = lightData1.w;\n				spotLight.position = lightData2.xyz;\n				spotLight.distance = lightData2.w;\n				spotLight.direction = lightData3.xyz;\n				spotLight.coneCos = lightData3.w;\n				spotLight.penumbraCos = lightData0.y;\n		}\n#endif";
 
 	var alphamap_pars_frag = "#ifdef USE_ALPHA_MAP\n\tuniform sampler2D alphaMap;\n\tvarying vec2 vAlphaMapUV;\n#endif";
 
@@ -15377,12 +15363,9 @@
 				program.dispose(this._gl);
 			}
 		}
-		generateProps(material, object, renderStates) {
+		generateProps(material, object, lightingState, renderStates) {
 			const state = this._state;
 			const capabilities = this._capabilities;
-			const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
-			const hasLighting = lightingGroup.isValid();
-			const hasShadows = hasLighting && lightingGroup.shadowsNum > 0 && object.receiveShadow;
 			const fog = material.fog ? renderStates.scene.fog : null;
 			const envMap = material.envMap !== undefined ? material.envMap || renderStates.scene.environment : null;
 			const logarithmicDepthBuffer = renderStates.scene.logarithmicDepthBuffer;
@@ -15445,17 +15428,7 @@
 
 			// lights
 
-			props.useAmbientLight = hasLighting && lightingGroup.useAmbient;
-			props.useSphericalHarmonicsLight = hasLighting && lightingGroup.useSphericalHarmonics;
-			props.hemisphereLightNum = hasLighting ? lightingGroup.hemisNum : 0;
-			props.directLightNum = hasLighting ? lightingGroup.directsNum : 0;
-			props.pointLightNum = hasLighting ? lightingGroup.pointsNum : 0;
-			props.spotLightNum = hasLighting ? lightingGroup.spotsNum : 0;
-			props.rectAreaLightNum = hasLighting ? lightingGroup.rectAreaNum : 0;
-			props.directShadowNum = hasShadows ? lightingGroup.directShadowNum : 0;
-			props.pointShadowNum = hasShadows ? lightingGroup.pointShadowNum : 0;
-			props.spotShadowNum = hasShadows ? lightingGroup.spotShadowNum : 0;
-			props.useShadow = hasShadows;
+			lightingState.setProgramProps(props, object.receiveShadow);
 			props.useShadowSampler = capabilities.version >= 2 && !disableShadowSampler;
 			props.shadowType = object.shadowType;
 			if (!props.useShadowSampler && props.shadowType !== SHADOW_TYPE.HARD) {
@@ -15623,7 +15596,7 @@
 		props.useDiffuseMap ? '#define USE_DIFFUSE_MAP' : '', props.useAlphaMap ? '#define USE_ALPHA_MAP' : '', props.useEmissiveMap ? '#define USE_EMISSIVEMAP' : '', props.useAOMap ? '#define USE_AOMAP' : '', props.useNormalMap ? '#define USE_NORMAL_MAP' : '', props.useBumpMap ? '#define USE_BUMPMAP' : '', props.useSpecularMap ? '#define USE_SPECULARMAP' : '', props.useRoughnessMap ? '#define USE_ROUGHNESSMAP' : '', props.useMetalnessMap ? '#define USE_METALNESSMAP' : '', props.useGlossinessMap ? '#define USE_GLOSSINESSMAP' : '', props.useEnvMap ? '#define USE_ENV_MAP' : '', props.envMapCombine ? '#define ' + props.envMapCombine : '', props.useClearcoat ? '#define USE_CLEARCOAT' : '', props.useClearcoatMap ? '#define USE_CLEARCOATMAP' : '', props.useClearcoatRoughnessMap ? '#define USE_CLEARCOAT_ROUGHNESSMAP' : '', props.useClearcoatNormalMap ? '#define USE_CLEARCOAT_NORMALMAP' : '', props.activeMapCoords & 1 ? '#define USE_UV1' : '',
 		// lights
 
-		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '', props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '', props.useShadow ? '#define USE_SHADOW' : '', props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '', props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF3_SOFT ? '#define USE_PCF3_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF5_SOFT ? '#define USE_PCF5_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT ? '#define USE_PCSS16_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS_SOFT_SHADOW' : '', props.dithering ? '#define DITHERING' : '',
+		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '', props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '', props.useClusteredLights ? '#define USE_CLUSTERED_LIGHTS' : '', props.useShadow ? '#define USE_SHADOW' : '', props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '', props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF3_SOFT ? '#define USE_PCF3_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCF5_SOFT ? '#define USE_PCF5_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT ? '#define USE_PCSS16_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '', props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS_SOFT_SHADOW' : '', props.dithering ? '#define DITHERING' : '',
 		// encoding
 
 		ShaderChunk['encodings_pars_frag'], '#define GAMMA_FACTOR ' + props.gammaFactor, getTexelEncodingFunction('linearToOutputTexel', props.outputEncoding), getTexelDecodingFunction('mapTexelToLinear', props.diffuseMapEncoding), props.useEnvMap ? getTexelDecodingFunction('envMapTexelToLinear', props.envMapEncoding) : '', props.useEmissiveMap ? getTexelDecodingFunction('emissiveMapTexelToLinear', props.emissiveMapEncoding) : '',
@@ -17495,11 +17468,11 @@
 
 			return materialProperties;
 		}
-		updateProgram(material, object, renderStates, shaderCompileOptions) {
+		updateProgram(material, object, lightingState, renderStates, shaderCompileOptions) {
 			const programs = this._programs;
 			const vertexArrayBindings = this._vertexArrayBindings;
 			const materialProperties = this.get(material);
-			const props = programs.generateProps(material, object, renderStates);
+			const props = programs.generateProps(material, object, lightingState, renderStates);
 			const programCode = programs.generateProgramCode(props, material);
 			const programList = materialProperties.programList;
 			let targetProgram = findProgram(programList, programCode);
@@ -17709,6 +17682,567 @@
 		}
 	}
 
+	class WebGLClusteredLighting {
+		constructor(options) {
+			this.lightsTexture = new LightsTexture();
+			this.lightsTexture.initLights(options.maxClusterLights, options.useFloatPrecision ? PIXEL_TYPE.FLOAT : PIXEL_TYPE.HALF_FLOAT);
+			this.cellsTexture = new CellsTexture();
+			this.cellsTexture.initCells(options.gridDimensions, options.maxLightsPerCell);
+			this._zClip = options.zClip.clone();
+			this._cellsTextureEmpty = false;
+			this.cellsTransform = {
+				clips: [0, 0],
+				// near, far
+				factors: [0, 0, 0, 0],
+				// logFactor1, logFactor2, persp:tan(fov/2)|ortho:-height/2, aspect
+				perspective: true
+			};
+		}
+		dispose() {
+			this._cellsTextureEmpty = false;
+			this.cellsTexture.dispose();
+			this.lightsTexture.dispose();
+		}
+		setOptions(options) {
+			this.lightsTexture.updateLights(options.maxClusterLights, options.useFloatPrecision ? PIXEL_TYPE.FLOAT : PIXEL_TYPE.HALF_FLOAT);
+			this.cellsTexture.updateCells(options.gridDimensions, options.maxLightsPerCell);
+			this._zClip.copy(options.zClip);
+		}
+		update(lightingGroup, cameraData, lightsNeedsUpdate = true) {
+			this._updateCellsTransform(cameraData);
+			this.cellsTexture.resetLightIndices();
+			const cellsTable = this.cellsTexture.cellsInfo.table;
+			const cellsTransform = this.cellsTransform;
+			let lightIndicesWritten = false;
+			for (let i = 0; i < lightingGroup.pointsNum; i++) {
+				const pointLight = lightingGroup.point[i];
+				getPointLightBoundingSphere(pointLight, _lightSphere);
+				_lightSphere.center.applyMatrix4(cameraData.viewMatrix);
+				_lightSphere.center.z *= -1;
+				if (getCellsRange(_lightSphere, cellsTable, cellsTransform, _cellsRange)) {
+					lightIndicesWritten = this.cellsTexture.setLightIndex(_cellsRange, i) || lightIndicesWritten;
+					lightsNeedsUpdate && this.lightsTexture.setPointLight(i, pointLight);
+				}
+			}
+			for (let i = 0; i < lightingGroup.spotsNum; i++) {
+				const spotLight = lightingGroup.spot[i];
+				getSpotLightBoundingSphere(spotLight, _lightSphere);
+				_lightSphere.center.applyMatrix4(cameraData.viewMatrix);
+				_lightSphere.center.z *= -1;
+				if (getCellsRange(_lightSphere, cellsTable, cellsTransform, _cellsRange)) {
+					lightIndicesWritten = this.cellsTexture.setLightIndex(_cellsRange, i + lightingGroup.pointsNum) || lightIndicesWritten;
+					lightsNeedsUpdate && this.lightsTexture.setSpotLight(i + lightingGroup.pointsNum, spotLight);
+				}
+			}
+			lightIndicesWritten && lightsNeedsUpdate && this.lightsTexture.version++;
+			(lightIndicesWritten || !this._cellsTextureEmpty) && this.cellsTexture.version++;
+			this._cellsTextureEmpty = !lightIndicesWritten;
+		}
+		_updateCellsTransform(cameraData) {
+			const {
+				clips,
+				factors
+			} = this.cellsTransform;
+			this._zClip.toArray(clips);
+			clips[0] = clips[0] > 0 ? clips[0] : cameraData.near;
+			clips[1] = clips[1] > 0 ? clips[1] : cameraData.far;
+			const cz = this.cellsTexture.cellsInfo.table[2];
+			const _logFarNear = Math.log(clips[1] / clips[0]);
+			factors[0] = cz / _logFarNear;
+			factors[1] = -cz * Math.log(clips[0]) / _logFarNear;
+			const perspective = _isPerspectiveMatrix(cameraData.projectionMatrix);
+			const elements = cameraData.projectionMatrix.elements;
+			factors[2] = (perspective ? 1 : -1) / elements[5]; // persp: tan(fov / 2), ortho: -height / 2
+			factors[3] = elements[5] / elements[0]; // aspect: (width / height)
+
+			this.cellsTransform.perspective = perspective;
+		}
+	}
+	class CellsTexture extends Texture2D {
+		constructor() {
+			super();
+			this.format = PIXEL_FORMAT.RED;
+			this.type = PIXEL_TYPE.HALF_FLOAT;
+			this.magFilter = TEXTURE_FILTER.NEAREST;
+			this.minFilter = TEXTURE_FILTER.NEAREST;
+			this.generateMipmaps = false;
+			this.flipY = false;
+			this.unpackAlignment = 1;
+			this.cellsInfo = {
+				table: [],
+				maxLightsPerCell: 0,
+				textureSize: [],
+				dotData: []
+			};
+			this._counts = null;
+		}
+		initCells(cellTable, maxLightsPerCell) {
+			const numCells = cellTable.x * cellTable.y * cellTable.z;
+			const numPixels = numCells * maxLightsPerCell;
+
+			// TODO - better texture size calculation
+			let width = Math.ceil(Math.sqrt(numPixels));
+			width = Math.ceil(width / maxLightsPerCell) * maxLightsPerCell;
+			const height = Math.ceil(numPixels / width);
+			const data = new Uint16Array(width * height);
+			this.image = {
+				data,
+				width,
+				height
+			};
+			cellTable.toArray(this.cellsInfo.table);
+			this.cellsInfo.maxLightsPerCell = maxLightsPerCell;
+			this.cellsInfo.textureSize[0] = width;
+			this.cellsInfo.textureSize[1] = 1 / width;
+			this.cellsInfo.textureSize[2] = 1 / height;
+			this.cellsInfo.dotData[0] = maxLightsPerCell;
+			this.cellsInfo.dotData[1] = cellTable.x * cellTable.z * maxLightsPerCell;
+			this.cellsInfo.dotData[2] = cellTable.x * maxLightsPerCell;
+			this._counts = new Int32Array(numCells);
+		}
+		updateCells(cellTable, maxLightsPerCell) {
+			const cellsInfo = this.cellsInfo;
+			if (_vec3_1.fromArray(cellsInfo.table).equals(cellTable) && cellsInfo.maxLightsPerCell === maxLightsPerCell) {
+				return;
+			}
+			this.dispose();
+			this.initCells(cellTable, maxLightsPerCell);
+			this.version++;
+		}
+		resetLightIndices() {
+			this.image.data.fill(0);
+			this._counts.fill(0);
+		}
+		setLightIndex(cellsRange, index) {
+			const data = this.image.data;
+			const counts = this._counts;
+			const {
+				table,
+				maxLightsPerCell
+			} = this.cellsInfo;
+			const {
+				min,
+				max
+			} = cellsRange;
+			let needsUpdate = false;
+			for (let x = min.x; x <= max.x; x++) {
+				for (let z = min.z; z <= max.z; z++) {
+					for (let y = min.y; y <= max.y; y++) {
+						const idx = x + table[0] * (z + y * table[2]);
+						const count = counts[idx];
+						if (count < maxLightsPerCell) {
+							const offset = idx * maxLightsPerCell + count;
+							data[offset] = MathUtils.toHalfFloat(index + 1); // 0 is reserved for empty cell, so we offset by 1
+							counts[idx]++;
+							needsUpdate = true;
+						}
+					}
+				}
+			}
+			return needsUpdate;
+		}
+	}
+	class LightsTexture extends Texture2D {
+		constructor() {
+			super();
+			this.format = PIXEL_FORMAT.RGBA;
+			this.magFilter = TEXTURE_FILTER.NEAREST;
+			this.minFilter = TEXTURE_FILTER.NEAREST;
+			this.generateMipmaps = false;
+			this.flipY = false;
+		}
+		initLights(maxLights, type) {
+			const size = lightsTextureSize(maxLights);
+			const arrayType = type === PIXEL_TYPE.FLOAT ? Float32Array : Uint16Array;
+			const data = new arrayType(size * size * 4); // eslint-disable-line new-cap
+
+			this.image = {
+				data,
+				width: size,
+				height: size
+			};
+			this.type = type;
+		}
+		updateLights(maxLights, type) {
+			const size = lightsTextureSize(maxLights);
+			if (size === this.image.width && type === this.type) return;
+			this.dispose();
+			this.initLights(maxLights, type);
+			this.version++;
+		}
+		setPointLight(index, lightInfo) {
+			const data = this.image.data;
+			const halfFloat = this.type === PIXEL_TYPE.HALF_FLOAT;
+			const start = index * LIGHT_STRIDE * 4;
+			const {
+				color,
+				decay,
+				position,
+				distance
+			} = lightInfo;
+
+			// pixel 0 - R: lightType, G: -, B: -, A: -
+
+			data[start + 0 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(1) : 1;
+
+			// pixel 1 - R: color.r, G: color.g, B: color.b, A: decay
+
+			data[start + 1 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(color[0]) : color[0];
+			data[start + 1 * 4 + 1] = halfFloat ? MathUtils.toHalfFloat(color[1]) : color[1];
+			data[start + 1 * 4 + 2] = halfFloat ? MathUtils.toHalfFloat(color[2]) : color[2];
+			data[start + 1 * 4 + 3] = halfFloat ? MathUtils.toHalfFloat(decay) : decay;
+
+			// pixel 2 - R: position.x, G: position.y, B: position.z, A: distance
+
+			data[start + 2 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(position[0]) : position[0];
+			data[start + 2 * 4 + 1] = halfFloat ? MathUtils.toHalfFloat(position[1]) : position[1];
+			data[start + 2 * 4 + 2] = halfFloat ? MathUtils.toHalfFloat(position[2]) : position[2];
+			data[start + 2 * 4 + 3] = halfFloat ? MathUtils.toHalfFloat(distance) : distance;
+
+			// pixel 3 - R: -, G: -, B: -, A: -
+		}
+		setSpotLight(index, lightInfo) {
+			const data = this.image.data;
+			const halfFloat = this.type === PIXEL_TYPE.HALF_FLOAT;
+			const start = index * LIGHT_STRIDE * 4;
+			const {
+				color,
+				decay,
+				position,
+				distance,
+				direction,
+				coneCos,
+				penumbraCos
+			} = lightInfo;
+
+			// pixel 0 - R: lightType, G: penumbraCos, B: -, A: -
+
+			data[start + 0 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(2) : 2;
+			data[start + 0 * 4 + 1] = halfFloat ? MathUtils.toHalfFloat(penumbraCos) : penumbraCos;
+
+			// pixel 1 - R: color.r, G: color.g, B: color.b, A: decay
+
+			data[start + 1 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(color[0]) : color[0];
+			data[start + 1 * 4 + 1] = halfFloat ? MathUtils.toHalfFloat(color[1]) : color[1];
+			data[start + 1 * 4 + 2] = halfFloat ? MathUtils.toHalfFloat(color[2]) : color[2];
+			data[start + 1 * 4 + 3] = halfFloat ? MathUtils.toHalfFloat(decay) : decay;
+
+			// pixel 2 - R: position.x, G: position.y, B: position.z, A: distance
+
+			data[start + 2 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(position[0]) : position[0];
+			data[start + 2 * 4 + 1] = halfFloat ? MathUtils.toHalfFloat(position[1]) : position[1];
+			data[start + 2 * 4 + 2] = halfFloat ? MathUtils.toHalfFloat(position[2]) : position[2];
+			data[start + 2 * 4 + 3] = halfFloat ? MathUtils.toHalfFloat(distance) : distance;
+
+			// pixel 3 - R: direction.x, G: direction.y, B: direction.z, A: coneCos
+
+			data[start + 3 * 4 + 0] = halfFloat ? MathUtils.toHalfFloat(direction[0]) : direction[0];
+			data[start + 3 * 4 + 1] = halfFloat ? MathUtils.toHalfFloat(direction[1]) : direction[1];
+			data[start + 3 * 4 + 2] = halfFloat ? MathUtils.toHalfFloat(direction[2]) : direction[2];
+			data[start + 3 * 4 + 3] = halfFloat ? MathUtils.toHalfFloat(coneCos) : coneCos;
+		}
+	}
+	const LIGHT_STRIDE = 4;
+	const _lightSphere = new Sphere();
+	const _cellsRange = new Box3();
+	const _vec3_1 = new Vector3();
+	function getPointLightBoundingSphere(light, sphere) {
+		sphere.center.fromArray(light.position);
+		sphere.radius = light.distance;
+	}
+	function getSpotLightBoundingSphere(light, sphere) {
+		if (light.coneCos < 0.70710678118) {
+			// obtuse angle
+			_vec3_1.fromArray(light.direction).multiplyScalar(light.distance * light.coneCos);
+			sphere.center.fromArray(light.position).add(_vec3_1);
+			sphere.radius = light.distance * Math.sqrt(1 - light.coneCos * light.coneCos);
+		} else {
+			_vec3_1.fromArray(light.direction).multiplyScalar(light.distance / (light.coneCos * 2));
+			sphere.center.fromArray(light.position).add(_vec3_1);
+			sphere.radius = light.distance / (light.coneCos * 2);
+		}
+	}
+	function lightsTextureSize(maxLights) {
+		return Math.max(MathUtils.nextPowerOfTwo(Math.ceil(Math.sqrt(maxLights * LIGHT_STRIDE))), LIGHT_STRIDE);
+	}
+	function _isPerspectiveMatrix(m) {
+		return m.elements[11] === -1.0;
+	}
+	function getCellsRange(lightSphere, cellsTable, cellsTransform, cellsRange) {
+		const {
+			center,
+			radius
+		} = lightSphere;
+		const {
+			clips,
+			factors,
+			perspective
+		} = cellsTransform;
+		let zMin = center.z - radius;
+		const zMax = center.z + radius;
+		if (zMin > clips[1] || zMax < clips[0]) {
+			return false;
+		}
+		zMin = Math.max(zMin, clips[0]);
+		const zStart = Math.floor(Math.log(zMin) * factors[0] + factors[1]);
+		const zEnd = Math.min(Math.floor(Math.log(zMax) * factors[0] + factors[1]), cellsTable[2] - 1);
+		const halfFrustumHeight = (perspective ? Math.abs(center.z) : -1) * factors[2];
+		const invH = 1 / (2 * halfFrustumHeight);
+		const yMin = (center.y - radius) * invH + 0.5;
+		const yMax = (center.y + radius) * invH + 0.5;
+		if (yMin > 1 || yMax < 0) {
+			return false;
+		}
+		const yStart = Math.max(Math.floor(yMin * cellsTable[1]), 0);
+		const yEnd = Math.min(Math.floor(yMax * cellsTable[1]), cellsTable[1] - 1);
+		const halfFrustumWidth = halfFrustumHeight * factors[3];
+		const invW = 1 / (2 * halfFrustumWidth);
+		const xMin = (center.x - radius) * invW + 0.5;
+		const xMax = (center.x + radius) * invW + 0.5;
+		if (xMin > 1 || xMax < 0) {
+			return false;
+		}
+		const xStart = Math.max(Math.floor(xMin * cellsTable[0]), 0);
+		const xEnd = Math.min(Math.floor(xMax * cellsTable[0]), cellsTable[0] - 1);
+		cellsRange.min.set(xStart, yStart, zStart);
+		cellsRange.max.set(xEnd, yEnd, zEnd);
+		return true;
+	}
+
+	class WebGLLights extends PropertyMap {
+		constructor(prefix, capabilities, textures) {
+			super(prefix);
+			const that = this;
+			function onLightingGroupDispose(event) {
+				const lightingGroup = event.target;
+				const lightingProperties = that.get(lightingGroup);
+				lightingGroup.removeEventListener('dispose', onLightingGroupDispose);
+				if (lightingProperties.clustered) {
+					lightingProperties.clustered.dispose();
+				}
+				that.delete(lightingGroup);
+			}
+			this._onLightingGroupDispose = onLightingGroupDispose;
+			this._capabilities = capabilities;
+			this._textures = textures;
+		}
+		setLightingGroup(lightingGroup, passInfo, options, cameraData) {
+			const lightingProperties = this.get(lightingGroup);
+
+			// Skip early if this lighting group has been set in this pass.
+			if (lightingProperties.pass === passInfo.count) {
+				return lightingProperties;
+			}
+			lightingProperties.pass = passInfo.count;
+			if (lightingProperties.state === undefined) {
+				lightingGroup.addEventListener('dispose', this._onLightingGroupDispose);
+				lightingProperties.state = new LightingState();
+				lightingProperties.uploadVersion = 0;
+			}
+
+			// Skip early if this lighting group is empty
+			if (lightingGroup.totalNum === 0) {
+				return lightingProperties;
+			}
+			const clusteredOptions = options.clustered;
+			const clusteredEnabled = clusteredOptions.enabled;
+			let clusteredLightsChanged = false;
+			if (lightingProperties.lightingVersion !== lightingGroup.version || lightingProperties.clusteredEnabled !== clusteredEnabled) {
+				lightingProperties.state.update(lightingGroup, clusteredEnabled);
+				lightingProperties.uploadVersion++;
+				const hasClusteredLights = lightingProperties.state._factor[10] > 0;
+				lightingProperties.lightingVersion = lightingGroup.version;
+				lightingProperties.clusteredEnabled = clusteredEnabled;
+				lightingProperties.hasClusteredLights = hasClusteredLights;
+				clusteredLightsChanged = hasClusteredLights;
+
+				// prepare clustered lighting
+
+				if (hasClusteredLights && !lightingProperties.clustered) {
+					lightingProperties.clustered = new WebGLClusteredLighting(clusteredOptions);
+					lightingProperties.clusteredOptionVersion = clusteredOptions.version;
+				} else if (!clusteredEnabled && lightingProperties.clustered) {
+					lightingProperties.clustered.dispose();
+					delete lightingProperties.clustered;
+				}
+			}
+			if (lightingProperties.hasClusteredLights) {
+				if (lightingProperties.clusteredOptionVersion !== clusteredOptions.version) {
+					lightingProperties.clustered.setOptions(clusteredOptions);
+					lightingProperties.clusteredOptionVersion = clusteredOptions.version;
+					clusteredLightsChanged = true;
+				}
+				let cameraChanged = false;
+				if (lightingProperties.cameraId !== cameraData.id || lightingProperties.cameraVersion !== cameraData.version) {
+					lightingProperties.cameraId = cameraData.id;
+					lightingProperties.cameraVersion = cameraData.version;
+					cameraChanged = true;
+				}
+				if (clusteredLightsChanged || cameraChanged) {
+					lightingProperties.clustered.update(lightingGroup, cameraData, clusteredLightsChanged);
+				}
+			}
+			return lightingProperties;
+		}
+		uploadUniforms(program, lightingGroup, disableShadowSampler) {
+			const lightingGroupProperties = this.get(lightingGroup);
+			let refresh = false;
+			if (program.lightId !== lightingGroup.id || program.lightVersion !== lightingGroupProperties.uploadVersion) {
+				refresh = true;
+				program.lightId = lightingGroup.id;
+				program.lightVersion = lightingGroupProperties.uploadVersion;
+			}
+			const uniforms = program.getUniforms();
+			const capabilities = this._capabilities;
+			const textures = this._textures;
+			const lightingFactor = lightingGroupProperties.state._factor;
+			if (lightingFactor[0] && refresh) {
+				uniforms.set('u_AmbientLightColor', lightingGroup.ambient);
+			}
+			if (lightingFactor[1] && refresh) {
+				uniforms.set('u_SphericalHarmonicsLightData', lightingGroup.sh);
+			}
+			if (lightingFactor[2] > 0 && refresh) {
+				uniforms.set('u_Hemi', lightingGroup.hemisphere);
+			}
+			if (lightingFactor[3] > 0) {
+				if (refresh) uniforms.set('u_Directional', lightingGroup.directional);
+				if (lightingFactor[7] > 0) {
+					if (refresh) uniforms.set('u_DirectionalShadow', lightingGroup.directionalShadow);
+					if (uniforms.has('directionalShadowMap')) {
+						if (capabilities.version >= 2 && !disableShadowSampler) {
+							uniforms.set('directionalShadowMap', lightingGroup.directionalShadowDepthMap, textures);
+						} else {
+							uniforms.set('directionalShadowMap', lightingGroup.directionalShadowMap, textures);
+						}
+						uniforms.set('directionalShadowMatrix', lightingGroup.directionalShadowMatrix);
+					}
+					if (uniforms.has('directionalDepthMap')) {
+						uniforms.set('directionalDepthMap', lightingGroup.directionalShadowMap, textures);
+					}
+				}
+			}
+			if (lightingFactor[4] > 0) {
+				if (refresh) uniforms.set('u_Point', lightingGroup.point);
+				if (lightingFactor[8] > 0) {
+					if (refresh) uniforms.set('u_PointShadow', lightingGroup.pointShadow);
+					if (uniforms.has('pointShadowMap')) {
+						uniforms.set('pointShadowMap', lightingGroup.pointShadowMap, textures);
+						uniforms.set('pointShadowMatrix', lightingGroup.pointShadowMatrix);
+					}
+				}
+			}
+			if (lightingFactor[5] > 0) {
+				if (refresh) uniforms.set('u_Spot', lightingGroup.spot);
+				if (lightingFactor[9] > 0) {
+					if (refresh) uniforms.set('u_SpotShadow', lightingGroup.spotShadow);
+					if (uniforms.has('spotShadowMap')) {
+						if (capabilities.version >= 2 && !disableShadowSampler) {
+							uniforms.set('spotShadowMap', lightingGroup.spotShadowDepthMap, textures);
+						} else {
+							uniforms.set('spotShadowMap', lightingGroup.spotShadowMap, textures);
+						}
+						uniforms.set('spotShadowMatrix', lightingGroup.spotShadowMatrix);
+					}
+					if (uniforms.has('spotDepthMap')) {
+						uniforms.set('spotDepthMap', lightingGroup.spotShadowMap, textures);
+					}
+				}
+			}
+			if (lightingFactor[6] > 0) {
+				if (refresh) uniforms.set('u_RectArea', lightingGroup.rectArea);
+				if (lightingGroup.LTC1 && lightingGroup.LTC2) {
+					uniforms.set('ltc_1', lightingGroup.LTC1, textures);
+					uniforms.set('ltc_2', lightingGroup.LTC2, textures);
+				} else {
+					console.warn('WebGLRenderer: RectAreaLight.LTC1 and LTC2 need to be set before use.');
+				}
+			}
+			if (lightingFactor[10] > 0) {
+				const clusteredLighting = lightingGroupProperties.clustered;
+				const cellsInfo = clusteredLighting.cellsTexture.cellsInfo;
+				uniforms.set('maxLightsPerCell', cellsInfo.maxLightsPerCell);
+				uniforms.set('cells', cellsInfo.table);
+				uniforms.set('cellsDotData', cellsInfo.dotData);
+				uniforms.set('cellsTextureSize', cellsInfo.textureSize);
+				uniforms.set('cellsTransformFactors', clusteredLighting.cellsTransform.factors);
+				uniforms.set('lightsTexture', clusteredLighting.lightsTexture, textures);
+				uniforms.set('cellsTexture', clusteredLighting.cellsTexture, textures);
+			}
+		}
+	}
+	class LightingState {
+		constructor() {
+			this._factor = new Uint16Array(11);
+			this._totalNum = 0;
+			this._shadowsNum = 0;
+		}
+		update(lightingGroup, clusteredEnabled) {
+			const selfFactor = this._factor;
+			selfFactor[0] = lightingGroup.useAmbient ? 1 : 0;
+			selfFactor[1] = lightingGroup.useSphericalHarmonics ? 1 : 0;
+			selfFactor[2] = lightingGroup.hemisNum;
+			selfFactor[3] = lightingGroup.directsNum;
+			selfFactor[4] = lightingGroup.pointsNum;
+			selfFactor[5] = lightingGroup.spotsNum;
+			selfFactor[6] = lightingGroup.rectAreaNum;
+			selfFactor[7] = lightingGroup.directShadowNum;
+			selfFactor[8] = lightingGroup.pointShadowNum;
+			selfFactor[9] = lightingGroup.spotShadowNum;
+			selfFactor[10] = 0;
+			this._totalNum = lightingGroup.totalNum;
+			this._shadowsNum = lightingGroup.shadowsNum;
+			if (clusteredEnabled) {
+				const clusteredPointsNum = selfFactor[4] - selfFactor[8];
+				const clusteredSpotsNum = selfFactor[5] - selfFactor[9];
+				selfFactor[4] = selfFactor[8];
+				selfFactor[5] = selfFactor[9];
+				selfFactor[10] = clusteredPointsNum + clusteredSpotsNum > 0 ? 1 : 0;
+			}
+		}
+		compare(factor) {
+			if (!factor) {
+				return false;
+			}
+			const selfFactor = this._factor;
+			for (let i = 0, l = factor.length; i < l; i++) {
+				if (selfFactor[i] !== factor[i]) {
+					return false;
+				}
+			}
+			return true;
+		}
+		copyTo(factor) {
+			const selfFactor = this._factor;
+			if (!factor) {
+				factor = new selfFactor.constructor(this._factor.length);
+			}
+			factor.set(selfFactor);
+			return factor;
+		}
+		hasLight() {
+			return this._totalNum > 0;
+		}
+		hasShadow() {
+			return this._shadowsNum > 0;
+		}
+		setProgramProps(props, receiveShadow) {
+			const selfFactor = this._factor;
+			props.useAmbientLight = selfFactor[0];
+			props.useSphericalHarmonicsLight = selfFactor[1];
+			props.hemisphereLightNum = selfFactor[2];
+			props.directLightNum = selfFactor[3];
+			props.pointLightNum = selfFactor[4];
+			props.spotLightNum = selfFactor[5];
+			props.rectAreaLightNum = selfFactor[6];
+			props.directShadowNum = receiveShadow ? selfFactor[7] : 0;
+			props.pointShadowNum = receiveShadow ? selfFactor[8] : 0;
+			props.spotShadowNum = receiveShadow ? selfFactor[9] : 0;
+			props.useClusteredLights = selfFactor[10];
+			props.useShadow = this._shadowsNum > 0 && receiveShadow;
+		}
+	}
+
 	const helpVector4 = new Vector4();
 	const helpMatrix4 = new Matrix4();
 	const influencesList = new WeakMap();
@@ -17727,6 +18261,17 @@
 	}
 	function defaultIfRender(renderable) {
 		return true;
+	}
+	const _emptyLightingGroup = new LightingGroup();
+	function getLightingGroup(lighting, material) {
+		if (!material.acceptLight) {
+			return _emptyLightingGroup;
+		}
+		const lightingGroup = lighting.getGroup(material.lightingGroup);
+		if (lightingGroup && lightingGroup.totalNum > 0) {
+			return lightingGroup;
+		}
+		return _emptyLightingGroup;
 	}
 
 	/**
@@ -17752,6 +18297,7 @@
 			this._renderTargets = null;
 			this._buffers = null;
 			this._geometries = null;
+			this._lights = null;
 			this._programs = null;
 			this._materials = null;
 			this._state = null;
@@ -17780,6 +18326,7 @@
 			const buffers = new WebGLBuffers(prefix, gl, capabilities);
 			const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, gl, capabilities, buffers);
 			const geometries = new WebGLGeometries(prefix, gl, buffers, vertexArrayBindings);
+			const lights = new WebGLLights(prefix, capabilities, textures);
 			const programs = new WebGLPrograms(gl, state, capabilities);
 			const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
 			const queries = new WebGLQueries(prefix, gl, capabilities);
@@ -17789,6 +18336,7 @@
 			this._renderTargets = renderTargets;
 			this._buffers = buffers;
 			this._geometries = geometries;
+			this._lights = lights;
 			this._programs = programs;
 			this._materials = materials;
 			this._state = state;
@@ -17903,8 +18451,10 @@
 			const geometry = getGeometry.call(this, renderable);
 			const group = renderable.group;
 			const fog = material.fog ? sceneData.fog : null;
-			const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
-			const hasLighting = lightingGroup.isValid();
+			const lightingGroup = getLightingGroup(renderStates.lighting, material);
+			const lightingState = this._lights.setLightingGroup(lightingGroup, passInfo, this.lightingOptions, cameraData).state;
+			const hasLighting = lightingState.hasLight();
+			const hasShadow = lightingState.hasShadow() && object.receiveShadow;
 			_envData.map = material.envMap !== undefined ? material.envMap || sceneData.environment : null;
 			_envData.diffuse = sceneData.envDiffuseIntensity * material.envMapIntensity;
 			_envData.specular = sceneData.envSpecularIntensity * material.envMapIntensity;
@@ -17942,8 +18492,12 @@
 					if (hasLighting !== materialProperties.hasLighting) {
 						material.needsUpdate = true;
 					} else if (hasLighting) {
-						if (!lightingGroup.hash.compare(materialProperties.lightsHash) || object.receiveShadow !== materialProperties.receiveShadow || object.shadowType !== materialProperties.shadowType) {
+						if (!lightingState.compare(materialProperties.lightingFactors)) {
 							material.needsUpdate = true;
+						} else if (hasShadow !== materialProperties.hasShadow) {
+							material.needsUpdate = true;
+						} else if (hasShadow) {
+							material.needsUpdate = materialProperties.shadowType !== object.shadowType;
 						}
 					}
 				}
@@ -17952,13 +18506,13 @@
 			// Update program if needed.
 
 			if (material.needsUpdate) {
-				this._materials.updateProgram(material, object, renderStates, this.shaderCompileOptions);
+				this._materials.updateProgram(material, object, lightingState, renderStates, this.shaderCompileOptions);
 				materialProperties.fog = fog;
 				materialProperties.envMap = _envData.map;
 				materialProperties.logarithmicDepthBuffer = sceneData.logarithmicDepthBuffer;
 				materialProperties.hasLighting = hasLighting;
-				materialProperties.lightsHash = lightingGroup.hash.copyTo(materialProperties.lightsHash);
-				materialProperties.receiveShadow = object.receiveShadow;
+				materialProperties.lightingFactors = lightingState.copyTo(materialProperties.lightingFactors);
+				materialProperties.hasShadow = hasShadow;
 				materialProperties.shadowType = object.shadowType;
 				materialProperties.numClippingPlanes = numClippingPlanes;
 				materialProperties.outputEncoding = renderStates.outputEncoding;
@@ -17976,12 +18530,6 @@
 				this._updateMorphtargets(object, geometry, program);
 			}
 			vertexArrayBindings.setup(object, geometry, program);
-			let refreshLights = false;
-			if (program.lightId !== lightingGroup.id || program.lightVersion !== lightingGroup.version) {
-				refreshLights = true;
-				program.lightId = lightingGroup.id;
-				program.lightVersion = lightingGroup.version;
-			}
 			let refreshCamera = false;
 			if (program.cameraId !== cameraData.id || program.cameraVersion !== cameraData.version) {
 				refreshCamera = true;
@@ -18007,7 +18555,7 @@
 
 			// upload light uniforms
 			if (hasLighting) {
-				this._uploadLights(uniforms, lightingGroup, sceneData.disableShadowSampler, refreshLights);
+				this._lights.uploadUniforms(program, lightingGroup, sceneData.disableShadowSampler);
 			}
 
 			// upload bone matrices
@@ -18079,71 +18627,6 @@
 			textures.resetTextureUnits();
 			afterRender && afterRender.call(this, renderable);
 			object.onAfterRender(renderable);
-		}
-		_uploadLights(uniforms, lightingGroup, disableShadowSampler, refresh) {
-			const textures = this._textures;
-			if (lightingGroup.useAmbient && refresh) {
-				uniforms.set('u_AmbientLightColor', lightingGroup.ambient);
-			}
-			if (lightingGroup.useSphericalHarmonics && refresh) {
-				uniforms.set('u_SphericalHarmonicsLightData', lightingGroup.sh);
-			}
-			if (lightingGroup.hemisNum > 0 && refresh) {
-				uniforms.set('u_Hemi', lightingGroup.hemisphere);
-			}
-			if (lightingGroup.directsNum > 0) {
-				if (refresh) uniforms.set('u_Directional', lightingGroup.directional);
-				if (lightingGroup.directShadowNum > 0) {
-					if (refresh) uniforms.set('u_DirectionalShadow', lightingGroup.directionalShadow);
-					if (uniforms.has('directionalShadowMap')) {
-						if (this.capabilities.version >= 2 && !disableShadowSampler) {
-							uniforms.set('directionalShadowMap', lightingGroup.directionalShadowDepthMap, textures);
-						} else {
-							uniforms.set('directionalShadowMap', lightingGroup.directionalShadowMap, textures);
-						}
-						uniforms.set('directionalShadowMatrix', lightingGroup.directionalShadowMatrix);
-					}
-					if (uniforms.has('directionalDepthMap')) {
-						uniforms.set('directionalDepthMap', lightingGroup.directionalShadowMap, textures);
-					}
-				}
-			}
-			if (lightingGroup.pointsNum > 0) {
-				if (refresh) uniforms.set('u_Point', lightingGroup.point);
-				if (lightingGroup.pointShadowNum > 0) {
-					if (refresh) uniforms.set('u_PointShadow', lightingGroup.pointShadow);
-					if (uniforms.has('pointShadowMap')) {
-						uniforms.set('pointShadowMap', lightingGroup.pointShadowMap, textures);
-						uniforms.set('pointShadowMatrix', lightingGroup.pointShadowMatrix);
-					}
-				}
-			}
-			if (lightingGroup.spotsNum > 0) {
-				if (refresh) uniforms.set('u_Spot', lightingGroup.spot);
-				if (lightingGroup.spotShadowNum > 0) {
-					if (refresh) uniforms.set('u_SpotShadow', lightingGroup.spotShadow);
-					if (uniforms.has('spotShadowMap')) {
-						if (this.capabilities.version >= 2 && !disableShadowSampler) {
-							uniforms.set('spotShadowMap', lightingGroup.spotShadowDepthMap, textures);
-						} else {
-							uniforms.set('spotShadowMap', lightingGroup.spotShadowMap, textures);
-						}
-						uniforms.set('spotShadowMatrix', lightingGroup.spotShadowMatrix);
-					}
-					if (uniforms.has('spotDepthMap')) {
-						uniforms.set('spotDepthMap', lightingGroup.spotShadowMap, textures);
-					}
-				}
-			}
-			if (lightingGroup.rectAreaNum > 0) {
-				if (refresh) uniforms.set('u_RectArea', lightingGroup.rectArea);
-				if (lightingGroup.LTC1 && lightingGroup.LTC2) {
-					uniforms.set('ltc_1', lightingGroup.LTC1, textures);
-					uniforms.set('ltc_2', lightingGroup.LTC2, textures);
-				} else {
-					console.warn('WebGLRenderer: RectAreaLight.LTC1 and LTC2 need to be set before use.');
-				}
-			}
 		}
 		_uploadSkeleton(uniforms, object, sceneData) {
 			if (object.skeleton && object.skeleton.bones.length > 0) {
@@ -18353,21 +18836,21 @@
 				this.envDiffuseIntensity = value;
 			}
 		},
-		// deprecated since 0.3.2
+		// deprecated since 0.4.0
 		_lightData: {
 			configurable: true,
 			get: function () {
-				// console.warn('Scene: ._lightData has been deprecated, use ._lightingData.getGroup(0) instead.');
+				console.warn('Scene: ._lightData has been deprecated since v0.4.0, use ._lightingData.getGroup(0) instead.');
 				return this._lightingData.getGroup(0);
 			}
 		}
 	});
 	Object.defineProperties(RenderStates.prototype, {
-		// deprecated since 0.3.2
+		// deprecated since 0.4.0
 		lights: {
 			configurable: true,
 			get: function () {
-				// console.warn('RenderStates: .lights has been deprecated, use .lighting.getGroup(0) instead.');
+				console.warn('RenderStates: .lights has been deprecated since v0.4.0, use .lighting.getGroup(0) instead.');
 				return this.lighting.getGroup(0);
 			}
 		}

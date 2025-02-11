@@ -13,7 +13,7 @@ class LightingData {
 	}
 
 	getGroup(id) {
-		return this.groupList[id] || _emptyLightingGroup;
+		return this.groupList[id];
 	}
 
 	setMaxGroupCount(max) {
@@ -23,10 +23,13 @@ class LightingData {
 		const oldMax = groupList.length;
 
 		if (max < oldMax) {
+			for (let i = max; i < oldMax; i++) {
+				groupList[i].dispose();
+			}
 			groupList.length = max;
 		} else if (max > oldMax) {
 			for (let i = oldMax; i < max; i++) {
-				this.groupList.push(new LightingGroup());
+				groupList.push(new LightingGroup());
 			}
 		}
 	}
@@ -96,8 +99,6 @@ class LightingData {
 	}
 
 }
-
-const _emptyLightingGroup = new LightingGroup();
 
 function shadowCastingLightsFirst(lightA, lightB) {
 	const a = castShadow(lightA) ? 1 : 0;

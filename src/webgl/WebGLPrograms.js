@@ -58,13 +58,10 @@ class WebGLPrograms {
 		}
 	}
 
-	generateProps(material, object, renderStates) {
+	generateProps(material, object, lightingState, renderStates) {
 		const state = this._state;
 		const capabilities = this._capabilities;
 
-		const lightingGroup = renderStates.lighting.getGroup(material.acceptLight ? material.lightingGroup : -1);
-		const hasLighting = lightingGroup.isValid();
-		const hasShadows = hasLighting && (lightingGroup.shadowsNum > 0) && object.receiveShadow;
 		const fog = material.fog ? renderStates.scene.fog : null;
 		const envMap = material.envMap !== undefined ? (material.envMap || renderStates.scene.environment) : null;
 		const logarithmicDepthBuffer = renderStates.scene.logarithmicDepthBuffer;
@@ -137,22 +134,14 @@ class WebGLPrograms {
 
 		// lights
 
-		props.useAmbientLight = hasLighting && lightingGroup.useAmbient;
-		props.useSphericalHarmonicsLight = hasLighting && lightingGroup.useSphericalHarmonics;
-		props.hemisphereLightNum = hasLighting ? lightingGroup.hemisNum : 0;
-		props.directLightNum = hasLighting ? lightingGroup.directsNum : 0;
-		props.pointLightNum = hasLighting ? lightingGroup.pointsNum : 0;
-		props.spotLightNum = hasLighting ? lightingGroup.spotsNum : 0;
-		props.rectAreaLightNum = hasLighting ? lightingGroup.rectAreaNum : 0;
-		props.directShadowNum = hasShadows ? lightingGroup.directShadowNum : 0;
-		props.pointShadowNum = hasShadows ? lightingGroup.pointShadowNum : 0;
-		props.spotShadowNum = hasShadows ? lightingGroup.spotShadowNum : 0;
-		props.useShadow = hasShadows;
+		lightingState.setProgramProps(props, object.receiveShadow);
+
 		props.useShadowSampler = capabilities.version >= 2 && !disableShadowSampler;
 		props.shadowType = object.shadowType;
 		if (!props.useShadowSampler && props.shadowType !== SHADOW_TYPE.HARD) {
 			props.shadowType = SHADOW_TYPE.POISSON_SOFT;
 		}
+
 		props.dithering = material.dithering;
 
 		// encoding
@@ -438,6 +427,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 
 		props.useAmbientLight ? '#define USE_AMBIENT_LIGHT' : '',
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
+		props.useClusteredLights ? '#define USE_CLUSTERED_LIGHTS' : '',
 		props.useShadow ? '#define USE_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '',
 		props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '',

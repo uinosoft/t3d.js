@@ -1,5 +1,7 @@
 import { ShaderLib, ShaderChunk, PBRMaterial, MATERIAL_TYPE } from 't3d';
 
+console.warn('ClusteredLightingPBRMaterial is deprecated since v0.4.0, use renderer.lightingOptions to enable clustered lighting instead.');
+
 class ClusteredLightingPBRMaterial extends PBRMaterial {
 
 	constructor(sourceMaterial) {
@@ -48,7 +50,7 @@ const clusterlight_pars_frag = `
 		float distance;
 		float decay;
 	};
-	
+
 	struct ClusteredSpotLight {
 		vec3 position;
 		vec3 color;

@@ -1,66 +1,28 @@
-import { PIXEL_TYPE, PIXEL_FORMAT, Texture2D, TEXTURE_FILTER, MathUtils, Sphere, Box3, Vector3 } from 't3d';
+import { PIXEL_TYPE, PIXEL_FORMAT, TEXTURE_FILTER } from '../const.js';
+import { Texture2D } from '../resources/textures/Texture2D.js';
+import { MathUtils } from '../math/MathUtils.js';
+import { Sphere } from '../math/Sphere.js';
+import { Box3 } from '../math/Box3.js';
+import { Vector3 } from '../math/Vector3.js';
 
-console.warn('ClusteredLightingManager is deprecated since v0.4.0, use renderer.lightingOptions to enable clustered lighting instead.');
+class WebGLClusteredLighting {
 
-/**
- * ClusteredLightingManager.
- * Supports point and spot lights.
- */
-class ClusteredLightingManager {
-
-	/**
-	 * Constructs a new ClusteredLightingManager.
-	 * @param {Object} [options] - The options.
-	 * @param {Number} [options.maxLights=256] - The maximum number of lights.
-	 * @param {Boolean} [options.floatLights=false] - Whether the lights are stored as floats.
-	 * @param {Number[]} [options.cells=[16, 8, 32]] - The number of cells in each dimension.
-	 * @param {Number} [options.maxLightsPerCell=256] - The maximum number of lights per cell.
-	 * @param {Number} [options.clipNear=-1] - The near clipping plane for the cells.
-	 * @param {Number} [options.clipFar=-1] - The far clipping plane for the cells.
-	 */
-	constructor({
-		maxLights = 256,
-		floatLights = false,
-		cells = [16, 8, 32],
-		maxLightsPerCell = 256,
-		clipNear = -1,
-		clipFar = -1
-	}) {
-		this.lightsTexture = new LightsTexture(maxLights, floatLights ? PIXEL_TYPE.FLOAT : PIXEL_TYPE.HALF_FLOAT);
+	constructor(options) {
+		this.lightsTexture = new LightsTexture();
+		this.lightsTexture.initLights(options.maxClusterLights, options.useFloatPrecision ? PIXEL_TYPE.FLOAT : PIXEL_TYPE.HALF_FLOAT);
 
 		this.cellsTexture = new CellsTexture();
-		this.cellsTexture.initCells(cells, maxLightsPerCell);
+		this.cellsTexture.initCells(options.gridDimensions, options.maxLightsPerCell);
 
-		this.clipNear = clipNear;
-		this.clipFar = clipFar;
+		this._zClip = options.zClip.clone();
 
 		this._cellsTextureEmpty = false;
 
-		this._cellsTransform = {
+		this.cellsTransform = {
 			clips: [0, 0], // near, far
 			factors: [0, 0, 0, 0], // logFactor1, logFactor2, persp:tan(fov/2)|ortho:-height/2, aspect
 			perspective: true
 		};
-	}
-
-	get cells() {
-		return this.cellsTexture.cellsInfo.table;
-	}
-
-	get maxLightsPerCell() {
-		return this.cellsTexture.cellsInfo.maxLightsPerCell;
-	}
-
-	get cellsDotData() {
-		return this.cellsTexture.cellsInfo.dotData;
-	}
-
-	get cellsTextureSize() {
-		return this.cellsTexture.cellsInfo.textureSize;
-	}
-
-	get cellsTransformFactors() {
-		return this._cellsTransform.factors;
 	}
 
 	dispose() {
@@ -69,13 +31,19 @@ class ClusteredLightingManager {
 		this.lightsTexture.dispose();
 	}
 
-	update(cameraData, lightingGroup, lightsNeedsUpdate = true) {
+	setOptions(options) {
+		this.lightsTexture.updateLights(options.maxClusterLights, options.useFloatPrecision ? PIXEL_TYPE.FLOAT : PIXEL_TYPE.HALF_FLOAT);
+		this.cellsTexture.updateCells(options.gridDimensions, options.maxLightsPerCell);
+		this._zClip.copy(options.zClip);
+	}
+
+	update(lightingGroup, cameraData, lightsNeedsUpdate = true) {
 		this._updateCellsTransform(cameraData);
 
 		this.cellsTexture.resetLightIndices();
 
 		const cellsTable = this.cellsTexture.cellsInfo.table;
-		const cellsTransform = this._cellsTransform;
+		const cellsTransform = this.cellsTransform;
 
 		let lightIndicesWritten = false;
 
@@ -112,19 +80,17 @@ class ClusteredLightingManager {
 	}
 
 	_updateCellsTransform(cameraData) {
-		const { clips, factors } = this._cellsTransform;
+		const { clips, factors } = this.cellsTransform;
 
-		const fixedNear = this.clipNear > 0 ? this.clipNear : cameraData.near,
-			fixedFar = this.clipFar > 0 ? this.clipFar : cameraData.far;
-
-		clips[0] = fixedNear;
-		clips[1] = fixedFar;
+		this._zClip.toArray(clips);
+		clips[0] = clips[0] > 0 ? clips[0] : cameraData.near;
+		clips[1] = clips[1] > 0 ? clips[1] : cameraData.far;
 
 		const cz = this.cellsTexture.cellsInfo.table[2];
 
-		const _logFarNear = Math.log(fixedFar / fixedNear);
+		const _logFarNear = Math.log(clips[1] / clips[0]);
 		factors[0] = cz / _logFarNear;
-		factors[1] = -cz * Math.log(fixedNear) / _logFarNear;
+		factors[1] = -cz * Math.log(clips[0]) / _logFarNear;
 
 		const perspective = _isPerspectiveMatrix(cameraData.projectionMatrix);
 		const elements = cameraData.projectionMatrix.elements;
@@ -132,7 +98,7 @@ class ClusteredLightingManager {
 		factors[2] = (perspective ? 1 : -1) / elements[5]; // persp: tan(fov / 2), ortho: -height / 2
 		factors[3] = elements[5] / elements[0]; // aspect: (width / height)
 
-		this._cellsTransform.perspective = perspective;
+		this.cellsTransform.perspective = perspective;
 	}
 
 }
@@ -162,7 +128,7 @@ class CellsTexture extends Texture2D {
 	}
 
 	initCells(cellTable, maxLightsPerCell) {
-		const numCells = cellTable[0] * cellTable[1] * cellTable[2];
+		const numCells = cellTable.x * cellTable.y * cellTable.z;
 		const numPixels = numCells * maxLightsPerCell;
 
 		// TODO - better texture size calculation
@@ -174,9 +140,7 @@ class CellsTexture extends Texture2D {
 
 		this.image = { data, width, height };
 
-		this.cellsInfo.table[0] = cellTable[0];
-		this.cellsInfo.table[1] = cellTable[1];
-		this.cellsInfo.table[2] = cellTable[2];
+		cellTable.toArray(this.cellsInfo.table);
 
 		this.cellsInfo.maxLightsPerCell = maxLightsPerCell;
 
@@ -185,13 +149,18 @@ class CellsTexture extends Texture2D {
 		this.cellsInfo.textureSize[2] = 1 / height;
 
 		this.cellsInfo.dotData[0] = maxLightsPerCell;
-		this.cellsInfo.dotData[1] = cellTable[0] * cellTable[2] * maxLightsPerCell;
-		this.cellsInfo.dotData[2] = cellTable[0] * maxLightsPerCell;
+		this.cellsInfo.dotData[1] = cellTable.x * cellTable.z * maxLightsPerCell;
+		this.cellsInfo.dotData[2] = cellTable.x * maxLightsPerCell;
 
 		this._counts = new Int32Array(numCells);
 	}
 
 	updateCells(cellTable, maxLightsPerCell) {
+		const cellsInfo = this.cellsInfo;
+		if (_vec3_1.fromArray(cellsInfo.table).equals(cellTable) && cellsInfo.maxLightsPerCell === maxLightsPerCell) {
+			return;
+		}
+
 		this.dispose();
 		this.initCells(cellTable, maxLightsPerCell);
 		this.version++;
@@ -232,20 +201,32 @@ class CellsTexture extends Texture2D {
 
 class LightsTexture extends Texture2D {
 
-	constructor(maxLights = 256, type = PIXEL_TYPE.HALF_FLOAT) {
+	constructor() {
 		super();
 
-		const size = Math.max(textureSize(maxLights * LIGHT_STRIDE), LIGHT_STRIDE);
-		const arrayType = type === PIXEL_TYPE.FLOAT ? Float32Array : Uint16Array;
-		const data = new arrayType(size * size * 4); // eslint-disable-line new-cap
-
-		this.image = { data, width: size, height: size };
 		this.format = PIXEL_FORMAT.RGBA;
-		this.type = type;
 		this.magFilter = TEXTURE_FILTER.NEAREST;
 		this.minFilter = TEXTURE_FILTER.NEAREST;
 		this.generateMipmaps = false;
 		this.flipY = false;
+	}
+
+	initLights(maxLights, type) {
+		const size = lightsTextureSize(maxLights);
+		const arrayType = type === PIXEL_TYPE.FLOAT ? Float32Array : Uint16Array;
+		const data = new arrayType(size * size * 4); // eslint-disable-line new-cap
+
+		this.image = { data, width: size, height: size };
+		this.type = type;
+	}
+
+	updateLights(maxLights, type) {
+		const size = lightsTextureSize(maxLights);
+		if (size === this.image.width && type === this.type) return;
+
+		this.dispose();
+		this.initLights(maxLights, type);
+		this.version++;
 	}
 
 	setPointLight(index, lightInfo) {
@@ -335,8 +316,8 @@ function getSpotLightBoundingSphere(light, sphere) {
 	}
 }
 
-function textureSize(pixelCount) {
-	return MathUtils.nextPowerOfTwo(Math.ceil(Math.sqrt(pixelCount)));
+function lightsTextureSize(maxLights) {
+	return Math.max(MathUtils.nextPowerOfTwo(Math.ceil(Math.sqrt(maxLights * LIGHT_STRIDE))), LIGHT_STRIDE);
 }
 
 function _isPerspectiveMatrix(m) {
@@ -389,4 +370,4 @@ function getCellsRange(lightSphere, cellsTable, cellsTransform, cellsRange) {
 	return true;
 }
 
-export { ClusteredLightingManager };
+export { WebGLClusteredLighting };

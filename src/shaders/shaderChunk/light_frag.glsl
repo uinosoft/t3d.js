@@ -201,6 +201,89 @@ float clearcoatDHR;
     #pragma unroll_loop_end
 #endif
 
+#ifdef USE_CLUSTERED_LIGHTS
+    vec4 positionView = u_View * vec4(v_modelPos, 1.0);
+
+    float perspectiveFactor = step(0.0, cellsTransformFactors.z);
+    float halfFrustumHeight = -cellsTransformFactors.z * mix(1.0, positionView.z, perspectiveFactor);
+    float halfFrustumWidth = halfFrustumHeight * cellsTransformFactors.w;
+
+    vec3 cellCoords;
+    cellCoords.z = floor(log(-positionView.z) * cellsTransformFactors.x + cellsTransformFactors.y);
+    cellCoords.y = floor((positionView.y / (2.0 * halfFrustumHeight) + 0.5) * cells.y);
+    cellCoords.x = floor((positionView.x / (2.0 * halfFrustumWidth) + 0.5) * cells.x);
+
+    if(!(any(lessThan(cellCoords, vec3(0.0))) || any(greaterThanEqual(cellCoords, cells)))) {
+        float cellIndex = dot(cellsDotData, cellCoords);
+        float clusterV = floor(cellIndex * cellsTextureSize.y);
+        float clusterU = cellIndex - (clusterV * cellsTextureSize.x);
+
+        int size = textureSize(lightsTexture, 0).x;
+
+        ClusteredPointLight clusteredPointLight;
+        ClusteredSpotLight clusteredSpotLight;
+
+        vec3 clusteredLightColor;
+        float clusteredLightDistance;
+        float clusteredAngleCos;
+
+        for (int lightCellIndex = 0; lightCellIndex < maxLightsPerCell; lightCellIndex++) {
+            float lightIndex = texelFetch(cellsTexture, ivec2(int(clusterU) + lightCellIndex, clusterV), 0).x;
+
+            if (lightIndex <= 0.0) break;
+
+            int lightOffset = int(lightIndex - 1.) * 4;
+            ivec2 lightDataCoords = ivec2(lightOffset % size, lightOffset / size);
+
+            vec4 lightData0 = texelFetch(lightsTexture, lightDataCoords, 0);
+
+            if (lightData0.x == 1.0) {
+                getPointLightFromTexture(lightDataCoords, lightData0, clusteredPointLight);
+                L = clusteredPointLight.position - v_modelPos;
+                clusteredLightDistance = length(L);
+                L = normalize(L);
+
+                falloff = pow(clamp(1. - clusteredLightDistance / clusteredPointLight.distance, 0.0, 1.0), clusteredPointLight.decay);
+
+                clusteredLightColor = clusteredPointLight.color;
+            } else if (lightData0.x == 2.0) {
+                getSpotLightFromTexture(lightDataCoords, lightData0, clusteredSpotLight);
+                L = clusteredSpotLight.position - v_modelPos;
+                clusteredLightDistance = length(L);
+                L = normalize(L);
+
+                clusteredAngleCos = dot(L, -normalize(clusteredSpotLight.direction));
+                falloff = smoothstep(clusteredSpotLight.coneCos, clusteredSpotLight.penumbraCos, clusteredAngleCos);
+                falloff *= pow(clamp(1. - clusteredLightDistance / clusteredSpotLight.distance, 0.0, 1.0), clusteredSpotLight.decay);
+
+                clusteredLightColor = clusteredSpotLight.color;
+            }
+
+            dotNL = saturate(dot(N, L));
+            irradiance = clusteredLightColor * falloff * dotNL * PI;
+
+            #ifdef USE_CLEARCOAT
+                ccDotNL = saturate(dot(clearcoatNormal, L));
+                ccIrradiance = ccDotNL * clusteredLightColor * falloff * PI;
+                clearcoatDHR = clearcoat * clearcoatDHRApprox(clearcoatRoughness, ccDotNL);
+                reflectedLight.directSpecular += ccIrradiance * clearcoat * BRDF_Specular_GGX(specularColor, clearcoatNormal, L, V, clearcoatRoughness);
+            #else
+                clearcoatDHR = 0.0;
+            #endif
+
+            reflectedLight.directDiffuse += (1.0 - clearcoatDHR) * irradiance * BRDF_Diffuse_Lambert(diffuseColor);
+
+            #ifdef USE_PHONG
+                reflectedLight.directSpecular += irradiance * BRDF_Specular_BlinnPhong(specularColor, N, L, V, shininess) * specularStrength;
+            #endif
+
+            #ifdef USE_PBR
+                reflectedLight.directSpecular += (1.0 - clearcoatDHR) * irradiance * BRDF_Specular_GGX(specularColor, N, L, V, roughness);
+            #endif
+        }
+    }
+#endif
+
 vec3 indirectIrradiance = vec3(0., 0., 0.);   
 
 #ifdef USE_AMBIENT_LIGHT

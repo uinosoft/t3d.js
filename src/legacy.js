@@ -69,22 +69,22 @@ Object.defineProperties(Scene.prototype, {
 			this.envDiffuseIntensity = value;
 		}
 	},
-	// deprecated since 0.3.2
+	// deprecated since 0.4.0
 	_lightData: {
 		configurable: true,
 		get: function() {
-			// console.warn('Scene: ._lightData has been deprecated, use ._lightingData.getGroup(0) instead.');
+			console.warn('Scene: ._lightData has been deprecated since v0.4.0, use ._lightingData.getGroup(0) instead.');
 			return this._lightingData.getGroup(0);
 		}
 	}
 });
 
 Object.defineProperties(RenderStates.prototype, {
-	// deprecated since 0.3.2
+	// deprecated since 0.4.0
 	lights: {
 		configurable: true,
 		get: function() {
-			// console.warn('RenderStates: .lights has been deprecated, use .lighting.getGroup(0) instead.');
+			console.warn('RenderStates: .lights has been deprecated since v0.4.0, use .lighting.getGroup(0) instead.');
 			return this.lighting.getGroup(0);
 		}
 	}

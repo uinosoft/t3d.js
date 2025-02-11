@@ -1,3 +1,6 @@
+import { Vector3 } from '../math/Vector3.js';
+import { Vector2 } from '../math/Vector2.js';
+
 let _rendererId = 0;
 
 /**
@@ -35,6 +38,30 @@ class ThinRenderer {
 			checkErrors: true,
 			compileAsynchronously: false,
 			maxMaterialPrograms: 5
+		};
+
+		/**
+		 * The lighting options.
+		 * @type {Object}
+		 * @property {Object} clustered - The clustered lighting options.
+		 * @property {Boolean} clustered.enabled - Whether to use clustered lighting, defaults to false.
+		 * @property {Number} clustered.maxClusterLights - The maximum number of lights, defaults to 1024.
+		 * @property {Boolean} clustered.useFloatPrecision - Whether the lights are stored as floats, defaults to false (half floats).
+		 * @property {Vector3} clustered.gridDimensions - The number of cells in each dimension, defaults to Vector3(16, 8, 32).
+		 * @property {Number} clustered.maxLightsPerCell - The maximum number of lights per cell, defaults to 256.
+		 * @property {Vector2} clustered.zClip - The near and far clipping planes for the cells, defaults to Vector2(-1, -1) (clip based on camera near and far planes).
+		 * @property {Number} clustered.version - The version of the clustered lighting options. If the options change, the version should be incremented, defaults to 0.
+		 */
+		this.lightingOptions = {
+			clustered: {
+				enabled: false,
+				maxClusterLights: 1024,
+				useFloatPrecision: false,
+				gridDimensions: new Vector3(16, 8, 32),
+				maxLightsPerCell: 256,
+				zClip: new Vector2(-1, -1),
+				version: 0
+			}
 		};
 
 		/**

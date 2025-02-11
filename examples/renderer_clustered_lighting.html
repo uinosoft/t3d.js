@@ -32,8 +32,7 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
-		import { ClusteredLightingManager } from 't3d/addons/render/ClusteredLightingManager.js';
-		import { ClusteredLightingPBRMaterial } from 't3d/addons/materials/ClusteredLightingPBRMaterial.js';
+		import { ClusteredDebugShader } from 't3d/addons/shaders/ClusteredDebugShader.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
 
@@ -81,7 +80,7 @@
 
 		// Create meshes
 
-		const meshMaterial = new ClusteredLightingPBRMaterial();
+		const meshMaterial = new t3d.PBRMaterial();
 		meshMaterial.diffuse.setRGB(1, 1, 1);
 		meshMaterial.roughness = 0.2;
 		meshMaterial.metalness = 0.8;
@@ -107,7 +106,7 @@
 		// Create plane
 
 		const planeGeometry = new t3d.PlaneGeometry(1500, 1500);
-		const planeMaterial = new ClusteredLightingPBRMaterial();
+		const planeMaterial = new t3d.PBRMaterial();
 		planeMaterial.diffuse.setHex(0x555555);
 		planeMaterial.roughness = 0.6;
 		planeMaterial.metalness = 0.4;
@@ -173,11 +172,13 @@
 			}
 		}
 
-		const clustersManager = new ClusteredLightingManager({
-			maxLights: maxLightCount,
-			maxLightsPerCell: 255,
-			floatLights: false
-		});
+		// Prepare clustered lighting
+
+		const clusteredOptions = renderer.lightingOptions.clustered;
+		clusteredOptions.enabled = true;
+		clusteredOptions.maxClusterLights = maxLightCount;
+		clusteredOptions.gridDimensions.set(16, 8, 32);
+		clusteredOptions.maxLightsPerCell = 256;
 
 		const cellsTableMap = {
 			'8-4-16': [8, 4, 16],
@@ -190,7 +191,6 @@
 			renderMode: 'Forward+',
 			rotate: true,
 			lightHelpers: true,
-			maxLightsPerCell: 256,
 			cellsTable: cellsTableMap['16-8-32']
 		};
 
@@ -211,6 +211,9 @@
 			}
 
 			lightCountControl.updateDisplay();
+
+			clusteredOptions.enabled = value !== 'Forward';
+			clusteredOptions.version++;
 		});
 		gui.add(params, 'rotate');
 		gui.add(params, 'lightHelpers').onChange(function(value) {
@@ -219,13 +222,15 @@
 			}
 		});
 		
-		const advancedFolder = gui.addFolder('Advanced').close();
-		advancedFolder.add(clustersManager, 'clipFar', -1, 3000, 0.01);
-		const cellsDebugFolder = advancedFolder.addFolder('Cells').onChange(() => {
-			clustersManager.cellsTexture.updateCells(params.cellsTable, params.maxLightsPerCell);
+		const advancedFolder = gui.addFolder('Advanced').close().onChange(() => {
+			clusteredOptions.version++;
 		});
-		cellsDebugFolder.add(params, 'maxLightsPerCell', [8, 16, 32, 64, 128, 256]);
-		cellsDebugFolder.add(params, 'cellsTable', cellsTableMap);
+		advancedFolder.add(clusteredOptions.zClip, 'y', -1, 3000, 0.01).name('clipFar');
+		const cellsDebugFolder = advancedFolder.addFolder('Cells');
+		cellsDebugFolder.add(clusteredOptions, 'maxLightsPerCell', [8, 16, 32, 64, 128, 256]);
+		cellsDebugFolder.add(params, 'cellsTable', cellsTableMap).onChange(() => {
+			clusteredOptions.gridDimensions.fromArray(params.cellsTable);
+		});
 
 		//
 
@@ -237,35 +242,13 @@
 		let queryInProgress = false, timer = 0;
 		const timerElapsedQuery = new t3d.Query(), supportTimerQuery = !!renderer.capabilities.timerQuery;
 
+		const clusteredDebugMaterial = new t3d.ShaderMaterial(ClusteredDebugShader);
+		clusteredDebugMaterial.acceptLight = true;
 		const renderOptions = {
-			getMaterial(renderable) {
+			getMaterial: function(renderable) {
 				const material = renderable.material;
-				if (material.shaderName === 'ClusteredLightingPBR') {
-					const useClusterLighting = params.renderMode !== 'Forward';
-					if (material.defines.CLUSTER_LIGHT !== useClusterLighting) {
-						material.defines.CLUSTER_LIGHT = useClusterLighting;
-						material.needsUpdate = true;
-					}
-		
-					const clusterDebug = params.renderMode === 'Forward+Debug';
-					if (material.defines.CLUSTER_DEBUG !== clusterDebug) {
-						material.defines.CLUSTER_DEBUG = clusterDebug;
-						material.needsUpdate = true;
-					}
-		
-					material.uniforms.maxLightsPerCell = clustersManager.maxLightsPerCell;
-
-					if (!material._linkedUniforms) {
-						material.uniforms.cells = clustersManager.cells;
-						material.uniforms.cellsDotData = clustersManager.cellsDotData;
-						material.uniforms.cellsTextureSize = clustersManager.cellsTextureSize;
-						material.uniforms.cellsTransformFactors = clustersManager.cellsTransformFactors;
-		
-						material.uniforms.cellsTexture = clustersManager.cellsTexture;
-						material.uniforms.lightsTexture = clustersManager.lightsTexture;
-
-						material._linkedUniforms = true;
-					}
+				if (material.acceptLight && params.renderMode === 'Forward+Debug') {
+					return clusteredDebugMaterial;
 				}
 				return material;
 			}
@@ -292,21 +275,6 @@
 			scene.updateMatrix();
 			const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 			const renderStates = scene.updateRenderStates(camera);
-
-			if (params.renderMode !== 'Forward') {
-				const lightingGroup = renderStates.lighting.getGroup(0);
-				const cameraData = renderStates.camera;
-
-				clustersManager.update(cameraData, lightingGroup, true);
-
-				// remove point and spot lights from lighting group
-				lightingGroup.totalNum -= lightingGroup.pointsNum;
-				lightingGroup.totalNum -= lightingGroup.spotsNum;
-				lightingGroup.pointsNum = 0;
-				lightingGroup.spotsNum = 0;
-				lightingGroup.hash._factor[4] = 0;
-				lightingGroup.hash._factor[5] = 0;
-			}
 
 			if (supportTimerQuery && !queryInProgress) {
 				renderer.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);

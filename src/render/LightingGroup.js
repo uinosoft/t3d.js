@@ -1,10 +1,13 @@
 import { Vector3 } from '../math/Vector3.js';
 import { Matrix4 } from '../math/Matrix4.js';
 import { RectAreaLight } from '../scenes/lights/RectAreaLight.js';
+import { EventDispatcher } from '../EventDispatcher.js';
 
-class LightingGroup {
+class LightingGroup extends EventDispatcher {
 
 	constructor() {
+		super();
+
 		this.id = _lightingGroupId++;
 
 		// Light collection array
@@ -59,10 +62,6 @@ class LightingGroup {
 		// Version
 
 		this.version = 0;
-
-		// Hash
-
-		this.hash = new LightHash();
 	}
 
 	begin() {
@@ -83,13 +82,11 @@ class LightingGroup {
 
 		this._setupCache(sceneData);
 
-		this.hash.update(this);
-
 		this.version++;
 	}
 
-	isValid() {
-		return this.totalNum > 0;
+	dispose() {
+		this.dispatchEvent({ type: 'dispose' });
 	}
 
 	_setupCache(sceneData) {
@@ -539,51 +536,6 @@ function getShadowCache(light) {
 	shadowCaches.set(light, cache);
 
 	return cache;
-}
-
-// Light hash
-
-class LightHash {
-
-	constructor() {
-		this._factor = new Uint16Array(10);
-	}
-
-	update(lights) {
-		this._factor[0] = lights.useAmbient ? 1 : 0;
-		this._factor[1] = lights.useSphericalHarmonics ? 1 : 0;
-		this._factor[2] = lights.hemisNum;
-		this._factor[3] = lights.directsNum;
-		this._factor[4] = lights.pointsNum;
-		this._factor[5] = lights.spotsNum;
-		this._factor[6] = lights.rectAreaNum;
-		this._factor[7] = lights.directShadowNum;
-		this._factor[8] = lights.pointShadowNum;
-		this._factor[9] = lights.spotShadowNum;
-	}
-
-	compare(factor) {
-		if (!factor) {
-			return false;
-		}
-
-		for (let i = 0, l = factor.length; i < l; i++) {
-			if (this._factor[i] !== factor[i]) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	copyTo(factor) {
-		if (!factor) {
-			factor = new this._factor.constructor(this._factor.length);
-		}
-		factor.set(this._factor);
-		return factor;
-	}
-
 }
 
 export { LightingGroup };

@@ -259,3 +259,53 @@
         return irradiance;
     }
 #endif
+
+#ifdef USE_CLUSTERED_LIGHTS
+    uniform vec3 cells;
+    uniform int maxLightsPerCell;
+    uniform vec3 cellsDotData;
+    uniform vec3 cellsTextureSize;
+    uniform vec4 cellsTransformFactors;
+
+    uniform sampler2D cellsTexture;
+    uniform sampler2D lightsTexture;
+
+    struct ClusteredPointLight {
+        vec3 position;
+        vec3 color;
+        float distance;
+        float decay;
+    };
+
+    struct ClusteredSpotLight {
+        vec3 position;
+        vec3 color;
+        float distance;
+        float decay;
+        vec3 direction;
+        float coneCos;
+        float penumbraCos;
+    };
+
+    void getPointLightFromTexture(ivec2 lightDataCoords, vec4 lightData0, inout ClusteredPointLight pointLight) {
+        vec4 lightData1 = texelFetch(lightsTexture, lightDataCoords + ivec2(1, 0), 0);
+        vec4 lightData2 = texelFetch(lightsTexture, lightDataCoords + ivec2(2, 0), 0);
+        pointLight.color = lightData1.xyz;
+        pointLight.decay = lightData1.w;
+        pointLight.position = lightData2.xyz;
+        pointLight.distance = lightData2.w;
+    }
+
+    void getSpotLightFromTexture(ivec2 lightDataCoords, vec4 lightData0, inout ClusteredSpotLight spotLight) {
+        vec4 lightData1 = texelFetch(lightsTexture, lightDataCoords + ivec2(1, 0), 0);
+        vec4 lightData2 = texelFetch(lightsTexture, lightDataCoords + ivec2(2, 0), 0);
+        vec4 lightData3 = texelFetch(lightsTexture, lightDataCoords + ivec2(3, 0), 0);
+        spotLight.color = lightData1.xyz;
+        spotLight.decay = lightData1.w;
+        spotLight.position = lightData2.xyz;
+        spotLight.distance = lightData2.w;
+        spotLight.direction = lightData3.xyz;
+        spotLight.coneCos = lightData3.w;
+        spotLight.penumbraCos = lightData0.y;
+    }
+#endif
