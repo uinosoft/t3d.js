@@ -107,7 +107,7 @@
 
 		const pathPoints = [new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 0, -10), new t3d.Vector3(10, 0, -10)];
 		const curvePath3 = new CurvePath3();
-		curvePath3.setFromPoints(pathPoints, { bevelRadius: 10 });
+		curvePath3.setBeveledCurves(pathPoints, { bevelRadius: 10 });
 		const geometryData2 = ExtrudeShapeBuilder.getGeometryData({
 			contour: shape.contour,
 			holes: shape.holes,

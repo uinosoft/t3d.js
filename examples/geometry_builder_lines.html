@@ -69,7 +69,7 @@
 		});
 
 		const curvePath3 = new CurvePath3();
-		curvePath3.setFromPoints(hilbert3DPoints, { bevelRadius: 0.5 });
+		curvePath3.setBeveledCurves(hilbert3DPoints, { bevelRadius: 0.5 });
 		const frames = curvePath3.computeFrames({
 			up: new t3d.Vector3(-1, 0, 0),
 			divisions: 8
@@ -91,7 +91,7 @@
 		scene.add(tube);
 		
 		const curvePath3_2 = new CurvePath3();
-		curvePath3_2.setFromPoints(hilbert2DPoints, { bevelRadius: 0.5 });
+		curvePath3_2.setBeveledCurves(hilbert2DPoints, { bevelRadius: 0.5 });
 		const frames2 = curvePath3_2.computeFrames({
 			up: new t3d.Vector3(0, 0, 1),
 			divisions: 8
@@ -113,7 +113,7 @@
 		scene.add(route);
 
 		const curvePath3_3 = new CurvePath3();
-		curvePath3_3.setFromPoints(hilbert2DPoints, { bevelRadius: 0 });
+		curvePath3_3.setBeveledCurves(hilbert2DPoints, { bevelRadius: 0 });
 		const frames3 = curvePath3_3.computeFrames({
 			up: new t3d.Vector3(0, 0, 1)
 		});

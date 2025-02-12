@@ -26,7 +26,7 @@
 
     <script type="module">
 		import * as t3d from 't3d';
-		import { CubicBezierCurve3, QuadraticBezierCurve3, CurvePath3 } from 't3d/addons/math/curves/Curves.js';
+		import { CubicBezierCurve3, QuadraticBezierCurve3, CurvePath2, CurvePath3 } from 't3d/addons/math/curves/Curves.js';
 		import { CurveUtils } from 't3d/addons/math/curves/CurveUtils.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
@@ -44,11 +44,21 @@
 
 		const scene = new t3d.Scene();
 
-		function createLine(points) {
+		const camera = new t3d.Camera();
+		camera.position.set(150, 80, 250);
+		camera.lookAt(new t3d.Vector3(0, 0, -1), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// curves
+
+		function createMeshByPoints(points) {
 			const verticesArray = [];
 			const colorsArray = [];
 			points.forEach((point, i) => {
-				verticesArray.push(point.x, point.y, point.z);
+				verticesArray.push(point.x, point.y, point.z || 0);
 				colorsArray.push(Math.random(), Math.random(), Math.random());
 			});
 			const lineGeometry = new t3d.Geometry();
@@ -65,44 +75,29 @@
 			return lines;
 		}
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
-		scene.add(ambientLight);
-
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.6);
-		directionalLight.position.set(-40, 40, 0);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		scene.add(directionalLight);
-
-		const camera = new t3d.Camera();
-		camera.position.set(150, 80, 250);
-		camera.lookAt(new t3d.Vector3(0, 0, -1), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-		scene.add(camera);
+		function disposeMesh(mesh) {
+			mesh.geometry.dispose();
+			mesh.material.dispose();
+			scene.remove(mesh);
+		}
 
 		const params = { sampleNum: 4, bevelRadius: 4 };
 
 		let line1, line2, line3, line4;
 		function createLines() {
-			if (line1) {
-				line1.geometry.dispose();
-				line1.material.dispose();
-				scene.remove(line1);
-			}
+			if (line1) disposeMesh(line1);
+			if (line2) disposeMesh(line2);
+			if (line3) disposeMesh(line3);
+			if (line4) disposeMesh(line4);
 
 			const quadraticBezierCurve3 = new QuadraticBezierCurve3(
 				new t3d.Vector3(-10, 10, 0),
 				new t3d.Vector3(0, 0, 0),
 				new t3d.Vector3(10, 10, 0)
 			);
-			line1 = createLine(quadraticBezierCurve3.getSpacedPoints(params.sampleNum));
+			line1 = createMeshByPoints(quadraticBezierCurve3.getSpacedPoints(params.sampleNum));
 			line1.position.set(50, 0, 0);
 			scene.add(line1);
-
-			if (line2) {
-				line2.geometry.dispose();
-				line2.material.dispose();
-				scene.remove(line2);
-			}
 
 			const cubicBezierCurve3 = new CubicBezierCurve3(
 				new t3d.Vector3(-10, 10, 0),
@@ -110,41 +105,26 @@
 				new t3d.Vector3(10, 0, 0),
 				new t3d.Vector3(10, 10, 0)
 			);
-			line2 = createLine(cubicBezierCurve3.getSpacedPoints(params.sampleNum));
+			line2 = createMeshByPoints(cubicBezierCurve3.getSpacedPoints(params.sampleNum));
 			line2.position.set(50, 0, 0);
 			scene.add(line2);
 
-			if (line3) {
-				line3.geometry.dispose();
-				line3.material.dispose();
-				scene.remove(line3);
-			}
-
 			const hilbert3DPoints = CurveUtils.hilbert3D(new t3d.Vector3(0, 0, 0), 50, 1, 0, 1, 2, 3, 4, 5, 6, 7);
-			const curvePath3_1 = new CurvePath3();
-			curvePath3_1.setFromPoints(hilbert3DPoints, { close: false, bevelRadius: params.bevelRadius });
-			const points_1 = curvePath3_1.getPoints(params.sampleNum);
-			line3 = createLine(points_1);
+			const curvePath3 = new CurvePath3();
+			curvePath3.setBeveledCurves(hilbert3DPoints, { close: false, bevelRadius: params.bevelRadius });
+			line3 = createMeshByPoints(curvePath3.getPoints(params.sampleNum));
 			line3.position.set(-50, 0, 0);
 			scene.add(line3);
 
-			if (line4) {
-				line4.geometry.dispose();
-				line4.material.dispose();
-				scene.remove(line4);
-			}
-
-			const rectanglePoints = [
-				new t3d.Vector3(-35, 35, 0),
-				new t3d.Vector3(-35, -35, 0),
-				new t3d.Vector3(35, -35, 0),
-				new t3d.Vector3(35, 35, 0)
+			const rectangle2DPoints = [
+				new t3d.Vector2(-35, 35),
+				new t3d.Vector2(-35, -35),
+				new t3d.Vector2(35, -35),
+				new t3d.Vector2(35, 35)
 			];
-
-			const curvePath3_2 = new CurvePath3();
-			curvePath3_2.setFromPoints(rectanglePoints, { close: true, bevelRadius: params.bevelRadius });
-			const points_2 = curvePath3_2.getPoints(params.sampleNum);
-			line4 = createLine(points_2);
+			const curvePath2 = new CurvePath2();
+			curvePath2.setBeveledCurves(rectangle2DPoints, { close: true, bevelRadius: params.bevelRadius });
+			line4 = createMeshByPoints(curvePath2.getPoints(params.sampleNum));
 			line4.position.set(50, 0, 0);
 			scene.add(line4);
 		}
@@ -154,11 +134,8 @@
 		// gui
 		
 		const gui = new GUI();
-		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(params, 'bevelRadius', 0, 50, 0.01).onChange(createLines);
 		gui.add(params, 'sampleNum', 2, 20, 1).onChange(createLines);
-
-		const controller = new OrbitControls(camera, canvas);
 
 		function loop(count) {
 			requestAnimationFrame(loop);

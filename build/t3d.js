@@ -4130,6 +4130,15 @@
 		}
 
 		/**
+		 * Checks for strict equality of this vector and v.
+		 * @param {t3d.Vector2} v
+		 * @return {Boolean}
+		 */
+		equals(v) {
+			return v.x === this.x && v.y === this.y;
+		}
+
+		/**
 				* Returns a new Vector2 with the same x and y values as this one.
 		 * @return {t3d.Vector2}
 				*/

@@ -1,117 +1,17 @@
 import { Vector3, Matrix4, MathUtils } from 't3d';
-import { LineCurve3 } from './LineCurve3.js';
-import { QuadraticBezierCurve3 } from './QuadraticBezierCurve3.js';
+import { CurvePath } from './CurvePath.js';
 
-const _vec3_1 = new Vector3();
-const _vec3_2 = new Vector3();
-const _mat4_1 = new Matrix4();
-
-/**
- * CurvePath3
- */
-class CurvePath3 {
-
-	constructor() {
-		this.curves = [];
-	}
+class CurvePath3 extends CurvePath {
 
 	/**
-	 * @param {t3d.Vector3[]} points
-	 * @param {Object} [options={}]
-	 * @param {Number} [options.bevelRadius=0]
-	 * @param {Boolean} [options.close=false]
-	 */
-	setFromPoints(points, options = {}) {
-		const bevelRadius = options.bevelRadius || 0;
-		const close = options.close || false;
-
-		let pointLength = points.length;
-
-		if (pointLength < 2) {
-			console.warn('CurvePath3.setFromPoints: points length less than 2.');
-			return;
-		}
-
-		if (close && !points[0].equals(points[pointLength - 1])) {
-			points.push(new Vector3().copy(points[0]));
-			pointLength++;
-		}
-
-		const lastVector = new Vector3().copy(points[0]);
-
-		for (let i = 1; i < pointLength; i++) {
-			const currentVector = points[i];
-
-			const isEnd = i === pointLength - 1;
-			const isOpenEnd = isEnd && !close;
-			if (bevelRadius > 0 && !isOpenEnd) {
-				const nextVector = isEnd ? points[1] : points[i + 1];
-
-				const lastDir = _vec3_1.subVectors(currentVector, lastVector);
-				const nextDir = _vec3_2.subVectors(nextVector, currentVector);
-
-				const lastDirLength = lastDir.getLength();
-				const nextDirLength = nextDir.getLength();
-
-				const v0Dist = Math.min((i === 1 ? lastDirLength / 2 : lastDirLength) * 0.999999, bevelRadius); // fix
-				const v2Dist = Math.min(nextDirLength / 2 * 0.999999, bevelRadius);
-
-				lastDir.normalize();
-				nextDir.normalize();
-
-				const lineCurve = new LineCurve3();
-				lineCurve.v1.copy(lastVector);
-				lineCurve.v2.copy(currentVector).sub(lastDir.multiplyScalar(v0Dist));
-				this.curves.push(lineCurve);
-
-				const bezierCurve = new QuadraticBezierCurve3();
-				bezierCurve.v0.copy(lineCurve.v2);
-				bezierCurve.v1.copy(currentVector);
-				bezierCurve.v2.copy(currentVector).add(nextDir.multiplyScalar(v2Dist));
-				this.curves.push(bezierCurve);
-
-				lastVector.copy(bezierCurve.v2);
-			} else {
-				const lineCurve = new LineCurve3();
-				lineCurve.v1.copy(lastVector);
-				lineCurve.v2.copy(currentVector);
-				this.curves.push(lineCurve);
-
-				lastVector.copy(currentVector);
-			}
-		}
-
-		if (close) {
-			this.curves[0].v1.copy(lastVector);
-		}
-	}
-
-	getPoints(divisions = 12) {
-		const points = [];
-
-		for (let i = 0, curves = this.curves; i < curves.length; i++) {
-			const curve = curves[i];
-			const resolution = (curve.isLineCurve2 || curve.isLineCurve3) ? 1 : divisions;
-
-			const pts = curve.getPoints(resolution);
-
-			const isLast = i === (curves.length - 1);
-			for (let j = 0, l = isLast ? pts.length : pts.length - 1; j < l; j++) {
-				const point = pts[j];
-				points.push(point);
-			}
-		}
-
-		return points;
-	}
-
-	/**
-	 * @param {Object} [options={}]
-	 * @param {t3d.Vector3|null} [options.up=null]
-	 * @param {Number} [options.divisions=12]
-	 * @param {Boolean} [options.frenet=true]
-	 * @param {Boolean} [options.fixLine=true]
-	 * @param {Boolean} [options.close=false]
+	 * Computes the frames data of the path.
+	 * TODO: move this to CurvePath.
+	 * @param {Object} [options={}] - Options object.
+	 * @param {t3d.Vector3|null} [options.up=null] - The input up vector.
+	 * @param {Number} [options.divisions=12] - The number of divisions.
+	 * @param {Boolean} [options.frenet=true] - Whether to use Frenet frames.
+	 * @param {Boolean} [options.fixLine=true] - Whether to fix line tangent types.
+	 * @param {Boolean} [options.close=false] - Whether auto-close the path.
 	 * @return {Object} - The frames data.
 	 */
 	computeFrames(options = {}) {
@@ -321,6 +221,16 @@ class CurvePath3 {
 		};
 	}
 
+	// deprecated since 0.4.0
+	setFromPoints(points, options = {}) {
+		// console.warn('CurvePath3: setFromPoints() has been deprecated. Use setBeveledCurves() instead.');
+		super.setBeveledCurves(points, options);
+	}
+
 }
+
+CurvePath3.prototype.isCurvePath3 = true;
+
+const _mat4_1 = new Matrix4();
 
 export { CurvePath3 };

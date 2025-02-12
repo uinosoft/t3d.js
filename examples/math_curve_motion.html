@@ -92,9 +92,9 @@
 		}
 
 		function createCurveFrames() {
-			const curvePath3_2 = new CurvePath3();
-			curvePath3_2.setFromPoints(createRoadPoints(), { close: true, bevelRadius: 3.5 });
-			return curvePath3_2.computeFrames({ divisions: 12, up: new t3d.Vector3(0, 1, 0) });
+			const curvePath3 = new CurvePath3();
+			curvePath3.setBeveledCurves(createRoadPoints(), { close: true, bevelRadius: 3.5 });
+			return curvePath3.computeFrames({ divisions: 12, up: new t3d.Vector3(0, 1, 0) });
 		}
 
 		function createRoad(frames) {
