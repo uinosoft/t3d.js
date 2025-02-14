@@ -94,7 +94,7 @@ export class AnimationParser {
 
 				const interpolant = getInterpolant(interpolation, TypedKeyframeTrack === QuaternionKeyframeTrack);
 
-				if (propertyPath === 'weights') {
+				if (propertyPath === 'morphTargetInfluences') {
 					// node may be a Object3D (glTF mesh with several primitives) or a Mesh.
 					target.traverse(object => {
 						if (object.isMesh && object.morphTargetInfluences) {
