@@ -1,11 +1,12 @@
 // Use worldPosition from pvm_vert
 
 #ifdef USE_SHADOW
-	#if NUM_DIR_SHADOWS > 0 || NUM_POINT_SHADOWS > 0 || NUM_SPOT_SHADOWS > 0
-		vec3 shadowWorldNormal = (transposeMat4(inverseMat4(u_Model)) * vec4(objectNormal, 0.0)).xyz;
-		shadowWorldNormal = normalize(shadowWorldNormal);
-		vec4 shadowWorldPosition;
+	vec3 shadowWorldNormal = (transposeMat4(inverseMat4(u_Model)) * vec4(objectNormal, 0.0)).xyz;
+	shadowWorldNormal = normalize(shadowWorldNormal);
+	#ifdef FLIP_SIDED
+		shadowWorldNormal = -shadowWorldNormal;
 	#endif
+	vec4 shadowWorldPosition;
 
 	#if NUM_DIR_SHADOWS > 0
 		#pragma unroll_loop_start
