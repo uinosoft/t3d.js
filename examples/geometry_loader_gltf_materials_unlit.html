@@ -51,20 +51,7 @@
 		loader.load(
 			'./resources/models/gltf/BotSkinned/glTF-MaterialsUnlit/Bot_Skinned.gltf'
 		).then(function(result) {
-			// add mesh to scene
-			const object = result.root.children[0];
-			object.traverse(function(obj) {
-				if (obj.isSkinnedMesh) {
-					obj.frustumCulled = false;
-				}
-			});
-			object.scale.set(100, 100, 100);
-			object.position.y = -0.5;
-
-			// todo skeleton need auto inverse in GLTFLoader
-			const bones = result.root.children[0].children[0];
-			result.root.children[0].remove(bones);
-			scene.add(bones);
+			const object = result.root;
 		
 			animation = new t3d.AnimationMixer();
 			result.animations.forEach(function(clip) {
