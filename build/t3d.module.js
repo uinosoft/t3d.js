@@ -113,11 +113,11 @@ class MathUtils {
 			case Uint8Array:
 				return value / 255.0;
 			case Int32Array:
-				return Math.max(value / 2147483647.0, -1.0);
+				return Math.max(value / 2147483647.0, -1);
 			case Int16Array:
-				return Math.max(value / 32767.0, -1.0);
+				return Math.max(value / 32767.0, -1);
 			case Int8Array:
-				return Math.max(value / 127.0, -1.0);
+				return Math.max(value / 127.0, -1);
 			default:
 				throw new Error('Invalid component type.');
 		}
@@ -247,7 +247,7 @@ function _generateTables() {
 			e -= 0x00800000; // decrement exponent
 		}
 
-		m &= ~0x00800000; // clear leading 1 bit
+		m &= -8388609; // clear leading 1 bit
 		e += 0x38800000; // adjust bias
 
 		mantissaTable[i] = m | e;
@@ -8956,7 +8956,7 @@ class SceneData {
 }
 
 function _isPerspectiveMatrix$1(m) {
-	return m.elements[11] === -1.0;
+	return m.elements[11] === -1;
 }
 
 let _cameraDataId = 0;
@@ -20009,7 +20009,7 @@ function lightsTextureSize(maxLights) {
 }
 
 function _isPerspectiveMatrix(m) {
-	return m.elements[11] === -1.0;
+	return m.elements[11] === -1;
 }
 
 function getCellsRange(lightSphere, cellsTable, cellsTransform, cellsRange) {
