@@ -16,7 +16,7 @@ import {
 
 import { ReflectionProbe } from './probes/ReflectionProbe.js';
 
-// deprecated since v0.2.5, add warning since v0.3.0, will be removed in v0.4.0
+// deprecated since v0.2.5, add warning since v0.3.0
 console.warn('PMREM has been deprecated. Use PMREMGenerator instead.');
 
 /**
@@ -220,7 +220,7 @@ const prefilterShader = {
 
 		vec3 importanceSampleNormal(float i, float roughness, vec3 N) {
 			vec3 H = texture2D(normalDistribution, vec2(roughness, i)).rgb;
-		
+
 			vec3 upVector = abs(N.y) > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
 			vec3 tangentX = normalize(cross(N, upVector));
 			vec3 tangentZ = cross(N, tangentX);
@@ -240,7 +240,7 @@ const prefilterShader = {
 			for (int i = 0; i < SAMPLE_NUMBER; i++) {
 				vec3 H = importanceSampleNormal(float(i) / fMaxSampleNumber, roughness, N);
 				vec3 L = reflect(-V, H);
-		
+
 				float NoL = clamp(dot(N, L), 0.0, 1.0);
 				if (NoL > 0.0) {
 					#ifdef PANORAMA

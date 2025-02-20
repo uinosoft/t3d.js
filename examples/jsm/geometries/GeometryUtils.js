@@ -531,7 +531,7 @@ class GeometryUtils {
 		));
 	}
 
-	// deprecated since v0.2.0, add warning since v0.3.0, will be removed in v0.4.0
+	// deprecated since v0.2.0, add warning since v0.3.0
 	static mergeBufferAttributes(attributes) {
 		console.warn('GeometryUtils: mergeBufferAttributes() has been renamed to mergeAttributes().');
 		return this.mergeAttributes(attributes);
