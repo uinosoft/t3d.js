@@ -12,6 +12,8 @@ class LineCurve2 extends Curve {
 	constructor(v1 = new Vector2(), v2 = new Vector2()) {
 		super();
 
+		this.arcLengthDivisions = 1;
+
 		this.v1 = v1;
 		this.v2 = v2;
 	}

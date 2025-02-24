@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - linechart fill</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+	<style>
+		.atlas {
+			position: fixed;
+			left: 0;
+			top: 0;
+			z-index: 1000;
+			background: #eeeeee;
+			width: 200px;
+			height: 200px;
+		}
+	</style>
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - linechart fill
+		<br/>Available only for WebGL 2.0
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebGL2</div>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
+		import { InstancedLine } from 't3d/addons/objects/InstancedLine.js';
+		import { ColorGradient } from 't3d/addons/math/ColorGradient.js';
+		import { GradientTextureGenerator } from 't3d/addons/textures/GradientTextureGenerator.js';
+		import { LineChartFillMesh } from 't3d/addons/objects/LineChartFillMesh.js';
+		import { CurvePath3 } from 't3d/addons/math/curves/Curves.js';
+		import TWEEN from './libs/tween.module.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * window.devicePixelRatio;
+		canvas.height = height * window.devicePixelRatio;
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.2, 0.2, 0.2, 1);
+
+		const scene = new t3d.Scene();
+
+		const grid = new GridHelper(100, 20, 0x666666, 0x555555);
+		scene.add(grid);
+
+		const camera = new t3d.Camera();
+		camera.position.set(0, 50, 110);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 0, 1));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		// textures
+
+		const colorTexture = new Texture2DLoader().load('./resources/platte.png');
+
+		const alphaGradient = new ColorGradient()
+			.addColorStop(0.0, new t3d.Color3(0, 0, 0))
+			.addColorStop(0.5, new t3d.Color3(0.8, 0.8, 0.8))
+			.addColorStop(1.0, new t3d.Color3(1, 1, 1));
+		const alphaTexture = new GradientTextureGenerator()
+			.gradient(alphaGradient)
+			.getTexture();
+
+		// data
+
+		const maxHeight = 15;
+
+		const basePath = [];
+		const values = [];
+
+		for (let i = 0; i < 100; i++) {
+			basePath.push(new t3d.Vector3(i - 50, 0, Math.sin(i / 5) * 10));
+		}
+
+		randomValues();
+
+		function randomValues() {
+			for (let i = 0; i < 100; i++) {
+				values[i] = 0.1 + Math.random() * 0.9;
+			}
+		}
+
+		// helper path to map 2D points to 3D
+		const baseCurvePath = new CurvePath3();
+		baseCurvePath.setPolylines(basePath);
+		const basePathTotalLength = baseCurvePath.getLength();
+
+		// meshes
+
+		const container = new t3d.Object3D();
+		scene.add(container);
+
+		const tweenGroup = new TWEEN.Group();
+
+		function fadeIn() {
+			container.scale.y = 0;
+
+			if (container.__tween && container.__tween.isPlaying) {
+				container.__tween.stop();
+			}
+
+			container.__tween = new TWEEN.Tween(container.scale, tweenGroup)
+				.to({ y: 1 }, 800)
+				.easing(TWEEN.Easing.Quadratic.Out)
+				.start();
+		}
+
+		const fillMesh = new LineChartFillMesh();
+		fillMesh.setPositionAndValue(basePath, values, { smooth: 0.3, height: maxHeight });
+		fillMesh.material.depthWrite = false;
+		fillMesh.material.opacity = 0.8;
+		fillMesh.material.diffuseMap = colorTexture;
+		fillMesh.material.alphaMap = alphaTexture;
+		container.add(fillMesh);
+
+		let lines0, lines1;
+
+		function createChartLines() {
+			destroyLines(lines0);
+			destroyLines(lines1);
+
+			const topPath = fillMesh.curvePath.getPoints(8).map(point => {
+				const x = point.x * maxHeight;
+				const y = point.y * maxHeight;
+
+				const t = x / basePathTotalLength;
+
+				const pos = baseCurvePath.getPoint(t);
+				pos.y = y;
+
+				return pos;
+			});
+
+			lines0 = createLines(basePath);
+			lines1 = createLines(topPath);
+
+			// fix line uv to match values
+			fixLineUV(lines0, values);
+			fixLineUV(lines1, topPath.map(v => v.y / maxHeight));
+		}
+
+		function fixLineUV(lines, path) {
+			const array = lines.geometry.attributes.instanceNextDist.buffer.array;
+			for (let i = 0; i < array.length - 8; i += 4) {
+				array[i + 4 + 3] = path[i / 4];
+			}
+			lines.geometry.attributes.instanceNextDist.buffer.version++;
+		}
+
+		function createLines(points) {
+			const lines = new InstancedLine();
+			lines.geometry.setFromPoints(points);
+			lines.material.uniforms.lineWidth = 2.2;
+			lines.material.defines.SWAP_UV = true;
+			lines.material.uniforms.resolution[0] = width;
+			lines.material.uniforms.resolution[1] = height;
+			lines.material.diffuseMap = colorTexture;
+			lines.material.transparent = true;
+			lines.renderOrder = -1;
+			container.add(lines);
+
+			return lines;
+		}
+
+		function destroyLines(lines) {
+			if (lines) {
+				lines.geometry.dispose();
+				lines.material.dispose();
+				container.remove(lines);
+			}
+		}
+
+		createChartLines();
+		fadeIn();
+
+		// gui
+
+		const gui = new GUI();
+		gui.add(fillMesh.material.defines, 'UV_TYPE', [0, 1]).name('UV Type').onChange(() => {
+			fillMesh.material.needsUpdate = true;
+		});
+		gui.add({ smooth: 0.3 }, 'smooth', 0, 0.5, 0.01).onChange(value => {
+			fillMesh.setPositionAndValue(basePath, values, { smooth: value, height: maxHeight });
+			createChartLines();
+		});
+		gui.add(fillMesh.material, 'opacity', 0.0, 1.0, 0.01).name('opacity');
+		gui.add({ alphaMap: true }, 'alphaMap').onChange(value => {
+			fillMesh.material.alphaMap = value ? alphaTexture : null;
+			fillMesh.material.needsUpdate = true;
+		});
+
+		gui.add({ randomValues: () => {
+			randomValues();
+			fillMesh.setPositionAndValue(basePath, values, { smooth: 0.3, height: maxHeight });
+			createChartLines();
+			fadeIn();
+		} }, 'randomValues').name('Random Values');
+
+		//
+		
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+			tweenGroup.update();
+
+			forwardRenderer.clear(true, true, true);
+			forwardRenderer.render(scene, camera);
+		}
+		
+		if (forwardRenderer.capabilities.version < 2) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			requestAnimationFrame(loop);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+
+			if (lines0) {
+				lines0.material.uniforms.resolution[0] = width;
+				lines0.material.uniforms.resolution[1] = height;
+			}
+
+			if (lines1) {
+				lines1.material.uniforms.resolution[0] = width;
+				lines1.material.uniforms.resolution[1] = height;
+			}
+
+			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

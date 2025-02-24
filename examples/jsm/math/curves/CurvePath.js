@@ -17,6 +17,9 @@ class CurvePath {
 	constructor() {
 		this.curves = [];
 
+		this.cacheLengths = null;
+		this.needsUpdate = true;
+
 		if (new.target === CurvePath) {
 			console.error('CurvePath: Abstract classes can not be instantiated.');
 		}
@@ -252,6 +255,76 @@ class CurvePath {
 		}
 
 		return points;
+	}
+
+	/**
+	 * This method returns a point for the given interpolation factor.
+	 * @param {Number} t - A interpolation factor representing a position on the curve. Must be in the range [0,1].
+	 * @param {Vector2|Vector3} [optionalTarget] - An optional target point.
+	 * @return {Vector2|Vector3} - The resulting point.
+	 */
+	getPoint(t, optionalTarget) {
+		const d = t * this.getLength();
+		const curveLengths = this.getLengths();
+		let i = 0;
+
+		while (i < curveLengths.length) {
+			if (curveLengths[i] >= d) {
+				const diff = curveLengths[i] - d;
+				const curve = this.curves[i];
+
+				const segmentLength = curve.getLength();
+				const u = segmentLength === 0 ? 0 : 1 - diff / segmentLength;
+
+				return curve.getPointAt(u, optionalTarget);
+			}
+
+			i++;
+		}
+
+		return this.curves[this.curves.length - 1].getPointAt(1, optionalTarget);
+	}
+
+	/**
+	 * Return total curve path length.
+	 * @return {Number} The total length.
+	 */
+	getLength() {
+		const lengths = this.getLengths();
+		return lengths[lengths.length - 1];
+	}
+
+	/**
+	 * Returns list of cumulative curve lengths of the defined curves.
+	 * @return {Number[]} The curve lengths.
+	 */
+	getLengths() {
+		if (this.cacheLengths && this.cacheLengths.length === this.curves.length && !this.needsUpdate) {
+			return this.cacheLengths;
+		}
+
+		this.needsUpdate = false;
+
+		const lengths = [];
+		let sums = 0;
+
+		for (let i = 0, l = this.curves.length; i < l; i++) {
+			sums += this.curves[i].getLength();
+			lengths.push(sums);
+		}
+
+		this.cacheLengths = lengths;
+
+		return lengths;
+	}
+
+	/**
+	 * Updates the cumulative curve lengths of the defined curves.
+	 */
+	updateArcLengths() {
+		this.needsUpdate = true;
+		this.cacheLengths = null;
+		this.getLengths();
 	}
 
 }
