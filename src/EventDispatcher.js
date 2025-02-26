@@ -1,12 +1,11 @@
 /**
  * JavaScript events for custom objects.
- * @memberof t3d
  */
 class EventDispatcher {
 
 	/**
 	 * Adds a listener to an event type.
-	 * @param {String} type - The type of event to listen to.
+	 * @param {string} type - The type of event to listen to.
 	 * @param {Function} listener - The function that gets called when the event is fired.
 	 */
 	addEventListener(type, listener) {
@@ -25,7 +24,7 @@ class EventDispatcher {
 
 	/**
 	 * Removes a listener from an event type.
-	 * @param {String} type - The type of the listener that gets removed.
+	 * @param {string} type - The type of the listener that gets removed.
 	 * @param {Function} listener - The listener function that gets removed.
 	 */
 	removeEventListener(type, listener) {
@@ -46,7 +45,7 @@ class EventDispatcher {
 
 	/**
 	 * Fire an event.
-	 * @param {Object} event - The event that gets fired.
+	 * @param {object} event - The event that gets fired.
 	 */
 	dispatchEvent(event) {
 		const listeners = this._listeners;

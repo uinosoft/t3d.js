@@ -11,7 +11,6 @@ let _cameraDataId = 0;
 
 /**
  * RenderStates collect all render states about scene and camera.
- * @memberof t3d
  */
 class RenderStates {
 
@@ -39,7 +38,7 @@ class RenderStates {
 
 	/**
 	 * Update render states about camera.
-	 * @param {t3d.Camera}
+	 * @param {Camera} camera
 	 */
 	updateCamera(camera) {
 		const sceneData = this.scene;

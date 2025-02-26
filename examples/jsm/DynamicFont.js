@@ -174,11 +174,11 @@ class CharacterCanvas {
 	 * Draw a character on the canvas and get the pixels of the character.
 	 * @param {string} char - The character to draw.
 	 * @returns {object} - The pixel information of the character.
-	 * @returns {Uint8ClampedArray} returns.buffer - The pixel information buffer of the character.
-	 * @returns {number} returns.width - The width of the character pixel information.
-	 * @returns {number} returns.height - The height of the character pixel information.
-	 * @returns {number} returns.padding - The padding of the character pixel information.
-	 * @returns {number} returns.glyphTop - The baseline to the top of the highest bounding box of the glyphs used to render the text.
+	 * @property {Uint8ClampedArray} buffer - The pixel information buffer of the character.
+	 * @property {number} width - The width of the character pixel information.
+	 * @property {number} height - The height of the character pixel information.
+	 * @property {number} padding - The padding of the character pixel information.
+	 * @property {number} glyphTop - The baseline to the top of the highest bounding box of the glyphs used to render the text.
 	 */
 	draw(char) {
 		const { size, padding, distanceRadius, distanceCutoff, ctx, dt } = this;
@@ -332,11 +332,11 @@ class FontAtlas {
 	 * Get the character information.
 	 * @param {string} char - The character to get.
 	 * @returns {object} - The character information.
-	 * @returns {number} returns.i - The index of the character in the atlas.
-	 * @returns {number} returns.x - The x position of the character in the atlas.
-	 * @returns {number} returns.y - The y position of the character in the atlas.
-	 * @returns {number} returns.w - The width of the character pixel information.
-	 * @returns {number} returns.h - The height of the character pixel information.
+	 * @property {number} i - The index of the character in the atlas.
+	 * @property {number} x - The x position of the character in the atlas.
+	 * @property {number} y - The y position of the character in the atlas.
+	 * @property {number} w - The width of the character pixel information.
+	 * @property {number} h - The height of the character pixel information.
 	 */
 	getChar(char) {
 		return this._fontMap.get(char);

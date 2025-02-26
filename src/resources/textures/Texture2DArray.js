@@ -3,8 +3,7 @@ import { TEXTURE_FILTER, PIXEL_FORMAT } from '../../const.js';
 
 /**
  * Creates a 2d texture. (WebGL 2.0)
- * @memberof t3d
- * @extends t3d.TextureBase
+ * @extends TextureBase
  */
 class Texture2DArray extends TextureBase {
 
@@ -13,23 +12,23 @@ class Texture2DArray extends TextureBase {
 
 		/**
 		 * Image data for this texture.
-		 * @type {Object}
+		 * @type {object}
 		 * @default null
 		 */
 		this.image = { data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]), width: 2, height: 2, depth: 2 };
 
 		/**
-		 * @default t3d.PIXEL_FORMAT.RED
+		 * @default PIXEL_FORMAT.RED
 		 */
 		this.format = PIXEL_FORMAT.RED;
 
 		/**
-		 * @default t3d.TEXTURE_FILTER.NEAREST
+		 * @default TEXTURE_FILTER.NEAREST
 		 */
 		this.magFilter = TEXTURE_FILTER.NEAREST;
 
 		/**
-		 * @default t3d.TEXTURE_FILTER.NEAREST
+		 * @default TEXTURE_FILTER.NEAREST
 		 */
 		this.minFilter = TEXTURE_FILTER.NEAREST;
 
@@ -57,8 +56,8 @@ class Texture2DArray extends TextureBase {
 
 	/**
 	 * Copy the given 2d texture into this texture.
-	 * @param {t3d.Texture2DArray} source - The 2d texture to be copied.
-	 * @return {t3d.Texture2DArray}
+	 * @param {Texture2DArray} source - The 2d texture to be copied.
+	 * @returns {Texture2DArray}
 	 */
 	copy(source) {
 		super.copy(source);
@@ -72,7 +71,7 @@ class Texture2DArray extends TextureBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 Texture2DArray.prototype.isTexture2DArray = true;

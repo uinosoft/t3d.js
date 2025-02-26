@@ -7,28 +7,27 @@ import { Matrix4 } from '../math/Matrix4.js';
  * - The light's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed light points down the -Z axis.
  * - all other light types inherit the properties and methods described here.
  * @abstract
- * @memberof t3d
- * @extends t3d.Object3D
+ * @extends Object3D
  */
 class Light extends Object3D {
 
 	/**
-	 * @param {Number} [color=0xffffff]
-	 * @param {Number} [intensity=1]
+	 * @param {number} [color=0xffffff]
+	 * @param {number} [intensity=1]
 	 */
 	constructor(color = 0xffffff, intensity = 1) {
 		super();
 
 		/**
 		 * Color of the light.
-		 * @type {t3d.Color3}
-		 * @default t3d.Color3(0xffffff)
+		 * @type {Color3}
+		 * @default Color3(0xffffff)
 		 */
 		this.color = new Color3(color);
 
 		/**
 		 * The light's intensity, or strength.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.intensity = intensity;
@@ -36,28 +35,28 @@ class Light extends Object3D {
 		/**
 		 * Group mask of the light, indicating which lighting group the light belongs to. Default is 1 (binary 0001), meaning the light belongs to lighting group 0.
 		 * For example, to make the light effective in both lighting group 0 and lighting group 1, set groupMask to 3 (binary 0011).
-		 * Used in conjunction with {@link t3d.Material#lightingGroup}.
-		 * @type {Number}
+		 * Used in conjunction with {@link Material#lightingGroup}.
+		 * @type {number}
 		 * @default 1
 		 */
 		this.groupMask = 1;
 	}
 
 	/**
-     * Set light direction, this func will set quaternion of this light.
-     * @param {t3d.Vector3} target - The target that the light look at.
-     * @param {t3d.Vector3} up - The up direction of the light.
-     */
+	 * Set light direction, this func will set quaternion of this light.
+	 * @param {Vector3} target - The target that the light look at.
+	 * @param {Vector3} up - The up direction of the light.
+	 */
 	lookAt(target, up) {
 		_mat4_1.lookAtRH(this.position, target, up);
 		this.quaternion.setFromRotationMatrix(_mat4_1);
 	}
 
 	/**
-     * Copies properties from the source light into this one.
-     * @param {t3d.Light} source - The source light.
-     * @return {t3d.Light} - This light.
-     */
+	 * Copies properties from the source light into this one.
+	 * @param {Light} source - The source light.
+	 * @returns {Light} - This light.
+	 */
 	copy(source) {
 		super.copy(source);
 
@@ -72,7 +71,7 @@ class Light extends Object3D {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 Light.prototype.isLight = true;

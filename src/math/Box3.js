@@ -2,14 +2,13 @@ import { Vector3 } from './Vector3.js';
 
 /**
  * Represents an axis-aligned bounding box (AABB) in 3D space.
- * @memberof t3d
  */
 class Box3 {
 
 	/**
-	 * @param {t3d.Vector3} min - (optional) Vector3 representing the lower (x, y, z) boundary of the box.
+	 * @param {Vector3} min - (optional) Vector3 representing the lower (x, y, z) boundary of the box.
 	 * 								Default is ( + Infinity, + Infinity, + Infinity ).
-	 * @param {t3d.Vector3} max - (optional) Vector3 representing the upper (x, y, z) boundary of the box.
+	 * @param {Vector3} max - (optional) Vector3 representing the upper (x, y, z) boundary of the box.
 	 * 								Default is ( - Infinity, - Infinity, - Infinity ).
 	 */
 	constructor(min, max) {
@@ -19,8 +18,8 @@ class Box3 {
 
 	/**
 	 * Sets the lower and upper (x, y, z) boundaries of this box.
-	 * @param {t3d.Vector3} min - Vector3 representing the lower (x, y, z) boundary of the box.
-	 * @param {t3d.Vector3} max - Vector3 representing the lower upper (x, y, z) boundary of the box.
+	 * @param {Vector3} min - Vector3 representing the lower (x, y, z) boundary of the box.
+	 * @param {Vector3} max - Vector3 representing the lower upper (x, y, z) boundary of the box.
 	 */
 	set(min, max) {
 		this.min.copy(min);
@@ -29,8 +28,8 @@ class Box3 {
 
 	/**
 	 * Sets the upper and lower bounds of this box to include all of the points in points.
-	 * @param {t3d.Vector3[]} points - Array of Vector3s that the resulting box will contain.
-	 * @return {t3d.Box3}
+	 * @param {Vector3[]} points - Array of Vector3s that the resulting box will contain.
+	 * @returns {Box3}
 	 */
 	setFromPoints(points) {
 		this.makeEmpty();
@@ -44,7 +43,7 @@ class Box3 {
 
 	/**
 	 * Makes this box empty.
-	 * @return {t3d.Box3}
+	 * @returns {Box3}
 	 */
 	makeEmpty() {
 		this.min.x = this.min.y = this.min.z = +Infinity;
@@ -55,8 +54,8 @@ class Box3 {
 
 	/**
 	 * Expands the boundaries of this box to include point.
-	 * @param {t3d.Vector3} point - Vector3 that should be included in the box.
-	 * @return {t3d.Box3}
+	 * @param {Vector3} point - Vector3 that should be included in the box.
+	 * @returns {Box3}
 	 */
 	expandByPoint(point) {
 		this.min.min(point);
@@ -67,8 +66,8 @@ class Box3 {
 
 	/**
 	 * Expands each dimension of the box by scalar. If negative, the dimensions of the box will be contracted.
-	 * @param {Number} scalar - Distance to expand the box by.
-	 * @return {t3d.Box3}
+	 * @param {number} scalar - Distance to expand the box by.
+	 * @returns {Box3}
 	 */
 	expandByScalar(scalar) {
 		this.min.addScalar(-scalar);
@@ -79,8 +78,8 @@ class Box3 {
 
 	/**
 	 * Expands the boundaries of this box to include box3.
-	 * @param {t3d.Box3} box3 - Box that will be unioned with this box.
-	 * @return {t3d.Box3}
+	 * @param {Box3} box3 - Box that will be unioned with this box.
+	 * @returns {Box3}
 	 */
 	expandByBox3(box3) {
 		this.min.min(box3.min);
@@ -91,10 +90,10 @@ class Box3 {
 
 	/**
 	 * Sets the upper and lower bounds of this box to include all of the data in array.
-	 * @param {Number[]} array - An array of position data that the resulting box will envelop.
-	 * @param {Number} [gap=3]
-	 * @param {Number} [offset=0]
-	 * @return {t3d.Box3}
+	 * @param {number[]} array - An array of position data that the resulting box will envelop.
+	 * @param {number} [gap=3]
+	 * @param {number} [offset=0]
+	 * @returns {Box3}
 	 */
 	setFromArray(array, gap = 3, offset = 0) {
 		let minX = +Infinity;
@@ -127,9 +126,9 @@ class Box3 {
 
 	/**
 	 * Clamps the point within the bounds of this box.
-	 * @param {t3d.Vector3} point - Vector3 to clamp.
-	 * @param {t3d.Vector3} target - Vector3 to store the result in.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} point - Vector3 to clamp.
+	 * @param {Vector3} target - Vector3 to store the result in.
+	 * @returns {Vector3}
 	 */
 	clampPoint(point, target) {
 		return target.copy(point).min(this.max).max(this.min);
@@ -138,8 +137,8 @@ class Box3 {
 	/**
 	 * Returns the distance from any edge of this box to the specified point.
 	 * If the point lies inside of this box, the distance will be 0.
-	 * @param {t3d.Vector3} point - Vector3 to measure the distance to.
-	 * @return {Number}
+	 * @param {Vector3} point - Vector3 to measure the distance to.
+	 * @returns {number}
 	 */
 	distanceToPoint(point) {
 		return this.clampPoint(point, _vec3_1).distanceTo(point);
@@ -147,8 +146,8 @@ class Box3 {
 
 	/**
 	 * Returns aMinimum Bounding Sphere for the box.
-	 * @param {t3d.Sphere} target — the result will be copied into this Sphere.
-	 * @return {t3d.Sphere}
+	 * @param {Sphere} target — the result will be copied into this Sphere.
+	 * @returns {Sphere}
 	 */
 	getBoundingSphere(target) {
 		if (this.isEmpty()) {
@@ -163,7 +162,7 @@ class Box3 {
 
 	/**
 	 * Returns true if this box includes zero points within its bounds.
-	 * @return {Boolean}
+	 * @returns {boolean}
 	 */
 	isEmpty() {
 		// this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
@@ -172,8 +171,8 @@ class Box3 {
 
 	/**
 	 * Returns true if this box and box share the same lower and upper bounds.
-	 * @param {t3d.Box3} box - Box to compare with this one.
-	 * @return {Boolean}
+	 * @param {Box3} box - Box to compare with this one.
+	 * @returns {boolean}
 	 */
 	equals(box) {
 		return box.min.equals(this.min) && box.max.equals(this.max);
@@ -181,8 +180,8 @@ class Box3 {
 
 	/**
 	 * Returns the center point of the box as a Vector3.
-	 * @param {t3d.Vector3} target - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} target - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	getCenter(target = new Vector3()) {
 		return this.isEmpty() ? target.set(0, 0, 0) : target.addVectors(this.min, this.max).multiplyScalar(0.5);
@@ -190,15 +189,15 @@ class Box3 {
 
 	/**
 	 * Returns the width, height and depth of this box.
-	 * @param {t3d.Vector3} target - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} target - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	getSize(target = new Vector3()) {
 		return this.isEmpty() ? target.set(0, 0, 0) : target.subVectors(this.max, this.min);
 	}
 
 	/**
-     * Get the 8 corner points of the bounding box, the order is as follows:
+	 * Get the 8 corner points of the bounding box, the order is as follows:
 	 *   7-------3
 	 *  /|      /|
 	 * 4-------0 |
@@ -206,9 +205,9 @@ class Box3 {
 	 * | 6-----|-2
 	 * |/      |/
 	 * 5-------1
-     * @param {t3d.Vector3[]} points - The array to store the points.
-     * @return {t3d.Vector3[]} The array of points.
-     */
+	 * @param {Vector3[]} points - The array to store the points.
+	 * @returns {Vector3[]} The array of points.
+	 */
 	getPoints(points) {
 		const minX = this.min.x, minY = this.min.y, minZ = this.min.z;
 		const maxX = this.max.x, maxY = this.max.y, maxZ = this.max.z;
@@ -228,8 +227,8 @@ class Box3 {
 	/**
 	 * Computes the union of this box and box,
 	 * setting the upper bound of this box to the greater of the two boxes' upper bounds and the lower bound of this box to the lesser of the two boxes' lower bounds.
-	 * @param {t3d.Box3} box - Box that will be unioned with this box.
-	 * @return {t3d.Box3}
+	 * @param {Box3} box - Box that will be unioned with this box.
+	 * @returns {Box3}
 	 */
 	union(box) {
 		this.min.min(box.min);
@@ -239,8 +238,8 @@ class Box3 {
 
 	/**
 	 * Transforms this Box3 with the supplied matrix.
-	 * @param {t3d.Matrix4} matrix - The Matrix4 to apply
-	 * @return {t3d.Box3}
+	 * @param {Matrix4} matrix - The Matrix4 to apply
+	 * @returns {Box3}
 	 */
 	applyMatrix4(matrix) {
 		// transform of empty box is an empty box.
@@ -263,8 +262,8 @@ class Box3 {
 
 	/**
 	 * Returns true if the specified point lies within or on the boundaries of this box.
-	 * @param {t3d.Vector3} point - Vector3 to check for inclusion.
-	 * @return {Boolean}
+	 * @param {Vector3} point - Vector3 to check for inclusion.
+	 * @returns {boolean}
 	 */
 	containsPoint(point) {
 		return point.x < this.min.x || point.x > this.max.x ||
@@ -274,8 +273,8 @@ class Box3 {
 
 	/**
 	 * Determines whether or not this box intersects triangle.
-	 * @param {t3d.Triangle} triangle - Triangle to check for intersection against.
-	 * @return {Boolean}
+	 * @param {Triangle} triangle - Triangle to check for intersection against.
+	 * @returns {boolean}
 	 */
 	intersectsTriangle(triangle) {
 		if (this.isEmpty()) {
@@ -324,7 +323,7 @@ class Box3 {
 
 	/**
 	 * Returns a new Box3 with the same min and max as this one.
-	 * @return {t3d.Box3}
+	 * @returns {Box3}
 	 */
 	clone() {
 		return new Box3().copy(this);
@@ -332,8 +331,8 @@ class Box3 {
 
 	/**
 	 * Copies the min and max from box to this box.
-	 * @param {t3d.Box3} box - Box3 to copy.
-	 * @return {t3d.Box3}
+	 * @param {Box3} box - Box3 to copy.
+	 * @returns {Box3}
 	 */
 	copy(box) {
 		this.min.copy(box.min);

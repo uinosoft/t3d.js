@@ -2,7 +2,6 @@
  * Render info collector.
  * If you want to collect information about the rendering of this frame,
  * pass an instance of RenderInfo to RenderOption when calling renderRenderableList.
- * @memberof t3d
  */
 class RenderInfo {
 
@@ -43,9 +42,9 @@ class RenderInfo {
 		 * Method of update render info.
 		 * This method will be executed after each draw.
 		 * @private
-		 * @param {Number} count
-		 * @param {t3d.DRAW_MODE} mode
-		 * @param {Number} instanceCount
+		 * @param {number} count
+		 * @param {DRAW_MODE} mode
+		 * @param {number} instanceCount
 		 */
 		this.update = function(count, mode, instanceCount) {
 			render.calls++;
@@ -64,9 +63,9 @@ class RenderInfo {
 		};
 
 		/**
-         * A series of statistical information of rendering process, include calls, triangles, lines and points.
-         * @type {Object}
-         */
+		 * A series of statistical information of rendering process, include calls, triangles, lines and points.
+		 * @type {object}
+		 */
 		this.render = render;
 	}
 

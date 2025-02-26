@@ -6,13 +6,13 @@ import { Vector3 } from 't3d';
 const RouteBuilder = {
 
 	/**
-	 * @param {Object} frames
-	 * @param {Object} [options={}]
-	 * @param {Number} [options.width=0.1]
-	 * @param {Boolean} [options.arrow=true]
-	 * @param {String} [options.side='both'] - 'both' / 'left' / 'right'
-	 * @param {Boolean} [options.sharp=false]
-	 * @return {Object} - The geometry data.
+	 * @param {object} frames
+	 * @param {object} [options={}]
+	 * @param {number} [options.width=0.1]
+	 * @param {boolean} [options.arrow=true]
+	 * @param {string} [options.side='both'] - 'both' / 'left' / 'right'
+	 * @param {boolean} [options.sharp=false]
+	 * @returns {object} - The geometry data.
 	 */
 	getGeometryData: function(frames, options = {}) {
 		const width = options.width !== undefined ? options.width : 0.1;

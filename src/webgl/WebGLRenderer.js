@@ -54,8 +54,7 @@ function getLightingGroup(lighting, material) {
 
 /**
  * The WebGL renderer.
- * @memberof t3d
- * @extends t3d.ThinRenderer
+ * @extends ThinRenderer
  */
 class WebGLRenderer extends ThinRenderer {
 
@@ -68,7 +67,7 @@ class WebGLRenderer extends ThinRenderer {
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
-		 * @type {t3d.WebGLCapabilities}
+		 * @type {WebGLCapabilities}
 		 */
 		this.capabilities = {};
 

@@ -5,7 +5,6 @@ import { Vector4 } from '../../math/Vector4.js';
 
 /**
  * Shadow map pass.
- * @memberof t3d
  */
 class ShadowMapPass {
 
@@ -27,14 +26,14 @@ class ShadowMapPass {
 		/**
 		 * Define which render layers will produce shadows.
 		 * If the value is Null, it means that all render layers will produce shadows.
-		 * @type {Null|Array}
+		 * @type {null | Array}
 		 * @default null
 		 */
 		this.shadowLayers = null;
 
 		/**
 		 * Whether transparent objects can cast shadows.
-		 * @type {Boolean}
+		 * @type {boolean}
 		 * @default false
 		 */
 		this.transparentShadow = false;
@@ -56,7 +55,7 @@ class ShadowMapPass {
 
 	/**
 	 * Get geometry function for shadow render options.
-	 * @type {Null|Function}
+	 * @type {null | Function}
 	 */
 	set getGeometry(func) {
 		if (func) {
@@ -86,8 +85,8 @@ class ShadowMapPass {
 
 	/**
 	 * Render shadow map.
-	 * @param {t3d.ThinRenderer} renderer
-	 * @param {t3d.Scene} scene
+	 * @param {ThinRenderer} renderer
+	 * @param {Scene} scene
 	 */
 	render(renderer, scene) {
 		oldClearColor.copy(renderer.getClearColor());

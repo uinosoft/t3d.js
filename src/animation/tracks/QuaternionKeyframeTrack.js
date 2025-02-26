@@ -3,17 +3,16 @@ import { QuaternionLinearInterpolant } from '../KeyframeInterpolants.js';
 
 /**
  * Used for quaternion property track.
- * @memberof t3d
- * @extends t3d.KeyframeTrack
+ * @extends KeyframeTrack
  */
 class QuaternionKeyframeTrack extends KeyframeTrack {
 
 	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
+	 * @param {Object3D} target
+	 * @param {string} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.QuaternionLinearInterpolant]
+	 * @param {KeyframeInterpolant.constructor} [interpolant=QuaternionLinearInterpolant]
 	 */
 	constructor(target, propertyPath, times, values, interpolant = QuaternionLinearInterpolant) {
 		// since 0.2.2, remove this after few versions later
@@ -28,7 +27,7 @@ class QuaternionKeyframeTrack extends KeyframeTrack {
 
 /**
  * @readonly
- * @type {String}
+ * @type {string}
  * @default 'quaternion'
  */
 QuaternionKeyframeTrack.prototype.valueTypeName = 'quaternion';

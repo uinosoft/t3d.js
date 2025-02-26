@@ -29,34 +29,33 @@ const _intersectionPointWorld = new Vector3();
 
 /**
  * Class representing triangular polygon mesh based objects.
- * Also serves as a base for other classes such as {@link t3d.SkinnedMesh}.
- * @memberof t3d
- * @extends t3d.Object3D
+ * Also serves as a base for other classes such as {@link SkinnedMesh}.
+ * @extends Object3D
  */
 class Mesh extends Object3D {
 
 	/**
-	 * @param {t3d.Geometry} geometry — an instance of {@link t3d.Geometry}.
-	 * @param {t3d.Material} material - a single or an array of {@link t3d.Material}.
+	 * @param {Geometry} geometry — an instance of {@link Geometry}.
+	 * @param {Material} material - a single or an array of {@link Material}.
 	 */
 	constructor(geometry, material) {
 		super();
 
 		/**
-		 * an instance of {@link t3d.Geometry}.
-		 * @type {t3d.Geometry}
+		 * an instance of {@link Geometry}.
+		 * @type {Geometry}
 		 */
 		this.geometry = geometry;
 
 		/**
-		 * a single or an array of {@link t3d.Material}.
-		 * @type {t3d.Material|t3d.Material[]}
+		 * a single or an array of {@link Material}.
+		 * @type {Material|Material[]}
 		 */
 		this.material = material;
 
 		/**
 		 * An array of weights typically from 0-1 that specify how much of the morph is applied.
-		 * @type {Number[]|null}
+		 * @type {number[] | null}
 		 * @default null
 		 */
 		this.morphTargetInfluences = null;
@@ -65,9 +64,9 @@ class Mesh extends Object3D {
 	/**
 	 * Get the local-space position of the vertex at the given index,
 	 * taking into account the current animation state of both morph targets and skinning.
-	 * @param {Number} index - The index of the vertex.
-	 * @param {t3d.Vector3} target - The target vector.
-	 * @return {t3d.Vector3} The target vector.
+	 * @param {number} index - The index of the vertex.
+	 * @param {Vector3} target - The target vector.
+	 * @returns {Vector3} The target vector.
 	 */
 	getVertexPosition(index, target) {
 		const geometry = this.geometry;
@@ -172,7 +171,7 @@ class Mesh extends Object3D {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 Mesh.prototype.isMesh = true;

@@ -7,17 +7,17 @@ import { Geometry, Buffer, Attribute } from 't3d';
 class BitmapTextGeometry extends Geometry {
 
 	/**
-	 * @param {Object|String} options - the options or text string to render
-	 * @param {String} options.text - the text to layout. Newline characters (\n) will cause line breaks
-	 * @param {Object} options.font - the BMFont definition which holds chars, kernings, etc
-	 * @param {Number} [options.width=] - the desired width of the text box, causes word-wrapping and clipping in "pre" mode. Leave as undefined to remove
-	 * @param {String} [options.mode=] - a mode for word-wrapper; can be 'pre' (maintain spacing), or 'nowrap' (collapse whitespace but only break on newline characters), otherwise assumes normal word-wrap behaviour (collapse whitespace, break at width or newlines)
-	 * @param {String} [options.align='left'] - can be "left", "center" or "right"
-	 * @param {Number} [options.letterSpacing=0] - the letter spacing in pixels
-	 * @param {Number} [options.tabSize=4] - the number of spaces to use in a single tab
-	 * @param {Number} [options.baseline=font.common.base] - the baseline height in pixels
-	 * @param {Number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
-	 * @param {Boolean} [options.flipY=true] - whether the texture will be Y-flipped (default true)
+	 * @param {object | string} options - the options or text string to render
+	 * @param {string} options.text - the text to layout. Newline characters (\n) will cause line breaks
+	 * @param {object} options.font - the BMFont definition which holds chars, kernings, etc
+	 * @param {number} [options.width] - the desired width of the text box, causes word-wrapping and clipping in "pre" mode. Leave as undefined to remove
+	 * @param {string} [options.mode] - a mode for word-wrapper; can be 'pre' (maintain spacing), or 'nowrap' (collapse whitespace but only break on newline characters), otherwise assumes normal word-wrap behaviour (collapse whitespace, break at width or newlines)
+	 * @param {string} [options.align='left'] - can be "left", "center" or "right"
+	 * @param {number} [options.letterSpacing=0] - the letter spacing in pixels
+	 * @param {number} [options.tabSize=4] - the number of spaces to use in a single tab
+	 * @param {number} [options.baseline=font.common.base] - the baseline height in pixels
+	 * @param {number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
+	 * @param {boolean} [options.flipY=true] - whether the texture will be Y-flipped (default true)
 	 */
 	constructor(options) {
 		super();
@@ -477,9 +477,6 @@ class TextLayout {
 		};
 	}
 
-	/**
-     * Private
-     */
 	_setupSpaceGlyphs(font) {
 		// These are fallbacks, when the font doesn't include
 		// ' ' or '\t' glyphs

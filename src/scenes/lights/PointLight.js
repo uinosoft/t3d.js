@@ -4,39 +4,38 @@ import { Light } from '../Light.js';
 /**
  * A light that gets emitted from a single point in all directions.
  * A common use case for this is to replicate the light emitted from a bare lightbulb.
- * This light can cast shadows - see {@link t3d.PointLightShadow} page for details.
- * @memberof t3d
- * @extends t3d.Light
+ * This light can cast shadows - see {@link PointLightShadow} page for details.
+ * @extends Light
  */
 class PointLight extends Light {
 
 	/**
-	 * @param {Number} [color=0xffffff]
-	 * @param {Number} [intensity=1]
-	 * @param {Number} [distance=200]
-	 * @param {Number} [decay=1]
+	 * @param {number} [color=0xffffff]
+	 * @param {number} [intensity=1]
+	 * @param {number} [distance=200]
+	 * @param {number} [decay=1]
 	 */
 	constructor(color, intensity, distance, decay) {
 		super(color, intensity);
 
 		/**
 		 * The amount the light dims along the distance of the light.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.decay = (decay !== undefined) ? decay : 1;
 
 		/**
 		 * The distance from the light where the intensity is 0.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 200
 		 */
 		this.distance = (distance !== undefined) ? distance : 200;
 
 		/**
-		 * A {@link t3d.PointLightShadow} used to calculate shadows for this light.
-		 * @type {t3d.PointLightShadow}
-		 * @default t3d.PointLightShadow()
+		 * A {@link PointLightShadow} used to calculate shadows for this light.
+		 * @type {PointLightShadow}
+		 * @default PointLightShadow()
 		 */
 		this.shadow = new PointLightShadow();
 	}
@@ -53,7 +52,7 @@ class PointLight extends Light {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 PointLight.prototype.isPointLight = true;

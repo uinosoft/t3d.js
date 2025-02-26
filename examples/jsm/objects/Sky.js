@@ -17,7 +17,7 @@ import {
  * http://blenderartists.org/forum/showthread.php?245954-preethams-sky-impementation-HDR
  *
  * Three.js integration by zz85 http://twitter.com/blurspline
-*/
+ */
 class Sky extends Mesh {
 
 	constructor(cubeTexture) {

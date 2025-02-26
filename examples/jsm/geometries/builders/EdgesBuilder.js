@@ -5,12 +5,12 @@ const EdgesBuilder = {
 
 	/**
 	 * @param {Array} bufferArray - Flat buffer array containing vertex positions.
-	 * @param {Array} [indices=] - Flat buffer array of indices, must be multiple of 3.
-     * @param {Object} [options={}] - The options object.
-	 * @param {Number} [options.thresholdAngle=1] - An edge is only rendered if the angle (in degrees) between the face normals of the adjoining faces exceeds this value.
-	 * @param {Number} [options.stride=3] - The number of values of the array that should be associated with a particular vertex.
-	 * @param {Number} [options.offset=0] - The offset in the buffer array where the position starts.
-	 * @return {Object} - The edges geometry data.
+	 * @param {Array} [indices] - Flat buffer array of indices, must be multiple of 3.
+	 * @param {object} [options={}] - The options object.
+	 * @param {number} [options.thresholdAngle=1] - An edge is only rendered if the angle (in degrees) between the face normals of the adjoining faces exceeds this value.
+	 * @param {number} [options.stride=3] - The number of values of the array that should be associated with a particular vertex.
+	 * @param {number} [options.offset=0] - The offset in the buffer array where the position starts.
+	 * @returns {object} - The edges geometry data.
 	 */
 	getGeometryData: function(bufferArray, indices, options = {}) {
 		const thresholdAngle = options.thresholdAngle !== undefined ? options.thresholdAngle : 1;
@@ -73,8 +73,8 @@ const EdgesBuilder = {
 		}
 
 		/**
-         * get edges { index1: edge[ 0 ], index2: edge[ 1 ], face1: i, face2: undefined }
-         */
+		 * get edges { index1: edge[ 0 ], index2: edge[ 1 ], face1: i, face2: undefined }
+		 */
 		let edge1, edge2;
 		const edge = [0, 0], edges = {};
 		for (i = 0, l = faces.length; i < l; i++) {

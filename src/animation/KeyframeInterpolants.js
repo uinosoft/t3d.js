@@ -3,14 +3,13 @@ import { Quaternion } from '../math/Quaternion.js';
 /**
  * Interpolant serves as the base class for all interpolation algorithms.
  * It defines a set of static methods that are intended to be invoked by a keyframe track for the purpose of interpolation.
- * @memberof t3d
  * @abstract
  */
 class KeyframeInterpolant {
 
 	/**
 	 * Get the value size for keyframe values.
-	 * @return {Number} - the value size.
+	 * @returns {number} - the value size.
 	 */
 	static getValueSize() {
 		return this.values.length / this.times.length;
@@ -18,11 +17,11 @@ class KeyframeInterpolant {
 
 	/**
 	 * Interpolate the value for the specified time.
-	 * @param {Number} index0 - the index of the first keyframe.
-	 * @param {Number} ratio - the ratio (0-1) of the time passed between the first keyframe and the next keyframe.
-	 * @param {Number} duration - the duration time between the first keyframe and the next keyframe.
+	 * @param {number} index0 - the index of the first keyframe.
+	 * @param {number} ratio - the ratio (0-1) of the time passed between the first keyframe and the next keyframe.
+	 * @param {number} duration - the duration time between the first keyframe and the next keyframe.
 	 * @param {Array} outBuffer - the output buffer to store the interpolated value.
-	 * @return {Array} - the output buffer to store the interpolated value.
+	 * @returns {Array} - the output buffer to store the interpolated value.
 	 */
 	static interpolate(index0, ratio, duration, outBuffer) {
 		throw new Error('Interpolant: call to abstract method');
@@ -30,9 +29,9 @@ class KeyframeInterpolant {
 
 	/**
 	 * Copy the value for the specified index.
-	 * @param {Number} index - the index of the keyframe.
+	 * @param {number} index - the index of the keyframe.
 	 * @param {Array} outBuffer - the output buffer to store the copied value.
-	 * @return {Array} - the output buffer to store the copied value.
+	 * @returns {Array} - the output buffer to store the copied value.
 	 */
 	static copyValue(index, outBuffer) {
 		const values = this.values,
@@ -50,8 +49,7 @@ class KeyframeInterpolant {
 
 /**
  * Step (Discrete) interpolation of keyframe values.
- * @memberof t3d
- * @extends t3d.KeyframeInterpolant
+ * @extends KeyframeInterpolant
  */
 class StepInterpolant extends KeyframeInterpolant {
 
@@ -71,8 +69,7 @@ class StepInterpolant extends KeyframeInterpolant {
 
 /**
  * Linear interpolation of keyframe values.
- * @memberof t3d
- * @extends t3d.KeyframeInterpolant
+ * @extends KeyframeInterpolant
  */
 class LinearInterpolant extends KeyframeInterpolant {
 
@@ -103,8 +100,7 @@ class LinearInterpolant extends KeyframeInterpolant {
 
 /**
  * Quaternion Linear interpolation of keyframe values.
- * @memberof t3d
- * @extends t3d.KeyframeInterpolant
+ * @extends KeyframeInterpolant
  */
 class QuaternionLinearInterpolant extends KeyframeInterpolant {
 
@@ -121,8 +117,7 @@ class QuaternionLinearInterpolant extends KeyframeInterpolant {
 
 /**
  * Cubic spline interpolation of keyframe values.
- * @memberof t3d
- * @extends t3d.KeyframeInterpolant
+ * @extends KeyframeInterpolant
  */
 class CubicSplineInterpolant extends KeyframeInterpolant {
 
@@ -178,8 +173,7 @@ class CubicSplineInterpolant extends KeyframeInterpolant {
 
 /**
  * Quaternion Cubic spline interpolation of keyframe values.
- * @memberof t3d
- * @extends t3d.CubicSplineInterpolant
+ * @extends CubicSplineInterpolant
  */
 class QuaternionCubicSplineInterpolant extends CubicSplineInterpolant {
 

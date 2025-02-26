@@ -20,8 +20,8 @@ class HeatmapGenerator {
 
 	/**
 	 * Create a heatmap generator.
-	 * @param {Number} [width=1024] The initial width of the heatmap textures.
-	 * @param {Number} [height=1024] The initial height of the heatmap textures.
+	 * @param {number} [width=1024] The initial width of the heatmap textures.
+	 * @param {number} [height=1024] The initial height of the heatmap textures.
 	 */
 	constructor(width = 1024, height = 1024) {
 		// Gray pass
@@ -73,9 +73,9 @@ class HeatmapGenerator {
 	 * Resize heatmap textures.
 	 * The heatmap texture size only affects the image resolution, and generally does not affect the drawing results.
 	 * Note: resize will clear the content in the texture, so you need to re-execute rendering after resize.
-	 * @param {Number} width
-	 * @param {Number} height
-	 * @return this
+	 * @param {number} width
+	 * @param {number} height
+	 * @returns {HeatmapGenerator} this
 	 */
 	resize(width, height) {
 		this._grayRenderTarget.resize(width, height);
@@ -88,13 +88,13 @@ class HeatmapGenerator {
 	 * This method needs to be executed before executing colorize to generate the final heatmap.
 	 * @param {ThinRenderer} renderer
 	 * @param {Array} data [[x0, y0, value0], [x1, y1, value1], ...]
-	 * @param {Object} options
+	 * @param {object} options
 	 * @param {Array} options.size Dimensions in the data coordinate system with the origin at the center.
-	 * @param {Number} radius The diffusion radius of the data point, the unit is 1 in the data coordinate system.
-	 * @param {String} interpolation (Optional) The interpolation method of the spread of data points, 'gaussian'(default) | 'linear' | 'cos'.
-	 * @param {Number} gaussianSigma (Optional) Only effective in Gaussian interpolation mode. default is 0.158.
-	 * @param {Array} range (Optional) The range of data values, default is [0, 1].
-	 * @return this
+	 * @param {number} options.radius The diffusion radius of the data point, the unit is 1 in the data coordinate system.
+	 * @param {string} options.interpolation (Optional) The interpolation method of the spread of data points, 'gaussian'(default) | 'linear' | 'cos'.
+	 * @param {number} options.gaussianSigma (Optional) Only effective in Gaussian interpolation mode. default is 0.158.
+	 * @param {Array} options.range (Optional) The range of data values, default is [0, 1].
+	 * @returns {HeatmapGenerator} this
 	 */
 	render(renderer, data, options = {}) {
 		const size = options.size;
@@ -185,8 +185,9 @@ class HeatmapGenerator {
 	 * Colorize the grayscale texture according to the color gradient ribbon map.
 	 * @param {ThinRenderer} renderer
 	 * @param {Texture2D} gradientTexture
-	 * @param {Object} options (Optional)
-	 * @param {Boolean} options.alpha (Optional) Whether to generate images with alpha gradients, default is false.
+	 * @param {object} options (Optional)
+	 * @param {boolean} options.alpha (Optional) Whether to generate images with alpha gradients, default is false.
+	 * @returns {HeatmapGenerator} this
 	 */
 	colorize(renderer, gradientTexture, options = {}) {
 		renderer.getClearColor().toArray(_tempClearColor); // save clear color
@@ -208,7 +209,7 @@ class HeatmapGenerator {
 
 	/**
 	 * Get heatmap gray texture.
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getGrayTexture() {
 		return this._grayRenderTarget.texture;
@@ -216,7 +217,7 @@ class HeatmapGenerator {
 
 	/**
 	 * Get the colored heatmap texture.
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getTexture() {
 		return this._colorizeRenderTarget.texture;

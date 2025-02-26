@@ -85,8 +85,6 @@ class WeightedBlendedOITPass {
 
 }
 
-/** WeightedBlendedMixShader **/
-
 const WeightedBlendedMixShader = {
 	name: 'wb_oit_mix',
 
@@ -127,8 +125,6 @@ const WeightedBlendedMixShader = {
 		}
    `
 };
-
-/** WeightedBlendedOITMaterial **/
 
 class WeightedBlendedOITMaterial extends PBRMaterial {
 

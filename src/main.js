@@ -1,8 +1,3 @@
-/**
- * The t3d namespace.
- * @namespace t3d
- */
-
 export { BooleanKeyframeTrack } from './animation/tracks/BooleanKeyframeTrack.js';
 export { ColorKeyframeTrack } from './animation/tracks/ColorKeyframeTrack.js';
 export { NumberKeyframeTrack } from './animation/tracks/NumberKeyframeTrack.js';

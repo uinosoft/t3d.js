@@ -8,14 +8,15 @@ import { GeometryBuilderUtils } from './GeometryBuilderUtils.js';
 const ExtrudeShapeBuilder = {
 
 	/**
-     * @param {Object} shape - The shape.
-     * @param {Array} shape.contour - The holes of this shape, for example: [[0, 0], [0, 5], [5, 5], [5, 0]]
-     * @param {Array} shape.holes - The holes of this shape, for example: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
+	 * @param {object} shape - The shape.
+	 * @param {Array} shape.contour - The holes of this shape, for example: [[0, 0], [0, 5], [5, 5], [5, 0]]
+	 * @param {Array} shape.holes - The holes of this shape, for example: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
 	 * @param {Array} [shape.depth=1] - The depth of this shape. If it is a negative number, extrude in the positive direction of the z-axis, otherwise, extrude in the negative direction of the z-axis.
-	 * @param {Boolean} [shape.generateTop=true] - Whether to generate the top face.
-	 * @param {Boolean} [shape.generateBottom=true] - Whether to generate the bottom face.
-	 * @param {Object} [shape.pathFrames] - The path frames data. If it is not undefined, the shape will be extruded along the path.
-     */
+	 * @param {boolean} [shape.generateTop=true] - Whether to generate the top face.
+	 * @param {boolean} [shape.generateBottom=true] - Whether to generate the bottom face.
+	 * @param {object} [shape.pathFrames] - The path frames data. If it is not undefined, the shape will be extruded along the path.
+	 * @returns {object} The geometry data.
+	 */
 	getGeometryData: function(shape) {
 		const depth = (shape.depth !== undefined) ? shape.depth : 1;
 		const generateTop = (shape.generateTop !== undefined) ? shape.generateTop : true;

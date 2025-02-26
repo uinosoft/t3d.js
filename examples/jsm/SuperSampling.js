@@ -66,8 +66,8 @@ class SuperSampling {
 	/**
 	 * Jitter camera projectionMatrix
 	 * @param {Camera} camera
-	 * @param {Number} width screen width
-	 * @param {Number} height screen height
+	 * @param {number} width screen width
+	 * @param {number} height screen height
 	 */
 	jitterProjection(camera, width, height) {
 		const offset = this._haltonSequence[this._frame];
@@ -87,8 +87,8 @@ class SuperSampling {
 	 * @param {TextureBase} texture input texture
 	 * @param {TextureBase} velocityTexture velocity texture
 	 * @param {TextureBase} depthTexture depth texture
-	 * @param {Boolean} [still=true]
-	 * @return {TextureBase} output texture
+	 * @param {boolean} [still=true]
+	 * @returns {TextureBase} output texture
 	 */
 	sample(renderer, texture, velocityTexture, depthTexture, still) {
 		velocityTexture = (velocityTexture !== undefined) ? velocityTexture : null;
@@ -123,7 +123,7 @@ class SuperSampling {
 	}
 
 	/**
-	 * @return {TextureBase} output texture
+	 * @returns {TextureBase} output texture
 	 */
 	output() {
 		return this._prevFrame.texture;

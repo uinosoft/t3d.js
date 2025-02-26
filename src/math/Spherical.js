@@ -5,14 +5,13 @@ import { MathUtils } from './MathUtils.js';
  *
  * The poles (phi) are at the positive and negative y axis.
  * The equator starts at positive z.
- * @memberof t3d
  */
 class Spherical {
 
 	/**
-	 * @param {Number} [radius=1] - the radius, or the Euclidean distance (straight-line distance) from the point to the origin. Default is 1.0.
-	 * @param {Number} [phi=0] - - polar angle in radians from the y (up) axis. Default is 0.
-	 * @param {Number} [theta=0] - - equator angle in radians around the y (up) axis. Default is 0.
+	 * @param {number} [radius=1] - the radius, or the Euclidean distance (straight-line distance) from the point to the origin. Default is 1.0.
+	 * @param {number} [phi=0] - - polar angle in radians from the y (up) axis. Default is 0.
+	 * @param {number} [theta=0] - - equator angle in radians around the y (up) axis. Default is 0.
 	 */
 	constructor(radius = 1, phi = 0, theta = 0) {
 		this.radius = radius;
@@ -22,9 +21,10 @@ class Spherical {
 
 	/**
 	 * Sets values of this spherical's radius, phi and theta properties.
-	 * @param {Number} radius
-	 * @param {Number} phi
-	 * @param {Number} theta
+	 * @param {number} radius
+	 * @param {number} phi
+	 * @param {number} theta
+	 * @returns {Spherical}
 	 */
 	set(radius, phi, theta) {
 		this.radius = radius;
@@ -36,8 +36,8 @@ class Spherical {
 
 	/**
 	 * Copies the values of the passed Spherical's radius, phi and theta properties to this spherical.
-	 * @param {t3d.Spherical} other
-	 * @return {t3d.Spherical}
+	 * @param {Spherical} other
+	 * @returns {Spherical}
 	 */
 	copy(other) {
 		this.radius = other.radius;
@@ -49,7 +49,7 @@ class Spherical {
 
 	/**
 	 * Returns a new spherical with the same radius, phi and theta properties as this one.
-	 * @return {t3d.Spherical}
+	 * @returns {Spherical}
 	 */
 	clone() {
 		return new Spherical().copy(this);
@@ -57,7 +57,7 @@ class Spherical {
 
 	/**
 	 * Restrict phi to be betwee EPS and PI-EPS.
-	 * @return {t3d.Spherical}
+	 * @returns {Spherical}
 	 */
 	makeSafe() {
 		const EPS = 0.000001;
@@ -68,8 +68,8 @@ class Spherical {
 
 	/**
 	 * Sets values of this spherical's radius, phi and theta properties from the Vector3.
-	 * @param {t3d.Vector3} vec3
-	 * @return {t3d.Spherical}
+	 * @param {Vector3} vec3
+	 * @returns {Spherical}
 	 */
 	setFromVector3(vec3) {
 		this.radius = vec3.getLength();

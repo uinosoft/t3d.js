@@ -7,14 +7,13 @@ const _v3 = new Vector3();
 
 /**
  * A geometric triangle as defined by three Vector3s representing its three corners.
- * @memberof t3d
  */
 class Triangle {
 
 	/**
-	 * @param {t3d.Vector3} [a=] - the first corner of the triangle. Default is a Vector3 at (0, 0, 0).
-	 * @param {t3d.Vector3} [b=] - the second corner of the triangle. Default is a Vector3 at (0, 0, 0).
-	 * @param {t3d.Vector3} [c=] - the final corner of the triangle. Default is a Vector3 at (0, 0, 0).
+	 * @param {Vector3} [a] - the first corner of the triangle. Default is a Vector3 at (0, 0, 0).
+	 * @param {Vector3} [b] - the second corner of the triangle. Default is a Vector3 at (0, 0, 0).
+	 * @param {Vector3} [c] - the final corner of the triangle. Default is a Vector3 at (0, 0, 0).
 	 */
 	constructor(a = new Vector3(), b = new Vector3(), c = new Vector3()) {
 		this.a = a;
@@ -24,11 +23,11 @@ class Triangle {
 
 	/**
 	 * Calculate the normal vector of the triangle.
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @param {t3d.Vector3} c
-	 * @param {t3d.Vector3} [optionalTarget]
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @param {Vector3} c
+	 * @param {Vector3} [optionalTarget]
+	 * @returns {Vector3}
 	 */
 	static normal(a, b, c, optionalTarget) {
 		const result = optionalTarget || new Vector3();
@@ -48,12 +47,12 @@ class Triangle {
 	/**
 	 * static/instance method to calculate barycentric coordinates.
 	 * based on: http://www.blackpawn.com/texts/pointinpoly/default.html
-	 * @param {t3d.Vector3} point - Vector3
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @param {t3d.Vector3} c
-	 * @param {t3d.Vector3} [target] - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} point - Vector3
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @param {Vector3} c
+	 * @param {Vector3} [target] - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	static barycoordFromPoint(point, a, b, c, target) {
 		_v0.subVectors(c, a);
@@ -87,11 +86,11 @@ class Triangle {
 
 	/**
 	 * Returns true if the passed point, when projected onto the plane of the triangle, lies within the triangle.
-	 * @param {t3d.Vector3} point
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @param {t3d.Vector3} c
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} point
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @param {Vector3} c
+	 * @returns {Vector3}
 	 */
 	static containsPoint(point, a, b, c) {
 		this.barycoordFromPoint(point, a, b, c, _v3);
@@ -100,10 +99,10 @@ class Triangle {
 
 	/**
 	 * Sets the triangle's a, b and c properties to the passed vector3s.
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @param {t3d.Vector3} c
-	 * @return {t3d.Triangle}
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @param {Vector3} c
+	 * @returns {Triangle}
 	 */
 	set(a, b, c) {
 		this.a.copy(a);

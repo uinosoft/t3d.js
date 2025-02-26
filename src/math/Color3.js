@@ -2,15 +2,14 @@ import { MathUtils } from './MathUtils.js';
 
 /**
  * Color3 Class.
- * @memberof t3d
  */
 class Color3 {
 
 	/**
-	 * @param {Number} r - (optional) If arguments g and b are defined, the red component of the color.
+	 * @param {number} r - (optional) If arguments g and b are defined, the red component of the color.
 	 * 						If they are not defined, it can be a hexadecimal triplet (recommended).
-	 * @param {Number} g - (optional) If it is defined, the green component of the color.
-	 * @param {Number} b - (optional) If it is defined, the blue component of the color.
+	 * @param {number} g - (optional) If it is defined, the green component of the color.
+	 * @param {number} b - (optional) If it is defined, the blue component of the color.
 	 */
 	constructor(r, g, b) {
 		this.r = 0;
@@ -28,10 +27,10 @@ class Color3 {
 	 * Sets this color to be the color linearly interpolated
 	 * between color1 and color2 where ratio is the percent distance along the line connecting the two colors
 	 * - ratio = 0 will be color1, and ratio = 1 will be color2.
-     * @param {t3d.Color3} c1 - the starting Color.
-     * @param {t3d.Color3} c2 - Color to interpolate towards.
-     * @param {Number} ratio - interpolation factor, typically in the closed interval [0, 1].
-     */
+	 * @param {Color3} c1 - the starting Color.
+	 * @param {Color3} c2 - Color to interpolate towards.
+	 * @param {number} ratio - interpolation factor, typically in the closed interval [0, 1].
+	 */
 	lerpColors(c1, c2, ratio) {
 		this.r = ratio * (c2.r - c1.r) + c1.r;
 		this.g = ratio * (c2.g - c1.g) + c1.g;
@@ -42,26 +41,26 @@ class Color3 {
 	 * Linearly interpolates this color's RGB values toward the RGB values of the passed argument.
 	 * The ratio argument can be thought of as the ratio between the two colors,
 	 * where 0.0 is this color and 1.0 is the first argument.
-     * @param {t3d.Color3} c - color to converge on.
-     * @param {Number} ratio - interpolation factor in the closed interval [0, 1].
-     */
+	 * @param {Color3} c - color to converge on.
+	 * @param {number} ratio - interpolation factor in the closed interval [0, 1].
+	 */
 	lerp(c, ratio) {
 		this.lerpColors(this, c, ratio);
 	}
 
 	/**
-     * Returns a new Color with the same r, g and b values as this one.
-	 * @return {t3d.Color3}
-     */
+	 * Returns a new Color with the same r, g and b values as this one.
+	 * @returns {Color3}
+	 */
 	clone() {
 		return new Color3(this.r, this.g, this.b);
 	}
 
 	/**
 	 * Copies the r, g and b parameters from v in to this color.
-     * @param {t3d.Color3} v
-	 * @return {t3d.Color3}
-     */
+	 * @param {Color3} v
+	 * @returns {Color3}
+	 */
 	copy(v) {
 		this.r = v.r;
 		this.g = v.g;
@@ -71,10 +70,10 @@ class Color3 {
 	}
 
 	/**
-     * Set from hex.
-	 * @param {Number} hex - hexadecimal triplet format.
-	 * @return {t3d.Color3}
-     */
+	 * Set from hex.
+	 * @param {number} hex - hexadecimal triplet format.
+	 * @returns {Color3}
+	 */
 	setHex(hex) {
 		hex = Math.floor(hex);
 
@@ -86,20 +85,20 @@ class Color3 {
 	}
 
 	/**
-     * Returns the hexadecimal value of this color.
-	 * @return {Number}
-     */
+	 * Returns the hexadecimal value of this color.
+	 * @returns {number}
+	 */
 	getHex() {
 		return MathUtils.clamp(this.r * 255, 0, 255) << 16 ^ MathUtils.clamp(this.g * 255, 0, 255) << 8 ^ MathUtils.clamp(this.b * 255, 0, 255) << 0;
 	}
 
 	/**
-     * Sets this color from RGB values.
-	 * @param {Number} r - Red channel value between 0.0 and 1.0.
-	 * @param {Number} g - Green channel value between 0.0 and 1.0.
-	 * @param {Number} b - Blue channel value between 0.0 and 1.0.
-	 * @return {t3d.Color3}
-     */
+	 * Sets this color from RGB values.
+	 * @param {number} r - Red channel value between 0.0 and 1.0.
+	 * @param {number} g - Green channel value between 0.0 and 1.0.
+	 * @param {number} b - Blue channel value between 0.0 and 1.0.
+	 * @returns {Color3}
+	 */
 	setRGB(r, g, b) {
 		this.r = r;
 		this.g = g;
@@ -109,12 +108,12 @@ class Color3 {
 	}
 
 	/**
-     * Set from HSL.
-	 * @param {Number} h - hue value between 0.0 and 1.0
-	 * @param {Number} s - saturation value between 0.0 and 1.0
-	 * @param {Number} l - lightness value between 0.0 and 1.0
-	 * @return {t3d.Color3}
-     */
+	 * Set from HSL.
+	 * @param {number} h - hue value between 0.0 and 1.0
+	 * @param {number} s - saturation value between 0.0 and 1.0
+	 * @param {number} l - lightness value between 0.0 and 1.0
+	 * @returns {Color3}
+	 */
 	setHSL(h, s, l) {
 		// h,s,l ranges are in 0.0 - 1.0
 		h = MathUtils.euclideanModulo(h, 1);
@@ -136,7 +135,7 @@ class Color3 {
 
 	/**
 	 * Converts this color from sRGB space to linear space.
-	 * @return {t3d.Color3}
+	 * @returns {Color3}
 	 */
 	convertSRGBToLinear() {
 		this.r = SRGBToLinear(this.r);
@@ -147,7 +146,7 @@ class Color3 {
 
 	/**
 	 * Converts this color from linear space to sRGB space.
-	 * @return {t3d.Color3}
+	 * @returns {Color3}
 	 */
 	convertLinearToSRGB() {
 		this.r = LinearToSRGB(this.r);
@@ -158,11 +157,11 @@ class Color3 {
 
 	/**
 	 * Sets this color's components based on an array formatted like [ r, g, b ].
-     * @param {Number[]} array - Array of floats in the form [ r, g, b ].
-	 * @param {Number} [offset=0] - An offset into the array.
-	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-	 * @return {t3d.Color3}
-     */
+	 * @param {number[]} array - Array of floats in the form [ r, g, b ].
+	 * @param {number} [offset=0] - An offset into the array.
+	 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+	 * @returns {Color3}
+	 */
 	fromArray(array, offset = 0, denormalize = false) {
 		let r = array[offset], g = array[offset + 1], b = array[offset + 2];
 
@@ -181,11 +180,11 @@ class Color3 {
 
 	/**
 	 * Returns an array of the form [ r, g, b ].
-     * @param {Number[]} [array] - An array to store the color to.
-	 * @param {Number} [offset=0] - An offset into the array.
-	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-	 * @return {Number[]}
-     */
+	 * @param {number[]} [array] - An array to store the color to.
+	 * @param {number} [offset=0] - An offset into the array.
+	 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+	 * @returns {number[]}
+	 */
 	toArray(array = [], offset = 0, normalize = false) {
 		let r = this.r, g = this.g, b = this.b;
 

@@ -2,17 +2,16 @@ import { LinearInterpolant, StepInterpolant } from './KeyframeInterpolants.js';
 
 /**
  * Base class for property track.
- * @memberof t3d
  * @abstract
  */
 class KeyframeTrack {
 
 	/**
-	 * @param {t3d.Object3D|t3d.Material} target
-	 * @param {String} propertyPath
+	 * @param {Object3D|Material} target
+	 * @param {string} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+	 * @param {KeyframeInterpolant.constructor} [interpolant=LinearInterpolant]
 	 */
 	constructor(target, propertyPath, times, values, interpolant = LinearInterpolant) {
 		this.target = target;
@@ -38,8 +37,8 @@ class KeyframeTrack {
 
 	/**
 	 * Set interpolant for this keyframe track.
-	 * @param {t3d.KeyframeInterpolant.constructor} interpolant
-	 * @return {t3d.KeyframeTrack}
+	 * @param {KeyframeInterpolant.constructor} interpolant
+	 * @returns {KeyframeTrack}
 	 */
 	setInterpolant(interpolant) {
 		this.valueSize = interpolant.getValueSize.call(this);
@@ -50,9 +49,9 @@ class KeyframeTrack {
 	/**
 	 * Get value at time.
 	 * The value will be interpolated by interpolant if time is between keyframes.
-	 * @param {Number} t - time
+	 * @param {number} t - time
 	 * @param {Array} outBuffer - output buffer
-	 * @return {Array} output buffer
+	 * @returns {Array} output buffer
 	 */
 	getValue(t, outBuffer) {
 		const interpolant = this.interpolant,

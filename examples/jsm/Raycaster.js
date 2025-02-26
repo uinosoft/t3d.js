@@ -4,31 +4,31 @@ class Raycaster {
 
 	/**
 	 * This creates a new raycaster object.
-	 * @param {t3d.Vector3} origin — The origin vector where the ray casts from.
-	 * @param {t3d.Vector3} direction — The direction vector that gives direction to the ray. Should be normalized.
+	 * @param {Vector3} origin — The origin vector where the ray casts from.
+	 * @param {Vector3} direction — The direction vector that gives direction to the ray. Should be normalized.
 	 */
 	constructor(origin, direction) {
 		/**
 		 * The Ray used for the raycasting.
-		 * @type {t3d.Ray}
+		 * @type {Ray}
 		 */
 		this.ray = new Ray(origin, direction);
 	}
 
 	/**
-     * Updates the ray with a new origin and direction.
-     * @param {t3d.Vector3} origin — The origin vector where the ray casts from.
-     * @param {t3d.Vector3} direction — The normalized direction vector that gives direction to the ray.
-     */
+	 * Updates the ray with a new origin and direction.
+	 * @param {Vector3} origin — The origin vector where the ray casts from.
+	 * @param {Vector3} direction — The normalized direction vector that gives direction to the ray.
+	 */
 	set(origin, direction) {
 		this.ray.set(origin, direction);
 	}
 
 	/**
-     * Updates the ray with a new origin and direction.
-     * @param {t3d.Vector2} coords — 2D coordinates of the mouse, in normalized device coordinates (NDC)---X and Y components should be between -1 and 1.
-     * @param {t3d.Camera} camera — camera from which the ray should originate.
-     */
+	 * Updates the ray with a new origin and direction.
+	 * @param {Vector2} coords — 2D coordinates of the mouse, in normalized device coordinates (NDC)---X and Y components should be between -1 and 1.
+	 * @param {Camera} camera — camera from which the ray should originate.
+	 */
 	setFromCamera(coords, camera) {
 		if (camera.projectionMatrix.elements[11] === -1.0) { // perspective
 			this.ray.origin.setFromMatrixPosition(camera.worldMatrix);
@@ -42,12 +42,12 @@ class Raycaster {
 	}
 
 	/**
-     * Checks all intersection between the ray and the object with or without the descendants. Intersections are returned sorted by distance, closest first. An array of intersections is returned:
-     * [ { distance, point, face, faceIndex, object }, ... ]
-     * @param {t3d.Object3D} object — The object to check for intersection with the ray.
-     * @param {Boolean} [recursive=] — If true, it also checks all descendants. Otherwise it only checks intersecton with the object.
-     * @return {Object[]} An array of intersections
-     */
+	 * Checks all intersection between the ray and the object with or without the descendants. Intersections are returned sorted by distance, closest first. An array of intersections is returned:
+	 * [ { distance, point, face, faceIndex, object }, ... ]
+	 * @param {Object3D} object — The object to check for intersection with the ray.
+	 * @param {boolean} [recursive] — If true, it also checks all descendants. Otherwise it only checks intersecton with the object.
+	 * @returns {object[]} An array of intersections
+	 */
 	intersectObject(object, recursive) {
 		const intersects = [];
 
@@ -59,12 +59,12 @@ class Raycaster {
 	}
 
 	/**
-     * Checks all intersection between the ray and the objects with or without the descendants. Intersections are returned sorted by distance, closest first. An array of intersections is returned:
-     * [ { distance, point, face, faceIndex, object }, ... ]
-     * @param {t3d.Object3D[]} objects — The objects to check for intersection with the ray.
-     * @param {Boolean} [recursive=] — If true, it also checks all descendants. Otherwise it only checks intersecton with the object.
-     * @return {Object[]} An array of intersections
-     */
+	 * Checks all intersection between the ray and the objects with or without the descendants. Intersections are returned sorted by distance, closest first. An array of intersections is returned:
+	 * [ { distance, point, face, faceIndex, object }, ... ]
+	 * @param {Object3D[]} objects — The objects to check for intersection with the ray.
+	 * @param {boolean} [recursive=false] — If true, it also checks all descendants. Otherwise it only checks intersecton with the object.
+	 * @returns {object[]} An array of intersections
+	 */
 	intersectObjects(objects, recursive) {
 		const intersects = [];
 

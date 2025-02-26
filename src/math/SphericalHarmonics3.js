@@ -4,7 +4,6 @@ import { Vector3 } from './Vector3.js';
  * Primary reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
  * Secondary reference: https://www.ppsloan.org/publications/StupidSH36.pdf
  * 3-band SH defined by 9 coefficients.
- * @memberof t3d
  */
 class SphericalHarmonics3 {
 
@@ -26,8 +25,8 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Set this sphericalHarmonics3 value.
-	 * @param {t3d.Vector3[]} coefficients An array of SH coefficients.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {Vector3[]} coefficients An array of SH coefficients.
+	 * @returns {SphericalHarmonics3}
 	 */
 	set(coefficients) {
 		for (let i = 0; i < 9; i++) {
@@ -38,7 +37,7 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Sets all SH coefficients to 0.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @returns {SphericalHarmonics3}
 	 */
 	zero() {
 		for (let i = 0; i < 9; i++) {
@@ -49,9 +48,9 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Returns the radiance in the direction of the given normal.
-	 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
-	 * @param {t3d.Vector3} target - The result vector.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} normal - The normal vector (assumed to be unit length).
+	 * @param {Vector3} target - The result vector.
+	 * @returns {Vector3}
 	 */
 	getAt(normal, target) {
 		// normal is assumed to be unit length
@@ -81,9 +80,9 @@ class SphericalHarmonics3 {
 	/**
 	 * Reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
 	 * Returns the irradiance (radiance convolved with cosine lobe) in the direction of the given normal.
-	 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
-	 * @param {t3d.Vector3} target - The result vector.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} normal - The normal vector (assumed to be unit length).
+	 * @param {Vector3} target - The result vector.
+	 * @returns {Vector3}
 	 */
 	getIrradianceAt(normal, target) {
 		// normal is assumed to be unit length
@@ -112,8 +111,8 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Adds the given SH to this instance.
-	 * @param {t3d.SphericalHarmonics3} sh - The SH to add.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {SphericalHarmonics3} sh - The SH to add.
+	 * @returns {SphericalHarmonics3}
 	 */
 	add(sh) {
 		for (let i = 0; i < 9; i++) {
@@ -124,9 +123,9 @@ class SphericalHarmonics3 {
 
 	/**
 	 * A convenience method for performing .add() and .scale() at once.
-	 * @param {t3d.SphericalHarmonics3} sh - The SH to add.
-	 * @param {t3d.Vector3} s - The scale factor.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {SphericalHarmonics3} sh - The SH to add.
+	 * @param {Vector3} s - The scale factor.
+	 * @returns {SphericalHarmonics3}
 	 */
 	addScaledSH(sh, s) {
 		for (let i = 0; i < 9; i++) {
@@ -137,8 +136,8 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Multiply the s to this SphericalHarmonics3.
-	 * @param {Number} s - The scale factor.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {number} s - The scale factor.
+	 * @returns {SphericalHarmonics3}
 	 */
 	scale(s) {
 		for (let i = 0; i < 9; i++) {
@@ -152,9 +151,9 @@ class SphericalHarmonics3 {
 	 * Sets this coefficients vector to be the vector linearly interpolated between v1 and v2
 	 * where alpha is the percent distance along the line connecting the two vectors
 	 * - alpha = 0 will be v1, and alpha = 1 will be v2.
-	 * @param {t3d.SphericalHarmonics3} sh - The SH to interpolate with.
-	 * @param {Number} alpha - The alpha factor.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {SphericalHarmonics3} sh - The SH to interpolate with.
+	 * @param {number} alpha - The alpha factor.
+	 * @returns {SphericalHarmonics3}
 	 */
 	lerp(sh, alpha) {
 		for (let i = 0; i < 9; i++) {
@@ -165,8 +164,8 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Returns true if the given SH and this instance have equal coefficients.
-	 * @param {t3d.SphericalHarmonics3} sh - The SH to compare with.
-	 * @return {Boolean}
+	 * @param {SphericalHarmonics3} sh - The SH to compare with.
+	 * @returns {boolean}
 	 */
 	equals(sh) {
 		for (let i = 0; i < 9; i++) {
@@ -179,8 +178,8 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Copies the given SH to this instance.
-	 * @param {t3d.SphericalHarmonics3} sh - The SH to compare with.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {SphericalHarmonics3} sh - The SH to compare with.
+	 * @returns {SphericalHarmonics3}
 	 */
 	copy(sh) {
 		return this.set(sh.coefficients);
@@ -188,7 +187,7 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Returns a new instance of SphericalHarmonics3 with equal coefficients.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @returns {SphericalHarmonics3}
 	 */
 	clone() {
 		return new this.constructor().copy(this);
@@ -196,9 +195,9 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Sets the coefficients of this instance from the given array.
-	 * @param {Number[]} array - The array holding the numbers of the SH coefficients.
-	 * @param {Number} [offset=0] - The array offset.
-	 * @return {t3d.SphericalHarmonics3}
+	 * @param {number[]} array - The array holding the numbers of the SH coefficients.
+	 * @param {number} [offset=0] - The array offset.
+	 * @returns {SphericalHarmonics3}
 	 */
 	fromArray(array, offset = 0) {
 		const coefficients = this.coefficients;
@@ -213,9 +212,9 @@ class SphericalHarmonics3 {
 	/**
 	 * Returns an array with the coefficients, or copies them into the provided array.
 	 * The coefficients are represented as numbers.
-	 * @param {Number[]} [array] - The target array.
-	 * @param {Number} [offset=0] - The array offset.
-	 * @return {Number[]}
+	 * @param {number[]} [array] - The target array.
+	 * @param {number} [offset=0] - The array offset.
+	 * @returns {number[]}
 	 */
 	toArray(array = [], offset = 0) {
 		const coefficients = this.coefficients;
@@ -229,8 +228,8 @@ class SphericalHarmonics3 {
 
 	/**
 	 * Computes the SH basis for the given normal vector.
-	 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
-	 * @param {Number[]} array - The resulting SH basis.
+	 * @param {Vector3} normal - The normal vector (assumed to be unit length).
+	 * @param {number[]} shBasis - The resulting SH basis.
 	 */
 	static getBasisAt(normal, shBasis) {
 		// normal is assumed to be unit length

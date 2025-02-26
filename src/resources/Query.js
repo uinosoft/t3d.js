@@ -5,8 +5,7 @@ let _queryId = 0;
 /**
  * A Query object provides single unified API for using WebGL asynchronus queries,
  * which include query objects ('Occlusion' and 'Transform Feedback') and timer queries.
- * @memberof t3d
- * @extends t3d.EventDispatcher
+ * @extends EventDispatcher
  */
 class Query extends EventDispatcher {
 
@@ -16,9 +15,9 @@ class Query extends EventDispatcher {
 	}
 
 	/**
-     * Disposes the Query object.
+	 * Disposes the Query object.
 	 * Rejects any pending query.
-     */
+	 */
 	dispose() {
 		this.dispatchEvent({ type: 'dispose' });
 	}

@@ -52,10 +52,10 @@ class GLTFExporter {
 
 	/**
 	 * Parse input root object(s) and generate GLTF output
-	 * @param {Object3D or [Object3D]} input root object(s)
+	 * @param {Object3D|Object3D[]} input root object(s)
 	 * @param {Function} onDone Callback on completed
 	 * @param {Function} onError Callback on errors
-	 * @param {Object} options options
+	 * @param {object} options options
 	 */
 	parse(input, onDone, onError, options) {
 		const writer = new GLTFWriter();
@@ -248,7 +248,7 @@ function decompose(matrix3) {
  * Compare two arrays
  * @param  {Array} array1 Array 1 to compare
  * @param  {Array} array2 Array 2 to compare
- * @return {Boolean}        Returns true if both arrays are equal
+ * @returns {boolean}        Returns true if both arrays are equal
  */
 function equalArray(array1, array2) {
 	return (array1.length === array2.length) && array1.every(function(element, index) {
@@ -259,7 +259,7 @@ function equalArray(array1, array2) {
 /**
  * Converts a string to an ArrayBuffer.
  * @param  {string} text
- * @return {ArrayBuffer}
+ * @returns {ArrayBuffer}
  */
 function stringToArrayBuffer(text) {
 	return new TextEncoder().encode(text).buffer;
@@ -267,9 +267,8 @@ function stringToArrayBuffer(text) {
 
 /**
  * Is identity matrix
- *
  * @param {Matrix4} matrix
- * @returns {Boolean} Returns true, if parameter is identity matrix
+ * @returns {boolean} Returns true, if parameter is identity matrix
  */
 function isIdentityMatrix(matrix) {
 	return equalArray(matrix.elements, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -280,7 +279,7 @@ function isIdentityMatrix(matrix) {
  * @param  {Attribute} attribute Attribute to find the min/max in range from start to start + count
  * @param  {Integer} start
  * @param  {Integer} count
- * @return {Object} Object containing the `min` and `max` values (As an array of attribute.size components)
+ * @returns {object} Object containing the `min` and `max` values (As an array of attribute.size components)
  */
 function getMinMax(attribute, start, count) {
 	const output = {
@@ -303,10 +302,8 @@ function getMinMax(attribute, start, count) {
 /**
  * Get the required size + padding for a buffer, rounded to the next 4-byte boundary.
  * https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#data-alignment
- *
  * @param {Integer} bufferSize The size the original buffer.
  * @returns {Integer} new buffer size with required padding.
- *
  */
 function getPaddedBufferSize(bufferSize) {
 	return Math.ceil(bufferSize / 4) * 4;
@@ -314,7 +311,6 @@ function getPaddedBufferSize(bufferSize) {
 
 /**
  * Returns a buffer aligned to 4-byte boundary.
- *
  * @param {ArrayBuffer} arrayBuffer Buffer to pad
  * @param {Integer} paddingByte (Optional)
  * @returns {ArrayBuffer} The same buffer if it's already aligned to 4-byte boundary or a new buffer
@@ -425,9 +421,9 @@ class GLTFWriter {
 
 	/**
 	 * Parse input root object(s) and generate GLTF output
-	 * @param {Object3D or [Object3D]} input root object(s)
+	 * @param {Object3D|Object3D[]} input root object(s)
 	 * @param {Function} onDone Callback on completed
-	 * @param {Object} options options
+	 * @param {object} options options
 	 */
 	async writeAsync(input, onDone, options) {
 		this.options = Object.assign({
@@ -646,8 +642,8 @@ class GLTFWriter {
 
 	/**
 	 * Process Object3D node
-	 * @param  {Object3D} node Object3D to processNodeAsync
-	 * @return {Integer} Index of the node in the nodes list
+	 * @param  {Object3D} object Object3D to processNodeAsync
+	 * @returns {Integer} Index of the node in the nodes list
 	 */
 	async processNodeAsync(object) {
 		const json = this.json;
@@ -719,7 +715,7 @@ class GLTFWriter {
 	/**
 	 * Process mesh
 	 * @param {Mesh} mesh Mesh to process
-	 * @return {Integer|null} Index of the processed mesh in the "meshes" array
+	 * @returns {Integer|null} Index of the processed mesh in the "meshes" array
 	 */
 	async processMeshAsync(mesh) {
 		const cache = this.cache;
@@ -905,8 +901,8 @@ class GLTFWriter {
 	 * @param  {Geometry} geometry (Optional) Geometry used for truncated draw range
 	 * @param  {Integer} start (Optional)
 	 * @param  {Integer} count (Optional)
-	 * @param  {Boolean} skipBufferView (Optional) Skip creating a bufferView and return the accessor
-	 * @return {Integer|null} Index of the processed accessor on the "accessors" array
+	 * @param  {boolean} skipBufferView (Optional) Skip creating a bufferView and return the accessor
+	 * @returns {Integer|null} Index of the processed accessor on the "accessors" array
 	 */
 	processAccessor(attribute, geometry, start, count, skipBufferView = false) {
 		const json = this.json;
@@ -983,7 +979,7 @@ class GLTFWriter {
 	 * @param  {number} start
 	 * @param  {number} count
 	 * @param  {number} target (Optional) Target usage of the BufferView
-	 * @return {Integer|null} Index of the processed BufferView on the "bufferViews" array
+	 * @returns {Integer|null} Index of the processed BufferView on the "bufferViews" array
 	 */
 	processBufferView(attribute, componentType, start, count, target) {
 		const json = this.json;
@@ -1068,7 +1064,7 @@ class GLTFWriter {
 	/**
 	 * Process and generate a draco compressed BufferView
 	 * @param  {Geometry} geometry
-	 * @return {Object}
+	 * @returns {object}
 	 */
 	processDracoBufferView(geometry) {
 		const json = this.json;
@@ -1100,7 +1096,7 @@ class GLTFWriter {
 	/**
 	 * Process a buffer to append to the default one.
 	 * @param  {ArrayBuffer} buffer
-	 * @return {Integer}
+	 * @returns {Integer}
 	 */
 	processBuffer(buffer) {
 		const json = this.json;
@@ -1117,7 +1113,7 @@ class GLTFWriter {
 	/**
 	 * Process material
 	 * @param  {Material} material Material to process
-	 * @return {Integer|null} Index of the processed material in the "materials" array
+	 * @returns {Integer|null} Index of the processed material in the "materials" array
 	 */
 	async processMaterialAsync(material) {
 		const cache = this.cache;
@@ -1237,7 +1233,7 @@ class GLTFWriter {
 	/**
 	 * Process texture
 	 * @param  {TextureBase} map Map to process
-	 * @return {Integer} Index of the processed texture in the "textures" array
+	 * @returns {Integer} Index of the processed texture in the "textures" array
 	 */
 	async processTextureAsync(map) {
 		const cache = this.cache;
@@ -1273,9 +1269,9 @@ class GLTFWriter {
 	 * Process image
 	 * @param  {Image} image to process
 	 * @param  {Integer} format of the image (RGBAFormat)
-	 * @param  {Boolean} flipY before writing out the image
-	 * @param  {String} mimeType export format
-	 * @return {Integer} Index of the processed texture in the "images" array
+	 * @param  {boolean} flipY before writing out the image
+	 * @param  {string} mimeType export format
+	 * @returns {Integer} Index of the processed texture in the "images" array
 	 */
 	processImage(image, format, flipY, mimeType = 'image/png') {
 		if (image === null) {
@@ -1376,7 +1372,7 @@ class GLTFWriter {
 	/**
 	 * Process sampler
 	 * @param  {Texture} map Texture to process
-	 * @return {Integer} Index of the processed texture in the "samplers" array
+	 * @returns {Integer} Index of the processed texture in the "samplers" array
 	 */
 	processSampler(map) {
 		const json = this.json;
@@ -1396,7 +1392,7 @@ class GLTFWriter {
 	/**
 	 * Process and generate a BufferView from an image Blob.
 	 * @param {Blob} blob
-	 * @return {Promise<Integer>}
+	 * @returns {Promise<Integer>}
 	 */
 	processBufferViewImage(blob) {
 		const writer = this;
@@ -1424,7 +1420,7 @@ class GLTFWriter {
 
 	/**
 	 * @param {Object3D} object
-	 * @return {number|null}
+	 * @returns {number|null}
 	 */
 	processSkin(object) {
 		const json = this.json;
@@ -1468,9 +1464,8 @@ class GLTFWriter {
 	 *
 	 * Status:
 	 * - Only properties listed in PATH_PROPERTIES may be animated.
-	 *
 	 * @param {AnimationClip} clip
-	 * @return {number|null}
+	 * @returns {number|null}
 	 */
 	processAnimation(clip) {
 		const json = this.json;
@@ -1626,9 +1621,8 @@ class GLTFWriter {
 
 	/**
 	 * Serializes a userData.
-	 *
 	 * @param {Object3D|Material} object
-	 * @param {Object} objectDef
+	 * @param {object} objectDef
 	 */
 	serializeUserData(object, objectDef) {
 		if (!object.userData) return;
@@ -1655,8 +1649,8 @@ class GLTFWriter {
 
 	/**
 	 * Returns ids for buffer attributes.
-	 * @param  {Object} object
-	 * @return {Integer}
+	 * @param  {object} attribute
+	 * @returns {Integer}
 	 */
 	getUID(attribute) {
 		if (this.uids.has(attribute) === false) {
@@ -1669,7 +1663,8 @@ class GLTFWriter {
 	/**
 	 * Returns unique file names.
 	 * @param {string} originalName
-	 * @return {string} unique name
+	 * @param {string} ext
+	 * @returns {string} unique name
 	 */
 	getUniqueFileName(originalName, ext) {
 		if (!this.fileNamesUsed[ext]) this.fileNamesUsed[ext] = {};
@@ -1686,13 +1681,13 @@ class GLTFWriter {
 
 	/**
 	 * Set uri to imageDef by dataURL.
-	 * @param {Object} imageDef
+	 * @param {object} imageDef
 	 * @param {string} dataURL
 	 */
 	setImageUri(imageDef, dataURL) {
 		const options = this.options;
 
-		if (options.format !== GLTF_FORMAT.GLTF_SEPARATE) return dataURL;
+		if (options.format !== GLTF_FORMAT.GLTF_SEPARATE) return;
 
 		const ext = imageDef.mimeType === 'image/jpeg' ? 'jpg' : 'png';
 		const name = this.getUniqueFileName(imageDef.name || 'image', ext);
@@ -1709,7 +1704,6 @@ class GLTFWriter {
 	 * [KHR_mesh_quantization](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md)
 	 * extension.
 	 * In this case the extension is automatically added to the list of used extensions.
-	 *
 	 * @param {string} attributeName
 	 * @param {Attribute} attribute
 	 */

@@ -5,11 +5,12 @@ import { Vector2, Vector3, MathUtils } from 't3d';
  */
 const LatheBuilder = {
 	/**
-     * @param {Array} points - The points of the lathe, for example: [[0, -0.5], [0.5, 0], [0, 0.5]]
-     * @param {Number} [segments=12] - The number of circumference segments to generate
-     * @param {Number} [phiStart=0] - The starting angle in radians
-     * @param {Number} [phiLength=Math.PI*2] - The radian (0 to 2PI) range of the lathed section, less than 2PI is a portion
-     */
+	 * @param {Array} points - The points of the lathe, for example: [[0, -0.5], [0.5, 0], [0, 0.5]]
+	 * @param {number} [segments=12] - The number of circumference segments to generate
+	 * @param {number} [phiStart=0] - The starting angle in radians
+	 * @param {number} [phiLength=Math.PI*2] - The radian (0 to 2PI) range of the lathed section, less than 2PI is a portion
+	 * @returns {object} The geometry data.
+	 */
 	getGeometryData: function(points, segments = 12, phiStart = 0, phiLength = Math.PI * 2) {
 		segments = Math.floor(segments);
 

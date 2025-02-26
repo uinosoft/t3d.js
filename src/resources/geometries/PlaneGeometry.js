@@ -4,16 +4,15 @@ import { Buffer } from './Buffer.js';
 
 /**
  * A class for generating plane geometries.
- * @memberof t3d
- * @extends t3d.Geometry
+ * @extends Geometry
  */
 class PlaneGeometry extends Geometry {
 
 	/**
-	 * @param {Number} [width=1] — Width along the X axis.
-	 * @param {Number} [height=1] — Height along the Y axis.
-	 * @param {Number} [widthSegments=1]
-	 * @param {Number} [heightSegments=1]
+	 * @param {number} [width=1] — Width along the X axis.
+	 * @param {number} [height=1] — Height along the Y axis.
+	 * @param {number} [widthSegments=1]
+	 * @param {number} [heightSegments=1]
 	 */
 	constructor(width = 1, height = 1, widthSegments = 1, heightSegments = 1) {
 		super();

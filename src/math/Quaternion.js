@@ -3,15 +3,14 @@ import { Matrix4 } from './Matrix4.js';
 
 /**
  * The Quaternion class
- * @memberof t3d
  */
 class Quaternion {
 
 	/**
-	 * @param {Number} [x=0] - x coordinate
-	 * @param {Number} [y=0] - y coordinate
-	 * @param {Number} [z=0] - z coordinate
-	 * @param {Number} [w=1] - w coordinate
+	 * @param {number} [x=0] - x coordinate
+	 * @param {number} [y=0] - y coordinate
+	 * @param {number} [z=0] - z coordinate
+	 * @param {number} [w=1] - w coordinate
 	 */
 	constructor(x = 0, y = 0, z = 0, w = 1) {
 		this._x = x;
@@ -22,13 +21,13 @@ class Quaternion {
 
 	/**
 	 * Slerp method, operates directly on flat arrays of numbers.
-	 * @param {Number[]} dst - The output array.
-	 * @param {Number} dstOffset - An offset into the output array.
-	 * @param {Number[]} src0 - The source array of the starting quaternion.
-	 * @param {Number} srcOffset0 - An offset into the array src0.
-	 * @param {Number[]} src1 - The source array of the target quatnerion.
-	 * @param {Number} srcOffset1 - An offset into the array src1.
-	 * @param {Number} t - Normalized interpolation factor (between 0 and 1).
+	 * @param {number[]} dst - The output array.
+	 * @param {number} dstOffset - An offset into the output array.
+	 * @param {number[]} src0 - The source array of the starting quaternion.
+	 * @param {number} srcOffset0 - An offset into the array src0.
+	 * @param {number[]} src1 - The source array of the target quatnerion.
+	 * @param {number} srcOffset1 - An offset into the array src1.
+	 * @param {number} t - Normalized interpolation factor (between 0 and 1).
 	 */
 	static slerpFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1, t) {
 		// fuzz-free, array-based Quaternion SLERP operation
@@ -101,13 +100,13 @@ class Quaternion {
 
 	/**
 	 * Multipley quaternions, but operates directly on flat arrays of numbers.
-	 * @param {Number[]} dst - The output array.
-	 * @param {Number} dstOffset - An offset into the output array.
-	 * @param {Number[]} src0 - The source array of the starting quaternion.
-	 * @param {Number} srcOffset0 - An offset into the array src0.
-	 * @param {Number[]} src1 - The source array of the target quatnerion.
-	 * @param {Number} srcOffset1 - An offset into the array src1.
-	 * @return {Number[]}
+	 * @param {number[]} dst - The output array.
+	 * @param {number} dstOffset - An offset into the output array.
+	 * @param {number[]} src0 - The source array of the starting quaternion.
+	 * @param {number} srcOffset0 - An offset into the array src0.
+	 * @param {number[]} src1 - The source array of the target quatnerion.
+	 * @param {number} srcOffset1 - An offset into the array src1.
+	 * @returns {number[]}
 	 */
 	static multiplyQuaternionsFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1) {
 		const x0 = src0[srcOffset0];
@@ -129,14 +128,14 @@ class Quaternion {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get x() {
 		return this._x;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set x(value) {
 		this._x = value;
@@ -144,14 +143,14 @@ class Quaternion {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get y() {
 		return this._y;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set y(value) {
 		this._y = value;
@@ -159,14 +158,14 @@ class Quaternion {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get z() {
 		return this._z;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set z(value) {
 		this._z = value;
@@ -174,14 +173,14 @@ class Quaternion {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get w() {
 		return this._w;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set w(value) {
 		this._w = value;
@@ -191,7 +190,7 @@ class Quaternion {
 	/**
 	 * Normalizes this quaternion - that is, calculated the quaternion that performs the same rotation as this one,
 	 * but has length equal to 1.
-	 * @return {t3d.Quaternion}
+	 * @returns {Quaternion}
 	 */
 	normalize() {
 		let l = this.length();
@@ -217,7 +216,7 @@ class Quaternion {
 
 	/**
 	 * Computes the Euclidean length (straight-line length) of this quaternion, considered as a 4 dimensional vector.
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	length() {
 		return Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
@@ -225,10 +224,10 @@ class Quaternion {
 
 	/**
 	 * Linearly interpolates between two quaternions.
-	 * @param {t3d.Quaternion} q1
-	 * @param {t3d.Quaternion} q2
-	 * @param {Number} ratio
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} q1
+	 * @param {Quaternion} q2
+	 * @param {number} ratio
+	 * @returns {Quaternion}
 	 */
 	lerpQuaternions(q1, q2, ratio) {
 		if (ratio === 0) return this.copy(q1);
@@ -267,10 +266,10 @@ class Quaternion {
 	/**
 	 * Spherically interpolates between two quaternions
 	 * providing an interpolation between rotations with constant angle change rate.
-	 * @param {t3d.Quaternion} q1
-	 * @param {t3d.Quaternion} q2
-	 * @param {Number} ratio
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} q1
+	 * @param {Quaternion} q2
+	 * @param {number} ratio
+	 * @returns {Quaternion}
 	 */
 	slerpQuaternions(q1, q2, ratio) {
 		if (ratio === 0) return this.copy(q1);
@@ -322,11 +321,11 @@ class Quaternion {
 
 	/**
 	 * Sets x, y, z, w properties of this quaternion.
-	 * @param {Number} x
-	 * @param {Number} y
-	 * @param {Number} z
-	 * @param {Number} w
-	 * @return {t3d.Quaternion}
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 * @param {number} w
+	 * @returns {Quaternion}
 	 */
 	set(x = 0, y = 0, z = 0, w = 1) {
 		this._x = x;
@@ -341,7 +340,7 @@ class Quaternion {
 
 	/**
 	 * Creates a new Quaternion with identical x, y, z and w properties to this one.
-	 * @return {t3d.Quaternion}
+	 * @returns {Quaternion}
 	 */
 	clone() {
 		return new Quaternion(this._x, this._y, this._z, this._w);
@@ -349,8 +348,8 @@ class Quaternion {
 
 	/**
 	 * Copies the x, y, z and w properties of q into this quaternion.
-	 * @param {t3d.Quaternion} quaternion
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} quaternion
+	 * @returns {Quaternion}
 	 */
 	copy(quaternion) {
 		this._x = quaternion.x;
@@ -365,9 +364,9 @@ class Quaternion {
 
 	/**
 	 * Sets this quaternion from the rotation specified by Euler angle.
-	 * @param {t3d.Euler} euler
-	 * @param {Boolean} [update=true] - Whether to notify quaternion angle has changed
-	 * @return {t3d.Quaternion}
+	 * @param {Euler} euler
+	 * @param {boolean} [update=true] - Whether to notify quaternion angle has changed
+	 * @returns {Quaternion}
 	 */
 	setFromEuler(euler, update = true) {
 		const c1 = Math.cos(euler._x / 2);
@@ -418,8 +417,8 @@ class Quaternion {
 
 	/**
 	 * Sets this quaternion from rotation component of m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Quaternion}
+	 * @param {Matrix4} m
+	 * @returns {Quaternion}
 	 */
 	setFromRotationMatrix(m) {
 		const te = m.elements,
@@ -469,9 +468,9 @@ class Quaternion {
 
 	/**
 	 * vFrom and vTo are assumed to be normalized.
-	 * @param {t3d.Vector3} vFrom
-	 * @param {t3d.Vector3} vTo
-	 * @return {t3d.Quaternion}
+	 * @param {Vector3} vFrom
+	 * @param {Vector3} vTo
+	 * @returns {Quaternion}
 	 */
 	setFromUnitVectors(vFrom, vTo) {
 		// http://lolengine.net/blog/2014/02/24/quaternion-from-two-vectors-final
@@ -508,8 +507,8 @@ class Quaternion {
 
 	/**
 	 * Multiplies this quaternion by q.
-	 * @param {t3d.Quaternion} q
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} q
+	 * @returns {Quaternion}
 	 */
 	multiply(q) {
 		return this.multiplyQuaternions(this, q);
@@ -517,8 +516,8 @@ class Quaternion {
 
 	/**
 	 * Pre-multiplies this quaternion by q.
-	 * @param {t3d.Quaternion} q
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} q
+	 * @returns {Quaternion}
 	 */
 	premultiply(q) {
 		return this.multiplyQuaternions(q, this);
@@ -526,9 +525,9 @@ class Quaternion {
 
 	/**
 	 * Sets this quaternion to a x b.
-	 * @param {t3d.Quaternion} a
-	 * @param {t3d.Quaternion} b
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} a
+	 * @param {Quaternion} b
+	 * @returns {Quaternion}
 	 */
 	multiplyQuaternions(a, b) {
 		// from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
@@ -548,8 +547,8 @@ class Quaternion {
 
 	/**
 	 * Convert the current quaternion to a matrix4
-	 * @param {t3d.Matrix4} target
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} target
+	 * @returns {Matrix4}
 	 */
 	toMatrix4(target = new Matrix4()) {
 		const ele = target.elements;
@@ -581,7 +580,7 @@ class Quaternion {
 	/**
 	 * Returns the rotational conjugate of this quaternion.
 	 * The conjugate of a quaternion represents the same rotation in the opposite direction about the rotational axis.
-	 * @return {t3d.Quaternion}
+	 * @returns {Quaternion}
 	 */
 	conjugate() {
 		this._x *= -1;
@@ -595,8 +594,8 @@ class Quaternion {
 
 	/**
 	 * Calculates the dot product of quaternions v and this one.
-	 * @param {t3d.Quaternion} v
-	 * @return {t3d.Quaternion}
+	 * @param {Quaternion} v
+	 * @returns {Quaternion}
 	 */
 	dot(v) {
 		return this._x * v._x + this._y * v._y + this._z * v._z + this._w * v._w;
@@ -604,9 +603,9 @@ class Quaternion {
 
 	/**
 	 * Set quaternion from axis angle
-	 * @param {t3d.Vector3} axis
-	 * @param {Number} angle
-	 * @return {t3d.Quaternion}
+	 * @param {Vector3} axis
+	 * @param {number} angle
+	 * @returns {Quaternion}
 	 */
 	setFromAxisAngle(axis, angle) {
 		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
@@ -627,10 +626,10 @@ class Quaternion {
 
 	/**
 	 * Sets this quaternion's x, y, z and w properties from an array.
-	 * @param {Number[]} - array of format (x, y, z, w) used to construct the quaternion.
-	 * @param {Number} [offset=0] - an offset into the array.
-	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-	 * @return {t3d.Quaternion}
+	 * @param {number[]} array - array of format (x, y, z, w) used to construct the quaternion.
+	 * @param {number} [offset=0] - an offset into the array.
+	 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+	 * @returns {Quaternion}
 	 */
 	fromArray(array, offset = 0, denormalize = false) {
 		let x = array[offset], y = array[offset + 1],
@@ -655,10 +654,10 @@ class Quaternion {
 
 	/**
 	 * Returns the numerical elements of this quaternion in an array of format [x, y, z, w].
-	 * @param {Number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
-	 * @param {Number} [offset=0] - An offset into the array.
-	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-	 * @return {t3d.Quaternion}
+	 * @param {number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
+	 * @param {number} [offset=0] - An offset into the array.
+	 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+	 * @returns {Quaternion}
 	 */
 	toArray(array = [], offset = 0, normalize = false) {
 		let x = this._x, y = this._y,
@@ -681,7 +680,7 @@ class Quaternion {
 
 	/**
 	 * @param {Function} callback - When the Quaternion angle value changes, the callback method is triggered
-	 * @return {t3d.Quaternion}
+	 * @returns {Quaternion}
 	 */
 	onChange(callback) {
 		this.onChangeCallback = callback;

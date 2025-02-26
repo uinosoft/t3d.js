@@ -5,14 +5,13 @@ import { ATTACHMENT, PIXEL_FORMAT } from '../../const.js';
 
 /**
  * Render Target that render to cube texture.
- * @memberof t3d
- * @extends t3d.RenderTargetBase
+ * @extends RenderTargetBase
  */
 class RenderTargetCube extends RenderTargetBase {
 
 	/**
-	 * @param {Number} width - The width of the render target.
-	 * @param {Number} height - The height of the render target.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
 	 */
 	constructor(width, height) {
 		super(width, height);
@@ -24,7 +23,7 @@ class RenderTargetCube extends RenderTargetBase {
 
 		/**
 		 * The activeCubeFace property corresponds to a cube side (PX 0, NX 1, PY 2, NY 3, PZ 4, NZ 5).
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.activeCubeFace = 0;
@@ -32,7 +31,7 @@ class RenderTargetCube extends RenderTargetBase {
 		/**
 		 * Specifies the active mipmap level.
 		 * This is only available in WebGL2.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.activeMipmapLevel = 0;
@@ -41,8 +40,8 @@ class RenderTargetCube extends RenderTargetBase {
 	/**
 	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {t3d.TextureCube|t3d.RenderBuffer} target
-	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 * @param  {TextureCube|RenderBuffer} target
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTextureCube) {
@@ -73,7 +72,7 @@ class RenderTargetCube extends RenderTargetBase {
 
 	/**
 	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		delete this._attachments[attachment];
@@ -105,7 +104,7 @@ class RenderTargetCube extends RenderTargetBase {
 
 	/**
 	 * Dispose the render target.
-	 * @param {Boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
+	 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
 	 */
 	dispose(disposeAttachments = true) {
 		super.dispose();
@@ -121,7 +120,7 @@ class RenderTargetCube extends RenderTargetBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RenderTargetCube.prototype.isRenderTargetCube = true;

@@ -7,7 +7,7 @@ import { Camera, RenderTarget2D, Vector3, Vector4, Plane, Matrix4, TEXTURE_FILTE
 class PlanarReflectionProbe {
 
 	/**
-	 * @param {t3d.RenderTarget2D} [renderTarget] - The reflection render is done to the renderTarget (if specified).
+	 * @param {RenderTarget2D} [renderTarget] - The reflection render is done to the renderTarget (if specified).
 	 */
 	constructor(renderTarget) {
 		this.plane = new Plane();
@@ -36,9 +36,9 @@ class PlanarReflectionProbe {
 	/**
 	 * Render the reflection.
 	 * Need update scene data and collect light data before calling this method.
-	 * @param {t3d.ThinRenderer} renderer
-	 * @param {t3d.Scene} scene
-	 * @param {t3d.Camera} camera
+	 * @param {ThinRenderer} renderer
+	 * @param {Scene} scene
+	 * @param {Camera} camera
 	 */
 	render(renderer, scene, camera) {
 		const mirrorCamera = this.mirrorCamera;

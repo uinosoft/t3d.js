@@ -28,7 +28,7 @@ export class RGBDDecoder {
 	 * @param {ThinRenderer} renderer - The renderer.
 	 * @param {TextureCube} source - The source RGBD cube texture.
 	 * @param {TextureCube} target - The target cube texture to store the decoded result.
-	 * @return {TextureCube|Null} The target cube texture. This is a render texture, so you can't get the data from the mipmaps attribute directly.
+	 * @returns {TextureCube | null} The target cube texture. This is a render texture, so you can't get the data from the mipmaps attribute directly.
 	 */
 	decode(renderer, source, target = new TextureCube()) {
 		if (!source.isTextureCube) {

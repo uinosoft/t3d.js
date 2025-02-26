@@ -430,7 +430,7 @@ class WebGLTextures extends PropertyMap {
 			}
 
 			if (texture.wrapS !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.wrapT !== TEXTURE_WRAP.CLAMP_TO_EDGE) {
-				console.warn('Texture is not power of two. Texture.wrapS and Texture.wrapT should be set to t3d.TEXTURE_WRAP.CLAMP_TO_EDGE.', texture);
+				console.warn('Texture is not power of two. Texture.wrapS and Texture.wrapT should be set to TEXTURE_WRAP.CLAMP_TO_EDGE.', texture);
 			}
 
 			magFilter = filterFallback(texture.magFilter);
@@ -440,7 +440,7 @@ class WebGLTextures extends PropertyMap {
 				(texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR) ||
 				(texture.magFilter !== TEXTURE_FILTER.NEAREST && texture.magFilter !== TEXTURE_FILTER.LINEAR)
 			) {
-				console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to t3d.TEXTURE_FILTER.NEAREST or t3d.TEXTURE_FILTER.LINEAR.', texture);
+				console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to TEXTURE_FILTER.NEAREST or TEXTURE_FILTER.LINEAR.', texture);
 			}
 		}
 

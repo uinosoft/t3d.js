@@ -4,7 +4,6 @@ import { Vector4 } from '../math/Vector4.js';
 /**
  * RenderQueue is used to collect all renderable items, lights and skeletons from the scene.
  * Renderable items will be dispatched to the corresponding RenderQueueLayer according to the object's renderLayer property.
- * @memberof t3d
  */
 class RenderQueue {
 
@@ -71,10 +70,10 @@ class RenderQueue {
 	}
 
 	/**
-     * Set a render queue layer.
-	 * @param {Number} id - The layer id.
-     * @param {t3d.RenderQueueLayer} layer - The layer to set.
-     */
+	 * Set a render queue layer.
+	 * @param {number} id - The layer id.
+	 * @param {RenderQueueLayer} layer - The layer to set.
+	 */
 	setLayer(id, layer) {
 		this.layerMap.set(id, layer);
 		this.layerList.push(layer);
@@ -82,10 +81,10 @@ class RenderQueue {
 	}
 
 	/**
-     * Create and set a render queue layer.
-	 * @param {Number} id - The layer id.
-	 * @return {t3d.RenderQueueLayer}
-     */
+	 * Create and set a render queue layer.
+	 * @param {number} id - The layer id.
+	 * @returns {RenderQueueLayer}
+	 */
 	createLayer(id) {
 		const layer = new RenderQueueLayer(id);
 		this.setLayer(id, layer);
@@ -93,18 +92,18 @@ class RenderQueue {
 	}
 
 	/**
-     * Get the render queue layer.
-	 * @param {Number} id - The layer id.
-	 * @return {t3d.RenderQueueLayer}
-     */
+	 * Get the render queue layer.
+	 * @param {number} id - The layer id.
+	 * @returns {RenderQueueLayer}
+	 */
 	getLayer(id) {
 		return this.layerMap.get(id);
 	}
 
 	/**
-     * Remove the render queue layer.
-	 * @param {Number} id - The layer id.
-     */
+	 * Remove the render queue layer.
+	 * @param {number} id - The layer id.
+	 */
 	removeLayer(id) {
 		const layer = this.layerMap.get(id);
 

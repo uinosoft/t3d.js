@@ -5,9 +5,8 @@ import { Color3 } from '../../math/Color3.js';
 /**
  * A material for shiny surfaces with specular highlights.
  * The material uses a non-physically based Blinn-Phong model for calculating reflectance.
- * Unlike the Lambertian model used in the {@link t3d.LambertMaterial} this can simulate shiny surfaces with specular highlights (such as varnished wood).
- * @extends t3d.Material
- * @memberof t3d
+ * Unlike the Lambertian model used in the {@link LambertMaterial} this can simulate shiny surfaces with specular highlights (such as varnished wood).
+ * @extends Material
  */
 class PhongMaterial extends Material {
 
@@ -20,8 +19,8 @@ class PhongMaterial extends Material {
 		this.type = MATERIAL_TYPE.PHONG;
 
 		/**
-		 * How shiny the {@link t3d.PhongMaterial#specular} highlight is; a higher value gives a sharper highlight.
-		 * @type {Number}
+		 * How shiny the {@link PhongMaterial#specular} highlight is; a higher value gives a sharper highlight.
+		 * @type {number}
 		 * @default 30
 		 */
 		this.shininess = 30;
@@ -29,14 +28,14 @@ class PhongMaterial extends Material {
 		/**
 		 * Specular color of the material.
 		 * This defines how shiny the material is and the color of its shine.
-		 * @type {t3d.Color3}
-		 * @default t3d.Color(0x111111)
+		 * @type {Color3}
+		 * @default Color(0x111111)
 		 */
 		this.specular = new Color3(0x111111);
 
 		/**
 		 * The specular map value affects both how much the specular surface highlight contributes and how much of the environment map affects the surface.
-		 * @type {t3d.Texture2D}
+		 * @type {Texture2D}
 		 * @default null
 		 */
 		this.specularMap = null;

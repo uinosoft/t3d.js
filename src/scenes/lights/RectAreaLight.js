@@ -7,30 +7,29 @@ import { Light } from '../Light.js';
  * - There is no shadow support.
  * - Only PBRMaterial are supported.
  * - You have to set LTC1 and LTC2 in RectAreaLight before using it.
- * @memberof t3d
- * @extends t3d.Light
+ * @extends Light
  */
 class RectAreaLight extends Light {
 
 	/**
-	 * @param {Number} [color=0xffffff]
-	 * @param {Number} [intensity=1]
-	 * @param {Number} [width=10]
-	 * @param {Number} [height=10]
+	 * @param {number} [color=0xffffff]
+	 * @param {number} [intensity=1]
+	 * @param {number} [width=10]
+	 * @param {number} [height=10]
 	 */
 	constructor(color, intensity, width = 10, height = 10) {
 		super(color, intensity);
 
 		/**
 		 * The width of the light.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 10
 		 */
 		this.width = width;
 
 		/**
 		 * The height of the light.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 10
 		 */
 		this.height = height;
@@ -40,7 +39,7 @@ class RectAreaLight extends Light {
 	 * The light's power.
 	 * Power is the luminous power of the light measured in lumens (lm).
 	 * Changing the power will also change the light's intensity.
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get power() {
 		// compute the light's luminous power (in lumens) from its intensity (in nits)
@@ -65,7 +64,7 @@ class RectAreaLight extends Light {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RectAreaLight.prototype.isRectAreaLight = true;
@@ -73,14 +72,14 @@ RectAreaLight.prototype.isRectAreaLight = true;
 /**
  * The first LTC (Linearly Transformed Cosines).
  * If you want to use RectAreaLight, you have to set this before using it.
- * @type {Null|t3d.Texture2D}
+ * @type {null | Texture2D}
  */
 RectAreaLight.LTC1 = null;
 
 /**
  * The second LTC (Linearly Transformed Cosines).
  * If you want to use RectAreaLight, you have to set this before using it.
- * @type {Null|t3d.Texture2D}
+ * @type {null | Texture2D}
  */
 RectAreaLight.LTC2 = null;
 

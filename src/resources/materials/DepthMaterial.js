@@ -4,8 +4,7 @@ import { MATERIAL_TYPE } from '../../const.js';
 /**
  * A material for drawing geometry by depth.
  * Depth is based off of the camera near and far plane. White is nearest, black is farthest.
- * @extends t3d.Material
- * @memberof t3d
+ * @extends Material
  */
 class DepthMaterial extends Material {
 
@@ -19,7 +18,7 @@ class DepthMaterial extends Material {
 
 		/**
 		 * Encoding for depth packing.
-		 * @type {Boolean}
+		 * @type {boolean}
 		 * @default false
 		 */
 		this.packToRGBA = false;

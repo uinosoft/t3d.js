@@ -7,7 +7,6 @@ let _sceneDataId = 0;
 
 /**
  * SceneData collect all render states about scene, Including lights.
- * @memberof t3d
  */
 class SceneData {
 
@@ -33,7 +32,7 @@ class SceneData {
 
 	/**
 	 * Update scene data.
-	 * @param {t3d.Scene}
+	 * @param {Scene} scene
 	 */
 	update(scene) {
 		this.useAnchorMatrix = !scene.anchorMatrix.isIdentity();

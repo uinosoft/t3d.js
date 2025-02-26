@@ -24,7 +24,7 @@ class VOXMeshBuilder {
 
 	/**
 	 * @param {VoxelData} voxelData
-	 * @param {Object=} param
+	 * @param {object=} param
 	 * @param {number=} param.voxelSize default = 1.0.
 	 * @param {boolean=} param.vertexColor default = false.
 	 * @param {boolean=} param.optimizeFaces dafalue = true.
@@ -170,14 +170,14 @@ class VOXMeshBuilder {
 	}
 
 	/**
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getTexture() {
 		return VOXMeshBuilder.textureFactory.getTexture(this.voxelData);
 	}
 
 	/**
-	 * @return {Mesh}
+	 * @returns {Mesh}
 	 */
 	createMesh() {
 		return new Mesh(this.geometry, this.material);
@@ -185,7 +185,8 @@ class VOXMeshBuilder {
 
 	/**
 	 * is it an outward facing voxel?
-	 * @return {Boolean}
+	 * @param {object} voxel
+	 * @returns {boolean}
 	 */
 	isOuterVoxel(voxel) {
 		return six.filter(s => {

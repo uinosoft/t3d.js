@@ -3,8 +3,7 @@ import { Vector2 } from '../math/Vector2.js';
 
 /**
  * A transform object for UV coordinates.
- * @memberof t3d
- * @extends t3d.Matrix3
+ * @extends Matrix3
  */
 class TransformUV extends Matrix3 {
 
@@ -25,7 +24,7 @@ class TransformUV extends Matrix3 {
 	/**
 	 * Update the matrix for UV transformation based on the offset, scale, rotation and center.
 	 * If needsUpdate is false, this method will do nothing.
-	 * @return {t3d.TransformUV} This object.
+	 * @returns {TransformUV} This object.
 	 */
 	update() {
 		if (!this.needsUpdate) return this;
@@ -40,7 +39,7 @@ class TransformUV extends Matrix3 {
 	/**
 	 * Update the matrix for UV transformation based on the offset, scale, rotation and center.
 	 * This method will always update the matrix regardless of the needsUpdate flag.
-	 * @return {t3d.TransformUV} This object.
+	 * @returns {TransformUV} This object.
 	 */
 	updateMatrix() {
 		return this.setUvTransform(
@@ -53,8 +52,8 @@ class TransformUV extends Matrix3 {
 
 	/**
 	 * Copy the properties of another TransformUV object.
-	 * @param {t3d.TransformUV|t3d.Matrix3} source - The object to copy the properties from.
-	 * @return {t3d.TransformUV} This object.
+	 * @param {TransformUV|Matrix3} source - The object to copy the properties from.
+	 * @returns {TransformUV} This object.
 	 */
 	copy(source) {
 		super.copy(source);
@@ -74,7 +73,7 @@ class TransformUV extends Matrix3 {
 
 	/**
 	 * Clone this TransformUV object.
-	 * @return {t3d.TransformUV} The cloned object.
+	 * @returns {TransformUV} The cloned object.
 	 */
 	clone() {
 		return new this.constructor().copy(this);
@@ -84,7 +83,7 @@ class TransformUV extends Matrix3 {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 TransformUV.prototype.isTransformUV = true;

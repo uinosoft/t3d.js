@@ -8,17 +8,16 @@ const _mat3_1 = new Matrix3();
 /**
  * Frustums are used to determine what is inside the camera's field of view.
  * They help speed up the rendering process - objects which lie outside a camera's frustum can safely be excluded from rendering.
- * @memberof t3d
  */
 class Frustum {
 
 	/**
-	 * @param {t3d.Plane} p0 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p1 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p2 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p3 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p4 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p5 - (optional) defaults to a new Plane.
+	 * @param {Plane} p0 - (optional) defaults to a new Plane.
+	 * @param {Plane} p1 - (optional) defaults to a new Plane.
+	 * @param {Plane} p2 - (optional) defaults to a new Plane.
+	 * @param {Plane} p3 - (optional) defaults to a new Plane.
+	 * @param {Plane} p4 - (optional) defaults to a new Plane.
+	 * @param {Plane} p5 - (optional) defaults to a new Plane.
 	 */
 	constructor(p0 = new Plane(), p1 = new Plane(), p2 = new Plane(), p3 = new Plane(), p4 = new Plane(), p5 = new Plane()) {
 		this.planes = [p0, p1, p2, p3, p4, p5];
@@ -26,13 +25,13 @@ class Frustum {
 
 	/**
 	 * Sets the frustum from the passed planes. No plane order is implied.
-	 * @param {t3d.Plane} p0 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p1 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p2 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p3 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p4 - (optional) defaults to a new Plane.
-	 * @param {t3d.Plane} p5 - (optional) defaults to a new Plane.
-	 * @return {t3d.Frustum}
+	 * @param {Plane} p0 - (optional) defaults to a new Plane.
+	 * @param {Plane} p1 - (optional) defaults to a new Plane.
+	 * @param {Plane} p2 - (optional) defaults to a new Plane.
+	 * @param {Plane} p3 - (optional) defaults to a new Plane.
+	 * @param {Plane} p4 - (optional) defaults to a new Plane.
+	 * @param {Plane} p5 - (optional) defaults to a new Plane.
+	 * @returns {Frustum}
 	 */
 	set(p0, p1, p2, p3, p4, p5) {
 		const planes = this.planes;
@@ -49,8 +48,8 @@ class Frustum {
 
 	/**
 	 * Sets the frustum planes from the matrix.
-	 * @param {t3d.Matrix4} m - a Matrix4 used to set the planes
-	 * @return {t3d.Frustum}
+	 * @param {Matrix4} m - a Matrix4 used to set the planes
+	 * @returns {Frustum}
 	 */
 	setFromMatrix(m) {
 		const planes = this.planes;
@@ -84,8 +83,8 @@ class Frustum {
 
 	/**
 	 * Return true if sphere intersects with this frustum.
-	 * @param {t3d.Sphere} sphere - Sphere to check for intersection.
-	 * @return {Boolean}
+	 * @param {Sphere} sphere - Sphere to check for intersection.
+	 * @returns {boolean}
 	 */
 	intersectsSphere(sphere) {
 		const planes = this.planes;
@@ -105,8 +104,8 @@ class Frustum {
 
 	/**
 	 * Return true if box intersects with this frustum.
-	 * @param {t3d.Box3} box - Box3 to check for intersection.
-	 * @return {Boolean}
+	 * @param {Box3} box - Box3 to check for intersection.
+	 * @returns {boolean}
 	 */
 	intersectsBox(box) {
 		const planes = this.planes;
@@ -132,8 +131,8 @@ class Frustum {
 
 	/**
 	 * Apply a matrix4x4 to the frustum.
-	 * @param {t3d.Matrix4} matrix - Matrix4 to apply to the frustum.
-	 * @return {t3d.Frustum}
+	 * @param {Matrix4} matrix - Matrix4 to apply to the frustum.
+	 * @returns {Frustum}
 	 */
 	applyMatrix4(matrix) {
 		const planes = this.planes;
@@ -149,7 +148,7 @@ class Frustum {
 
 	/**
 	 * Return a new Frustum with the same parameters as this one.
-	 * @return {t3d.Frustum}
+	 * @returns {Frustum}
 	 */
 	clone() {
 		return new this.constructor().copy(this);
@@ -157,8 +156,8 @@ class Frustum {
 
 	/**
 	 * Copies the properties of the passed frustum into this one.
-	 * @param {t3d.Frustum} frustum - The frustum to copy
-	 * @return {t3d.Frustum}
+	 * @param {Frustum} frustum - The frustum to copy
+	 * @returns {Frustum}
 	 */
 	copy(frustum) {
 		const planes = this.planes;

@@ -3,8 +3,7 @@ import { MATERIAL_TYPE, DRAW_MODE } from '../../const.js';
 
 /**
  * The default material used by Points.
- * @extends t3d.Material
- * @memberof t3d
+ * @extends Material
  */
 class PointsMaterial extends Material {
 
@@ -18,22 +17,22 @@ class PointsMaterial extends Material {
 
 		/**
 		 * Sets the size of the points.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.size = 1;
 
 		/**
 		 * Specify whether points' size is attenuated by the camera depth. (Perspective camera only.)
-		 * @type {Boolean}
+		 * @type {boolean}
 		 * @default true
 		 */
 		this.sizeAttenuation = true;
 
 		/**
 		 * Set draw mode to POINTS.
-		 * @type {t3d.DRAW_MODE}
-		 * @default t3d.DRAW_MODE.POINTS
+		 * @type {DRAW_MODE}
+		 * @default DRAW_MODE.POINTS
 		 */
 		this.drawMode = DRAW_MODE.POINTS;
 	}

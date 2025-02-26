@@ -1,8 +1,7 @@
 /**
- * Handles and keeps track of loaded and pending data. A default global instance of this class is created and used by loaders if not supplied manually - see {@link t3d.DefaultLoadingManager}.
+ * Handles and keeps track of loaded and pending data. A default global instance of this class is created and used by loaders if not supplied manually - see {@link DefaultLoadingManager}.
  * In general that should be sufficient, however there are times when it can be useful to have seperate loaders - for example if you want to show seperate loading bars for objects and textures.
  * In addition to observing progress, a LoadingManager can be used to override resource URLs during loading. This may be helpful for assets coming from drag-and-drop events, WebSockets, WebRTC, or other APIs.
- * @memberof t3d
  */
 class LoadingManager {
 
@@ -36,7 +35,7 @@ class LoadingManager {
 
 	/**
 	 * This should be called by any loader using the manager when the loader starts loading an url.
-	 * @param {String} url - the url to load.
+	 * @param {string} url - the url to load.
 	 */
 	itemStart(url) {
 		this.itemsTotal++;
@@ -52,7 +51,7 @@ class LoadingManager {
 
 	/**
 	 * This should be called by any loader using the manager when the loader ended loading an url.
-	 * @param {String} url - the loaded url.
+	 * @param {string} url - the loaded url.
 	 */
 	itemEnd(url) {
 		this.itemsLoaded++;
@@ -72,7 +71,7 @@ class LoadingManager {
 
 	/**
 	 * This should be called by any loader using the manager when the loader errors loading an url.
-	 * @param {String} url - the loaded url.
+	 * @param {string} url - the loaded url.
 	 */
 	itemError(url) {
 		if (this.onError !== undefined) {
@@ -83,7 +82,8 @@ class LoadingManager {
 	/**
 	 * Given a URL, uses the URL modifier callback (if any) and returns a resolved URL.
 	 * If no URL modifier is set, returns the original URL.
-	 * @param {String} url - the url to load.
+	 * @param {string} url - the url to load.
+	 * @returns {string} the resolved URL.
 	 */
 	resolveURL(url) {
 		if (this.urlModifier) {
@@ -98,6 +98,7 @@ class LoadingManager {
 	 * The callback may return the original URL, or a new URL to override loading behavior.
 	 * This behavior can be used to load assets from .ZIP files, drag-and-drop APIs, and Data URIs.
 	 * @param {Function} callback - URL modifier callback. Called with url argument, and must return resolvedURL.
+	 * @returns {LoadingManager} this instance
 	 */
 	setURLModifier(callback) {
 		this.urlModifier = callback;
@@ -107,9 +108,8 @@ class LoadingManager {
 }
 
 /**
- * A global instance of the {@link t3d.LoadingManager}, used by most loaders when no custom manager has been specified.
+ * A global instance of the {@link LoadingManager}, used by most loaders when no custom manager has been specified.
  * This will be sufficient for most purposes, however there may be times when you desire separate loading managers for say, textures and models.
- * @memberof t3d
  */
 const DefaultLoadingManager = new LoadingManager();
 

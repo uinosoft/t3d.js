@@ -2,8 +2,7 @@ import { RenderTargetBase } from './RenderTargetBase.js';
 
 /**
  * Render Target that render to canvas element.
- * @memberof t3d
- * @extends t3d.RenderTargetBase
+ * @extends RenderTargetBase
  */
 class RenderTargetBack extends RenderTargetBase {
 
@@ -36,7 +35,7 @@ class RenderTargetBack extends RenderTargetBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RenderTargetBack.prototype.isRenderTargetBack = true;

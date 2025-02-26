@@ -2,54 +2,53 @@ import { BUFFER_USAGE } from '../../const.js';
 
 /**
  * The Buffer contain the data that is used for the geometry of 3D models, animations, and skinning.
- * @memberof t3d
  */
 class Buffer {
 
 	/**
 	 * @param {TypedArray} array -- A typed array with a shared buffer. Stores the geometry data.
-     * @param {Number} stride -- The number of typed-array elements per vertex.
+	 * @param {number} stride -- The number of typed-array elements per vertex.
 	 */
 	constructor(array, stride) {
 		/**
-         * A typed array with a shared buffer.
-         * Stores the geometry data.
-         * @type {TypedArray}
-         */
+		 * A typed array with a shared buffer.
+		 * Stores the geometry data.
+		 * @type {TypedArray}
+		 */
 		this.array = array;
 
 		/**
-         * The number of typed-array elements per vertex.
-         * @type {Number}
-         */
+		 * The number of typed-array elements per vertex.
+		 * @type {number}
+		 */
 		this.stride = stride;
 
 		/**
-         * Gives the total number of elements in the array.
-         * @type {Number}
-         */
+		 * Gives the total number of elements in the array.
+		 * @type {number}
+		 */
 		this.count = array !== undefined ? array.length / stride : 0;
 
 		/**
-         * Defines the intended usage pattern of the data store for optimization purposes.
-         * Corresponds to the usage parameter of WebGLRenderingContext.bufferData().
-         * @type {t3d.BUFFER_USAGE}
-         * @default t3d.BUFFER_USAGE.STATIC_DRAW
-         */
+		 * Defines the intended usage pattern of the data store for optimization purposes.
+		 * Corresponds to the usage parameter of WebGLRenderingContext.bufferData().
+		 * @type {BUFFER_USAGE}
+		 * @default BUFFER_USAGE.STATIC_DRAW
+		 */
 		this.usage = BUFFER_USAGE.STATIC_DRAW;
 
 		/**
-         * Object containing offset and count.
-         * @type {Object}
-         * @default { offset: 0, count: - 1 }
-         */
+		 * Object containing offset and count.
+		 * @type {object}
+		 * @default { offset: 0, count: - 1 }
+		 */
 		this.updateRange = { offset: 0, count: -1 };
 
 		/**
-         * A version number, incremented every time the data is changed.
-         * @type {Number}
-         * @default 0
-         */
+		 * A version number, incremented every time the data is changed.
+		 * @type {number}
+		 * @default 0
+		 */
 		this.version = 0;
 	}
 
@@ -60,8 +59,8 @@ class Buffer {
 
 	/**
 	 * Copies another Buffer to this Buffer.
-	 * @param {t3d.Buffer} source - The buffer to be copied.
-	 * @return {t3d.Buffer}
+	 * @param {Buffer} source - The buffer to be copied.
+	 * @returns {Buffer}
 	 */
 	copy(source) {
 		this.array = new source.array.constructor(source.array);
@@ -73,7 +72,7 @@ class Buffer {
 
 	/**
 	 * Return a copy of this buffer.
-	 * @return {t3d.Buffer}
+	 * @returns {Buffer}
 	 */
 	clone() {
 		const array = new this.array.constructor(this.array);

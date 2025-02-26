@@ -6,14 +6,14 @@ import { Vector3, Quaternion } from 't3d';
 const TubeBuilder = {
 
 	/**
-	 * @param {Object} frames
-	 * @param {Object} [options={}]
-	 * @param {Number} [options.radius=0.1]
-	 * @param {Number} [options.radialSegments=8]
-	 * @param {Number} [options.startRad=0]
-	 * @param {Boolean} [options.generateStartCap=false] - Whether to generate the start cap.
-	 * @param {Boolean} [options.generateEndCap=false] - Whether to generate the end cap.
-	 * @return {Object} - The geometry data.
+	 * @param {object} frames
+	 * @param {object} [options={}]
+	 * @param {number} [options.radius=0.1]
+	 * @param {number} [options.radialSegments=8]
+	 * @param {number} [options.startRad=0]
+	 * @param {boolean} [options.generateStartCap=false] - Whether to generate the start cap.
+	 * @param {boolean} [options.generateEndCap=false] - Whether to generate the end cap.
+	 * @returns {object} - The geometry data.
 	 */
 	getGeometryData: function(frames, options = {}) {
 		const radius = options.radius !== undefined ? options.radius : 0.1;

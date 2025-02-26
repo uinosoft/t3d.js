@@ -5,14 +5,13 @@ import { ATTACHMENT, PIXEL_FORMAT } from '../../const.js';
 
 /**
  * Render Target that render to 2d texture.
- * @memberof t3d
- * @extends t3d.RenderTargetBase
+ * @extends RenderTargetBase
  */
 class RenderTarget2D extends RenderTargetBase {
 
 	/**
-	 * @param {Number} width - The width of the render target.
-	 * @param {Number} height - The height of the render target.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
 	 */
 	constructor(width, height) {
 		super(width, height);
@@ -26,8 +25,8 @@ class RenderTarget2D extends RenderTargetBase {
 	/**
 	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {t3d.Texture2D|t3d.RenderBuffer} target
-	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 * @param  {Texture2D|RenderBuffer} target
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture2D) {
@@ -50,7 +49,7 @@ class RenderTarget2D extends RenderTargetBase {
 
 	/**
 	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		delete this._attachments[attachment];
@@ -82,7 +81,7 @@ class RenderTarget2D extends RenderTargetBase {
 
 	/**
 	 * Dispose the render target.
-	 * @param {Boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
+	 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
 	 */
 	dispose(disposeAttachments = true) {
 		super.dispose();
@@ -98,7 +97,7 @@ class RenderTarget2D extends RenderTargetBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RenderTarget2D.prototype.isRenderTarget2D = true;

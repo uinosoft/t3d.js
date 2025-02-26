@@ -23,8 +23,8 @@ import {
 class CCDIKSolver {
 
 	/**
-	 * @param {Array[Bone]} mesh
-	 * @param {Array[Object]} iks
+	 * @param {Bone[]} bones
+	 * @param {object[]} iks
 	 */
 	constructor(bones, iks = []) {
 		this.bones = bones;
@@ -37,7 +37,7 @@ class CCDIKSolver {
 
 	/**
 	 * Update all IK bones.
-	 * @return {CCDIKSolver}
+	 * @returns {CCDIKSolver}
 	 */
 	update() {
 		const iks = this.iks;
@@ -51,8 +51,8 @@ class CCDIKSolver {
 
 	/**
 	 * Update one IK bone
-	 * @param {Object} ik parameter
-	 * @return {CCDIKSolver}
+	 * @param {object} ik parameter
+	 * @returns {CCDIKSolver}
 	 */
 	updateOne(ik) {
 		const bones = this.bones;

@@ -3,15 +3,14 @@ import { Quaternion } from '../math/Quaternion.js';
 /**
  * This holds a reference to a real property in the scene graph; used internally.
  * Binding property and value, mixer for multiple values.
- * @memberof t3d
  */
 class PropertyBindingMixer {
 
 	/**
-	 * @param {Object3D|t3d.Material} target
-	 * @param {String} propertyPath
-	 * @param {String} typeName - vector/bool/string/quaternion/number/color
-	 * @param {Number} valueSize
+	 * @param {Object3D|Material} target
+	 * @param {string} propertyPath
+	 * @param {string} typeName - vector/bool/string/quaternion/number/color
+	 * @param {number} valueSize
 	 */
 	constructor(target, propertyPath, typeName, valueSize) {
 		this.target = null;
@@ -121,9 +120,9 @@ class PropertyBindingMixer {
 	}
 
 	/**
-     * Accumulate value.
-     * @param {Number} weight
-     */
+	 * Accumulate value.
+	 * @param {number} weight
+	 */
 	accumulate(weight) {
 		const buffer = this.buffer,
 			stride = this.valueSize,
@@ -147,9 +146,9 @@ class PropertyBindingMixer {
 	}
 
 	/**
-     * Additive Accumulate value.
-     * @param {Number} weight
-     */
+	 * Additive Accumulate value.
+	 * @param {number} weight
+	 */
 	accumulateAdditive(weight) {
 		const buffer = this.buffer,
 			stride = this.valueSize,
@@ -165,8 +164,8 @@ class PropertyBindingMixer {
 	}
 
 	/**
-     * Apply to scene graph.
-     */
+	 * Apply to scene graph.
+	 */
 	apply() {
 		const buffer = this.buffer,
 			stride = this.valueSize,

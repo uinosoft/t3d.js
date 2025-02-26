@@ -3,33 +3,32 @@ import { Light } from '../Light.js';
 
 /**
  * This light gets emitted from a single point in one direction, along a cone that increases in size the further from the light it gets.
- * This light can cast shadows - see the {@link t3d.SpotLightShadow} page for details.
- * @memberof t3d
- * @extends t3d.Light
+ * This light can cast shadows - see the {@link SpotLightShadow} page for details.
+ * @extends Light
  */
 class SpotLight extends Light {
 
 	/**
-	 * @param {Number} [color=0xffffff]
-	 * @param {Number} [intensity=1]
-	 * @param {Number} [distance=200]
-	 * @param {Number} [angle=Math.PI/6]
-	 * @param {Number} [penumbra=0]
-	 * @param {Number} [decay=1]
+	 * @param {number} [color=0xffffff]
+	 * @param {number} [intensity=1]
+	 * @param {number} [distance=200]
+	 * @param {number} [angle=Math.PI/6]
+	 * @param {number} [penumbra=0]
+	 * @param {number} [decay=1]
 	 */
 	constructor(color, intensity, distance, angle, penumbra, decay) {
 		super(color, intensity);
 
 		/**
 		 * The amount the light dims along the distance of the light.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.decay = (decay !== undefined) ? decay : 1;
 
 		/**
 		 * The distance from the light where the intensity is 0.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 200
 		 */
 		this.distance = (distance !== undefined) ? distance : 200;
@@ -37,7 +36,7 @@ class SpotLight extends Light {
 		/**
 		 * Percent of the spotlight cone that is attenuated due to penumbra.
 		 * Takes values between zero and 1.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.penumbra = (penumbra !== undefined) ? penumbra : 0;
@@ -45,15 +44,15 @@ class SpotLight extends Light {
 		/**
 		 * Maximum extent of the spotlight, in radians, from its direction.
 		 * Should be no more than Math.PI/2.
-		 * @type {Number}
+		 * @type {number}
 		 * @default Math.PI/6
 		 */
 		this.angle = (angle !== undefined) ? angle : Math.PI / 6;
 
 		/**
-		 * A {@link t3d.SpotLightShadow} used to calculate shadows for this light.
-		 * @type {t3d.SpotLightShadow}
-		 * @default t3d.SpotLightShadow()
+		 * A {@link SpotLightShadow} used to calculate shadows for this light.
+		 * @type {SpotLightShadow}
+		 * @default SpotLightShadow()
 		 */
 		this.shadow = new SpotLightShadow();
 	}
@@ -70,7 +69,7 @@ class SpotLight extends Light {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 SpotLight.prototype.isSpotLight = true;

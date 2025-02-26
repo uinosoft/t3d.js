@@ -70,8 +70,9 @@ class PMREMGenerator {
 	/**
 	 * Generate a PMREM from a cubeMap or equirectangular environment texture.
 	 * @param {ThinRenderer} renderer - The renderer.
-	 * @param {TextureCube|Texture2D} envMap - The environment map.
+	 * @param {TextureCube|Texture2D} source - The environment map.
 	 * @param {TextureCube} [target] - The output texture. If not provided, a new cube texture will be created.
+	 * @returns {TextureCube}
 	 */
 	prefilter(renderer, source, target = new TextureCube()) {
 		// Check capabilities
@@ -292,7 +293,7 @@ const prefilterShader = {
 
 		vec3 importanceSampleNormal(float i, float roughness, vec3 N) {
 			vec3 H = texture2D(normalDistribution, vec2(roughness, i)).rgb;
-		
+
 			vec3 upVector = abs(N.y) > 0.999 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
 			vec3 tangentX = normalize(cross(N, upVector));
 			vec3 tangentZ = cross(N, tangentX);
@@ -312,7 +313,7 @@ const prefilterShader = {
 			for (int i = 0; i < SAMPLE_NUMBER; i++) {
 				vec3 H = importanceSampleNormal(float(i) / fMaxSampleNumber, roughness, N);
 				vec3 L = reflect(-V, H);
-		
+
 				float NoL = clamp(dot(N, L), 0.0, 1.0);
 				if (NoL > 0.0) {
 					#ifdef PANORAMA

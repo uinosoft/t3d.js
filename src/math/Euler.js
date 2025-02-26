@@ -5,15 +5,14 @@ const _matrix = new Matrix4();
 
 /**
  * Euler class.
- * @memberof t3d
  */
 class Euler {
 
 	/**
-	 * @param {Number} [x=0]
-	 * @param {Number} [y=0]
-	 * @param {Number} [z=0]
-	 * @param {String} [order=t3d.Euler.DefaultOrder]
+	 * @param {number} [x=0]
+	 * @param {number} [y=0]
+	 * @param {number} [z=0]
+	 * @param {string} [order=Euler.DefaultOrder]
 	 */
 	constructor(x = 0, y = 0, z = 0, order = Euler.DefaultOrder) {
 		this._x = x;
@@ -23,14 +22,14 @@ class Euler {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get x() {
 		return this._x;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set x(value) {
 		this._x = value;
@@ -38,14 +37,14 @@ class Euler {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get y() {
 		return this._y;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set y(value) {
 		this._y = value;
@@ -53,14 +52,14 @@ class Euler {
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	get z() {
 		return this._z;
 	}
 
 	/**
-	 * @type {Number}
+	 * @type {number}
 	 */
 	set z(value) {
 		this._z = value;
@@ -68,14 +67,14 @@ class Euler {
 	}
 
 	/**
-	 * @type {String}
+	 * @type {string}
 	 */
 	get order() {
 		return this._order;
 	}
 
 	/**
-	 * @type {String}
+	 * @type {string}
 	 */
 	set order(value) {
 		this._order = value;
@@ -83,18 +82,18 @@ class Euler {
 	}
 
 	/**
-     * Returns a new Euler with the same parameters as this one.
-	 * @return {t3d.Euler}
-     */
+	 * Returns a new Euler with the same parameters as this one.
+	 * @returns {Euler}
+	 */
 	clone() {
 		return new Euler(this._x, this._y, this._z, this._order);
 	}
 
 	/**
 	 * Copies value of euler to this euler.
-     * @param {t3d.Euler} euler
-	 * @return {t3d.Euler}
-     */
+	 * @param {Euler} euler
+	 * @returns {Euler}
+	 */
 	copy(euler) {
 		this._x = euler._x;
 		this._y = euler._y;
@@ -107,12 +106,12 @@ class Euler {
 	}
 
 	/**
-     * @param {Number} x - the angle of the x axis in radians.
-     * @param {Number} y - the angle of the y axis in radians.
-     * @param {Number} z - the angle of the z axis in radians.
-     * @param {String} order - (optional) a string representing the order that the rotations are applied.
-	 * @return {t3d.Euler}
-     */
+	 * @param {number} x - the angle of the x axis in radians.
+	 * @param {number} y - the angle of the y axis in radians.
+	 * @param {number} z - the angle of the z axis in radians.
+	 * @param {string} order - (optional) a string representing the order that the rotations are applied.
+	 * @returns {Euler}
+	 */
 	set(x = 0, y = 0, z = 0, order = this._order) {
 		this._x = x;
 		this._y = y;
@@ -126,11 +125,11 @@ class Euler {
 
 	/**
 	 * Sets the angles of this euler transform from a pure rotation matrix based on the orientation specified by order.
-     * @param {t3d.Matrix4} m - a Matrix4 of which the upper 3x3 of matrix is a pure rotation matrix
-     * @param {String} order - (optional) a string representing the order that the rotations are applied.
-     * @param {Boolean} [update=true] - Whether to notify Euler angle has changed
-	 * @return {t3d.Euler}
-     */
+	 * @param {Matrix4} m - a Matrix4 of which the upper 3x3 of matrix is a pure rotation matrix
+	 * @param {string} order - (optional) a string representing the order that the rotations are applied.
+	 * @param {boolean} [update=true] - Whether to notify Euler angle has changed
+	 * @returns {Euler}
+	 */
 	setFromRotationMatrix(m, order = this._order, update = true) {
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -211,12 +210,12 @@ class Euler {
 	}
 
 	/**
-     * Sets the angles of this euler transform from a normalized quaternion based on the orientation specified by order.
-	 * @param {t3d.Quaternion} q - a normalized quaternion.
-	 * @param {String} order - (optional) a string representing the order that the rotations are applied.
-	 * @param {Boolean} [update=true] - Whether to notify Euler angle has changed
-	 * @return {t3d.Euler}
-     */
+	 * Sets the angles of this euler transform from a normalized quaternion based on the orientation specified by order.
+	 * @param {Quaternion} q - a normalized quaternion.
+	 * @param {string} order - (optional) a string representing the order that the rotations are applied.
+	 * @param {boolean} [update=true] - Whether to notify Euler angle has changed
+	 * @returns {Euler}
+	 */
 	setFromQuaternion(q, order, update) {
 		q.toMatrix4(_matrix);
 		return this.setFromRotationMatrix(_matrix, order, update);
@@ -224,7 +223,7 @@ class Euler {
 
 	/**
 	 * @param {Function} callback - When the Euler angle value changes, the callback method is triggered
-	 * @return {t3d.Euler}
+	 * @returns {Euler}
 	 */
 	onChange(callback) {
 		this.onChangeCallback = callback;
@@ -242,9 +241,9 @@ class Euler {
 Euler.RotationOrders = ['XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX'];
 
 /**
-  * The default order in which to apply rotations.
-  * @readonly
-  */
+ * The default order in which to apply rotations.
+ * @readonly
+ */
 Euler.DefaultOrder = 'XYZ';
 
 export { Euler };

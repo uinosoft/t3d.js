@@ -7,19 +7,18 @@ import { Vector3 } from '../../math/Vector3.js';
  * A class for generating sphere geometries.
  * The geometry is created by sweeping and calculating vertexes around the Y axis (horizontal sweep) and the Z axis (vertical sweep).
  * Thus, incomplete spheres (akin to 'sphere slices') can be created through the use of different values of phiStart, phiLength, thetaStart and thetaLength, in order to define the points in which we start (or end) calculating those vertices.
- * @memberof t3d
- * @extends t3d.Geometry
+ * @extends Geometry
  */
 class SphereGeometry extends Geometry {
 
 	/**
-	 * @param {Number} [radius=1] — sphere radius. Default is 1.
-	 * @param {Number} [widthSegments=8] — number of horizontal segments. Minimum value is 3, and the default is 8.
-	 * @param {Number} [heightSegments=6] — number of vertical segments. Minimum value is 2, and the default is 6.
-	 * @param {Number} [phiStart=0] — specify horizontal starting angle. Default is 0.
-	 * @param {Number} [phiLength=Math.PI*2] — specify horizontal sweep angle size. Default is Math.PI * 2.
-	 * @param {Number} [thetaStart=0] — specify vertical starting angle. Default is 0.
-	 * @param {Number} [thetaLength=Math.PI] — specify vertical sweep angle size. Default is Math.PI.
+	 * @param {number} [radius=1] — sphere radius. Default is 1.
+	 * @param {number} [widthSegments=8] — number of horizontal segments. Minimum value is 3, and the default is 8.
+	 * @param {number} [heightSegments=6] — number of vertical segments. Minimum value is 2, and the default is 6.
+	 * @param {number} [phiStart=0] — specify horizontal starting angle. Default is 0.
+	 * @param {number} [phiLength=Math.PI*2] — specify horizontal sweep angle size. Default is Math.PI * 2.
+	 * @param {number} [thetaStart=0] — specify vertical starting angle. Default is 0.
+	 * @param {number} [thetaLength=Math.PI] — specify vertical sweep angle size. Default is Math.PI.
 	 */
 	constructor(radius = 1, widthSegments = 8, heightSegments = 6, phiStart = 0, phiLength = Math.PI * 2, thetaStart = 0, thetaLength = Math.PI) {
 		super();

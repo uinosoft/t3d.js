@@ -17,11 +17,11 @@ class LineChartFillMesh extends Mesh {
 
 	/**
 	 * @param {Vector3[]} points - Base points(x axis) of this chart in 3D space.
-	 * @param {Number[]} values - Values of each point in the path, which should be in the range of [0, 1].
-	 * @param {Object} [options={}] - Options object.
+	 * @param {number[]} values - Values of each point in the path, which should be in the range of [0, 1].
+	 * @param {object} [options={}] - Options object.
 	 * @param {Vector3[]|Vector3} [options.up=Vector3(0, 1, 0)] - Up direction of each point in the path, or a single up for all points.
-	 * @param {Number} [options.height=1] - The height of the chart.
-	 * @param {Number} [options.smooth=0.3] - The smoothness of the lines.
+	 * @param {number} [options.height=1] - The height of the chart.
+	 * @param {number} [options.smooth=0.3] - The smoothness of the lines.
 	 */
 	setPositionAndValue(points, values, options = {}) {
 		this.clear();

@@ -2,8 +2,7 @@ import { Loader } from './Loader.js';
 
 /**
  * A loader for loading an Image.
- * @memberof t3d
- * @extends t3d.Loader
+ * @extends Loader
  */
 class ImageLoader extends Loader {
 
@@ -13,11 +12,11 @@ class ImageLoader extends Loader {
 
 	/**
 	 * Begin loading from url and return the image object that will contain the data.
-	 * @param {String} url — the path or URL to the file. This can also be a Data URI.
-	 * @param {Function} [onLoad=] — Will be called when loading completes. The argument will be the loaded response.
-	 * @param {Function} [onProgress=] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-	 * @param {Function} [onError=] — Will be called if an error occurs.
-	 * @return {HTMLImageElement}
+	 * @param {string} url — the path or URL to the file. This can also be a Data URI.
+	 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
+	 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
+	 * @param {Function} [onError] — Will be called if an error occurs.
+	 * @returns {HTMLImageElement}
 	 */
 	load(url, onLoad, onProgress, onError) {
 		if (url === undefined) url = '';

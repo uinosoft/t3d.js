@@ -11,7 +11,8 @@ module.exports = {
 	},
 	'plugins': [
 		'html',
-		'import'
+		'import',
+		'jsdoc'
 	],
 	'globals': {
 		'Nanobar': 'readonly',
@@ -19,7 +20,10 @@ module.exports = {
 		'CANNON': 'readonly',
 		'SimplexNoise': 'readonly'
 	},
-	'extends': 'eslint:recommended',
+	'extends': [
+		'eslint:recommended',
+		'plugin:jsdoc/recommended'
+	],
 	'rules': {
 		/* Override eslint:recommended */
 
@@ -88,6 +92,23 @@ module.exports = {
 
 		/* Import(plugin) */
 
-		'import/extensions': ['warn', 'always']
+		'import/extensions': ['warn', 'always'],
+
+		/* JSDoc(plugin) */
+
+		'jsdoc/no-defaults': 0,
+		'jsdoc/no-undefined-types': 0,
+		'jsdoc/require-jsdoc': 0,
+		'jsdoc/require-param-description': 0,
+		'jsdoc/require-property-description': 0,
+		'jsdoc/require-returns-check': 0,
+		'jsdoc/require-returns-description': 0
+	},
+	'settings': {
+		'jsdoc': {
+			'tagNamePreference': {
+				'augments': 'extends'
+			}
+		}
 	}
 };

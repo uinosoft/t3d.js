@@ -1,8 +1,7 @@
 /**
  * Enum for material Type.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const MATERIAL_TYPE = {
 	BASIC: 'basic',
@@ -21,9 +20,8 @@ export { MATERIAL_TYPE };
 
 /**
  * Enum for blend Type.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const BLEND_TYPE = {
 	NONE: 'none',
@@ -38,9 +36,8 @@ export { BLEND_TYPE };
 
 /**
  * Enum for blend equation.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const BLEND_EQUATION = {
 	ADD: 100,
@@ -55,9 +52,8 @@ export { BLEND_EQUATION };
 
 /**
  * Enum for blend factor.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const BLEND_FACTOR = {
 	ZERO: 200,
@@ -77,9 +73,8 @@ export { BLEND_FACTOR };
 
 /**
  * Enum for cull face Type.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const CULL_FACE_TYPE = {
 	NONE: 'none',
@@ -92,9 +87,8 @@ export { CULL_FACE_TYPE };
 
 /**
  * Enum for draw side.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const DRAW_SIDE = {
 	FRONT: 'front',
@@ -106,9 +100,8 @@ export { DRAW_SIDE };
 
 /**
  * Enum for shading side.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const SHADING_TYPE = {
 	SMOOTH_SHADING: 'smooth_shading',
@@ -119,9 +112,8 @@ export { SHADING_TYPE };
 
 /**
  * Enum for pixel format.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const PIXEL_FORMAT = {
 	DEPTH_COMPONENT: 1000,
@@ -178,9 +170,8 @@ export { PIXEL_FORMAT };
 
 /**
  * Enum for pixel Type.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const PIXEL_TYPE = {
 	UNSIGNED_BYTE: 1500,
@@ -202,9 +193,8 @@ export { PIXEL_TYPE };
 
 /**
  * Enum for texture filter.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const TEXTURE_FILTER = {
 	NEAREST: 1600,
@@ -219,9 +209,8 @@ export { TEXTURE_FILTER };
 
 /**
  * Enum for texture wrap.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const TEXTURE_WRAP = {
 	REPEAT:	1700,
@@ -233,9 +222,8 @@ export { TEXTURE_WRAP };
 
 /**
  * Enum for compare function.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const COMPARE_FUNC = {
 	LEQUAL: 0x0203,
@@ -252,9 +240,8 @@ export { COMPARE_FUNC };
 
 /**
  * Enum for operation.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const OPERATION = {
 	KEEP: 0x1E00,
@@ -270,9 +257,8 @@ export { OPERATION };
 
 /**
  * Enum for Shadow Type.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const SHADOW_TYPE = {
 	HARD: 'hard',
@@ -289,9 +275,8 @@ export { SHADOW_TYPE };
 
 /**
  * Enum for Texel Encoding Type.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const TEXEL_ENCODING_TYPE = {
 	LINEAR: 'linear',
@@ -303,9 +288,8 @@ export { TEXEL_ENCODING_TYPE };
 
 /**
  * Enum for Envmap Combine Type.
- * @memberof t3d
  * @readonly
- * @enum {String}
+ * @enum {string}
  */
 const ENVMAP_COMBINE_TYPE = {
 	MULTIPLY: 'ENVMAP_BLENDING_MULTIPLY',
@@ -317,9 +301,8 @@ export { ENVMAP_COMBINE_TYPE };
 
 /**
  * Enum for Draw Mode.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const DRAW_MODE = {
 	POINTS: 0,
@@ -335,9 +318,8 @@ export { DRAW_MODE };
 
 /**
  * Enum for Vertex Color.
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const VERTEX_COLOR = {
 	NONE: 0,
@@ -349,9 +331,8 @@ export { VERTEX_COLOR };
 
 /**
  * Enum for ATTACHMENT
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const ATTACHMENT = {
 	COLOR_ATTACHMENT0: 2000,
@@ -379,9 +360,8 @@ export { ATTACHMENT };
 
 /**
  * Enum for BUFFER_USAGE
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const BUFFER_USAGE = {
 	STREAM_DRAW: 35040,
@@ -399,9 +379,8 @@ export { BUFFER_USAGE };
 
 /**
  * Enum for QUERY_TYPE
- * @memberof t3d
  * @readonly
- * @enum {Number}
+ * @enum {number}
  */
 const QUERY_TYPE = {
 	ANY_SAMPLES_PASSED: 7000,

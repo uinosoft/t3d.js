@@ -170,7 +170,7 @@ function createFloatColorTexture(type = PIXEL_TYPE.FLOAT) {
 	return texture;
 }
 
-/** Shaders **/
+/** Shaders */
 
 const DepthPeelingBackBlendShader = {
 	name: 'dp_oit_back_blend',
@@ -246,7 +246,7 @@ const DepthPeelingMixShader = {
    `
 };
 
-/** DepthPeelingOITMaterial **/
+/** DepthPeelingOITMaterial */
 
 class DepthPeelingOITMaterial extends PBRMaterial {
 
@@ -311,7 +311,7 @@ fragmentShader = fragmentShader.replace(
     }else{
         lastDepth = texelFetch(uDepth, fragCoord, 0).rg;
     }
-   
+
     vec4 lastFrontColor = texelFetch(uFrontColor, fragCoord, 0);
     // depth value always increases
     // so we can use MAX blend equation
@@ -324,7 +324,7 @@ fragmentShader = fragmentShader.replace(
     gl_FragData[2] = vec4(0.0);
     float nearestDepth = -lastDepth.x;
     float furthestDepth = lastDepth.y;
-    
+
     float alphaMultiplier = 1.0 - lastFrontColor.a;
 
     if (gl_FragCoord.z < nearestDepth || gl_FragCoord.z > furthestDepth) {
@@ -334,7 +334,7 @@ fragmentShader = fragmentShader.replace(
 
     if (gl_FragCoord.z > nearestDepth && gl_FragCoord.z < furthestDepth) {
         // This needs to be peeled.
-        // The ones remaining after MAX blended for 
+        // The ones remaining after MAX blended for
         // all need-to-peel will be peeled next pass.
         pc_fragData0 = vec4(-gl_FragCoord.z, gl_FragCoord.z, 0.0, 1.0);
         return;

@@ -11,7 +11,7 @@ class Curve {
 	}
 
 	getPoint(/* t, optionalTarget */) {
-		console.warn('t3d.Curve: .getPoint() not implemented.');
+		console.warn('Curve: .getPoint() not implemented.');
 		return null;
 	}
 

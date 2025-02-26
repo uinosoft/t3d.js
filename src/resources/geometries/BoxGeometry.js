@@ -6,18 +6,17 @@ import { Vector3 } from '../../math/Vector3.js';
 /**
  * BoxGeometry is the quadrilateral primitive geometry class.
  * It is typically used for creating a cube or irregular quadrilateral of the dimensions provided with the 'width', 'height', and 'depth' constructor arguments.
- * @memberof t3d
- * @extends t3d.Geometry
+ * @extends Geometry
  */
 class BoxGeometry extends Geometry {
 
 	/**
-	 * @param {Number} [width=1] - Width of the sides on the X axis.
-	 * @param {Number} [height=1] - Height of the sides on the Y axis.
-	 * @param {Number} [depth=1] - Depth of the sides on the Z axis.
-	 * @param {Number} [widthSegments=1] - Number of segmented faces along the width of the sides.
-	 * @param {Number} [heightSegments=1] - Number of segmented faces along the height of the sides.
-	 * @param {Number} [depthSegments=1] - Number of segmented faces along the depth of the sides.
+	 * @param {number} [width=1] - Width of the sides on the X axis.
+	 * @param {number} [height=1] - Height of the sides on the Y axis.
+	 * @param {number} [depth=1] - Depth of the sides on the Z axis.
+	 * @param {number} [widthSegments=1] - Number of segmented faces along the width of the sides.
+	 * @param {number} [heightSegments=1] - Number of segmented faces along the height of the sides.
+	 * @param {number} [depthSegments=1] - Number of segmented faces along the depth of the sides.
 	 */
 	constructor(width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) {
 		super();

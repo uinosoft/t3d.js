@@ -4,10 +4,9 @@ import { Vector3 } from '../math/Vector3.js';
 import { Vector4 } from '../math/Vector4.js';
 
 /**
- * A mesh that has a {@link t3d.Skeleton} with bones that can then be used to animate the vertices of the geometry.
+ * A mesh that has a {@link Skeleton} with bones that can then be used to animate the vertices of the geometry.
  * The material must support skinning.
- * @memberof t3d
- * @extends t3d.Mesh
+ * @extends Mesh
  */
 class SkinnedMesh extends Mesh {
 
@@ -16,28 +15,28 @@ class SkinnedMesh extends Mesh {
 
 		/**
 		 * Skeleton created from the bones of the Geometry.
-		 * @type {t3d.Skeleton}
+		 * @type {Skeleton}
 		 */
 		this.skeleton = undefined;
 
 		/**
 		 * Either "attached" or "detached".
-		 * "attached" uses the {@link t3d.SkinnedMesh#worldMatrix} property for the base transform matrix of the bones.
-		 * "detached" uses the {@link t3d.SkinnedMesh#bindMatrix}.
-		 * @type {String}
+		 * "attached" uses the {@link SkinnedMesh#worldMatrix} property for the base transform matrix of the bones.
+		 * "detached" uses the {@link SkinnedMesh#bindMatrix}.
+		 * @type {string}
 		 * @default "attached"
 		 */
 		this.bindMode = 'attached';
 
 		/**
 		 * The base matrix that is used for the bound bone transforms.
-		 * @type {t3d.Matrix4}
+		 * @type {Matrix4}
 		 */
 		this.bindMatrix = new Matrix4();
 
 		/**
 		 * The base matrix that is used for resetting the bound bone transforms.
-		 * @type {t3d.Matrix4}
+		 * @type {Matrix4}
 		 */
 		this.bindMatrixInverse = new Matrix4();
 	}
@@ -45,8 +44,8 @@ class SkinnedMesh extends Mesh {
 	/**
 	 * Bind a skeleton to the skinned mesh.
 	 * The bindMatrix gets saved to .bindMatrix property and the .bindMatrixInverse gets calculated.
-	 * @param {t3d.Skeleton} skeleton - Skeleton created from a Bones tree.
-	 * @param {t3d.Matrix4} [bindMatrix=] - Matrix4 that represents the base transform of the skeleton.
+	 * @param {Skeleton} skeleton - Skeleton created from a Bones tree.
+	 * @param {Matrix4} [bindMatrix] - Matrix4 that represents the base transform of the skeleton.
 	 */
 	bind(skeleton, bindMatrix) {
 		this.skeleton = skeleton;
@@ -69,7 +68,7 @@ class SkinnedMesh extends Mesh {
 		} else if (this.bindMode === 'detached') {
 			this.bindMatrixInverse.getInverse(this.bindMatrix);
 		} else {
-			console.warn('t3d.SkinnedMesh: Unrecognized bindMode: ' + this.bindMode);
+			console.warn('SkinnedMesh: Unrecognized bindMode: ' + this.bindMode);
 		}
 	}
 
@@ -96,9 +95,9 @@ class SkinnedMesh extends Mesh {
 	/**
 	 * Applies the bone transform associated with the given index to the given position vector.
 	 * Returns the updated vector.
-	 * @param {Number} index - The index of the vertex.
-	 * @param {t3d.Vector3} target - The target vector.
-	 * @return {t3d.Vector3} The target vector.
+	 * @param {number} index - The index of the vertex.
+	 * @param {Vector3} target - The target vector.
+	 * @returns {Vector3} The target vector.
 	 */
 	applyBoneTransform(index, target) {
 		const skeleton = this.skeleton;
@@ -134,7 +133,7 @@ class SkinnedMesh extends Mesh {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 SkinnedMesh.prototype.isSkinnedMesh = true;

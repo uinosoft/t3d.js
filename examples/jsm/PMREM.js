@@ -32,12 +32,12 @@ class PMREM {
 	 * Generate a PMREM from a cubeMap or equirectangular environment texture.
 	 * @param {ThinRenderer} renderer - The renderer.
 	 * @param {TextureCube|Texture2D} envMap - The environment map.
-	 * @param {Object} [options] - The options for the output texture.
-	 * @param {Number} [options.sampleSize=1024] - The sample size.
+	 * @param {object} [options] - The options for the output texture.
+	 * @param {number} [options.sampleSize=1024] - The sample size.
 	 * @param {Euler} [options.rotation] - The rotation of the environment map.
-	 * @param {Boolean} [options.legacy] - Use legacy method to generate PMREM.
+	 * @param {boolean} [options.legacy] - Use legacy method to generate PMREM.
 	 * @param {TextureCube} [options.outputTexture] - The output texture.
-	 * @return {TextureCube} - The output texture.
+	 * @returns {TextureCube} - The output texture.
 	 */
 	static prefilterEnvironmentMap(renderer, envMap, options = {}) {
 		const capabilities = renderer.capabilities;

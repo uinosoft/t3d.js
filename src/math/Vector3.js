@@ -2,14 +2,13 @@ import { MathUtils } from './MathUtils.js';
 
 /**
  * The vector 3 class.
- * @memberof t3d
  */
 class Vector3 {
 
 	/**
-	 * @param {Number} [x=0] - the x value of this vector. Default is 0.
-	 * @param {Number} [y=0] - the y value of this vector. Default is 0.
-	 * @param {Number} [z=0] - the z value of this vector. Default is 0.
+	 * @param {number} [x=0] - the x value of this vector. Default is 0.
+	 * @param {number} [y=0] - the y value of this vector. Default is 0.
+	 * @param {number} [z=0] - the z value of this vector. Default is 0.
 	 */
 	constructor(x = 0, y = 0, z = 0) {
 		this.x = x;
@@ -21,10 +20,10 @@ class Vector3 {
 	 * Sets this vector to be the vector linearly interpolated between v1 and v2
 	 * where ratio is the percent distance along the line connecting the two vectors
 	 * - ratio = 0 will be v1, and ratio = 1 will be v2.
-	 * @param {t3d.Vector3} v1
-	 * @param {t3d.Vector3} v2
-	 * @param {Number} ratio
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v1
+	 * @param {Vector3} v2
+	 * @param {number} ratio
+	 * @returns {Vector3}
 	 */
 	lerpVectors(v1, v2, ratio) {
 		return this.subVectors(v2, v1).multiplyScalar(ratio).add(v1);
@@ -34,9 +33,9 @@ class Vector3 {
 	 * Linearly interpolate between this vector and v,
 	 * where alpha is the percent distance along the line
 	 * - alpha = 0 will be this vector, and alpha = 1 will be v.
-	 * @param {t3d.Vector3} v
-	 * @param {Number} alpha
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @param {number} alpha
+	 * @returns {Vector3}
 	 */
 	lerp(v, alpha) {
 		this.x += (v.x - this.x) * alpha;
@@ -48,10 +47,10 @@ class Vector3 {
 
 	/**
 	 * Sets the x, y and z components of this vector.
-	 * @param {Number} x
-	 * @param {Number} y
-	 * @param {Number} z
-	 * @return {t3d.Vector3}
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 * @returns {Vector3}
 	 */
 	set(x = 0, y = 0, z = 0) {
 		this.x = x;
@@ -63,8 +62,8 @@ class Vector3 {
 
 	/**
 	 * Set the x, y and z values of this vector both equal to scalar.
-	 * @param {Number} scalar
-	 * @return {t3d.Vector3}
+	 * @param {number} scalar
+	 * @returns {Vector3}
 	 */
 	setScalar(scalar) {
 		this.x = scalar;
@@ -76,8 +75,8 @@ class Vector3 {
 
 	/**
 	 * If this vector's x, y or z value is greater than v's x, y or z value, replace that value with the corresponding min value.
-	 * @param {t3d.Vector3} v
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	min(v) {
 		this.x = Math.min(this.x, v.x);
@@ -89,8 +88,8 @@ class Vector3 {
 
 	/**
 	 * If this vector's x, y or z value is less than v's x, y or z value, replace that value with the corresponding max value.
-	 * @param {t3d.Vector3} v
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	max(v) {
 		this.x = Math.max(this.x, v.x);
@@ -102,7 +101,7 @@ class Vector3 {
 
 	/**
 	 * Computes the Euclidean length (straight-line length) from (0, 0, 0) to (x, y, z).
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	getLength() {
 		return Math.sqrt(this.getLengthSquared());
@@ -112,7 +111,7 @@ class Vector3 {
 	 * Computes the square of the Euclidean length (straight-line length) from (0, 0, 0) to (x, y, z).
 	 * If you are comparing the lengths of vectors, you should compare the length squared instead as it is slightly
 	 * more efficient to calculate.
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	getLengthSquared() {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
@@ -120,7 +119,8 @@ class Vector3 {
 
 	/**
 	 * Convert this vector to a unit vector - that is, sets it equal to a vector with the same direction as this one, but length 1.
-	 * @param {Number} [thickness=1]
+	 * @param {number} [thickness=1]
+	 * @returns {Vector3}
 	 */
 	normalize(thickness = 1) {
 		const length = this.getLength() || 1;
@@ -135,9 +135,9 @@ class Vector3 {
 
 	/**
 	 * Subtracts a from this vector.
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} [target]
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} a
+	 * @param {Vector3} [target]
+	 * @returns {Vector3}
 	 */
 	subtract(a, target = new Vector3()) {
 		return target.set(this.x - a.x, this.y - a.y, this.z - a.z);
@@ -145,8 +145,8 @@ class Vector3 {
 
 	/**
 	 * Multiplies this vector by v.
-	 * @param {t3d.Vector3} v
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	multiply(v) {
 		this.x *= v.x;
@@ -158,9 +158,9 @@ class Vector3 {
 
 	/**
 	 * Sets this vector to cross product of a and b.
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @returns {Vector3}
 	 */
 	crossVectors(a, b) {
 		const ax = a.x, ay = a.y, az = a.z;
@@ -175,8 +175,8 @@ class Vector3 {
 
 	/**
 	 * Sets this vector to cross product of itself and v.
-	 * @param {t3d.Vector3} v
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	cross(v) {
 		return this.crossVectors(this, v);
@@ -184,7 +184,7 @@ class Vector3 {
 
 	/**
 	 * Inverts this vector - i.e. sets x = -x, y = -y and z = -z.
-	 * @return {t3d.Vector3}
+	 * @returns {Vector3}
 	 */
 	negate() {
 		this.x = -this.x;
@@ -196,8 +196,8 @@ class Vector3 {
 
 	/**
 	 * Calculate the dot product of this vector and v.
-	 * @param {t3d.Vector3} a
-	 * @return {Number}
+	 * @param {Vector3} a
+	 * @returns {number}
 	 */
 	dot(a) {
 		return this.x * a.x + this.y * a.y + this.z * a.z;
@@ -205,8 +205,8 @@ class Vector3 {
 
 	/**
 	 * Applies a Quaternion transform to this vector.
-	 * @param {t3d.Quaternion} q
-	 * @return {t3d.Vector3}
+	 * @param {Quaternion} q
+	 * @returns {Vector3}
 	 */
 	applyQuaternion(q) {
 		const x = this.x, y = this.y, z = this.z;
@@ -230,8 +230,8 @@ class Vector3 {
 
 	/**
 	 * Multiplies this vector (with an implicit 1 in the 4th dimension) and m, and divides by perspective.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Vector3}
+	 * @param {Matrix4} m
+	 * @returns {Vector3}
 	 */
 	applyMatrix4(m) {
 		const x = this.x, y = this.y, z = this.z;
@@ -248,8 +248,8 @@ class Vector3 {
 
 	/**
 	 * Multiplies this vector by m
-	 * @param {t3d.Matrix3} m
-	 * @return {t3d.Vector3}
+	 * @param {Matrix3} m
+	 * @returns {Vector3}
 	 */
 	applyMatrix3(m) {
 		const x = this.x, y = this.y, z = this.z;
@@ -264,8 +264,8 @@ class Vector3 {
 
 	/**
 	 * Transforms the direction of this vector by a matrix (the upper left 3 x 3 subset of a m) and then
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Vector3}
+	 * @param {Matrix4} m
+	 * @returns {Vector3}
 	 */
 	transformDirection(m) {
 		// input: Matrix4 affine matrix
@@ -283,8 +283,8 @@ class Vector3 {
 
 	/**
 	 * Sets this vector to the position elements of the transformation matrix m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Vector3}
+	 * @param {Matrix4} m
+	 * @returns {Vector3}
 	 */
 	setFromMatrixPosition(m) {
 		const e = m.elements;
@@ -298,8 +298,8 @@ class Vector3 {
 
 	/**
 	 * Sets this vector to the scale elements of the transformation matrix m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Vector3}
+	 * @param {Matrix4} m
+	 * @returns {Vector3}
 	 */
 	setFromMatrixScale(m) {
 		const sx = this.setFromMatrixColumn(m, 0).getLength();
@@ -310,9 +310,9 @@ class Vector3 {
 
 	/**
 	 * Sets this vector's x, y and z components from index column of matrix.
-	 * @param {t3d.Matrix3} m
-	 * @param {Number} index
-	 * @return {t3d.Vector3}
+	 * @param {Matrix3} m
+	 * @param {number} index
+	 * @returns {Vector3}
 	 */
 	setFromMatrixColumn(m, index) {
 		return this.fromArray(m.elements, index * 4);
@@ -320,10 +320,10 @@ class Vector3 {
 
 	/**
 	 * Sets this vector's x value to be array[ offset + 0 ], y value to be array[ offset + 1 ] and z value to be array[ offset + 2 ].
-	 * @param {Number[]} array - the source array.
-	 * @param {Number} [offset=0] - offset into the array.
-	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-	 * @return {t3d.Vector3}
+	 * @param {number[]} array - the source array.
+	 * @param {number} [offset=0] - offset into the array.
+	 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+	 * @returns {Vector3}
 	 */
 	fromArray(array, offset = 0, denormalize = false) {
 		let x = array[offset], y = array[offset + 1], z = array[offset + 2];
@@ -343,10 +343,10 @@ class Vector3 {
 
 	/**
 	 * Returns an array [x, y, z], or copies x, y and z into the provided array.
-	 * @param {Number[]} [array] - array to store this vector to. If this is not provided a new array will be created.
-	 * @param {Number} [offset=0] - offset into the array.
-	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-	 * @return {Number[]}
+	 * @param {number[]} [array] - array to store this vector to. If this is not provided a new array will be created.
+	 * @param {number} [offset=0] - offset into the array.
+	 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+	 * @returns {number[]}
 	 */
 	toArray(array = [], offset = 0, normalize = false) {
 		let x = this.x, y = this.y, z = this.z;
@@ -366,8 +366,8 @@ class Vector3 {
 
 	/**
 	 * Copies the values of the passed vector3's x, y and z properties to this vector3.
-	 * @param {t3d.Vector3} v
-	 * @returns {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	copy(v) {
 		this.x = v.x;
@@ -379,9 +379,9 @@ class Vector3 {
 
 	/**
 	 * Sets this vector to a + b.
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @returns {Vector3}
 	 */
 	addVectors(a, b) {
 		this.x = a.x + b.x;
@@ -393,8 +393,8 @@ class Vector3 {
 
 	/**
 	 * Adds the scalar value s to this vector's x, y and z values.
-	 * @param {Number} s
-	 * @return {t3d.Vector3}
+	 * @param {number} s
+	 * @returns {Vector3}
 	 */
 	addScalar(s) {
 		this.x += s;
@@ -406,8 +406,8 @@ class Vector3 {
 
 	/**
 	 * Adds v to this vector.
-	 * @param {t3d.Vector3} v
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	add(v) {
 		this.x += v.x;
@@ -419,9 +419,9 @@ class Vector3 {
 
 	/**
 	 * Adds the multiple of v and s to this vector.
-	 * @param {t3d.Vector3} v
-	 * @param {Number} s
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @param {number} s
+	 * @returns {Vector3}
 	 */
 	addScaledVector(v, s) {
 		this.x += v.x * s;
@@ -433,9 +433,9 @@ class Vector3 {
 
 	/**
 	 * Sets this vector to a - b.
-	 * @param {t3d.Vector3} a
-	 * @param {t3d.Vector3} b
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} a
+	 * @param {Vector3} b
+	 * @returns {Vector3}
 	 */
 	subVectors(a, b) {
 		this.x = a.x - b.x;
@@ -447,8 +447,8 @@ class Vector3 {
 
 	/**
 	 * Subtracts v from this vector.
-	 * @param {t3d.Vector3} v
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} v
+	 * @returns {Vector3}
 	 */
 	sub(v) {
 		this.x -= v.x;
@@ -460,8 +460,8 @@ class Vector3 {
 
 	/**
 	 * Multiplies this vector by scalar s.
-	 * @param {Number} scalar
-	 * @return {t3d.Vector3}
+	 * @param {number} scalar
+	 * @returns {Vector3}
 	 */
 	multiplyScalar(scalar) {
 		this.x *= scalar;
@@ -475,8 +475,8 @@ class Vector3 {
 	 * Computes the squared distance from this vector to v.
 	 * If you are just comparing the distance with another distance,
 	 * you should compare the distance squared instead as it is slightly more efficient to calculate.
-	 * @param {t3d.Vector3} v
-	 * @return {Number}
+	 * @param {Vector3} v
+	 * @returns {number}
 	 */
 	distanceToSquared(v) {
 		const dx = this.x - v.x, dy = this.y - v.y, dz = this.z - v.z;
@@ -485,8 +485,8 @@ class Vector3 {
 
 	/**
 	 * Computes the distance from this vector to v.
-	 * @param {t3d.Vector3} v
-	 * @return {Number}
+	 * @param {Vector3} v
+	 * @returns {number}
 	 */
 	distanceTo(v) {
 		return Math.sqrt(this.distanceToSquared(v));
@@ -494,8 +494,8 @@ class Vector3 {
 
 	/**
 	 * Sets this vector from the spherical coordinates s.
-	 * @param {t3d.Spherical} s
-	 * @return {t3d.Vector3}
+	 * @param {Spherical} s
+	 * @returns {Vector3}
 	 */
 	setFromSpherical(s) {
 		const sinPhiRadius = Math.sin(s.phi) * s.radius;
@@ -509,8 +509,8 @@ class Vector3 {
 
 	/**
 	 * Projects this vector from world space into the camera's normalized device coordinate (NDC) space.
-	 * @param {t3d.Camera} camera
-	 * @return {t3d.Vector3}
+	 * @param {Camera} camera
+	 * @returns {Vector3}
 	 */
 	project(camera) {
 		return this.applyMatrix4(camera.projectionViewMatrix);
@@ -518,8 +518,8 @@ class Vector3 {
 
 	/**
 	 * Projects this vector from the camera's normalized device coordinate (NDC) space into world space.
-	 * @param {t3d.Camera} camera
-	 * @return {t3d.Vector3}
+	 * @param {Camera} camera
+	 * @returns {Vector3}
 	 */
 	unproject(camera) {
 		return this.applyMatrix4(camera.projectionMatrixInverse).applyMatrix4(camera.worldMatrix);
@@ -527,8 +527,8 @@ class Vector3 {
 
 	/**
 	 * Reflect this vector off of plane orthogonal to normal. Normal is assumed to have unit length.
-	 * @param {t3d.Vector3} narmal - the normal to the reflecting plane
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} normal - the normal to the reflecting plane
+	 * @returns {Vector3}
 	 */
 	reflect(normal) {
 		// reflect incident vector off plane orthogonal to normal
@@ -538,8 +538,8 @@ class Vector3 {
 
 	/**
 	 * Checks for strict equality of this vector and v.
-	 * @param {t3d.Vector3} v
-	 * @return {Boolean}
+	 * @param {Vector3} v
+	 * @returns {boolean}
 	 */
 	equals(v) {
 		return ((v.x === this.x) && (v.y === this.y) && (v.z === this.z));
@@ -547,7 +547,7 @@ class Vector3 {
 
 	/**
 	 * Returns a new vector3 with the same x, y and z values as this one.
-	 * @return {t3d.Vector3}
+	 * @returns {Vector3}
 	 */
 	clone() {
 		return new Vector3(this.x, this.y, this.z);

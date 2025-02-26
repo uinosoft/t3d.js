@@ -16,8 +16,8 @@ class IDWMapGenerator {
 
 	/**
 	 * Create a idwmap generator.
-	 * @param {Number} [width=1024] The initial width of the idwmap textures.
-	 * @param {Number} [height=1024] The initial height of the idwmap textures.
+	 * @param {number} [width=1024] The initial width of the idwmap textures.
+	 * @param {number} [height=1024] The initial height of the idwmap textures.
 	 */
 	constructor(width = 1024, height = 1024) {
 		// Gray pass
@@ -93,9 +93,9 @@ class IDWMapGenerator {
 	 * Resize idwmap textures.
 	 * The idwmap texture size only affects the image resolution, and generally does not affect the drawing results.
 	 * Note: resize will clear the content in the texture, so you need to re-execute rendering after resize.
-	 * @param {Number} width
-	 * @param {Number} height
-	 * @return this
+	 * @param {number} width
+	 * @param {number} height
+	 * @returns {IDWMapGenerator} this
 	 */
 	resize(width, height) {
 		this._grayRenderTarget.resize(width, height);
@@ -108,11 +108,11 @@ class IDWMapGenerator {
 	 * This method needs to be executed before executing colorize to generate the final idwmap.
 	 * @param {ThinRenderer} renderer
 	 * @param {Array} data [[x0, y0, value0], [x1, y1, value1], ...]
-	 * @param {Object} options
+	 * @param {object} options
 	 * @param {Array} options.size Dimensions in the data coordinate system with the origin at the center.
-	 * @param {String} exponent (Optional) The exponent for idwmap, default is 2.
-	 * @param {Array} range (Optional) The range of data values, default is [0, 1].
-	 * @return this
+	 * @param {string} options.exponent (Optional) The exponent for idwmap, default is 2.
+	 * @param {Array} options.range (Optional) The range of data values, default is [0, 1].
+	 * @returns {IDWMapGenerator} this
 	 */
 	render(renderer, data, options = {}) {
 		this._checkCapabilities(renderer.capabilities);
@@ -192,8 +192,9 @@ class IDWMapGenerator {
 	 * Colorize the grayscale texture according to the color gradient ribbon map.
 	 * @param {ThinRenderer} renderer
 	 * @param {Texture2D} gradientTexture
-	 * @param {Object} options (Optional)
-	 * @param {Boolean} options.isoline (Optional) Whether to show isoline, default is false.
+	 * @param {object} options (Optional)
+	 * @param {boolean} options.isoline (Optional) Whether to show isoline, default is false.
+	 * @returns {IDWMapGenerator} this
 	 */
 	colorize(renderer, gradientTexture, options = {}) {
 		renderer.getClearColor().toArray(_tempClearColor); // save clear color
@@ -218,7 +219,7 @@ class IDWMapGenerator {
 
 	/**
 	 * Get idwmap gray texture.
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getGrayTexture() {
 		return this._grayRenderTarget.texture;
@@ -226,7 +227,7 @@ class IDWMapGenerator {
 
 	/**
 	 * Get the colored idwmap texture.
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getTexture() {
 		return this._colorizeRenderTarget.texture;

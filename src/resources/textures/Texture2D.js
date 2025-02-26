@@ -2,8 +2,7 @@ import { TextureBase } from './TextureBase.js';
 
 /**
  * Creates a 2d texture.
- * @memberof t3d
- * @extends t3d.TextureBase
+ * @extends TextureBase
  */
 class Texture2D extends TextureBase {
 
@@ -12,7 +11,7 @@ class Texture2D extends TextureBase {
 
 		/**
 		 * Image data for this texture.
-		 * @type {null|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|ImageBitmap|Object}
+		 * @type {null | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap | object}
 		 * @default null
 		 */
 		this.image = null;
@@ -20,8 +19,8 @@ class Texture2D extends TextureBase {
 
 	/**
 	 * Copy the given 2d texture into this texture.
-	 * @param {t3d.Texture2D} source - The 2d texture to be copied.
-	 * @return {t3d.Texture2D}
+	 * @param {Texture2D} source - The 2d texture to be copied.
+	 * @returns {Texture2D}
 	 */
 	copy(source) {
 		super.copy(source);
@@ -35,7 +34,7 @@ class Texture2D extends TextureBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 Texture2D.prototype.isTexture2D = true;

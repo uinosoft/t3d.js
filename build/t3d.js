@@ -16,7 +16,7 @@
 		/**
 		 * Method for generate uuid.
 		 * http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
-		 * @return {String} - The uuid.
+		 * @returns {string} - The uuid.
 		 */
 		static generateUUID() {
 			const d0 = Math.random() * 0xffffffff | 0;
@@ -31,10 +31,10 @@
 
 		/**
 		 * Returns a value linearly interpolated from two known points based on the given interval - t = 0 will return x and t = 1 will return y.
-		 * @param {Number} x - The first value.
-		 * @param {Number} y - The second value.
-		 * @param {Number} t - The interpolation factor.
-		 * @return {Number} - The interpolated value.
+		 * @param {number} x - The first value.
+		 * @param {number} y - The second value.
+		 * @param {number} t - The interpolation factor.
+		 * @returns {number} - The interpolated value.
 		 */
 		static lerp(x, y, t) {
 			return x + (y - x) * t;
@@ -42,10 +42,10 @@
 
 		/**
 		 * Clamps the value to be between min and max.
-		 * @param {Number} value - Value to be clamped.
-		 * @param {Number} min - The minimum value.
-		 * @param {Number} max - The maximum value.
-		 * @return {Number} - The clamped value.
+		 * @param {number} value - Value to be clamped.
+		 * @param {number} min - The minimum value.
+		 * @param {number} max - The maximum value.
+		 * @returns {number} - The clamped value.
 		 */
 		static clamp(value, min, max) {
 			return Math.max(min, Math.min(max, value));
@@ -54,9 +54,9 @@
 		/**
 		 * Compute euclidean modulo of m % n.
 		 * Refer to: https://en.wikipedia.org/wiki/Modulo_operation
-		 * @param {Number} n - The dividend.
-		 * @param {Number} m - The divisor.
-		 * @return {Number} - The result of the modulo operation.
+		 * @param {number} n - The dividend.
+		 * @param {number} m - The divisor.
+		 * @returns {number} - The result of the modulo operation.
 		 */
 		static euclideanModulo(n, m) {
 			return (n % m + m) % m;
@@ -64,8 +64,8 @@
 
 		/**
 		 * Is this number a power of two.
-		 * @param {Number} value - The input number.
-		 * @return {Boolean} - Is this number a power of two.
+		 * @param {number} value - The input number.
+		 * @returns {boolean} - Is this number a power of two.
 		 */
 		static isPowerOfTwo(value) {
 			return (value & value - 1) === 0 && value !== 0;
@@ -73,8 +73,8 @@
 
 		/**
 		 * Return the nearest power of two number of this number.
-		 * @param {Number} value - The input number.
-		 * @return {Number} - The result number.
+		 * @param {number} value - The input number.
+		 * @returns {number} - The result number.
 		 */
 		static nearestPowerOfTwo(value) {
 			return Math.pow(2, Math.round(Math.log(value) / Math.LN2));
@@ -82,8 +82,8 @@
 
 		/**
 		 * Return the next power of two number of this number.
-		 * @param {Number} value - The input number.
-		 * @return {Number} - The result number.
+		 * @param {number} value - The input number.
+		 * @returns {number} - The result number.
 		 */
 		static nextPowerOfTwo(value) {
 			value--;
@@ -98,9 +98,9 @@
 
 		/**
 		 * Denormalizes a value based on the type of the provided array.
-		 * @param {Number} value - The value to be denormalized.
+		 * @param {number} value - The value to be denormalized.
 		 * @param {TypedArray} array - The typed array to determine the normalization factor.
-		 * @returns {Number} - The denormalized value.
+		 * @returns {number} - The denormalized value.
 		 * @throws {Error} - Throws an error if the array type is invalid.
 		 */
 		static denormalize(value, array) {
@@ -126,9 +126,9 @@
 
 		/**
 		 * Normalizes a value based on the type of the provided array.
-		 * @param {Number} value - The value to be normalized.
+		 * @param {number} value - The value to be normalized.
 		 * @param {TypedArray} array - The typed array to determine the normalization factor.
-		 * @returns {Number} - The normalized value.
+		 * @returns {number} - The normalized value.
 		 * @throws {Error} - Throws an error if the array type is invalid.
 		 */
 		static normalize(value, array) {
@@ -154,8 +154,8 @@
 
 		/**
 		 * Converts float to half float.
-		 * @param {Number} val - The float value.
-		 * @return {Number} - The half float value.
+		 * @param {number} val - The float value.
+		 * @returns {number} - The half float value.
 		 */
 		static toHalfFloat(val) {
 			if (Math.abs(val) > 65504) {
@@ -170,8 +170,8 @@
 
 		/**
 		 * Converts half float to float.
-		 * @param {Number} val - The half float value.
-		 * @return {Number} - The float value.
+		 * @param {number} val - The half float value.
+		 * @returns {number} - The float value.
 		 */
 		static fromHalfFloat(val) {
 			const m = val >> 10;
@@ -279,13 +279,12 @@
 
 	/**
 	 * The vector 3 class.
-	 * @memberof t3d
 	 */
 	class Vector3 {
 		/**
-		 * @param {Number} [x=0] - the x value of this vector. Default is 0.
-		 * @param {Number} [y=0] - the y value of this vector. Default is 0.
-		 * @param {Number} [z=0] - the z value of this vector. Default is 0.
+		 * @param {number} [x=0] - the x value of this vector. Default is 0.
+		 * @param {number} [y=0] - the y value of this vector. Default is 0.
+		 * @param {number} [z=0] - the z value of this vector. Default is 0.
 		 */
 		constructor(x = 0, y = 0, z = 0) {
 			this.x = x;
@@ -297,10 +296,10 @@
 		 * Sets this vector to be the vector linearly interpolated between v1 and v2
 		 * where ratio is the percent distance along the line connecting the two vectors
 		 * - ratio = 0 will be v1, and ratio = 1 will be v2.
-		 * @param {t3d.Vector3} v1
-		 * @param {t3d.Vector3} v2
-		 * @param {Number} ratio
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v1
+		 * @param {Vector3} v2
+		 * @param {number} ratio
+		 * @returns {Vector3}
 		 */
 		lerpVectors(v1, v2, ratio) {
 			return this.subVectors(v2, v1).multiplyScalar(ratio).add(v1);
@@ -310,9 +309,9 @@
 		 * Linearly interpolate between this vector and v,
 		 * where alpha is the percent distance along the line
 		 * - alpha = 0 will be this vector, and alpha = 1 will be v.
-		 * @param {t3d.Vector3} v
-		 * @param {Number} alpha
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @param {number} alpha
+		 * @returns {Vector3}
 		 */
 		lerp(v, alpha) {
 			this.x += (v.x - this.x) * alpha;
@@ -323,10 +322,10 @@
 
 		/**
 		 * Sets the x, y and z components of this vector.
-		 * @param {Number} x
-		 * @param {Number} y
-		 * @param {Number} z
-		 * @return {t3d.Vector3}
+		 * @param {number} x
+		 * @param {number} y
+		 * @param {number} z
+		 * @returns {Vector3}
 		 */
 		set(x = 0, y = 0, z = 0) {
 			this.x = x;
@@ -337,8 +336,8 @@
 
 		/**
 		 * Set the x, y and z values of this vector both equal to scalar.
-		 * @param {Number} scalar
-		 * @return {t3d.Vector3}
+		 * @param {number} scalar
+		 * @returns {Vector3}
 		 */
 		setScalar(scalar) {
 			this.x = scalar;
@@ -349,8 +348,8 @@
 
 		/**
 		 * If this vector's x, y or z value is greater than v's x, y or z value, replace that value with the corresponding min value.
-		 * @param {t3d.Vector3} v
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		min(v) {
 			this.x = Math.min(this.x, v.x);
@@ -361,8 +360,8 @@
 
 		/**
 		 * If this vector's x, y or z value is less than v's x, y or z value, replace that value with the corresponding max value.
-		 * @param {t3d.Vector3} v
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		max(v) {
 			this.x = Math.max(this.x, v.x);
@@ -373,7 +372,7 @@
 
 		/**
 		 * Computes the Euclidean length (straight-line length) from (0, 0, 0) to (x, y, z).
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		getLength() {
 			return Math.sqrt(this.getLengthSquared());
@@ -383,7 +382,7 @@
 		 * Computes the square of the Euclidean length (straight-line length) from (0, 0, 0) to (x, y, z).
 		 * If you are comparing the lengths of vectors, you should compare the length squared instead as it is slightly
 		 * more efficient to calculate.
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		getLengthSquared() {
 			return this.x * this.x + this.y * this.y + this.z * this.z;
@@ -391,7 +390,8 @@
 
 		/**
 		 * Convert this vector to a unit vector - that is, sets it equal to a vector with the same direction as this one, but length 1.
-		 * @param {Number} [thickness=1]
+		 * @param {number} [thickness=1]
+		 * @returns {Vector3}
 		 */
 		normalize(thickness = 1) {
 			const length = this.getLength() || 1;
@@ -404,9 +404,9 @@
 
 		/**
 		 * Subtracts a from this vector.
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} [target]
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} a
+		 * @param {Vector3} [target]
+		 * @returns {Vector3}
 		 */
 		subtract(a, target = new Vector3()) {
 			return target.set(this.x - a.x, this.y - a.y, this.z - a.z);
@@ -414,8 +414,8 @@
 
 		/**
 		 * Multiplies this vector by v.
-		 * @param {t3d.Vector3} v
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		multiply(v) {
 			this.x *= v.x;
@@ -426,9 +426,9 @@
 
 		/**
 		 * Sets this vector to cross product of a and b.
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @returns {Vector3}
 		 */
 		crossVectors(a, b) {
 			const ax = a.x,
@@ -445,8 +445,8 @@
 
 		/**
 		 * Sets this vector to cross product of itself and v.
-		 * @param {t3d.Vector3} v
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		cross(v) {
 			return this.crossVectors(this, v);
@@ -454,7 +454,7 @@
 
 		/**
 		 * Inverts this vector - i.e. sets x = -x, y = -y and z = -z.
-		 * @return {t3d.Vector3}
+		 * @returns {Vector3}
 		 */
 		negate() {
 			this.x = -this.x;
@@ -465,8 +465,8 @@
 
 		/**
 		 * Calculate the dot product of this vector and v.
-		 * @param {t3d.Vector3} a
-		 * @return {Number}
+		 * @param {Vector3} a
+		 * @returns {number}
 		 */
 		dot(a) {
 			return this.x * a.x + this.y * a.y + this.z * a.z;
@@ -474,8 +474,8 @@
 
 		/**
 		 * Applies a Quaternion transform to this vector.
-		 * @param {t3d.Quaternion} q
-		 * @return {t3d.Vector3}
+		 * @param {Quaternion} q
+		 * @returns {Vector3}
 		 */
 		applyQuaternion(q) {
 			const x = this.x,
@@ -503,8 +503,8 @@
 
 		/**
 		 * Multiplies this vector (with an implicit 1 in the 4th dimension) and m, and divides by perspective.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Vector3}
+		 * @param {Matrix4} m
+		 * @returns {Vector3}
 		 */
 		applyMatrix4(m) {
 			const x = this.x,
@@ -520,8 +520,8 @@
 
 		/**
 		 * Multiplies this vector by m
-		 * @param {t3d.Matrix3} m
-		 * @return {t3d.Vector3}
+		 * @param {Matrix3} m
+		 * @returns {Vector3}
 		 */
 		applyMatrix3(m) {
 			const x = this.x,
@@ -536,8 +536,8 @@
 
 		/**
 		 * Transforms the direction of this vector by a matrix (the upper left 3 x 3 subset of a m) and then
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Vector3}
+		 * @param {Matrix4} m
+		 * @returns {Vector3}
 		 */
 		transformDirection(m) {
 			// input: Matrix4 affine matrix
@@ -555,8 +555,8 @@
 
 		/**
 		 * Sets this vector to the position elements of the transformation matrix m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Vector3}
+		 * @param {Matrix4} m
+		 * @returns {Vector3}
 		 */
 		setFromMatrixPosition(m) {
 			const e = m.elements;
@@ -568,8 +568,8 @@
 
 		/**
 		 * Sets this vector to the scale elements of the transformation matrix m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Vector3}
+		 * @param {Matrix4} m
+		 * @returns {Vector3}
 		 */
 		setFromMatrixScale(m) {
 			const sx = this.setFromMatrixColumn(m, 0).getLength();
@@ -580,9 +580,9 @@
 
 		/**
 		 * Sets this vector's x, y and z components from index column of matrix.
-		 * @param {t3d.Matrix3} m
-		 * @param {Number} index
-		 * @return {t3d.Vector3}
+		 * @param {Matrix3} m
+		 * @param {number} index
+		 * @returns {Vector3}
 		 */
 		setFromMatrixColumn(m, index) {
 			return this.fromArray(m.elements, index * 4);
@@ -590,10 +590,10 @@
 
 		/**
 		 * Sets this vector's x value to be array[ offset + 0 ], y value to be array[ offset + 1 ] and z value to be array[ offset + 2 ].
-		 * @param {Number[]} array - the source array.
-		 * @param {Number} [offset=0] - offset into the array.
-		 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @return {t3d.Vector3}
+		 * @param {number[]} array - the source array.
+		 * @param {number} [offset=0] - offset into the array.
+		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+		 * @returns {Vector3}
 		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let x = array[offset],
@@ -612,10 +612,10 @@
 
 		/**
 		 * Returns an array [x, y, z], or copies x, y and z into the provided array.
-		 * @param {Number[]} [array] - array to store this vector to. If this is not provided a new array will be created.
-		 * @param {Number} [offset=0] - offset into the array.
-		 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @return {Number[]}
+		 * @param {number[]} [array] - array to store this vector to. If this is not provided a new array will be created.
+		 * @param {number} [offset=0] - offset into the array.
+		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+		 * @returns {number[]}
 		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let x = this.x,
@@ -634,8 +634,8 @@
 
 		/**
 		 * Copies the values of the passed vector3's x, y and z properties to this vector3.
-		 * @param {t3d.Vector3} v
-		 * @returns {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		copy(v) {
 			this.x = v.x;
@@ -646,9 +646,9 @@
 
 		/**
 		 * Sets this vector to a + b.
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @returns {Vector3}
 		 */
 		addVectors(a, b) {
 			this.x = a.x + b.x;
@@ -659,8 +659,8 @@
 
 		/**
 		 * Adds the scalar value s to this vector's x, y and z values.
-		 * @param {Number} s
-		 * @return {t3d.Vector3}
+		 * @param {number} s
+		 * @returns {Vector3}
 		 */
 		addScalar(s) {
 			this.x += s;
@@ -671,8 +671,8 @@
 
 		/**
 		 * Adds v to this vector.
-		 * @param {t3d.Vector3} v
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		add(v) {
 			this.x += v.x;
@@ -683,9 +683,9 @@
 
 		/**
 		 * Adds the multiple of v and s to this vector.
-		 * @param {t3d.Vector3} v
-		 * @param {Number} s
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @param {number} s
+		 * @returns {Vector3}
 		 */
 		addScaledVector(v, s) {
 			this.x += v.x * s;
@@ -696,9 +696,9 @@
 
 		/**
 		 * Sets this vector to a - b.
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @returns {Vector3}
 		 */
 		subVectors(a, b) {
 			this.x = a.x - b.x;
@@ -709,8 +709,8 @@
 
 		/**
 		 * Subtracts v from this vector.
-		 * @param {t3d.Vector3} v
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} v
+		 * @returns {Vector3}
 		 */
 		sub(v) {
 			this.x -= v.x;
@@ -721,8 +721,8 @@
 
 		/**
 		 * Multiplies this vector by scalar s.
-		 * @param {Number} scalar
-		 * @return {t3d.Vector3}
+		 * @param {number} scalar
+		 * @returns {Vector3}
 		 */
 		multiplyScalar(scalar) {
 			this.x *= scalar;
@@ -735,8 +735,8 @@
 		 * Computes the squared distance from this vector to v.
 		 * If you are just comparing the distance with another distance,
 		 * you should compare the distance squared instead as it is slightly more efficient to calculate.
-		 * @param {t3d.Vector3} v
-		 * @return {Number}
+		 * @param {Vector3} v
+		 * @returns {number}
 		 */
 		distanceToSquared(v) {
 			const dx = this.x - v.x,
@@ -747,8 +747,8 @@
 
 		/**
 		 * Computes the distance from this vector to v.
-		 * @param {t3d.Vector3} v
-		 * @return {Number}
+		 * @param {Vector3} v
+		 * @returns {number}
 		 */
 		distanceTo(v) {
 			return Math.sqrt(this.distanceToSquared(v));
@@ -756,8 +756,8 @@
 
 		/**
 		 * Sets this vector from the spherical coordinates s.
-		 * @param {t3d.Spherical} s
-		 * @return {t3d.Vector3}
+		 * @param {Spherical} s
+		 * @returns {Vector3}
 		 */
 		setFromSpherical(s) {
 			const sinPhiRadius = Math.sin(s.phi) * s.radius;
@@ -769,8 +769,8 @@
 
 		/**
 		 * Projects this vector from world space into the camera's normalized device coordinate (NDC) space.
-		 * @param {t3d.Camera} camera
-		 * @return {t3d.Vector3}
+		 * @param {Camera} camera
+		 * @returns {Vector3}
 		 */
 		project(camera) {
 			return this.applyMatrix4(camera.projectionViewMatrix);
@@ -778,8 +778,8 @@
 
 		/**
 		 * Projects this vector from the camera's normalized device coordinate (NDC) space into world space.
-		 * @param {t3d.Camera} camera
-		 * @return {t3d.Vector3}
+		 * @param {Camera} camera
+		 * @returns {Vector3}
 		 */
 		unproject(camera) {
 			return this.applyMatrix4(camera.projectionMatrixInverse).applyMatrix4(camera.worldMatrix);
@@ -787,8 +787,8 @@
 
 		/**
 		 * Reflect this vector off of plane orthogonal to normal. Normal is assumed to have unit length.
-		 * @param {t3d.Vector3} narmal - the normal to the reflecting plane
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} normal - the normal to the reflecting plane
+		 * @returns {Vector3}
 		 */
 		reflect(normal) {
 			// reflect incident vector off plane orthogonal to normal
@@ -798,8 +798,8 @@
 
 		/**
 		 * Checks for strict equality of this vector and v.
-		 * @param {t3d.Vector3} v
-		 * @return {Boolean}
+		 * @param {Vector3} v
+		 * @returns {boolean}
 		 */
 		equals(v) {
 			return v.x === this.x && v.y === this.y && v.z === this.z;
@@ -807,7 +807,7 @@
 
 		/**
 		 * Returns a new vector3 with the same x, y and z values as this one.
-		 * @return {t3d.Vector3}
+		 * @returns {Vector3}
 		 */
 		clone() {
 			return new Vector3(this.x, this.y, this.z);
@@ -817,8 +817,6 @@
 
 	/**
 	 * 4x4 matrix class.
-	 * @constructor
-	 * @memberof t3d
 	 */
 	class Matrix4 {
 		/**
@@ -832,7 +830,7 @@
 
 		/**
 		 * Resets this matrix to the identity matrix.
-		 * @return {t3d.Matrix4}
+		 * @returns {Matrix4}
 		 */
 		identity() {
 			return this.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -840,7 +838,7 @@
 
 		/**
 		 * Checks if the matrix is an identity matrix.
-		 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
+		 * @returns {boolean} - True if the matrix is an identity matrix, false otherwise.
 		 */
 		isIdentity() {
 			const te = this.elements;
@@ -849,23 +847,23 @@
 
 		/**
 		 * Set the elements of this matrix to the supplied row-major values n11, n12, ... n44.
-		 * @param {Number} n11
-		 * @param {Number} n12
-		 * @param {Number} n13
-		 * @param {Number} n14
-		 * @param {Number} n21
-		 * @param {Number} n22
-		 * @param {Number} n23
-		 * @param {Number} n24
-		 * @param {Number} n31
-		 * @param {Number} n32
-		 * @param {Number} n33
-		 * @param {Number} n34
-		 * @param {Number} n41
-		 * @param {Number} n42
-		 * @param {Number} n43
-		 * @param {Number} n44
-		 * @return {t3d.Matrix4}
+		 * @param {number} n11
+		 * @param {number} n12
+		 * @param {number} n13
+		 * @param {number} n14
+		 * @param {number} n21
+		 * @param {number} n22
+		 * @param {number} n23
+		 * @param {number} n24
+		 * @param {number} n31
+		 * @param {number} n32
+		 * @param {number} n33
+		 * @param {number} n34
+		 * @param {number} n41
+		 * @param {number} n42
+		 * @param {number} n43
+		 * @param {number} n44
+		 * @returns {Matrix4}
 		 */
 		set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
 			const ele = this.elements;
@@ -890,7 +888,7 @@
 
 		/**
 		 * Creates a new Matrix4 with identical elements to this one.
-		 * @return {t3d.Matrix4}
+		 * @returns {Matrix4}
 		 */
 		clone() {
 			return new Matrix4().fromArray(this.elements);
@@ -898,8 +896,8 @@
 
 		/**
 		 * Copies the elements of matrix m into this matrix.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} m
+		 * @returns {Matrix4}
 		 */
 		copy(m) {
 			const te = this.elements;
@@ -925,8 +923,8 @@
 
 		/**
 		 * Set the upper 3x3 elements of this matrix to the values of the Matrix3 m.
-		 * @param {t3d.Matrix3} m
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix3} m
+		 * @returns {Matrix4}
 		 */
 		setFromMatrix3(m) {
 			const me = m.elements;
@@ -935,10 +933,10 @@
 
 		/**
 		 * Sets this matrix as a translation transform.
-		 * @param {Number} x - the amount to translate in the X axis.
-		 * @param {Number} y - the amount to translate in the Y axis.
-		 * @param {Number} z - the amount to translate in the Z axis.
-		 * @return {t3d.Matrix4}
+		 * @param {number} x - the amount to translate in the X axis.
+		 * @param {number} y - the amount to translate in the Y axis.
+		 * @param {number} z - the amount to translate in the Z axis.
+		 * @returns {Matrix4}
 		 */
 		makeTranslation(x, y, z) {
 			return this.set(1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1);
@@ -946,8 +944,8 @@
 
 		/**
 		 * Post-multiplies this matrix by m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} m
+		 * @returns {Matrix4}
 		 */
 		multiply(m) {
 			return this.multiplyMatrices(this, m);
@@ -955,8 +953,8 @@
 
 		/**
 		 * Pre-multiplies this matrix by m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} m
+		 * @returns {Matrix4}
 		 */
 		premultiply(m) {
 			return this.multiplyMatrices(m, this);
@@ -964,9 +962,9 @@
 
 		/**
 		 * Sets this matrix to a x b.
-		 * @param {t3d.Matrix4} a
-		 * @param {t3d.Matrix4} b
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} a
+		 * @param {Matrix4} b
+		 * @returns {Matrix4}
 		 */
 		multiplyMatrices(a, b) {
 			const ae = a.elements;
@@ -1025,7 +1023,7 @@
 
 		/**
 		 * Transposes this matrix.
-		 * @return {t3d.Matrix4}
+		 * @returns {Matrix4}
 		 */
 		transpose() {
 			const te = this.elements;
@@ -1053,7 +1051,7 @@
 
 		/**
 		 * Take the inverse of this matrix
-		 * @return {t3d.Matrix4}
+		 * @returns {Matrix4}
 		 */
 		inverse() {
 			return this.getInverse(this);
@@ -1061,7 +1059,8 @@
 
 		/**
 		 * Take the inverse of the matrix
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} m
+		 * @returns {Matrix4}
 		 */
 		getInverse(m) {
 			// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
@@ -1114,10 +1113,10 @@
 
 		/**
 		 * Make transform from position&scale&quaternion(Quaternion).
-		 * @param {t3d.Vector3} position
-		 * @param {t3d.Vector3} scale
-		 * @param {t3d.Quaternion} quaternion
-		 * @return {t3d.Matrix4}
+		 * @param {Vector3} position
+		 * @param {Vector3} scale
+		 * @param {Quaternion} quaternion
+		 * @returns {Matrix4}
 		 */
 		transform(position, scale, quaternion) {
 			const te = this.elements;
@@ -1161,8 +1160,8 @@
 
 		/**
 		 * Sets the rotation component of this matrix to the rotation specified by q, as outlined here.
-		 * @param {t3d.Quaternion} q
-		 * @return {t3d.Matrix4}
+		 * @param {Quaternion} q
+		 * @returns {Matrix4}
 		 */
 		makeRotationFromQuaternion(q) {
 			const te = this.elements;
@@ -1207,7 +1206,8 @@
 
 		/**
 		 * Extracts the rotation component of the supplied matrix m into this matrix's rotation component.
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} m
+		 * @returns {Matrix4}
 		 */
 		extractRotation(m) {
 			// this method does not support reflection matrices
@@ -1238,10 +1238,10 @@
 
 		/**
 		 * Constructs a rotation matrix, looking from eye towards center oriented by the up vector.
-		 * @param {t3d.Vector3} eye
-		 * @param {t3d.Vector3} target
-		 * @param {t3d.Vector3} update
-		 * @return {t3d.Matrix4}
+		 * @param {Vector3} eye
+		 * @param {Vector3} target
+		 * @param {Vector3} up
+		 * @returns {Matrix4}
 		 */
 		lookAtRH(eye, target, up) {
 			const te = this.elements;
@@ -1279,10 +1279,10 @@
 
 		/**
 		 * Decomposes this matrix into it's position, quaternion and scale components.
-		 * @param {t3d.Vector3} position
-		 * @param {t3d.Quaternion} quaternion
-		 * @param {t3d.Vector3} scale
-		 * @return {t3d.Matrix4}
+		 * @param {Vector3} position
+		 * @param {Quaternion} quaternion
+		 * @param {Vector3} scale
+		 * @returns {Matrix4}
 		 */
 		decompose(position, quaternion, scale) {
 			const te = this.elements;
@@ -1322,7 +1322,7 @@
 
 		/**
 		 * Computes and returns the determinant of this matrix.
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		determinant() {
 			const te = this.elements;
@@ -1357,9 +1357,9 @@
 
 		/**
 		 * Sets the elements of this matrix based on an array in column-major format.
-		 * @param {Number[]} array
-		 * @param {Number} [offset=0]
-		 * @return {t3d.Matrix4}
+		 * @param {number[]} array
+		 * @param {number} [offset=0]
+		 * @returns {Matrix4}
 		 */
 		fromArray(array, offset = 0) {
 			for (let i = 0; i < 16; i++) {
@@ -1370,7 +1370,7 @@
 
 		/**
 		 * Gets the maximum scale value of the 3 axes.
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		getMaxScaleOnAxis() {
 			const te = this.elements;
@@ -1382,9 +1382,9 @@
 
 		/**
 		 * Sets this matrix as rotation transform around axis by theta radians.
-		 * @param {t3d.Vector3} axis
-		 * @param {Number} angle
-		 * @return {t3d.Matrix4}
+		 * @param {Vector3} axis
+		 * @param {number} angle
+		 * @returns {Matrix4}
 		 */
 		makeRotationAxis(axis, angle) {
 			// Based on http://www.gamedev.net/reference/articles/article1199.asp
@@ -1402,10 +1402,10 @@
 
 		/**
 		 * Linearly interpolates between two matrix4.
-		 * @param {t3d.Matrix4} m1
-		 * @param {t3d.Matrix4} m2
-		 * @param {Number} ratio
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} m1
+		 * @param {Matrix4} m2
+		 * @param {number} ratio
+		 * @returns {Matrix4}
 		 */
 		lerpMatrices(m1, m2, ratio) {
 			if (ratio === 0) return this.copy(m1);
@@ -1421,8 +1421,8 @@
 
 		/**
 		 * Return true if this matrix and m are equal.
-		 * @param {t3d.Matrix4} m
-		 * @return {Boolean}
+		 * @param {Matrix4} m
+		 * @returns {boolean}
 		 */
 		equals(m) {
 			const te = this.elements;
@@ -1435,9 +1435,9 @@
 
 		/**
 		 * Writes the elements of this matrix to an array in column-major format.
-		 * @param {Number[]} [array]
-		 * @param {Number} [offset=0]
-		 * @return {Number[]}
+		 * @param {number[]} [array]
+		 * @param {number} [offset=0]
+		 * @returns {number[]}
 		 */
 		toArray(array = [], offset = 0) {
 			const te = this.elements;
@@ -1468,14 +1468,13 @@
 
 	/**
 	 * The Quaternion class
-	 * @memberof t3d
 	 */
 	class Quaternion {
 		/**
-		 * @param {Number} [x=0] - x coordinate
-		 * @param {Number} [y=0] - y coordinate
-		 * @param {Number} [z=0] - z coordinate
-		 * @param {Number} [w=1] - w coordinate
+		 * @param {number} [x=0] - x coordinate
+		 * @param {number} [y=0] - y coordinate
+		 * @param {number} [z=0] - z coordinate
+		 * @param {number} [w=1] - w coordinate
 		 */
 		constructor(x = 0, y = 0, z = 0, w = 1) {
 			this._x = x;
@@ -1486,13 +1485,13 @@
 
 		/**
 		 * Slerp method, operates directly on flat arrays of numbers.
-		 * @param {Number[]} dst - The output array.
-		 * @param {Number} dstOffset - An offset into the output array.
-		 * @param {Number[]} src0 - The source array of the starting quaternion.
-		 * @param {Number} srcOffset0 - An offset into the array src0.
-		 * @param {Number[]} src1 - The source array of the target quatnerion.
-		 * @param {Number} srcOffset1 - An offset into the array src1.
-		 * @param {Number} t - Normalized interpolation factor (between 0 and 1).
+		 * @param {number[]} dst - The output array.
+		 * @param {number} dstOffset - An offset into the output array.
+		 * @param {number[]} src0 - The source array of the starting quaternion.
+		 * @param {number} srcOffset0 - An offset into the array src0.
+		 * @param {number[]} src1 - The source array of the target quatnerion.
+		 * @param {number} srcOffset1 - An offset into the array src1.
+		 * @param {number} t - Normalized interpolation factor (between 0 and 1).
 		 */
 		static slerpFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1, t) {
 			// fuzz-free, array-based Quaternion SLERP operation
@@ -1555,13 +1554,13 @@
 
 		/**
 		 * Multipley quaternions, but operates directly on flat arrays of numbers.
-		 * @param {Number[]} dst - The output array.
-		 * @param {Number} dstOffset - An offset into the output array.
-		 * @param {Number[]} src0 - The source array of the starting quaternion.
-		 * @param {Number} srcOffset0 - An offset into the array src0.
-		 * @param {Number[]} src1 - The source array of the target quatnerion.
-		 * @param {Number} srcOffset1 - An offset into the array src1.
-		 * @return {Number[]}
+		 * @param {number[]} dst - The output array.
+		 * @param {number} dstOffset - An offset into the output array.
+		 * @param {number[]} src0 - The source array of the starting quaternion.
+		 * @param {number} srcOffset0 - An offset into the array src0.
+		 * @param {number[]} src1 - The source array of the target quatnerion.
+		 * @param {number} srcOffset1 - An offset into the array src1.
+		 * @returns {number[]}
 		 */
 		static multiplyQuaternionsFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1) {
 			const x0 = src0[srcOffset0];
@@ -1580,14 +1579,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get x() {
 			return this._x;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set x(value) {
 			this._x = value;
@@ -1595,14 +1594,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get y() {
 			return this._y;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set y(value) {
 			this._y = value;
@@ -1610,14 +1609,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get z() {
 			return this._z;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set z(value) {
 			this._z = value;
@@ -1625,14 +1624,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get w() {
 			return this._w;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set w(value) {
 			this._w = value;
@@ -1642,7 +1641,7 @@
 		/**
 		 * Normalizes this quaternion - that is, calculated the quaternion that performs the same rotation as this one,
 		 * but has length equal to 1.
-		 * @return {t3d.Quaternion}
+		 * @returns {Quaternion}
 		 */
 		normalize() {
 			let l = this.length();
@@ -1664,7 +1663,7 @@
 
 		/**
 		 * Computes the Euclidean length (straight-line length) of this quaternion, considered as a 4 dimensional vector.
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		length() {
 			return Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
@@ -1672,10 +1671,10 @@
 
 		/**
 		 * Linearly interpolates between two quaternions.
-		 * @param {t3d.Quaternion} q1
-		 * @param {t3d.Quaternion} q2
-		 * @param {Number} ratio
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} q1
+		 * @param {Quaternion} q2
+		 * @param {number} ratio
+		 * @returns {Quaternion}
 		 */
 		lerpQuaternions(q1, q2, ratio) {
 			if (ratio === 0) return this.copy(q1);
@@ -1713,10 +1712,10 @@
 		/**
 		 * Spherically interpolates between two quaternions
 		 * providing an interpolation between rotations with constant angle change rate.
-		 * @param {t3d.Quaternion} q1
-		 * @param {t3d.Quaternion} q2
-		 * @param {Number} ratio
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} q1
+		 * @param {Quaternion} q2
+		 * @param {number} ratio
+		 * @returns {Quaternion}
 		 */
 		slerpQuaternions(q1, q2, ratio) {
 			if (ratio === 0) return this.copy(q1);
@@ -1766,11 +1765,11 @@
 
 		/**
 		 * Sets x, y, z, w properties of this quaternion.
-		 * @param {Number} x
-		 * @param {Number} y
-		 * @param {Number} z
-		 * @param {Number} w
-		 * @return {t3d.Quaternion}
+		 * @param {number} x
+		 * @param {number} y
+		 * @param {number} z
+		 * @param {number} w
+		 * @returns {Quaternion}
 		 */
 		set(x = 0, y = 0, z = 0, w = 1) {
 			this._x = x;
@@ -1783,7 +1782,7 @@
 
 		/**
 		 * Creates a new Quaternion with identical x, y, z and w properties to this one.
-		 * @return {t3d.Quaternion}
+		 * @returns {Quaternion}
 		 */
 		clone() {
 			return new Quaternion(this._x, this._y, this._z, this._w);
@@ -1791,8 +1790,8 @@
 
 		/**
 		 * Copies the x, y, z and w properties of q into this quaternion.
-		 * @param {t3d.Quaternion} quaternion
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} quaternion
+		 * @returns {Quaternion}
 		 */
 		copy(quaternion) {
 			this._x = quaternion.x;
@@ -1805,9 +1804,9 @@
 
 		/**
 		 * Sets this quaternion from the rotation specified by Euler angle.
-		 * @param {t3d.Euler} euler
-		 * @param {Boolean} [update=true] - Whether to notify quaternion angle has changed
-		 * @return {t3d.Quaternion}
+		 * @param {Euler} euler
+		 * @param {boolean} [update=true] - Whether to notify quaternion angle has changed
+		 * @returns {Quaternion}
 		 */
 		setFromEuler(euler, update = true) {
 			const c1 = Math.cos(euler._x / 2);
@@ -1854,8 +1853,8 @@
 
 		/**
 		 * Sets this quaternion from rotation component of m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Quaternion}
+		 * @param {Matrix4} m
+		 * @returns {Quaternion}
 		 */
 		setFromRotationMatrix(m) {
 			const te = m.elements,
@@ -1901,9 +1900,9 @@
 
 		/**
 		 * vFrom and vTo are assumed to be normalized.
-		 * @param {t3d.Vector3} vFrom
-		 * @param {t3d.Vector3} vTo
-		 * @return {t3d.Quaternion}
+		 * @param {Vector3} vFrom
+		 * @param {Vector3} vTo
+		 * @returns {Quaternion}
 		 */
 		setFromUnitVectors(vFrom, vTo) {
 			// http://lolengine.net/blog/2014/02/24/quaternion-from-two-vectors-final
@@ -1937,8 +1936,8 @@
 
 		/**
 		 * Multiplies this quaternion by q.
-		 * @param {t3d.Quaternion} q
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} q
+		 * @returns {Quaternion}
 		 */
 		multiply(q) {
 			return this.multiplyQuaternions(this, q);
@@ -1946,8 +1945,8 @@
 
 		/**
 		 * Pre-multiplies this quaternion by q.
-		 * @param {t3d.Quaternion} q
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} q
+		 * @returns {Quaternion}
 		 */
 		premultiply(q) {
 			return this.multiplyQuaternions(q, this);
@@ -1955,9 +1954,9 @@
 
 		/**
 		 * Sets this quaternion to a x b.
-		 * @param {t3d.Quaternion} a
-		 * @param {t3d.Quaternion} b
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} a
+		 * @param {Quaternion} b
+		 * @returns {Quaternion}
 		 */
 		multiplyQuaternions(a, b) {
 			// from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
@@ -1980,8 +1979,8 @@
 
 		/**
 		 * Convert the current quaternion to a matrix4
-		 * @param {t3d.Matrix4} target
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} target
+		 * @returns {Matrix4}
 		 */
 		toMatrix4(target = new Matrix4()) {
 			const ele = target.elements;
@@ -2017,7 +2016,7 @@
 		/**
 		 * Returns the rotational conjugate of this quaternion.
 		 * The conjugate of a quaternion represents the same rotation in the opposite direction about the rotational axis.
-		 * @return {t3d.Quaternion}
+		 * @returns {Quaternion}
 		 */
 		conjugate() {
 			this._x *= -1;
@@ -2029,8 +2028,8 @@
 
 		/**
 		 * Calculates the dot product of quaternions v and this one.
-		 * @param {t3d.Quaternion} v
-		 * @return {t3d.Quaternion}
+		 * @param {Quaternion} v
+		 * @returns {Quaternion}
 		 */
 		dot(v) {
 			return this._x * v._x + this._y * v._y + this._z * v._z + this._w * v._w;
@@ -2038,9 +2037,9 @@
 
 		/**
 		 * Set quaternion from axis angle
-		 * @param {t3d.Vector3} axis
-		 * @param {Number} angle
-		 * @return {t3d.Quaternion}
+		 * @param {Vector3} axis
+		 * @param {number} angle
+		 * @returns {Quaternion}
 		 */
 		setFromAxisAngle(axis, angle) {
 			// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
@@ -2059,10 +2058,10 @@
 
 		/**
 		 * Sets this quaternion's x, y, z and w properties from an array.
-		 * @param {Number[]} - array of format (x, y, z, w) used to construct the quaternion.
-		 * @param {Number} [offset=0] - an offset into the array.
-		 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @return {t3d.Quaternion}
+		 * @param {number[]} array - array of format (x, y, z, w) used to construct the quaternion.
+		 * @param {number} [offset=0] - an offset into the array.
+		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+		 * @returns {Quaternion}
 		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let x = array[offset],
@@ -2085,10 +2084,10 @@
 
 		/**
 		 * Returns the numerical elements of this quaternion in an array of format [x, y, z, w].
-		 * @param {Number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
-		 * @param {Number} [offset=0] - An offset into the array.
-		 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @return {t3d.Quaternion}
+		 * @param {number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
+		 * @param {number} [offset=0] - An offset into the array.
+		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+		 * @returns {Quaternion}
 		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let x = this._x,
@@ -2110,7 +2109,7 @@
 
 		/**
 		 * @param {Function} callback - When the Quaternion angle value changes, the callback method is triggered
-		 * @return {t3d.Quaternion}
+		 * @returns {Quaternion}
 		 */
 		onChange(callback) {
 			this.onChangeCallback = callback;
@@ -2122,13 +2121,12 @@
 	/**
 	 * Interpolant serves as the base class for all interpolation algorithms.
 	 * It defines a set of static methods that are intended to be invoked by a keyframe track for the purpose of interpolation.
-	 * @memberof t3d
 	 * @abstract
 	 */
 	class KeyframeInterpolant {
 		/**
 		 * Get the value size for keyframe values.
-		 * @return {Number} - the value size.
+		 * @returns {number} - the value size.
 		 */
 		static getValueSize() {
 			return this.values.length / this.times.length;
@@ -2136,11 +2134,11 @@
 
 		/**
 		 * Interpolate the value for the specified time.
-		 * @param {Number} index0 - the index of the first keyframe.
-		 * @param {Number} ratio - the ratio (0-1) of the time passed between the first keyframe and the next keyframe.
-		 * @param {Number} duration - the duration time between the first keyframe and the next keyframe.
+		 * @param {number} index0 - the index of the first keyframe.
+		 * @param {number} ratio - the ratio (0-1) of the time passed between the first keyframe and the next keyframe.
+		 * @param {number} duration - the duration time between the first keyframe and the next keyframe.
 		 * @param {Array} outBuffer - the output buffer to store the interpolated value.
-		 * @return {Array} - the output buffer to store the interpolated value.
+		 * @returns {Array} - the output buffer to store the interpolated value.
 		 */
 		static interpolate(index0, ratio, duration, outBuffer) {
 			throw new Error('Interpolant: call to abstract method');
@@ -2148,9 +2146,9 @@
 
 		/**
 		 * Copy the value for the specified index.
-		 * @param {Number} index - the index of the keyframe.
+		 * @param {number} index - the index of the keyframe.
 		 * @param {Array} outBuffer - the output buffer to store the copied value.
-		 * @return {Array} - the output buffer to store the copied value.
+		 * @returns {Array} - the output buffer to store the copied value.
 		 */
 		static copyValue(index, outBuffer) {
 			const values = this.values,
@@ -2165,8 +2163,7 @@
 
 	/**
 	 * Step (Discrete) interpolation of keyframe values.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeInterpolant
+	 * @extends KeyframeInterpolant
 	 */
 	class StepInterpolant extends KeyframeInterpolant {
 		static interpolate(index0, ratio, duration, outBuffer) {
@@ -2182,8 +2179,7 @@
 
 	/**
 	 * Linear interpolation of keyframe values.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeInterpolant
+	 * @extends KeyframeInterpolant
 	 */
 	class LinearInterpolant extends KeyframeInterpolant {
 		static interpolate(index0, ratio, duration, outBuffer) {
@@ -2207,8 +2203,7 @@
 
 	/**
 	 * Quaternion Linear interpolation of keyframe values.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeInterpolant
+	 * @extends KeyframeInterpolant
 	 */
 	class QuaternionLinearInterpolant extends KeyframeInterpolant {
 		static interpolate(index0, ratio, duration, outBuffer) {
@@ -2221,8 +2216,7 @@
 
 	/**
 	 * Cubic spline interpolation of keyframe values.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeInterpolant
+	 * @extends KeyframeInterpolant
 	 */
 	class CubicSplineInterpolant extends KeyframeInterpolant {
 		static getValueSize() {
@@ -2270,8 +2264,7 @@
 
 	/**
 	 * Quaternion Cubic spline interpolation of keyframe values.
-	 * @memberof t3d
-	 * @extends t3d.CubicSplineInterpolant
+	 * @extends CubicSplineInterpolant
 	 */
 	class QuaternionCubicSplineInterpolant extends CubicSplineInterpolant {
 		static interpolate(index0, ratio, duration, outBuffer) {
@@ -2284,16 +2277,15 @@
 
 	/**
 	 * Base class for property track.
-	 * @memberof t3d
 	 * @abstract
 	 */
 	class KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D|t3d.Material} target
-		 * @param {String} propertyPath
+		 * @param {Object3D|Material} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=LinearInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant = LinearInterpolant) {
 			this.target = target;
@@ -2315,8 +2307,8 @@
 
 		/**
 		 * Set interpolant for this keyframe track.
-		 * @param {t3d.KeyframeInterpolant.constructor} interpolant
-		 * @return {t3d.KeyframeTrack}
+		 * @param {KeyframeInterpolant.constructor} interpolant
+		 * @returns {KeyframeTrack}
 		 */
 		setInterpolant(interpolant) {
 			this.valueSize = interpolant.getValueSize.call(this);
@@ -2327,9 +2319,9 @@
 		/**
 		 * Get value at time.
 		 * The value will be interpolated by interpolant if time is between keyframes.
-		 * @param {Number} t - time
+		 * @param {number} t - time
 		 * @param {Array} outBuffer - output buffer
-		 * @return {Array} output buffer
+		 * @returns {Array} output buffer
 		 */
 		getValue(t, outBuffer) {
 			const interpolant = this.interpolant,
@@ -2355,16 +2347,15 @@
 
 	/**
 	 * Used for boolean property track.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeTrack
+	 * @extends KeyframeTrack
 	 */
 	class BooleanKeyframeTrack extends KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D} target
-		 * @param {String} propertyPath
+		 * @param {Object3D} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.StepInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=StepInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant = StepInterpolant) {
 			// since 0.2.2, remove this after few versions later
@@ -2377,23 +2368,22 @@
 
 	/**
 	 * @readonly
-	 * @type {String}
+	 * @type {string}
 	 * @default 'bool'
 	 */
 	BooleanKeyframeTrack.prototype.valueTypeName = 'bool';
 
 	/**
 	 * Used for color property track.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeTrack
+	 * @extends KeyframeTrack
 	 */
 	class ColorKeyframeTrack extends KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D} target
-		 * @param {String} propertyPath
+		 * @param {Object3D} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=LinearInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant) {
 			super(target, propertyPath, times, values, interpolant);
@@ -2402,23 +2392,22 @@
 
 	/**
 	 * @readonly
-	 * @type {String}
+	 * @type {string}
 	 * @default 'color'
 	 */
 	ColorKeyframeTrack.prototype.valueTypeName = 'color';
 
 	/**
 	 * Used for number property track.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeTrack
+	 * @extends KeyframeTrack
 	 */
 	class NumberKeyframeTrack extends KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D} target
-		 * @param {String} propertyPath
+		 * @param {Object3D} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=LinearInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant) {
 			super(target, propertyPath, times, values, interpolant);
@@ -2427,23 +2416,22 @@
 
 	/**
 	 * @readonly
-	 * @type {String}
+	 * @type {string}
 	 * @default 'number'
 	 */
 	NumberKeyframeTrack.prototype.valueTypeName = 'number';
 
 	/**
 	 * Used for quaternion property track.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeTrack
+	 * @extends KeyframeTrack
 	 */
 	class QuaternionKeyframeTrack extends KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D} target
-		 * @param {String} propertyPath
+		 * @param {Object3D} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.QuaternionLinearInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=QuaternionLinearInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant = QuaternionLinearInterpolant) {
 			// since 0.2.2, remove this after few versions later
@@ -2456,23 +2444,22 @@
 
 	/**
 	 * @readonly
-	 * @type {String}
+	 * @type {string}
 	 * @default 'quaternion'
 	 */
 	QuaternionKeyframeTrack.prototype.valueTypeName = 'quaternion';
 
 	/**
 	 * Used for string property track.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeTrack
+	 * @extends KeyframeTrack
 	 */
 	class StringKeyframeTrack extends KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D} target
-		 * @param {String} propertyPath
+		 * @param {Object3D} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.StepInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=StepInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant = StepInterpolant) {
 			// since 0.2.2, remove this after few versions later
@@ -2485,23 +2472,22 @@
 
 	/**
 	 * @readonly
-	 * @type {String}
+	 * @type {string}
 	 * @default 'string'
 	 */
 	StringKeyframeTrack.prototype.valueTypeName = 'string';
 
 	/**
 	 * Used for vector property track.
-	 * @memberof t3d
-	 * @extends t3d.KeyframeTrack
+	 * @extends KeyframeTrack
 	 */
 	class VectorKeyframeTrack extends KeyframeTrack {
 		/**
-		 * @param {t3d.Object3D} target
-		 * @param {String} propertyPath
+		 * @param {Object3D} target
+		 * @param {string} propertyPath
 		 * @param {Array} times
 		 * @param {Array} values
-		 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+		 * @param {KeyframeInterpolant.constructor} [interpolant=LinearInterpolant]
 		 */
 		constructor(target, propertyPath, times, values, interpolant) {
 			super(target, propertyPath, times, values, interpolant);
@@ -2510,16 +2496,15 @@
 
 	/**
 	 * @readonly
-	 * @type {String}
+	 * @type {string}
 	 * @default 'vector'
 	 */
 	VectorKeyframeTrack.prototype.valueTypeName = 'vector';
 
 	/**
 	 * Enum for material Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const MATERIAL_TYPE = {
 		BASIC: 'basic',
@@ -2536,9 +2521,8 @@
 
 	/**
 	 * Enum for blend Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const BLEND_TYPE = {
 		NONE: 'none',
@@ -2551,9 +2535,8 @@
 
 	/**
 	 * Enum for blend equation.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const BLEND_EQUATION = {
 		ADD: 100,
@@ -2566,9 +2549,8 @@
 
 	/**
 	 * Enum for blend factor.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const BLEND_FACTOR = {
 		ZERO: 200,
@@ -2586,9 +2568,8 @@
 
 	/**
 	 * Enum for cull face Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const CULL_FACE_TYPE = {
 		NONE: 'none',
@@ -2599,9 +2580,8 @@
 
 	/**
 	 * Enum for draw side.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const DRAW_SIDE = {
 		FRONT: 'front',
@@ -2611,9 +2591,8 @@
 
 	/**
 	 * Enum for shading side.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const SHADING_TYPE = {
 		SMOOTH_SHADING: 'smooth_shading',
@@ -2622,9 +2601,8 @@
 
 	/**
 	 * Enum for pixel format.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const PIXEL_FORMAT = {
 		DEPTH_COMPONENT: 1000,
@@ -2679,9 +2657,8 @@
 
 	/**
 	 * Enum for pixel Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const PIXEL_TYPE = {
 		UNSIGNED_BYTE: 1500,
@@ -2701,9 +2678,8 @@
 
 	/**
 	 * Enum for texture filter.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const TEXTURE_FILTER = {
 		NEAREST: 1600,
@@ -2716,9 +2692,8 @@
 
 	/**
 	 * Enum for texture wrap.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const TEXTURE_WRAP = {
 		REPEAT: 1700,
@@ -2728,9 +2703,8 @@
 
 	/**
 	 * Enum for compare function.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const COMPARE_FUNC = {
 		LEQUAL: 0x0203,
@@ -2745,9 +2719,8 @@
 
 	/**
 	 * Enum for operation.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const OPERATION = {
 		KEEP: 0x1E00,
@@ -2761,9 +2734,8 @@
 
 	/**
 	 * Enum for Shadow Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const SHADOW_TYPE = {
 		HARD: 'hard',
@@ -2778,9 +2750,8 @@
 
 	/**
 	 * Enum for Texel Encoding Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const TEXEL_ENCODING_TYPE = {
 		LINEAR: 'linear',
@@ -2790,9 +2761,8 @@
 
 	/**
 	 * Enum for Envmap Combine Type.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {String}
+	 * @enum {string}
 	 */
 	const ENVMAP_COMBINE_TYPE = {
 		MULTIPLY: 'ENVMAP_BLENDING_MULTIPLY',
@@ -2802,9 +2772,8 @@
 
 	/**
 	 * Enum for Draw Mode.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const DRAW_MODE = {
 		POINTS: 0,
@@ -2818,9 +2787,8 @@
 
 	/**
 	 * Enum for Vertex Color.
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const VERTEX_COLOR = {
 		NONE: 0,
@@ -2830,9 +2798,8 @@
 
 	/**
 	 * Enum for ATTACHMENT
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const ATTACHMENT = {
 		COLOR_ATTACHMENT0: 2000,
@@ -2858,9 +2825,8 @@
 
 	/**
 	 * Enum for BUFFER_USAGE
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const BUFFER_USAGE = {
 		STREAM_DRAW: 35040,
@@ -2876,9 +2842,8 @@
 
 	/**
 	 * Enum for QUERY_TYPE
-	 * @memberof t3d
 	 * @readonly
-	 * @enum {Number}
+	 * @enum {number}
 	 */
 	const QUERY_TYPE = {
 		ANY_SAMPLES_PASSED: 7000,
@@ -2888,12 +2853,11 @@
 
 	/**
 	 * JavaScript events for custom objects.
-	 * @memberof t3d
 	 */
 	class EventDispatcher {
 		/**
 		 * Adds a listener to an event type.
-		 * @param {String} type - The type of event to listen to.
+		 * @param {string} type - The type of event to listen to.
 		 * @param {Function} listener - The function that gets called when the event is fired.
 		 */
 		addEventListener(type, listener) {
@@ -2909,7 +2873,7 @@
 
 		/**
 		 * Removes a listener from an event type.
-		 * @param {String} type - The type of the listener that gets removed.
+		 * @param {string} type - The type of the listener that gets removed.
 		 * @param {Function} listener - The listener function that gets removed.
 		 */
 		removeEventListener(type, listener) {
@@ -2926,7 +2890,7 @@
 
 		/**
 		 * Fire an event.
-		 * @param {Object} event - The event that gets fired.
+		 * @param {object} event - The event that gets fired.
 		 */
 		dispatchEvent(event) {
 			const listeners = this._listeners;
@@ -2949,48 +2913,47 @@
 	 * AnimationAction wraps AnimationClip and is mainly responsible for the update logic of time.
 	 * You can extend other functions by inheriting this class, such as repeat playback, pingpang, etc.
 	 * And since this class inherits from EventDispatcher, animation events can also be extended.
-	 * @memberof t3d
-	 * @extends t3d.EventDispatcher
+	 * @extends EventDispatcher
 	 */
 	class AnimationAction extends EventDispatcher {
 		/**
-		 * @param {t3d.KeyframeClip} clip - The keyframe clip for this action.
+		 * @param {KeyframeClip} clip - The keyframe clip for this action.
 		 */
 		constructor(clip) {
 			super();
 
 			/**
-						 * The keyframe clip for this action.
-			 * @type {t3d.KeyframeClip}
-						 */
+			 * The keyframe clip for this action.
+			 * @type {KeyframeClip}
+			 */
 			this.clip = clip;
 
 			/**
-						 * The degree of influence of this action (in the interval [0, 1]).
-						 * Values can be used to blend between several actions.
-			 * @type {Number}
-						 * @default 0
-						 */
+			 * The degree of influence of this action (in the interval [0, 1]).
+			 * Values can be used to blend between several actions.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.weight = 0;
 
 			/**
-						 * The local time of this action (in seconds).
-			 * @type {Number}
-						 */
+			 * The local time of this action (in seconds).
+			 * @type {number}
+			 */
 			this.time = 0;
 
 			/**
-						 * The blend mode for this action, currently only two values BLEND_TYPE.NORMAL and BLEND_TYPE.ADD are available.
-			 * @type {t3d.BLEND_TYPE}
-			 * @default {t3d.BLEND_TYPE.NORMAL}
-						 */
+			 * The blend mode for this action, currently only two values BLEND_TYPE.NORMAL and BLEND_TYPE.ADD are available.
+			 * @type {BLEND_TYPE}
+			 * @default {BLEND_TYPE.NORMAL}
+			 */
 			this.blendMode = BLEND_TYPE.NORMAL;
 		}
 
 		/**
-				* Update time.
-				* @param {Number} deltaTime - The delta time in seconds.
-				*/
+		 * Update time.
+		 * @param {number} deltaTime - The delta time in seconds.
+		 */
 		update(deltaTime) {
 			this.time += deltaTime;
 			const endTime = this.clip.duration;
@@ -3010,14 +2973,13 @@
 	/**
 	 * This holds a reference to a real property in the scene graph; used internally.
 	 * Binding property and value, mixer for multiple values.
-	 * @memberof t3d
 	 */
 	class PropertyBindingMixer {
 		/**
-		 * @param {Object3D|t3d.Material} target
-		 * @param {String} propertyPath
-		 * @param {String} typeName - vector/bool/string/quaternion/number/color
-		 * @param {Number} valueSize
+		 * @param {Object3D|Material} target
+		 * @param {string} propertyPath
+		 * @param {string} typeName - vector/bool/string/quaternion/number/color
+		 * @param {number} valueSize
 		 */
 		constructor(target, propertyPath, typeName, valueSize) {
 			this.target = null;
@@ -3114,9 +3076,9 @@
 		}
 
 		/**
-				* Accumulate value.
-				* @param {Number} weight
-				*/
+		 * Accumulate value.
+		 * @param {number} weight
+		 */
 		accumulate(weight) {
 			const buffer = this.buffer,
 				stride = this.valueSize,
@@ -3136,9 +3098,9 @@
 		}
 
 		/**
-				* Additive Accumulate value.
-				* @param {Number} weight
-				*/
+		 * Additive Accumulate value.
+		 * @param {number} weight
+		 */
 		accumulateAdditive(weight) {
 			const buffer = this.buffer,
 				stride = this.valueSize,
@@ -3151,8 +3113,8 @@
 		}
 
 		/**
-				* Apply to scene graph.
-				*/
+		 * Apply to scene graph.
+		 */
 		apply() {
 			const buffer = this.buffer,
 				stride = this.valueSize,
@@ -3250,7 +3212,6 @@
 	/**
 	 * The AnimationMixer is a player for animations on a particular object in the scene.
 	 * When multiple objects in the scene are animated independently, one AnimationMixer may be used for each object.
-	 * @memberof t3d
 	 */
 	class AnimationMixer {
 		constructor() {
@@ -3260,7 +3221,7 @@
 
 		/**
 		 * Add an action to this mixer.
-		 * @param {t3d.AnimationAction} action - The action to add.
+		 * @param {AnimationAction} action - The action to add.
 		 */
 		addAction(action) {
 			if (this._actions.indexOf(action) !== -1) {
@@ -3287,7 +3248,7 @@
 
 		/**
 		 * Remove an action from this mixer.
-		 * @param {t3d.AnimationAction} action - The action to be removed.
+		 * @param {AnimationAction} action - The action to be removed.
 		 */
 		removeAction(action) {
 			const index = this._actions.indexOf(action);
@@ -3317,8 +3278,8 @@
 
 		/**
 		 * Whether has this action.
-		 * @param {t3d.AnimationAction} action - The action.
-		 * @return {Boolean}
+		 * @param {AnimationAction} action - The action.
+		 * @returns {boolean}
 		 */
 		hasAction(action) {
 			return this._actions.indexOf(action) > -1;
@@ -3326,7 +3287,7 @@
 
 		/**
 		 * Get all actions.
-		 * @return {t3d.AnimationAction[]}
+		 * @returns {AnimationAction[]}
 		 */
 		getActions() {
 			return this._actions;
@@ -3334,7 +3295,7 @@
 
 		/**
 		 * Advances the global mixer time and updates the animation.
-		 * @param {Number} deltaTime - The delta time in seconds.
+		 * @param {number} deltaTime - The delta time in seconds.
 		 */
 		update(deltaTime) {
 			// Mark active to false for all bindings.
@@ -3388,31 +3349,30 @@
 
 	/**
 	 * An KeyframeClip is a reusable set of keyframe tracks which represent an animation.
-	 * @memberof t3d
 	 */
 	class KeyframeClip {
 		/**
-		 * @param {String} [name=''] - A name for this clip.
-		 * @param {t3d.KeyframeTrack[]} [tracks=[]] - An array of KeyframeTracks.
-		 * @param {Number} [duration] - The duration of this clip (in seconds). If not passed, the duration will be calculated from the passed tracks array.
+		 * @param {string} [name=''] - A name for this clip.
+		 * @param {KeyframeTrack[]} [tracks=[]] - An array of KeyframeTracks.
+		 * @param {number} [duration] - The duration of this clip (in seconds). If not passed, the duration will be calculated from the passed tracks array.
 		 */
 		constructor(name = '', tracks = [], duration = -1) {
 			/**
 			 * A name for this clip.
-			 * @type {String}
+			 * @type {string}
 			 */
 			this.name = name;
 
 			/**
 			 * An array of KeyframeTracks.
-			 * @type {t3d.KeyframeTrack[]}
+			 * @type {KeyframeTrack[]}
 			 */
 			this.tracks = tracks;
 
 			/**
 			 * The duration of this clip (in seconds).
 			 * If a negative value is passed, the duration will be calculated from the passed tracks array.
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.duration = duration;
 			if (this.duration < 0) {
@@ -3422,7 +3382,7 @@
 
 		/**
 		 * Sets the duration of the clip to the duration of its longest KeyframeTrack.
-		 * @return {t3d.KeyframeClip}
+		 * @returns {KeyframeClip}
 		 */
 		resetDuration() {
 			const tracks = this.tracks;
@@ -3437,10 +3397,9 @@
 	}
 
 	/**
-	 * Handles and keeps track of loaded and pending data. A default global instance of this class is created and used by loaders if not supplied manually - see {@link t3d.DefaultLoadingManager}.
+	 * Handles and keeps track of loaded and pending data. A default global instance of this class is created and used by loaders if not supplied manually - see {@link DefaultLoadingManager}.
 	 * In general that should be sufficient, however there are times when it can be useful to have seperate loaders - for example if you want to show seperate loading bars for objects and textures.
 	 * In addition to observing progress, a LoadingManager can be used to override resource URLs during loading. This may be helpful for assets coming from drag-and-drop events, WebSockets, WebRTC, or other APIs.
-	 * @memberof t3d
 	 */
 	class LoadingManager {
 		/**
@@ -3472,7 +3431,7 @@
 
 		/**
 		 * This should be called by any loader using the manager when the loader starts loading an url.
-		 * @param {String} url - the url to load.
+		 * @param {string} url - the url to load.
 		 */
 		itemStart(url) {
 			this.itemsTotal++;
@@ -3486,7 +3445,7 @@
 
 		/**
 		 * This should be called by any loader using the manager when the loader ended loading an url.
-		 * @param {String} url - the loaded url.
+		 * @param {string} url - the loaded url.
 		 */
 		itemEnd(url) {
 			this.itemsLoaded++;
@@ -3503,7 +3462,7 @@
 
 		/**
 		 * This should be called by any loader using the manager when the loader errors loading an url.
-		 * @param {String} url - the loaded url.
+		 * @param {string} url - the loaded url.
 		 */
 		itemError(url) {
 			if (this.onError !== undefined) {
@@ -3514,7 +3473,8 @@
 		/**
 		 * Given a URL, uses the URL modifier callback (if any) and returns a resolved URL.
 		 * If no URL modifier is set, returns the original URL.
-		 * @param {String} url - the url to load.
+		 * @param {string} url - the url to load.
+		 * @returns {string} the resolved URL.
 		 */
 		resolveURL(url) {
 			if (this.urlModifier) {
@@ -3528,6 +3488,7 @@
 		 * The callback may return the original URL, or a new URL to override loading behavior.
 		 * This behavior can be used to load assets from .ZIP files, drag-and-drop APIs, and Data URIs.
 		 * @param {Function} callback - URL modifier callback. Called with url argument, and must return resolvedURL.
+		 * @returns {LoadingManager} this instance
 		 */
 		setURLModifier(callback) {
 			this.urlModifier = callback;
@@ -3536,73 +3497,71 @@
 	}
 
 	/**
-	 * A global instance of the {@link t3d.LoadingManager}, used by most loaders when no custom manager has been specified.
+	 * A global instance of the {@link LoadingManager}, used by most loaders when no custom manager has been specified.
 	 * This will be sufficient for most purposes, however there may be times when you desire separate loading managers for say, textures and models.
-	 * @memberof t3d
 	 */
 	const DefaultLoadingManager = new LoadingManager();
 
 	/**
 	 * Base class for implementing loaders.
-	 * @memberof t3d
 	 */
 	class Loader {
 		/**
-				* Creates a new Loader.
-				* @param {t3d.LoadingManager} [manager=t3d.DefaultLoadingManager] - The loadingManager the loader is using.
-				*/
+		 * Creates a new Loader.
+		 * @param {LoadingManager} [manager=DefaultLoadingManager] - The loadingManager the loader is using.
+		 */
 		constructor(manager) {
 			/**
-						 * The loadingManager the loader is using.
-						 * @type {t3d.LoadingManager}
-						 * @default t3d.DefaultLoadingManager
-						 */
+			 * The loadingManager the loader is using.
+			 * @type {LoadingManager}
+			 * @default DefaultLoadingManager
+			 */
 			this.manager = manager !== undefined ? manager : DefaultLoadingManager;
 
 			/**
-						 * The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
-						 * @type {String}
-						 * @default 'anonymous'
-						 */
+			 * The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
+			 * @type {string}
+			 * @default 'anonymous'
+			 */
 			this.crossOrigin = 'anonymous';
 
 			/**
-						 * Whether the XMLHttpRequest uses credentials.
-						 * @type {Boolean}
-						 * @default false
-						 */
+			 * Whether the XMLHttpRequest uses credentials.
+			 * @type {boolean}
+			 * @default false
+			 */
 			this.withCredentials = false;
 
 			/**
-						 * The base path from which the asset will be loaded.
-						 * @type {String}
-						 * @default ''
-						 */
+			 * The base path from which the asset will be loaded.
+			 * @type {string}
+			 * @default ''
+			 */
 			this.path = '';
 
 			/**
-						 * The request header used in HTTP request.
-						 * @type {Object}
-						 * @default {}
-						 */
+			 * The request header used in HTTP request.
+			 * @type {object}
+			 * @default {}
+			 */
 			this.requestHeader = {};
 		}
 
 		/**
-				* This method needs to be implement by all concrete loaders.
-				* It holds the logic for loading the asset from the backend.
-				*/
+		 * This method needs to be implement by all concrete loaders.
+		 * It holds the logic for loading the asset from the backend.
+		 */
 		load(/* url, onLoad, onProgress, onError */) {}
 
 		/**
-				* This method is equivalent to .load, but returns a Promise.
-				* onLoad is handled by Promise.resolve and onError is handled by Promise.reject.
-				* @param {String} url - A string containing the path/URL of the file to be loaded.
-				* @param {Function} [onProgress] - A function to be called while the loading is in progress.
-				* The argument will be the ProgressEvent instance, which contains .lengthComputable, .total and .loaded.
-				* If the server does not set the Content-Length header; .total will be 0.
-				* @return {Promise}
-				*/
+		 * This method is equivalent to .load, but returns a Promise.
+		 * onLoad is handled by Promise.resolve and onError is handled by Promise.reject.
+		 * @param {string} url - A string containing the path/URL of the file to be loaded.
+		 * @param {Function} [onProgress] - A function to be called while the loading is in progress.
+		 * The argument will be the ProgressEvent instance, which contains .lengthComputable, .total and .loaded.
+		 * If the server does not set the Content-Length header; .total will be 0.
+		 * @returns {Promise}
+		 */
 		loadAsync(url, onProgress) {
 			const scope = this;
 			return new Promise(function (resolve, reject) {
@@ -3611,37 +3570,37 @@
 		}
 
 		/**
-				* @param {String} crossOrigin - The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
-				* @return {this}
-				*/
+		 * @param {string} crossOrigin - The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
+		 * @returns {this}
+		 */
 		setCrossOrigin(crossOrigin) {
 			this.crossOrigin = crossOrigin;
 			return this;
 		}
 
 		/**
-				* @param {Boolean} value - Whether the XMLHttpRequest uses credentials such as cookies, authorization headers or TLS client certificates.
-				* Note that this has no effect if you are loading files locally or from the same domain.
-				* @return {this}
-				*/
+		 * @param {boolean} value - Whether the XMLHttpRequest uses credentials such as cookies, authorization headers or TLS client certificates.
+		 * Note that this has no effect if you are loading files locally or from the same domain.
+		 * @returns {this}
+		 */
 		setWithCredentials(value) {
 			this.withCredentials = value;
 			return this;
 		}
 
 		/**
-				* @param {String} path - Set the base path for the asset.
-				* @return {this}
-				*/
+		 * @param {string} path - Set the base path for the asset.
+		 * @returns {this}
+		 */
 		setPath(path) {
 			this.path = path;
 			return this;
 		}
 
 		/**
-				* @param {Object} requestHeader - key: The name of the header whose value is to be set. value: The value to set as the body of the header.
-				* @return {this}
-				*/
+		 * @param {object} requestHeader - key: The name of the header whose value is to be set. value: The value to set as the body of the header.
+		 * @returns {this}
+		 */
 		setRequestHeader(requestHeader) {
 			this.requestHeader = requestHeader;
 			return this;
@@ -3651,23 +3610,22 @@
 	/**
 	 * A low level class for loading resources with Fetch, used internaly by most loaders.
 	 * It can also be used directly to load any file type that does not have a loader.
-	 * @memberof t3d
-	 * @extends t3d.Loader
+	 * @extends Loader
 	 */
 	class FileLoader extends Loader {
 		constructor(manager) {
 			super(manager);
 
 			/**
-			 * The expected response type. See {@link t3d.FileLoader.setResponseType}.
-			 * @type {String}
+			 * The expected response type. See {@link FileLoader.setResponseType}.
+			 * @type {string}
 			 * @default undefined
 			 */
 			this.responseType = undefined;
 
 			/**
-			 * The expected mimeType. See {@link t3d.FileLoader.setMimeType}.
-			 * @type {String}
+			 * The expected mimeType. See {@link FileLoader.setMimeType}.
+			 * @type {string}
 			 * @default undefined
 			 */
 			this.mimeType = undefined;
@@ -3675,10 +3633,10 @@
 
 		/**
 		 * Load the URL and pass the response to the onLoad function.
-		 * @param {String} url — the path or URL to the file. This can also be a Data URI.
-		 * @param {Function} [onLoad=] — Will be called when loading completes. The argument will be the loaded response.
-		 * @param {Function} [onProgress=] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-		 * @param {Function} [onError=] — Will be called if an error occurs.
+		 * @param {string} url — the path or URL to the file. This can also be a Data URI.
+		 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
+		 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
+		 * @param {Function} [onError] — Will be called if an error occurs.
 		 */
 		load(url, onLoad, onProgress, onError) {
 			if (url === undefined) url = '';
@@ -3703,7 +3661,7 @@
 					// e.g. 'file://' or 'data://'. Handle as success.
 
 					if (response.status === 0) {
-						console.warn('t3d.FileLoader: HTTP Status 0 received.');
+						console.warn('FileLoader: HTTP Status 0 received.');
 					}
 
 					// Workaround: Checking if response.body === undefined for Alipay browser #23548
@@ -3791,8 +3749,8 @@
 		 * blob - returns the data as a Blob.
 		 * document - parses the file using the DOMParser.
 		 * json - parses the file using JSON.parse.
-		 * @param {String} value
-		 * @return {t3d.FileLoader}
+		 * @param {string} value
+		 * @returns {FileLoader}
 		 */
 		setResponseType(value) {
 			this.responseType = value;
@@ -3802,8 +3760,8 @@
 		/**
 		 * Set the expected mimeType of the file being loaded.
 		 * Note that in many cases this will be determined automatically, so by default it is undefined.
-		 * @param {String} value
-		 * @return {t3d.FileLoader}
+		 * @param {string} value
+		 * @returns {FileLoader}
 		 */
 		setMimeType(value) {
 			this.mimeType = value;
@@ -3819,8 +3777,7 @@
 
 	/**
 	 * A loader for loading an Image.
-	 * @memberof t3d
-	 * @extends t3d.Loader
+	 * @extends Loader
 	 */
 	class ImageLoader extends Loader {
 		constructor(manager) {
@@ -3829,11 +3786,11 @@
 
 		/**
 		 * Begin loading from url and return the image object that will contain the data.
-		 * @param {String} url — the path or URL to the file. This can also be a Data URI.
-		 * @param {Function} [onLoad=] — Will be called when loading completes. The argument will be the loaded response.
-		 * @param {Function} [onProgress=] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-		 * @param {Function} [onError=] — Will be called if an error occurs.
-		 * @return {HTMLImageElement}
+		 * @param {string} url — the path or URL to the file. This can also be a Data URI.
+		 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
+		 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
+		 * @param {Function} [onError] — Will be called if an error occurs.
+		 * @returns {HTMLImageElement}
 		 */
 		load(url, onLoad, onProgress, onError) {
 			if (url === undefined) url = '';
@@ -3869,12 +3826,11 @@
 
 	/**
 	 * The vector 2 class
-	 * @memberof t3d
 	 */
 	class Vector2 {
 		/**
-		 * @param {Number} [x=0] - the x value of this vector.
-		 * @param {Number} [y=0] - the y value of this vector.
+		 * @param {number} [x=0] - the x value of this vector.
+		 * @param {number} [y=0] - the y value of this vector.
 		 */
 		constructor(x = 0, y = 0) {
 			this.x = x;
@@ -3882,11 +3838,11 @@
 		}
 
 		/**
-				* Sets the x and y components of this vector.
-		 * @param {Number} x
-		 * @param {Number} y
-		 * @return {t3d.Vector2}
-				*/
+		 * Sets the x and y components of this vector.
+		 * @param {number} x
+		 * @param {number} y
+		 * @returns {Vector2}
+		 */
 		set(x = 0, y = 0) {
 			this.x = x;
 			this.y = y;
@@ -3894,23 +3850,23 @@
 		}
 
 		/**
-				* Sets this vector to be the vector linearly interpolated between v1 and v2
+		 * Sets this vector to be the vector linearly interpolated between v1 and v2
 		 * where ratio is the percent distance along the line connecting the two vectors
 		 * - ratio = 0 will be v1, and ratio = 1 will be v2.
-		 * @param {t3d.Vector2} v1 - the starting Vector2.
-		 * @param {t3d.Vector2} v2 - Vector2 to interpolate towards.
-		 * @param {Number} ratio - interpolation factor, typically in the closed interval [0, 1].
-		 * @return {t3d.Vector2}
-				*/
+		 * @param {Vector2} v1 - the starting Vector2.
+		 * @param {Vector2} v2 - Vector2 to interpolate towards.
+		 * @param {number} ratio - interpolation factor, typically in the closed interval [0, 1].
+		 * @returns {Vector2}
+		 */
 		lerpVectors(v1, v2, ratio) {
 			return this.subVectors(v2, v1).multiplyScalar(ratio).add(v1);
 		}
 
 		/**
-				* If this vector's x or y value is greater than v's x or y value, replace that value with the corresponding min value.
-		 * @param {t3d.Vector2} v
-		 * @return {t3d.Vector2}
-				*/
+		 * If this vector's x or y value is greater than v's x or y value, replace that value with the corresponding min value.
+		 * @param {Vector2} v
+		 * @returns {Vector2}
+		 */
 		min(v) {
 			this.x = Math.min(this.x, v.x);
 			this.y = Math.min(this.y, v.y);
@@ -3918,10 +3874,10 @@
 		}
 
 		/**
-				* If this vector's x or y value is less than v's x or y value, replace that value with the corresponding max value.
-		 * @param {t3d.Vector2} v
-		 * @return {t3d.Vector2}
-				*/
+		 * If this vector's x or y value is less than v's x or y value, replace that value with the corresponding max value.
+		 * @param {Vector2} v
+		 * @returns {Vector2}
+		 */
 		max(v) {
 			this.x = Math.max(this.x, v.x);
 			this.y = Math.max(this.y, v.y);
@@ -3929,28 +3885,28 @@
 		}
 
 		/**
-				* Computes the Euclidean length (straight-line length) from (0, 0) to (x, y).
-		 * @return {Number}
-				*/
+		 * Computes the Euclidean length (straight-line length) from (0, 0) to (x, y).
+		 * @returns {number}
+		 */
 		getLength() {
 			return Math.sqrt(this.getLengthSquared());
 		}
 
 		/**
-				* Computes the square of the Euclidean length (straight-line length) from (0, 0) to (x, y).
+		 * Computes the square of the Euclidean length (straight-line length) from (0, 0) to (x, y).
 		 * If you are comparing the lengths of vectors, you should compare the length squared instead
 		 * as it is slightly more efficient to calculate.
-		 * @return {Number}
-				*/
+		 * @returns {number}
+		 */
 		getLengthSquared() {
 			return this.x * this.x + this.y * this.y;
 		}
 
 		/**
-				* Converts this vector to a unit vector - that is, sets it equal to a vector with the same direction as this one, but length 1.
-		 * @param {Number} [thickness=1]
-		 * @return {t3d.Vector2}
-				*/
+		 * Converts this vector to a unit vector - that is, sets it equal to a vector with the same direction as this one, but length 1.
+		 * @param {number} [thickness=1]
+		 * @returns {Vector2}
+		 */
 		normalize(thickness = 1) {
 			const length = this.getLength() || 1;
 			const invLength = thickness / length;
@@ -3960,20 +3916,20 @@
 		}
 
 		/**
-				* Subtracts v from the vector.
-		 * @param {t3d.Vector2} a
-		 * @param {t3d.Vector2} target - the result vector2
-		 * @return {t3d.Vector2}
-				*/
+		 * Subtracts v from the vector.
+		 * @param {Vector2} a
+		 * @param {Vector2} target - the result vector2
+		 * @returns {Vector2}
+		 */
 		subtract(a, target = new Vector2()) {
 			return target.set(this.x - a.x, this.y - a.y);
 		}
 
 		/**
-				* Subtracts v from this vector.
-		 * @param {t3d.Vector2} v
-		 * @return {t3d.Vector2}
-				*/
+		 * Subtracts v from this vector.
+		 * @param {Vector2} v
+		 * @returns {Vector2}
+		 */
 		sub(v) {
 			this.x -= v.x;
 			this.y -= v.y;
@@ -3981,10 +3937,10 @@
 		}
 
 		/**
-				* Copies the values of the passed Vector2's x and y properties to this Vector2.
-		 * @param {t3d.Vector2} v
-		 * @return {t3d.Vector2}
-				*/
+		 * Copies the values of the passed Vector2's x and y properties to this Vector2.
+		 * @param {Vector2} v
+		 * @returns {Vector2}
+		 */
 		copy(v) {
 			this.x = v.x;
 			this.y = v.y;
@@ -3992,11 +3948,11 @@
 		}
 
 		/**
-				* Sets this vector to a + b.
-		 * @param {t3d.Vector2} a
-		 * @param {t3d.Vector2} b
-		 * @return {t3d.Vector2}
-				*/
+		 * Sets this vector to a + b.
+		 * @param {Vector2} a
+		 * @param {Vector2} b
+		 * @returns {Vector2}
+		 */
 		addVectors(a, b) {
 			this.x = a.x + b.x;
 			this.y = a.y + b.y;
@@ -4004,11 +3960,11 @@
 		}
 
 		/**
-				* Sets this vector to a - b.
-		 * @param {t3d.Vector2} a
-		 * @param {t3d.Vector2} b
-		 * @return {t3d.Vector2}
-				*/
+		 * Sets this vector to a - b.
+		 * @param {Vector2} a
+		 * @param {Vector2} b
+		 * @returns {Vector2}
+		 */
 		subVectors(a, b) {
 			this.x = a.x - b.x;
 			this.y = a.y - b.y;
@@ -4016,10 +3972,10 @@
 		}
 
 		/**
-				* Multiplies this vector by scalar.
-		 * @param {Number} scalar
-		 * @return {t3d.Vector2}
-				*/
+		 * Multiplies this vector by scalar.
+		 * @param {number} scalar
+		 * @returns {Vector2}
+		 */
 		multiplyScalar(scalar) {
 			this.x *= scalar;
 			this.y *= scalar;
@@ -4027,11 +3983,11 @@
 		}
 
 		/**
-				* Computes the squared distance from this vector to v. If you are just comparing the distance with
+		 * Computes the squared distance from this vector to v. If you are just comparing the distance with
 		 * another distance, you should compare the distance squared instead as it is slightly more efficient to calculate.
-		 * @param {t3d.Vector2} v
-		 * @return {Number}
-				*/
+		 * @param {Vector2} v
+		 * @returns {number}
+		 */
 		distanceToSquared(v) {
 			const dx = this.x - v.x,
 				dy = this.y - v.y;
@@ -4039,21 +3995,21 @@
 		}
 
 		/**
-				* Computes the distance from this vector to v.
-		 * @param {t3d.Vector2} v
-		 * @return {Number}
-				*/
+		 * Computes the distance from this vector to v.
+		 * @param {Vector2} v
+		 * @returns {number}
+		 */
 		distanceTo(v) {
 			return Math.sqrt(this.distanceToSquared(v));
 		}
 
 		/**
-				* Sets this vector's x value to be array[ offset ] and y value to be array[ offset + 1 ].
-		 * @param {Number[]} array - the source array.
-		 * @param {Number} [offset=0] - offset into the array.
-		 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @return {t3d.Vector2}
-				*/
+		 * Sets this vector's x value to be array[ offset ] and y value to be array[ offset + 1 ].
+		 * @param {number[]} array - the source array.
+		 * @param {number} [offset=0] - offset into the array.
+		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+		 * @returns {Vector2}
+		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let x = array[offset],
 				y = array[offset + 1];
@@ -4068,11 +4024,11 @@
 
 		/**
 		 * Sets this array[ offset ] value to be vector's x and array[ offset + 1 ] to be vector's y.
-		 * @param {Number[]} [array] - the target array.
-		 * @param {Number} [offset=0] - offset into the array.
-		 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @return {Number[]}
-				*/
+		 * @param {number[]} [array] - the target array.
+		 * @param {number} [offset=0] - offset into the array.
+		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+		 * @returns {number[]}
+		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let x = this.x,
 				y = this.y;
@@ -4086,10 +4042,10 @@
 		}
 
 		/**
-				* Adds v to this vector.
-		 * @param {t3d.Vector2} v
-		 * @return {t3d.Vector2}
-				*/
+		 * Adds v to this vector.
+		 * @param {Vector2} v
+		 * @returns {Vector2}
+		 */
 		add(v) {
 			this.x += v.x;
 			this.y += v.y;
@@ -4097,9 +4053,9 @@
 		}
 
 		/**
-				* Computes the angle in radians of this vector with respect to the positive x-axis.
-		 * @return {Number}
-				*/
+		 * Computes the angle in radians of this vector with respect to the positive x-axis.
+		 * @returns {number}
+		 */
 		angle() {
 			// computes the angle in radians with respect to the positive x-axis
 
@@ -4112,7 +4068,7 @@
 
 		/**
 		 * Inverts this vector - i.e. sets x = -x, y = -y.
-		 * @return {t3d.Vector2}
+		 * @returns {Vector2}
 		 */
 		negate() {
 			this.x = -this.x;
@@ -4122,8 +4078,8 @@
 
 		/**
 		 * Calculate the dot product of this vector and v.
-		 * @param {t3d.Vector2} a
-		 * @return {Number}
+		 * @param {Vector2} a
+		 * @returns {number}
 		 */
 		dot(a) {
 			return this.x * a.x + this.y * a.y;
@@ -4131,17 +4087,17 @@
 
 		/**
 		 * Checks for strict equality of this vector and v.
-		 * @param {t3d.Vector2} v
-		 * @return {Boolean}
+		 * @param {Vector2} v
+		 * @returns {boolean}
 		 */
 		equals(v) {
 			return v.x === this.x && v.y === this.y;
 		}
 
 		/**
-				* Returns a new Vector2 with the same x and y values as this one.
-		 * @return {t3d.Vector2}
-				*/
+		 * Returns a new Vector2 with the same x and y values as this one.
+		 * @returns {Vector2}
+		 */
 		clone() {
 			return new Vector2(this.x, this.y);
 		}
@@ -4149,13 +4105,12 @@
 
 	/**
 	 * Represents an axis-aligned bounding box (AABB) in 2D space.
-	 * @memberof t3d
 	 */
 	class Box2 {
 		/**
-		 * @param {t3d.Vector2} min - (optional) Vector2 representing the lower (x, y) boundary of the box.
+		 * @param {Vector2} min - (optional) Vector2 representing the lower (x, y) boundary of the box.
 		 * 								Default is ( + Infinity, + Infinity ).
-		 * @param {t3d.Vector2} max - (optional) Vector2 representing the upper (x, y) boundary of the box.
+		 * @param {Vector2} max - (optional) Vector2 representing the upper (x, y) boundary of the box.
 		 * 								Default is ( - Infinity, - Infinity ).
 		 */
 		constructor(min, max) {
@@ -4164,10 +4119,10 @@
 		}
 
 		/**
-		 * @param {Number} x1
-		 * @param {Number} y1
-		 * @param {Number} x2
-		 * @param {Number} y2
+		 * @param {number} x1
+		 * @param {number} y1
+		 * @param {number} x2
+		 * @param {number} y2
 		 */
 		set(x1, y1, x2, y2) {
 			this.min.set(x1, y1);
@@ -4176,7 +4131,7 @@
 
 		/**
 		 * Returns a new Box2 with the same min and max as this one.
-		 * @return {t3d.Box2}
+		 * @returns {Box2}
 		 */
 		clone() {
 			return new Box2().copy(this);
@@ -4184,8 +4139,8 @@
 
 		/**
 		 * Copies the min and max from box to this box.
-		 * @param {t3d.Box2} box
-		 * @return {t3d.Box2}
+		 * @param {Box2} box
+		 * @returns {Box2}
 		 */
 		copy(box) {
 			this.min.copy(box.min);
@@ -4196,13 +4151,12 @@
 
 	/**
 	 * Represents an axis-aligned bounding box (AABB) in 3D space.
-	 * @memberof t3d
 	 */
 	class Box3 {
 		/**
-		 * @param {t3d.Vector3} min - (optional) Vector3 representing the lower (x, y, z) boundary of the box.
+		 * @param {Vector3} min - (optional) Vector3 representing the lower (x, y, z) boundary of the box.
 		 * 								Default is ( + Infinity, + Infinity, + Infinity ).
-		 * @param {t3d.Vector3} max - (optional) Vector3 representing the upper (x, y, z) boundary of the box.
+		 * @param {Vector3} max - (optional) Vector3 representing the upper (x, y, z) boundary of the box.
 		 * 								Default is ( - Infinity, - Infinity, - Infinity ).
 		 */
 		constructor(min, max) {
@@ -4212,8 +4166,8 @@
 
 		/**
 		 * Sets the lower and upper (x, y, z) boundaries of this box.
-		 * @param {t3d.Vector3} min - Vector3 representing the lower (x, y, z) boundary of the box.
-		 * @param {t3d.Vector3} max - Vector3 representing the lower upper (x, y, z) boundary of the box.
+		 * @param {Vector3} min - Vector3 representing the lower (x, y, z) boundary of the box.
+		 * @param {Vector3} max - Vector3 representing the lower upper (x, y, z) boundary of the box.
 		 */
 		set(min, max) {
 			this.min.copy(min);
@@ -4222,8 +4176,8 @@
 
 		/**
 		 * Sets the upper and lower bounds of this box to include all of the points in points.
-		 * @param {t3d.Vector3[]} points - Array of Vector3s that the resulting box will contain.
-		 * @return {t3d.Box3}
+		 * @param {Vector3[]} points - Array of Vector3s that the resulting box will contain.
+		 * @returns {Box3}
 		 */
 		setFromPoints(points) {
 			this.makeEmpty();
@@ -4235,7 +4189,7 @@
 
 		/**
 		 * Makes this box empty.
-		 * @return {t3d.Box3}
+		 * @returns {Box3}
 		 */
 		makeEmpty() {
 			this.min.x = this.min.y = this.min.z = +Infinity;
@@ -4245,8 +4199,8 @@
 
 		/**
 		 * Expands the boundaries of this box to include point.
-		 * @param {t3d.Vector3} point - Vector3 that should be included in the box.
-		 * @return {t3d.Box3}
+		 * @param {Vector3} point - Vector3 that should be included in the box.
+		 * @returns {Box3}
 		 */
 		expandByPoint(point) {
 			this.min.min(point);
@@ -4256,8 +4210,8 @@
 
 		/**
 		 * Expands each dimension of the box by scalar. If negative, the dimensions of the box will be contracted.
-		 * @param {Number} scalar - Distance to expand the box by.
-		 * @return {t3d.Box3}
+		 * @param {number} scalar - Distance to expand the box by.
+		 * @returns {Box3}
 		 */
 		expandByScalar(scalar) {
 			this.min.addScalar(-scalar);
@@ -4267,8 +4221,8 @@
 
 		/**
 		 * Expands the boundaries of this box to include box3.
-		 * @param {t3d.Box3} box3 - Box that will be unioned with this box.
-		 * @return {t3d.Box3}
+		 * @param {Box3} box3 - Box that will be unioned with this box.
+		 * @returns {Box3}
 		 */
 		expandByBox3(box3) {
 			this.min.min(box3.min);
@@ -4278,10 +4232,10 @@
 
 		/**
 		 * Sets the upper and lower bounds of this box to include all of the data in array.
-		 * @param {Number[]} array - An array of position data that the resulting box will envelop.
-		 * @param {Number} [gap=3]
-		 * @param {Number} [offset=0]
-		 * @return {t3d.Box3}
+		 * @param {number[]} array - An array of position data that the resulting box will envelop.
+		 * @param {number} [gap=3]
+		 * @param {number} [offset=0]
+		 * @returns {Box3}
 		 */
 		setFromArray(array, gap = 3, offset = 0) {
 			let minX = +Infinity;
@@ -4308,9 +4262,9 @@
 
 		/**
 		 * Clamps the point within the bounds of this box.
-		 * @param {t3d.Vector3} point - Vector3 to clamp.
-		 * @param {t3d.Vector3} target - Vector3 to store the result in.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} point - Vector3 to clamp.
+		 * @param {Vector3} target - Vector3 to store the result in.
+		 * @returns {Vector3}
 		 */
 		clampPoint(point, target) {
 			return target.copy(point).min(this.max).max(this.min);
@@ -4319,8 +4273,8 @@
 		/**
 		 * Returns the distance from any edge of this box to the specified point.
 		 * If the point lies inside of this box, the distance will be 0.
-		 * @param {t3d.Vector3} point - Vector3 to measure the distance to.
-		 * @return {Number}
+		 * @param {Vector3} point - Vector3 to measure the distance to.
+		 * @returns {number}
 		 */
 		distanceToPoint(point) {
 			return this.clampPoint(point, _vec3_1$5).distanceTo(point);
@@ -4328,8 +4282,8 @@
 
 		/**
 		 * Returns aMinimum Bounding Sphere for the box.
-		 * @param {t3d.Sphere} target — the result will be copied into this Sphere.
-		 * @return {t3d.Sphere}
+		 * @param {Sphere} target — the result will be copied into this Sphere.
+		 * @returns {Sphere}
 		 */
 		getBoundingSphere(target) {
 			if (this.isEmpty()) {
@@ -4343,7 +4297,7 @@
 
 		/**
 		 * Returns true if this box includes zero points within its bounds.
-		 * @return {Boolean}
+		 * @returns {boolean}
 		 */
 		isEmpty() {
 			// this is a more robust check for empty than ( volume <= 0 ) because volume can get positive with two negative axes
@@ -4352,8 +4306,8 @@
 
 		/**
 		 * Returns true if this box and box share the same lower and upper bounds.
-		 * @param {t3d.Box3} box - Box to compare with this one.
-		 * @return {Boolean}
+		 * @param {Box3} box - Box to compare with this one.
+		 * @returns {boolean}
 		 */
 		equals(box) {
 			return box.min.equals(this.min) && box.max.equals(this.max);
@@ -4361,8 +4315,8 @@
 
 		/**
 		 * Returns the center point of the box as a Vector3.
-		 * @param {t3d.Vector3} target - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} target - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		getCenter(target = new Vector3()) {
 			return this.isEmpty() ? target.set(0, 0, 0) : target.addVectors(this.min, this.max).multiplyScalar(0.5);
@@ -4370,15 +4324,15 @@
 
 		/**
 		 * Returns the width, height and depth of this box.
-		 * @param {t3d.Vector3} target - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} target - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		getSize(target = new Vector3()) {
 			return this.isEmpty() ? target.set(0, 0, 0) : target.subVectors(this.max, this.min);
 		}
 
 		/**
-				* Get the 8 corner points of the bounding box, the order is as follows:
+		 * Get the 8 corner points of the bounding box, the order is as follows:
 		 *	 7-------3
 		 *	/|			/|
 		 * 4-------0 |
@@ -4386,9 +4340,9 @@
 		 * | 6-----|-2
 		 * |/			|/
 		 * 5-------1
-				* @param {t3d.Vector3[]} points - The array to store the points.
-				* @return {t3d.Vector3[]} The array of points.
-				*/
+		 * @param {Vector3[]} points - The array to store the points.
+		 * @returns {Vector3[]} The array of points.
+		 */
 		getPoints(points) {
 			const minX = this.min.x,
 				minY = this.min.y,
@@ -4410,8 +4364,8 @@
 		/**
 		 * Computes the union of this box and box,
 		 * setting the upper bound of this box to the greater of the two boxes' upper bounds and the lower bound of this box to the lesser of the two boxes' lower bounds.
-		 * @param {t3d.Box3} box - Box that will be unioned with this box.
-		 * @return {t3d.Box3}
+		 * @param {Box3} box - Box that will be unioned with this box.
+		 * @returns {Box3}
 		 */
 		union(box) {
 			this.min.min(box.min);
@@ -4421,8 +4375,8 @@
 
 		/**
 		 * Transforms this Box3 with the supplied matrix.
-		 * @param {t3d.Matrix4} matrix - The Matrix4 to apply
-		 * @return {t3d.Box3}
+		 * @param {Matrix4} matrix - The Matrix4 to apply
+		 * @returns {Box3}
 		 */
 		applyMatrix4(matrix) {
 			// transform of empty box is an empty box.
@@ -4444,8 +4398,8 @@
 
 		/**
 		 * Returns true if the specified point lies within or on the boundaries of this box.
-		 * @param {t3d.Vector3} point - Vector3 to check for inclusion.
-		 * @return {Boolean}
+		 * @param {Vector3} point - Vector3 to check for inclusion.
+		 * @returns {boolean}
 		 */
 		containsPoint(point) {
 			return point.x < this.min.x || point.x > this.max.x || point.y < this.min.y || point.y > this.max.y || point.z < this.min.z || point.z > this.max.z ? false : true;
@@ -4453,8 +4407,8 @@
 
 		/**
 		 * Determines whether or not this box intersects triangle.
-		 * @param {t3d.Triangle} triangle - Triangle to check for intersection against.
-		 * @return {Boolean}
+		 * @param {Triangle} triangle - Triangle to check for intersection against.
+		 * @returns {boolean}
 		 */
 		intersectsTriangle(triangle) {
 			if (this.isEmpty()) {
@@ -4498,7 +4452,7 @@
 
 		/**
 		 * Returns a new Box3 with the same min and max as this one.
-		 * @return {t3d.Box3}
+		 * @returns {Box3}
 		 */
 		clone() {
 			return new Box3().copy(this);
@@ -4506,8 +4460,8 @@
 
 		/**
 		 * Copies the min and max from box to this box.
-		 * @param {t3d.Box3} box - Box3 to copy.
-		 * @return {t3d.Box3}
+		 * @param {Box3} box - Box3 to copy.
+		 * @returns {Box3}
 		 */
 		copy(box) {
 			this.min.copy(box.min);
@@ -4554,14 +4508,13 @@
 
 	/**
 	 * Color3 Class.
-	 * @memberof t3d
 	 */
 	class Color3 {
 		/**
-		 * @param {Number} r - (optional) If arguments g and b are defined, the red component of the color.
+		 * @param {number} r - (optional) If arguments g and b are defined, the red component of the color.
 		 * 						If they are not defined, it can be a hexadecimal triplet (recommended).
-		 * @param {Number} g - (optional) If it is defined, the green component of the color.
-		 * @param {Number} b - (optional) If it is defined, the blue component of the color.
+		 * @param {number} g - (optional) If it is defined, the green component of the color.
+		 * @param {number} b - (optional) If it is defined, the blue component of the color.
 		 */
 		constructor(r, g, b) {
 			this.r = 0;
@@ -4577,10 +4530,10 @@
 		 * Sets this color to be the color linearly interpolated
 		 * between color1 and color2 where ratio is the percent distance along the line connecting the two colors
 		 * - ratio = 0 will be color1, and ratio = 1 will be color2.
-				* @param {t3d.Color3} c1 - the starting Color.
-				* @param {t3d.Color3} c2 - Color to interpolate towards.
-				* @param {Number} ratio - interpolation factor, typically in the closed interval [0, 1].
-				*/
+		 * @param {Color3} c1 - the starting Color.
+		 * @param {Color3} c2 - Color to interpolate towards.
+		 * @param {number} ratio - interpolation factor, typically in the closed interval [0, 1].
+		 */
 		lerpColors(c1, c2, ratio) {
 			this.r = ratio * (c2.r - c1.r) + c1.r;
 			this.g = ratio * (c2.g - c1.g) + c1.g;
@@ -4591,26 +4544,26 @@
 		 * Linearly interpolates this color's RGB values toward the RGB values of the passed argument.
 		 * The ratio argument can be thought of as the ratio between the two colors,
 		 * where 0.0 is this color and 1.0 is the first argument.
-				* @param {t3d.Color3} c - color to converge on.
-				* @param {Number} ratio - interpolation factor in the closed interval [0, 1].
-				*/
+		 * @param {Color3} c - color to converge on.
+		 * @param {number} ratio - interpolation factor in the closed interval [0, 1].
+		 */
 		lerp(c, ratio) {
 			this.lerpColors(this, c, ratio);
 		}
 
 		/**
-				* Returns a new Color with the same r, g and b values as this one.
-		 * @return {t3d.Color3}
-				*/
+		 * Returns a new Color with the same r, g and b values as this one.
+		 * @returns {Color3}
+		 */
 		clone() {
 			return new Color3(this.r, this.g, this.b);
 		}
 
 		/**
 		 * Copies the r, g and b parameters from v in to this color.
-				* @param {t3d.Color3} v
-		 * @return {t3d.Color3}
-				*/
+		 * @param {Color3} v
+		 * @returns {Color3}
+		 */
 		copy(v) {
 			this.r = v.r;
 			this.g = v.g;
@@ -4619,10 +4572,10 @@
 		}
 
 		/**
-				* Set from hex.
-		 * @param {Number} hex - hexadecimal triplet format.
-		 * @return {t3d.Color3}
-				*/
+		 * Set from hex.
+		 * @param {number} hex - hexadecimal triplet format.
+		 * @returns {Color3}
+		 */
 		setHex(hex) {
 			hex = Math.floor(hex);
 			this.r = (hex >> 16 & 255) / 255;
@@ -4632,20 +4585,20 @@
 		}
 
 		/**
-				* Returns the hexadecimal value of this color.
-		 * @return {Number}
-				*/
+		 * Returns the hexadecimal value of this color.
+		 * @returns {number}
+		 */
 		getHex() {
 			return MathUtils.clamp(this.r * 255, 0, 255) << 16 ^ MathUtils.clamp(this.g * 255, 0, 255) << 8 ^ MathUtils.clamp(this.b * 255, 0, 255) << 0;
 		}
 
 		/**
-				* Sets this color from RGB values.
-		 * @param {Number} r - Red channel value between 0.0 and 1.0.
-		 * @param {Number} g - Green channel value between 0.0 and 1.0.
-		 * @param {Number} b - Blue channel value between 0.0 and 1.0.
-		 * @return {t3d.Color3}
-				*/
+		 * Sets this color from RGB values.
+		 * @param {number} r - Red channel value between 0.0 and 1.0.
+		 * @param {number} g - Green channel value between 0.0 and 1.0.
+		 * @param {number} b - Blue channel value between 0.0 and 1.0.
+		 * @returns {Color3}
+		 */
 		setRGB(r, g, b) {
 			this.r = r;
 			this.g = g;
@@ -4654,12 +4607,12 @@
 		}
 
 		/**
-				* Set from HSL.
-		 * @param {Number} h - hue value between 0.0 and 1.0
-		 * @param {Number} s - saturation value between 0.0 and 1.0
-		 * @param {Number} l - lightness value between 0.0 and 1.0
-		 * @return {t3d.Color3}
-				*/
+		 * Set from HSL.
+		 * @param {number} h - hue value between 0.0 and 1.0
+		 * @param {number} s - saturation value between 0.0 and 1.0
+		 * @param {number} l - lightness value between 0.0 and 1.0
+		 * @returns {Color3}
+		 */
 		setHSL(h, s, l) {
 			// h,s,l ranges are in 0.0 - 1.0
 			h = MathUtils.euclideanModulo(h, 1);
@@ -4679,7 +4632,7 @@
 
 		/**
 		 * Converts this color from sRGB space to linear space.
-		 * @return {t3d.Color3}
+		 * @returns {Color3}
 		 */
 		convertSRGBToLinear() {
 			this.r = SRGBToLinear(this.r);
@@ -4690,7 +4643,7 @@
 
 		/**
 		 * Converts this color from linear space to sRGB space.
-		 * @return {t3d.Color3}
+		 * @returns {Color3}
 		 */
 		convertLinearToSRGB() {
 			this.r = LinearToSRGB(this.r);
@@ -4701,11 +4654,11 @@
 
 		/**
 		 * Sets this color's components based on an array formatted like [ r, g, b ].
-				* @param {Number[]} array - Array of floats in the form [ r, g, b ].
-		 * @param {Number} [offset=0] - An offset into the array.
-		 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @return {t3d.Color3}
-				*/
+		 * @param {number[]} array - Array of floats in the form [ r, g, b ].
+		 * @param {number} [offset=0] - An offset into the array.
+		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+		 * @returns {Color3}
+		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let r = array[offset],
 				g = array[offset + 1],
@@ -4723,11 +4676,11 @@
 
 		/**
 		 * Returns an array of the form [ r, g, b ].
-				* @param {Number[]} [array] - An array to store the color to.
-		 * @param {Number} [offset=0] - An offset into the array.
-		 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @return {Number[]}
-				*/
+		 * @param {number[]} [array] - An array to store the color to.
+		 * @param {number} [offset=0] - An offset into the array.
+		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+		 * @returns {number[]}
+		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let r = this.r,
 				g = this.g,
@@ -4762,14 +4715,13 @@
 
 	/**
 	 * Euler class.
-	 * @memberof t3d
 	 */
 	class Euler {
 		/**
-		 * @param {Number} [x=0]
-		 * @param {Number} [y=0]
-		 * @param {Number} [z=0]
-		 * @param {String} [order=t3d.Euler.DefaultOrder]
+		 * @param {number} [x=0]
+		 * @param {number} [y=0]
+		 * @param {number} [z=0]
+		 * @param {string} [order=Euler.DefaultOrder]
 		 */
 		constructor(x = 0, y = 0, z = 0, order = Euler.DefaultOrder) {
 			this._x = x;
@@ -4779,14 +4731,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get x() {
 			return this._x;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set x(value) {
 			this._x = value;
@@ -4794,14 +4746,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get y() {
 			return this._y;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set y(value) {
 			this._y = value;
@@ -4809,14 +4761,14 @@
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get z() {
 			return this._z;
 		}
 
 		/**
-		 * @type {Number}
+		 * @type {number}
 		 */
 		set z(value) {
 			this._z = value;
@@ -4824,14 +4776,14 @@
 		}
 
 		/**
-		 * @type {String}
+		 * @type {string}
 		 */
 		get order() {
 			return this._order;
 		}
 
 		/**
-		 * @type {String}
+		 * @type {string}
 		 */
 		set order(value) {
 			this._order = value;
@@ -4839,18 +4791,18 @@
 		}
 
 		/**
-				* Returns a new Euler with the same parameters as this one.
-		 * @return {t3d.Euler}
-				*/
+		 * Returns a new Euler with the same parameters as this one.
+		 * @returns {Euler}
+		 */
 		clone() {
 			return new Euler(this._x, this._y, this._z, this._order);
 		}
 
 		/**
 		 * Copies value of euler to this euler.
-				* @param {t3d.Euler} euler
-		 * @return {t3d.Euler}
-				*/
+		 * @param {Euler} euler
+		 * @returns {Euler}
+		 */
 		copy(euler) {
 			this._x = euler._x;
 			this._y = euler._y;
@@ -4861,12 +4813,12 @@
 		}
 
 		/**
-				* @param {Number} x - the angle of the x axis in radians.
-				* @param {Number} y - the angle of the y axis in radians.
-				* @param {Number} z - the angle of the z axis in radians.
-				* @param {String} order - (optional) a string representing the order that the rotations are applied.
-		 * @return {t3d.Euler}
-				*/
+		 * @param {number} x - the angle of the x axis in radians.
+		 * @param {number} y - the angle of the y axis in radians.
+		 * @param {number} z - the angle of the z axis in radians.
+		 * @param {string} order - (optional) a string representing the order that the rotations are applied.
+		 * @returns {Euler}
+		 */
 		set(x = 0, y = 0, z = 0, order = this._order) {
 			this._x = x;
 			this._y = y;
@@ -4878,11 +4830,11 @@
 
 		/**
 		 * Sets the angles of this euler transform from a pure rotation matrix based on the orientation specified by order.
-				* @param {t3d.Matrix4} m - a Matrix4 of which the upper 3x3 of matrix is a pure rotation matrix
-				* @param {String} order - (optional) a string representing the order that the rotations are applied.
-				* @param {Boolean} [update=true] - Whether to notify Euler angle has changed
-		 * @return {t3d.Euler}
-				*/
+		 * @param {Matrix4} m - a Matrix4 of which the upper 3x3 of matrix is a pure rotation matrix
+		 * @param {string} order - (optional) a string representing the order that the rotations are applied.
+		 * @param {boolean} [update=true] - Whether to notify Euler angle has changed
+		 * @returns {Euler}
+		 */
 		setFromRotationMatrix(m, order = this._order, update = true) {
 			// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -4959,12 +4911,12 @@
 		}
 
 		/**
-				* Sets the angles of this euler transform from a normalized quaternion based on the orientation specified by order.
-		 * @param {t3d.Quaternion} q - a normalized quaternion.
-		 * @param {String} order - (optional) a string representing the order that the rotations are applied.
-		 * @param {Boolean} [update=true] - Whether to notify Euler angle has changed
-		 * @return {t3d.Euler}
-				*/
+		 * Sets the angles of this euler transform from a normalized quaternion based on the orientation specified by order.
+		 * @param {Quaternion} q - a normalized quaternion.
+		 * @param {string} order - (optional) a string representing the order that the rotations are applied.
+		 * @param {boolean} [update=true] - Whether to notify Euler angle has changed
+		 * @returns {Euler}
+		 */
 		setFromQuaternion(q, order, update) {
 			q.toMatrix4(_matrix$1);
 			return this.setFromRotationMatrix(_matrix$1, order, update);
@@ -4972,7 +4924,7 @@
 
 		/**
 		 * @param {Function} callback - When the Euler angle value changes, the callback method is triggered
-		 * @return {t3d.Euler}
+		 * @returns {Euler}
 		 */
 		onChange(callback) {
 			this.onChangeCallback = callback;
@@ -4988,14 +4940,13 @@
 	Euler.RotationOrders = ['XYZ', 'YZX', 'ZXY', 'XZY', 'YXZ', 'ZYX'];
 
 	/**
-		* The default order in which to apply rotations.
-		* @readonly
-		*/
+	 * The default order in which to apply rotations.
+	 * @readonly
+	 */
 	Euler.DefaultOrder = 'XYZ';
 
 	/**
 	 * The 3x3 matrix class.
-	 * @memberof t3d
 	 */
 	class Matrix3 {
 		/**
@@ -5007,16 +4958,16 @@
 
 		/**
 		 * Sets the 3x3 matrix values to the given row-major sequence of values.
-		 * @param {Number} n11 - value to put in row 1, col 1.
-		 * @param {Number} n12 - value to put in row 1, col 2.
-		 * @param {Number} n13 - value to put in row 1, col 3.
-		 * @param {Number} n21 - value to put in row 2, col 1.
-		 * @param {Number} n22 - value to put in row 2, col 2.
-		 * @param {Number} n23 - value to put in row 2, col 3.
-		 * @param {Number} n31 - value to put in row 3, col 1.
-		 * @param {Number} n32 - value to put in row 3, col 2.
-		 * @param {Number} n33 - value to put in row 3, col 3.
-		 * @return {t3d.Matrix3}
+		 * @param {number} n11 - value to put in row 1, col 1.
+		 * @param {number} n12 - value to put in row 1, col 2.
+		 * @param {number} n13 - value to put in row 1, col 3.
+		 * @param {number} n21 - value to put in row 2, col 1.
+		 * @param {number} n22 - value to put in row 2, col 2.
+		 * @param {number} n23 - value to put in row 2, col 3.
+		 * @param {number} n31 - value to put in row 3, col 1.
+		 * @param {number} n32 - value to put in row 3, col 2.
+		 * @param {number} n33 - value to put in row 3, col 3.
+		 * @returns {Matrix3}
 		 */
 		set(n11, n12, n13, n21, n22, n23, n31, n32, n33) {
 			const ele = this.elements;
@@ -5034,7 +4985,7 @@
 
 		/**
 		 * Resets this matrix to the 3x3 identity matrix
-		 * @return {t3d.Matrix3}
+		 * @returns {Matrix3}
 		 */
 		identity() {
 			return this.set(1, 0, 0, 0, 1, 0, 0, 0, 1);
@@ -5042,7 +4993,7 @@
 
 		/**
 		 * Checks if the matrix is an identity matrix.
-		 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
+		 * @returns {boolean} - True if the matrix is an identity matrix, false otherwise.
 		 */
 		isIdentity() {
 			const te = this.elements;
@@ -5051,7 +5002,7 @@
 
 		/**
 		 * Take the inverse of this matrix
-		 * @return {t3d.Matrix3}
+		 * @returns {Matrix3}
 		 */
 		inverse() {
 			return this.getInverse(this);
@@ -5059,7 +5010,8 @@
 
 		/**
 		 * Take the inverse of the matrix
-		 * @return {t3d.Matrix3}
+		 * @param {Matrix3} matrix - The matrix to take the inverse of.
+		 * @returns {Matrix3}
 		 */
 		getInverse(matrix) {
 			const me = matrix.elements,
@@ -5096,7 +5048,7 @@
 
 		/**
 		 * Transposes this matrix in place.
-		 * @return {t3d.Matrix3}
+		 * @returns {Matrix3}
 		 */
 		transpose() {
 			let tmp;
@@ -5115,8 +5067,8 @@
 
 		/**
 		 * Return true if this matrix and m are equal.
-		 * @param {t3d.Matrix3} matrix
-		 * @return {Boolean}
+		 * @param {Matrix3} matrix
+		 * @returns {boolean}
 		 */
 		equals(matrix) {
 			const te = this.elements;
@@ -5129,9 +5081,9 @@
 
 		/**
 		 * Sets the elements of this matrix based on an array in column-major format.
-		 * @param {Number[]} array
-		 * @param {Number} [offset=0]
-		 * @return {t3d.Matrix3}
+		 * @param {number[]} array
+		 * @param {number} [offset=0]
+		 * @returns {Matrix3}
 		 */
 		fromArray(array, offset = 0) {
 			for (let i = 0; i < 9; i++) {
@@ -5142,9 +5094,9 @@
 
 		/**
 		 * Writes the elements of this matrix to an array in column-major format.
-		 * @param {Number[]} [array]
-		 * @param {Number} [offset=0]
-		 * @return {Number[]}
+		 * @param {number[]} [array]
+		 * @param {number} [offset=0]
+		 * @returns {number[]}
 		 */
 		toArray(array = [], offset = 0) {
 			const te = this.elements;
@@ -5162,7 +5114,7 @@
 
 		/**
 		 * Creates a new Matrix3 and with identical elements to this one.
-		 * @return {t3d.Matrix3}
+		 * @returns {Matrix3}
 		 */
 		clone() {
 			return new Matrix3().fromArray(this.elements);
@@ -5170,8 +5122,8 @@
 
 		/**
 		 * Copies the elements of matrix m into this matrix.
-		 * @param {t3d.Matrix3} m
-		 * @return {t3d.Matrix3}
+		 * @param {Matrix3} m
+		 * @returns {Matrix3}
 		 */
 		copy(m) {
 			const te = this.elements;
@@ -5190,8 +5142,8 @@
 
 		/**
 		 * Post-multiplies this matrix by m.
-		 * @param {t3d.Matrix3} m
-		 * @return {t3d.Matrix3}
+		 * @param {Matrix3} m
+		 * @returns {Matrix3}
 		 */
 		multiply(m) {
 			return this.multiplyMatrices(this, m);
@@ -5199,8 +5151,8 @@
 
 		/**
 		 * Pre-multiplies this matrix by m.
-		 * @param {t3d.Matrix3} m
-		 * @return {t3d.Matrix3}
+		 * @param {Matrix3} m
+		 * @returns {Matrix3}
 		 */
 		premultiply(m) {
 			return this.multiplyMatrices(m, this);
@@ -5208,9 +5160,9 @@
 
 		/**
 		 * Sets this matrix to a x b.
-		 * @param {t3d.Matrix3} a
-		 * @param {t3d.Matrix3} b
-		 * @return {t3d.Matrix3}
+		 * @param {Matrix3} a
+		 * @param {Matrix3} b
+		 * @returns {Matrix3}
 		 */
 		multiplyMatrices(a, b) {
 			const ae = a.elements;
@@ -5248,14 +5200,14 @@
 
 		/**
 		 * Transform 2D
-		 * @param {Number} x - position.x
-		 * @param {Number} y - position.y
-		 * @param {Number} scaleX - scale.x
-		 * @param {Number} scaleY - scale.y
-		 * @param {Number} rotation - rotation
-		 * @param {Number} anchorX - anchor.x
-		 * @param {Number} anchorY - anchor.y
-		 * @return {t3d.Matrix3}
+		 * @param {number} x - position.x
+		 * @param {number} y - position.y
+		 * @param {number} scaleX - scale.x
+		 * @param {number} scaleY - scale.y
+		 * @param {number} rotation - rotation
+		 * @param {number} anchorX - anchor.x
+		 * @param {number} anchorY - anchor.y
+		 * @returns {Matrix3}
 		 */
 		transform(x, y, scaleX, scaleY, rotation, anchorX, anchorY) {
 			const te = this.elements;
@@ -5280,14 +5232,14 @@
 
 		/**
 		 * Set the transformation matrix of uv coordinates
-		 * @param {Number} tx
-		 * @param {Number} ty
-		 * @param {Number} sx
-		 * @param {Number} sy
-		 * @param {Number} rotation
-		 * @param {Number} cx
-		 * @param {Number} cy
-		 * @return {t3d.Matrix3}
+		 * @param {number} tx
+		 * @param {number} ty
+		 * @param {number} sx
+		 * @param {number} sy
+		 * @param {number} rotation
+		 * @param {number} cx
+		 * @param {number} cy
+		 * @returns {Matrix3}
 		 */
 		setUvTransform(tx, ty, sx, sy, rotation, cx, cy) {
 			const c = Math.cos(rotation);
@@ -5297,8 +5249,8 @@
 
 		/**
 		 * Sets the matri3 planes from the matrix4.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Matrix3}
+		 * @param {Matrix4} m
+		 * @returns {Matrix3}
 		 */
 		setFromMatrix4(m) {
 			const me = m.elements;
@@ -5307,10 +5259,10 @@
 
 		/**
 		 * Extracts the basis vectors from the matrix.
-		 * @param {t3d.Vector3} xAxis
-		 * @param {t3d.Vector3} yAxis
-		 * @param {t3d.Vector3} zAxis
-		 * @return {t3d.Matrix3}
+		 * @param {Vector3} xAxis
+		 * @param {Vector3} yAxis
+		 * @param {Vector3} zAxis
+		 * @returns {Matrix3}
 		 */
 		extractBasis(xAxis, yAxis, zAxis) {
 			const te = this.elements;
@@ -5328,13 +5280,12 @@
 	/**
 	 * A two dimensional surface that extends infinitely in 3d space,
 	 * represented in Hessian normal form by a unit length normal vector and a constant.
-	 * @memberof t3d
 	 */
 	class Plane {
 		/**
 		 * Constructs a new Plane.
-		 * @param {t3d.Vector3} [normal=Vector3(1, 0, 0)] - A unit length Vector3 defining the normal of the plane.
-		 * @param {Number} [constant=0] - The signed distance from the origin to the plane.
+		 * @param {Vector3} [normal=Vector3(1, 0, 0)] - A unit length Vector3 defining the normal of the plane.
+		 * @param {number} [constant=0] - The signed distance from the origin to the plane.
 		 */
 		constructor(normal = new Vector3(1, 0, 0), constant = 0) {
 			this.normal = normal;
@@ -5343,10 +5294,11 @@
 
 		/**
 		 * Solve a system of equations to find the point where the three planes intersect.
-		 * @param {t3d.Plane} p1 - The first plane.
-		 * @param {t3d.Plane} p2 - The second plane.
-		 * @param {t3d.Plane} p3 - The third plane.
-		 * @param {t3d.Vector3} target - The result will be copied into this Vector3.
+		 * @param {Plane} p1 - The first plane.
+		 * @param {Plane} p2 - The second plane.
+		 * @param {Plane} p3 - The third plane.
+		 * @param {Vector3} target - The result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		static intersectPlanes(p1, p2, p3, target) {
 			// Create the matrix using the normals of the planes as rows
@@ -5362,8 +5314,9 @@
 
 		/**
 		 * Sets this plane's normal and constant properties by copying the values from the given normal.
-		 * @param {t3d.Vector3} normal - a unit length Vector3 defining the normal of the plane.
-		 * @param {Number} constant - the signed distance from the origin to the plane. Default is 0.
+		 * @param {Vector3} normal - a unit length Vector3 defining the normal of the plane.
+		 * @param {number} constant - the signed distance from the origin to the plane. Default is 0.
+		 * @returns {Plane}
 		 */
 		set(normal, constant) {
 			this.normal.copy(normal);
@@ -5373,11 +5326,11 @@
 
 		/**
 		 * Set the individual components that define the plane.
-		 * @param {Number} x - x value of the unit length normal vector.
-		 * @param {Number} y - y value of the unit length normal vector.
-		 * @param {Number} z - z value of the unit length normal vector.
-		 * @param {Number} w - the value of the plane's constant property.
-		 * @return {t3d.Plane}
+		 * @param {number} x - x value of the unit length normal vector.
+		 * @param {number} y - y value of the unit length normal vector.
+		 * @param {number} z - z value of the unit length normal vector.
+		 * @param {number} w - the value of the plane's constant property.
+		 * @returns {Plane}
 		 */
 		setComponents(x, y, z, w) {
 			this.normal.set(x, y, z);
@@ -5387,8 +5340,9 @@
 
 		/**
 		 * Sets the plane's properties as defined by a normal and an arbitrary coplanar point.
-		 * @param {t3d.Vector3} normal - a unit length Vector3 defining the normal of the plane.
-		 * @param {t3d.Vector3} point - Vector3
+		 * @param {Vector3} normal - a unit length Vector3 defining the normal of the plane.
+		 * @param {Vector3} point - Vector3
+		 * @returns {Plane}
 		 */
 		setFromNormalAndCoplanarPoint(normal, point) {
 			this.normal.copy(normal);
@@ -5399,10 +5353,10 @@
 		/**
 		 * Defines the plane based on the 3 provided points.
 		 * The winding order is assumed to be counter-clockwise, and determines the direction of the normal.
-		 * @param {t3d.Vector3} a - first point on the plane.
-		 * @param {t3d.Vector3} b - second point on the plane.
-		 * @param {t3d.Vector3} c - third point on the plane.
-		 * @return {t3d.Plane}
+		 * @param {Vector3} a - first point on the plane.
+		 * @param {Vector3} b - second point on the plane.
+		 * @param {Vector3} c - third point on the plane.
+		 * @returns {Plane}
 		 */
 		setFromCoplanarPoints(a, b, c) {
 			const normal = _vec3_1$4.subVectors(c, b).cross(_vec3_2.subVectors(a, b)).normalize();
@@ -5413,7 +5367,7 @@
 
 		/**
 		 * Normalizes the normal vector, and adjusts the constant value accordingly.
-		 * @return {t3d.Plane}
+		 * @returns {Plane}
 		 */
 		normalize() {
 			// Note: will lead to a divide by zero if the plane is invalid.
@@ -5426,8 +5380,8 @@
 
 		/**
 		 * Returns the signed distance from the point to the plane.
-		 * @param {t3d.Vector3} point
-		 * @return {Number}
+		 * @param {Vector3} point
+		 * @returns {number}
 		 */
 		distanceToPoint(point) {
 			return this.normal.dot(point) + this.constant;
@@ -5435,9 +5389,9 @@
 
 		/**
 		 * Projects a point onto the plane.
-		 * @param {t3d.Vector3} point - the Vector3 to project onto the plane.
-		 * @param {t3d.Vector3} [target] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} point - the Vector3 to project onto the plane.
+		 * @param {Vector3} [target] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		projectPoint(point, target = new Vector3()) {
 			return target.copy(point).addScaledVector(this.normal, -this.distanceToPoint(point));
@@ -5445,9 +5399,9 @@
 
 		/**
 		 * Reflects a point through the plane.
-		 * @param {t3d.Vector3} point - the Vector3 to reflect through the plane.
-		 * @param {t3d.Vector3} [target] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} point - the Vector3 to reflect through the plane.
+		 * @param {Vector3} [target] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		mirrorPoint(point, target = new Vector3()) {
 			const distance = this.distanceToPoint(point);
@@ -5456,8 +5410,8 @@
 
 		/**
 		 * Returns a Vector3 coplanar to the plane, by calculating the projection of the normal vector at the origin onto the plane.
-		 * @param {t3d.Vector3} [target]
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} [target]
+		 * @returns {Vector3}
 		 */
 		coplanarPoint(target = new Vector3()) {
 			return target.copy(this.normal).multiplyScalar(-this.constant);
@@ -5465,7 +5419,7 @@
 
 		/**
 		 * Returns a new plane with the same normal and constant as this one.
-		 * @return {t3d.Plane}
+		 * @returns {Plane}
 		 */
 		clone() {
 			return new Plane().copy(this);
@@ -5473,8 +5427,8 @@
 
 		/**
 		 * Copies the values of the passed plane's normal and constant properties to this plane.
-		 * @param {t3d.Plane} plane
-		 * @return {t3d.Plane}
+		 * @param {Plane} plane
+		 * @returns {Plane}
 		 */
 		copy(plane) {
 			this.normal.copy(plane.normal);
@@ -5484,8 +5438,9 @@
 
 		/**
 		 * Apply a Matrix4 to the plane. The matrix must be an affine, homogeneous transform.
-		 * @param {t3d.Matrix4} matrix - the Matrix4 to apply.
-		 * @param {t3d.Matrix3} [optionalNormalMatrix] - (optional) pre-computed normal Matrix3 of the Matrix4 being applied.
+		 * @param {Matrix4} matrix - the Matrix4 to apply.
+		 * @param {Matrix3} [optionalNormalMatrix] - (optional) pre-computed normal Matrix3 of the Matrix4 being applied.
+		 * @returns {Plane}
 		 */
 		applyMatrix4(matrix, optionalNormalMatrix) {
 			const normalMatrix = optionalNormalMatrix || _mat3_1$1.setFromMatrix4(matrix).inverse().transpose();
@@ -5502,16 +5457,15 @@
 	/**
 	 * Frustums are used to determine what is inside the camera's field of view.
 	 * They help speed up the rendering process - objects which lie outside a camera's frustum can safely be excluded from rendering.
-	 * @memberof t3d
 	 */
 	class Frustum {
 		/**
-		 * @param {t3d.Plane} p0 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p1 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p2 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p3 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p4 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p5 - (optional) defaults to a new Plane.
+		 * @param {Plane} p0 - (optional) defaults to a new Plane.
+		 * @param {Plane} p1 - (optional) defaults to a new Plane.
+		 * @param {Plane} p2 - (optional) defaults to a new Plane.
+		 * @param {Plane} p3 - (optional) defaults to a new Plane.
+		 * @param {Plane} p4 - (optional) defaults to a new Plane.
+		 * @param {Plane} p5 - (optional) defaults to a new Plane.
 		 */
 		constructor(p0 = new Plane(), p1 = new Plane(), p2 = new Plane(), p3 = new Plane(), p4 = new Plane(), p5 = new Plane()) {
 			this.planes = [p0, p1, p2, p3, p4, p5];
@@ -5519,13 +5473,13 @@
 
 		/**
 		 * Sets the frustum from the passed planes. No plane order is implied.
-		 * @param {t3d.Plane} p0 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p1 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p2 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p3 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p4 - (optional) defaults to a new Plane.
-		 * @param {t3d.Plane} p5 - (optional) defaults to a new Plane.
-		 * @return {t3d.Frustum}
+		 * @param {Plane} p0 - (optional) defaults to a new Plane.
+		 * @param {Plane} p1 - (optional) defaults to a new Plane.
+		 * @param {Plane} p2 - (optional) defaults to a new Plane.
+		 * @param {Plane} p3 - (optional) defaults to a new Plane.
+		 * @param {Plane} p4 - (optional) defaults to a new Plane.
+		 * @param {Plane} p5 - (optional) defaults to a new Plane.
+		 * @returns {Frustum}
 		 */
 		set(p0, p1, p2, p3, p4, p5) {
 			const planes = this.planes;
@@ -5540,8 +5494,8 @@
 
 		/**
 		 * Sets the frustum planes from the matrix.
-		 * @param {t3d.Matrix4} m - a Matrix4 used to set the planes
-		 * @return {t3d.Frustum}
+		 * @param {Matrix4} m - a Matrix4 used to set the planes
+		 * @returns {Frustum}
 		 */
 		setFromMatrix(m) {
 			const planes = this.planes;
@@ -5573,8 +5527,8 @@
 
 		/**
 		 * Return true if sphere intersects with this frustum.
-		 * @param {t3d.Sphere} sphere - Sphere to check for intersection.
-		 * @return {Boolean}
+		 * @param {Sphere} sphere - Sphere to check for intersection.
+		 * @returns {boolean}
 		 */
 		intersectsSphere(sphere) {
 			const planes = this.planes;
@@ -5591,8 +5545,8 @@
 
 		/**
 		 * Return true if box intersects with this frustum.
-		 * @param {t3d.Box3} box - Box3 to check for intersection.
-		 * @return {Boolean}
+		 * @param {Box3} box - Box3 to check for intersection.
+		 * @returns {boolean}
 		 */
 		intersectsBox(box) {
 			const planes = this.planes;
@@ -5616,8 +5570,8 @@
 
 		/**
 		 * Apply a matrix4x4 to the frustum.
-		 * @param {t3d.Matrix4} matrix - Matrix4 to apply to the frustum.
-		 * @return {t3d.Frustum}
+		 * @param {Matrix4} matrix - Matrix4 to apply to the frustum.
+		 * @returns {Frustum}
 		 */
 		applyMatrix4(matrix) {
 			const planes = this.planes;
@@ -5630,7 +5584,7 @@
 
 		/**
 		 * Return a new Frustum with the same parameters as this one.
-		 * @return {t3d.Frustum}
+		 * @returns {Frustum}
 		 */
 		clone() {
 			return new this.constructor().copy(this);
@@ -5638,8 +5592,8 @@
 
 		/**
 		 * Copies the properties of the passed frustum into this one.
-		 * @param {t3d.Frustum} frustum - The frustum to copy
-		 * @return {t3d.Frustum}
+		 * @param {Frustum} frustum - The frustum to copy
+		 * @returns {Frustum}
 		 */
 		copy(frustum) {
 			const planes = this.planes;
@@ -5660,12 +5614,11 @@
 	 * A ray that emits from an origin in a certain direction.
 	 * This is used by the Raycaster to assist with raycasting.
 	 * Raycasting is used for mouse picking (working out what objects in the 3D space the mouse is over) amongst other things.
-	 * @memberof t3d
 	 */
 	class Ray {
 		/**
-		 * @param {t3d.Vector3} [origin=] - the origin of the Ray.
-		 * @param {t3d.Vector3} [direction=] - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
+		 * @param {Vector3} [origin] - the origin of the Ray.
+		 * @param {Vector3} [direction] - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
 		 */
 		constructor(origin = new Vector3(), direction = new Vector3(0, 0, -1)) {
 			this.origin = origin;
@@ -5674,9 +5627,9 @@
 
 		/**
 		 * Sets this ray's origin and direction properties by copying the values from the given objects.
-		 * @param {t3d.Vector3} origin - the origin of the Ray.
-		 * @param {t3d.Vector3} direction - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
-		 * @return {t3d.Ray}
+		 * @param {Vector3} origin - the origin of the Ray.
+		 * @param {Vector3} direction - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
+		 * @returns {Ray}
 		 */
 		set(origin, direction) {
 			this.origin.copy(origin);
@@ -5686,8 +5639,8 @@
 
 		/**
 		 * Copies the origin and direction properties of ray into this ray.
-		 * @param {t3d.Ray} ray
-		 * @return {t3d.Ray}
+		 * @param {Ray} ray
+		 * @returns {Ray}
 		 */
 		copy(ray) {
 			this.origin.copy(ray.origin);
@@ -5697,8 +5650,8 @@
 
 		/**
 		 * Transform this Ray by the Matrix4.
-		 * @param {t3d.Matrix4} matrix4 - the Matrix4 to apply to this Ray.
-		 * @return {t3d.Ray}
+		 * @param {Matrix4} matrix4 - the Matrix4 to apply to this Ray.
+		 * @returns {Ray}
 		 */
 		applyMatrix4(matrix4) {
 			this.origin.applyMatrix4(matrix4);
@@ -5708,9 +5661,9 @@
 
 		/**
 		 * Get a Vector3 that is a given distance along this Ray.
-		 * @param {Number} t - the distance along the Ray to retrieve a position for.
-		 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {number} t - the distance along the Ray to retrieve a position for.
+		 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		at(t, optionalTarget = new Vector3()) {
 			return optionalTarget.copy(this.direction).multiplyScalar(t).add(this.origin);
@@ -5718,8 +5671,8 @@
 
 		/**
 		 * Get the squared distance of the closest approach between the Ray and the Vector3.
-		 * @param {t3d.Vector3} point - the Vector3 to compute a distance to.
-		 * @return {Number}
+		 * @param {Vector3} point - the Vector3 to compute a distance to.
+		 * @returns {number}
 		 */
 		distanceSqToPoint(point) {
 			const directionDistance = _vec3_1$2.subVectors(point, this.origin).dot(this.direction);
@@ -5732,8 +5685,8 @@
 
 		/**
 		 * Get the distance of the closest approach between the Ray and the Plane.
-		 * @param {t3d.Plane} plane - the Plane to compute a distance to.
-		 * @return {Number}
+		 * @param {Plane} plane - the Plane to compute a distance to.
+		 * @returns {number}
 		 */
 		distanceToPlane(plane) {
 			const denominator = plane.normal.dot(this.direction);
@@ -5754,9 +5707,9 @@
 
 		/**
 		 * Intersect this Ray with a Plane, returning the intersection point or null if there is no intersection.
-		 * @param {t3d.Plane} plane - the Plane to intersect with.
-		 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Plane} plane - the Plane to intersect with.
+		 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		intersectPlane(plane, optionalTarget = new Vector3()) {
 			const t = this.distanceToPlane(plane);
@@ -5768,8 +5721,8 @@
 
 		/**
 		 * Return true if this Ray intersects with the Plane.
-		 * @param {t3d.Plane} plane - the plane to intersect with.
-		 * @return {Boolean}
+		 * @param {Plane} plane - the plane to intersect with.
+		 * @returns {boolean}
 		 */
 		intersectsPlane(plane) {
 			// check if the ray lies on the plane first
@@ -5788,8 +5741,8 @@
 
 		/**
 		 * Return true if this Ray intersects with the Box3.
-		 * @param {t3d.Box3} box - the Box3 to intersect with.
-		 * @return {Boolean}
+		 * @param {Box3} box - the Box3 to intersect with.
+		 * @returns {boolean}
 		 */
 		intersectsBox(box) {
 			return this.intersectBox(box, _vec3_1$2) !== null;
@@ -5797,9 +5750,9 @@
 
 		/**
 		 * Intersect this Ray with a Box3, returning the intersection point or null if there is no intersection.
-		 * @param {t3d.Box3} box - the Box3 to intersect with.
-		 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Box3} box - the Box3 to intersect with.
+		 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		intersectBox(box, optionalTarget) {
 			let tmin, tmax, tymin, tymax, tzmin, tzmax;
@@ -5847,8 +5800,8 @@
 
 		/**
 		 * Return true if this Ray intersects with the Sphere.
-		 * @param {t3d.Sphere} sphere - the Sphere to intersect with.
-		 * @return {Boolean}
+		 * @param {Sphere} sphere - the Sphere to intersect with.
+		 * @returns {boolean}
 		 */
 		intersectsSphere(sphere) {
 			return this.distanceSqToPoint(sphere.center) <= sphere.radius * sphere.radius;
@@ -5856,9 +5809,9 @@
 
 		/**
 		 * Intersect this Ray with a Sphere, returning the intersection point or null if there is no intersection.
-		 * @param {t3d.Sphere} sphere - the Sphere to intersect with.
-		 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Sphere} sphere - the Sphere to intersect with.
+		 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		intersectSphere(sphere, optionalTarget) {
 			_vec3_1$2.subVectors(sphere.center, this.origin);
@@ -5894,12 +5847,12 @@
 
 		/**
 		 * Intersect this Ray with a triangle, returning the intersection point or null if there is no intersection.
-		 * @param {t3d.Vector3} a - The Vector3 point making up the triangle.
-		 * @param {t3d.Vector3} b - The Vector3 point making up the triangle.
-		 * @param {t3d.Vector3} c - The Vector3 point making up the triangle.
-		 * @param {Boolean} backfaceCulling - whether to use backface culling.
-		 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} a - The Vector3 point making up the triangle.
+		 * @param {Vector3} b - The Vector3 point making up the triangle.
+		 * @param {Vector3} c - The Vector3 point making up the triangle.
+		 * @param {boolean} backfaceCulling - whether to use backface culling.
+		 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		intersectTriangle(a, b, c, backfaceCulling, optionalTarget) {
 			// Compute the offset origin, edges, and normal.
@@ -5963,12 +5916,11 @@
 
 	/**
 	 * A sphere defined by a center and radius.
-	 * @memberof t3d
 	 */
 	class Sphere {
 		/**
-		 * @param {t3d.Vector3} [center=Vector3(0, 0, 0)] - center of the sphere.
-		 * @param {Number} [radius=-1] - radius of the sphere.
+		 * @param {Vector3} [center=Vector3(0, 0, 0)] - center of the sphere.
+		 * @param {number} [radius=-1] - radius of the sphere.
 		 */
 		constructor(center = new Vector3(), radius = -1) {
 			this.center = center;
@@ -5977,9 +5929,9 @@
 
 		/**
 		 * Sets the center and radius properties of this sphere.
-		 * @param {t3d.Vector3} center - center of the sphere.
-		 * @param {Number} radius - radius of the sphere.
-		 * @return {t3d.Sphere}
+		 * @param {Vector3} center - center of the sphere.
+		 * @param {number} radius - radius of the sphere.
+		 * @returns {Sphere}
 		 */
 		set(center, radius) {
 			this.center.copy(center);
@@ -5991,9 +5943,9 @@
 		 * Computes the minimum bounding sphere for an array of points.
 		 * If optionalCenteris given, it is used as the sphere's center.
 		 * Otherwise, the center of the axis-aligned bounding box encompassing points is calculated.
-		 * @param {t3d.Vector3[]} points - an Array of Vector3 positions.
-		 * @param {t3d.Vector3} [optionalCenter] - the center of the sphere.
-		 * @return {t3d.Sphere}
+		 * @param {Vector3[]} points - an Array of Vector3 positions.
+		 * @param {Vector3} [optionalCenter] - the center of the sphere.
+		 * @returns {Sphere}
 		 */
 		setFromPoints(points, optionalCenter) {
 			const center = this.center;
@@ -6012,10 +5964,10 @@
 
 		/**
 		 * Computes the minimum bounding sphere for an array of points.
-		 * @param {Number[]} array - an Array of Vector3 positions.
-		 * @param {Number} [gap=3] - array gap.
-		 * @param {Number} [offset=0] - array offset.
-		 * @return {t3d.Sphere}
+		 * @param {number[]} array - an Array of Vector3 positions.
+		 * @param {number} [gap=3] - array gap.
+		 * @param {number} [offset=0] - array offset.
+		 * @returns {Sphere}
 		 */
 		setFromArray(array, gap = 3, offset = 0) {
 			const center = this.center;
@@ -6031,8 +5983,8 @@
 
 		/**
 		 * Transforms this sphere with the provided Matrix4.
-		 * @param {t3d.Matrix4} matrix - the Matrix4 to apply
-		 * @return {t3d.Matrix4}
+		 * @param {Matrix4} matrix - the Matrix4 to apply
+		 * @returns {Matrix4}
 		 */
 		applyMatrix4(matrix) {
 			this.center.applyMatrix4(matrix);
@@ -6042,8 +5994,8 @@
 
 		/**
 		 * Returns aMinimum Bounding Box for the sphere.
-		 * @param {t3d.Box3} target — the result will be copied into this Box3.
-		 * @return {t3d.Box3}
+		 * @param {Box3} target — the result will be copied into this Box3.
+		 * @returns {Box3}
 		 */
 		getBoundingBox(target) {
 			if (this.isEmpty()) {
@@ -6059,7 +6011,7 @@
 		/**
 		 * Checks to see if the sphere is empty (the radius set to a negative number).
 		 * Spheres with a radius of 0 contain only their center point and are not considered to be empty.
-		 * @return {Boolean}
+		 * @returns {boolean}
 		 */
 		isEmpty() {
 			return this.radius < 0;
@@ -6067,7 +6019,7 @@
 
 		/**
 		 * Makes the sphere empty by setting center to (0, 0, 0) and radius to -1.
-		 * @return {t3d.Sphere}
+		 * @returns {Sphere}
 		 */
 		makeEmpty() {
 			this.center.set(0, 0, 0);
@@ -6077,8 +6029,8 @@
 
 		/**
 		 * Checks to see if the sphere contains the provided point inclusive of the surface of the sphere.
-		 * @param {t3d.Vector3} point - The point to check for containment.
-		 * @return {Boolean}
+		 * @param {Vector3} point - The point to check for containment.
+		 * @returns {boolean}
 		 */
 		containsPoint(point) {
 			return point.distanceToSquared(this.center) <= this.radius * this.radius;
@@ -6087,8 +6039,8 @@
 		/**
 		 * Returns the closest distance from the boundary of the sphere to the point.
 		 * If the sphere contains the point, the distance will be negative.
-		 * @param {t3d.Vector3} point - The point to calculate the distance to.
-		 * @return {Number}
+		 * @param {Vector3} point - The point to calculate the distance to.
+		 * @returns {number}
 		 */
 		distanceToPoint(point) {
 			return point.distanceTo(this.center) - this.radius;
@@ -6096,8 +6048,8 @@
 
 		/**
 		 * Expands the boundaries of this sphere to include point.
-		 * @param {t3d.Vector3} point - The vector3 that should be included in the sphere.
-		 * @return {t3d.Sphere}
+		 * @param {Vector3} point - The vector3 that should be included in the sphere.
+		 * @returns {Sphere}
 		 */
 		expandByPoint(point) {
 			if (this.isEmpty()) {
@@ -6119,7 +6071,7 @@
 
 		/**
 		 * Returns a new sphere with the same center and radius as this one.
-		 * @return {t3d.Sphere}
+		 * @returns {Sphere}
 		 */
 		clone() {
 			return new Sphere().copy(this);
@@ -6127,8 +6079,8 @@
 
 		/**
 		 * Copies the values of the passed sphere's center and radius properties to this sphere.
-		 * @param {t3d.Sphere} sphere
-		 * @return {t3d.Sphere}
+		 * @param {Sphere} sphere
+		 * @returns {Sphere}
 		 */
 		copy(sphere) {
 			this.center.copy(sphere.center);
@@ -6142,13 +6094,12 @@
 	 *
 	 * The poles (phi) are at the positive and negative y axis.
 	 * The equator starts at positive z.
-	 * @memberof t3d
 	 */
 	class Spherical {
 		/**
-		 * @param {Number} [radius=1] - the radius, or the Euclidean distance (straight-line distance) from the point to the origin. Default is 1.0.
-		 * @param {Number} [phi=0] - - polar angle in radians from the y (up) axis. Default is 0.
-		 * @param {Number} [theta=0] - - equator angle in radians around the y (up) axis. Default is 0.
+		 * @param {number} [radius=1] - the radius, or the Euclidean distance (straight-line distance) from the point to the origin. Default is 1.0.
+		 * @param {number} [phi=0] - - polar angle in radians from the y (up) axis. Default is 0.
+		 * @param {number} [theta=0] - - equator angle in radians around the y (up) axis. Default is 0.
 		 */
 		constructor(radius = 1, phi = 0, theta = 0) {
 			this.radius = radius;
@@ -6158,9 +6109,10 @@
 
 		/**
 		 * Sets values of this spherical's radius, phi and theta properties.
-		 * @param {Number} radius
-		 * @param {Number} phi
-		 * @param {Number} theta
+		 * @param {number} radius
+		 * @param {number} phi
+		 * @param {number} theta
+		 * @returns {Spherical}
 		 */
 		set(radius, phi, theta) {
 			this.radius = radius;
@@ -6171,8 +6123,8 @@
 
 		/**
 		 * Copies the values of the passed Spherical's radius, phi and theta properties to this spherical.
-		 * @param {t3d.Spherical} other
-		 * @return {t3d.Spherical}
+		 * @param {Spherical} other
+		 * @returns {Spherical}
 		 */
 		copy(other) {
 			this.radius = other.radius;
@@ -6183,7 +6135,7 @@
 
 		/**
 		 * Returns a new spherical with the same radius, phi and theta properties as this one.
-		 * @return {t3d.Spherical}
+		 * @returns {Spherical}
 		 */
 		clone() {
 			return new Spherical().copy(this);
@@ -6191,7 +6143,7 @@
 
 		/**
 		 * Restrict phi to be betwee EPS and PI-EPS.
-		 * @return {t3d.Spherical}
+		 * @returns {Spherical}
 		 */
 		makeSafe() {
 			const EPS = 0.000001;
@@ -6201,8 +6153,8 @@
 
 		/**
 		 * Sets values of this spherical's radius, phi and theta properties from the Vector3.
-		 * @param {t3d.Vector3} vec3
-		 * @return {t3d.Spherical}
+		 * @param {Vector3} vec3
+		 * @returns {Spherical}
 		 */
 		setFromVector3(vec3) {
 			this.radius = vec3.getLength();
@@ -6221,7 +6173,6 @@
 	 * Primary reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
 	 * Secondary reference: https://www.ppsloan.org/publications/StupidSH36.pdf
 	 * 3-band SH defined by 9 coefficients.
-	 * @memberof t3d
 	 */
 	class SphericalHarmonics3 {
 		/**
@@ -6241,8 +6192,8 @@
 
 		/**
 		 * Set this sphericalHarmonics3 value.
-		 * @param {t3d.Vector3[]} coefficients An array of SH coefficients.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {Vector3[]} coefficients An array of SH coefficients.
+		 * @returns {SphericalHarmonics3}
 		 */
 		set(coefficients) {
 			for (let i = 0; i < 9; i++) {
@@ -6253,7 +6204,7 @@
 
 		/**
 		 * Sets all SH coefficients to 0.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @returns {SphericalHarmonics3}
 		 */
 		zero() {
 			for (let i = 0; i < 9; i++) {
@@ -6264,9 +6215,9 @@
 
 		/**
 		 * Returns the radiance in the direction of the given normal.
-		 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
-		 * @param {t3d.Vector3} target - The result vector.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} normal - The normal vector (assumed to be unit length).
+		 * @param {Vector3} target - The result vector.
+		 * @returns {Vector3}
 		 */
 		getAt(normal, target) {
 			// normal is assumed to be unit length
@@ -6296,9 +6247,9 @@
 		/**
 		 * Reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
 		 * Returns the irradiance (radiance convolved with cosine lobe) in the direction of the given normal.
-		 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
-		 * @param {t3d.Vector3} target - The result vector.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} normal - The normal vector (assumed to be unit length).
+		 * @param {Vector3} target - The result vector.
+		 * @returns {Vector3}
 		 */
 		getIrradianceAt(normal, target) {
 			// normal is assumed to be unit length
@@ -6328,8 +6279,8 @@
 
 		/**
 		 * Adds the given SH to this instance.
-		 * @param {t3d.SphericalHarmonics3} sh - The SH to add.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {SphericalHarmonics3} sh - The SH to add.
+		 * @returns {SphericalHarmonics3}
 		 */
 		add(sh) {
 			for (let i = 0; i < 9; i++) {
@@ -6340,9 +6291,9 @@
 
 		/**
 		 * A convenience method for performing .add() and .scale() at once.
-		 * @param {t3d.SphericalHarmonics3} sh - The SH to add.
-		 * @param {t3d.Vector3} s - The scale factor.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {SphericalHarmonics3} sh - The SH to add.
+		 * @param {Vector3} s - The scale factor.
+		 * @returns {SphericalHarmonics3}
 		 */
 		addScaledSH(sh, s) {
 			for (let i = 0; i < 9; i++) {
@@ -6353,8 +6304,8 @@
 
 		/**
 		 * Multiply the s to this SphericalHarmonics3.
-		 * @param {Number} s - The scale factor.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {number} s - The scale factor.
+		 * @returns {SphericalHarmonics3}
 		 */
 		scale(s) {
 			for (let i = 0; i < 9; i++) {
@@ -6368,9 +6319,9 @@
 		 * Sets this coefficients vector to be the vector linearly interpolated between v1 and v2
 		 * where alpha is the percent distance along the line connecting the two vectors
 		 * - alpha = 0 will be v1, and alpha = 1 will be v2.
-		 * @param {t3d.SphericalHarmonics3} sh - The SH to interpolate with.
-		 * @param {Number} alpha - The alpha factor.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {SphericalHarmonics3} sh - The SH to interpolate with.
+		 * @param {number} alpha - The alpha factor.
+		 * @returns {SphericalHarmonics3}
 		 */
 		lerp(sh, alpha) {
 			for (let i = 0; i < 9; i++) {
@@ -6381,8 +6332,8 @@
 
 		/**
 		 * Returns true if the given SH and this instance have equal coefficients.
-		 * @param {t3d.SphericalHarmonics3} sh - The SH to compare with.
-		 * @return {Boolean}
+		 * @param {SphericalHarmonics3} sh - The SH to compare with.
+		 * @returns {boolean}
 		 */
 		equals(sh) {
 			for (let i = 0; i < 9; i++) {
@@ -6395,8 +6346,8 @@
 
 		/**
 		 * Copies the given SH to this instance.
-		 * @param {t3d.SphericalHarmonics3} sh - The SH to compare with.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {SphericalHarmonics3} sh - The SH to compare with.
+		 * @returns {SphericalHarmonics3}
 		 */
 		copy(sh) {
 			return this.set(sh.coefficients);
@@ -6404,7 +6355,7 @@
 
 		/**
 		 * Returns a new instance of SphericalHarmonics3 with equal coefficients.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @returns {SphericalHarmonics3}
 		 */
 		clone() {
 			return new this.constructor().copy(this);
@@ -6412,9 +6363,9 @@
 
 		/**
 		 * Sets the coefficients of this instance from the given array.
-		 * @param {Number[]} array - The array holding the numbers of the SH coefficients.
-		 * @param {Number} [offset=0] - The array offset.
-		 * @return {t3d.SphericalHarmonics3}
+		 * @param {number[]} array - The array holding the numbers of the SH coefficients.
+		 * @param {number} [offset=0] - The array offset.
+		 * @returns {SphericalHarmonics3}
 		 */
 		fromArray(array, offset = 0) {
 			const coefficients = this.coefficients;
@@ -6427,9 +6378,9 @@
 		/**
 		 * Returns an array with the coefficients, or copies them into the provided array.
 		 * The coefficients are represented as numbers.
-		 * @param {Number[]} [array] - The target array.
-		 * @param {Number} [offset=0] - The array offset.
-		 * @return {Number[]}
+		 * @param {number[]} [array] - The target array.
+		 * @param {number} [offset=0] - The array offset.
+		 * @returns {number[]}
 		 */
 		toArray(array = [], offset = 0) {
 			const coefficients = this.coefficients;
@@ -6441,8 +6392,8 @@
 
 		/**
 		 * Computes the SH basis for the given normal vector.
-		 * @param {t3d.Vector3} normal - The normal vector (assumed to be unit length).
-		 * @param {Number[]} array - The resulting SH basis.
+		 * @param {Vector3} normal - The normal vector (assumed to be unit length).
+		 * @param {number[]} shBasis - The resulting SH basis.
 		 */
 		static getBasisAt(normal, shBasis) {
 			// normal is assumed to be unit length
@@ -6475,13 +6426,12 @@
 
 	/**
 	 * A geometric triangle as defined by three Vector3s representing its three corners.
-	 * @memberof t3d
 	 */
 	class Triangle {
 		/**
-		 * @param {t3d.Vector3} [a=] - the first corner of the triangle. Default is a Vector3 at (0, 0, 0).
-		 * @param {t3d.Vector3} [b=] - the second corner of the triangle. Default is a Vector3 at (0, 0, 0).
-		 * @param {t3d.Vector3} [c=] - the final corner of the triangle. Default is a Vector3 at (0, 0, 0).
+		 * @param {Vector3} [a] - the first corner of the triangle. Default is a Vector3 at (0, 0, 0).
+		 * @param {Vector3} [b] - the second corner of the triangle. Default is a Vector3 at (0, 0, 0).
+		 * @param {Vector3} [c] - the final corner of the triangle. Default is a Vector3 at (0, 0, 0).
 		 */
 		constructor(a = new Vector3(), b = new Vector3(), c = new Vector3()) {
 			this.a = a;
@@ -6491,11 +6441,11 @@
 
 		/**
 		 * Calculate the normal vector of the triangle.
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @param {t3d.Vector3} c
-		 * @param {t3d.Vector3} [optionalTarget]
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @param {Vector3} c
+		 * @param {Vector3} [optionalTarget]
+		 * @returns {Vector3}
 		 */
 		static normal(a, b, c, optionalTarget) {
 			const result = optionalTarget || new Vector3();
@@ -6512,12 +6462,12 @@
 		/**
 		 * static/instance method to calculate barycentric coordinates.
 		 * based on: http://www.blackpawn.com/texts/pointinpoly/default.html
-		 * @param {t3d.Vector3} point - Vector3
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @param {t3d.Vector3} c
-		 * @param {t3d.Vector3} [target] - the result will be copied into this Vector3.
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} point - Vector3
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @param {Vector3} c
+		 * @param {Vector3} [target] - the result will be copied into this Vector3.
+		 * @returns {Vector3}
 		 */
 		static barycoordFromPoint(point, a, b, c, target) {
 			_v0.subVectors(c, a);
@@ -6547,11 +6497,11 @@
 
 		/**
 		 * Returns true if the passed point, when projected onto the plane of the triangle, lies within the triangle.
-		 * @param {t3d.Vector3} point
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @param {t3d.Vector3} c
-		 * @return {t3d.Vector3}
+		 * @param {Vector3} point
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @param {Vector3} c
+		 * @returns {Vector3}
 		 */
 		static containsPoint(point, a, b, c) {
 			this.barycoordFromPoint(point, a, b, c, _v3);
@@ -6560,10 +6510,10 @@
 
 		/**
 		 * Sets the triangle's a, b and c properties to the passed vector3s.
-		 * @param {t3d.Vector3} a
-		 * @param {t3d.Vector3} b
-		 * @param {t3d.Vector3} c
-		 * @return {t3d.Triangle}
+		 * @param {Vector3} a
+		 * @param {Vector3} b
+		 * @param {Vector3} c
+		 * @returns {Triangle}
 		 */
 		set(a, b, c) {
 			this.a.copy(a);
@@ -6575,14 +6525,13 @@
 
 	/**
 	 * The vector 4 class
-	 * @memberof t3d
 	 */
 	class Vector4 {
 		/**
-		 * @param {Number} [x=0] - the x value of this vector.
-		 * @param {Number} [y=0] - the y value of this vector.
-		 * @param {Number} [z=0] - the z value of this vector.
-		 * @param {Number} [w=1] - the w value of this vector.
+		 * @param {number} [x=0] - the x value of this vector.
+		 * @param {number} [y=0] - the y value of this vector.
+		 * @param {number} [z=0] - the z value of this vector.
+		 * @param {number} [w=1] - the w value of this vector.
 		 */
 		constructor(x = 0, y = 0, z = 0, w = 1) {
 			this.x = x;
@@ -6595,10 +6544,10 @@
 		 * Sets this vector to be the vector linearly interpolated between v1 and v2
 		 * where ratio is the percent distance along the line connecting the two vectors
 		 * - ratio = 0 will be v1, and ratio = 1 will be v2.
-		 * @param {t3d.Vector4} v1 - the starting Vector4.
-		 * @param {t3d.Vector4} v2 - Vector4 to interpolate towards.
-		 * @param {Number} ratio - interpolation factor, typically in the closed interval [0, 1].
-		 * @return {t3d.Vector4}
+		 * @param {Vector4} v1 - the starting Vector4.
+		 * @param {Vector4} v2 - Vector4 to interpolate towards.
+		 * @param {number} ratio - interpolation factor, typically in the closed interval [0, 1].
+		 * @returns {Vector4}
 		 */
 		lerpVectors(v1, v2, ratio) {
 			return this.subVectors(v2, v1).multiplyScalar(ratio).add(v1);
@@ -6606,11 +6555,11 @@
 
 		/**
 		 * Sets the x, y, z and w components of this vector.
-		 * @param {Number} x
-		 * @param {Number} y
-		 * @param {Number} z
-		 * @param {Number} w
-		 * @return {t3d.Vector4}
+		 * @param {number} x
+		 * @param {number} y
+		 * @param {number} z
+		 * @param {number} w
+		 * @returns {Vector4}
 		 */
 		set(x = 0, y = 0, z = 0, w = 1) {
 			this.x = x;
@@ -6622,7 +6571,7 @@
 
 		/**
 		 * Converts this vector to a unit vector - that is, sets it equal to a vector with the same direction as this one, but length 1.
-		 * @return {t3d.Vector4}
+		 * @returns {Vector4}
 		 */
 		normalize() {
 			return this.multiplyScalar(1 / (this.getLength() || 1));
@@ -6630,8 +6579,8 @@
 
 		/**
 		 * Multiplies this vector by scalar s.
-		 * @param {Number} scalar
-		 * @return {t3d.Vector4}
+		 * @param {number} scalar
+		 * @returns {Vector4}
 		 */
 		multiplyScalar(scalar) {
 			this.x *= scalar;
@@ -6643,8 +6592,8 @@
 
 		/**
 		 * Calculates the dot product of this vector and v.
-		 * @param {t3d.Vector4} v
-		 * @return {t3d.Vector4}
+		 * @param {Vector4} v
+		 * @returns {Vector4}
 		 */
 		dot(v) {
 			return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
@@ -6654,7 +6603,7 @@
 		 * Computes the square of the Euclidean length (straight-line length) from (0, 0, 0, 0) to (x, y, z, w).
 		 * If you are comparing the lengths of vectors, you should compare the length squared instead
 		 * as it is slightly more efficient to calculate.
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		getLengthSquared() {
 			return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
@@ -6662,7 +6611,7 @@
 
 		/**
 		 * Computes the Euclidean length (straight-line length) from (0, 0, 0, 0) to (x, y, z, w).
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		getLength() {
 			return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
@@ -6670,7 +6619,7 @@
 
 		/**
 		 * Computes the {@link https://en.wikipedia.org/wiki/Taxicab_geometry|Manhattan length}	from (0, 0, 0, 0) to (x, y, z, w).
-		 * @return {Number}
+		 * @returns {number}
 		 */
 		getManhattanLength() {
 			return Math.abs(this.x) + Math.abs(this.y) + Math.abs(this.z) + Math.abs(this.w);
@@ -6678,8 +6627,8 @@
 
 		/**
 		 * Multiplies this vector by 4 x 4 m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Vector4}
+		 * @param {Matrix4} m
+		 * @returns {Vector4}
 		 */
 		applyMatrix4(m) {
 			const x = this.x,
@@ -6696,8 +6645,8 @@
 
 		/**
 		 * Sets this vector to the position represented by the matrix m.
-		 * @param {t3d.Matrix4} m
-		 * @return {t3d.Vector4}
+		 * @param {Matrix4} m
+		 * @returns {Vector4}
 		 */
 		setFromMatrixPosition(m) {
 			const e = m.elements;
@@ -6710,8 +6659,8 @@
 
 		/**
 		 * Checks for strict equality of this vector and v.
-		 * @param {t3d.Vector4} v
-		 * @return {Boolean}
+		 * @param {Vector4} v
+		 * @returns {boolean}
 		 */
 		equals(v) {
 			return v.x === this.x && v.y === this.y && v.z === this.z && v.w === this.w;
@@ -6719,8 +6668,8 @@
 
 		/**
 		 * Adds v to this vector.
-		 * @param {t3d.Vector4} v
-		 * @return {t3d.Vector4}
+		 * @param {Vector4} v
+		 * @returns {Vector4}
 		 */
 		add(v) {
 			this.x += v.x;
@@ -6732,8 +6681,8 @@
 
 		/**
 		 * Multiplies this vector by v.
-		 * @param {t3d.Vector4} v
-		 * @return {t3d.Vector4}
+		 * @param {Vector4} v
+		 * @returns {Vector4}
 		 */
 		multiply(v) {
 			this.x *= v.x;
@@ -6745,9 +6694,9 @@
 
 		/**
 		 * Sets this vector to a - b.
-		 * @param {t3d.Vector4} a
-		 * @param {t3d.Vector4} b
-		 * @return {t3d.Vector4}
+		 * @param {Vector4} a
+		 * @param {Vector4} b
+		 * @returns {Vector4}
 		 */
 		subVectors(a, b) {
 			this.x = a.x - b.x;
@@ -6761,10 +6710,10 @@
 		 * Sets this vector's x value to be array[ offset + 0 ],
 		 * y value to be array[ offset + 1 ] z value to be array[ offset + 2 ]
 		 * and w value to be array[ offset + 3 ].
-		 * @param {Number[]} array - the source array.
-		 * @param {Number} [offset=0] - offset into the array.
-		 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @return {t3d.Vector4}
+		 * @param {number[]} array - the source array.
+		 * @param {number} [offset=0] - offset into the array.
+		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+		 * @returns {Vector4}
 		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let x = array[offset],
@@ -6786,10 +6735,10 @@
 
 		/**
 		 * Returns an array [x, y, z, w], or copies x, y, z and w into the provided array.
-		 * @param {Number[]} [array] - array to store this vector to. If this is not provided, a new array will be created.
-		 * @param {Number} [offset=0] - offset into the array.
-		 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @return {Number[]}
+		 * @param {number[]} [array] - array to store this vector to. If this is not provided, a new array will be created.
+		 * @param {number} [offset=0] - offset into the array.
+		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+		 * @returns {number[]}
 		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let x = this.x,
@@ -6811,7 +6760,7 @@
 
 		/**
 		 * Rounds the x, y, z and w values of this vector to the nearest integer value.
-		 * @return {t3d.Vector4}
+		 * @returns {Vector4}
 		 */
 		round() {
 			this.x = Math.round(this.x);
@@ -6823,7 +6772,7 @@
 
 		/**
 		 * Returns a new Vector4 with the same x, y, z and w values as this one.
-		 * @return {t3d.Vector4}
+		 * @returns {Vector4}
 		 */
 		clone() {
 			return new Vector4(this.x, this.y, this.z, this.w);
@@ -6831,8 +6780,8 @@
 
 		/**
 		 * Copies the values of the passed Vector4's x, y, z and w properties to this Vector4.
-		 * @param {t3d.Vector4} v
-		 * @return {t3d.Vector4}
+		 * @param {Vector4} v
+		 * @returns {Vector4}
 		 */
 		copy(v) {
 			this.x = v.x;
@@ -6845,10 +6794,10 @@
 
 	/**
 	 * Clone uniforms.
-	 * @method
-	 * @name t3d.cloneUniforms
-	 * @param {Object} value - The input uniforms.
-	 * @return {Object} - The output uniforms.
+	 * @function
+	 * @name cloneUniforms
+	 * @param {object} uniforms_src - The input uniforms.
+	 * @returns {object} - The output uniforms.
 	 */
 	function cloneUniforms(uniforms_src) {
 		const uniforms_dst = {};
@@ -6866,10 +6815,10 @@
 	/**
 	 * Clone json.
 	 * This is faster than JSON.parse(JSON.stringify()).
-	 * @method
-	 * @name t3d.cloneJson
-	 * @param {Object} obj - The input json.
-	 * @return {Object} - The output json.
+	 * @function
+	 * @name cloneJson
+	 * @param {object} obj - The input json.
+	 * @returns {object} - The output json.
 	 */
 	function cloneJson(obj) {
 		const newObj = Array.isArray(obj) ? [] : {};
@@ -6887,57 +6836,56 @@
 	const _mat4_1$2 = new Matrix4();
 
 	/**
-	 * This is the base class for most objects in t3d
+	 * This is the base class for most objects,
 	 * and provides a set of properties and methods for manipulating objects in 3D space.
-	 * @memberof t3d
 	 */
 	class Object3D {
 		constructor() {
 			/**
 			 * Unique number for this object instance.
 			 * @readonly
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.id = _object3DId++;
 
 			/**
 			 * UUID of this object instance.
 			 * This gets automatically assigned, so this shouldn't be edited.
-			 * @type {String}
+			 * @type {string}
 			 */
 			this.uuid = MathUtils.generateUUID();
 
 			/**
 			 * Optional name of the object (doesn't need to be unique).
-			 * @type {String}
+			 * @type {string}
 			 * @default ""
 			 */
 			this.name = '';
 
 			/**
 			 * A Vector3 representing the object's local position.
-			 * @type {t3d.Vector3}
+			 * @type {Vector3}
 			 * @default Vector3(0, 0, 0)
 			 */
 			this.position = new Vector3();
 
 			/**
 			 * The object's local scale.
-			 * @type {t3d.Vector3}
+			 * @type {Vector3}
 			 * @default Vector3(1, 1, 1)
 			 */
 			this.scale = new Vector3(1, 1, 1);
 
 			/**
-			 * Object's local rotation as an {@link t3d.Euler}, in radians.
-			 * @type {t3d.Euler}
+			 * Object's local rotation as an {@link Euler}, in radians.
+			 * @type {Euler}
 			 * @default Euler(0, 0, 0)
 			 */
 			this.euler = new Euler();
 
 			/**
-			 * Object's local rotation as a {@link t3d.Quaternion}.
-			 * @type {t3d.Quaternion}
+			 * Object's local rotation as a {@link Quaternion}.
+			 * @type {Quaternion}
 			 * @default Quaternion(0, 0, 0, 1)
 			 */
 			this.quaternion = new Quaternion();
@@ -6954,50 +6902,50 @@
 
 			/**
 			 * The local transform matrix.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.matrix = new Matrix4();
 
 			/**
 			 * The global transform of the object.
-			 * If the Object3D has no parent, then it's identical to the local transform {@link t3d.Object3D#matrix}.
-			 * @type {t3d.Matrix4}
+			 * If the Object3D has no parent, then it's identical to the local transform {@link Object3D#matrix}.
+			 * @type {Matrix4}
 			 */
 			this.worldMatrix = new Matrix4();
 
 			/**
 			 * Object's parent in the scene graph.
 			 * An object can have at most one parent.
-			 * @type {t3d.Object3D[]}
+			 * @type {Object3D[]}
 			 */
 			this.children = new Array();
 
 			/**
 			 * Object's parent in the scene graph.
 			 * An object can have at most one parent.
-			 * @type {t3d.Object3D}
+			 * @type {Object3D}
 			 */
 			this.parent = null;
 
 			/**
 			 * Whether the object gets rendered into shadow map.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.castShadow = false;
 
 			/**
 			 * Whether the material receives shadows.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.receiveShadow = false;
 
 			/**
 			 * Defines shadow map type.
-			 * Note: In webgl1 or {@link t3d.Scene#disableShadowSampler} is true, soft shadow types will fallback to POISSON_SOFT without warning.
+			 * Note: In webgl1 or {@link Scene#disableShadowSampler} is true, soft shadow types will fallback to POISSON_SOFT without warning.
 			 * Note: Point light only support POISSON_SOFT for now.
-			 * @type {t3d.SHADOW_TYPE}
+			 * @type {SHADOW_TYPE}
 			 * @default SHADOW_TYPE.PCF3_SOFT
 			 */
 			this.shadowType = SHADOW_TYPE.PCF3_SOFT;
@@ -7005,14 +6953,14 @@
 			/**
 			 * When this is set, it checks every frame if the object is in the frustum of the camera before rendering the object.
 			 * Otherwise the object gets rendered every frame even if it isn't visible.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.frustumCulled = true;
 
 			/**
 			 * Object gets rendered if true.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.visible = true;
@@ -7020,7 +6968,7 @@
 			/**
 			 * This value allows the default rendering order of scene graph objects to be overridden although opaque and transparent objects remain sorted independently.
 			 * Sorting is from lowest to highest renderOrder.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.renderOrder = 0;
@@ -7028,43 +6976,43 @@
 			/**
 			 * Render layer of this object.
 			 * RenderQueue will dispatch all renderable objects to the corresponding RenderQueueLayer according to object.renderLayer.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.renderLayer = 0;
 
 			/**
 			 * Whether it can be collected into the Render Queue.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.renderable = true;
 
 			/**
-			 * An object that can be used to store custom data about the {@link t3d.Object3D}.
+			 * An object that can be used to store custom data about the {@link Object3D}.
 			 * It should not hold references to functions as these will not be cloned.
-			 * @type {Object}
+			 * @type {object}
 			 * @default {}
 			 */
 			this.userData = {};
 
 			/**
 			 * When this is set, it calculates the matrix of position, (rotation or quaternion) and scale every frame and also recalculates the worldMatrix property.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.matrixAutoUpdate = true;
 
 			/**
 			 * When this is set, it calculates the matrix in that frame and resets this property to false.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.matrixNeedsUpdate = true;
 
 			/**
 			 * When this is set, it calculates the world matrix in that frame and resets this property to false.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.worldMatrixNeedsUpdate = true;
@@ -7082,7 +7030,7 @@
 
 		/**
 		 * Add object as child of this object.
-		 * @param {t3d.Object3D} object
+		 * @param {Object3D} object
 		 */
 		add(object) {
 			if (object === this) {
@@ -7099,7 +7047,7 @@
 
 		/**
 		 * Remove object as child of this object.
-		 * @param {t3d.Object3D} object
+		 * @param {Object3D} object
 		 */
 		remove(object) {
 			const index = this.children.indexOf(object);
@@ -7114,8 +7062,8 @@
 		 * Searches through the object's children and returns the first with a matching name.
 		 * Note that for most objects the name is an empty string by default.
 		 * You will have to set it manually to make use of this method.
-		 * @param {String} name - String to match to the children's {@link t3d.Object3D#name} property.
-		 * @return {t3d.Object3D}
+		 * @param {string} name - String to match to the children's {@link Object3D#name} property.
+		 * @returns {Object3D}
 		 */
 		getObjectByName(name) {
 			return this.getObjectByProperty('name', name);
@@ -7123,9 +7071,9 @@
 
 		/**
 		 * Searches through the object's children and returns the first with a property that matches the value given.
-		 * @param {String} name - the property name to search for.
-		 * @param {Number} value - value of the given property.
-		 * @return {t3d.Object3D}
+		 * @param {string} name - the property name to search for.
+		 * @param {number} value - value of the given property.
+		 * @returns {Object3D}
 		 */
 		getObjectByProperty(name, value) {
 			if (this[name] === value) return this;
@@ -7141,6 +7089,7 @@
 
 		/**
 		 * Update the local transform.
+		 * @param {boolean} force
 		 */
 		updateMatrix(force) {
 			if (this.matrixAutoUpdate || this.matrixNeedsUpdate) {
@@ -7165,9 +7114,9 @@
 
 		/**
 		 * Returns a vector representing the direction of object's positive z-axis in world space.
-		 * This call must be after {@link t3d.Object3D#updateMatrix}.
-		 * @param {Vector3} [optionalTarget=] — the result will be copied into this Vector3.
-		 * @return {Vector3} - the result.
+		 * This call must be after {@link Object3D#updateMatrix}.
+		 * @param {Vector3} [optionalTarget] — the result will be copied into this Vector3.
+		 * @returns {Vector3} - the result.
 		 */
 		getWorldDirection(optionalTarget = new Vector3()) {
 			const e = this.worldMatrix.elements;
@@ -7187,7 +7136,7 @@
 		/**
 		 * Method to get intersections between a casted ray and this object.
 		 * @abstract
-		 * @param {Ray} ray - The {@link t3d.Ray} instance.
+		 * @param {Ray} ray - The {@link Ray} instance.
 		 * @param {Array} intersects - output intersects array.
 		 */
 		raycast(ray, intersects) {}
@@ -7207,7 +7156,7 @@
 		/**
 		 * Returns a clone of this object and optionally all descendants.
 		 * @param {Function} [recursive=true] - if true, descendants of the object are also cloned.
-		 * @return {t3d.Object3D}
+		 * @returns {Object3D}
 		 */
 		clone(recursive) {
 			return new this.constructor().copy(this, recursive);
@@ -7215,9 +7164,9 @@
 
 		/**
 		 * Copy the given object into this object.
-		 * @param {t3d.Object3D} source - The object to be copied.
-		 * @param {Boolean} [recursive=true] - if true, descendants of the object are also copied.
-		 * @return {t3d.Object3D}
+		 * @param {Object3D} source - The object to be copied.
+		 * @param {boolean} [recursive=true] - if true, descendants of the object are also copied.
+		 * @returns {Object3D}
 		 */
 		copy(source, recursive = true) {
 			this.name = source.name;
@@ -7250,27 +7199,26 @@
 	 * - The light's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed light points down the -Z axis.
 	 * - all other light types inherit the properties and methods described here.
 	 * @abstract
-	 * @memberof t3d
-	 * @extends t3d.Object3D
+	 * @extends Object3D
 	 */
 	class Light extends Object3D {
 		/**
-		 * @param {Number} [color=0xffffff]
-		 * @param {Number} [intensity=1]
+		 * @param {number} [color=0xffffff]
+		 * @param {number} [intensity=1]
 		 */
 		constructor(color = 0xffffff, intensity = 1) {
 			super();
 
 			/**
 			 * Color of the light.
-			 * @type {t3d.Color3}
-			 * @default t3d.Color3(0xffffff)
+			 * @type {Color3}
+			 * @default Color3(0xffffff)
 			 */
 			this.color = new Color3(color);
 
 			/**
 			 * The light's intensity, or strength.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.intensity = intensity;
@@ -7278,28 +7226,28 @@
 			/**
 			 * Group mask of the light, indicating which lighting group the light belongs to. Default is 1 (binary 0001), meaning the light belongs to lighting group 0.
 			 * For example, to make the light effective in both lighting group 0 and lighting group 1, set groupMask to 3 (binary 0011).
-			 * Used in conjunction with {@link t3d.Material#lightingGroup}.
-			 * @type {Number}
+			 * Used in conjunction with {@link Material#lightingGroup}.
+			 * @type {number}
 			 * @default 1
 			 */
 			this.groupMask = 1;
 		}
 
 		/**
-				* Set light direction, this func will set quaternion of this light.
-				* @param {t3d.Vector3} target - The target that the light look at.
-				* @param {t3d.Vector3} up - The up direction of the light.
-				*/
+		 * Set light direction, this func will set quaternion of this light.
+		 * @param {Vector3} target - The target that the light look at.
+		 * @param {Vector3} up - The up direction of the light.
+		 */
 		lookAt(target, up) {
 			_mat4_1$1.lookAtRH(this.position, target, up);
 			this.quaternion.setFromRotationMatrix(_mat4_1$1);
 		}
 
 		/**
-				* Copies properties from the source light into this one.
-				* @param {t3d.Light} source - The source light.
-				* @return {t3d.Light} - This light.
-				*/
+		 * Copies properties from the source light into this one.
+		 * @param {Light} source - The source light.
+		 * @returns {Light} - This light.
+		 */
 		copy(source) {
 			super.copy(source);
 			this.color.copy(source.color);
@@ -7311,7 +7259,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Light.prototype.isLight = true;
@@ -7324,29 +7272,28 @@
 	 * - There is no shadow support.
 	 * - Only PBRMaterial are supported.
 	 * - You have to set LTC1 and LTC2 in RectAreaLight before using it.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * @extends Light
 	 */
 	class RectAreaLight extends Light {
 		/**
-		 * @param {Number} [color=0xffffff]
-		 * @param {Number} [intensity=1]
-		 * @param {Number} [width=10]
-		 * @param {Number} [height=10]
+		 * @param {number} [color=0xffffff]
+		 * @param {number} [intensity=1]
+		 * @param {number} [width=10]
+		 * @param {number} [height=10]
 		 */
 		constructor(color, intensity, width = 10, height = 10) {
 			super(color, intensity);
 
 			/**
 			 * The width of the light.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 10
 			 */
 			this.width = width;
 
 			/**
 			 * The height of the light.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 10
 			 */
 			this.height = height;
@@ -7356,7 +7303,7 @@
 		 * The light's power.
 		 * Power is the luminous power of the light measured in lumens (lm).
 		 * Changing the power will also change the light's intensity.
-		 * @type {Number}
+		 * @type {number}
 		 */
 		get power() {
 			// compute the light's luminous power (in lumens) from its intensity (in nits)
@@ -7376,7 +7323,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RectAreaLight.prototype.isRectAreaLight = true;
@@ -7384,14 +7331,14 @@
 	/**
 	 * The first LTC (Linearly Transformed Cosines).
 	 * If you want to use RectAreaLight, you have to set this before using it.
-	 * @type {Null|t3d.Texture2D}
+	 * @type {null | Texture2D}
 	 */
 	RectAreaLight.LTC1 = null;
 
 	/**
 	 * The second LTC (Linearly Transformed Cosines).
 	 * If you want to use RectAreaLight, you have to set this before using it.
-	 * @type {Null|t3d.Texture2D}
+	 * @type {null | Texture2D}
 	 */
 	RectAreaLight.LTC2 = null;
 
@@ -7928,11 +7875,10 @@
 	/**
 	 * RenderQueueLayer holds all the renderable objects.
 	 * Now has an opaque list and a transparent list.
-	 * @memberof t3d
 	 */
 	class RenderQueueLayer {
 		/**
-		 * @param {Number} id - layer id.
+		 * @param {number} id - layer id.
 		 */
 		constructor(id) {
 			this.id = id;
@@ -8128,7 +8074,6 @@
 	/**
 	 * RenderQueue is used to collect all renderable items, lights and skeletons from the scene.
 	 * Renderable items will be dispatched to the corresponding RenderQueueLayer according to the object's renderLayer property.
-	 * @memberof t3d
 	 */
 	class RenderQueue {
 		constructor() {
@@ -8182,10 +8127,10 @@
 		}
 
 		/**
-				* Set a render queue layer.
-		 * @param {Number} id - The layer id.
-				* @param {t3d.RenderQueueLayer} layer - The layer to set.
-				*/
+		 * Set a render queue layer.
+		 * @param {number} id - The layer id.
+		 * @param {RenderQueueLayer} layer - The layer to set.
+		 */
 		setLayer(id, layer) {
 			this.layerMap.set(id, layer);
 			this.layerList.push(layer);
@@ -8193,10 +8138,10 @@
 		}
 
 		/**
-				* Create and set a render queue layer.
-		 * @param {Number} id - The layer id.
-		 * @return {t3d.RenderQueueLayer}
-				*/
+		 * Create and set a render queue layer.
+		 * @param {number} id - The layer id.
+		 * @returns {RenderQueueLayer}
+		 */
 		createLayer(id) {
 			const layer = new RenderQueueLayer(id);
 			this.setLayer(id, layer);
@@ -8204,18 +8149,18 @@
 		}
 
 		/**
-				* Get the render queue layer.
-		 * @param {Number} id - The layer id.
-		 * @return {t3d.RenderQueueLayer}
-				*/
+		 * Get the render queue layer.
+		 * @param {number} id - The layer id.
+		 * @returns {RenderQueueLayer}
+		 */
 		getLayer(id) {
 			return this.layerMap.get(id);
 		}
 
 		/**
-				* Remove the render queue layer.
-		 * @param {Number} id - The layer id.
-				*/
+		 * Remove the render queue layer.
+		 * @param {number} id - The layer id.
+		 */
 		removeLayer(id) {
 			const layer = this.layerMap.get(id);
 			if (layer) {
@@ -8240,7 +8185,6 @@
 
 	/**
 	 * SceneData collect all render states about scene, Including lights.
-	 * @memberof t3d
 	 */
 	class SceneData {
 		constructor() {
@@ -8261,7 +8205,7 @@
 
 		/**
 		 * Update scene data.
-		 * @param {t3d.Scene}
+		 * @param {Scene} scene
 		 */
 		update(scene) {
 			this.useAnchorMatrix = !scene.anchorMatrix.isIdentity();
@@ -8302,7 +8246,6 @@
 
 	/**
 	 * RenderStates collect all render states about scene and camera.
-	 * @memberof t3d
 	 */
 	class RenderStates {
 		constructor(sceneData, lightingData) {
@@ -8327,7 +8270,7 @@
 
 		/**
 		 * Update render states about camera.
-		 * @param {t3d.Camera}
+		 * @param {Camera} camera
 		 */
 		updateCamera(camera) {
 			const sceneData = this.scene;
@@ -8369,11 +8312,9 @@
 	}
 
 	/**
-	 * Scenes allow you to set up what and where is to be rendered by t3d.
-	 * This is where you place objects, lights and cameras.
-	 * @constructor
-	 * @memberof t3d
-	 * @extends t3d.Object3D
+	 * Scenes allow you to set up what and where is to be rendered,
+	 * this is where you place objects, lights and cameras.
+	 * @extends Object3D
 	 */
 	class Scene extends Object3D {
 		/**
@@ -8383,8 +8324,8 @@
 			super();
 
 			/**
-			 * A {@link t3d.Fog} instance defining the type of fog that affects everything rendered in the scene.
-			 * @type {t3d.Fog}
+			 * A {@link Fog} instance defining the type of fog that affects everything rendered in the scene.
+			 * @type {Fog}
 			 * @default null
 			 */
 			this.fog = null;
@@ -8392,14 +8333,14 @@
 			/**
 			 * Sets the environment map for all materials in the scene.
 			 * However, it's not possible to overwrite an existing texture assigned to Material.envMap.
-			 * @type {t3d.TextureCube | Null}
+			 * @type {TextureCube | null}
 			 * @default null
 			 */
 			this.environment = null;
 
 			/**
 			 * The diffuse intensity of the environment map.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.envDiffuseIntensity = 1;
@@ -8407,16 +8348,16 @@
 			/**
 			 * The specular intensity of the environment map.
 			 * This value is multiplied with the envMapIntensity of the material to get the final intensity.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.envSpecularIntensity = 1;
 
 			/**
-			 * User-defined clipping planes specified as {@link t3d.Plane} objects in world space.
+			 * User-defined clipping planes specified as {@link Plane} objects in world space.
 			 * These planes apply to the scene.
 			 * Points in space whose dot product with the plane is negative are cut away.
-			 * @type {t3d.Plane[]}
+			 * @type {Plane[]}
 			 * @default []
 			 */
 			this.clippingPlanes = [];
@@ -8425,7 +8366,7 @@
 			 * Defines whether disable shadow sampler feature.
 			 * Shader with sampler2DShadow uniforms may cause unknown error on some android phones, set disableShadowSampler to true to avoid these bugs.
 			 * When this property is set to true, soft shadow types will fallback to POISSON_SOFT without warning.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.disableShadowSampler = false;
@@ -8433,7 +8374,7 @@
 			/**
 			 * whether to use a logarithmic depth buffer. It may be neccesary to use this if dealing with huge differences in scale in a single scene.
 			 * Note that this setting uses gl_FragDepth if available which disables the Early Fragment Test optimization and can cause a decrease in performance.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.logarithmicDepthBuffer = false;
@@ -8443,7 +8384,7 @@
 			 * If it is not an identity matrix, the actual lighting calculating and the world position in the shader, will be in the anchor coordinate system.
 			 * By setting this property, you can solve the floating point precision problem caused by the rendering object far away from the origin of the world coordinate system.
 			 * In addition, by setting the rotation, it can also repair the direction of the reflection.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.anchorMatrix = new Matrix4();
 			this._sceneData = new SceneData();
@@ -8455,7 +8396,7 @@
 
 		/**
 		 * The maximum number of lighting groups.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		set maxLightingGroups(value) {
@@ -8466,11 +8407,11 @@
 		}
 
 		/**
-		 * Update {@link t3d.RenderStates} for the scene and camera.
-		 * The lighting data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
-		 * @param {t3d.Camera} camera - The camera.
-		 * @param {Boolean} [updateScene=true] - Whether to update scene data.
-		 * @return {t3d.RenderStates} - The result render states.
+		 * Update {@link RenderStates} for the scene and camera.
+		 * The lighting data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
+		 * @param {Camera} camera - The camera.
+		 * @param {boolean} [updateScene=true] - Whether to update scene data.
+		 * @returns {RenderStates} - The result render states.
 		 */
 		updateRenderStates(camera, updateScene = true) {
 			if (!this._renderStatesMap.has(camera)) {
@@ -8485,24 +8426,24 @@
 		}
 
 		/**
-		 * Get {@link t3d.RenderStates} for the scene and camera.
-		 * The RenderStates will be updated by calling {@link t3d.Scene#updateRenderStates}.
-		 * The light data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
-		 * @param {t3d.Camera} camera - The camera.
-		 * @return {t3d.RenderQueue} - The target render queue.
+		 * Get {@link RenderStates} for the scene and camera.
+		 * The RenderStates will be updated by calling {@link Scene#updateRenderStates}.
+		 * The light data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
+		 * @param {Camera} camera - The camera.
+		 * @returns {RenderQueue} - The target render queue.
 		 */
 		getRenderStates(camera) {
 			return this._renderStatesMap.get(camera);
 		}
 
 		/**
-		 * Update {@link t3d.RenderQueue} for the scene and camera.
+		 * Update {@link RenderQueue} for the scene and camera.
 		 * Collect all visible meshes (and lights) from scene graph, and push meshes to render queue.
 		 * Light data will be stored in RenderStates.
-		 * @param {t3d.Camera} camera - The camera.
-		 * @param {Boolean} [collectLights=true] - Whether to collect light data.
-		 * @param {Boolean} [updateSkeletons=true] - Whether to update skeletons.
-		 * @return {t3d.RenderQueue} - The result render queue.
+		 * @param {Camera} camera - The camera.
+		 * @param {boolean} [collectLights=true] - Whether to collect light data.
+		 * @param {boolean} [updateSkeletons=true] - Whether to update skeletons.
+		 * @returns {RenderQueue} - The result render queue.
 		 */
 		updateRenderQueue(camera, collectLights = true, updateSkeletons = true) {
 			if (!this._renderQueueMap.has(camera)) {
@@ -8531,10 +8472,10 @@
 		}
 
 		/**
-		 * Get {@link t3d.RenderQueue} for the scene and camera.
-		 * The RenderQueue will be updated by calling {@link t3d.Scene#updateRenderQueue}.
-		 * @param {t3d.Camera} camera - The camera.
-		 * @return {t3d.RenderQueue} - The target render queue.
+		 * Get {@link RenderQueue} for the scene and camera.
+		 * The RenderQueue will be updated by calling {@link Scene#updateRenderQueue}.
+		 * @param {Camera} camera - The camera.
+		 * @returns {RenderQueue} - The target render queue.
 		 */
 		getRenderQueue(camera) {
 			return this._renderQueueMap.get(camera);
@@ -8565,7 +8506,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Scene.prototype.isScene = true;
@@ -8574,8 +8515,7 @@
 	/**
 	 * The camera used for rendering a 3D scene.
 	 * The camera's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed camera points down the -Z axis.
-	 * @memberof t3d
-	 * @extends t3d.Object3D
+	 * @extends Object3D
 	 */
 	class Camera extends Object3D {
 		/**
@@ -8587,61 +8527,61 @@
 			/**
 			 * This is the inverse of worldMatrix.
 			 * The matrix may be different from the value passed in the shader, scene.anchorMatrix is not considered here.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.viewMatrix = new Matrix4();
 
 			/**
 			 * This is the matrix which contains the projection.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.projectionMatrix = new Matrix4();
 
 			/**
 			 * This is the matrix which contains the projection.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.projectionMatrixInverse = new Matrix4();
 
 			/**
 			 * This is the matrix which contains the projection and view matrix.
 			 * The matrix may be different from the value passed in the shader, scene.anchorMatrix is not considered here.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.projectionViewMatrix = new Matrix4();
 
 			/**
 			 * The frustum of the camera.
-			 * @type {t3d.Frustum}
+			 * @type {Frustum}
 			 */
 			this.frustum = new Frustum();
 
 			/**
 			 * The factor of gamma.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 2.0
 			 */
 			this.gammaFactor = 2.0;
 
 			/**
 			 * Output pixel encoding.
-			 * @type {t3d.TEXEL_ENCODING_TYPE}
-			 * @default t3d.TEXEL_ENCODING_TYPE.LINEAR
+			 * @type {TEXEL_ENCODING_TYPE}
+			 * @default TEXEL_ENCODING_TYPE.LINEAR
 			 */
 			this.outputEncoding = TEXEL_ENCODING_TYPE.LINEAR;
 
 			/**
 			 * Where on the screen is the camera rendered in normalized coordinates.
 			 * The values in rect range from zero (left/bottom) to one (right/top).
-			 * @type {t3d.Vector4}
-			 * @default t3d.Vector4(0, 0, 1, 1)
+			 * @type {Vector4}
+			 * @default Vector4(0, 0, 1, 1)
 			 */
 			this.rect = new Vector4(0, 0, 1, 1);
 
 			/**
 			 * When this is set, it checks every frame if objects are in the frustum of the camera before rendering objects.
 			 * Otherwise objects gets rendered every frame even if it isn't visible.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.frustumCulled = true;
@@ -8649,9 +8589,8 @@
 
 		/**
 		 * Set view by look at, this func will set quaternion of this camera.
-		 * @method
-		 * @param {t3d.Vector3} target - The target that the camera look at.
-		 * @param {t3d.Vector3} up - The up direction of the camera.
+		 * @param {Vector3} target - The target that the camera look at.
+		 * @param {Vector3} up - The up direction of the camera.
 		 */
 		lookAt(target, up) {
 			_mat4_1.lookAtRH(this.position, target, up);
@@ -8660,12 +8599,12 @@
 
 		/**
 		 * Set orthographic projection matrix.
-		 * @param {Number} left — Camera frustum left plane.
-		 * @param {Number} right — Camera frustum right plane.
-		 * @param {Number} bottom — Camera frustum bottom plane.
-		 * @param {Number} top — Camera frustum top plane.
-		 * @param {Number} near — Camera frustum near plane.
-		 * @param {Number} far — Camera frustum far plane.
+		 * @param {number} left — Camera frustum left plane.
+		 * @param {number} right — Camera frustum right plane.
+		 * @param {number} bottom — Camera frustum bottom plane.
+		 * @param {number} top — Camera frustum top plane.
+		 * @param {number} near — Camera frustum near plane.
+		 * @param {number} far — Camera frustum far plane.
 		 */
 		setOrtho(left, right, bottom, top, near, far) {
 			this.projectionMatrix.set(2 / (right - left), 0, 0, -(right + left) / (right - left), 0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom), 0, 0, -2 / (far - near), -(far + near) / (far - near), 0, 0, 0, 1);
@@ -8674,10 +8613,10 @@
 
 		/**
 		 * Set perspective projection matrix.
-		 * @param {Number} fov — Camera frustum vertical field of view.
-		 * @param {Number} aspect — Camera frustum aspect ratio.
-		 * @param {Number} near — Camera frustum near plane.
-		 * @param {Number} far — Camera frustum far plane.
+		 * @param {number} fov — Camera frustum vertical field of view.
+		 * @param {number} aspect — Camera frustum aspect ratio.
+		 * @param {number} near — Camera frustum near plane.
+		 * @param {number} far — Camera frustum far plane.
 		 */
 		setPerspective(fov, aspect, near, far) {
 			this.projectionMatrix.set(1 / (aspect * Math.tan(fov / 2)), 0, 0, 0, 0, 1 / Math.tan(fov / 2), 0, 0, 0, 0, -(far + near) / (far - near), -2 * far * near / (far - near), 0, 0, -1, 0);
@@ -8709,7 +8648,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Camera.prototype.isCamera = true;
@@ -8732,33 +8671,32 @@
 
 	/**
 	 * Class representing triangular polygon mesh based objects.
-	 * Also serves as a base for other classes such as {@link t3d.SkinnedMesh}.
-	 * @memberof t3d
-	 * @extends t3d.Object3D
+	 * Also serves as a base for other classes such as {@link SkinnedMesh}.
+	 * @extends Object3D
 	 */
 	class Mesh extends Object3D {
 		/**
-		 * @param {t3d.Geometry} geometry — an instance of {@link t3d.Geometry}.
-		 * @param {t3d.Material} material - a single or an array of {@link t3d.Material}.
+		 * @param {Geometry} geometry — an instance of {@link Geometry}.
+		 * @param {Material} material - a single or an array of {@link Material}.
 		 */
 		constructor(geometry, material) {
 			super();
 
 			/**
-			 * an instance of {@link t3d.Geometry}.
-			 * @type {t3d.Geometry}
+			 * an instance of {@link Geometry}.
+			 * @type {Geometry}
 			 */
 			this.geometry = geometry;
 
 			/**
-			 * a single or an array of {@link t3d.Material}.
-			 * @type {t3d.Material|t3d.Material[]}
+			 * a single or an array of {@link Material}.
+			 * @type {Material|Material[]}
 			 */
 			this.material = material;
 
 			/**
 			 * An array of weights typically from 0-1 that specify how much of the morph is applied.
-			 * @type {Number[]|null}
+			 * @type {number[] | null}
 			 * @default null
 			 */
 			this.morphTargetInfluences = null;
@@ -8767,9 +8705,9 @@
 		/**
 		 * Get the local-space position of the vertex at the given index,
 		 * taking into account the current animation state of both morph targets and skinning.
-		 * @param {Number} index - The index of the vertex.
-		 * @param {t3d.Vector3} target - The target vector.
-		 * @return {t3d.Vector3} The target vector.
+		 * @param {number} index - The index of the vertex.
+		 * @param {Vector3} target - The target vector.
+		 * @returns {Vector3} The target vector.
 		 */
 		getVertexPosition(index, target) {
 			const geometry = this.geometry;
@@ -8848,7 +8786,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Mesh.prototype.isMesh = true;
@@ -8912,56 +8850,55 @@
 	 * The Attribute add structural information to Buffer.
 	 * This class stores data for an attribute (such as vertex positions, face indices, normals, colors, UVs, and any custom attributes ) associated with a Geometry, which allows for more efficient passing of data to the GPU.
 	 * Data is stored as vectors of any length (defined by size).
-	 * @memberof t3d
 	 */
 	class Attribute {
 		/**
-		 * @param {t3d.Buffer} buffer - The Buffer instance passed in the constructor.
-				* @param {Number} [size=buffer.stride] - The number of values of the array that should be associated with a particular vertex. For instance, if this attribute is storing a 3-component vector (such as a position, normal, or color), then size should be 3.
-				* @param {Number} [offset=0] - The offset in the underlying array buffer where an item starts.
-		 * @param {Boolean} [normalized=false] - Indicates how the underlying data in the buffer maps to the values in the GLSL shader code.
+		 * @param {Buffer} buffer - The Buffer instance passed in the constructor.
+		 * @param {number} [size=buffer.stride] - The number of values of the array that should be associated with a particular vertex. For instance, if this attribute is storing a 3-component vector (such as a position, normal, or color), then size should be 3.
+		 * @param {number} [offset=0] - The offset in the underlying array buffer where an item starts.
+		 * @param {boolean} [normalized=false] - Indicates how the underlying data in the buffer maps to the values in the GLSL shader code.
 		 */
 		constructor(buffer, size = buffer.stride, offset = 0, normalized = false) {
 			/**
-						 * The Buffer instance passed in the constructor.
-						 * @type {t3d.Buffer}
-						 */
+			 * The Buffer instance passed in the constructor.
+			 * @type {Buffer}
+			 */
 			this.buffer = buffer;
 
 			/**
-						 * The number of values of the buffer that should be associated with the attribute.
-						 * @type {Number}
+			 * The number of values of the buffer that should be associated with the attribute.
+			 * @type {number}
 			 * @default buffer.stride
-						 */
+			 */
 			this.size = size;
 
 			/**
-						 * The offset in the underlying buffer where an item starts.
-						 * @type {Number}
-						 * @default 0
-						 */
+			 * The offset in the underlying buffer where an item starts.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.offset = offset;
 
 			/**
-						 * Indicates how the underlying data in the buffer maps to the values in the GLSL shader code.
-						 * @type {Boolean}
-						 * @default false
-						 */
+			 * Indicates how the underlying data in the buffer maps to the values in the GLSL shader code.
+			 * @type {boolean}
+			 * @default false
+			 */
 			this.normalized = normalized;
 
 			/**
-						 * Instance cadence, the number of instances drawn for each vertex in the buffer, non-instance attributes must be 0.
-						 * @type {Number}
-						 * @default 0
-						 */
+			 * Instance cadence, the number of instances drawn for each vertex in the buffer, non-instance attributes must be 0.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.divisor = 0;
 		}
 
 		/**
-				* Copy the parameters from the passed attribute.
-				* @param {t3d.Attribute} source - The attribute to be copied.
-				* @return {t3d.Attribute}
-				*/
+		 * Copy the parameters from the passed attribute.
+		 * @param {Attribute} source - The attribute to be copied.
+		 * @returns {Attribute}
+		 */
 		copy(source) {
 			this.buffer = source.buffer;
 			this.size = source.size;
@@ -8972,14 +8909,14 @@
 		}
 
 		/**
-				* Return a new attribute with the same parameters as this attribute.
-		 * @param {Object} buffers - A WeakMap to save shared buffers.
-				* @return {t3d.Attribute}
-				*/
+		 * Return a new attribute with the same parameters as this attribute.
+		 * @param {object} buffers - A WeakMap to save shared buffers.
+		 * @returns {Attribute}
+		 */
 		clone(buffers) {
 			let attribute;
 			if (!buffers) {
-				console.warn('t3d.Attribute.clone(): now requires a WeakMap as an argument to save shared buffers.');
+				console.warn('Attribute.clone(): now requires a WeakMap as an argument to save shared buffers.');
 				attribute = new Attribute(this.buffer.clone(), this.size, this.offset, this.normalized);
 				attribute.divisor = this.divisor;
 				return attribute;
@@ -8995,56 +8932,55 @@
 
 	/**
 	 * The Buffer contain the data that is used for the geometry of 3D models, animations, and skinning.
-	 * @memberof t3d
 	 */
 	class Buffer {
 		/**
 		 * @param {TypedArray} array -- A typed array with a shared buffer. Stores the geometry data.
-				* @param {Number} stride -- The number of typed-array elements per vertex.
+		 * @param {number} stride -- The number of typed-array elements per vertex.
 		 */
 		constructor(array, stride) {
 			/**
-						 * A typed array with a shared buffer.
-						 * Stores the geometry data.
-						 * @type {TypedArray}
-						 */
+			 * A typed array with a shared buffer.
+			 * Stores the geometry data.
+			 * @type {TypedArray}
+			 */
 			this.array = array;
 
 			/**
-						 * The number of typed-array elements per vertex.
-						 * @type {Number}
-						 */
+			 * The number of typed-array elements per vertex.
+			 * @type {number}
+			 */
 			this.stride = stride;
 
 			/**
-						 * Gives the total number of elements in the array.
-						 * @type {Number}
-						 */
+			 * Gives the total number of elements in the array.
+			 * @type {number}
+			 */
 			this.count = array !== undefined ? array.length / stride : 0;
 
 			/**
-						 * Defines the intended usage pattern of the data store for optimization purposes.
-						 * Corresponds to the usage parameter of WebGLRenderingContext.bufferData().
-						 * @type {t3d.BUFFER_USAGE}
-						 * @default t3d.BUFFER_USAGE.STATIC_DRAW
-						 */
+			 * Defines the intended usage pattern of the data store for optimization purposes.
+			 * Corresponds to the usage parameter of WebGLRenderingContext.bufferData().
+			 * @type {BUFFER_USAGE}
+			 * @default BUFFER_USAGE.STATIC_DRAW
+			 */
 			this.usage = BUFFER_USAGE.STATIC_DRAW;
 
 			/**
-						 * Object containing offset and count.
-						 * @type {Object}
-						 * @default { offset: 0, count: - 1 }
-						 */
+			 * Object containing offset and count.
+			 * @type {object}
+			 * @default { offset: 0, count: - 1 }
+			 */
 			this.updateRange = {
 				offset: 0,
 				count: -1
 			};
 
 			/**
-						 * A version number, incremented every time the data is changed.
-						 * @type {Number}
-						 * @default 0
-						 */
+			 * A version number, incremented every time the data is changed.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.version = 0;
 		}
 
@@ -9055,8 +8991,8 @@
 
 		/**
 		 * Copies another Buffer to this Buffer.
-		 * @param {t3d.Buffer} source - The buffer to be copied.
-		 * @return {t3d.Buffer}
+		 * @param {Buffer} source - The buffer to be copied.
+		 * @returns {Buffer}
 		 */
 		copy(source) {
 			this.array = new source.array.constructor(source.array);
@@ -9068,7 +9004,7 @@
 
 		/**
 		 * Return a copy of this buffer.
-		 * @return {t3d.Buffer}
+		 * @returns {Buffer}
 		 */
 		clone() {
 			const array = new this.array.constructor(this.array);
@@ -9088,9 +9024,8 @@
 	/**
 	 * An efficient representation of mesh, line, or point geometry.
 	 * Includes vertex positions, face indices, normals, colors, UVs, and custom attributes within buffers, reducing the cost of passing all this data to the GPU.
-	 * To read and edit data in {@link t3d.Geometry#attributes}.
-	 * @memberof t3d
-	 * @extends t3d.EventDispatcher
+	 * To read and edit data in {@link Geometry#attributes}.
+	 * @extends EventDispatcher
 	 */
 	class Geometry extends EventDispatcher {
 		/**
@@ -9102,7 +9037,7 @@
 			/**
 			 * Unique number for this geometry instance.
 			 * @readonly
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.id = _geometryId++;
 
@@ -9110,20 +9045,20 @@
 			 * UUID of this geometry instance.
 			 * This gets automatically assigned, so this shouldn't be edited.
 			 * @readonly
-			 * @type {String}
+			 * @type {string}
 			 */
 			this.uuid = MathUtils.generateUUID();
 
 			/**
 			 * This hashmap has as id the name of the attribute to be set and as value the buffer to set it to.
-			 * Rather than accessing this property directly, use {@link t3d.Geometry#addAttribute} and {@link t3d.Geometry#getAttribute} to access attributes of this geometry.
-			 * @type {Object}
+			 * Rather than accessing this property directly, use {@link Geometry#addAttribute} and {@link Geometry#getAttribute} to access attributes of this geometry.
+			 * @type {object}
 			 */
 			this.attributes = {};
 
 			/**
 			 * Hashmap of Attributes Array for morph targets.
-			 * @type {Object}
+			 * @type {object}
 			 */
 			this.morphAttributes = {};
 
@@ -9131,21 +9066,21 @@
 			 * Allows for vertices to be re-used across multiple triangles; this is called using "indexed triangles" and each triangle is associated with the indices of three vertices.
 			 * This attribute therefore stores the index of each vertex for each triangular face.
 			 * If this attribute is not set, the renderer assumes that each three contiguous positions represent a single triangle.
-			 * @type {t3d.Attribute|Null}
+			 * @type {Attribute | null}
 			 */
 			this.index = null;
 
 			/**
-			 * Bounding box for the bufferGeometry, which can be calculated with {@link t3d.Geometry#computeBoundingBox}.
-			 * @type {t3d.Box3}
-			 * @default t3d.Box3()
+			 * Bounding box for the bufferGeometry, which can be calculated with {@link Geometry#computeBoundingBox}.
+			 * @type {Box3}
+			 * @default Box3()
 			 */
 			this.boundingBox = new Box3();
 
 			/**
-			 * Bounding sphere for the bufferGeometry, which can be calculated with {@link t3d.Geometry#computeBoundingSphere}.
-			 * @type {t3d.Sphere}
-			 * @default t3d.Sphere()
+			 * Bounding sphere for the bufferGeometry, which can be calculated with {@link Geometry#computeBoundingSphere}.
+			 * @type {Sphere}
+			 * @default Sphere()
 			 */
 			this.boundingSphere = new Sphere();
 
@@ -9160,16 +9095,16 @@
 
 			/**
 			 * The number of instances to be rendered. If set to -1 (default), instanced rendering is disabled.
-						 * This property is used for instanced rendering, where multiple copies of the geometry
-						 * are drawn with a single draw call.
-			 * @type {Number}
+			 * This property is used for instanced rendering, where multiple copies of the geometry
+			 * are drawn with a single draw call.
+			 * @type {number}
 			 * @default -1
 			 */
 			this.instanceCount = -1;
 
 			/**
 			 * A version number, incremented every time the attribute object or index object changes to mark VAO drity.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.version = 0;
@@ -9178,8 +9113,8 @@
 		/**
 		 * Adds an attribute to this geometry.
 		 * Use this rather than the attributes property.
-		 * @param {String} name
-		 * @param {t3d.Attribute} attribute
+		 * @param {string} name
+		 * @param {Attribute} attribute
 		 */
 		addAttribute(name, attribute) {
 			this.attributes[name] = attribute;
@@ -9187,8 +9122,8 @@
 
 		/**
 		 * Returns the attribute with the specified name.
-		 * @param {String} name
-		 * @return {t3d.Attribute}
+		 * @param {string} name
+		 * @returns {Attribute}
 		 */
 		getAttribute(name) {
 			return this.attributes[name];
@@ -9196,15 +9131,15 @@
 
 		/**
 		 * Removes the attribute with the specified name.
-		 * @param {String} name
+		 * @param {string} name
 		 */
 		removeAttribute(name) {
 			delete this.attributes[name];
 		}
 
 		/**
-		 * Set the {@link t3d.Geometry#index} buffer.
-		 * @param {Array|t3d.Attribute|Null} index
+		 * Set the {@link Geometry#index} buffer.
+		 * @param {Array | Attribute | null} index
 		 */
 		setIndex(index) {
 			if (Array.isArray(index)) {
@@ -9216,10 +9151,10 @@
 		}
 
 		/**
-		 * Adds a group to this geometry; see the {@link t3d.Geometry#groups} for details.
-		 * @param {Number} start
-		 * @param {Number} count
-		 * @param {Number} [materialIndex=0]
+		 * Adds a group to this geometry; see the {@link Geometry#groups} for details.
+		 * @param {number} start
+		 * @param {number} count
+		 * @param {number} [materialIndex=0]
 		 */
 		addGroup(start, count, materialIndex = 0) {
 			this.groups.push({
@@ -9237,7 +9172,7 @@
 		}
 
 		/**
-		 * Computes bounding box of the geometry, updating {@link t3d.Geometry#boundingBox}.
+		 * Computes bounding box of the geometry, updating {@link Geometry#boundingBox}.
 		 * Bounding boxes aren't computed by default. They need to be explicitly computed.
 		 */
 		computeBoundingBox() {
@@ -9259,7 +9194,7 @@
 		}
 
 		/**
-		 * Computes bounding sphere of the geometry, updating {@link t3d.Geometry#boundingSphere}.
+		 * Computes bounding sphere of the geometry, updating {@link Geometry#boundingSphere}.
 		 * Bounding spheres aren't computed by default. They need to be explicitly computed.
 		 */
 		computeBoundingSphere() {
@@ -9317,8 +9252,8 @@
 
 		/**
 		 * Copies another Geometry to this Geometry.
-		 * @param {t3d.Geometry} source - The geometry to be copied.
-		 * @return {t3d.Geometry}
+		 * @param {Geometry} source - The geometry to be copied.
+		 * @returns {Geometry}
 		 */
 		copy(source) {
 			let name, i, l;
@@ -9378,7 +9313,7 @@
 
 		/**
 		 * Creates a clone of this Geometry.
-		 * @return {t3d.Geometry}
+		 * @returns {Geometry}
 		 */
 		clone() {
 			return new Geometry().copy(this);
@@ -9395,8 +9330,7 @@
 
 	/**
 	 * A transform object for UV coordinates.
-	 * @memberof t3d
-	 * @extends t3d.Matrix3
+	 * @extends Matrix3
 	 */
 	class TransformUV extends Matrix3 {
 		/**
@@ -9414,7 +9348,7 @@
 		/**
 		 * Update the matrix for UV transformation based on the offset, scale, rotation and center.
 		 * If needsUpdate is false, this method will do nothing.
-		 * @return {t3d.TransformUV} This object.
+		 * @returns {TransformUV} This object.
 		 */
 		update() {
 			if (!this.needsUpdate) return this;
@@ -9426,7 +9360,7 @@
 		/**
 		 * Update the matrix for UV transformation based on the offset, scale, rotation and center.
 		 * This method will always update the matrix regardless of the needsUpdate flag.
-		 * @return {t3d.TransformUV} This object.
+		 * @returns {TransformUV} This object.
 		 */
 		updateMatrix() {
 			return this.setUvTransform(this.offset.x, this.offset.y, this.scale.x, this.scale.y, this.rotation, this.center.x, this.center.y);
@@ -9434,8 +9368,8 @@
 
 		/**
 		 * Copy the properties of another TransformUV object.
-		 * @param {t3d.TransformUV|t3d.Matrix3} source - The object to copy the properties from.
-		 * @return {t3d.TransformUV} This object.
+		 * @param {TransformUV|Matrix3} source - The object to copy the properties from.
+		 * @returns {TransformUV} This object.
 		 */
 		copy(source) {
 			super.copy(source);
@@ -9452,7 +9386,7 @@
 
 		/**
 		 * Clone this TransformUV object.
-		 * @return {t3d.TransformUV} The cloned object.
+		 * @returns {TransformUV} The cloned object.
 		 */
 		clone() {
 			return new this.constructor().copy(this);
@@ -9461,7 +9395,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	TransformUV.prototype.isTransformUV = true;
@@ -9470,12 +9404,11 @@
 
 	/**
 	 * Abstract base class for materials.
-	 * Materials describe the appearance of {@link t3d.Object3D}.
+	 * Materials describe the appearance of {@link Object3D}.
 	 * They are defined in a (mostly) renderer-independent way, so you don't have to rewrite materials if you decide to use a different renderer.
 	 * The following properties and methods are inherited by all other material types (although they may have different defaults).
 	 * @abstract
-	 * @extends t3d.EventDispatcher
-	 * @memberof t3d
+	 * @extends EventDispatcher
 	 */
 	class Material extends EventDispatcher {
 		constructor() {
@@ -9484,61 +9417,61 @@
 			/**
 			 * Unique number for this material instance.
 			 * @readonly
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.id = _materialId++;
 
 			/**
 			 * UUID of this material instance.
 			 * This gets automatically assigned, so this shouldn't be edited.
-			 * @type {String}
+			 * @type {string}
 			 */
 			this.uuid = MathUtils.generateUUID();
 
 			/**
 			 * Type of the material.
-			 * @type {t3d.MATERIAL_TYPE}
-			 * @default t3d.MATERIAL_TYPE.SHADER
+			 * @type {MATERIAL_TYPE}
+			 * @default MATERIAL_TYPE.SHADER
 			 */
 			this.type = MATERIAL_TYPE.SHADER;
 
 			/**
 			 * Custom shader name. This naming can help ShaderMaterial to optimize the length of the index hash string.
-			 * It is valid only when the material type is t3d.MATERIAL_TYPE.SHADER.
+			 * It is valid only when the material type is MATERIAL_TYPE.SHADER.
 			 * Otherwise, if the material is a built-in type, the name of the shader will always be equal to the material type.
-			 * @type {String}
+			 * @type {string}
 			 * @default ""
 			 */
 			this.shaderName = '';
 
 			/**
 			 * Custom defines of the shader.
-			 * Only valid when the material type is t3d.MATERIAL_TYPE.SHADER.
-			 * @type {Object}
+			 * Only valid when the material type is MATERIAL_TYPE.SHADER.
+			 * @type {object}
 			 * @default {}
 			 */
 			this.defines = {};
 
 			/**
 			 * Custom uniforms of the shader.
-			 * Only valid when the material type is t3d.MATERIAL_TYPE.SHADER.
-			 * @type {Object}
+			 * Only valid when the material type is MATERIAL_TYPE.SHADER.
+			 * @type {object}
 			 * @default {}
 			 */
 			this.uniforms = {};
 
 			/**
 			 * Custom GLSL code for vertex shader.
-			 * Only valid when the material type is t3d.MATERIAL_TYPE.SHADER.
-			 * @type {String}
+			 * Only valid when the material type is MATERIAL_TYPE.SHADER.
+			 * @type {string}
 			 * @default ""
 			 */
 			this.vertexShader = '';
 
 			/**
 			 * Custom GLSL code for fragment shader.
-			 * Only valid when the material type is t3d.MATERIAL_TYPE.SHADER.
-			 * @type {String}
+			 * Only valid when the material type is MATERIAL_TYPE.SHADER.
+			 * @type {string}
 			 * @default ""
 			 */
 			this.fragmentShader = '';
@@ -9546,7 +9479,7 @@
 			/**
 			 * Override the renderer's default precision for this material.
 			 * Can be "highp", "mediump" or "lowp".
-			 * @type {String}
+			 * @type {string}
 			 * @default null
 			 */
 			this.precision = null;
@@ -9555,7 +9488,7 @@
 			 * The bitmask of UV coordinate channels to use for the external texture.
 			 * This will be combined with the internal UV coordinate mask collected from the renderer by default.
 			 * Finally, it will be used to determine which UV coordinate attribute to use and to generate the shader code.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.extUvCoordMask = 0;
@@ -9564,78 +9497,78 @@
 			 * Defines whether this material is transparent.
 			 * This has an effect on rendering as transparent objects need special treatment and are rendered after non-transparent objects.
 			 * When set to true, the extent to which the material is transparent is controlled by setting it's blending property.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.transparent = false;
 
 			/**
 			 * Which blending to use when displaying objects with this material.
-			 * This must be set to t3d.BLEND_TYPE.CUSTOM to use custom blendSrc, blendDst or blendEquation.
-			 * @type {t3d.BLEND_TYPE}
-			 * @default t3d.BLEND_TYPE.NORMAL
+			 * This must be set to BLEND_TYPE.CUSTOM to use custom blendSrc, blendDst or blendEquation.
+			 * @type {BLEND_TYPE}
+			 * @default BLEND_TYPE.NORMAL
 			 */
 			this.blending = BLEND_TYPE.NORMAL;
 
 			/**
 			 * Blending source.
-			 * The {@link t3d.Material#blending} must be set to t3d.BLEND_TYPE.CUSTOM for this to have any effect.
-			 * @type {t3d.BLEND_FACTOR}
-			 * @default t3d.BLEND_FACTOR.SRC_ALPHA
+			 * The {@link Material#blending} must be set to BLEND_TYPE.CUSTOM for this to have any effect.
+			 * @type {BLEND_FACTOR}
+			 * @default BLEND_FACTOR.SRC_ALPHA
 			 */
 			this.blendSrc = BLEND_FACTOR.SRC_ALPHA;
 
 			/**
 			 * Blending destination.
-			 * The {@link t3d.Material#blending} must be set to t3d.BLEND_TYPE.CUSTOM for this to have any effect.
-			 * @type {t3d.BLEND_FACTOR}
-			 * @default t3d.BLEND_FACTOR.ONE_MINUS_SRC_ALPHA
+			 * The {@link Material#blending} must be set to BLEND_TYPE.CUSTOM for this to have any effect.
+			 * @type {BLEND_FACTOR}
+			 * @default BLEND_FACTOR.ONE_MINUS_SRC_ALPHA
 			 */
 			this.blendDst = BLEND_FACTOR.ONE_MINUS_SRC_ALPHA;
 
 			/**
 			 * Blending equation to use when applying blending.
-			 * The {@link t3d.Material#blending} must be set to t3d.BLEND_TYPE.CUSTOM for this to have any effect.
-			 * @type {t3d.BLEND_EQUATION}
-			 * @default t3d.BLEND_EQUATION.ADD
+			 * The {@link Material#blending} must be set to BLEND_TYPE.CUSTOM for this to have any effect.
+			 * @type {BLEND_EQUATION}
+			 * @default BLEND_EQUATION.ADD
 			 */
 			this.blendEquation = BLEND_EQUATION.ADD;
 
 			/**
-			 * The transparency of the {@link t3d.Material#blendSrc}.
-			 * The {@link t3d.Material#blending} must be set to t3d.BLEND_TYPE.CUSTOM for this to have any effect.
-			 * @type {t3d.BLEND_FACTOR}
+			 * The transparency of the {@link Material#blendSrc}.
+			 * The {@link Material#blending} must be set to BLEND_TYPE.CUSTOM for this to have any effect.
+			 * @type {BLEND_FACTOR}
 			 * @default null
 			 */
 			this.blendSrcAlpha = null;
 
 			/**
-			 * The transparency of the {@link t3d.Material#blendDst}.
-			 * The {@link t3d.Material#blending} must be set to t3d.BLEND_TYPE.CUSTOM for this to have any effect.
-			 * @type {t3d.BLEND_FACTOR}
+			 * The transparency of the {@link Material#blendDst}.
+			 * The {@link Material#blending} must be set to BLEND_TYPE.CUSTOM for this to have any effect.
+			 * @type {BLEND_FACTOR}
 			 * @default null
 			 */
 			this.blendDstAlpha = null;
 
 			/**
-			 * The tranparency of the {@link t3d.Material#blendEquation}.
-			 * The {@link t3d.Material#blending} must be set to t3d.BLEND_TYPE.CUSTOM for this to have any effect.
-			 * @type {t3d.BLEND_EQUATION}
+			 * The tranparency of the {@link Material#blendEquation}.
+			 * The {@link Material#blending} must be set to BLEND_TYPE.CUSTOM for this to have any effect.
+			 * @type {BLEND_EQUATION}
 			 * @default null
 			 */
 			this.blendEquationAlpha = null;
 
 			/**
 			 * Whether to premultiply the alpha (transparency) value.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.premultipliedAlpha = false;
 
 			/**
 			 * Defines whether vertex coloring is used.
-			 * @type {t3d.VERTEX_COLOR}
-			 * @default t3d.VERTEX_COLOR.NONE
+			 * @type {VERTEX_COLOR}
+			 * @default VERTEX_COLOR.NONE
 			 */
 			this.vertexColors = VERTEX_COLOR.NONE;
 
@@ -9643,7 +9576,7 @@
 			 * Defines whether precomputed vertex tangents, which must be provided in a vec4 "tangent" attribute, are used.
 			 * When disabled, tangents are derived automatically.
 			 * Using precomputed tangents will give more accurate normal map details in some cases, such as with mirrored UVs.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.vertexTangents = false;
@@ -9651,28 +9584,28 @@
 			/**
 			 * Float in the range of 0.0 - 1.0 indicating how transparent the material is.
 			 * A value of 0.0 indicates fully transparent, 1.0 is fully opaque.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.opacity = 1;
 
 			/**
 			 * The diffuse color.
-			 * @type {t3d.Color3}
-			 * @default t3d.Color3(0xffffff)
+			 * @type {Color3}
+			 * @default Color3(0xffffff)
 			 */
 			this.diffuse = new Color3(0xffffff);
 
 			/**
 			 * The diffuse map.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.diffuseMap = null;
 
 			/**
 			 * Define the UV chanel for the diffuse map to use starting from 0 and defaulting to 0.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.diffuseMapCoord = 0;
@@ -9680,36 +9613,36 @@
 			/**
 			 * The uv-transform matrix of diffuse map.
 			 * This will also affect other maps that cannot be individually specified uv transform, such as normalMap, bumpMap, etc.
-			 * @type {t3d.TransformUV}
-			 * @default t3d.TransformUV()
+			 * @type {TransformUV}
+			 * @default TransformUV()
 			 */
 			this.diffuseMapTransform = new TransformUV();
 
 			/**
 			 * The alpha map.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.alphaMap = null;
 
 			/**
 			 * Define the UV chanel for the alpha map to use starting from 0 and defaulting to 0.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.alphaMapCoord = 0;
 
 			/**
 			 * The uv-transform matrix of alpha map.
-			 * @type {t3d.TransformUV}
-			 * @default t3d.TransformUV()
+			 * @type {TransformUV}
+			 * @default TransformUV()
 			 */
 			this.alphaMapTransform = new TransformUV();
 
 			/**
 			 * Emissive (light) color of the material, essentially a solid color unaffected by other lighting.
-			 * @type {t3d.Color3}
-			 * @default t3d.Color3(0x000000)
+			 * @type {Color3}
+			 * @default Color3(0x000000)
 			 */
 			this.emissive = new Color3(0x000000);
 
@@ -9717,71 +9650,71 @@
 			 * Set emissive (glow) map.
 			 * The emissive map color is modulated by the emissive color.
 			 * If you have an emissive map, be sure to set the emissive color to something other than black.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.emissiveMap = null;
 
 			/**
 			 * Define the UV chanel for the emissive map to use starting from 0 and defaulting to 0.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.emissiveMapCoord = 0;
 
 			/**
 			 * The uv-transform matrix of emissive map.
-			 * @type {t3d.TransformUV}
-			 * @default t3d.TransformUV()
+			 * @type {TransformUV}
+			 * @default TransformUV()
 			 */
 			this.emissiveMapTransform = new TransformUV();
 
 			/**
 			 * The red channel of this texture is used as the ambient occlusion map.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.aoMap = null;
 
 			/**
 			 * Intensity of the ambient occlusion effect.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.aoMapIntensity = 1.0;
 
 			/**
 			 * Define the UV chanel for the ao map to use starting from 0 and defaulting to 0.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.aoMapCoord = 0;
 
 			/**
 			 * The uv-transform matrix of ao map.
-			 * @type {t3d.TransformUV}
-			 * @default t3d.TransformUV()
+			 * @type {TransformUV}
+			 * @default TransformUV()
 			 */
 			this.aoMapTransform = new TransformUV();
 
 			/**
 			 * The normal map.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.normalMap = null;
 
 			/**
 			 * How much the normal map affects the material. Typical ranges are 0-1.
-			 * @type {t3d.Vector2}
-			 * @default t3d.Vector2(1,1)
+			 * @type {Vector2}
+			 * @default Vector2(1,1)
 			 */
 			this.normalScale = new Vector2(1, 1);
 
 			/**
 			 * The texture to create a bump map.
 			 * The black and white values map to the perceived depth in relation to the lights. Bump doesn't actually affect the geometry of the object, only the lighting.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.bumpMap = null;
@@ -9789,7 +9722,7 @@
 			/**
 			 * How much the bump map affects the material.
 			 * Typical ranges are 0-1.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.bumpScale = 1;
@@ -9797,7 +9730,7 @@
 			/**
 			 * The environment map.
 			 * If set to undefined, then the material will not inherit envMap from scene.environment.
-			 * @type {t3d.TextureCube|null|undefined}
+			 * @type {TextureCube|null|undefined}
 			 * @default null
 			 */
 			this.envMap = null;
@@ -9805,29 +9738,29 @@
 			/**
 			 * Scales the effect of the environment map by multiplying its color.
 			 * This can effect both the diffuse and specular components of environment map.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.envMapIntensity = 1;
 
 			/**
 			 * How to combine the result of the surface's color with the environment map, if any.
-			 * This has no effect in a {@link t3d.PBRMaterial}.
-			 * @type {t3d.ENVMAP_COMBINE_TYPE}
-			 * @default t3d.ENVMAP_COMBINE_TYPE.MULTIPLY
+			 * This has no effect in a {@link PBRMaterial}.
+			 * @type {ENVMAP_COMBINE_TYPE}
+			 * @default ENVMAP_COMBINE_TYPE.MULTIPLY
 			 */
 			this.envMapCombine = ENVMAP_COMBINE_TYPE.MULTIPLY;
 
 			/**
-			 * Which depth function to use. See the {@link t3d.COMPARE_FUNC} constants for all possible values.
-			 * @type {t3d.COMPARE_FUNC}
-			 * @default t3d.COMPARE_FUNC.LEQUAL
+			 * Which depth function to use. See the {@link COMPARE_FUNC} constants for all possible values.
+			 * @type {COMPARE_FUNC}
+			 * @default COMPARE_FUNC.LEQUAL
 			 */
 			this.depthFunc = COMPARE_FUNC.LEQUAL;
 
 			/**
 			 * Whether to have depth test enabled when rendering this material.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.depthTest = true;
@@ -9835,7 +9768,7 @@
 			/**
 			 * Whether rendering this material has any effect on the depth buffer.
 			 * When drawing 2D overlays it can be useful to disable the depth writing in order to layer several things together without creating z-index artifacts.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.depthWrite = true;
@@ -9843,7 +9776,7 @@
 			/**
 			 * Whether to render the material's color.
 			 * This can be used in conjunction with a mesh's renderOrder property to create invisible objects that occlude other objects.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.colorWrite = true;
@@ -9851,69 +9784,69 @@
 			/**
 			 * Whether stencil operations are performed against the stencil buffer.
 			 * In order to perform writes or comparisons against the stencil buffer this value must be true.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.stencilTest = false;
 
 			/**
 			 * The bit mask to use when writing to the stencil buffer.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0xFF
 			 */
 			this.stencilWriteMask = 0xff;
 
 			/**
 			 * The stencil comparison function to use.
-			 * See the {@link t3d.COMPARE_FUNC} constants for all possible values.
-			 * @type {t3d.COMPARE_FUNC}
-			 * @default t3d.COMPARE_FUNC.ALWAYS
+			 * See the {@link COMPARE_FUNC} constants for all possible values.
+			 * @type {COMPARE_FUNC}
+			 * @default COMPARE_FUNC.ALWAYS
 			 */
 			this.stencilFunc = COMPARE_FUNC.ALWAYS;
 
 			/**
 			 * The value to use when performing stencil comparisons or stencil operations.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.stencilRef = 0;
 
 			/**
 			 * The bit mask to use when comparing against the stencil buffer.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0xFF
 			 */
 			this.stencilFuncMask = 0xff;
 
 			/**
 			 * Which stencil operation to perform when the comparison function returns false.
-			 * See the {@link t3d.OPERATION} constants for all possible values.
-			 * @type {t3d.OPERATION}
-			 * @default t3d.OPERATION.KEEP
+			 * See the {@link OPERATION} constants for all possible values.
+			 * @type {OPERATION}
+			 * @default OPERATION.KEEP
 			 */
 			this.stencilFail = OPERATION.KEEP;
 
 			/**
 			 * Which stencil operation to perform when the comparison function returns true but the depth test fails.
-			 * See the {@link t3d.OPERATION} constants for all possible values.
-			 * @type {t3d.OPERATION}
-			 * @default t3d.OPERATION.KEEP
+			 * See the {@link OPERATION} constants for all possible values.
+			 * @type {OPERATION}
+			 * @default OPERATION.KEEP
 			 */
 			this.stencilZFail = OPERATION.KEEP;
 
 			/**
 			 * Which stencil operation to perform when the comparison function returns true and the depth test passes.
-			 * See the {@link t3d.OPERATION} constants for all possible values.
-			 * @type {t3d.OPERATION}
-			 * @default t3d.OPERATION.KEEP
+			 * See the {@link OPERATION} constants for all possible values.
+			 * @type {OPERATION}
+			 * @default OPERATION.KEEP
 			 */
 			this.stencilZPass = OPERATION.KEEP;
 
 			/**
 			 * The stencil comparison function to use.
-			 * See the {@link t3d.COMPARE_FUNC} constants for all possible values.
+			 * See the {@link COMPARE_FUNC} constants for all possible values.
 			 * You can explicitly specify the two-sided stencil function state by defining stencilFuncBack, stencilRefBack and stencilFuncMaskBack.
-			 * @type {t3d.COMPARE_FUNC|null}
+			 * @type {COMPARE_FUNC|null}
 			 * @default null
 			 */
 			this.stencilFuncBack = null;
@@ -9921,7 +9854,7 @@
 			/**
 			 * The value to use when performing stencil comparisons or stencil operations.
 			 * You can explicitly specify the two-sided stencil function state by defining stencilFuncBack, stencilRefBack and stencilFuncMaskBack.
-			 * @type {Number|null}
+			 * @type {number | null}
 			 * @default null
 			 */
 			this.stencilRefBack = null;
@@ -9929,43 +9862,43 @@
 			/**
 			 * The bit mask to use when comparing against the stencil buffer.
 			 * You can explicitly specify the two-sided stencil function state by defining stencilFuncBack, stencilRefBack and stencilFuncMaskBack.
-			 * @type {Number|null}
+			 * @type {number | null}
 			 * @default null
 			 */
 			this.stencilFuncMaskBack = null;
 
 			/**
 			 * Which stencil operation to perform when the comparison function returns false.
-			 * See the {@link t3d.OPERATION} constants for all possible values.
+			 * See the {@link OPERATION} constants for all possible values.
 			 * You can explicitly specify the two-sided stencil op state by defining stencilFailBack, stencilZFailBack and stencilZPassBack.
-			 * @type {t3d.OPERATION|null}
+			 * @type {OPERATION|null}
 			 * @default null
 			 */
 			this.stencilFailBack = null;
 
 			/**
 			 * Which stencil operation to perform when the comparison function returns true but the depth test fails.
-			 * See the {@link t3d.OPERATION} constants for all possible values.
+			 * See the {@link OPERATION} constants for all possible values.
 			 * You can explicitly specify the two-sided stencil op state by defining stencilFailBack, stencilZFailBack and stencilZPassBack.
-			 * @type {t3d.OPERATION|null}
+			 * @type {OPERATION|null}
 			 * @default null
 			 */
 			this.stencilZFailBack = null;
 
 			/**
 			 * Which stencil operation to perform when the comparison function returns true and the depth test passes.
-			 * See the {@link t3d.OPERATION} constants for all possible values.
+			 * See the {@link OPERATION} constants for all possible values.
 			 * You can explicitly specify the two-sided stencil op state by defining stencilFailBack, stencilZFailBack and stencilZPassBack.
-			 * @type {t3d.OPERATION|null}
+			 * @type {OPERATION|null}
 			 * @default null
 			 */
 			this.stencilZPassBack = null;
 
 			/**
-			 * User-defined clipping planes specified as t3d.Plane objects in world space.
+			 * User-defined clipping planes specified as Plane objects in world space.
 			 * These planes apply to the objects this material is attached to.
 			 * Points in space whose signed distance to the plane is negative are clipped (not rendered).
-			 * @type {t3d.Plane[]}
+			 * @type {Plane[]}
 			 * @default null
 			 */
 			this.clippingPlanes = null;
@@ -9973,7 +9906,7 @@
 			/**
 			 * Sets the alpha value to be used when running an alpha test.
 			 * The material will not be renderered if the opacity is lower than this value.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.alphaTest = 0;
@@ -9981,50 +9914,50 @@
 			/**
 			 * Enables alpha to coverage.
 			 * Can only be used when MSAA is enabled.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.alphaToCoverage = false;
 
 			/**
 			 * Defines which side of faces will be rendered - front, back or double.
-			 * @type {t3d.DRAW_SIDE}
-			 * @default t3d.DRAW_SIDE.FRONT
+			 * @type {DRAW_SIDE}
+			 * @default DRAW_SIDE.FRONT
 			 */
 			this.side = DRAW_SIDE.FRONT;
 
 			/**
 			 * Whether to use polygon offset.
 			 * This corresponds to the GL_POLYGON_OFFSET_FILL WebGL feature.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.polygonOffset = false;
 
 			/**
 			 * Sets the polygon offset factor.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.polygonOffsetFactor = 0;
 
 			/**
 			 * Sets the polygon offset units.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.polygonOffsetUnits = 0;
 
 			/**
 			 * Define whether the material is rendered with flat shading or smooth shading.
-			 * @type {t3d.SHADING_TYPE}
-			 * @default t3d.SHADING_TYPE.SMOOTH_SHADING
+			 * @type {SHADING_TYPE}
+			 * @default SHADING_TYPE.SMOOTH_SHADING
 			 */
 			this.shading = SHADING_TYPE.SMOOTH_SHADING;
 
 			/**
 			 * Whether to apply dithering to the color to remove the appearance of banding.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.dithering = false;
@@ -10032,37 +9965,37 @@
 			/**
 			 * Whether the material is affected by lights.
 			 * If set true, renderer will try to upload light uniforms.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.acceptLight = false;
 
 			/**
 			 * The lighting group of the material.
-			 * Used in conjunction with {@link t3d.Light#groupMask}.
-			 * @type {Number}
+			 * Used in conjunction with {@link Light#groupMask}.
+			 * @type {number}
 			 * @default 0
 			 */
 			this.lightingGroup = 0;
 
 			/**
 			 * Whether the material is affected by fog.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.fog = true;
 
 			/**
 			 * Determines how the mesh triangles are constructed from the vertices.
-			 * @type {t3d.DRAW_MODE}
-			 * @default t3d.DRAW_MODE.TRIANGLES
+			 * @type {DRAW_MODE}
+			 * @default DRAW_MODE.TRIANGLES
 			 */
 			this.drawMode = DRAW_MODE.TRIANGLES;
 
 			/**
 			 * Whether the material uniforms need to be updated every draw call.
 			 * If set false, the material uniforms are only updated once per frame , this can help optimize performance.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.forceUpdateUniforms = true;
@@ -10070,7 +10003,7 @@
 			/**
 			 * Specifies that the material needs to be recompiled.
 			 * This property is automatically set to true when instancing a new material.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.needsUpdate = true;
@@ -10078,8 +10011,8 @@
 
 		/**
 		 * Copy the parameters from the passed material into this material.
-		 * @param {t3d.Material} source - The material to be copied.
-		 * @return {t3d.Material}
+		 * @param {Material} source - The material to be copied.
+		 * @returns {Material}
 		 */
 		copy(source) {
 			this.shaderName = source.shaderName;
@@ -10159,7 +10092,7 @@
 
 		/**
 		 * Return a new material with the same parameters as this material.
-		 * @return {t3d.Material}
+		 * @returns {Material}
 		 */
 		clone() {
 			return new this.constructor().copy(this);
@@ -10179,17 +10112,16 @@
 	/**
 	 * A material rendered with custom shaders.
 	 * A shader is a small program written in GLSL that runs on the GPU.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class ShaderMaterial extends Material {
 		/**
-		 * @param {Object} shader - Shader object for the shader material.
-		 * @param {String} shader.name - Name of the shader.
-		 * @param {Object} shader.defines - Defines of the shader.
-		 * @param {Object} shader.uniforms - Uniforms of the shader.
-		 * @param {String} shader.vertexShader - Vertex shader GLSL code.
-		 * @param {String} shader.fragmentShader - Fragment shader GLSL code.
+		 * @param {object} shader - Shader object for the shader material.
+		 * @param {string} shader.name - Name of the shader.
+		 * @param {object} shader.defines - Defines of the shader.
+		 * @param {object} shader.uniforms - Uniforms of the shader.
+		 * @param {string} shader.vertexShader - Vertex shader GLSL code.
+		 * @param {string} shader.fragmentShader - Fragment shader GLSL code.
 		 */
 		constructor(shader) {
 			super();
@@ -10207,16 +10139,15 @@
 
 	/**
 	 * Shader post pass.
-	 * @memberof t3d
 	 */
 	class ShaderPostPass {
 		/**
-		 * @param {Object} shader - Shader object for the shader material.
-		 * @param {String} shader.name - Name of the shader.
-		 * @param {Object} shader.defines - Defines of the shader.
-		 * @param {Object} shader.uniforms - Uniforms of the shader.
-		 * @param {String} shader.vertexShader - Vertex shader GLSL code.
-		 * @param {String} shader.fragmentShader - Fragment shader GLSL code.
+		 * @param {object} shader - Shader object for the shader material.
+		 * @param {string} shader.name - Name of the shader.
+		 * @param {object} shader.defines - Defines of the shader.
+		 * @param {object} shader.uniforms - Uniforms of the shader.
+		 * @param {string} shader.vertexShader - Vertex shader GLSL code.
+		 * @param {string} shader.fragmentShader - Fragment shader GLSL code.
 		 */
 		constructor(shader) {
 			const scene = new Scene();
@@ -10246,7 +10177,7 @@
 
 		/**
 		 * Render the post pass.
-		 * @param {t3d.ThinRenderer} renderer
+		 * @param {ThinRenderer} renderer
 		 */
 		render(renderer) {
 			renderer.beginRender();
@@ -10266,8 +10197,7 @@
 	/**
 	 * A material for drawing geometry by depth.
 	 * Depth is based off of the camera near and far plane. White is nearest, black is farthest.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class DepthMaterial extends Material {
 		/**
@@ -10279,7 +10209,7 @@
 
 			/**
 			 * Encoding for depth packing.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.packToRGBA = false;
@@ -10288,8 +10218,7 @@
 
 	/**
 	 * A material for drawing geometry by distance.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class DistanceMaterial extends Material {
 		/**
@@ -10303,7 +10232,6 @@
 
 	/**
 	 * Shadow map pass.
-	 * @memberof t3d
 	 */
 	class ShadowMapPass {
 		constructor() {
@@ -10324,14 +10252,14 @@
 			/**
 			 * Define which render layers will produce shadows.
 			 * If the value is Null, it means that all render layers will produce shadows.
-			 * @type {Null|Array}
+			 * @type {null | Array}
 			 * @default null
 			 */
 			this.shadowLayers = null;
 
 			/**
 			 * Whether transparent objects can cast shadows.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.transparentShadow = false;
@@ -10354,7 +10282,7 @@
 
 		/**
 		 * Get geometry function for shadow render options.
-		 * @type {Null|Function}
+		 * @type {null | Function}
 		 */
 		set getGeometry(func) {
 			if (func) {
@@ -10384,8 +10312,8 @@
 
 		/**
 		 * Render shadow map.
-		 * @param {t3d.ThinRenderer} renderer
-		 * @param {t3d.Scene} scene
+		 * @param {ThinRenderer} renderer
+		 * @param {Scene} scene
 		 */
 		render(renderer, scene) {
 			oldClearColor.copy(renderer.getClearColor());
@@ -10492,24 +10420,23 @@
 	 * Instead of using a Map, we store the property map directly on the object itself,
 	 * which provides better lookup performance.
 	 * This is generally used to store the gpu resources corresponding to objects.
-	 * @memberof t3d
 	 */
 	class PropertyMap {
 		/**
-				* Create a new PropertyMap.
-				* @param {String} prefix - The prefix of the properties name.
-				*/
+		 * Create a new PropertyMap.
+		 * @param {string} prefix - The prefix of the properties name.
+		 */
 		constructor(prefix) {
 			this._key = prefix + '$';
 			this._count = 0;
 		}
 
 		/**
-				* Get the properties of the object.
-				* If the object does not have properties, create a new one.
-				* @param {Object} object - The object to get properties.
-				* @returns {Object} - The properties of the object.
-				*/
+		 * Get the properties of the object.
+		 * If the object does not have properties, create a new one.
+		 * @param {object} object - The object to get properties.
+		 * @returns {object} - The properties of the object.
+		 */
 		get(object) {
 			const key = this._key;
 			let properties = object[key];
@@ -10522,9 +10449,9 @@
 		}
 
 		/**
-				* Delete the properties of the object.
-				* @param {Object} object - The object to delete properties.
-				*/
+		 * Delete the properties of the object.
+		 * @param {object} object - The object to delete properties.
+		 */
 		delete(object) {
 			const key = this._key;
 			const properties = object[key];
@@ -10535,9 +10462,9 @@
 		}
 
 		/**
-				* Get the number of objects that have properties.
-				* @returns {Number} - The number of objects that have properties.
-				*/
+		 * Get the number of objects that have properties.
+		 * @returns {number} - The number of objects that have properties.
+		 */
 		size() {
 			return this._count;
 		}
@@ -10547,7 +10474,6 @@
 	 * Render info collector.
 	 * If you want to collect information about the rendering of this frame,
 	 * pass an instance of RenderInfo to RenderOption when calling renderRenderableList.
-	 * @memberof t3d
 	 */
 	class RenderInfo {
 		constructor() {
@@ -10579,9 +10505,9 @@
 			 * Method of update render info.
 			 * This method will be executed after each draw.
 			 * @private
-			 * @param {Number} count
-			 * @param {t3d.DRAW_MODE} mode
-			 * @param {Number} instanceCount
+			 * @param {number} count
+			 * @param {DRAW_MODE} mode
+			 * @param {number} instanceCount
 			 */
 			this.update = function (count, mode, instanceCount) {
 				render.calls++;
@@ -10600,9 +10526,9 @@
 			};
 
 			/**
-						 * A series of statistical information of rendering process, include calls, triangles, lines and points.
-						 * @type {Object}
-						 */
+			 * A series of statistical information of rendering process, include calls, triangles, lines and points.
+			 * @type {object}
+			 */
 			this.render = render;
 		}
 	}
@@ -10611,7 +10537,6 @@
 
 	/**
 	 * Base class for WebGL and WebGPU renderers.
-	 * @memberof t3d
 	 */
 	class ThinRenderer {
 		/**
@@ -10628,16 +10553,16 @@
 
 			/**
 			 * An object containing details about the capabilities of the current RenderingContext.
-			 * @type {Object}
+			 * @type {object}
 			 */
 			this.capabilities = {};
 
 			/**
 			 * The shader compiler options.
-			 * @type {Object}
-			 * @property {Boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
-			 * @property {Boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
-			 * @property {Number} maxMaterialPrograms - The maximum number of programs that one material can cache, defaults to 5.
+			 * @type {object}
+			 * @property {boolean} checkErrors - Whether to use error checking when compiling shaders, defaults to true.
+			 * @property {boolean} compileAsynchronously - Whether to compile shaders asynchronously, defaults to false.
+			 * @property {number} maxMaterialPrograms - The maximum number of programs that one material can cache, defaults to 5.
 			 */
 			this.shaderCompileOptions = {
 				checkErrors: true,
@@ -10647,15 +10572,15 @@
 
 			/**
 			 * The lighting options.
-			 * @type {Object}
-			 * @property {Object} clustered - The clustered lighting options.
-			 * @property {Boolean} clustered.enabled - Whether to use clustered lighting, defaults to false.
-			 * @property {Number} clustered.maxClusterLights - The maximum number of lights, defaults to 1024.
-			 * @property {Boolean} clustered.useFloatPrecision - Whether the lights are stored as floats, defaults to false (half floats).
+			 * @type {object}
+			 * @property {object} clustered - The clustered lighting options.
+			 * @property {boolean} clustered.enabled - Whether to use clustered lighting, defaults to false.
+			 * @property {number} clustered.maxClusterLights - The maximum number of lights, defaults to 1024.
+			 * @property {boolean} clustered.useFloatPrecision - Whether the lights are stored as floats, defaults to false (half floats).
 			 * @property {Vector3} clustered.gridDimensions - The number of cells in each dimension, defaults to Vector3(16, 8, 32).
-			 * @property {Number} clustered.maxLightsPerCell - The maximum number of lights per cell, defaults to 256.
+			 * @property {number} clustered.maxLightsPerCell - The maximum number of lights per cell, defaults to 256.
 			 * @property {Vector2} clustered.zClip - The near and far clipping planes for the cells, defaults to Vector2(-1, -1) (clip based on camera near and far planes).
-			 * @property {Number} clustered.version - The version of the clustered lighting options. If the options change, the version should be incremented, defaults to 0.
+			 * @property {number} clustered.version - The version of the clustered lighting options. If the options change, the version should be incremented, defaults to 0.
 			 */
 			this.lightingOptions = {
 				clustered: {
@@ -10670,10 +10595,10 @@
 			};
 
 			/**
-						 * Whether to perform readPixel operations asynchronously.
-						 * @type {Boolean}
+			 * Whether to perform readPixel operations asynchronously.
+			 * @type {boolean}
 			 * @default false
-						 */
+			 */
 			this.asyncReadPixel = false;
 			this._passInfo = {
 				// Whether the renderer is in the process of pass rendering.
@@ -10700,29 +10625,29 @@
 		}
 
 		/**
-		 * @typedef {Object} t3d.RenderOptions - The render options for renderRenderableItem and renderRenderableList methods.
+		 * @typedef {object} RenderOptions - The render options for renderRenderableItem and renderRenderableList methods.
 		 * @property {Function} getGeometry - (Optional) Get renderable geometry.
 		 * @property {Function} getMaterial - (Optional) Get renderable material.
 		 * @property {Function} beforeRender - (Optional) Before render each renderable item.
 		 * @property {Function} afterRender - (Optional) After render each renderable item.
 		 * @property {Function} ifRender - (Optional) If render the renderable item.
-		 * @property {t3d.RenderInfo} renderInfo - (Optional) Render info for collect information.
-		 * @property {Boolean} onlyCompile - (Optional) Only compile shader, do not render.
+		 * @property {RenderInfo} renderInfo - (Optional) Render info for collect information.
+		 * @property {boolean} onlyCompile - (Optional) Only compile shader, do not render.
 		 */
 
 		/**
 		 * Render a single renderable item with render states.
-		 * @param {Object} renderable - The renderable item.
-		 * @param {t3d.RenderStates} renderStates - The render states.
-		 * @param {t3d.RenderOptions} [options=] - The render options for this render task.
+		 * @param {object} renderable - The renderable item.
+		 * @param {RenderStates} renderStates - The render states.
+		 * @param {RenderOptions} [options] - The render options for this render task.
 		 */
 		renderRenderableItem(renderable, renderStates, options) {}
 
 		/**
 		 * Render a single renderable list with render states.
 		 * @param {Array} renderables - Array of renderable.
-		 * @param {t3d.RenderStates} renderStates - Render states.
-		 * @param {t3d.RenderOptions} [options=] - The render options for this render task.
+		 * @param {RenderStates} renderStates - Render states.
+		 * @param {RenderOptions} [options] - The render options for this render task.
 		 */
 		renderRenderableList(renderables, renderStates, options = {}) {
 			for (let i = 0, l = renderables.length; i < l; i++) {
@@ -10734,9 +10659,9 @@
 		 * Render a scene with a particular camera.
 		 * This method will render all layers in scene's RenderQueue by default.
 		 * If you need a customized rendering process, it is recommended to use renderRenderableList method.
-		 * @param {t3d.Scene} scene - The scene to render.
-		 * @param {t3d.Camera} camera - The camera used to render the scene.
-		 * @param {t3d.RenderOptions} [options=] - The render options for this scene render task.
+		 * @param {Scene} scene - The scene to render.
+		 * @param {Camera} camera - The camera used to render the scene.
+		 * @param {RenderOptions} [options] - The render options for this scene render task.
 		 */
 		renderScene(scene, camera, options = {}) {
 			const renderStates = scene.getRenderStates(camera);
@@ -10753,49 +10678,49 @@
 
 		/**
 		 * Clear the color, depth and stencil buffers.
-		 * @param {Boolean} [color=false] - Clear color buffer.
-		 * @param {Boolean} [depth=false] - Clear depth buffer.
-		 * @param {Boolean} [stencil=false] - Clear stencil buffer.
+		 * @param {boolean} [color=false] - Clear color buffer.
+		 * @param {boolean} [depth=false] - Clear depth buffer.
+		 * @param {boolean} [stencil=false] - Clear stencil buffer.
 		 */
 		clear(color, depth, stencil) {}
 
 		/**
 		 * Set clear color.
-		 * @param {Number} r - Red component in the range 0.0 - 1.0.
-		 * @param {Number} g - Green component in the range 0.0 - 1.0.
-		 * @param {Number} b - Blue component in the range 0.0 - 1.0.
-		 * @param {Number} a - Alpha component in the range 0.0 - 1.0.
-		 * @param {Number} premultipliedAlpha - Whether the alpha is premultiplied.
+		 * @param {number} r - Red component in the range 0.0 - 1.0.
+		 * @param {number} g - Green component in the range 0.0 - 1.0.
+		 * @param {number} b - Blue component in the range 0.0 - 1.0.
+		 * @param {number} a - Alpha component in the range 0.0 - 1.0.
+		 * @param {number} premultipliedAlpha - Whether the alpha is premultiplied.
 		 */
 		setClearColor(r, g, b, a, premultipliedAlpha) {}
 
 		/**
 		 * Returns a Vector4 instance with the current clear color and alpha.
 		 * Note: Do not modify the value of Vector4, it is read-only.
-		 * @return {t3d.Vector4}
+		 * @returns {Vector4}
 		 */
 		getClearColor() {}
 
 		/**
 		 * This method sets the active rendertarget.
-		 * @param {t3d.RenderTargetBase} renderTarget The renderTarget that needs to be activated.
+		 * @param {RenderTargetBase} renderTarget The renderTarget that needs to be activated.
 		 */
 		setRenderTarget(renderTarget) {}
 
 		/**
 		 * Returns the current RenderTarget if there are; returns null otherwise.
-		 * @return {t3d.RenderTargetBase|Null}
+		 * @returns {RenderTargetBase | null}
 		 */
 		getRenderTarget() {}
 
 		/**
 		 * Copy a frame buffer to another.
 		 * This copy process can be used to perform multi-sampling (MSAA).
-		 * @param {t3d.RenderTargetBase} read - The source renderTarget.
-		 * @param {t3d.RenderTargetBase} draw - The destination renderTarget.
-		 * @param {Boolean} [color=true] - Copy color buffer.
-		 * @param {Boolean} [depth=true] - Copy depth buffer.
-		 * @param {Boolean} [stencil=true] - Copy stencil buffer.
+		 * @param {RenderTargetBase} read - The source renderTarget.
+		 * @param {RenderTargetBase} draw - The destination renderTarget.
+		 * @param {boolean} [color=true] - Copy color buffer.
+		 * @param {boolean} [depth=true] - Copy depth buffer.
+		 * @param {boolean} [stencil=true] - Copy stencil buffer.
 		 */
 		blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {}
 
@@ -10803,45 +10728,45 @@
 		 * Reads the pixel data from the current render target into the provided buffer.
 		 * The Renderer.asyncReadPixel property determines whether this operation is synchronous or asynchronous.
 		 * To maintain consistency, this method always returns a Promise object.
-		 * @param {Number} x - The x coordinate of the rectangle to read from.
-		 * @param {Number} y - The y coordinate of the rectangle to read from.
-		 * @param {Number} width - The width of the rectangle to read from.
-		 * @param {Number} height - The height of the rectangle to read from.
+		 * @param {number} x - The x coordinate of the rectangle to read from.
+		 * @param {number} y - The y coordinate of the rectangle to read from.
+		 * @param {number} width - The width of the rectangle to read from.
+		 * @param {number} height - The height of the rectangle to read from.
 		 * @param {TypedArray} buffer Uint8Array is the only destination type supported in all cases, other types are renderTarget and platform dependent.
-		 * @return {Promise<TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the pixel data.
+		 * @returns {Promise<TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the pixel data.
 		 */
 		readRenderTargetPixels(x, y, width, height, buffer) {}
 
 		/**
 		 * Generate mipmaps for the renderTarget you pass in.
-		 * @param {t3d.RenderTargetBase} renderTarget - The renderTarget to update.
+		 * @param {RenderTargetBase} renderTarget - The renderTarget to update.
 		 */
 		updateRenderTargetMipmap(renderTarget) {}
 
 		/**
-		 * Bind webglTexture to t3d's texture.
-		 * @param {t3d.TextureBase} texture
+		 * Bind webglTexture to Texture.
+		 * @param {TextureBase} texture
 		 * @param {WebGLTexture} webglTexture
 		 */
 		setTextureExternal(texture, webglTexture) {}
 
 		/**
-		 * Bind webglRenderbuffer to t3d's renderBuffer.
-		 * @param {t3d.RenderBuffer} renderBuffer
+		 * Bind webglRenderbuffer to RenderBuffer.
+		 * @param {RenderBuffer} renderBuffer
 		 * @param {WebGLRenderbuffer} webglRenderbuffer
 		 */
 		setRenderBufferExternal(renderBuffer, webglRenderbuffer) {}
 
 		/**
-		 * Bind webglBuffer to t3d's buffer.
-		 * @param {t3d.Buffer} buffer
+		 * Bind webglBuffer to Buffer.
+		 * @param {Buffer} buffer
 		 * @param {WebGLBuffer} webglBuffer
 		 */
 		setBufferExternal(buffer, webglBuffer) {}
 
 		/**
 		 * Reset vertex array object bindings.
-		 * @param {Boolean} [force=false] - Whether clear the current vertex array object.
+		 * @param {boolean} [force=false] - Whether clear the current vertex array object.
 		 */
 		resetVertexArrayBindings(force) {}
 
@@ -10853,48 +10778,49 @@
 
 		/**
 		 * Begin a query instance.
-		 * @param {t3d.Query} query
-		 * @param {t3d.QUERY_TYPE} target
+		 * @param {Query} query
+		 * @param {QUERY_TYPE} target
 		 */
 		beginQuery(query, target) {}
 
 		/**
 		 * End a query instance.
-		 * @param {t3d.Query} query
+		 * @param {Query} query
 		 */
 		endQuery(query) {}
 
 		/**
 		 * Records the current time into the corresponding query object.
-		 * @param {t3d.Query} query
+		 * @param {Query} query
 		 */
 		queryCounter(query) {}
 
 		/**
 		 * Returns true if the timer query was disjoint, indicating that timing results are invalid.
 		 * This is rare and might occur, for example, if the GPU was throttled while timing.
-		 * @param {t3d.Query} query
-		 * @return {Boolean} Returns true if the timer query was disjoint.
+		 * @param {Query} query
+		 * @returns {boolean} Returns true if the timer query was disjoint.
 		 */
 		isTimerQueryDisjoint(query) {}
 
 		/**
 		 * Check if the query result is available.
-		 * @param {t3d.Query} query
-		 * @return {Boolean} If query result is available.
+		 * @param {Query} query
+		 * @returns {boolean} If query result is available.
 		 */
 		isQueryResultAvailable(query) {}
 
 		/**
 		 * Get the query result.
-		 * @param {t3d.Query} query
-		 * @return {Number} The query result.
+		 * @param {Query} query
+		 * @returns {number} The query result.
 		 */
 		getQueryResult(query) {}
 
 		/**
 		 * Used for context lost and restored.
 		 * @protected
+		 * @returns {number}
 		 */
 		increaseId() {
 			this.id = _rendererId++;
@@ -10904,32 +10830,31 @@
 
 	/**
 	 * Linear fog.
-	 * @memberof t3d
 	 */
 	class Fog {
 		/**
-		 * @param {Number} [color=0x000000] - The color of the fog.
-		 * @param {Number} [near=1] - The near clip of the fog.
-		 * @param {Number} [far=1000] - The far clip of the fog.
+		 * @param {number} [color=0x000000] - The color of the fog.
+		 * @param {number} [near=1] - The near clip of the fog.
+		 * @param {number} [far=1000] - The far clip of the fog.
 		 */
 		constructor(color = 0x000000, near = 1, far = 1000) {
 			/**
 			 * The color of the fog.
-			 * @type {t3d.Color3}
-			 * @default t3d.Color3(0x000000)
+			 * @type {Color3}
+			 * @default Color3(0x000000)
 			 */
 			this.color = new Color3(color);
 
 			/**
 			 * The near clip of the fog.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.near = near;
 
 			/**
 			 * The far clip of the fog.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1000
 			 */
 			this.far = far;
@@ -10938,31 +10863,30 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Fog.prototype.isFog = true;
 
 	/**
 	 * Exp2 fog.
-	 * @memberof t3d
 	 */
 	class FogExp2 {
 		/**
-		 * @param {Number} [color=0x000000] - The color of the fog.
-		 * @param {Number} [density=0.00025] - The density of the exp2 fog.
+		 * @param {number} [color=0x000000] - The color of the fog.
+		 * @param {number} [density=0.00025] - The density of the exp2 fog.
 		 */
 		constructor(color = 0x000000, density = 0.00025) {
 			/**
 			 * The color of the fog.
-			 * @type {t3d.Color3}
-			 * @default t3d.Color3(0x000000)
+			 * @type {Color3}
+			 * @default Color3(0x000000)
 			 */
 			this.color = new Color3(color);
 
 			/**
 			 * The density of the exp2 fog.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.00025
 			 */
 			this.density = density;
@@ -10971,7 +10895,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	FogExp2.prototype.isFogExp2 = true;
@@ -10979,17 +10903,16 @@
 	/**
 	 * BoxGeometry is the quadrilateral primitive geometry class.
 	 * It is typically used for creating a cube or irregular quadrilateral of the dimensions provided with the 'width', 'height', and 'depth' constructor arguments.
-	 * @memberof t3d
-	 * @extends t3d.Geometry
+	 * @extends Geometry
 	 */
 	class BoxGeometry extends Geometry {
 		/**
-		 * @param {Number} [width=1] - Width of the sides on the X axis.
-		 * @param {Number} [height=1] - Height of the sides on the Y axis.
-		 * @param {Number} [depth=1] - Depth of the sides on the Z axis.
-		 * @param {Number} [widthSegments=1] - Number of segmented faces along the width of the sides.
-		 * @param {Number} [heightSegments=1] - Number of segmented faces along the height of the sides.
-		 * @param {Number} [depthSegments=1] - Number of segmented faces along the depth of the sides.
+		 * @param {number} [width=1] - Width of the sides on the X axis.
+		 * @param {number} [height=1] - Height of the sides on the Y axis.
+		 * @param {number} [depth=1] - Depth of the sides on the Z axis.
+		 * @param {number} [widthSegments=1] - Number of segmented faces along the width of the sides.
+		 * @param {number} [heightSegments=1] - Number of segmented faces along the height of the sides.
+		 * @param {number} [depthSegments=1] - Number of segmented faces along the depth of the sides.
 		 */
 		constructor(width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) {
 			super();
@@ -11121,19 +11044,18 @@
 
 	/**
 	 * A class for generating cylinder geometries.
-	 * @memberof t3d
-	 * @extends t3d.Geometry
+	 * @extends Geometry
 	 */
 	class CylinderGeometry extends Geometry {
 		/**
-		 * @param {Number} [radiusTop=1] — Radius of the cylinder at the top.
-		 * @param {Number} [radiusBottom=1] — Radius of the cylinder at the bottom.
-		 * @param {Number} [height=1] — Height of the cylinder.
-		 * @param {Number} [radialSegments=8] — Number of segmented faces around the circumference of the cylinder.
-		 * @param {Number} [heightSegments=1] — Number of rows of faces along the height of the cylinder.
-		 * @param {Number} [openEnded=false] — A Boolean indicating whether the ends of the cylinder are open or capped. Default is false, meaning capped.
-		 * @param {Number} [thetaStart=0] — Start angle for first segment, default = 0 (three o'clock position).
-		 * @param {Number} [thetaLength=2*Pi] — The central angle, often called theta, of the circular sector. The default is 2*Pi, which makes for a complete cylinder.
+		 * @param {number} [radiusTop=1] — Radius of the cylinder at the top.
+		 * @param {number} [radiusBottom=1] — Radius of the cylinder at the bottom.
+		 * @param {number} [height=1] — Height of the cylinder.
+		 * @param {number} [radialSegments=8] — Number of segmented faces around the circumference of the cylinder.
+		 * @param {number} [heightSegments=1] — Number of rows of faces along the height of the cylinder.
+		 * @param {number} [openEnded=false] — A Boolean indicating whether the ends of the cylinder are open or capped. Default is false, meaning capped.
+		 * @param {number} [thetaStart=0] — Start angle for first segment, default = 0 (three o'clock position).
+		 * @param {number} [thetaLength=2*Pi] — The central angle, often called theta, of the circular sector. The default is 2*Pi, which makes for a complete cylinder.
 		 */
 		constructor(radiusTop = 1, radiusBottom = 1, height = 1, radialSegments = 8, heightSegments = 1, openEnded = false, thetaStart = 0, thetaLength = Math.PI * 2) {
 			super();
@@ -11346,15 +11268,14 @@
 
 	/**
 	 * A class for generating plane geometries.
-	 * @memberof t3d
-	 * @extends t3d.Geometry
+	 * @extends Geometry
 	 */
 	class PlaneGeometry extends Geometry {
 		/**
-		 * @param {Number} [width=1] — Width along the X axis.
-		 * @param {Number} [height=1] — Height along the Y axis.
-		 * @param {Number} [widthSegments=1]
-		 * @param {Number} [heightSegments=1]
+		 * @param {number} [width=1] — Width along the X axis.
+		 * @param {number} [height=1] — Height along the Y axis.
+		 * @param {number} [widthSegments=1]
+		 * @param {number} [heightSegments=1]
 		 */
 		constructor(width = 1, height = 1, widthSegments = 1, heightSegments = 1) {
 			super();
@@ -11419,18 +11340,17 @@
 	 * A class for generating sphere geometries.
 	 * The geometry is created by sweeping and calculating vertexes around the Y axis (horizontal sweep) and the Z axis (vertical sweep).
 	 * Thus, incomplete spheres (akin to 'sphere slices') can be created through the use of different values of phiStart, phiLength, thetaStart and thetaLength, in order to define the points in which we start (or end) calculating those vertices.
-	 * @memberof t3d
-	 * @extends t3d.Geometry
+	 * @extends Geometry
 	 */
 	class SphereGeometry extends Geometry {
 		/**
-		 * @param {Number} [radius=1] — sphere radius. Default is 1.
-		 * @param {Number} [widthSegments=8] — number of horizontal segments. Minimum value is 3, and the default is 8.
-		 * @param {Number} [heightSegments=6] — number of vertical segments. Minimum value is 2, and the default is 6.
-		 * @param {Number} [phiStart=0] — specify horizontal starting angle. Default is 0.
-		 * @param {Number} [phiLength=Math.PI*2] — specify horizontal sweep angle size. Default is Math.PI * 2.
-		 * @param {Number} [thetaStart=0] — specify vertical starting angle. Default is 0.
-		 * @param {Number} [thetaLength=Math.PI] — specify vertical sweep angle size. Default is Math.PI.
+		 * @param {number} [radius=1] — sphere radius. Default is 1.
+		 * @param {number} [widthSegments=8] — number of horizontal segments. Minimum value is 3, and the default is 8.
+		 * @param {number} [heightSegments=6] — number of vertical segments. Minimum value is 2, and the default is 6.
+		 * @param {number} [phiStart=0] — specify horizontal starting angle. Default is 0.
+		 * @param {number} [phiLength=Math.PI*2] — specify horizontal sweep angle size. Default is Math.PI * 2.
+		 * @param {number} [thetaStart=0] — specify vertical starting angle. Default is 0.
+		 * @param {number} [thetaLength=Math.PI] — specify vertical sweep angle size. Default is Math.PI.
 		 */
 		constructor(radius = 1, widthSegments = 8, heightSegments = 6, phiStart = 0, phiLength = Math.PI * 2, thetaStart = 0, thetaLength = Math.PI) {
 			super();
@@ -11512,17 +11432,16 @@
 	/**
 	 * Creates a torus knot, the particular shape of which is defined by a pair of coprime integers, p and q.
 	 * If p and q are not coprime, the result will be a torus link.
-	 * @memberof t3d
-	 * @extends t3d.Geometry
+	 * @extends Geometry
 	 */
 	class TorusKnotGeometry extends Geometry {
 		/**
-		 * @param {Number} [radius=1] — Radius of the torus. Default is 1.
-		 * @param {Number} [tube=0.4] — Radius of the tube. Default is 0.4.
-		 * @param {Number} [tubularSegments=64] — Default is 64.
-		 * @param {Number} [radialSegments=8] — Default is 8.
-		 * @param {Number} [p=2] — This value determines, how many times the geometry winds around its axis of rotational symmetry. Default is 2.
-		 * @param {Number} [q=3] — This value determines, how many times the geometry winds around a circle in the interior of the torus. Default is 3.
+		 * @param {number} [radius=1] — Radius of the torus. Default is 1.
+		 * @param {number} [tube=0.4] — Radius of the tube. Default is 0.4.
+		 * @param {number} [tubularSegments=64] — Default is 64.
+		 * @param {number} [radialSegments=8] — Default is 8.
+		 * @param {number} [p=2] — This value determines, how many times the geometry winds around its axis of rotational symmetry. Default is 2.
+		 * @param {number} [q=3] — This value determines, how many times the geometry winds around a circle in the interior of the torus. Default is 3.
 		 */
 		constructor(radius = 1, tube = 0.4, tubularSegments = 64, radialSegments = 8, p = 2, q = 3) {
 			super();
@@ -11643,8 +11562,7 @@
 	/**
 	 * A material for drawing geometries in a simple shaded (flat or wireframe) way.
 	 * This material is not affected by lights.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class BasicMaterial extends Material {
 		/**
@@ -11660,8 +11578,7 @@
 	 * A material for non-shiny surfaces, without specular highlights.
 	 * The material uses a non-physically based Lambertian model for calculating reflectance.
 	 * This can simulate some surfaces (such as untreated wood or stone) well, but cannot simulate shiny surfaces with specular highlights (such as varnished wood).
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class LambertMaterial extends Material {
 		/**
@@ -11680,8 +11597,7 @@
 
 	/**
 	 * A material for drawing wireframe-style geometries.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class LineMaterial extends Material {
 		/**
@@ -11694,15 +11610,15 @@
 			/**
 			 * Controls line thickness.
 			 * Due to limitations of the OpenGL Core Profile with the WebGL renderer on most platforms linewidth will always be 1 regardless of the set value.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.lineWidth = 1;
 
 			/**
 			 * Set draw mode to LINES / LINE_LOOP / LINE_STRIP
-			 * @type {t3d.DRAW_MODE}
-			 * @default t3d.DRAW_MODE.LINES
+			 * @type {DRAW_MODE}
+			 * @default DRAW_MODE.LINES
 			 */
 			this.drawMode = DRAW_MODE.LINES;
 		}
@@ -11718,8 +11634,7 @@
 	 * Physically based rendering (PBR) has recently become the standard in many 3D applications, such as Unity, Unreal and 3D Studio Max.
 	 * This approach differs from older approaches in that instead of using approximations for the way in which light interacts with a surface, a physically correct model is used.
 	 * The idea is that, instead of tweaking materials to look good under specific lighting, a material can	be created that will react 'correctly' under all lighting scenarios.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class PBR2Material extends Material {
 		/**
@@ -11731,28 +11646,28 @@
 
 			/**
 			 * Specular color of the material.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.5
 			 */
 			this.specular = new Color3(0x111111);
 
 			/**
 			 * Glossiness of the material.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.5
 			 */
 			this.glossiness = 0.5;
 
 			/**
 			 * The RGB channel of this texture is used to alter the specular of the material.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.specularMap = null;
 
 			/**
 			 * The A channel of this texture is used to alter the glossiness of the material.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.glossinessMap = null;
@@ -11777,8 +11692,7 @@
 	 * Physically based rendering (PBR) has recently become the standard in many 3D applications, such as Unity, Unreal and 3D Studio Max.
 	 * This approach differs from older approaches in that instead of using approximations for the way in which light interacts with a surface, a physically correct model is used.
 	 * The idea is that, instead of tweaking materials to look good under specific lighting, a material can	be created that will react 'correctly' under all lighting scenarios.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class PBRMaterial extends Material {
 		/**
@@ -11791,7 +11705,7 @@
 			/**
 			 * How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse.
 			 * If roughnessMap is also provided, both values are multiplied.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.5
 			 */
 			this.roughness = 0.5;
@@ -11800,21 +11714,21 @@
 			 * How much the material is like a metal.
 			 * Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between.
 			 * A value between 0.0 and 1.0 could be used for a rusty metal look. If metalnessMap is also provided, both values are multiplied.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.5
 			 */
 			this.metalness = 0.5;
 
 			/**
 			 * The green channel of this texture is used to alter the roughness of the material.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.roughnessMap = null;
 
 			/**
 			 * The blue channel of this texture is used to alter the metalness of the material.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.metalnessMap = null;
@@ -11824,14 +11738,14 @@
 			 * When clearcoatFactor is set to 0.0, it indicates that there is no clearcoat present.
 			 * When it is set to 1.0, it indicates a very strong clearcoat that-
 			 * will cause the reflection and refraction effects on the surface of the object to become more prominent.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.0
 			 */
 			this.clearcoat = 0.0;
 
 			/**
 			 * A texture property that allows for the modulation of the strength or roughness of the clearcoat layer.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.clearcoatMap = null;
@@ -11841,14 +11755,14 @@
 			 * When clearcoatRoughness is set to 0.0, the clearcoat layer will appear perfectly smooth and reflective-
 			 * and 0.0 represents a rough, textured clearcoat layer.
 			 * Adjusting the clearcoatRoughness can achieve a wide range of effects and create more realistic materials.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0.0
 			 */
 			this.clearcoatRoughness = 0.0;
 
 			/**
 			 * A texture that will be applied to the clearcoat layer of a material to simulate the roughness of the surface.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.clearcoatRoughnessMap = null;
@@ -11857,14 +11771,14 @@
 			 * Adjust the normal map's strength or intensity.
 			 * Affect the amount of bumpiness or surface detail that is visible on the clearcoat layer.
 			 * Typical ranges are 0-1.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.clearcoatNormalScale = new Vector2(1, 1);
 
 			/**
 			 * The texture that modulates the clearcoat layer's surface normal.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.clearcoatNormalMap = null;
@@ -11892,9 +11806,8 @@
 	/**
 	 * A material for shiny surfaces with specular highlights.
 	 * The material uses a non-physically based Blinn-Phong model for calculating reflectance.
-	 * Unlike the Lambertian model used in the {@link t3d.LambertMaterial} this can simulate shiny surfaces with specular highlights (such as varnished wood).
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * Unlike the Lambertian model used in the {@link LambertMaterial} this can simulate shiny surfaces with specular highlights (such as varnished wood).
+	 * @extends Material
 	 */
 	class PhongMaterial extends Material {
 		/**
@@ -11905,8 +11818,8 @@
 			this.type = MATERIAL_TYPE.PHONG;
 
 			/**
-			 * How shiny the {@link t3d.PhongMaterial#specular} highlight is; a higher value gives a sharper highlight.
-			 * @type {Number}
+			 * How shiny the {@link PhongMaterial#specular} highlight is; a higher value gives a sharper highlight.
+			 * @type {number}
 			 * @default 30
 			 */
 			this.shininess = 30;
@@ -11914,14 +11827,14 @@
 			/**
 			 * Specular color of the material.
 			 * This defines how shiny the material is and the color of its shine.
-			 * @type {t3d.Color3}
-			 * @default t3d.Color(0x111111)
+			 * @type {Color3}
+			 * @default Color(0x111111)
 			 */
 			this.specular = new Color3(0x111111);
 
 			/**
 			 * The specular map value affects both how much the specular surface highlight contributes and how much of the environment map affects the surface.
-			 * @type {t3d.Texture2D}
+			 * @type {Texture2D}
 			 * @default null
 			 */
 			this.specularMap = null;
@@ -11942,8 +11855,7 @@
 
 	/**
 	 * The default material used by Points.
-	 * @extends t3d.Material
-	 * @memberof t3d
+	 * @extends Material
 	 */
 	class PointsMaterial extends Material {
 		/**
@@ -11955,22 +11867,22 @@
 
 			/**
 			 * Sets the size of the points.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.size = 1;
 
 			/**
 			 * Specify whether points' size is attenuated by the camera depth. (Perspective camera only.)
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.sizeAttenuation = true;
 
 			/**
 			 * Set draw mode to POINTS.
-			 * @type {t3d.DRAW_MODE}
-			 * @default t3d.DRAW_MODE.POINTS
+			 * @type {DRAW_MODE}
+			 * @default DRAW_MODE.POINTS
 			 */
 			this.drawMode = DRAW_MODE.POINTS;
 		}
@@ -11984,36 +11896,35 @@
 
 	/**
 	 * Render Target is the wrapping class of gl.framebuffer.
-	 * @memberof t3d
-	 * @extends t3d.EventDispatcher
+	 * @extends EventDispatcher
 	 * @abstract
 	 */
 	class RenderTargetBase extends EventDispatcher {
 		/**
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
 		 */
 		constructor(width, height) {
 			super();
 
 			/**
 			 * The width of the render target.
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.width = width;
 
 			/**
 			 * The height of the render target.
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.height = height;
 		}
 
 		/**
 		 * Resize the render target.
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
-		 * @return {Boolean} - If size changed.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
+		 * @returns {boolean} - If size changed.
 		 */
 		resize(width, height) {
 			if (this.width !== width || this.height !== height) {
@@ -12036,35 +11947,34 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderTargetBase.prototype.isRenderTarget = true;
 
 	/**
 	 * Render Buffer can be attached to RenderTarget.
-	 * @memberof t3d
-	 * @extends t3d.EventDispatcher
+	 * @extends EventDispatcher
 	 */
 	class RenderBuffer extends EventDispatcher {
 		/**
-		 * @param {Number} width - The width of the render buffer.
-		 * @param {Number} height - The height of the render buffer.
-		 * @param {t3d.PIXEL_FORMAT} [format=t3d.PIXEL_FORMAT.RGBA8] - The internal format of the render buffer.
-		 * @param {Number} [multipleSampling=0] - If bigger than zero, this renderBuffer will support multipleSampling. (Only usable in WebGL 2.0)
+		 * @param {number} width - The width of the render buffer.
+		 * @param {number} height - The height of the render buffer.
+		 * @param {PIXEL_FORMAT} [format=PIXEL_FORMAT.RGBA8] - The internal format of the render buffer.
+		 * @param {number} [multipleSampling=0] - If bigger than zero, this renderBuffer will support multipleSampling. (Only usable in WebGL 2.0)
 		 */
 		constructor(width, height, format = PIXEL_FORMAT.RGBA8, multipleSampling = 0) {
 			super();
 
 			/**
 			 * The width of the render buffer.
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.width = width;
 
 			/**
 			 * The height of the render buffer.
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.height = height;
 
@@ -12075,8 +11985,8 @@
 			 * RGBA8：for multiple sampled color attachments.
 			 * DEPTH_COMPONENT16: for multiple sampled depth attachments.
 			 * DEPTH24_STENCIL8: for multiple sampled depth stencil attachments.
-			 * @type {t3d.PIXEL_FORMAT}
-			 * @default t3d.PIXEL_FORMAT.RGBA8
+			 * @type {PIXEL_FORMAT}
+			 * @default PIXEL_FORMAT.RGBA8
 			 */
 			this.format = format;
 
@@ -12085,7 +11995,7 @@
 			 * A Render Target's attachments must have the same multipleSampling value.
 			 * Texture can't be attached to the same render target with a multiple sampled render buffer.
 			 * Max support 8.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.multipleSampling = multipleSampling;
@@ -12093,9 +12003,9 @@
 
 		/**
 		 * Resize the render buffer.
-		 * @param {Number} width - The width of the render buffer.
-		 * @param {Number} height - The height of the render buffer.
-		 * @return {Boolean} - If size changed.
+		 * @param {number} width - The width of the render buffer.
+		 * @param {number} height - The height of the render buffer.
+		 * @returns {boolean} - If size changed.
 		 */
 		resize(width, height) {
 			if (this.width !== width || this.height !== height) {
@@ -12109,7 +12019,7 @@
 
 		/**
 		 * Returns a clone of this render buffer.
-		 * @return {t3d.RenderBuffer}
+		 * @returns {RenderBuffer}
 		 */
 		clone() {
 			return new this.constructor().copy(this);
@@ -12117,8 +12027,8 @@
 
 		/**
 		 * Copy the given render buffer into this render buffer.
-		 * @param {t3d.RenderBuffer} source - The render buffer to be copied.
-		 * @return {t3d.RenderBuffer}
+		 * @param {RenderBuffer} source - The render buffer to be copied.
+		 * @returns {RenderBuffer}
 		 */
 		copy(source) {
 			this.format = source.format;
@@ -12138,7 +12048,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderBuffer.prototype.isRenderBuffer = true;
@@ -12147,9 +12057,8 @@
 
 	/**
 	 * Create a texture to apply to a surface or as a reflection or refraction map.
-	 * @memberof t3d
 	 * @abstract
-	 * @extends t3d.EventDispatcher
+	 * @extends EventDispatcher
 	 */
 	class TextureBase extends EventDispatcher {
 		constructor() {
@@ -12158,21 +12067,21 @@
 			/**
 			 * Unique number for this texture instance.
 			 * @readonly
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.id = _textureId++;
 
 			/**
-			 * An object that can be used to store custom data about the {@link t3d.TextureBase}.
+			 * An object that can be used to store custom data about the {@link TextureBase}.
 			 * It should not hold references to functions as these will not be cloned.
-			 * @type {Object}
+			 * @type {object}
 			 * @default {}
 			 */
 			this.userData = {};
 
 			/**
 			 * Array of user-specified mipmaps (optional).
-			 * @type {HTMLImageElement[]|Object[]}
+			 * @type {HTMLImageElement[] | object[]}
 			 * @default []
 			 */
 			this.mipmaps = [];
@@ -12181,57 +12090,57 @@
 			 * WebGLTexture border.
 			 * See {@link https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D WebGLTexture texImage2D()}.
 			 * Must be zero.
-			 * @type {Number}
+			 * @type {number}
 			 */
 			this.border = 0;
 
 			/**
 			 * WebGLTexture texel data format.
-			 * @type {t3d.PIXEL_FORMAT}
-			 * @default t3d.PIXEL_FORMAT.RGBA
+			 * @type {PIXEL_FORMAT}
+			 * @default PIXEL_FORMAT.RGBA
 			 */
 			this.format = PIXEL_FORMAT.RGBA;
 
 			/**
 			 * The default value is null, the texture's internal format will be obtained using a combination of .format and .type.
 			 * Users can also specify a specific internalFormat.
-			 * @type {Null|t3d.PIXEL_FORMAT}
+			 * @type {null | PIXEL_FORMAT}
 			 * @default null
 			 */
 			this.internalformat = null;
 
 			/**
 			 * WebGLTexture texel data type.
-			 * @type {t3d.PIXEL_TYPE}
-			 * @default t3d.PIXEL_TYPE.UNSIGNED_BYTE
+			 * @type {PIXEL_TYPE}
+			 * @default PIXEL_TYPE.UNSIGNED_BYTE
 			 */
 			this.type = PIXEL_TYPE.UNSIGNED_BYTE;
 
 			/**
 			 * How the texture is sampled when a texel covers more than one pixel.
-			 * @type {t3d.TEXTURE_FILTER}
-			 * @default t3d.TEXTURE_FILTER.LINEAR
+			 * @type {TEXTURE_FILTER}
+			 * @default TEXTURE_FILTER.LINEAR
 			 */
 			this.magFilter = TEXTURE_FILTER.LINEAR;
 
 			/**
 			 * How the texture is sampled when a texel covers less than one pixel.
-			 * @type {t3d.TEXTURE_FILTER}
-			 * @default t3d.TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR
+			 * @type {TEXTURE_FILTER}
+			 * @default TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR
 			 */
 			this.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
 
 			/**
 			 * This defines how the texture is wrapped horizontally and corresponds to U in UV mapping.
-			 * @type {t3d.TEXTURE_WRAP}
-			 * @default t3d.TEXTURE_WRAP.CLAMP_TO_EDGE
+			 * @type {TEXTURE_WRAP}
+			 * @default TEXTURE_WRAP.CLAMP_TO_EDGE
 			 */
 			this.wrapS = TEXTURE_WRAP.CLAMP_TO_EDGE;
 
 			/**
 			 * This defines how the texture is wrapped vertically and corresponds to V in UV mapping.
-			 * @type {t3d.TEXTURE_WRAP}
-			 * @default t3d.TEXTURE_WRAP.CLAMP_TO_EDGE
+			 * @type {TEXTURE_WRAP}
+			 * @default TEXTURE_WRAP.CLAMP_TO_EDGE
 			 */
 			this.wrapT = TEXTURE_WRAP.CLAMP_TO_EDGE;
 
@@ -12239,14 +12148,14 @@
 			 * The number of samples taken along the axis through the pixel that has the highest density of texels.
 			 * A higher value gives a less blurry result than a basic mipmap, at the cost of more texture samples being used.
 			 * Use {@link WebGLcapabilities#maxAnisotropy} to find the maximum valid anisotropy value for the GPU; this value is usually a power of 2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.anisotropy = 1;
 
 			/**
 			 * Use for shadow sampler (WebGL 2.0 Only).
-			 * @type {t3d.COMPARE_FUNC|Undefined}
+			 * @type {COMPARE_FUNC | undefined}
 			 * @default undefined
 			 */
 			this.compare = undefined;
@@ -12254,15 +12163,15 @@
 			/**
 			 * Whether to generate mipmaps (if possible) for a texture.
 			 * Set this to false if you are creating mipmaps manually.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.generateMipmaps = true;
 
 			/**
 			 * texture pixel encoding.
-			 * @type {t3d.TEXEL_ENCODING_TYPE}
-			 * @default t3d.TEXEL_ENCODING_TYPE.LINEAR
+			 * @type {TEXEL_ENCODING_TYPE}
+			 * @default TEXEL_ENCODING_TYPE.LINEAR
 			 */
 			this.encoding = TEXEL_ENCODING_TYPE.LINEAR;
 
@@ -12270,7 +12179,7 @@
 			 * If set to true, the texture is flipped along the vertical axis when uploaded to the GPU.
 			 * Default is true to flips the image's Y axis to match the WebGL texture coordinate space.
 			 * Note that this property has no effect for ImageBitmap. You need to configure on bitmap creation instead.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.flipY = true;
@@ -12278,7 +12187,7 @@
 			/**
 			 * If set to true, the alpha channel, if present, is multiplied into the color channels when the texture is uploaded to the GPU.
 			 * Note that this property has no effect for ImageBitmap. You need to configure on bitmap creation instead.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.premultiplyAlpha = false;
@@ -12286,7 +12195,7 @@
 			/**
 			 * Specifies the alignment requirements for the start of each pixel row in memory.
 			 * The allowable values are 1 (byte-alignment), 2 (rows aligned to even-numbered bytes), 4 (word-alignment), and 8 (rows start on double-word boundaries).
-			 * @type {Number}
+			 * @type {number}
 			 * @default 4
 			 */
 			this.unpackAlignment = 4;
@@ -12294,7 +12203,7 @@
 			/**
 			 * version code increse if texture changed.
 			 * if version is still 0, this texture will be skiped.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.version = 0;
@@ -12302,7 +12211,7 @@
 
 		/**
 		 * Returns a clone of this texture.
-		 * @return {t3d.TextureBase}
+		 * @returns {TextureBase}
 		 */
 		clone() {
 			return new this.constructor().copy(this);
@@ -12310,8 +12219,8 @@
 
 		/**
 		 * Copy the given texture into this texture.
-		 * @param {t3d.TextureBase} source - The texture to be copied.
-		 * @return {t3d.TextureBase}
+		 * @param {TextureBase} source - The texture to be copied.
+		 * @returns {TextureBase}
 		 */
 		copy(source) {
 			this.userData = cloneJson(source.userData);
@@ -12348,15 +12257,14 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	TextureBase.prototype.isTexture = true;
 
 	/**
 	 * Creates a 2d texture.
-	 * @memberof t3d
-	 * @extends t3d.TextureBase
+	 * @extends TextureBase
 	 */
 	class Texture2D extends TextureBase {
 		constructor() {
@@ -12364,7 +12272,7 @@
 
 			/**
 			 * Image data for this texture.
-			 * @type {null|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|ImageBitmap|Object}
+			 * @type {null | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | ImageBitmap | object}
 			 * @default null
 			 */
 			this.image = null;
@@ -12372,8 +12280,8 @@
 
 		/**
 		 * Copy the given 2d texture into this texture.
-		 * @param {t3d.Texture2D} source - The 2d texture to be copied.
-		 * @return {t3d.Texture2D}
+		 * @param {Texture2D} source - The 2d texture to be copied.
+		 * @returns {Texture2D}
 		 */
 		copy(source) {
 			super.copy(source);
@@ -12384,20 +12292,19 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Texture2D.prototype.isTexture2D = true;
 
 	/**
 	 * Render Target that render to 2d texture.
-	 * @memberof t3d
-	 * @extends t3d.RenderTargetBase
+	 * @extends RenderTargetBase
 	 */
 	class RenderTarget2D extends RenderTargetBase {
 		/**
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
 		 */
 		constructor(width, height) {
 			super(width, height);
@@ -12409,8 +12316,8 @@
 		/**
 		 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 		 * Notice: For now, dynamic Attachment during rendering is not supported.
-		 * @param	{t3d.Texture2D|t3d.RenderBuffer} target
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{Texture2D|RenderBuffer} target
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTexture2D) {
@@ -12437,7 +12344,7 @@
 
 		/**
 		 * Detach a texture(RTT) or renderbuffer.
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			delete this._attachments[attachment];
@@ -12470,7 +12377,7 @@
 
 		/**
 		 * Dispose the render target.
-		 * @param {Boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
+		 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
 		 */
 		dispose(disposeAttachments = true) {
 			super.dispose();
@@ -12484,7 +12391,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderTarget2D.prototype.isRenderTarget2D = true;
@@ -12508,8 +12415,7 @@
 
 	/**
 	 * Creates a 2d texture. (WebGL 2.0)
-	 * @memberof t3d
-	 * @extends t3d.TextureBase
+	 * @extends TextureBase
 	 */
 	class Texture2DArray extends TextureBase {
 		constructor() {
@@ -12517,7 +12423,7 @@
 
 			/**
 			 * Image data for this texture.
-			 * @type {Object}
+			 * @type {object}
 			 * @default null
 			 */
 			this.image = {
@@ -12528,17 +12434,17 @@
 			};
 
 			/**
-			 * @default t3d.PIXEL_FORMAT.RED
+			 * @default PIXEL_FORMAT.RED
 			 */
 			this.format = PIXEL_FORMAT.RED;
 
 			/**
-			 * @default t3d.TEXTURE_FILTER.NEAREST
+			 * @default TEXTURE_FILTER.NEAREST
 			 */
 			this.magFilter = TEXTURE_FILTER.NEAREST;
 
 			/**
-			 * @default t3d.TEXTURE_FILTER.NEAREST
+			 * @default TEXTURE_FILTER.NEAREST
 			 */
 			this.minFilter = TEXTURE_FILTER.NEAREST;
 
@@ -12566,8 +12472,8 @@
 
 		/**
 		 * Copy the given 2d texture into this texture.
-		 * @param {t3d.Texture2DArray} source - The 2d texture to be copied.
-		 * @return {t3d.Texture2DArray}
+		 * @param {Texture2DArray} source - The 2d texture to be copied.
+		 * @returns {Texture2DArray}
 		 */
 		copy(source) {
 			super.copy(source);
@@ -12578,21 +12484,20 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Texture2DArray.prototype.isTexture2DArray = true;
 
 	/**
 	 * Render Target that render to 2d array texture.
-	 * @memberof t3d
-	 * @extends t3d.RenderTargetBase
+	 * @extends RenderTargetBase
 	 */
 	class RenderTarget2DArray extends RenderTargetBase {
 		/**
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
-		 * @param {Number} depth - The depth of the render target.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
+		 * @param {number} depth - The depth of the render target.
 		 */
 		constructor(width, height, depth) {
 			super(width, height);
@@ -12603,7 +12508,7 @@
 			/**
 			 * Specifies the layer.
 			 * This is only available in WebGL2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.activeLayer = 0;
@@ -12611,7 +12516,7 @@
 			/**
 			 * Specifies the active mipmap level.
 			 * This is only available in WebGL2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.activeMipmapLevel = 0;
@@ -12620,8 +12525,8 @@
 		/**
 		 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 		 * Notice: For now, dynamic Attachment during rendering is not supported.
-		 * @param	{t3d.Texture2DArray|t3d.RenderBuffer} target
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{Texture2DArray|RenderBuffer} target
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTexture2DArray) {
@@ -12650,7 +12555,7 @@
 
 		/**
 		 * Detach a texture(RTT) or renderbuffer.
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			delete this._attachments[attachment];
@@ -12658,10 +12563,10 @@
 
 		/**
 		 * Resize the render target.
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
-		 * @param {Number} depth - The depth of the render target.
-		 * @return {Boolean} - If size changed.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
+		 * @param {number} depth - The depth of the render target.
+		 * @returns {boolean} - If size changed.
 		 */
 		resize(width, height, depth) {
 			let changed = false;
@@ -12695,7 +12600,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
@@ -12719,17 +12624,16 @@
 
 	/**
 	 * Creates a 3D texture. (WebGL 2.0)
-	 * @memberof t3d
-	 * @extends t3d.TextureBase
+	 * @extends TextureBase
 	 */
 	class Texture3D extends TextureBase {
 		constructor() {
 			super();
 
 			/**
-						 * Image data for this texture.
-						 * @type {Object}
-						 */
+			 * Image data for this texture.
+			 * @type {object}
+			 */
 			this.image = {
 				data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]),
 				width: 2,
@@ -12739,28 +12643,28 @@
 
 			/**
 			 * This defines how the texture is wrapped in the depth direction.
-			 * @type {t3d.TEXTURE_WRAP}
-			 * @default t3d.TEXTURE_WRAP.CLAMP_TO_EDGE
+			 * @type {TEXTURE_WRAP}
+			 * @default TEXTURE_WRAP.CLAMP_TO_EDGE
 			 */
 			this.wrapR = TEXTURE_WRAP.CLAMP_TO_EDGE;
 
 			/**
-			 * @default t3d.PIXEL_FORMAT.RED
+			 * @default PIXEL_FORMAT.RED
 			 */
 			this.format = PIXEL_FORMAT.RED;
 
 			/**
-			 * @default t3d.PIXEL_TYPE.UNSIGNED_BYTE
+			 * @default PIXEL_TYPE.UNSIGNED_BYTE
 			 */
 			this.type = PIXEL_TYPE.UNSIGNED_BYTE;
 
 			/**
-			 * @default t3d.TEXTURE_FILTER.NEAREST
+			 * @default TEXTURE_FILTER.NEAREST
 			 */
 			this.magFilter = TEXTURE_FILTER.NEAREST;
 
 			/**
-			 * @default t3d.TEXTURE_FILTER.NEAREST
+			 * @default TEXTURE_FILTER.NEAREST
 			 */
 			this.minFilter = TEXTURE_FILTER.NEAREST;
 
@@ -12782,8 +12686,8 @@
 
 		/**
 		 * Copy the given 3d texture into this texture.
-		 * @param {t3d.Texture3D} source - The 3d texture to be copied.
-		 * @return {t3d.Texture3D}
+		 * @param {Texture3D} source - The 3d texture to be copied.
+		 * @returns {Texture3D}
 		 */
 		copy(source) {
 			super.copy(source);
@@ -12794,21 +12698,20 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Texture3D.prototype.isTexture3D = true;
 
 	/**
 	 * Render Target that render to 3d texture.
-	 * @memberof t3d
-	 * @extends t3d.RenderTargetBase
+	 * @extends RenderTargetBase
 	 */
 	class RenderTarget3D extends RenderTargetBase {
 		/**
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
-		 * @param {Number} depth - The depth of the render target.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
+		 * @param {number} depth - The depth of the render target.
 		 */
 		constructor(width, height, depth) {
 			super(width, height);
@@ -12819,7 +12722,7 @@
 			/**
 			 * Specifies the layer.
 			 * This is only available in WebGL2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.activeLayer = 0;
@@ -12827,7 +12730,7 @@
 			/**
 			 * Specifies the active mipmap level.
 			 * This is only available in WebGL2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.activeMipmapLevel = 0;
@@ -12836,8 +12739,8 @@
 		/**
 		 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 		 * Notice: For now, dynamic Attachment during rendering is not supported.
-		 * @param	{t3d.Texture3D|t3d.RenderBuffer} target
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{Texture3D|RenderBuffer} target
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTexture3D) {
@@ -12866,7 +12769,7 @@
 
 		/**
 		 * Detach a texture(RTT) or renderbuffer.
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			delete this._attachments[attachment];
@@ -12874,10 +12777,10 @@
 
 		/**
 		 * Resize the render target.
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
-		 * @param {Number} depth - The depth of the render target.
-		 * @return {Boolean} - If size changed.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
+		 * @param {number} depth - The depth of the render target.
+		 * @returns {boolean} - If size changed.
 		 */
 		resize(width, height, depth) {
 			let changed = false;
@@ -12910,7 +12813,7 @@
 
 		/**
 		 * Dispose the render target.
-		 * @param {Boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
+		 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
 		 */
 		dispose(disposeAttachments = true) {
 			super.dispose();
@@ -12924,7 +12827,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderTarget3D.prototype.isRenderTarget3D = true;
@@ -12948,8 +12851,7 @@
 
 	/**
 	 * Render Target that render to canvas element.
-	 * @memberof t3d
-	 * @extends t3d.RenderTargetBase
+	 * @extends RenderTargetBase
 	 */
 	class RenderTargetBack extends RenderTargetBase {
 		/**
@@ -12977,15 +12879,14 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderTargetBack.prototype.isRenderTargetBack = true;
 
 	/**
 	 * Creates a cube texture.
-	 * @memberof t3d
-	 * @extends t3d.TextureBase
+	 * @extends TextureBase
 	 */
 	class TextureCube extends TextureBase {
 		constructor() {
@@ -13006,8 +12907,8 @@
 
 		/**
 		 * Copy the given cube texture into this texture.
-		 * @param {t3d.TextureCube} source - The cube texture to be copied.
-		 * @return {t3d.TextureCube}
+		 * @param {TextureCube} source - The cube texture to be copied.
+		 * @returns {TextureCube}
 		 */
 		copy(source) {
 			super.copy(source);
@@ -13018,20 +12919,19 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	TextureCube.prototype.isTextureCube = true;
 
 	/**
 	 * Render Target that render to cube texture.
-	 * @memberof t3d
-	 * @extends t3d.RenderTargetBase
+	 * @extends RenderTargetBase
 	 */
 	class RenderTargetCube extends RenderTargetBase {
 		/**
-		 * @param {Number} width - The width of the render target.
-		 * @param {Number} height - The height of the render target.
+		 * @param {number} width - The width of the render target.
+		 * @param {number} height - The height of the render target.
 		 */
 		constructor(width, height) {
 			super(width, height);
@@ -13041,7 +12941,7 @@
 
 			/**
 			 * The activeCubeFace property corresponds to a cube side (PX 0, NX 1, PY 2, NY 3, PZ 4, NZ 5).
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.activeCubeFace = 0;
@@ -13049,7 +12949,7 @@
 			/**
 			 * Specifies the active mipmap level.
 			 * This is only available in WebGL2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.activeMipmapLevel = 0;
@@ -13058,8 +12958,8 @@
 		/**
 		 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 		 * Notice: For now, dynamic Attachment during rendering is not supported.
-		 * @param	{t3d.TextureCube|t3d.RenderBuffer} target
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{TextureCube|RenderBuffer} target
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTextureCube) {
@@ -13092,7 +12992,7 @@
 
 		/**
 		 * Detach a texture(RTT) or renderbuffer.
-		 * @param	{t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+		 * @param	{ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 		 */
 		detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			delete this._attachments[attachment];
@@ -13126,7 +13026,7 @@
 
 		/**
 		 * Dispose the render target.
-		 * @param {Boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
+		 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
 		 */
 		dispose(disposeAttachments = true) {
 			super.dispose();
@@ -13140,7 +13040,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	RenderTargetCube.prototype.isRenderTargetCube = true;
@@ -13167,8 +13067,7 @@
 	/**
 	 * A Query object provides single unified API for using WebGL asynchronus queries,
 	 * which include query objects ('Occlusion' and 'Transform Feedback') and timer queries.
-	 * @memberof t3d
-	 * @extends t3d.EventDispatcher
+	 * @extends EventDispatcher
 	 */
 	class Query extends EventDispatcher {
 		constructor() {
@@ -13177,9 +13076,9 @@
 		}
 
 		/**
-				* Disposes the Query object.
+		 * Disposes the Query object.
 		 * Rejects any pending query.
-				*/
+		 */
 		dispose() {
 			this.dispatchEvent({
 				type: 'dispose'
@@ -13190,24 +13089,23 @@
 	const _offsetMatrix = new Matrix4();
 
 	/**
-	 * Use an array of bones to create a skeleton that can be used by a {@link t3d.SkinnedMesh}.
-	 * @memberof t3d
+	 * Use an array of bones to create a skeleton that can be used by a {@link SkinnedMesh}.
 	 */
 	class Skeleton {
 		/**
-		 * @param {t3d.Bone[]} bones
-		 * @param {t3d.Matrix4[]} bones
+		 * @param {Bone[]} bones
+		 * @param {Matrix4[]} boneInverses
 		 */
 		constructor(bones, boneInverses) {
 			/**
 			 * The array of bones.
-			 * @type {t3d.Bone[]}
+			 * @type {Bone[]}
 			 */
 			this.bones = bones.slice(0);
 
 			/**
 			 * An array of Matrix4s that represent the inverse of the worldMatrix of the individual bones.
-			 * @type {t3d.Matrix4[]}
+			 * @type {Matrix4[]}
 			 */
 			this.boneInverses = boneInverses;
 
@@ -13218,9 +13116,9 @@
 			this.boneMatrices = new Float32Array(16 * this.bones.length);
 
 			/**
-			 * The {@link t3d.Texture2D} holding the bone data when using a vertex texture.
+			 * The {@link Texture2D} holding the bone data when using a vertex texture.
 			 * Use vertex texture to update boneMatrices, by that way, we can use more bones on phone.
-			 * @type {t3d.Texture2D|undefined}
+			 * @type {Texture2D|undefined}
 			 * @default undefined
 			 */
 			this.boneTexture = undefined;
@@ -13250,7 +13148,7 @@
 
 		/**
 		 * Clone skeleton.
-		 * @return {t3d.Skeleton}
+		 * @returns {Skeleton}
 		 */
 		clone() {
 			return new Skeleton(this.bones, this.boneInverses);
@@ -13303,13 +13201,12 @@
 	/**
 	 * This light globally illuminates all objects in the scene equally.
 	 * This light cannot be used to cast shadows as it does not have a direction.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * @extends Light
 	 */
 	class AmbientLight extends Light {
 		/**
-		 * @param {Number} [color=0xffffff]
-		 * @param {Number} [intensity=1]
+		 * @param {number} [color=0xffffff]
+		 * @param {number} [intensity=1]
 		 */
 		constructor(color, intensity) {
 			super(color, intensity);
@@ -13318,7 +13215,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	AmbientLight.prototype.isAmbientLight = true;
@@ -13326,28 +13223,27 @@
 	/**
 	 * Serves as a base class for the other shadow classes.
 	 * @abstract
-	 * @memberof t3d
 	 */
 	class LightShadow {
 		constructor() {
 			/**
 			 * The light's view of the world.
 			 * This is used to generate a depth map of the scene; objects behind other objects from the light's perspective will be in shadow.
-			 * @type {t3d.Camera}
+			 * @type {Camera}
 			 */
 			this.camera = new Camera();
 
 			/**
-			 * Model to shadow camera space, to compute location and depth in shadow map. Stored in a {@link t3d.Matrix4}.
+			 * Model to shadow camera space, to compute location and depth in shadow map. Stored in a {@link Matrix4}.
 			 * This is computed internally during rendering.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.matrix = new Matrix4();
 
 			/**
 			 * Shadow map bias, how much to add or subtract from the normalized depth when deciding whether a surface is in shadow.
 			 * Very tiny adjustments here (in the order of 0.0001) may help reduce artefacts in shadows.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.bias = 0;
@@ -13356,7 +13252,7 @@
 			 * Defines how much the position used to query the shadow map is offset along the object normal.
 			 * Increasing this value can be used to reduce shadow acne especially in large scenes where light shines onto geometry at a shallow angle.
 			 * The cost is that shadows may appear distorted.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.normalBias = 0;
@@ -13364,39 +13260,39 @@
 			/**
 			 * Setting this to values greater than 1 will blur the edges of the shadow.
 			 * High values will cause unwanted banding effects in the shadows - a greater mapSize will allow for a higher value to be used here before these effects become visible.
-			 * Note that this has no effect if the {@link @t3d.Object3D#shadowType} is set to PCF or PCSS.
-			 * @type {Number}
+			 * Note that this has no effect if the {@link Object3D#shadowType} is set to PCF or PCSS.
+			 * @type {number}
 			 * @default 1
 			 */
 			this.radius = 1;
 
 			/**
 			 * Shadow camera near.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.cameraNear = 1;
 
 			/**
 			 * Shadow camera far.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 500
 			 */
 			this.cameraFar = 500;
 
 			/**
-			 * A {@link t3d.Vector2} defining the width and height of the shadow map.
+			 * A {@link Vector2} defining the width and height of the shadow map.
 			 * Higher values give better quality shadows at the cost of computation time.
 			 * Values must be powers of 2.
-			 * @type {t3d.Vector2}
-			 * @default t3d.Vector2(512, 512)
+			 * @type {Vector2}
+			 * @default Vector2(512, 512)
 			 */
 			this.mapSize = new Vector2(512, 512);
 
 			/**
 			 * Enables automatic updates of the light's shadow.
 			 * If you do not require dynamic lighting / shadows, you may set this to false.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default true
 			 */
 			this.autoUpdate = true;
@@ -13404,7 +13300,7 @@
 			/**
 			 * When set to true, shadow maps will be updated in the next ShadowMapPass.render call.
 			 * If you have set .autoUpdate to false, you will need to set this property to true and then make a ShadowMapPass.render call to update the light's shadow.
-			 * @type {Boolean}
+			 * @type {boolean}
 			 * @default false
 			 */
 			this.needsUpdate = false;
@@ -13441,8 +13337,7 @@
 
 	/**
 	 * This is used internally by DirectionalLights for calculating shadows.
-	 * @memberof t3d
-	 * @extends t3d.LightShadow
+	 * @extends LightShadow
 	 */
 	class DirectionalLightShadow extends LightShadow {
 		constructor() {
@@ -13450,7 +13345,7 @@
 
 			/**
 			 * The cast shadow window size.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 500
 			 */
 			this.windowSize = 500;
@@ -13459,7 +13354,7 @@
 			 * Controls the extent to which the shadows fade out at the edge of the frustum.
 			 * If the value is greater than 0, the shadow fades out from center to all sides of shadow texture (radial fade out),
 			 * if the value is less than 0, the shadow will fade out from the y+ direction (vertical fade out).
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.frustumEdgeFalloff = 0.0;
@@ -13525,22 +13420,21 @@
 	 * A light that gets emitted in a specific direction.
 	 * This light will behave as though it is infinitely far away and the rays produced from it are all parallel.
 	 * The common use case for this is to simulate daylight; the sun is far enough away that its position can be considered to be infinite, and all light rays coming from it are parallel.
-	 * This light can cast shadows - see the {@link t3d.DirectionalLightShadow} page for details.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * This light can cast shadows - see the {@link DirectionalLightShadow} page for details.
+	 * @extends Light
 	 */
 	class DirectionalLight extends Light {
 		/**
-		 * @param {Number} [color=0xffffff]
-		 * @param {Number} [intensity=1]
+		 * @param {number} [color=0xffffff]
+		 * @param {number} [intensity=1]
 		 */
 		constructor(color, intensity) {
 			super(color, intensity);
 
 			/**
-			 * A {@link t3d.DirectionalLightShadow} used to calculate shadows for this light.
-			 * @type {t3d.DirectionalLightShadow}
-			 * @default t3d.DirectionalLightShadow()
+			 * A {@link DirectionalLightShadow} used to calculate shadows for this light.
+			 * @type {DirectionalLightShadow}
+			 * @default DirectionalLightShadow()
 			 */
 			this.shadow = new DirectionalLightShadow();
 		}
@@ -13553,7 +13447,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	DirectionalLight.prototype.isDirectionalLight = true;
@@ -13561,22 +13455,21 @@
 	/**
 	 * A light source positioned directly above the scene, with color fading from the sky color to the ground color.
 	 * This light cannot be used to cast shadows.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * @extends Light
 	 */
 	class HemisphereLight extends Light {
 		/**
-		 * @param {Number} [skyColor=0xffffff] - Hexadecimal color of the sky.
-		 * @param {Number} [groundColor=0xffffff] - Hexadecimal color of the ground.
-		 * @param {Number} [intensity=1] - numeric value of the light's strength/intensity.
+		 * @param {number} [skyColor=0xffffff] - Hexadecimal color of the sky.
+		 * @param {number} [groundColor=0xffffff] - Hexadecimal color of the ground.
+		 * @param {number} [intensity=1] - numeric value of the light's strength/intensity.
 		 */
 		constructor(skyColor, groundColor, intensity) {
 			super(skyColor, intensity);
 
 			/**
 			 * Color of the ground.
-			 * @type {t3d.Color3}
-				 	 * @default t3d.Color3(0xffffff)
+			 * @type {Color3}
+			 * @default Color3(0xffffff)
 			 */
 			this.groundColor = new Color3(groundColor !== undefined ? groundColor : 0xffffff);
 		}
@@ -13588,15 +13481,14 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	HemisphereLight.prototype.isHemisphereLight = true;
 
 	/**
 	 * This is used internally by PointLights for calculating shadows.
-	 * @memberof t3d
-	 * @extends t3d.LightShadow
+	 * @extends LightShadow
 	 */
 	class PointLightShadow extends LightShadow {
 		constructor() {
@@ -13639,38 +13531,37 @@
 	/**
 	 * A light that gets emitted from a single point in all directions.
 	 * A common use case for this is to replicate the light emitted from a bare lightbulb.
-	 * This light can cast shadows - see {@link t3d.PointLightShadow} page for details.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * This light can cast shadows - see {@link PointLightShadow} page for details.
+	 * @extends Light
 	 */
 	class PointLight extends Light {
 		/**
-		 * @param {Number} [color=0xffffff]
-		 * @param {Number} [intensity=1]
-		 * @param {Number} [distance=200]
-		 * @param {Number} [decay=1]
+		 * @param {number} [color=0xffffff]
+		 * @param {number} [intensity=1]
+		 * @param {number} [distance=200]
+		 * @param {number} [decay=1]
 		 */
 		constructor(color, intensity, distance, decay) {
 			super(color, intensity);
 
 			/**
 			 * The amount the light dims along the distance of the light.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.decay = decay !== undefined ? decay : 1;
 
 			/**
 			 * The distance from the light where the intensity is 0.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 200
 			 */
 			this.distance = distance !== undefined ? distance : 200;
 
 			/**
-			 * A {@link t3d.PointLightShadow} used to calculate shadows for this light.
-			 * @type {t3d.PointLightShadow}
-			 * @default t3d.PointLightShadow()
+			 * A {@link PointLightShadow} used to calculate shadows for this light.
+			 * @type {PointLightShadow}
+			 * @default PointLightShadow()
 			 */
 			this.shadow = new PointLightShadow();
 		}
@@ -13683,7 +13574,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	PointLight.prototype.isPointLight = true;
@@ -13691,15 +13582,14 @@
 	/**
 	 * This light globally all objects in the scene equally.
 	 * This light depends on spherical harmonics.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * @extends Light
 	 */
 	class SphericalHarmonicsLight extends Light {
 		/**
 		 * Creates a new SphericalHarmonicsLight.
-				* @param {SphericalHarmonics3} [sh =	new SphericalHarmonics3()]
-				* @param {Number} [intensity = 1]
-				*/
+		 * @param {SphericalHarmonics3} [sh = new SphericalHarmonics3()]
+		 * @param {number} [intensity = 1]
+		 */
 		constructor(sh = new SphericalHarmonics3(), intensity = 1) {
 			super(undefined, intensity);
 
@@ -13717,16 +13607,15 @@
 	}
 
 	/**
-	* Read-only flag to check if a given object is of type SphericalHarmonicsLight.
-	* @type {Boolean}
-	* @default true
-	*/
+	 * Read-only flag to check if a given object is of type SphericalHarmonicsLight.
+	 * @type {boolean}
+	 * @default true
+	 */
 	SphericalHarmonicsLight.prototype.isSphericalHarmonicsLight = true;
 
 	/**
 	 * This is used internally by SpotLights for calculating shadows.
-	 * @memberof t3d
-	 * @extends t3d.LightShadow
+	 * @extends LightShadow
 	 */
 	class SpotLightShadow extends LightShadow {
 		constructor() {
@@ -13734,7 +13623,7 @@
 
 			/**
 			 * Controls the extent to which the shadows fade out at the edge of the frustum.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.frustumEdgeFalloff = 0.0;
@@ -13796,32 +13685,31 @@
 
 	/**
 	 * This light gets emitted from a single point in one direction, along a cone that increases in size the further from the light it gets.
-	 * This light can cast shadows - see the {@link t3d.SpotLightShadow} page for details.
-	 * @memberof t3d
-	 * @extends t3d.Light
+	 * This light can cast shadows - see the {@link SpotLightShadow} page for details.
+	 * @extends Light
 	 */
 	class SpotLight extends Light {
 		/**
-		 * @param {Number} [color=0xffffff]
-		 * @param {Number} [intensity=1]
-		 * @param {Number} [distance=200]
-		 * @param {Number} [angle=Math.PI/6]
-		 * @param {Number} [penumbra=0]
-		 * @param {Number} [decay=1]
+		 * @param {number} [color=0xffffff]
+		 * @param {number} [intensity=1]
+		 * @param {number} [distance=200]
+		 * @param {number} [angle=Math.PI/6]
+		 * @param {number} [penumbra=0]
+		 * @param {number} [decay=1]
 		 */
 		constructor(color, intensity, distance, angle, penumbra, decay) {
 			super(color, intensity);
 
 			/**
 			 * The amount the light dims along the distance of the light.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 1
 			 */
 			this.decay = decay !== undefined ? decay : 1;
 
 			/**
 			 * The distance from the light where the intensity is 0.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 200
 			 */
 			this.distance = distance !== undefined ? distance : 200;
@@ -13829,7 +13717,7 @@
 			/**
 			 * Percent of the spotlight cone that is attenuated due to penumbra.
 			 * Takes values between zero and 1.
-			 * @type {Number}
+			 * @type {number}
 			 * @default 0
 			 */
 			this.penumbra = penumbra !== undefined ? penumbra : 0;
@@ -13837,15 +13725,15 @@
 			/**
 			 * Maximum extent of the spotlight, in radians, from its direction.
 			 * Should be no more than Math.PI/2.
-			 * @type {Number}
+			 * @type {number}
 			 * @default Math.PI/6
 			 */
 			this.angle = angle !== undefined ? angle : Math.PI / 6;
 
 			/**
-			 * A {@link t3d.SpotLightShadow} used to calculate shadows for this light.
-			 * @type {t3d.SpotLightShadow}
-			 * @default t3d.SpotLightShadow()
+			 * A {@link SpotLightShadow} used to calculate shadows for this light.
+			 * @type {SpotLightShadow}
+			 * @default SpotLightShadow()
 			 */
 			this.shadow = new SpotLightShadow();
 		}
@@ -13858,7 +13746,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	SpotLight.prototype.isSpotLight = true;
@@ -13870,8 +13758,7 @@
 	 * Bone acturely is a joint.
 	 * The position means joint position.
 	 * Mesh transform is based this joint space.
-	 * @memberof t3d
-	 * @extends t3d.Object3D
+	 * @extends Object3D
 	 */
 	class Bone extends Object3D {
 		constructor() {
@@ -13881,16 +13768,15 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	Bone.prototype.isBone = true;
 
 	/**
-	 * A mesh that has a {@link t3d.Skeleton} with bones that can then be used to animate the vertices of the geometry.
+	 * A mesh that has a {@link Skeleton} with bones that can then be used to animate the vertices of the geometry.
 	 * The material must support skinning.
-	 * @memberof t3d
-	 * @extends t3d.Mesh
+	 * @extends Mesh
 	 */
 	class SkinnedMesh extends Mesh {
 		constructor(geometry, material) {
@@ -13898,28 +13784,28 @@
 
 			/**
 			 * Skeleton created from the bones of the Geometry.
-			 * @type {t3d.Skeleton}
+			 * @type {Skeleton}
 			 */
 			this.skeleton = undefined;
 
 			/**
 			 * Either "attached" or "detached".
-			 * "attached" uses the {@link t3d.SkinnedMesh#worldMatrix} property for the base transform matrix of the bones.
-			 * "detached" uses the {@link t3d.SkinnedMesh#bindMatrix}.
-			 * @type {String}
+			 * "attached" uses the {@link SkinnedMesh#worldMatrix} property for the base transform matrix of the bones.
+			 * "detached" uses the {@link SkinnedMesh#bindMatrix}.
+			 * @type {string}
 			 * @default "attached"
 			 */
 			this.bindMode = 'attached';
 
 			/**
 			 * The base matrix that is used for the bound bone transforms.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.bindMatrix = new Matrix4();
 
 			/**
 			 * The base matrix that is used for resetting the bound bone transforms.
-			 * @type {t3d.Matrix4}
+			 * @type {Matrix4}
 			 */
 			this.bindMatrixInverse = new Matrix4();
 		}
@@ -13927,8 +13813,8 @@
 		/**
 		 * Bind a skeleton to the skinned mesh.
 		 * The bindMatrix gets saved to .bindMatrix property and the .bindMatrixInverse gets calculated.
-		 * @param {t3d.Skeleton} skeleton - Skeleton created from a Bones tree.
-		 * @param {t3d.Matrix4} [bindMatrix=] - Matrix4 that represents the base transform of the skeleton.
+		 * @param {Skeleton} skeleton - Skeleton created from a Bones tree.
+		 * @param {Matrix4} [bindMatrix] - Matrix4 that represents the base transform of the skeleton.
 		 */
 		bind(skeleton, bindMatrix) {
 			this.skeleton = skeleton;
@@ -13946,7 +13832,7 @@
 			} else if (this.bindMode === 'detached') {
 				this.bindMatrixInverse.getInverse(this.bindMatrix);
 			} else {
-				console.warn('t3d.SkinnedMesh: Unrecognized bindMode: ' + this.bindMode);
+				console.warn('SkinnedMesh: Unrecognized bindMode: ' + this.bindMode);
 			}
 		}
 		copy(source) {
@@ -13966,9 +13852,9 @@
 		/**
 		 * Applies the bone transform associated with the given index to the given position vector.
 		 * Returns the updated vector.
-		 * @param {Number} index - The index of the vertex.
-		 * @param {t3d.Vector3} target - The target vector.
-		 * @return {t3d.Vector3} The target vector.
+		 * @param {number} index - The index of the vertex.
+		 * @param {Vector3} target - The target vector.
+		 * @returns {Vector3} The target vector.
 		 */
 		applyBoneTransform(index, target) {
 			const skeleton = this.skeleton;
@@ -13993,7 +13879,7 @@
 
 	/**
 	 * @readonly
-	 * @type {Boolean}
+	 * @type {boolean}
 	 * @default true
 	 */
 	SkinnedMesh.prototype.isSkinnedMesh = true;
@@ -16806,12 +16692,12 @@
 					wrapR = TEXTURE_WRAP.CLAMP_TO_EDGE;
 				}
 				if (texture.wrapS !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.wrapT !== TEXTURE_WRAP.CLAMP_TO_EDGE) {
-					console.warn('Texture is not power of two. Texture.wrapS and Texture.wrapT should be set to t3d.TEXTURE_WRAP.CLAMP_TO_EDGE.', texture);
+					console.warn('Texture is not power of two. Texture.wrapS and Texture.wrapT should be set to TEXTURE_WRAP.CLAMP_TO_EDGE.', texture);
 				}
 				magFilter = filterFallback(texture.magFilter);
 				minFilter = filterFallback(texture.minFilter);
 				if (texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR || texture.magFilter !== TEXTURE_FILTER.NEAREST && texture.magFilter !== TEXTURE_FILTER.LINEAR) {
-					console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to t3d.TEXTURE_FILTER.NEAREST or t3d.TEXTURE_FILTER.LINEAR.', texture);
+					console.warn('Texture is not power of two. Texture.minFilter and Texture.magFilter should be set to TEXTURE_FILTER.NEAREST or TEXTURE_FILTER.LINEAR.', texture);
 				}
 			}
 			gl.texParameteri(textureType, gl.TEXTURE_WRAP_S, wrappingToGL[wrapS]);
@@ -18285,8 +18171,7 @@
 
 	/**
 	 * The WebGL renderer.
-	 * @memberof t3d
-	 * @extends t3d.ThinRenderer
+	 * @extends ThinRenderer
 	 */
 	class WebGLRenderer extends ThinRenderer {
 		/**
@@ -18298,7 +18183,7 @@
 
 			/**
 			 * An object containing details about the capabilities of the current RenderingContext.
-			 * @type {t3d.WebGLCapabilities}
+			 * @type {WebGLCapabilities}
 			 */
 			this.capabilities = {};
 			this._textures = null;

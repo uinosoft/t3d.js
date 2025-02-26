@@ -30,8 +30,8 @@ class CurvePath {
 	 * Ensures that all input points lie on the curve; inflection points should represent local extrema.
 	 * Control points are computed to satisfy these conditions.
 	 * @param {Vector2[]|Vector3[]} points - An array of path points.
-	 * @param {Object} [options={}] - Options object.
-	 * @param {Number} [options.smooth=0.3] - Smoothness factor; higher values yield a smoother curve.
+	 * @param {object} [options={}] - Options object.
+	 * @param {number} [options.smooth=0.3] - Smoothness factor; higher values yield a smoother curve.
 	 */
 	setSmoothCurves(points, options = {}) {
 		const smooth = options.smooth || 0;
@@ -114,9 +114,9 @@ class CurvePath {
 	 * Constructs a smooth curved path from an array of points using Quadratic Bezier curves and straight lines.
 	 * At right-angle turns, it applies quadratic Bezier curves with inflection points serving as control points.
 	 * @param {Vector2[]|Vector3[]} points - An array of path points.
-	 * @param {Object} [options={}] - Options.
-	 * @param {Number} [options.bevelRadius=0] - The bevel radius.
-	 * @param {Boolean} [options.close=false] - Whether to automatically close the path.
+	 * @param {object} [options={}] - Options.
+	 * @param {number} [options.bevelRadius=0] - The bevel radius.
+	 * @param {boolean} [options.close=false] - Whether to automatically close the path.
 	 */
 	setBeveledCurves(points, options = {}) {
 		const bevelRadius = options.bevelRadius || 0;
@@ -200,8 +200,8 @@ class CurvePath {
 	 * Constructs a polyline from an array of path points using straight segments.
 	 * This method creates a continuous series of line segments and optionally closes the path.
 	 * @param {Vector2[]|Vector3[]} points - An array of path points.
-	 * @param {Object} [options={}] - Options.
-	 * @param {Boolean} [options.close=false] - Whether to automatically close the path.
+	 * @param {object} [options={}] - Options.
+	 * @param {boolean} [options.close=false] - Whether to automatically close the path.
 	 */
 	setPolylines(points, options = {}) {
 		const close = options.close === true;
@@ -235,8 +235,8 @@ class CurvePath {
 	 * The division parameter defines the number of pieces each curve is divided into.
 	 * However, for optimization and quality purposes, the actual sampling resolution for each curve depends on its type.
 	 * For example, for a LineCurve, the returned number of points is always just 2.
-	 * @param {Number} [divisions=12] - Number of pieces to divide the curve into.
-	 * @return {Vector2[]|Vector3[]} - An array of points representing the curve.
+	 * @param {number} [divisions=12] - Number of pieces to divide the curve into.
+	 * @returns {Vector2[]|Vector3[]} - An array of points representing the curve.
 	 */
 	getPoints(divisions = 12) {
 		const points = [];
@@ -259,9 +259,9 @@ class CurvePath {
 
 	/**
 	 * This method returns a point for the given interpolation factor.
-	 * @param {Number} t - A interpolation factor representing a position on the curve. Must be in the range [0,1].
+	 * @param {number} t - A interpolation factor representing a position on the curve. Must be in the range [0,1].
 	 * @param {Vector2|Vector3} [optionalTarget] - An optional target point.
-	 * @return {Vector2|Vector3} - The resulting point.
+	 * @returns {Vector2|Vector3} - The resulting point.
 	 */
 	getPoint(t, optionalTarget) {
 		const d = t * this.getLength();
@@ -287,7 +287,7 @@ class CurvePath {
 
 	/**
 	 * Return total curve path length.
-	 * @return {Number} The total length.
+	 * @returns {number} The total length.
 	 */
 	getLength() {
 		const lengths = this.getLengths();
@@ -296,7 +296,7 @@ class CurvePath {
 
 	/**
 	 * Returns list of cumulative curve lengths of the defined curves.
-	 * @return {Number[]} The curve lengths.
+	 * @returns {number[]} The curve lengths.
 	 */
 	getLengths() {
 		if (this.cacheLengths && this.cacheLengths.length === this.curves.length && !this.needsUpdate) {

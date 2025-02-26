@@ -7,8 +7,8 @@ class DistanceTransform {
 
 	/**
 	 * Create a new DistanceTransform instance.
-	 * @param {Number} [maxPixelCount=64*64] - The maximum pixel count to handle.
-	 * @param {Number} [maxGridSize=64] - The maximum grid size to handle.
+	 * @param {number} [maxPixelCount=64*64] - The maximum pixel count to handle.
+	 * @param {number} [maxGridSize=64] - The maximum grid size to handle.
 	 */
 	constructor(maxPixelCount = 64 * 64, maxGridSize = 64) {
 		this._gridOuter = new Float64Array(maxPixelCount);
@@ -24,17 +24,17 @@ class DistanceTransform {
 
 	/**
 	 * Transform an image data to a distance field, which is stored in a Uint8Array.
-     * @param {Object} imageData - The image data to transform.
-     * @param {Uint8Array|Uint8ClampedArray} imageData.data - The pixel data.
-     * @param {Number} imageData.width - The width of the image.
-     * @param {Number} imageData.height - The height of the image.
-     * @param {Object} [options] - The options.
-     * @param {Number} [options.radius=8] - The radius of the distance field.
-     * @param {Number} [options.cutoff=0.25] - The cutoff value.
-	 * @param {Number} [options.inputChannel=3] - The input channel to use.
-	 * @param {Number} [options.targetArray] - The target array to store the result.
-     * @return {Uint8Array}
-     */
+	 * @param {object} imageData - The image data to transform.
+	 * @param {Uint8Array|Uint8ClampedArray} imageData.data - The pixel data.
+	 * @param {number} imageData.width - The width of the image.
+	 * @param {number} imageData.height - The height of the image.
+	 * @param {object} [options] - The options.
+	 * @param {number} [options.radius=8] - The radius of the distance field.
+	 * @param {number} [options.cutoff=0.25] - The cutoff value.
+	 * @param {number} [options.inputChannel=3] - The input channel to use.
+	 * @param {number} [options.targetArray] - The target array to store the result.
+	 * @returns {Uint8Array}
+	 */
 	transform(imageData, options = {}) {
 		const { data, width, height } = imageData;
 

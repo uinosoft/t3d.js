@@ -4,7 +4,6 @@ import { BLEND_TYPE } from '../const.js';
 /**
  * The AnimationMixer is a player for animations on a particular object in the scene.
  * When multiple objects in the scene are animated independently, one AnimationMixer may be used for each object.
- * @memberof t3d
  */
 class AnimationMixer {
 
@@ -15,7 +14,7 @@ class AnimationMixer {
 
 	/**
 	 * Add an action to this mixer.
-	 * @param {t3d.AnimationAction} action - The action to add.
+	 * @param {AnimationAction} action - The action to add.
 	 */
 	addAction(action) {
 		if (this._actions.indexOf(action) !== -1) {
@@ -42,7 +41,7 @@ class AnimationMixer {
 
 	/**
 	 * Remove an action from this mixer.
-	 * @param {t3d.AnimationAction} action - The action to be removed.
+	 * @param {AnimationAction} action - The action to be removed.
 	 */
 	removeAction(action) {
 		const index = this._actions.indexOf(action);
@@ -78,8 +77,8 @@ class AnimationMixer {
 
 	/**
 	 * Whether has this action.
-	 * @param {t3d.AnimationAction} action - The action.
-	 * @return {Boolean}
+	 * @param {AnimationAction} action - The action.
+	 * @returns {boolean}
 	 */
 	hasAction(action) {
 		return this._actions.indexOf(action) > -1;
@@ -87,7 +86,7 @@ class AnimationMixer {
 
 	/**
 	 * Get all actions.
-	 * @return {t3d.AnimationAction[]}
+	 * @returns {AnimationAction[]}
 	 */
 	getActions() {
 		return this._actions;
@@ -95,7 +94,7 @@ class AnimationMixer {
 
 	/**
 	 * Advances the global mixer time and updates the animation.
-	 * @param {Number} deltaTime - The delta time in seconds.
+	 * @param {number} deltaTime - The delta time in seconds.
 	 */
 	update(deltaTime) {
 		// Mark active to false for all bindings.

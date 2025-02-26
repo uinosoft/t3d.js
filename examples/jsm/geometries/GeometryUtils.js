@@ -246,8 +246,8 @@ class GeometryUtils {
 
 	/**
 	 * @param {Array<Geometry>} geometries
-	 * @param {Boolean} useGroups
-	 * @return {Geometry}
+	 * @param {boolean} useGroups
+	 * @returns {Geometry}
 	 */
 	static mergeGeometries(geometries, useGroups = false) {
 		const isIndexed = geometries[0].index !== null;
@@ -381,7 +381,7 @@ class GeometryUtils {
 
 	/**
 	 * @param {Array<Attribute>} attributes
-	 * @return {Attribute}
+	 * @returns {Attribute}
 	 */
 	static mergeAttributes(attributes) {
 		let TypedArray;
@@ -432,8 +432,8 @@ class GeometryUtils {
 	/**
 	 * @param {Geometry} geometry
 	 * @param {Matrix4} matrix
-	 * @param {Boolean} updateBoundings
-	 * @return {Geometry}
+	 * @param {boolean} updateBoundings
+	 * @returns {Geometry}
 	 */
 	static applyMatrix4(geometry, matrix, updateBoundings) {
 		let array, count, offset;
@@ -491,7 +491,7 @@ class GeometryUtils {
 
 	/**
 	 * @param {Geometry} geometry
-	 * @return {Attribute}
+	 * @returns {Attribute}
 	 */
 	static getWireframeAttribute(geometry) {
 		const indices = [];

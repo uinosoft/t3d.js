@@ -113,6 +113,7 @@ class Canvas2D extends Mesh {
 
 	/**
 	 * add child to canvas2d
+	 * @param {Object2D} object
 	 */
 	add(object) {
 		this._2dChildren.push(object);
@@ -120,6 +121,7 @@ class Canvas2D extends Mesh {
 
 	/**
 	 * remove child from canvas2d
+	 * @param {Object2D} object
 	 */
 	remove(object) {
 		const index = this._2dChildren.indexOf(object);
@@ -129,7 +131,7 @@ class Canvas2D extends Mesh {
 	}
 
 	updateSprites() {
-	// update attributes and indices
+		// update attributes and indices
 
 		const vertices = this._vertices,
 			indices = this._indices;

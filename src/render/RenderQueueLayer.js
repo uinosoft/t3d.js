@@ -1,12 +1,11 @@
 /**
  * RenderQueueLayer holds all the renderable objects.
  * Now has an opaque list and a transparent list.
- * @memberof t3d
  */
 class RenderQueueLayer {
 
 	/**
-	 * @param {Number} id - layer id.
+	 * @param {number} id - layer id.
 	 */
 	constructor(id) {
 		this.id = id;

@@ -6,13 +6,12 @@ const _vec3_1 = new Vector3();
 
 /**
  * A sphere defined by a center and radius.
- * @memberof t3d
  */
 class Sphere {
 
 	/**
-	 * @param {t3d.Vector3} [center=Vector3(0, 0, 0)] - center of the sphere.
-	 * @param {Number} [radius=-1] - radius of the sphere.
+	 * @param {Vector3} [center=Vector3(0, 0, 0)] - center of the sphere.
+	 * @param {number} [radius=-1] - radius of the sphere.
 	 */
 	constructor(center = new Vector3(), radius = -1) {
 		this.center = center;
@@ -21,9 +20,9 @@ class Sphere {
 
 	/**
 	 * Sets the center and radius properties of this sphere.
-	 * @param {t3d.Vector3} center - center of the sphere.
-	 * @param {Number} radius - radius of the sphere.
-	 * @return {t3d.Sphere}
+	 * @param {Vector3} center - center of the sphere.
+	 * @param {number} radius - radius of the sphere.
+	 * @returns {Sphere}
 	 */
 	set(center, radius) {
 		this.center.copy(center);
@@ -36,9 +35,9 @@ class Sphere {
 	 * Computes the minimum bounding sphere for an array of points.
 	 * If optionalCenteris given, it is used as the sphere's center.
 	 * Otherwise, the center of the axis-aligned bounding box encompassing points is calculated.
-	 * @param {t3d.Vector3[]} points - an Array of Vector3 positions.
-	 * @param {t3d.Vector3} [optionalCenter] - the center of the sphere.
-	 * @return {t3d.Sphere}
+	 * @param {Vector3[]} points - an Array of Vector3 positions.
+	 * @param {Vector3} [optionalCenter] - the center of the sphere.
+	 * @returns {Sphere}
 	 */
 	setFromPoints(points, optionalCenter) {
 		const center = this.center;
@@ -62,10 +61,10 @@ class Sphere {
 
 	/**
 	 * Computes the minimum bounding sphere for an array of points.
-	 * @param {Number[]} array - an Array of Vector3 positions.
-	 * @param {Number} [gap=3] - array gap.
-	 * @param {Number} [offset=0] - array offset.
-	 * @return {t3d.Sphere}
+	 * @param {number[]} array - an Array of Vector3 positions.
+	 * @param {number} [gap=3] - array gap.
+	 * @param {number} [offset=0] - array offset.
+	 * @returns {Sphere}
 	 */
 	setFromArray(array, gap = 3, offset = 0) {
 		const center = this.center;
@@ -84,8 +83,8 @@ class Sphere {
 
 	/**
 	 * Transforms this sphere with the provided Matrix4.
-	 * @param {t3d.Matrix4} matrix - the Matrix4 to apply
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} matrix - the Matrix4 to apply
+	 * @returns {Matrix4}
 	 */
 	applyMatrix4(matrix) {
 		this.center.applyMatrix4(matrix);
@@ -96,8 +95,8 @@ class Sphere {
 
 	/**
 	 * Returns aMinimum Bounding Box for the sphere.
-	 * @param {t3d.Box3} target — the result will be copied into this Box3.
-	 * @return {t3d.Box3}
+	 * @param {Box3} target — the result will be copied into this Box3.
+	 * @returns {Box3}
 	 */
 	getBoundingBox(target) {
 		if (this.isEmpty()) {
@@ -115,7 +114,7 @@ class Sphere {
 	/**
 	 * Checks to see if the sphere is empty (the radius set to a negative number).
 	 * Spheres with a radius of 0 contain only their center point and are not considered to be empty.
-	 * @return {Boolean}
+	 * @returns {boolean}
 	 */
 	isEmpty() {
 		return this.radius < 0;
@@ -123,7 +122,7 @@ class Sphere {
 
 	/**
 	 * Makes the sphere empty by setting center to (0, 0, 0) and radius to -1.
-	 * @return {t3d.Sphere}
+	 * @returns {Sphere}
 	 */
 	makeEmpty() {
 		this.center.set(0, 0, 0);
@@ -134,8 +133,8 @@ class Sphere {
 
 	/**
 	 * Checks to see if the sphere contains the provided point inclusive of the surface of the sphere.
-	 * @param {t3d.Vector3} point - The point to check for containment.
-	 * @return {Boolean}
+	 * @param {Vector3} point - The point to check for containment.
+	 * @returns {boolean}
 	 */
 	containsPoint(point) {
 		return (point.distanceToSquared(this.center) <= (this.radius * this.radius));
@@ -144,8 +143,8 @@ class Sphere {
 	/**
 	 * Returns the closest distance from the boundary of the sphere to the point.
 	 * If the sphere contains the point, the distance will be negative.
-	 * @param {t3d.Vector3} point - The point to calculate the distance to.
-	 * @return {Number}
+	 * @param {Vector3} point - The point to calculate the distance to.
+	 * @returns {number}
 	 */
 	distanceToPoint(point) {
 		return (point.distanceTo(this.center) - this.radius);
@@ -153,8 +152,8 @@ class Sphere {
 
 	/**
 	 * Expands the boundaries of this sphere to include point.
-	 * @param {t3d.Vector3} point - The vector3 that should be included in the sphere.
-	 * @return {t3d.Sphere}
+	 * @param {Vector3} point - The vector3 that should be included in the sphere.
+	 * @returns {Sphere}
 	 */
 	expandByPoint(point) {
 		if (this.isEmpty()) {
@@ -180,7 +179,7 @@ class Sphere {
 
 	/**
 	 * Returns a new sphere with the same center and radius as this one.
-	 * @return {t3d.Sphere}
+	 * @returns {Sphere}
 	 */
 	clone() {
 		return new Sphere().copy(this);
@@ -188,8 +187,8 @@ class Sphere {
 
 	/**
 	 * Copies the values of the passed sphere's center and radius properties to this sphere.
-	 * @param {t3d.Sphere} sphere
-	 * @return {t3d.Sphere}
+	 * @param {Sphere} sphere
+	 * @returns {Sphere}
 	 */
 	copy(sphere) {
 		this.center.copy(sphere.center);

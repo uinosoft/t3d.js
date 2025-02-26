@@ -6,18 +6,17 @@ import { Vector3 } from '../../math/Vector3.js';
 /**
  * Creates a torus knot, the particular shape of which is defined by a pair of coprime integers, p and q.
  * If p and q are not coprime, the result will be a torus link.
- * @memberof t3d
- * @extends t3d.Geometry
+ * @extends Geometry
  */
 class TorusKnotGeometry extends Geometry {
 
 	/**
-	 * @param {Number} [radius=1] — Radius of the torus. Default is 1.
-	 * @param {Number} [tube=0.4] — Radius of the tube. Default is 0.4.
-	 * @param {Number} [tubularSegments=64] — Default is 64.
-	 * @param {Number} [radialSegments=8] — Default is 8.
-	 * @param {Number} [p=2] — This value determines, how many times the geometry winds around its axis of rotational symmetry. Default is 2.
-	 * @param {Number} [q=3] — This value determines, how many times the geometry winds around a circle in the interior of the torus. Default is 3.
+	 * @param {number} [radius=1] — Radius of the torus. Default is 1.
+	 * @param {number} [tube=0.4] — Radius of the tube. Default is 0.4.
+	 * @param {number} [tubularSegments=64] — Default is 64.
+	 * @param {number} [radialSegments=8] — Default is 8.
+	 * @param {number} [p=2] — This value determines, how many times the geometry winds around its axis of rotational symmetry. Default is 2.
+	 * @param {number} [q=3] — This value determines, how many times the geometry winds around a circle in the interior of the torus. Default is 3.
 	 */
 	constructor(radius = 1, tube = 0.4, tubularSegments = 64, radialSegments = 8, p = 2, q = 3) {
 		super();

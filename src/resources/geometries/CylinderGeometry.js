@@ -6,20 +6,19 @@ import { Vector3 } from '../../math/Vector3.js';
 
 /**
  * A class for generating cylinder geometries.
- * @memberof t3d
- * @extends t3d.Geometry
+ * @extends Geometry
  */
 class CylinderGeometry extends Geometry {
 
 	/**
-	 * @param {Number} [radiusTop=1] — Radius of the cylinder at the top.
-	 * @param {Number} [radiusBottom=1] — Radius of the cylinder at the bottom.
-	 * @param {Number} [height=1] — Height of the cylinder.
-	 * @param {Number} [radialSegments=8] — Number of segmented faces around the circumference of the cylinder.
-	 * @param {Number} [heightSegments=1] — Number of rows of faces along the height of the cylinder.
-	 * @param {Number} [openEnded=false] — A Boolean indicating whether the ends of the cylinder are open or capped. Default is false, meaning capped.
-	 * @param {Number} [thetaStart=0] — Start angle for first segment, default = 0 (three o'clock position).
-	 * @param {Number} [thetaLength=2*Pi] — The central angle, often called theta, of the circular sector. The default is 2*Pi, which makes for a complete cylinder.
+	 * @param {number} [radiusTop=1] — Radius of the cylinder at the top.
+	 * @param {number} [radiusBottom=1] — Radius of the cylinder at the bottom.
+	 * @param {number} [height=1] — Height of the cylinder.
+	 * @param {number} [radialSegments=8] — Number of segmented faces around the circumference of the cylinder.
+	 * @param {number} [heightSegments=1] — Number of rows of faces along the height of the cylinder.
+	 * @param {number} [openEnded=false] — A Boolean indicating whether the ends of the cylinder are open or capped. Default is false, meaning capped.
+	 * @param {number} [thetaStart=0] — Start angle for first segment, default = 0 (three o'clock position).
+	 * @param {number} [thetaLength=2*Pi] — The central angle, often called theta, of the circular sector. The default is 2*Pi, which makes for a complete cylinder.
 	 */
 	constructor(radiusTop = 1, radiusBottom = 1, height = 1, radialSegments = 8, heightSegments = 1, openEnded = false, thetaStart = 0, thetaLength = Math.PI * 2) {
 		super();

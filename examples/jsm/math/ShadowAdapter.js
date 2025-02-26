@@ -16,8 +16,8 @@ class ShadowAdapter {
 
 	/**
 	 * @param {Camera} camera
-	 * @param {Number} near
-	 * @param {Number} distance
+	 * @param {number} near
+	 * @param {number} distance
 	 * @param {Sphere} out
 	 */
 	static getSphereByCamera(camera, near, distance, out) {
@@ -35,10 +35,10 @@ class ShadowAdapter {
 	/**
 	 * @param {Box3} box3
 	 * @param {Camera} camera
-	 * @param {Number} near
-	 * @param {Number} distance
+	 * @param {number} near
+	 * @param {number} distance
 	 * @param {Sphere} out
-	 * @return {Polygon[]}
+	 * @returns {Polygon[]}
 	 */
 	static getSphereByBox3AndCamera(box3, camera, near, distance, out) {
 		if (!camera.frustum.intersectsBox(box3)) {
@@ -110,8 +110,8 @@ class ShadowAdapter {
 
 	/**
 	 * @param {DirectionalLight} light
-	 * @param {Number} phi
-	 * @param {Number} theta
+	 * @param {number} phi
+	 * @param {number} theta
 	 * @param {Sphere} sphere
 	 * @param {Vector3} [up]
 	 */
@@ -134,8 +134,8 @@ class ShadowAdapter {
 
 	/**
 	 * @param {Camera} camera
-	 * @param {Number} clipNear
-	 * @param {Number} clipFar
+	 * @param {number} clipNear
+	 * @param {number} clipFar
 	 * @param {Array} out
 	 */
 	static getViewVertices(camera, clipNear, clipFar, out) {

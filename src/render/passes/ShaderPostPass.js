@@ -9,17 +9,16 @@ import { ShaderMaterial } from '../../resources/materials/ShaderMaterial.js';
 
 /**
  * Shader post pass.
- * @memberof t3d
  */
 class ShaderPostPass {
 
 	/**
-	 * @param {Object} shader - Shader object for the shader material.
-	 * @param {String} shader.name - Name of the shader.
-	 * @param {Object} shader.defines - Defines of the shader.
-	 * @param {Object} shader.uniforms - Uniforms of the shader.
-	 * @param {String} shader.vertexShader - Vertex shader GLSL code.
-	 * @param {String} shader.fragmentShader - Fragment shader GLSL code.
+	 * @param {object} shader - Shader object for the shader material.
+	 * @param {string} shader.name - Name of the shader.
+	 * @param {object} shader.defines - Defines of the shader.
+	 * @param {object} shader.uniforms - Uniforms of the shader.
+	 * @param {string} shader.vertexShader - Vertex shader GLSL code.
+	 * @param {string} shader.fragmentShader - Fragment shader GLSL code.
 	 */
 	constructor(shader) {
 		const scene = new Scene();
@@ -56,7 +55,7 @@ class ShaderPostPass {
 
 	/**
 	 * Render the post pass.
-	 * @param {t3d.ThinRenderer} renderer
+	 * @param {ThinRenderer} renderer
 	 */
 	render(renderer) {
 		renderer.beginRender();

@@ -3,8 +3,7 @@ import { Loader } from './Loader.js';
 /**
  * A low level class for loading resources with Fetch, used internaly by most loaders.
  * It can also be used directly to load any file type that does not have a loader.
- * @memberof t3d
- * @extends t3d.Loader
+ * @extends Loader
  */
 class FileLoader extends Loader {
 
@@ -12,15 +11,15 @@ class FileLoader extends Loader {
 		super(manager);
 
 		/**
-		 * The expected response type. See {@link t3d.FileLoader.setResponseType}.
-		 * @type {String}
+		 * The expected response type. See {@link FileLoader.setResponseType}.
+		 * @type {string}
 		 * @default undefined
 		 */
 		this.responseType = undefined;
 
 		/**
-		 * The expected mimeType. See {@link t3d.FileLoader.setMimeType}.
-		 * @type {String}
+		 * The expected mimeType. See {@link FileLoader.setMimeType}.
+		 * @type {string}
 		 * @default undefined
 		 */
 		this.mimeType = undefined;
@@ -28,10 +27,10 @@ class FileLoader extends Loader {
 
 	/**
 	 * Load the URL and pass the response to the onLoad function.
-	 * @param {String} url — the path or URL to the file. This can also be a Data URI.
-	 * @param {Function} [onLoad=] — Will be called when loading completes. The argument will be the loaded response.
-	 * @param {Function} [onProgress=] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-	 * @param {Function} [onError=] — Will be called if an error occurs.
+	 * @param {string} url — the path or URL to the file. This can also be a Data URI.
+	 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
+	 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
+	 * @param {Function} [onError] — Will be called if an error occurs.
 	 */
 	load(url, onLoad, onProgress, onError) {
 		if (url === undefined) url = '';
@@ -58,7 +57,7 @@ class FileLoader extends Loader {
 					// e.g. 'file://' or 'data://'. Handle as success.
 
 					if (response.status === 0) {
-						console.warn('t3d.FileLoader: HTTP Status 0 received.');
+						console.warn('FileLoader: HTTP Status 0 received.');
 					}
 
 					// Workaround: Checking if response.body === undefined for Alipay browser #23548
@@ -152,8 +151,8 @@ class FileLoader extends Loader {
 	 * blob - returns the data as a Blob.
 	 * document - parses the file using the DOMParser.
 	 * json - parses the file using JSON.parse.
-	 * @param {String} value
-	 * @return {t3d.FileLoader}
+	 * @param {string} value
+	 * @returns {FileLoader}
 	 */
 	setResponseType(value) {
 		this.responseType = value;
@@ -163,8 +162,8 @@ class FileLoader extends Loader {
 	/**
 	 * Set the expected mimeType of the file being loaded.
 	 * Note that in many cases this will be determined automatically, so by default it is undefined.
-	 * @param {String} value
-	 * @return {t3d.FileLoader}
+	 * @param {string} value
+	 * @returns {FileLoader}
 	 */
 	setMimeType(value) {
 		this.mimeType = value;

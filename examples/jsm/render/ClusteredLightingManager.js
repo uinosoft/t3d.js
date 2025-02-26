@@ -10,13 +10,13 @@ class ClusteredLightingManager {
 
 	/**
 	 * Constructs a new ClusteredLightingManager.
-	 * @param {Object} [options] - The options.
-	 * @param {Number} [options.maxLights=256] - The maximum number of lights.
-	 * @param {Boolean} [options.floatLights=false] - Whether the lights are stored as floats.
-	 * @param {Number[]} [options.cells=[16, 8, 32]] - The number of cells in each dimension.
-	 * @param {Number} [options.maxLightsPerCell=256] - The maximum number of lights per cell.
-	 * @param {Number} [options.clipNear=-1] - The near clipping plane for the cells.
-	 * @param {Number} [options.clipFar=-1] - The far clipping plane for the cells.
+	 * @param {object} [options] - The options.
+	 * @param {number} [options.maxLights=256] - The maximum number of lights.
+	 * @param {boolean} [options.floatLights=false] - Whether the lights are stored as floats.
+	 * @param {number[]} [options.cells=[16, 8, 32]] - The number of cells in each dimension.
+	 * @param {number} [options.maxLightsPerCell=256] - The maximum number of lights per cell.
+	 * @param {number} [options.clipNear=-1] - The near clipping plane for the cells.
+	 * @param {number} [options.clipFar=-1] - The far clipping plane for the cells.
 	 */
 	constructor({
 		maxLights = 256,

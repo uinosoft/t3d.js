@@ -7,11 +7,9 @@ import { RenderStates } from '../render/RenderStates.js';
 import { Sphere } from '../math/Sphere.js';
 
 /**
- * Scenes allow you to set up what and where is to be rendered by t3d.
- * This is where you place objects, lights and cameras.
- * @constructor
- * @memberof t3d
- * @extends t3d.Object3D
+ * Scenes allow you to set up what and where is to be rendered,
+ * this is where you place objects, lights and cameras.
+ * @extends Object3D
  */
 class Scene extends Object3D {
 
@@ -22,8 +20,8 @@ class Scene extends Object3D {
 		super();
 
 		/**
-		 * A {@link t3d.Fog} instance defining the type of fog that affects everything rendered in the scene.
-		 * @type {t3d.Fog}
+		 * A {@link Fog} instance defining the type of fog that affects everything rendered in the scene.
+		 * @type {Fog}
 		 * @default null
 		 */
 		this.fog = null;
@@ -31,14 +29,14 @@ class Scene extends Object3D {
 		/**
 		 * Sets the environment map for all materials in the scene.
 		 * However, it's not possible to overwrite an existing texture assigned to Material.envMap.
-		 * @type {t3d.TextureCube | Null}
+		 * @type {TextureCube | null}
 		 * @default null
 		 */
 		this.environment = null;
 
 		/**
 		 * The diffuse intensity of the environment map.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.envDiffuseIntensity = 1;
@@ -46,16 +44,16 @@ class Scene extends Object3D {
 		/**
 		 * The specular intensity of the environment map.
 		 * This value is multiplied with the envMapIntensity of the material to get the final intensity.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.envSpecularIntensity = 1;
 
 		/**
-		 * User-defined clipping planes specified as {@link t3d.Plane} objects in world space.
+		 * User-defined clipping planes specified as {@link Plane} objects in world space.
 		 * These planes apply to the scene.
 		 * Points in space whose dot product with the plane is negative are cut away.
-		 * @type {t3d.Plane[]}
+		 * @type {Plane[]}
 		 * @default []
 		 */
 		this.clippingPlanes = [];
@@ -64,7 +62,7 @@ class Scene extends Object3D {
 		 * Defines whether disable shadow sampler feature.
 		 * Shader with sampler2DShadow uniforms may cause unknown error on some android phones, set disableShadowSampler to true to avoid these bugs.
 		 * When this property is set to true, soft shadow types will fallback to POISSON_SOFT without warning.
-		 * @type {Boolean}
+		 * @type {boolean}
 		 * @default false
 		 */
 		this.disableShadowSampler = false;
@@ -72,7 +70,7 @@ class Scene extends Object3D {
 		/**
 		 * whether to use a logarithmic depth buffer. It may be neccesary to use this if dealing with huge differences in scale in a single scene.
 		 * Note that this setting uses gl_FragDepth if available which disables the Early Fragment Test optimization and can cause a decrease in performance.
-		 * @type {Boolean}
+		 * @type {boolean}
 		 * @default false
 		 */
 		this.logarithmicDepthBuffer = false;
@@ -82,7 +80,7 @@ class Scene extends Object3D {
 		 * If it is not an identity matrix, the actual lighting calculating and the world position in the shader, will be in the anchor coordinate system.
 		 * By setting this property, you can solve the floating point precision problem caused by the rendering object far away from the origin of the world coordinate system.
 		 * In addition, by setting the rotation, it can also repair the direction of the reflection.
-		 * @type {t3d.Matrix4}
+		 * @type {Matrix4}
 		 */
 		this.anchorMatrix = new Matrix4();
 
@@ -97,7 +95,7 @@ class Scene extends Object3D {
 
 	/**
 	 * The maximum number of lighting groups.
-	 * @type {Number}
+	 * @type {number}
 	 * @default 1
 	 */
 	set maxLightingGroups(value) {
@@ -108,11 +106,11 @@ class Scene extends Object3D {
 	}
 
 	/**
-	 * Update {@link t3d.RenderStates} for the scene and camera.
-	 * The lighting data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
-	 * @param {t3d.Camera} camera - The camera.
-	 * @param {Boolean} [updateScene=true] - Whether to update scene data.
-	 * @return {t3d.RenderStates} - The result render states.
+	 * Update {@link RenderStates} for the scene and camera.
+	 * The lighting data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
+	 * @param {Camera} camera - The camera.
+	 * @param {boolean} [updateScene=true] - Whether to update scene data.
+	 * @returns {RenderStates} - The result render states.
 	 */
 	updateRenderStates(camera, updateScene = true) {
 		if (!this._renderStatesMap.has(camera)) {
@@ -131,24 +129,24 @@ class Scene extends Object3D {
 	}
 
 	/**
-	 * Get {@link t3d.RenderStates} for the scene and camera.
-	 * The RenderStates will be updated by calling {@link t3d.Scene#updateRenderStates}.
-	 * The light data in RenderStates will be empty unless calling {@link t3d.Scene#updateRenderQueue}.
-	 * @param {t3d.Camera} camera - The camera.
-	 * @return {t3d.RenderQueue} - The target render queue.
+	 * Get {@link RenderStates} for the scene and camera.
+	 * The RenderStates will be updated by calling {@link Scene#updateRenderStates}.
+	 * The light data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
+	 * @param {Camera} camera - The camera.
+	 * @returns {RenderQueue} - The target render queue.
 	 */
 	getRenderStates(camera) {
 		return this._renderStatesMap.get(camera);
 	}
 
 	/**
-	 * Update {@link t3d.RenderQueue} for the scene and camera.
+	 * Update {@link RenderQueue} for the scene and camera.
 	 * Collect all visible meshes (and lights) from scene graph, and push meshes to render queue.
 	 * Light data will be stored in RenderStates.
-	 * @param {t3d.Camera} camera - The camera.
-	 * @param {Boolean} [collectLights=true] - Whether to collect light data.
-	 * @param {Boolean} [updateSkeletons=true] - Whether to update skeletons.
-	 * @return {t3d.RenderQueue} - The result render queue.
+	 * @param {Camera} camera - The camera.
+	 * @param {boolean} [collectLights=true] - Whether to collect light data.
+	 * @param {boolean} [updateSkeletons=true] - Whether to update skeletons.
+	 * @returns {RenderQueue} - The result render queue.
 	 */
 	updateRenderQueue(camera, collectLights = true, updateSkeletons = true) {
 		if (!this._renderQueueMap.has(camera)) {
@@ -183,10 +181,10 @@ class Scene extends Object3D {
 	}
 
 	/**
-	 * Get {@link t3d.RenderQueue} for the scene and camera.
-	 * The RenderQueue will be updated by calling {@link t3d.Scene#updateRenderQueue}.
-	 * @param {t3d.Camera} camera - The camera.
-	 * @return {t3d.RenderQueue} - The target render queue.
+	 * Get {@link RenderQueue} for the scene and camera.
+	 * The RenderQueue will be updated by calling {@link Scene#updateRenderQueue}.
+	 * @param {Camera} camera - The camera.
+	 * @returns {RenderQueue} - The target render queue.
 	 */
 	getRenderQueue(camera) {
 		return this._renderQueueMap.get(camera);
@@ -221,7 +219,7 @@ class Scene extends Object3D {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 Scene.prototype.isScene = true;

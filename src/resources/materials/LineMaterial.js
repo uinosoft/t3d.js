@@ -3,8 +3,7 @@ import { MATERIAL_TYPE, DRAW_MODE } from '../../const.js';
 
 /**
  * A material for drawing wireframe-style geometries.
- * @extends t3d.Material
- * @memberof t3d
+ * @extends Material
  */
 class LineMaterial extends Material {
 
@@ -19,15 +18,15 @@ class LineMaterial extends Material {
 		/**
 		 * Controls line thickness.
 		 * Due to limitations of the OpenGL Core Profile with the WebGL renderer on most platforms linewidth will always be 1 regardless of the set value.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 1
 		 */
 		this.lineWidth = 1;
 
 		/**
 		 * Set draw mode to LINES / LINE_LOOP / LINE_STRIP
-		 * @type {t3d.DRAW_MODE}
-		 * @default t3d.DRAW_MODE.LINES
+		 * @type {DRAW_MODE}
+		 * @default DRAW_MODE.LINES
 		 */
 		this.drawMode = DRAW_MODE.LINES;
 	}

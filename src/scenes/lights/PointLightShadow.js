@@ -5,8 +5,7 @@ import { Vector3 } from '../../math/Vector3.js';
 
 /**
  * This is used internally by PointLights for calculating shadows.
- * @memberof t3d
- * @extends t3d.LightShadow
+ * @extends LightShadow
  */
 class PointLightShadow extends LightShadow {
 

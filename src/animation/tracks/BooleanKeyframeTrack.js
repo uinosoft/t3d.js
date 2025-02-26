@@ -3,17 +3,16 @@ import { StepInterpolant } from '../KeyframeInterpolants.js';
 
 /**
  * Used for boolean property track.
- * @memberof t3d
- * @extends t3d.KeyframeTrack
+ * @extends KeyframeTrack
  */
 class BooleanKeyframeTrack extends KeyframeTrack {
 
 	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
+	 * @param {Object3D} target
+	 * @param {string} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.StepInterpolant]
+	 * @param {KeyframeInterpolant.constructor} [interpolant=StepInterpolant]
 	 */
 	constructor(target, propertyPath, times, values, interpolant = StepInterpolant) {
 		// since 0.2.2, remove this after few versions later
@@ -28,7 +27,7 @@ class BooleanKeyframeTrack extends KeyframeTrack {
 
 /**
  * @readonly
- * @type {String}
+ * @type {string}
  * @default 'bool'
  */
 BooleanKeyframeTrack.prototype.valueTypeName = 'bool';

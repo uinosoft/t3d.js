@@ -1,31 +1,30 @@
 /**
  * An KeyframeClip is a reusable set of keyframe tracks which represent an animation.
- * @memberof t3d
  */
 class KeyframeClip {
 
 	/**
-	 * @param {String} [name=''] - A name for this clip.
-	 * @param {t3d.KeyframeTrack[]} [tracks=[]] - An array of KeyframeTracks.
-	 * @param {Number} [duration] - The duration of this clip (in seconds). If not passed, the duration will be calculated from the passed tracks array.
+	 * @param {string} [name=''] - A name for this clip.
+	 * @param {KeyframeTrack[]} [tracks=[]] - An array of KeyframeTracks.
+	 * @param {number} [duration] - The duration of this clip (in seconds). If not passed, the duration will be calculated from the passed tracks array.
 	 */
 	constructor(name = '', tracks = [], duration = -1) {
 		/**
 		 * A name for this clip.
-		 * @type {String}
+		 * @type {string}
 		 */
 		this.name = name;
 
 		/**
 		 * An array of KeyframeTracks.
-		 * @type {t3d.KeyframeTrack[]}
+		 * @type {KeyframeTrack[]}
 		 */
 		this.tracks = tracks;
 
 		/**
 		 * The duration of this clip (in seconds).
 		 * If a negative value is passed, the duration will be calculated from the passed tracks array.
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.duration = duration;
 
@@ -36,7 +35,7 @@ class KeyframeClip {
 
 	/**
 	 * Sets the duration of the clip to the duration of its longest KeyframeTrack.
-	 * @return {t3d.KeyframeClip}
+	 * @returns {KeyframeClip}
 	 */
 	resetDuration() {
 		const tracks = this.tracks;

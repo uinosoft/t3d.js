@@ -17,9 +17,8 @@ const _boxMorphTargets = new Box3();
 /**
  * An efficient representation of mesh, line, or point geometry.
  * Includes vertex positions, face indices, normals, colors, UVs, and custom attributes within buffers, reducing the cost of passing all this data to the GPU.
- * To read and edit data in {@link t3d.Geometry#attributes}.
- * @memberof t3d
- * @extends t3d.EventDispatcher
+ * To read and edit data in {@link Geometry#attributes}.
+ * @extends EventDispatcher
  */
 class Geometry extends EventDispatcher {
 
@@ -32,7 +31,7 @@ class Geometry extends EventDispatcher {
 		/**
 		 * Unique number for this geometry instance.
 		 * @readonly
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.id = _geometryId++;
 
@@ -40,20 +39,20 @@ class Geometry extends EventDispatcher {
 		 * UUID of this geometry instance.
 		 * This gets automatically assigned, so this shouldn't be edited.
 		 * @readonly
-		 * @type {String}
+		 * @type {string}
 		 */
 		this.uuid = MathUtils.generateUUID();
 
 		/**
 		 * This hashmap has as id the name of the attribute to be set and as value the buffer to set it to.
-		 * Rather than accessing this property directly, use {@link t3d.Geometry#addAttribute} and {@link t3d.Geometry#getAttribute} to access attributes of this geometry.
-		 * @type {Object}
+		 * Rather than accessing this property directly, use {@link Geometry#addAttribute} and {@link Geometry#getAttribute} to access attributes of this geometry.
+		 * @type {object}
 		 */
 		this.attributes = {};
 
 		/**
 		 * Hashmap of Attributes Array for morph targets.
-		 * @type {Object}
+		 * @type {object}
 		 */
 		this.morphAttributes = {};
 
@@ -61,21 +60,21 @@ class Geometry extends EventDispatcher {
 		 * Allows for vertices to be re-used across multiple triangles; this is called using "indexed triangles" and each triangle is associated with the indices of three vertices.
 		 * This attribute therefore stores the index of each vertex for each triangular face.
 		 * If this attribute is not set, the renderer assumes that each three contiguous positions represent a single triangle.
-		 * @type {t3d.Attribute|Null}
+		 * @type {Attribute | null}
 		 */
 		this.index = null;
 
 		/**
-		 * Bounding box for the bufferGeometry, which can be calculated with {@link t3d.Geometry#computeBoundingBox}.
-		 * @type {t3d.Box3}
-		 * @default t3d.Box3()
+		 * Bounding box for the bufferGeometry, which can be calculated with {@link Geometry#computeBoundingBox}.
+		 * @type {Box3}
+		 * @default Box3()
 		 */
 		this.boundingBox = new Box3();
 
 		/**
-		 * Bounding sphere for the bufferGeometry, which can be calculated with {@link t3d.Geometry#computeBoundingSphere}.
-		 * @type {t3d.Sphere}
-		 * @default t3d.Sphere()
+		 * Bounding sphere for the bufferGeometry, which can be calculated with {@link Geometry#computeBoundingSphere}.
+		 * @type {Sphere}
+		 * @default Sphere()
 		 */
 		this.boundingSphere = new Sphere();
 
@@ -90,16 +89,16 @@ class Geometry extends EventDispatcher {
 
 		/**
 		 * The number of instances to be rendered. If set to -1 (default), instanced rendering is disabled.
-         * This property is used for instanced rendering, where multiple copies of the geometry
-         * are drawn with a single draw call.
-		 * @type {Number}
+		 * This property is used for instanced rendering, where multiple copies of the geometry
+		 * are drawn with a single draw call.
+		 * @type {number}
 		 * @default -1
 		 */
 		this.instanceCount = -1;
 
 		/**
 		 * A version number, incremented every time the attribute object or index object changes to mark VAO drity.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.version = 0;
@@ -108,8 +107,8 @@ class Geometry extends EventDispatcher {
 	/**
 	 * Adds an attribute to this geometry.
 	 * Use this rather than the attributes property.
-	 * @param {String} name
-	 * @param {t3d.Attribute} attribute
+	 * @param {string} name
+	 * @param {Attribute} attribute
 	 */
 	addAttribute(name, attribute) {
 		this.attributes[name] = attribute;
@@ -117,8 +116,8 @@ class Geometry extends EventDispatcher {
 
 	/**
 	 * Returns the attribute with the specified name.
-	 * @param {String} name
-	 * @return {t3d.Attribute}
+	 * @param {string} name
+	 * @returns {Attribute}
 	 */
 	getAttribute(name) {
 		return this.attributes[name];
@@ -126,15 +125,15 @@ class Geometry extends EventDispatcher {
 
 	/**
 	 * Removes the attribute with the specified name.
-	 * @param {String} name
+	 * @param {string} name
 	 */
 	removeAttribute(name) {
 		delete this.attributes[name];
 	}
 
 	/**
-	 * Set the {@link t3d.Geometry#index} buffer.
-	 * @param {Array|t3d.Attribute|Null} index
+	 * Set the {@link Geometry#index} buffer.
+	 * @param {Array | Attribute | null} index
 	 */
 	setIndex(index) {
 		if (Array.isArray(index)) {
@@ -146,10 +145,10 @@ class Geometry extends EventDispatcher {
 	}
 
 	/**
-	 * Adds a group to this geometry; see the {@link t3d.Geometry#groups} for details.
-	 * @param {Number} start
-	 * @param {Number} count
-	 * @param {Number} [materialIndex=0]
+	 * Adds a group to this geometry; see the {@link Geometry#groups} for details.
+	 * @param {number} start
+	 * @param {number} count
+	 * @param {number} [materialIndex=0]
 	 */
 	addGroup(start, count, materialIndex = 0) {
 		this.groups.push({
@@ -167,7 +166,7 @@ class Geometry extends EventDispatcher {
 	}
 
 	/**
-	 * Computes bounding box of the geometry, updating {@link t3d.Geometry#boundingBox}.
+	 * Computes bounding box of the geometry, updating {@link Geometry#boundingBox}.
 	 * Bounding boxes aren't computed by default. They need to be explicitly computed.
 	 */
 	computeBoundingBox() {
@@ -195,7 +194,7 @@ class Geometry extends EventDispatcher {
 	}
 
 	/**
-	 * Computes bounding sphere of the geometry, updating {@link t3d.Geometry#boundingSphere}.
+	 * Computes bounding sphere of the geometry, updating {@link Geometry#boundingSphere}.
 	 * Bounding spheres aren't computed by default. They need to be explicitly computed.
 	 */
 	computeBoundingSphere() {
@@ -267,8 +266,8 @@ class Geometry extends EventDispatcher {
 
 	/**
 	 * Copies another Geometry to this Geometry.
-	 * @param {t3d.Geometry} source - The geometry to be copied.
-	 * @return {t3d.Geometry}
+	 * @param {Geometry} source - The geometry to be copied.
+	 * @returns {Geometry}
 	 */
 	copy(source) {
 		let name, i, l;
@@ -334,7 +333,7 @@ class Geometry extends EventDispatcher {
 
 	/**
 	 * Creates a clone of this Geometry.
-	 * @return {t3d.Geometry}
+	 * @returns {Geometry}
 	 */
 	clone() {
 		return new Geometry().copy(this);

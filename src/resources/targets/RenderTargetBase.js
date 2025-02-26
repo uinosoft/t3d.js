@@ -2,37 +2,36 @@ import { EventDispatcher } from '../../EventDispatcher.js';
 
 /**
  * Render Target is the wrapping class of gl.framebuffer.
- * @memberof t3d
- * @extends t3d.EventDispatcher
+ * @extends EventDispatcher
  * @abstract
  */
 class RenderTargetBase extends EventDispatcher {
 
 	/**
-	 * @param {Number} width - The width of the render target.
-	 * @param {Number} height - The height of the render target.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
 	 */
 	constructor(width, height) {
 		super();
 
 		/**
 		 * The width of the render target.
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.width = width;
 
 		/**
 		 * The height of the render target.
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.height = height;
 	}
 
 	/**
 	 * Resize the render target.
-	 * @param {Number} width - The width of the render target.
-	 * @param {Number} height - The height of the render target.
-	 * @return {Boolean} - If size changed.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @returns {boolean} - If size changed.
 	 */
 	resize(width, height) {
 		if (this.width !== width || this.height !== height) {
@@ -55,7 +54,7 @@ class RenderTargetBase extends EventDispatcher {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RenderTargetBase.prototype.isRenderTarget = true;

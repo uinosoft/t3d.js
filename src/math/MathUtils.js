@@ -6,7 +6,7 @@ class MathUtils {
 	/**
 	 * Method for generate uuid.
 	 * http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
-	 * @return {String} - The uuid.
+	 * @returns {string} - The uuid.
 	 */
 	static generateUUID() {
 		const d0 = Math.random() * 0xffffffff | 0;
@@ -24,10 +24,10 @@ class MathUtils {
 
 	/**
 	 * Returns a value linearly interpolated from two known points based on the given interval - t = 0 will return x and t = 1 will return y.
-	 * @param {Number} x - The first value.
-	 * @param {Number} y - The second value.
-	 * @param {Number} t - The interpolation factor.
-	 * @return {Number} - The interpolated value.
+	 * @param {number} x - The first value.
+	 * @param {number} y - The second value.
+	 * @param {number} t - The interpolation factor.
+	 * @returns {number} - The interpolated value.
 	 */
 	static lerp(x, y, t) {
 		return x + (y - x) * t;
@@ -35,10 +35,10 @@ class MathUtils {
 
 	/**
 	 * Clamps the value to be between min and max.
-	 * @param {Number} value - Value to be clamped.
-	 * @param {Number} min - The minimum value.
-	 * @param {Number} max - The maximum value.
-	 * @return {Number} - The clamped value.
+	 * @param {number} value - Value to be clamped.
+	 * @param {number} min - The minimum value.
+	 * @param {number} max - The maximum value.
+	 * @returns {number} - The clamped value.
 	 */
 	static clamp(value, min, max) {
 		return Math.max(min, Math.min(max, value));
@@ -47,9 +47,9 @@ class MathUtils {
 	/**
 	 * Compute euclidean modulo of m % n.
 	 * Refer to: https://en.wikipedia.org/wiki/Modulo_operation
-	 * @param {Number} n - The dividend.
-	 * @param {Number} m - The divisor.
-	 * @return {Number} - The result of the modulo operation.
+	 * @param {number} n - The dividend.
+	 * @param {number} m - The divisor.
+	 * @returns {number} - The result of the modulo operation.
 	 */
 	static euclideanModulo(n, m) {
 		return ((n % m) + m) % m;
@@ -57,8 +57,8 @@ class MathUtils {
 
 	/**
 	 * Is this number a power of two.
-	 * @param {Number} value - The input number.
-	 * @return {Boolean} - Is this number a power of two.
+	 * @param {number} value - The input number.
+	 * @returns {boolean} - Is this number a power of two.
 	 */
 	static isPowerOfTwo(value) {
 		return (value & (value - 1)) === 0 && value !== 0;
@@ -66,8 +66,8 @@ class MathUtils {
 
 	/**
 	 * Return the nearest power of two number of this number.
-	 * @param {Number} value - The input number.
-	 * @return {Number} - The result number.
+	 * @param {number} value - The input number.
+	 * @returns {number} - The result number.
 	 */
 	static nearestPowerOfTwo(value) {
 		return Math.pow(2, Math.round(Math.log(value) / Math.LN2));
@@ -75,8 +75,8 @@ class MathUtils {
 
 	/**
 	 * Return the next power of two number of this number.
-	 * @param {Number} value - The input number.
-	 * @return {Number} - The result number.
+	 * @param {number} value - The input number.
+	 * @returns {number} - The result number.
 	 */
 	static nextPowerOfTwo(value) {
 		value--;
@@ -92,9 +92,9 @@ class MathUtils {
 
 	/**
 	 * Denormalizes a value based on the type of the provided array.
-	 * @param {Number} value - The value to be denormalized.
+	 * @param {number} value - The value to be denormalized.
 	 * @param {TypedArray} array - The typed array to determine the normalization factor.
-	 * @returns {Number} - The denormalized value.
+	 * @returns {number} - The denormalized value.
 	 * @throws {Error} - Throws an error if the array type is invalid.
 	 */
 	static denormalize(value, array) {
@@ -120,9 +120,9 @@ class MathUtils {
 
 	/**
 	 * Normalizes a value based on the type of the provided array.
-	 * @param {Number} value - The value to be normalized.
+	 * @param {number} value - The value to be normalized.
 	 * @param {TypedArray} array - The typed array to determine the normalization factor.
-	 * @returns {Number} - The normalized value.
+	 * @returns {number} - The normalized value.
 	 * @throws {Error} - Throws an error if the array type is invalid.
 	 */
 	static normalize(value, array) {
@@ -148,8 +148,8 @@ class MathUtils {
 
 	/**
 	 * Converts float to half float.
-	 * @param {Number} val - The float value.
-	 * @return {Number} - The half float value.
+	 * @param {number} val - The float value.
+	 * @returns {number} - The half float value.
 	 */
 	static toHalfFloat(val) {
 		if (Math.abs(val) > 65504) {
@@ -165,8 +165,8 @@ class MathUtils {
 
 	/**
 	 * Converts half float to float.
-	 * @param {Number} val - The half float value.
-	 * @return {Number} - The float value.
+	 * @param {number} val - The half float value.
+	 * @returns {number} - The float value.
 	 */
 	static fromHalfFloat(val) {
 		const m = val >> 10;

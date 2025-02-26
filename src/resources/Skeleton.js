@@ -6,25 +6,24 @@ import { MathUtils } from '../math/MathUtils.js';
 const _offsetMatrix = new Matrix4();
 
 /**
- * Use an array of bones to create a skeleton that can be used by a {@link t3d.SkinnedMesh}.
- * @memberof t3d
+ * Use an array of bones to create a skeleton that can be used by a {@link SkinnedMesh}.
  */
 class Skeleton {
 
 	/**
-	 * @param {t3d.Bone[]} bones
-	 * @param {t3d.Matrix4[]} bones
+	 * @param {Bone[]} bones
+	 * @param {Matrix4[]} boneInverses
 	 */
 	constructor(bones, boneInverses) {
 		/**
 		 * The array of bones.
-		 * @type {t3d.Bone[]}
+		 * @type {Bone[]}
 		 */
 		this.bones = bones.slice(0);
 
 		/**
 		 * An array of Matrix4s that represent the inverse of the worldMatrix of the individual bones.
-		 * @type {t3d.Matrix4[]}
+		 * @type {Matrix4[]}
 		 */
 		this.boneInverses = boneInverses;
 
@@ -35,9 +34,9 @@ class Skeleton {
 		this.boneMatrices = new Float32Array(16 * this.bones.length);
 
 		/**
-		 * The {@link t3d.Texture2D} holding the bone data when using a vertex texture.
+		 * The {@link Texture2D} holding the bone data when using a vertex texture.
 		 * Use vertex texture to update boneMatrices, by that way, we can use more bones on phone.
-		 * @type {t3d.Texture2D|undefined}
+		 * @type {Texture2D|undefined}
 		 * @default undefined
 		 */
 		this.boneTexture = undefined;
@@ -71,7 +70,7 @@ class Skeleton {
 
 	/**
 	 * Clone skeleton.
-	 * @return {t3d.Skeleton}
+	 * @returns {Skeleton}
 	 */
 	clone() {
 		return new Skeleton(this.bones, this.boneInverses);

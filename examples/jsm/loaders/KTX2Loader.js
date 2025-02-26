@@ -153,7 +153,7 @@ class KTX2Loader extends Loader {
 	/**
 	 * @param {ArrayBuffer} buffer
 	 * @param {object?} config
-	 * @return {Promise<Object>}
+	 * @returns {Promise<object>}
 	 */
 	async _createTextureData(buffer, config = {}) {
 		const { read, VK_FORMAT_UNDEFINED, KHR_DF_FLAG_ALPHA_PREMULTIPLIED } = _ktxParser;
@@ -493,7 +493,7 @@ KTX2Loader.BasisWorker = function() {
 		return (value & (value - 1)) === 0 && value !== 0;
 	}
 
-	/** Concatenates N byte arrays. */
+	// Concatenates N byte arrays.
 	function concat(arrays) {
 		if (arrays.length === 1) return arrays[0];
 

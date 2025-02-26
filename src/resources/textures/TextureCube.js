@@ -2,8 +2,7 @@ import { TextureBase } from './TextureBase.js';
 
 /**
  * Creates a cube texture.
- * @memberof t3d
- * @extends t3d.TextureBase
+ * @extends TextureBase
  */
 class TextureCube extends TextureBase {
 
@@ -25,8 +24,8 @@ class TextureCube extends TextureBase {
 
 	/**
 	 * Copy the given cube texture into this texture.
-	 * @param {t3d.TextureCube} source - The cube texture to be copied.
-	 * @return {t3d.TextureCube}
+	 * @param {TextureCube} source - The cube texture to be copied.
+	 * @returns {TextureCube}
 	 */
 	copy(source) {
 		super.copy(source);
@@ -40,7 +39,7 @@ class TextureCube extends TextureBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 TextureCube.prototype.isTextureCube = true;

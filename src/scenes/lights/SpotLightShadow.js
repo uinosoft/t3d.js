@@ -6,8 +6,7 @@ import { RenderBuffer } from '../../resources/RenderBuffer.js';
 
 /**
  * This is used internally by SpotLights for calculating shadows.
- * @memberof t3d
- * @extends t3d.LightShadow
+ * @extends LightShadow
  */
 class SpotLightShadow extends LightShadow {
 
@@ -16,7 +15,7 @@ class SpotLightShadow extends LightShadow {
 
 		/**
 		 * Controls the extent to which the shadows fade out at the edge of the frustum.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.frustumEdgeFalloff = 0.0;

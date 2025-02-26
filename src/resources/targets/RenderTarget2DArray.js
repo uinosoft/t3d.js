@@ -4,15 +4,14 @@ import { ATTACHMENT } from '../../const.js';
 
 /**
  * Render Target that render to 2d array texture.
- * @memberof t3d
- * @extends t3d.RenderTargetBase
+ * @extends RenderTargetBase
  */
 class RenderTarget2DArray extends RenderTargetBase {
 
 	/**
-	 * @param {Number} width - The width of the render target.
-	 * @param {Number} height - The height of the render target.
-	 * @param {Number} depth - The depth of the render target.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @param {number} depth - The depth of the render target.
 	 */
 	constructor(width, height, depth) {
 		super(width, height);
@@ -26,7 +25,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 		/**
 		 * Specifies the layer.
 		 * This is only available in WebGL2.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.activeLayer = 0;
@@ -34,7 +33,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 		/**
 		 * Specifies the active mipmap level.
 		 * This is only available in WebGL2.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.activeMipmapLevel = 0;
@@ -43,8 +42,8 @@ class RenderTarget2DArray extends RenderTargetBase {
 	/**
 	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
 	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {t3d.Texture2DArray|t3d.RenderBuffer} target
-	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 * @param  {Texture2DArray|RenderBuffer} target
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture2DArray) {
@@ -68,7 +67,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 
 	/**
 	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {t3d.ATTACHMENT} [attachment=t3d.ATTACHMENT.COLOR_ATTACHMENT0]
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
 	 */
 	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		delete this._attachments[attachment];
@@ -76,10 +75,10 @@ class RenderTarget2DArray extends RenderTargetBase {
 
 	/**
 	 * Resize the render target.
-	 * @param {Number} width - The width of the render target.
-	 * @param {Number} height - The height of the render target.
-	 * @param {Number} depth - The depth of the render target.
-	 * @return {Boolean} - If size changed.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @param {number} depth - The depth of the render target.
+	 * @returns {boolean} - If size changed.
 	 */
 	resize(width, height, depth) {
 		let changed = false;
@@ -113,7 +112,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RenderTarget2DArray.prototype.isRenderTarget2DArray = true;

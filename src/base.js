@@ -1,9 +1,9 @@
 /**
  * Clone uniforms.
- * @method
- * @name t3d.cloneUniforms
- * @param {Object} value - The input uniforms.
- * @return {Object} - The output uniforms.
+ * @function
+ * @name cloneUniforms
+ * @param {object} uniforms_src - The input uniforms.
+ * @returns {object} - The output uniforms.
  */
 export function cloneUniforms(uniforms_src) {
 	const uniforms_dst = {};
@@ -23,10 +23,10 @@ export function cloneUniforms(uniforms_src) {
 /**
  * Clone json.
  * This is faster than JSON.parse(JSON.stringify()).
- * @method
- * @name t3d.cloneJson
- * @param {Object} obj - The input json.
- * @return {Object} - The output json.
+ * @function
+ * @name cloneJson
+ * @param {object} obj - The input json.
+ * @returns {object} - The output json.
  */
 export function cloneJson(obj) {
 	const newObj = Array.isArray(obj) ? [] : {};

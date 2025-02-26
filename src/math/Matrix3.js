@@ -1,6 +1,5 @@
 /**
  * The 3x3 matrix class.
- * @memberof t3d
  */
 class Matrix3 {
 
@@ -17,16 +16,16 @@ class Matrix3 {
 
 	/**
 	 * Sets the 3x3 matrix values to the given row-major sequence of values.
-	 * @param {Number} n11 - value to put in row 1, col 1.
-	 * @param {Number} n12 - value to put in row 1, col 2.
-	 * @param {Number} n13 - value to put in row 1, col 3.
-	 * @param {Number} n21 - value to put in row 2, col 1.
-	 * @param {Number} n22 - value to put in row 2, col 2.
-	 * @param {Number} n23 - value to put in row 2, col 3.
-	 * @param {Number} n31 - value to put in row 3, col 1.
-	 * @param {Number} n32 - value to put in row 3, col 2.
-	 * @param {Number} n33 - value to put in row 3, col 3.
-	 * @return {t3d.Matrix3}
+	 * @param {number} n11 - value to put in row 1, col 1.
+	 * @param {number} n12 - value to put in row 1, col 2.
+	 * @param {number} n13 - value to put in row 1, col 3.
+	 * @param {number} n21 - value to put in row 2, col 1.
+	 * @param {number} n22 - value to put in row 2, col 2.
+	 * @param {number} n23 - value to put in row 2, col 3.
+	 * @param {number} n31 - value to put in row 3, col 1.
+	 * @param {number} n32 - value to put in row 3, col 2.
+	 * @param {number} n33 - value to put in row 3, col 3.
+	 * @returns {Matrix3}
 	 */
 	set(n11, n12, n13,
 		n21, n22, n23,
@@ -50,7 +49,7 @@ class Matrix3 {
 
 	/**
 	 * Resets this matrix to the 3x3 identity matrix
-	 * @return {t3d.Matrix3}
+	 * @returns {Matrix3}
 	 */
 	identity() {
 		return this.set(
@@ -62,7 +61,7 @@ class Matrix3 {
 
 	/**
 	 * Checks if the matrix is an identity matrix.
-	 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
+	 * @returns {boolean} - True if the matrix is an identity matrix, false otherwise.
 	 */
 	isIdentity() {
 		const te = this.elements;
@@ -73,7 +72,7 @@ class Matrix3 {
 
 	/**
 	 * Take the inverse of this matrix
-	 * @return {t3d.Matrix3}
+	 * @returns {Matrix3}
 	 */
 	inverse() {
 		return this.getInverse(this);
@@ -81,7 +80,8 @@ class Matrix3 {
 
 	/**
 	 * Take the inverse of the matrix
-	 * @return {t3d.Matrix3}
+	 * @param {Matrix3} matrix - The matrix to take the inverse of.
+	 * @returns {Matrix3}
 	 */
 	getInverse(matrix) {
 		const me = matrix.elements,
@@ -121,7 +121,7 @@ class Matrix3 {
 
 	/**
 	 * Transposes this matrix in place.
-	 * @return {t3d.Matrix3}
+	 * @returns {Matrix3}
 	 */
 	transpose() {
 		let tmp;
@@ -136,8 +136,8 @@ class Matrix3 {
 
 	/**
 	 * Return true if this matrix and m are equal.
-	 * @param {t3d.Matrix3} matrix
-	 * @return {Boolean}
+	 * @param {Matrix3} matrix
+	 * @returns {boolean}
 	 */
 	equals(matrix) {
 		const te = this.elements;
@@ -152,9 +152,9 @@ class Matrix3 {
 
 	/**
 	 * Sets the elements of this matrix based on an array in column-major format.
-	 * @param {Number[]} array
-	 * @param {Number} [offset=0]
-	 * @return {t3d.Matrix3}
+	 * @param {number[]} array
+	 * @param {number} [offset=0]
+	 * @returns {Matrix3}
 	 */
 	fromArray(array, offset = 0) {
 		for (let i = 0; i < 9; i++) {
@@ -166,9 +166,9 @@ class Matrix3 {
 
 	/**
 	 * Writes the elements of this matrix to an array in column-major format.
-	 * @param {Number[]} [array]
-	 * @param {Number} [offset=0]
-	 * @return {Number[]}
+	 * @param {number[]} [array]
+	 * @param {number} [offset=0]
+	 * @returns {number[]}
 	 */
 	toArray(array = [], offset = 0) {
 		const te = this.elements;
@@ -190,7 +190,7 @@ class Matrix3 {
 
 	/**
 	 * Creates a new Matrix3 and with identical elements to this one.
-	 * @return {t3d.Matrix3}
+	 * @returns {Matrix3}
 	 */
 	clone() {
 		return new Matrix3().fromArray(this.elements);
@@ -198,8 +198,8 @@ class Matrix3 {
 
 	/**
 	 * Copies the elements of matrix m into this matrix.
-	 * @param {t3d.Matrix3} m
-	 * @return {t3d.Matrix3}
+	 * @param {Matrix3} m
+	 * @returns {Matrix3}
 	 */
 	copy(m) {
 		const te = this.elements;
@@ -214,8 +214,8 @@ class Matrix3 {
 
 	/**
 	 * Post-multiplies this matrix by m.
-	 * @param {t3d.Matrix3} m
-	 * @return {t3d.Matrix3}
+	 * @param {Matrix3} m
+	 * @returns {Matrix3}
 	 */
 	multiply(m) {
 		return this.multiplyMatrices(this, m);
@@ -223,8 +223,8 @@ class Matrix3 {
 
 	/**
 	 * Pre-multiplies this matrix by m.
-	 * @param {t3d.Matrix3} m
-	 * @return {t3d.Matrix3}
+	 * @param {Matrix3} m
+	 * @returns {Matrix3}
 	 */
 	premultiply(m) {
 		return this.multiplyMatrices(m, this);
@@ -232,9 +232,9 @@ class Matrix3 {
 
 	/**
 	 * Sets this matrix to a x b.
-	 * @param {t3d.Matrix3} a
-	 * @param {t3d.Matrix3} b
-	 * @return {t3d.Matrix3}
+	 * @param {Matrix3} a
+	 * @param {Matrix3} b
+	 * @returns {Matrix3}
 	 */
 	multiplyMatrices(a, b) {
 		const ae = a.elements;
@@ -266,14 +266,14 @@ class Matrix3 {
 
 	/**
 	 * Transform 2D
-	 * @param {Number} x - position.x
-	 * @param {Number} y - position.y
-	 * @param {Number} scaleX - scale.x
-	 * @param {Number} scaleY - scale.y
-	 * @param {Number} rotation - rotation
-	 * @param {Number} anchorX - anchor.x
-	 * @param {Number} anchorY - anchor.y
-	 * @return {t3d.Matrix3}
+	 * @param {number} x - position.x
+	 * @param {number} y - position.y
+	 * @param {number} scaleX - scale.x
+	 * @param {number} scaleY - scale.y
+	 * @param {number} rotation - rotation
+	 * @param {number} anchorX - anchor.x
+	 * @param {number} anchorY - anchor.y
+	 * @returns {Matrix3}
 	 */
 	transform(x, y, scaleX, scaleY, rotation, anchorX, anchorY) {
 		const te = this.elements;
@@ -304,14 +304,14 @@ class Matrix3 {
 
 	/**
 	 * Set the transformation matrix of uv coordinates
-	 * @param {Number} tx
-	 * @param {Number} ty
-	 * @param {Number} sx
-	 * @param {Number} sy
-	 * @param {Number} rotation
-	 * @param {Number} cx
-	 * @param {Number} cy
-	 * @return {t3d.Matrix3}
+	 * @param {number} tx
+	 * @param {number} ty
+	 * @param {number} sx
+	 * @param {number} sy
+	 * @param {number} rotation
+	 * @param {number} cx
+	 * @param {number} cy
+	 * @returns {Matrix3}
 	 */
 	setUvTransform(tx, ty, sx, sy, rotation, cx, cy) {
 		const c = Math.cos(rotation);
@@ -326,8 +326,8 @@ class Matrix3 {
 
 	/**
 	 * Sets the matri3 planes from the matrix4.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Matrix3}
+	 * @param {Matrix4} m
+	 * @returns {Matrix3}
 	 */
 	setFromMatrix4(m) {
 		const me = m.elements;
@@ -341,10 +341,10 @@ class Matrix3 {
 
 	/**
 	 * Extracts the basis vectors from the matrix.
-	 * @param {t3d.Vector3} xAxis
-	 * @param {t3d.Vector3} yAxis
-	 * @param {t3d.Vector3} zAxis
-	 * @return {t3d.Matrix3}
+	 * @param {Vector3} xAxis
+	 * @param {Vector3} yAxis
+	 * @param {Vector3} zAxis
+	 * @returns {Matrix3}
 	 */
 	extractBasis(xAxis, yAxis, zAxis) {
 		const te = this.elements;

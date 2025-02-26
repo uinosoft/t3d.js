@@ -3,29 +3,28 @@ import { EventDispatcher } from '../EventDispatcher.js';
 
 /**
  * Render Buffer can be attached to RenderTarget.
- * @memberof t3d
- * @extends t3d.EventDispatcher
+ * @extends EventDispatcher
  */
 class RenderBuffer extends EventDispatcher {
 
 	/**
-	 * @param {Number} width - The width of the render buffer.
-	 * @param {Number} height - The height of the render buffer.
-	 * @param {t3d.PIXEL_FORMAT} [format=t3d.PIXEL_FORMAT.RGBA8] - The internal format of the render buffer.
-	 * @param {Number} [multipleSampling=0] - If bigger than zero, this renderBuffer will support multipleSampling. (Only usable in WebGL 2.0)
+	 * @param {number} width - The width of the render buffer.
+	 * @param {number} height - The height of the render buffer.
+	 * @param {PIXEL_FORMAT} [format=PIXEL_FORMAT.RGBA8] - The internal format of the render buffer.
+	 * @param {number} [multipleSampling=0] - If bigger than zero, this renderBuffer will support multipleSampling. (Only usable in WebGL 2.0)
 	 */
 	constructor(width, height, format = PIXEL_FORMAT.RGBA8, multipleSampling = 0) {
 		super();
 
 		/**
 		 * The width of the render buffer.
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.width = width;
 
 		/**
 		 * The height of the render buffer.
-		 * @type {Number}
+		 * @type {number}
 		 */
 		this.height = height;
 
@@ -36,8 +35,8 @@ class RenderBuffer extends EventDispatcher {
 		 * RGBA8：for multiple sampled color attachments.
 		 * DEPTH_COMPONENT16: for multiple sampled depth attachments.
 		 * DEPTH24_STENCIL8: for multiple sampled depth stencil attachments.
-		 * @type {t3d.PIXEL_FORMAT}
-		 * @default t3d.PIXEL_FORMAT.RGBA8
+		 * @type {PIXEL_FORMAT}
+		 * @default PIXEL_FORMAT.RGBA8
 		 */
 		this.format = format;
 
@@ -46,7 +45,7 @@ class RenderBuffer extends EventDispatcher {
 		 * A Render Target's attachments must have the same multipleSampling value.
 		 * Texture can't be attached to the same render target with a multiple sampled render buffer.
 		 * Max support 8.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.multipleSampling = multipleSampling;
@@ -54,9 +53,9 @@ class RenderBuffer extends EventDispatcher {
 
 	/**
 	 * Resize the render buffer.
-	 * @param {Number} width - The width of the render buffer.
-	 * @param {Number} height - The height of the render buffer.
-	 * @return {Boolean} - If size changed.
+	 * @param {number} width - The width of the render buffer.
+	 * @param {number} height - The height of the render buffer.
+	 * @returns {boolean} - If size changed.
 	 */
 	resize(width, height) {
 		if (this.width !== width || this.height !== height) {
@@ -72,7 +71,7 @@ class RenderBuffer extends EventDispatcher {
 
 	/**
 	 * Returns a clone of this render buffer.
-	 * @return {t3d.RenderBuffer}
+	 * @returns {RenderBuffer}
 	 */
 	clone() {
 		return new this.constructor().copy(this);
@@ -80,8 +79,8 @@ class RenderBuffer extends EventDispatcher {
 
 	/**
 	 * Copy the given render buffer into this render buffer.
-	 * @param {t3d.RenderBuffer} source - The render buffer to be copied.
-	 * @return {t3d.RenderBuffer}
+	 * @param {RenderBuffer} source - The render buffer to be copied.
+	 * @returns {RenderBuffer}
 	 */
 	copy(source) {
 		this.format = source.format;
@@ -101,7 +100,7 @@ class RenderBuffer extends EventDispatcher {
 
 /**
  * @readonly
- * @type {Boolean}
+ * @type {boolean}
  * @default true
  */
 RenderBuffer.prototype.isRenderBuffer = true;

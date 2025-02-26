@@ -1,10 +1,18 @@
 {
+    "source": {
+        "include": ["./src"]
+    },
     "templates": {
         "default": {
             "outputSourceFiles": false
         }
     },
     "opts":{
+        "encoding": "utf8",
+        "destination": "./docs",
+        "recurse": true,
+        "verbose": true,
+        "readme": "./README.md",
         "template": "node_modules/clean-jsdoc-theme",
         "theme_opts": {
             "favicon": "../examples/favicon.ico",
@@ -25,5 +33,9 @@
                 }
             ]
         }
+    },
+    "markdown": {
+        "hardwrap": false,
+        "idInHeadings": true
     }
 }

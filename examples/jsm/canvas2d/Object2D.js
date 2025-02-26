@@ -33,6 +33,7 @@ class Object2D {
 
 	/**
 	 * add child to object2d
+	 * @param {Object2D} object
 	 */
 	add(object) {
 		this.children.push(object);
@@ -41,6 +42,7 @@ class Object2D {
 
 	/**
 	 * remove child from object2d
+	 * @param {Object2D} object
 	 */
 	remove(object) {
 		const index = this.children.indexOf(object);
@@ -52,6 +54,8 @@ class Object2D {
 
 	/**
 	 * get object by name
+	 * @param {string} name
+	 * @returns {Object2D}
 	 */
 	getObjectByName(name) {
 		return this.getObjectByProperty('name', name);
@@ -59,6 +63,9 @@ class Object2D {
 
 	/**
 	 * get object by property
+	 * @param {string} name
+	 * @param {any} value
+	 * @returns {Object2D}
 	 */
 	getObjectByProperty(name, value) {
 		if (this[name] === value) return this;

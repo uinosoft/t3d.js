@@ -7,10 +7,11 @@ import { GeometryBuilderUtils } from './GeometryBuilderUtils.js';
 const PolygonBuilder = {
 
 	/**
-     * @param {Object} shape - The shape.
-     * @param {Array} shape.contour - The holes of this shape, for example: [[0, 0], [0, 5], [5, 5], [5, 0]]
-     * @param {Array} shape.holes - The holes of this shape, for example: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
-     */
+	 * @param {object} shape - The shape.
+	 * @param {Array} shape.contour - The holes of this shape, for example: [[0, 0], [0, 5], [5, 5], [5, 0]]
+	 * @param {Array} shape.holes - The holes of this shape, for example: [[[1, 3], [1, 4], [4, 4], [4, 3]], [[1, 1], [1, 2], [4, 1]]]
+	 * @returns {object} The geometry data.
+	 */
 	getGeometryData: function(shape) {
 		const vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
 		const holeIndices = []; // array of hole indices

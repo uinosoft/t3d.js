@@ -6,13 +6,13 @@ class CurvePath3 extends CurvePath {
 	/**
 	 * Computes the frames data of the path.
 	 * TODO: move this to CurvePath.
-	 * @param {Object} [options={}] - Options object.
-	 * @param {t3d.Vector3|null} [options.up=null] - The input up vector.
-	 * @param {Number} [options.divisions=12] - The number of divisions.
-	 * @param {Boolean} [options.frenet=true] - Whether to use Frenet frames.
-	 * @param {Boolean} [options.fixLine=true] - Whether to fix line tangent types.
-	 * @param {Boolean} [options.close=false] - Whether auto-close the path.
-	 * @return {Object} - The frames data.
+	 * @param {object} [options={}] - Options object.
+	 * @param {Vector3|null} [options.up=null] - The input up vector.
+	 * @param {number} [options.divisions=12] - The number of divisions.
+	 * @param {boolean} [options.frenet=true] - Whether to use Frenet frames.
+	 * @param {boolean} [options.fixLine=true] - Whether to fix line tangent types.
+	 * @param {boolean} [options.close=false] - Whether auto-close the path.
+	 * @returns {object} - The frames data.
 	 */
 	computeFrames(options = {}) {
 		const up = options.up;

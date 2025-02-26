@@ -59,8 +59,8 @@ class GBuffer {
 
 	/**
 	 * Set G Buffer size.
-	 * @param {Number} width
-	 * @param {Number} height
+	 * @param {number} width
+	 * @param {number} height
 	 */
 	resize(width, height) {
 		this._renderTarget1.resize(width, height);
@@ -209,10 +209,9 @@ class GBuffer {
 	 * + 'metalness'
 	 * + 'albedo'
 	 * + 'velocity'
-	 *
 	 * @param {ThinRenderer} renderer
 	 * @param {Camera} camera
-	 * @param {String} [type='normal']
+	 * @param {string} [type='normal']
 	 */
 	renderDebug(renderer, camera, type) {
 		this._debugPass.uniforms['normalGlossinessTexture'] = this.getNormalGlossinessTexture();
@@ -232,7 +231,7 @@ class GBuffer {
 	 * + G: normal.y * 0.5 + 0.5
 	 * + B: normal.z * 0.5 + 0.5
 	 * + A: glossiness
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getNormalGlossinessTexture() {
 		return this._renderTarget1.texture;
@@ -242,7 +241,7 @@ class GBuffer {
 	 * Get depth texture.
 	 * Channel storage:
 	 * + R: depth
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getDepthTexture() {
 		return this._depthTexture;
@@ -255,7 +254,7 @@ class GBuffer {
 	 * + G: albedo.g
 	 * + B: albedo.b
 	 * + A: metalness
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getAlbedoMetalnessTexture() {
 		return this._useMRT ? this._texture2 : this._renderTarget2.texture;
@@ -266,7 +265,7 @@ class GBuffer {
 	 * Channel storage:
 	 * + R: velocity.x
 	 * + G: velocity.y
-	 * @return {Texture2D}
+	 * @returns {Texture2D}
 	 */
 	getMotionTexture() {
 		return this._renderTarget3.texture;
@@ -520,7 +519,7 @@ const normalGlossinessShader = {
             	vec3 normal = normalize(v_Normal);
 				#ifdef DOUBLE_SIDED
 					normal = normal * (float(gl_FrontFacing) * 2.0 - 1.0);
-				#endif 
+				#endif
 			#endif
 
             float roughnessFactor = roughness;
@@ -531,7 +530,7 @@ const normalGlossinessShader = {
             vec4 packedNormalGlossiness;
             packedNormalGlossiness.xyz = normal * 0.5 + 0.5;
             packedNormalGlossiness.w = clamp(1. - roughnessFactor, 0., 1.);
-            
+
             gl_FragColor = packedNormalGlossiness;
         }
     `
@@ -585,7 +584,7 @@ const albedoMetalnessShader = {
 				metalnessFactor *= texture2D(metalnessMap, v_Uv).b;
 			#endif
 
-			gl_FragColor = vec4(diffuseColor.rgb, metalnessFactor); 
+			gl_FragColor = vec4(diffuseColor.rgb, metalnessFactor);
 		}
 	`
 };
@@ -807,7 +806,7 @@ const mrtShader = {
 			vec4 packedNormalGlossiness;
 			packedNormalGlossiness.xyz = normal * 0.5 + 0.5;
 			packedNormalGlossiness.w = clamp(1. - roughnessFactor, 0., 1.);
-			
+
 			gl_FragData[0] = packedNormalGlossiness;
 		}
 	`

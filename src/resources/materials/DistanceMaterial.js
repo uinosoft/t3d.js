@@ -3,8 +3,7 @@ import { MATERIAL_TYPE } from '../../const.js';
 
 /**
  * A material for drawing geometry by distance.
- * @extends t3d.Material
- * @memberof t3d
+ * @extends Material
  */
 class DistanceMaterial extends Material {
 

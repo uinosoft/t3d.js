@@ -2,15 +2,14 @@ import { MathUtils } from './MathUtils.js';
 
 /**
  * The vector 4 class
- * @memberof t3d
  */
 class Vector4 {
 
 	/**
-	 * @param {Number} [x=0] - the x value of this vector.
-	 * @param {Number} [y=0] - the y value of this vector.
-	 * @param {Number} [z=0] - the z value of this vector.
-	 * @param {Number} [w=1] - the w value of this vector.
+	 * @param {number} [x=0] - the x value of this vector.
+	 * @param {number} [y=0] - the y value of this vector.
+	 * @param {number} [z=0] - the z value of this vector.
+	 * @param {number} [w=1] - the w value of this vector.
 	 */
 	constructor(x = 0, y = 0, z = 0, w = 1) {
 		this.x = x;
@@ -23,10 +22,10 @@ class Vector4 {
 	 * Sets this vector to be the vector linearly interpolated between v1 and v2
 	 * where ratio is the percent distance along the line connecting the two vectors
 	 * - ratio = 0 will be v1, and ratio = 1 will be v2.
-	 * @param {t3d.Vector4} v1 - the starting Vector4.
-	 * @param {t3d.Vector4} v2 - Vector4 to interpolate towards.
-	 * @param {Number} ratio - interpolation factor, typically in the closed interval [0, 1].
-	 * @return {t3d.Vector4}
+	 * @param {Vector4} v1 - the starting Vector4.
+	 * @param {Vector4} v2 - Vector4 to interpolate towards.
+	 * @param {number} ratio - interpolation factor, typically in the closed interval [0, 1].
+	 * @returns {Vector4}
 	 */
 	lerpVectors(v1, v2, ratio) {
 		return this.subVectors(v2, v1).multiplyScalar(ratio).add(v1);
@@ -34,11 +33,11 @@ class Vector4 {
 
 	/**
 	 * Sets the x, y, z and w components of this vector.
-	 * @param {Number} x
-	 * @param {Number} y
-	 * @param {Number} z
-	 * @param {Number} w
-	 * @return {t3d.Vector4}
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 * @param {number} w
+	 * @returns {Vector4}
 	 */
 	set(x = 0, y = 0, z = 0, w = 1) {
 		this.x = x;
@@ -51,7 +50,7 @@ class Vector4 {
 
 	/**
 	 * Converts this vector to a unit vector - that is, sets it equal to a vector with the same direction as this one, but length 1.
-	 * @return {t3d.Vector4}
+	 * @returns {Vector4}
 	 */
 	normalize() {
 		return this.multiplyScalar(1 / (this.getLength() || 1));
@@ -59,8 +58,8 @@ class Vector4 {
 
 	/**
 	 * Multiplies this vector by scalar s.
-	 * @param {Number} scalar
-	 * @return {t3d.Vector4}
+	 * @param {number} scalar
+	 * @returns {Vector4}
 	 */
 	multiplyScalar(scalar) {
 		this.x *= scalar;
@@ -73,8 +72,8 @@ class Vector4 {
 
 	/**
 	 * Calculates the dot product of this vector and v.
-	 * @param {t3d.Vector4} v
-	 * @return {t3d.Vector4}
+	 * @param {Vector4} v
+	 * @returns {Vector4}
 	 */
 	dot(v) {
 		return this.x * v.x + this.y * v.y + this.z * v.z + this.w * v.w;
@@ -84,7 +83,7 @@ class Vector4 {
 	 * Computes the square of the Euclidean length (straight-line length) from (0, 0, 0, 0) to (x, y, z, w).
 	 * If you are comparing the lengths of vectors, you should compare the length squared instead
 	 * as it is slightly more efficient to calculate.
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	getLengthSquared() {
 		return this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w;
@@ -92,7 +91,7 @@ class Vector4 {
 
 	/**
 	 * Computes the Euclidean length (straight-line length) from (0, 0, 0, 0) to (x, y, z, w).
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	getLength() {
 		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
@@ -100,7 +99,7 @@ class Vector4 {
 
 	/**
 	 * Computes the {@link https://en.wikipedia.org/wiki/Taxicab_geometry|Manhattan length}  from (0, 0, 0, 0) to (x, y, z, w).
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	getManhattanLength() {
 		return Math.abs(this.x) + Math.abs(this.y) + Math.abs(this.z) + Math.abs(this.w);
@@ -108,8 +107,8 @@ class Vector4 {
 
 	/**
 	 * Multiplies this vector by 4 x 4 m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Vector4}
+	 * @param {Matrix4} m
+	 * @returns {Vector4}
 	 */
 	applyMatrix4(m) {
 		const x = this.x, y = this.y, z = this.z, w = this.w;
@@ -125,8 +124,8 @@ class Vector4 {
 
 	/**
 	 * Sets this vector to the position represented by the matrix m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Vector4}
+	 * @param {Matrix4} m
+	 * @returns {Vector4}
 	 */
 	setFromMatrixPosition(m) {
 		const e = m.elements;
@@ -141,8 +140,8 @@ class Vector4 {
 
 	/**
 	 * Checks for strict equality of this vector and v.
-	 * @param {t3d.Vector4} v
-	 * @return {Boolean}
+	 * @param {Vector4} v
+	 * @returns {boolean}
 	 */
 	equals(v) {
 		return ((v.x === this.x) && (v.y === this.y) && (v.z === this.z) && (v.w === this.w));
@@ -150,8 +149,8 @@ class Vector4 {
 
 	/**
 	 * Adds v to this vector.
-	 * @param {t3d.Vector4} v
-	 * @return {t3d.Vector4}
+	 * @param {Vector4} v
+	 * @returns {Vector4}
 	 */
 	add(v) {
 		this.x += v.x;
@@ -164,8 +163,8 @@ class Vector4 {
 
 	/**
 	 * Multiplies this vector by v.
-	 * @param {t3d.Vector4} v
-	 * @return {t3d.Vector4}
+	 * @param {Vector4} v
+	 * @returns {Vector4}
 	 */
 	multiply(v) {
 		this.x *= v.x;
@@ -178,9 +177,9 @@ class Vector4 {
 
 	/**
 	 * Sets this vector to a - b.
-	 * @param {t3d.Vector4} a
-	 * @param {t3d.Vector4} b
-	 * @return {t3d.Vector4}
+	 * @param {Vector4} a
+	 * @param {Vector4} b
+	 * @returns {Vector4}
 	 */
 	subVectors(a, b) {
 		this.x = a.x - b.x;
@@ -195,10 +194,10 @@ class Vector4 {
 	 * Sets this vector's x value to be array[ offset + 0 ],
 	 * y value to be array[ offset + 1 ] z value to be array[ offset + 2 ]
 	 * and w value to be array[ offset + 3 ].
-	 * @param {Number[]} array - the source array.
-	 * @param {Number} [offset=0] - offset into the array.
-	 * @param {Boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-	 * @return {t3d.Vector4}
+	 * @param {number[]} array - the source array.
+	 * @param {number} [offset=0] - offset into the array.
+	 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+	 * @returns {Vector4}
 	 */
 	fromArray(array, offset = 0, denormalize = false) {
 		let x = array[offset], y = array[offset + 1],
@@ -221,10 +220,10 @@ class Vector4 {
 
 	/**
 	 * Returns an array [x, y, z, w], or copies x, y, z and w into the provided array.
-	 * @param {Number[]} [array] - array to store this vector to. If this is not provided, a new array will be created.
-	 * @param {Number} [offset=0] - offset into the array.
-	 * @param {Boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-	 * @return {Number[]}
+	 * @param {number[]} [array] - array to store this vector to. If this is not provided, a new array will be created.
+	 * @param {number} [offset=0] - offset into the array.
+	 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+	 * @returns {number[]}
 	 */
 	toArray(array = [], offset = 0, normalize = false) {
 		let x = this.x, y = this.y,
@@ -247,7 +246,7 @@ class Vector4 {
 
 	/**
 	 * Rounds the x, y, z and w values of this vector to the nearest integer value.
-	 * @return {t3d.Vector4}
+	 * @returns {Vector4}
 	 */
 	round() {
 		this.x = Math.round(this.x);
@@ -260,7 +259,7 @@ class Vector4 {
 
 	/**
 	 * Returns a new Vector4 with the same x, y, z and w values as this one.
-	 * @return {t3d.Vector4}
+	 * @returns {Vector4}
 	 */
 	clone() {
 		return new Vector4(this.x, this.y, this.z, this.w);
@@ -268,8 +267,8 @@ class Vector4 {
 
 	/**
 	 * Copies the values of the passed Vector4's x, y, z and w properties to this Vector4.
-	 * @param {t3d.Vector4} v
-	 * @return {t3d.Vector4}
+	 * @param {Vector4} v
+	 * @returns {Vector4}
 	 */
 	copy(v) {
 		this.x = v.x;

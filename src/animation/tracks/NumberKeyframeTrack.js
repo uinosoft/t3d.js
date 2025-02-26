@@ -2,17 +2,16 @@ import { KeyframeTrack } from '../KeyframeTrack.js';
 
 /**
  * Used for number property track.
- * @memberof t3d
- * @extends t3d.KeyframeTrack
+ * @extends KeyframeTrack
  */
 class NumberKeyframeTrack extends KeyframeTrack {
 
 	/**
-	 * @param {t3d.Object3D} target
-	 * @param {String} propertyPath
+	 * @param {Object3D} target
+	 * @param {string} propertyPath
 	 * @param {Array} times
 	 * @param {Array} values
-	 * @param {t3d.KeyframeInterpolant.constructor} [interpolant=t3d.LinearInterpolant]
+	 * @param {KeyframeInterpolant.constructor} [interpolant=LinearInterpolant]
 	 */
 	constructor(target, propertyPath, times, values, interpolant) {
 		super(target, propertyPath, times, values, interpolant);
@@ -22,7 +21,7 @@ class NumberKeyframeTrack extends KeyframeTrack {
 
 /**
  * @readonly
- * @type {String}
+ * @type {string}
  * @default 'number'
  */
 NumberKeyframeTrack.prototype.valueTypeName = 'number';

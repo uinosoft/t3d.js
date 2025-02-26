@@ -7,7 +7,7 @@ import { TEXTURE_FILTER, Camera, Vector3, RenderTargetCube } from 't3d';
 class ReflectionProbe {
 
 	/**
-	 * @param {t3d.RenderTargetCube} [renderTarget=] - The reflection render is done to the renderTarget (if specified).
+	 * @param {RenderTargetCube} [renderTarget] - The reflection render is done to the renderTarget (if specified).
 	 */
 	constructor(renderTarget) {
 		this.camera = new Camera();
@@ -40,8 +40,8 @@ class ReflectionProbe {
 	/**
 	 * Render the reflection.
 	 * Need update scene data and collect light data before calling this method.
-	 * @param {t3d.ThinRenderer} renderer
-	 * @param {t3d.Scene} scene
+	 * @param {ThinRenderer} renderer
+	 * @param {Scene} scene
 	 */
 	render(renderer, scene) {
 		this.camera.position.copy(this.position);

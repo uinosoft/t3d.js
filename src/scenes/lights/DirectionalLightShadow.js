@@ -6,8 +6,7 @@ import { RenderBuffer } from '../../resources/RenderBuffer.js';
 
 /**
  * This is used internally by DirectionalLights for calculating shadows.
- * @memberof t3d
- * @extends t3d.LightShadow
+ * @extends LightShadow
  */
 class DirectionalLightShadow extends LightShadow {
 
@@ -16,7 +15,7 @@ class DirectionalLightShadow extends LightShadow {
 
 		/**
 		 * The cast shadow window size.
-		 * @type {Number}
+		 * @type {number}
 		 * @default 500
 		 */
 		this.windowSize = 500;
@@ -25,7 +24,7 @@ class DirectionalLightShadow extends LightShadow {
 		 * Controls the extent to which the shadows fade out at the edge of the frustum.
 		 * If the value is greater than 0, the shadow fades out from center to all sides of shadow texture (radial fade out),
 		 * if the value is less than 0, the shadow will fade out from the y+ direction (vertical fade out).
-		 * @type {Number}
+		 * @type {number}
 		 * @default 0
 		 */
 		this.frustumEdgeFalloff = 0.0;

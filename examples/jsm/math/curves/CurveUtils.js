@@ -8,17 +8,16 @@ class CurveUtils {
 
 	/**
 	 * Generates 2D-Coordinates in a very fast way.
-	 *
 	 * Based on work by:
-	 * @link http://www.openprocessing.org/sketch/15493
-	 *
-	 * @param center     Center of Hilbert curve.
-	 * @param size       Total width of Hilbert curve.
-	 * @param iterations Number of subdivisions.
-	 * @param v0         Corner index -X, -Z.
-	 * @param v1         Corner index -X, +Z.
-	 * @param v2         Corner index +X, +Z.
-	 * @param v3         Corner index +X, -Z.
+	 * @see http://www.openprocessing.org/sketch/15493
+	 * @param {Vector3} center     Center of Hilbert curve.
+	 * @param {number} size       Total width of Hilbert curve.
+	 * @param {number} iterations Number of subdivisions.
+	 * @param {number} v0         Corner index -X, -Z.
+	 * @param {number} v1         Corner index -X, +Z.
+	 * @param {number} v2         Corner index +X, +Z.
+	 * @param {number} v3         Corner index +X, -Z.
+	 * @returns {Vector3[]} Array of Vector
 	 */
 	static hilbert2D(center = new Vector3(0, 0, 0), size = 10, iterations = 1, v0 = 0, v1 = 1, v2 = 2, v3 = 3) {
 		const half = size / 2;
@@ -55,23 +54,22 @@ class CurveUtils {
 	}
 
 	/**
-     * Generates 3D-Coordinates in a very fast way.
-     *
-     * Based on work by:
-     * @link http://www.openprocessing.org/visuals/?visualID=15599
-     *
-     * @param center     Center of Hilbert curve.
-     * @param size       Total width of Hilbert curve.
-     * @param iterations Number of subdivisions.
-     * @param v0         Corner index -X, +Y, -Z.
-     * @param v1         Corner index -X, +Y, +Z.
-     * @param v2         Corner index -X, -Y, +Z.
-     * @param v3         Corner index -X, -Y, -Z.
-     * @param v4         Corner index +X, -Y, -Z.
-     * @param v5         Corner index +X, -Y, +Z.
-     * @param v6         Corner index +X, +Y, +Z.
-     * @param v7         Corner index +X, +Y, -Z.
-     */
+	 * Generates 3D-Coordinates in a very fast way.
+	 * Based on work by:
+	 * @see http://www.openprocessing.org/visuals/?visualID=15599
+	 * @param {Vector3} center     Center of Hilbert curve.
+	 * @param {number} size       Total width of Hilbert curve.
+	 * @param {number} iterations Number of subdivisions.
+	 * @param {number} v0         Corner index -X, +Y, -Z.
+	 * @param {number} v1         Corner index -X, +Y, +Z.
+	 * @param {number} v2         Corner index -X, -Y, +Z.
+	 * @param {number} v3         Corner index -X, -Y, -Z.
+	 * @param {number} v4         Corner index +X, -Y, -Z.
+	 * @param {number} v5         Corner index +X, -Y, +Z.
+	 * @param {number} v6         Corner index +X, +Y, +Z.
+	 * @param {number} v7         Corner index +X, +Y, -Z.
+	 * @returns {Vector3[]} Array of Vector3.
+	 */
 	static hilbert3D(center = new Vector3(0, 0, 0), size = 10, iterations = 1, v0 = 0, v1 = 1, v2 = 2, v3 = 3, v4 = 4, v5 = 5, v6 = 6, v7 = 7) {
 		// Default Vars
 		const half = size / 2;

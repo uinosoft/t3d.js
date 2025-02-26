@@ -12,9 +12,9 @@ class OBB {
 
 	/**
 	 * Create an oriented bounding box.
-	 * @param {t3d.Vector3} [center] - The center of the OBB.
-	 * @param {t3d.Vector3} [halfSize] - The half size of the OBB.
-	 * @param {t3d.Matrix3} [rotation] - The rotation of the OBB.
+	 * @param {Vector3} [center] - The center of the OBB.
+	 * @param {Vector3} [halfSize] - The half size of the OBB.
+	 * @param {Matrix3} [rotation] - The rotation of the OBB.
 	 */
 	constructor(center = new Vector3(), halfSize = new Vector3(), rotation = new Matrix3()) {
 		this.center = center;
@@ -24,10 +24,10 @@ class OBB {
 
 	/**
 	 * Set the center, half size and rotation of the OBB.
-	 * @param {t3d.Vector3} center - The center of the OBB.
-	 * @param {t3d.Vector3} halfSize - The half size of the OBB.
-	 * @param {t3d.Matrix3} rotation - The rotation of the OBB.
-	 * @return {t3d.OBB}
+	 * @param {Vector3} center - The center of the OBB.
+	 * @param {Vector3} halfSize - The half size of the OBB.
+	 * @param {Matrix3} rotation - The rotation of the OBB.
+	 * @returns {OBB}
 	 */
 	set(center, halfSize, rotation) {
 		this.center = center;
@@ -39,8 +39,8 @@ class OBB {
 
 	/**
 	 * Copy the values from the given OBB.
-	 * @param {t3d.OBB} obb - The OBB to copy.
-	 * @return {t3d.OBB}
+	 * @param {OBB} obb - The OBB to copy.
+	 * @returns {OBB}
 	 */
 	copy(obb) {
 		this.center.copy(obb.center);
@@ -52,7 +52,7 @@ class OBB {
 
 	/**
 	 * Clone this OBB.
-	 * @return {t3d.OBB}
+	 * @returns {OBB}
 	 */
 	clone() {
 		return new this.constructor().copy(this);
@@ -60,8 +60,8 @@ class OBB {
 
 	/**
 	 * Get the size of the OBB.
-	 * @param {t3d.Vector3} result - The result vector.
-	 * @return {t3d.Vector3} The size of the OBB.
+	 * @param {Vector3} result - The result vector.
+	 * @returns {Vector3} The size of the OBB.
 	 */
 	getSize(result) {
 		return result.copy(this.halfSize).multiplyScalar(2);
@@ -69,7 +69,7 @@ class OBB {
 
 	/**
 	 * Check if the OBB is empty.
-	 * @return {Boolean} Whether the OBB is empty.
+	 * @returns {boolean} Whether the OBB is empty.
 	 */
 	isEmpty() {
 		return this.halfSize.x <= 0 || this.halfSize.y <= 0 || this.halfSize.z <= 0;
@@ -77,7 +77,7 @@ class OBB {
 
 	/**
 	 * Make the OBB empty.
-	 * @return {t3d.OBB}
+	 * @returns {OBB}
 	 */
 	makeEmpty() {
 		this.center.set(0, 0, 0);
@@ -90,9 +90,9 @@ class OBB {
 	 * Get the closest point on the OBB to the given point.
 	 * Reference: Closest Point on OBB to Point in Real-Time Collision Detection
 	 * by Christer Ericson (chapter 5.1.4)
-	 * @param {t3d.Vector3} point - The point.
-	 * @param {t3d.Vector3} result - The result vector.
-	 * @return {t3d.Vector3} The closest point on the OBB.
+	 * @param {Vector3} point - The point.
+	 * @param {Vector3} result - The result vector.
+	 * @returns {Vector3} The closest point on the OBB.
 	 */
 	clampPoint(point, result) {
 		const halfSize = this.halfSize;
@@ -120,8 +120,8 @@ class OBB {
 
 	/**
 	 * Check if the OBB contains the given point.
-	 * @param {t3d.Vector3} point - The point.
-	 * @return {Boolean} Whether the OBB contains the point.
+	 * @param {Vector3} point - The point.
+	 * @returns {boolean} Whether the OBB contains the point.
 	 */
 	containsPoint(point) {
 		v1.subVectors(point, this.center);
@@ -136,8 +136,8 @@ class OBB {
 
 	/**
 	 * Check if the OBB intersects the given Box3.
-	 * @param {t3d.Box3} box3 - The Box3.
-	 * @return {Boolean} Whether the OBB intersects the Box3.
+	 * @param {Box3} box3 - The Box3.
+	 * @returns {boolean} Whether the OBB intersects the Box3.
 	 */
 	intersectsBox3(box3) {
 		return this.intersectsOBB(obb.fromBox3(box3));
@@ -145,8 +145,8 @@ class OBB {
 
 	/**
 	 * Check if the OBB intersects the given sphere.
-	 * @param {t3d.Sphere} sphere - The sphere.
-	 * @return {Boolean} Whether the OBB intersects the sphere.
+	 * @param {Sphere} sphere - The sphere.
+	 * @returns {boolean} Whether the OBB intersects the sphere.
 	 */
 	intersectsSphere(sphere) {
 		// find the point on the OBB closest to the sphere center
@@ -159,9 +159,9 @@ class OBB {
 	 * Check if the OBB intersects the given OBB.
 	 * Reference: OBB-OBB Intersection in Real-Time Collision Detection
 	 * by Christer Ericson (chapter 4.4.1)
-	 * @param {t3d.OBB} obb - The OBB.
-	 * @param {Number} [epsilon=Number.EPSILON] - A small number to counteract arithmetic errors.
-	 * @return {Boolean} Whether the OBB intersects the OBB.
+	 * @param {OBB} obb - The OBB.
+	 * @param {number} [epsilon=Number.EPSILON] - A small number to counteract arithmetic errors.
+	 * @returns {boolean} Whether the OBB intersects the OBB.
 	 */
 	intersectsOBB(obb, epsilon = Number.EPSILON) {
 		// prepare data structures (the code uses the same nomenclature like the reference)
@@ -287,8 +287,8 @@ class OBB {
 	 * Check if the OBB intersects the given plane.
 	 * Reference: Testing Box Against Plane in Real-Time Collision Detection
 	 * by Christer Ericson (chapter 5.2.3)
-	 * @param {t3d.Plane} plane - The plane.
-	 * @return {Boolean} Whether the OBB intersects the plane.
+	 * @param {Plane} plane - The plane.
+	 * @returns {boolean} Whether the OBB intersects the plane.
 	 */
 	intersectsPlane(plane) {
 		this.rotation.extractBasis(xAxis, yAxis, zAxis);
@@ -311,9 +311,9 @@ class OBB {
 	/**
 	 * Performs a ray/OBB intersection test and stores the intersection point
 	 * to the given 3D vector. If no intersection is detected, *null* is returned.
-	 * @param {t3d.Ray} ray - The ray.
-	 * @param {t3d.Vector3} result - The result vector.
-	 * @return {t3d.Vector3|Null} The intersection point or *null*.
+	 * @param {Ray} ray - The ray.
+	 * @param {Vector3} result - The result vector.
+	 * @returns {Vector3 | null} The intersection point or *null*.
 	 */
 	intersectRay(ray, result) {
 		// the idea is to perform the intersection test in the local space
@@ -338,8 +338,8 @@ class OBB {
 	/**
 	 * Performs a ray/OBB intersection test. Returns either true or false if
 	 * there is a intersection or not.
-	 * @param {t3d.Ray} ray - The ray.
-	 * @return {Boolean} Whether the ray intersects the OBB.
+	 * @param {Ray} ray - The ray.
+	 * @returns {boolean} Whether the ray intersects the OBB.
 	 */
 	intersectsRay(ray) {
 		return this.intersectRay(ray, v1) !== null;
@@ -347,8 +347,8 @@ class OBB {
 
 	/**
 	 * Set the OBB from a Box3, the OBB will be axis-aligned.
-	 * @param {t3d.Box3} box3 - The Box3.
-	 * @return {t3d.OBB}
+	 * @param {Box3} box3 - The Box3.
+	 * @returns {OBB}
 	 */
 	fromBox3(box3) {
 		box3.getCenter(this.center);
@@ -361,8 +361,8 @@ class OBB {
 
 	/**
 	 * Check if this OBB equals the given OBB.
-	 * @param {t3d.OBB} obb - The OBB to check against.
-	 * @return {Boolean} Whether this OBB equals
+	 * @param {OBB} obb - The OBB to check against.
+	 * @returns {boolean} Whether this OBB equals
 	 */
 	equals(obb) {
 		return obb.center.equals(this.center) &&
@@ -372,8 +372,8 @@ class OBB {
 
 	/**
 	 * Apply a 4x4 transformation matrix to the OBB.
-	 * @param {t3d.Matrix4} matrix - The transformation matrix.
-	 * @return {t3d.OBB}
+	 * @param {Matrix4} matrix - The transformation matrix.
+	 * @returns {OBB}
 	 */
 	applyMatrix4(matrix) {
 		const e = matrix.elements;
@@ -417,11 +417,11 @@ class OBB {
 
 	/**
 	 * Set the OBB from center point and axis vectors.
-	 * @param {t3d.Vector3} center - The center of the OBB.
-	 * @param {t3d.Vector3} axisX - The x-axis of the OBB.
-	 * @param {t3d.Vector3} axisY - The y-axis of the OBB.
-	 * @param {t3d.Vector3} axisZ - The z-axis of the OBB.
-	 * @return {t3d.OBB}
+	 * @param {Vector3} center - The center of the OBB.
+	 * @param {Vector3} axisX - The x-axis of the OBB.
+	 * @param {Vector3} axisY - The y-axis of the OBB.
+	 * @param {Vector3} axisZ - The z-axis of the OBB.
+	 * @returns {OBB}
 	 */
 	setFromCenterAndAxes(center, axisX, axisY, axisZ) {
 		xAxis.copy(axisX);
@@ -465,9 +465,9 @@ class OBB {
 	/**
 	 * Get the axis-aligned bounding box (AABB) and transformation matrix of the OBB,
 	 * the bounding box center is always at (0, 0, 0) because center offset is stored in the Matrix4.
-	 * @param {t3d.Box3} box3 - The Box3.
-	 * @param {t3d.Matrix4} matrix - The Matrix4.
-	 * @return {t3d.OBB}
+	 * @param {Box3} box3 - The Box3.
+	 * @param {Matrix4} matrix - The Matrix4.
+	 * @returns {OBB}
 	 */
 	toBoundingBoxAndTransform(box3, matrix) {
 		box3.min.copy(this.halfSize).negate();
@@ -480,10 +480,10 @@ class OBB {
 	}
 
 	/**
-     * Get the 8 corner points of the OBB, the order is same as Box3.getPoints().
-     * @param {t3d.Vector3[]} points - The array to store the points.
-     * @return {t3d.Vector3[]} The array of points.
-     */
+	 * Get the 8 corner points of the OBB, the order is same as Box3.getPoints().
+	 * @param {Vector3[]} points - The array to store the points.
+	 * @returns {Vector3[]} The array of points.
+	 */
 	getPoints(points) {
 		this.toBoundingBoxAndTransform(aabb, matrix);
 
@@ -497,10 +497,10 @@ class OBB {
 	}
 
 	/**
-     * Get the 6 planes of the OBB.
-     * @param {t3d.Plane[]} planes - The array to store the planes.
-     * @return {t3d.Plane[]} The array of planes.
-     */
+	 * Get the 6 planes of the OBB.
+	 * @param {Plane[]} planes - The array to store the planes.
+	 * @returns {Plane[]} The array of planes.
+	 */
 	getPlanes(planes) {
 		this.toBoundingBoxAndTransform(aabb, matrix);
 
@@ -530,8 +530,8 @@ class OBB {
 
 	/**
 	 * Check if the OBB intersects the given frustum.
-	 * @param {t3d.Frustum} frustum - The frustum.
-	 * @return {Boolean} Whether the OBB intersects the frustum.
+	 * @param {Frustum} frustum - The frustum.
+	 * @returns {boolean} Whether the OBB intersects the frustum.
 	 */
 	intersectsFrustum(frustum) {
 		// the idea is to perform the intersection test in the local space

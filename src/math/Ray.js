@@ -11,13 +11,12 @@ const _normal = new Vector3();
  * A ray that emits from an origin in a certain direction.
  * This is used by the Raycaster to assist with raycasting.
  * Raycasting is used for mouse picking (working out what objects in the 3D space the mouse is over) amongst other things.
- * @memberof t3d
  */
 class Ray {
 
 	/**
-	 * @param {t3d.Vector3} [origin=] - the origin of the Ray.
-	 * @param {t3d.Vector3} [direction=] - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
+	 * @param {Vector3} [origin] - the origin of the Ray.
+	 * @param {Vector3} [direction] - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
 	 */
 	constructor(origin = new Vector3(), direction = new Vector3(0, 0, -1)) {
 		this.origin = origin;
@@ -26,9 +25,9 @@ class Ray {
 
 	/**
 	 * Sets this ray's origin and direction properties by copying the values from the given objects.
-	 * @param {t3d.Vector3} origin - the origin of the Ray.
-	 * @param {t3d.Vector3} direction - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
-	 * @return {t3d.Ray}
+	 * @param {Vector3} origin - the origin of the Ray.
+	 * @param {Vector3} direction - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
+	 * @returns {Ray}
 	 */
 	set(origin, direction) {
 		this.origin.copy(origin);
@@ -38,8 +37,8 @@ class Ray {
 
 	/**
 	 * Copies the origin and direction properties of ray into this ray.
-	 * @param {t3d.Ray} ray
-	 * @return {t3d.Ray}
+	 * @param {Ray} ray
+	 * @returns {Ray}
 	 */
 	copy(ray) {
 		this.origin.copy(ray.origin);
@@ -50,8 +49,8 @@ class Ray {
 
 	/**
 	 * Transform this Ray by the Matrix4.
-	 * @param {t3d.Matrix4} matrix4 - the Matrix4 to apply to this Ray.
-	 * @return {t3d.Ray}
+	 * @param {Matrix4} matrix4 - the Matrix4 to apply to this Ray.
+	 * @returns {Ray}
 	 */
 	applyMatrix4(matrix4) {
 		this.origin.applyMatrix4(matrix4);
@@ -62,9 +61,9 @@ class Ray {
 
 	/**
 	 * Get a Vector3 that is a given distance along this Ray.
-	 * @param {Number} t - the distance along the Ray to retrieve a position for.
-	 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {number} t - the distance along the Ray to retrieve a position for.
+	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	at(t, optionalTarget = new Vector3()) {
 		return optionalTarget.copy(this.direction).multiplyScalar(t).add(this.origin);
@@ -72,8 +71,8 @@ class Ray {
 
 	/**
 	 * Get the squared distance of the closest approach between the Ray and the Vector3.
-	 * @param {t3d.Vector3} point - the Vector3 to compute a distance to.
-	 * @return {Number}
+	 * @param {Vector3} point - the Vector3 to compute a distance to.
+	 * @returns {number}
 	 */
 	distanceSqToPoint(point) {
 		const directionDistance = _vec3_1.subVectors(point, this.origin).dot(this.direction);
@@ -89,8 +88,8 @@ class Ray {
 
 	/**
 	 * Get the distance of the closest approach between the Ray and the Plane.
-	 * @param {t3d.Plane} plane - the Plane to compute a distance to.
-	 * @return {Number}
+	 * @param {Plane} plane - the Plane to compute a distance to.
+	 * @returns {number}
 	 */
 	distanceToPlane(plane) {
 		const denominator = plane.normal.dot(this.direction);
@@ -113,9 +112,9 @@ class Ray {
 
 	/**
 	 * Intersect this Ray with a Plane, returning the intersection point or null if there is no intersection.
-	 * @param {t3d.Plane} plane - the Plane to intersect with.
-	 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Plane} plane - the Plane to intersect with.
+	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	intersectPlane(plane, optionalTarget = new Vector3()) {
 		const t = this.distanceToPlane(plane);
@@ -129,8 +128,8 @@ class Ray {
 
 	/**
 	 * Return true if this Ray intersects with the Plane.
-	 * @param {t3d.Plane} plane - the plane to intersect with.
-	 * @return {Boolean}
+	 * @param {Plane} plane - the plane to intersect with.
+	 * @returns {boolean}
 	 */
 	intersectsPlane(plane) {
 		// check if the ray lies on the plane first
@@ -152,8 +151,8 @@ class Ray {
 
 	/**
 	 * Return true if this Ray intersects with the Box3.
-	 * @param {t3d.Box3} box - the Box3 to intersect with.
-	 * @return {Boolean}
+	 * @param {Box3} box - the Box3 to intersect with.
+	 * @returns {boolean}
 	 */
 	intersectsBox(box) {
 		return this.intersectBox(box, _vec3_1) !== null;
@@ -161,9 +160,9 @@ class Ray {
 
 	/**
 	 * Intersect this Ray with a Box3, returning the intersection point or null if there is no intersection.
-	 * @param {t3d.Box3} box - the Box3 to intersect with.
-	 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Box3} box - the Box3 to intersect with.
+	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	intersectBox(box, optionalTarget) {
 		let tmin, tmax, tymin, tymax, tzmin, tzmax;
@@ -222,8 +221,8 @@ class Ray {
 
 	/**
 	 * Return true if this Ray intersects with the Sphere.
-	 * @param {t3d.Sphere} sphere - the Sphere to intersect with.
-	 * @return {Boolean}
+	 * @param {Sphere} sphere - the Sphere to intersect with.
+	 * @returns {boolean}
 	 */
 	intersectsSphere(sphere) {
 		return this.distanceSqToPoint(sphere.center) <= (sphere.radius * sphere.radius);
@@ -231,9 +230,9 @@ class Ray {
 
 	/**
 	 * Intersect this Ray with a Sphere, returning the intersection point or null if there is no intersection.
-	 * @param {t3d.Sphere} sphere - the Sphere to intersect with.
-	 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Sphere} sphere - the Sphere to intersect with.
+	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	intersectSphere(sphere, optionalTarget) {
 		_vec3_1.subVectors(sphere.center, this.origin);
@@ -271,12 +270,12 @@ class Ray {
 
 	/**
 	 * Intersect this Ray with a triangle, returning the intersection point or null if there is no intersection.
-	 * @param {t3d.Vector3} a - The Vector3 point making up the triangle.
-	 * @param {t3d.Vector3} b - The Vector3 point making up the triangle.
-	 * @param {t3d.Vector3} c - The Vector3 point making up the triangle.
-	 * @param {Boolean} backfaceCulling - whether to use backface culling.
-	 * @param {t3d.Vector3} [optionalTarget=] - the result will be copied into this Vector3.
-	 * @return {t3d.Vector3}
+	 * @param {Vector3} a - The Vector3 point making up the triangle.
+	 * @param {Vector3} b - The Vector3 point making up the triangle.
+	 * @param {Vector3} c - The Vector3 point making up the triangle.
+	 * @param {boolean} backfaceCulling - whether to use backface culling.
+	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
+	 * @returns {Vector3}
 	 */
 	intersectTriangle(a, b, c, backfaceCulling, optionalTarget) {
 		// Compute the offset origin, edges, and normal.

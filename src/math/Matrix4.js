@@ -2,8 +2,6 @@ import { Vector3 } from './Vector3.js';
 
 /**
  * 4x4 matrix class.
- * @constructor
- * @memberof t3d
  */
 class Matrix4 {
 
@@ -23,7 +21,7 @@ class Matrix4 {
 
 	/**
 	 * Resets this matrix to the identity matrix.
-	 * @return {t3d.Matrix4}
+	 * @returns {Matrix4}
 	 */
 	identity() {
 		return this.set(
@@ -36,7 +34,7 @@ class Matrix4 {
 
 	/**
 	 * Checks if the matrix is an identity matrix.
-	 * @return {Boolean} - True if the matrix is an identity matrix, false otherwise.
+	 * @returns {boolean} - True if the matrix is an identity matrix, false otherwise.
 	 */
 	isIdentity() {
 		const te = this.elements;
@@ -48,23 +46,23 @@ class Matrix4 {
 
 	/**
 	 * Set the elements of this matrix to the supplied row-major values n11, n12, ... n44.
-	 * @param {Number} n11
-	 * @param {Number} n12
-	 * @param {Number} n13
-	 * @param {Number} n14
-	 * @param {Number} n21
-	 * @param {Number} n22
-	 * @param {Number} n23
-	 * @param {Number} n24
-	 * @param {Number} n31
-	 * @param {Number} n32
-	 * @param {Number} n33
-	 * @param {Number} n34
-	 * @param {Number} n41
-	 * @param {Number} n42
-	 * @param {Number} n43
-	 * @param {Number} n44
-	 * @return {t3d.Matrix4}
+	 * @param {number} n11
+	 * @param {number} n12
+	 * @param {number} n13
+	 * @param {number} n14
+	 * @param {number} n21
+	 * @param {number} n22
+	 * @param {number} n23
+	 * @param {number} n24
+	 * @param {number} n31
+	 * @param {number} n32
+	 * @param {number} n33
+	 * @param {number} n34
+	 * @param {number} n41
+	 * @param {number} n42
+	 * @param {number} n43
+	 * @param {number} n44
+	 * @returns {Matrix4}
 	 */
 	set(n11, n12, n13, n14, n21, n22, n23, n24,
 		n31, n32, n33, n34,
@@ -81,7 +79,7 @@ class Matrix4 {
 
 	/**
 	 * Creates a new Matrix4 with identical elements to this one.
-	 * @return {t3d.Matrix4}
+	 * @returns {Matrix4}
 	 */
 	clone() {
 		return new Matrix4().fromArray(this.elements);
@@ -89,8 +87,8 @@ class Matrix4 {
 
 	/**
 	 * Copies the elements of matrix m into this matrix.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} m
+	 * @returns {Matrix4}
 	 */
 	copy(m) {
 		const te = this.elements;
@@ -106,8 +104,8 @@ class Matrix4 {
 
 	/**
 	 * Set the upper 3x3 elements of this matrix to the values of the Matrix3 m.
-	 * @param {t3d.Matrix3} m
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix3} m
+	 * @returns {Matrix4}
 	 */
 	setFromMatrix3(m) {
 		const me = m.elements;
@@ -122,10 +120,10 @@ class Matrix4 {
 
 	/**
 	 * Sets this matrix as a translation transform.
-	 * @param {Number} x - the amount to translate in the X axis.
-	 * @param {Number} y - the amount to translate in the Y axis.
-	 * @param {Number} z - the amount to translate in the Z axis.
-	 * @return {t3d.Matrix4}
+	 * @param {number} x - the amount to translate in the X axis.
+	 * @param {number} y - the amount to translate in the Y axis.
+	 * @param {number} z - the amount to translate in the Z axis.
+	 * @returns {Matrix4}
 	 */
 	makeTranslation(x, y, z) {
 		return this.set(
@@ -138,8 +136,8 @@ class Matrix4 {
 
 	/**
 	 * Post-multiplies this matrix by m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} m
+	 * @returns {Matrix4}
 	 */
 	multiply(m) {
 		return this.multiplyMatrices(this, m);
@@ -147,8 +145,8 @@ class Matrix4 {
 
 	/**
 	 * Pre-multiplies this matrix by m.
-	 * @param {t3d.Matrix4} m
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} m
+	 * @returns {Matrix4}
 	 */
 	premultiply(m) {
 		return this.multiplyMatrices(m, this);
@@ -156,9 +154,9 @@ class Matrix4 {
 
 	/**
 	 * Sets this matrix to a x b.
-	 * @param {t3d.Matrix4} a
-	 * @param {t3d.Matrix4} b
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} a
+	 * @param {Matrix4} b
+	 * @returns {Matrix4}
 	 */
 	multiplyMatrices(a, b) {
 		const ae = a.elements;
@@ -200,7 +198,7 @@ class Matrix4 {
 
 	/**
 	 * Transposes this matrix.
-	 * @return {t3d.Matrix4}
+	 * @returns {Matrix4}
 	 */
 	transpose() {
 		const te = this.elements;
@@ -219,7 +217,7 @@ class Matrix4 {
 
 	/**
 	 * Take the inverse of this matrix
-	 * @return {t3d.Matrix4}
+	 * @returns {Matrix4}
 	 */
 	inverse() {
 		return this.getInverse(this);
@@ -227,7 +225,8 @@ class Matrix4 {
 
 	/**
 	 * Take the inverse of the matrix
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} m
+	 * @returns {Matrix4}
 	 */
 	getInverse(m) {
 		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
@@ -277,10 +276,10 @@ class Matrix4 {
 
 	/**
 	 * Make transform from position&scale&quaternion(Quaternion).
-	 * @param {t3d.Vector3} position
-	 * @param {t3d.Vector3} scale
-	 * @param {t3d.Quaternion} quaternion
-	 * @return {t3d.Matrix4}
+	 * @param {Vector3} position
+	 * @param {Vector3} scale
+	 * @param {Quaternion} quaternion
+	 * @returns {Matrix4}
 	 */
 	transform(position, scale, quaternion) {
 		const te = this.elements;
@@ -318,8 +317,8 @@ class Matrix4 {
 
 	/**
 	 * Sets the rotation component of this matrix to the rotation specified by q, as outlined here.
-	 * @param {t3d.Quaternion} q
-	 * @return {t3d.Matrix4}
+	 * @param {Quaternion} q
+	 * @returns {Matrix4}
 	 */
 	makeRotationFromQuaternion(q) {
 		const te = this.elements;
@@ -358,7 +357,8 @@ class Matrix4 {
 
 	/**
 	 * Extracts the rotation component of the supplied matrix m into this matrix's rotation component.
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} m
+	 * @returns {Matrix4}
 	 */
 	extractRotation(m) {
 		// this method does not support reflection matrices
@@ -395,10 +395,10 @@ class Matrix4 {
 
 	/**
 	 * Constructs a rotation matrix, looking from eye towards center oriented by the up vector.
-	 * @param {t3d.Vector3} eye
-	 * @param {t3d.Vector3} target
-	 * @param {t3d.Vector3} update
-	 * @return {t3d.Matrix4}
+	 * @param {Vector3} eye
+	 * @param {Vector3} target
+	 * @param {Vector3} up
+	 * @returns {Matrix4}
 	 */
 	lookAtRH(eye, target, up) {
 		const te = this.elements;
@@ -438,10 +438,10 @@ class Matrix4 {
 
 	/**
 	 * Decomposes this matrix into it's position, quaternion and scale components.
-	 * @param {t3d.Vector3} position
-	 * @param {t3d.Quaternion} quaternion
-	 * @param {t3d.Vector3} scale
-	 * @return {t3d.Matrix4}
+	 * @param {Vector3} position
+	 * @param {Quaternion} quaternion
+	 * @param {Vector3} scale
+	 * @returns {Matrix4}
 	 */
 	decompose(position, quaternion, scale) {
 		const te = this.elements;
@@ -490,7 +490,7 @@ class Matrix4 {
 
 	/**
 	 * Computes and returns the determinant of this matrix.
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	determinant() {
 		const te = this.elements;
@@ -516,9 +516,9 @@ class Matrix4 {
 
 	/**
 	 * Sets the elements of this matrix based on an array in column-major format.
-	 * @param {Number[]} array
-	 * @param {Number} [offset=0]
-	 * @return {t3d.Matrix4}
+	 * @param {number[]} array
+	 * @param {number} [offset=0]
+	 * @returns {Matrix4}
 	 */
 	fromArray(array, offset = 0) {
 		for (let i = 0; i < 16; i++) {
@@ -530,7 +530,7 @@ class Matrix4 {
 
 	/**
 	 * Gets the maximum scale value of the 3 axes.
-	 * @return {Number}
+	 * @returns {number}
 	 */
 	getMaxScaleOnAxis() {
 		const te = this.elements;
@@ -544,9 +544,9 @@ class Matrix4 {
 
 	/**
 	 * Sets this matrix as rotation transform around axis by theta radians.
-	 * @param {t3d.Vector3} axis
-	 * @param {Number} angle
-	 * @return {t3d.Matrix4}
+	 * @param {Vector3} axis
+	 * @param {number} angle
+	 * @returns {Matrix4}
 	 */
 	makeRotationAxis(axis, angle) {
 		// Based on http://www.gamedev.net/reference/articles/article1199.asp
@@ -567,10 +567,10 @@ class Matrix4 {
 
 	/**
 	 * Linearly interpolates between two matrix4.
-	 * @param {t3d.Matrix4} m1
-	 * @param {t3d.Matrix4} m2
-	 * @param {Number} ratio
-	 * @return {t3d.Matrix4}
+	 * @param {Matrix4} m1
+	 * @param {Matrix4} m2
+	 * @param {number} ratio
+	 * @returns {Matrix4}
 	 */
 	lerpMatrices(m1, m2, ratio) {
 		if (ratio === 0) return this.copy(m1);
@@ -589,8 +589,8 @@ class Matrix4 {
 
 	/**
 	 * Return true if this matrix and m are equal.
-	 * @param {t3d.Matrix4} m
-	 * @return {Boolean}
+	 * @param {Matrix4} m
+	 * @returns {boolean}
 	 */
 	equals(m) {
 		const te = this.elements;
@@ -605,9 +605,9 @@ class Matrix4 {
 
 	/**
 	 * Writes the elements of this matrix to an array in column-major format.
-	 * @param {Number[]} [array]
-	 * @param {Number} [offset=0]
-	 * @return {Number[]}
+	 * @param {number[]} [array]
+	 * @param {number} [offset=0]
+	 * @returns {number[]}
 	 */
 	toArray(array = [], offset = 0) {
 		const te = this.elements;
