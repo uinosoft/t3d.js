@@ -78,12 +78,12 @@
 			scene.add(result.root);
 		}).catch(e => console.error(e));
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 2);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 1);
 		scene.add(ambientLight);
 
 		const camera = new t3d.Camera();
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(0, 2, 4);
+		camera.position.set(0, 1.5, 3);
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 		scene.add(camera);
 

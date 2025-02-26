@@ -55,10 +55,18 @@
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
 		scene.add(camera);
 
-		const texture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.9);
+		directionalLight.position.set(20, 30, 40);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const texture = new Texture2DLoader().load('./resources/logo.jpg');
 
 		const boxGeometry = new t3d.BoxGeometry(1, 1, 1);
-		const boxMaterial = new t3d.BasicMaterial();
+		const boxMaterial = new t3d.LambertMaterial();
 		boxMaterial.diffuseMap = texture;
 
 		const boxes = [];

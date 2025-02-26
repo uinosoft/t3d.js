@@ -54,7 +54,7 @@
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.position.set(30, 30, 30);
+		camera.position.set(20, 20, 20);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
