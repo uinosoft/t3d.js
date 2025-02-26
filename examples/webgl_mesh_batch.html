@@ -1,22 +1,16 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
-	<title>t3d - webgl mesh batch</title>
+	<title>t3d - BatchedMesh Example</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
+
 <body>
-    <div id="info">
-        <a href="" target="_blank">t3d</a> - mesh batch<br/>
-		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support WebGL2 or WEBGL_multi_draw</div>
-	</div>
-
-	<!-- Import maps polyfill -->
-    <!-- Remove this when import maps will be widely supported -->
-    <script async src="./libs/es-module-shims.js"></script>
-
-    <script type="importmap">
+	<!-- Import map for ES modules -->
+	<script type="importmap">
         {
             "imports": {
                 "t3d": "../build/t3d.module.js",
@@ -25,7 +19,7 @@
         }
     </script>
 
-    <script type="module">
+	<script type="module">
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { BatchedMesh } from 't3d/addons/objects/BatchedMesh.js';
@@ -33,231 +27,1121 @@
 		import { BatchedPBRMaterial } from 't3d/addons/materials/BatchedPBRMaterial.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
+		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
+		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { Raycaster } from 't3d/addons/Raycaster.js';
 
-		let width = window.innerWidth || 2;
-		let height = window.innerHeight || 2;
-
-		const canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		document.body.appendChild(canvas);
-
-		const forwardRenderer = new ForwardRenderer(canvas);
-
-		const capabilities = forwardRenderer.capabilities;
-		if (!capabilities.getExtension('WEBGL_multi_draw') || capabilities.version < 2) {
-			document.getElementById('notSupported').style.display = '';
-			throw new Error('Not supported WebGL2 or WEBGL_multi_draw!');
-		}
-
-		const scene = new t3d.Scene();
-
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 2);
-		directionalLight.position.set(50, 20, 0);
-		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-		scene.add(directionalLight);
-
-		const pointLight = new t3d.PointLight(0x00d5ff, 2, 150, 1);
-		scene.add(pointLight);
-
-		const camera = new t3d.Camera();
-		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		camera.position.set(0, 0, 80);
-		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
-		scene.add(camera);
-
-		const controller = new OrbitControls(camera, canvas);
-		controller.enablePan = false;
-		controller.maxDistance = 200;
-		controller.autoRotate = true;
-		controller.autoRotateSpeed = 0.3;
-
-		//
-
-		const stats = new Stats();
-		stats.domElement.style.position = 'absolute';
-		stats.domElement.style.top = '0px';
-		canvas.parentElement.appendChild(stats.domElement);
-
-		//
-
-		let mesh;
-
-		const ids = [];
+		// Core variables
+		let camera, scene, renderer;
+		let controls;
+		let geometries, geometryIndices = [], mesh;
+		let ids = [];
 		const matrix = new t3d.Matrix4();
+		const axis = new t3d.Vector3(0, 1, 0);
+		const MAX_COUNT = 20000;
+		let sphereHelpers = [];
+		let boxHelpers = [];
+		let selectedInstance = -1;
+		let raycaster, mouse, canvas;
+		let instanceVisibility = {};
+		let instanceGeometryMap = {}; // Map to store which geometry is used by each instance
 
-		const position = new t3d.Vector3();
-		const rotation = new t3d.Euler();
-		const quaternion = new t3d.Quaternion();
-		const scale = new t3d.Vector3();
-
-		const MAX_GEOMETRY_COUNT = 8192 * 2;
-
-		const Method = {
-			BATCHED: 'BATCHED',
-			NAIVE: 'NAIVE'
-		};
-
+		// Configuration parameters
 		const api = {
-			method: Method.BATCHED,
-			count: 512,
-			dynamic: 512
+			method: 'batched',         // 'batched' or 'regular' rendering method
+			count: 3,                  // Number of instances to create initially
+			dynamic: 1,                // Number of instances to animate
+			opacity: 1.0,              // Material opacity
+			sortObjects: false,        // Sort objects for proper transparency rendering
+			perObjectFrustumCulled: false, // Enable per-instance frustum culling
+			showBoundingSpheres: false,    // Show bounding spheres for debugging
+			showBoundingBoxes: false,      // Show bounding boxes for debugging
+			
+			// Add a new instance with random properties
+			addInstance: function() {
+				if (api.method === 'batched' && ids.length < MAX_COUNT) {
+					addRandomInstance();
+					updateCountDisplay();
+					api.count = ids.length;
+				}
+			},
+			
+			// Remove the last added instance
+			removeInstance: function() {
+				if (api.method === 'batched' && ids.length > 0) {
+					removeLastInstance();
+					updateCountDisplay();
+					api.count = ids.length;
+				}
+			},
+			
+			// Remove the currently selected instance
+			removeSelected: function() {
+				if (selectedInstance >= 0 && api.method === 'batched') {
+					removeInstance(selectedInstance);
+					selectedInstance = -1;
+					updateCountDisplay();
+					api.count = ids.length;
+				}
+			},
+			
+			instanceColor: [1, 1, 1],  // Color for selected instance
+			
+			// Toggle visibility of selected instance
+			toggleSelectedVisibility: function() {
+				if (selectedInstance >= 0 && api.method === 'batched') {
+					const id = ids[selectedInstance];
+					const isVisible = mesh.getVisibleAt(id);
+					mesh.setVisibleAt(id, !isVisible);
+					instanceVisibility[id] = !isVisible;
+					console.log(`Instance ${id} visibility: ${!isVisible}`);
+				}
+			},
+			
+			// Log the current instance count
+			logInstanceCount: function() {
+				if (api.method === 'batched') {
+					// Compare tracked instance count with BatchedMesh reported count
+					console.log(`Tracked instances: ${ids.length}, BatchedMesh count: ${mesh.instanceCount}`);
+				}
+			},
+			
+			// Check if the selected instance exists
+			checkSelectedInstance: function() {
+				if (selectedInstance >= 0 && api.method === 'batched') {
+					const id = ids[selectedInstance];
+					console.log(`Instance ${id} exists: ${mesh.hasInstance(id)}`);
+				}
+			},
+			
+			// Optimize the BatchedMesh (rearrange geometries and instances)
+			optimizeBatch: function() {
+				if (api.method === 'batched' && mesh) {
+					console.log("Before optimization:");
+					logBatchStats();
+					
+					// Visualize geometry layout before optimization
+					visualizeGeometryLayout("Before optimization");
+					
+					console.time('Optimize');
+					mesh.optimize();
+					console.timeEnd('Optimize');
+					
+					console.log("After optimization:");
+					logBatchStats();
+					
+					// Visualize geometry layout after optimization
+					visualizeGeometryLayout("After optimization");
+					
+					// Refresh visualizations if enabled
+					if (api.showBoundingSpheres) {
+						updateBoundingSpheres();
+					}
+					if (api.showBoundingBoxes) {
+						updateBoundingBoxes();
+					}
+				}
+			},
+			
+			// Create geometry fragmentation for testing optimization
+			createGeometryFragmentation: function() {
+				if (api.method === 'batched') {
+					// Record current state
+					const currentGeometryCount = geometryIndices.length;
+					
+					// Add 10 new geometries
+					const newGeometryIds = [];
+					for (let i = 0; i < 10; i++) {
+						// Create a randomly sized geometry
+						const size = 0.5 + Math.random() * 1.5;
+						const geometry = new t3d.BoxGeometry(size, size, size);
+						
+						// Reserve space with intentional gaps
+						const reservedVertexCount = geometry.attributes.a_Position.buffer.count * 2;
+						const reservedIndexCount = geometry.index.buffer.count * 2;
+						
+						// Add to BatchedMesh
+						const geoId = mesh.addGeometry(geometry, reservedVertexCount, reservedIndexCount);
+						if (geoId >= 0) {
+							geometryIndices.push(geoId);
+							newGeometryIds.push(geoId);
+							console.log(`Added new geometry ID: ${geoId}, reserved vertices: ${reservedVertexCount}`);
+						}
+						
+						// Release temporary geometry
+						geometry.dispose();
+					}
+					
+					// Add instances for each new geometry
+					for (const geoId of newGeometryIds) {
+						const count = 1 + Math.floor(Math.random() * 3); // 1-3 instances
+						for (let i = 0; i < count; i++) {
+							const id = mesh.addInstance(geoId);
+							ids.push(id);
+							instanceGeometryMap[id] = geoId;
+							
+							// Set random transform
+							const position = new t3d.Vector3(
+								Math.random() * 40 - 20,
+								Math.random() * 40 - 20,
+								Math.random() * 40 - 20
+							);
+							const rotation = new t3d.Euler(
+								Math.random() * Math.PI * 2,
+								Math.random() * Math.PI * 2,
+								Math.random() * Math.PI * 2
+							);
+							const quaternion = new t3d.Quaternion().setFromEuler(rotation);
+							const scale = new t3d.Vector3().setScalar(0.5 + Math.random() * 0.5);
+							
+							matrix.transform(position, scale, quaternion);
+							mesh.setMatrixAt(id, matrix);
+							
+							// Set random color
+							const color = new t3d.Color3(Math.random(), Math.random(), Math.random());
+							mesh.setColorAt(id, color);
+							mesh.setVisibleAt(id, true);
+						}
+					}
+					
+					// Now delete some geometries to create fragmentation
+					const deleteCount = Math.min(3, currentGeometryCount);
+					for (let i = 0; i < deleteCount; i++) {
+						const indexToDelete = Math.floor(Math.random() * currentGeometryCount);
+						const geoId = geometryIndices[indexToDelete];
+						
+						console.log(`Deleting geometry ID: ${geoId}`);
+						
+						// Delete the geometry (this also deletes all instances using it)
+						mesh.deleteGeometry(geoId);
+						
+						// Remove from our tracking list
+						geometryIndices.splice(indexToDelete, 1);
+						
+						// Update ids array, removing instances that used this geometry
+						ids = ids.filter(id => {
+							if (instanceGeometryMap[id] === geoId) {
+								delete instanceGeometryMap[id];
+								return false;
+							}
+							return true;
+						});
+					}
+					
+					// Log state after fragmentation
+					console.log(`After geometry operations: ${geometryIndices.length} geometries, ${ids.length} instances`);
+					logBatchStats();
+					
+					// Visualize geometry distribution
+					visualizeGeometryLayout("After fragmentation");
+					
+					updateCountDisplay();
+
+					// Update api.count control
+					api.count = ids.length;
+				}
+			},
+			
+			// Debug function to check BatchedMesh integrity
+			debugBatchedMesh: function() {
+				if (api.method !== 'batched' || !mesh) return;
+				
+				console.group("BatchedMesh Debug Information");
+				
+				// Validate geometry references for each instance
+				console.log("Validating instance geometry references...");
+				let invalidInstancesCount = 0;
+				for (const id of ids) {
+					// Get the geometry ID for this instance
+					const geometryId = mesh.getGeometryIdAt(id);
+					
+					// Check if this geometry ID is in our tracking list
+					if (!geometryIndices.includes(geometryId)) {
+						console.error(`Instance ${id} references non-existent geometry ${geometryId}`);
+						invalidInstancesCount++;
+					}
+					
+					// Check if the geometry is active
+					if (!mesh._validateGeometryId(geometryId)) {
+						console.error(`Instance ${id} references inactive geometry ${geometryId}`);
+						invalidInstancesCount++;
+					}
+					
+					// Check instance matrix validity
+					const matrix = new t3d.Matrix4();
+					mesh.getMatrixAt(id, matrix);
+					if (matrix.elements.some(isNaN)) {
+						console.error(`Instance ${id} transform matrix contains NaN values`);
+					}
+					
+					// Validate internal mapping
+					if (instanceGeometryMap[id] !== geometryId) {
+						console.error(`Instance ${id} mapping mismatch: JS map=${instanceGeometryMap[id]}, BatchedMesh internal=${geometryId}`);
+					}
+				}
+				
+				// Check geometry mappings and status
+				console.log("Validating geometry status...");
+				for (const geoId of geometryIndices) {
+					// Check if geometry actually exists and is active
+					const exists = mesh._validateGeometryId(geoId);
+					if (!exists) {
+						console.error(`Geometry ${geoId} is in tracking list but not available in BatchedMesh`);
+						continue;
+					}
+					
+					// Check render parameters for each geometry (drawStart, drawCount)
+					const info = mesh._geometryInfo[geoId];
+					console.log(`Geometry ${geoId}: drawStart=${info.drawStart}, drawCount=${info.drawCount}, ` +
+							 `vertexStart=${info.vertexStart}, vertexCount=${info.vertexCount}, ` +
+							 `indexStart=${info.indexStart}, indexCount=${info.indexCount}`);
+					
+					// Validate render parameters
+					if (info.drawCount <= 0) {
+						console.error(`Geometry ${geoId} has invalid drawCount: ${info.drawCount}`);
+					}
+					
+					// Check if geometry ranges are valid
+					if (info.vertexStart < 0 || info.vertexStart >= mesh._maxVertexCount) {
+						console.error(`Geometry ${geoId} has invalid vertex start: ${info.vertexStart}`);
+					}
+					
+					if (info.indexStart !== -1 && (info.indexStart < 0 || info.indexStart >= mesh._maxIndexCount)) {
+						console.error(`Geometry ${geoId} has invalid index start: ${info.indexStart}`);
+					}
+				}
+				
+				// Check if instance counts match
+				const trackedInstanceCount = ids.length;
+				const internalInstanceCount = mesh.instanceCount;
+				if (trackedInstanceCount !== internalInstanceCount) {
+					console.error(`Instance count mismatch: JS tracked=${trackedInstanceCount}, BatchedMesh internal=${internalInstanceCount}`);
+				}
+				
+				// Check if geometry counts match
+				const trackedGeometryCount = geometryIndices.length;
+				const internalGeometryCount = mesh._geometryInfo.filter(g => g?.active).length;
+				if (trackedGeometryCount !== internalGeometryCount) {
+					console.error(`Geometry count mismatch: JS tracked=${trackedGeometryCount}, BatchedMesh internal=${internalGeometryCount}`);
+				}
+				
+				// Check BatchedMesh internal render state
+				console.group("BatchedMesh Render State");
+				const groups = mesh.geometry.groups;
+				console.log(`Render groups count: ${groups.length}`);
+				if (groups.length > 0) {
+					console.log(`Multi-draw count: ${groups[0].multiDrawCount}`);
+					console.log(`Multi-draw starts:`, groups[0].multiDrawStarts.slice(0, 10)); // Show first 10
+					console.log(`Multi-draw counts:`, groups[0].multiDrawCounts.slice(0, 10)); // Show first 10
+				}
+				console.groupEnd();
+				
+				visualizeInstanceGeometryRelationships();
+				
+				console.log(`Found ${invalidInstancesCount} instances with invalid references`);
+				console.groupEnd();
+			},
+			
 		};
 
-		const planeGeometry = new t3d.PlaneGeometry(2, 2);
-		const material = new t3d.PBRMaterial();
-		material.side = t3d.DRAW_SIDE.DOUBLE;
-		const batchedMaterial = new BatchedPBRMaterial(material);
+		// Initialize the scene and start the animation loop
+		init();
 		
-		initMesh();
+		// Add stats display
+		const stats = new Stats();
+		document.body.appendChild(stats.dom);
+		
+		// Create GUI controls
+		const gui = new GUI();
+		gui.add(api, 'method', ['regular', 'batched']).onChange(() => {
+			initMesh();
+		});
+		gui.add(api, 'count', 1, MAX_COUNT, 1).onChange(() => {
+			initMesh();
+		}).listen();
+		gui.add(api, 'dynamic', 0, MAX_COUNT, 1);
+		gui.add(api, 'opacity', 0.0, 1.0).onChange(() => {
+			if (api.method === 'regular') {
+				mesh.traverse((child) => {
+					if (child.isMesh) {
+						child.material.opacity = api.opacity;
+						child.material.transparent = api.opacity < 1.0;
+					}
+				});
+			} else {
+				mesh.material[0].opacity = api.opacity;
+				mesh.material[0].transparent = api.opacity < 1.0;
+			}
+		});
+		gui.add(api, 'sortObjects');
+		gui.add(api, 'perObjectFrustumCulled');
 
-		function randomizeMatrix(matrix) {
-			position.x = Math.random() * 40 - 20;
-			position.y = Math.random() * 40 - 20;
-			position.z = Math.random() * 40 - 20;
+		// Add BatchedMesh specific controls
+		const batchGui = gui.addFolder('BatchedMesh Controls');
+		batchGui.add(api, 'addInstance').name('Add Instance');
+		batchGui.add(api, 'removeInstance').name('Remove Last');
+		batchGui.add(api, 'removeSelected').name('Remove Selected');
+		batchGui.add(api, 'showBoundingSpheres').name('Show Bounding Spheres').onChange(updateBoundingSpheres);
+		batchGui.add(api, 'showBoundingBoxes').name('Show Bounding Boxes').onChange(updateBoundingBoxes);
+		batchGui.addColor(api, 'instanceColor').name('Selected Color').onChange(updateSelectedInstanceColor);
+		batchGui.add(api, 'toggleSelectedVisibility').name('Toggle Selected Visibility');
+		batchGui.add(api, 'logInstanceCount').name('Log Instance Count');
+		batchGui.add(api, 'checkSelectedInstance').name('Check Selected Info');
+		batchGui.add(api, 'optimizeBatch').name('Optimize Batch');
+		batchGui.add(api, 'createGeometryFragmentation').name('Create Geometry Gaps');
+		batchGui.add(api, 'debugBatchedMesh').name('Debug BatchedMesh');
+		
+		// Stats display data
+		const statsData = {
+			instanceCount: '0/0',
+			selectedInstance: 'None'
+		};
 
-			rotation.x = Math.random() * 2 * Math.PI;
-			rotation.y = Math.random() * 2 * Math.PI;
-			rotation.z = Math.random() * 2 * Math.PI;
+		// Add stats folder to GUI
+		const statsFolder = gui.addFolder('Stats');
+		const instanceCountController = statsFolder.add(statsData, 'instanceCount').name('Instances').disable();
+		const selectedInstanceController = statsFolder.add(statsData, 'selectedInstance').name('Selected').disable();
 
-			quaternion.setFromEuler(rotation);
-
-			scale.x = scale.y = scale.z = 0.5 + (Math.random() * 0.5);
-
-			return matrix.transform(position, scale, quaternion);
+		/**
+		 * Updates the instance count and selected instance display in GUI
+		 */
+		function updateCountDisplay() {
+			if (api.method === 'batched' && mesh) {
+				statsData.instanceCount = `${ids.length}/${mesh.instanceCount}`;
+				
+				if (selectedInstance >= 0) {
+					const id = ids[selectedInstance];
+					const geoId = instanceGeometryMap[id] !== undefined ? instanceGeometryMap[id] : 'unknown';
+					statsData.selectedInstance = `ID: ${id}, Geometry: ${geoId}`;
+				} else {
+					statsData.selectedInstance = 'None';
+				}
+			} else {
+				statsData.instanceCount = `${api.count}`;
+				statsData.selectedInstance = 'N/A';
+			}
+			
+			instanceCountController.updateDisplay();
+			selectedInstanceController.updateDisplay();
 		}
 
-		function randomizeRotationSpeed(rotation) {
-			rotation.x = Math.random() * 0.05;
-			rotation.y = Math.random() * 0.05;
-			rotation.z = Math.random() * 0.05;
-			return rotation;
+		// Start animation loop
+		animate();
+		
+		/**
+		 * Initialize the scene, renderer, camera and controls
+		 */
+		function init() {
+			// Create canvas
+			canvas = document.createElement('canvas');
+			const width = window.innerWidth;
+			const height = window.innerHeight;
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
+
+			// Initialize mouse and raycaster
+			mouse = new t3d.Vector2();
+			raycaster = new Raycaster();
+
+			// Create ForwardRenderer
+			renderer = new ForwardRenderer(canvas);
+			renderer.setClearColor(0.1, 0.1, 0.1, 1);
+
+			// Check for multi-draw extension support
+			const capabilities = renderer.capabilities;
+			if (!capabilities.getExtension('WEBGL_multi_draw')) {
+				document.getElementById('notSupported').style.display = '';
+				console.error('Not supported WEBGL_multi_draw!');
+			}
+
+			// Create scene
+			scene = new t3d.Scene();
+
+			// Create camera
+			camera = new t3d.Camera();
+			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+			camera.position.set(0, 10, 30);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+			scene.add(camera);
+
+			// Create orbit controls
+			controls = new OrbitControls(camera, canvas);
+			controls.enableDamping = true;
+			controls.dampingFactor = 0.25;
+
+			// Add ambient light and directional light
+			const ambientLight = new t3d.AmbientLight(0xffffff, 1);
+			scene.add(ambientLight);
+
+			const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+			directionalLight.lookAt(new t3d.Vector3(0, -25, -25), new t3d.Vector3(0, 1, 0));
+			scene.add(directionalLight);
+
+			// Initialize geometries and batched mesh
+			initGeometries();
+			initBatchedMesh();
+
+			// Add event listeners
+			window.addEventListener('resize', onWindowResize);
+			canvas.addEventListener('click', onCanvasClick);
 		}
 
-		function cleanup() {
+		/**
+		 * Clean up resources when switching between mesh types
+		 */
+		function dispose() {
 			if (mesh) {
-				mesh.parent.remove(mesh);
-
-				if (mesh instanceof BatchedMesh) {
-					mesh.geometry.dispose();
-					mesh._matricesTexture.dispose();
+				mesh.parent && mesh.parent.remove(mesh);
+				
+				// Properly call dispose method for BatchedMesh
+				if (mesh.dispose && api.method === 'batched') {
+					mesh.dispose();
+				} else {
+					mesh.traverse((child) => {
+						if (child.geometry) {
+							child.geometry.dispose();
+						}
+						if (child.material) {
+							if(Array.isArray(child.material)) {
+								child.material.forEach(m => m.dispose());
+							} else {
+								child.material.dispose();
+							}
+						}
+					});
 				}
 			}
+
+			// Clear bounding volume helpers
+			clearBoundingSpheres();
+			clearBoundingBoxes();
 		}
 
-		function initMesh() {
-			cleanup();
+		/**
+		 * Remove all bounding sphere helpers from the scene
+		 */
+		function clearBoundingSpheres() {
+			sphereHelpers.forEach(helper => {
+				scene.remove(helper);
+			});
+			sphereHelpers = [];
+		}
+		
+		/**
+		 * Remove all bounding box helpers from the scene
+		 */
+		function clearBoundingBoxes() {
+			boxHelpers.forEach(helper => {
+				scene.remove(helper);
+			});
+			boxHelpers = [];
+		}
 
-			if (api.method === Method.BATCHED) {
-				initBatchedMesh();
-			} else {
+		/**
+		 * Initialize the mesh based on selected method (regular or batched)
+		 */
+		function initMesh(){
+			dispose();
+			ids.length = 0;
+			geometryIndices = [];
+			instanceVisibility = {};
+			instanceGeometryMap = {};
+			selectedInstance = -1;
+			if (api.method === 'regular') {
 				initRegularMesh();
+			} else {
+				initBatchedMesh();
 			}
+			updateCountDisplay();
 		}
 
-		function initRegularMesh() {
-			mesh = new t3d.Object3D();
+		/**
+		 * Initialize the basic geometry types to use
+		 */
+		function initGeometries() {
+			geometries = [
+				new t3d.BoxGeometry(2.0, 2.0, 2.0),
+				new t3d.SphereGeometry(1.0, 16, 8),
+				new t3d.CylinderGeometry(1.0, 1.0, 2.0, 16)
+			];
+		}
 
-			for (let i = 0; i < api.count; i++) {
-				const child = new t3d.Mesh(planeGeometry, material);
-				randomizeMatrix(child.matrix);
-				child.matrix.decompose(child.position, child.quaternion, child.scale);
-				child.userData.rotationSpeed = randomizeRotationSpeed(new t3d.Euler());
+		/**
+		 * Create a scene using regular mesh instances (non-batched)
+		 */
+		function initRegularMesh(){
+			mesh = new t3d.Object3D();
+			const material = new t3d.PBRMaterial();
+			material.metalness = 0.4;
+			material.roughness = 1;
+			material.diffuseMap = new Texture2DLoader().load('./resources/UV_Grid_Sm.jpg');
+			material.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+			// Create individual meshes with random transforms
+			for(let i = 0; i < api.count; i++) {
+				const geometry = geometries[i % geometries.length];
+				const child = new t3d.Mesh(geometry, material);
+				child.position.set(
+					Math.random() * 40 - 20,
+					Math.random() * 40 - 20,
+					Math.random() * 40 - 20
+				);
+				child.euler.set(
+					Math.random() * Math.PI * 2,
+					Math.random() * Math.PI * 2,
+					Math.random() * Math.PI * 2
+				);
+				child.scale.setScalar(0.5 + Math.random() * 0.5);
 				mesh.add(child);
 			}
 
 			scene.add(mesh);
 		}
 
+		/**
+		 * Create a scene using BatchedMesh for improved performance
+		 */
 		function initBatchedMesh() {
-			const geometryCount = api.count;
-			const vertexCount = api.count * 4;
-			const indexCount = api.count * 6;
+			const geometryCount = MAX_COUNT; // Maximum number of geometry types
+			const vertexCount = geometries.length * 512;  // Reserve space for vertices
+			const indexCount = geometries.length * 1024;  // Reserve space for indices
 
-			const euler = new t3d.Euler();
-			const quaternion = new t3d.Quaternion();
-			const matrix = new t3d.Matrix4();
-			mesh = new BatchedMesh(geometryCount, vertexCount, indexCount, batchedMaterial);
-			mesh.userData.rotationSpeeds = [];
+			// Create batched material
+			const material = new BatchedPBRMaterial();
+			material.metalness = 0.4;
+			material.roughness = 1;
+			material.diffuseMap = new Texture2DLoader().load('./resources/UV_Grid_Sm.jpg');
+			material.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+			material.side = t3d.DRAW_SIDE.DOUBLE;
+			
+			// Create BatchedMesh with reserved capacity
+			mesh = new BatchedMesh(geometryCount, vertexCount, indexCount, material);
+			mesh.frustumCulled = false;
 
-			ids.length = 0;
+			// Add each geometry type and store its index
+			for(let i = 0; i < geometries.length; i++) {
+				const geometryIndex = mesh.addGeometry(geometries[i]);
+				geometryIndices.push(geometryIndex);
+				console.log(`Added geometry ${i}, got index ${geometryIndex}`);
+			}
 
+			// Create multiple instances
 			for (let i = 0; i < api.count; i++) {
-				const id = mesh.addGeometry(planeGeometry);
-				mesh.setMatrixAt(id, randomizeMatrix(matrix));
-
-				const rotationMatrix = new t3d.Matrix4();
-				quaternion.setFromEuler(randomizeRotationSpeed(euler));
-				rotationMatrix.makeRotationFromQuaternion(quaternion);
-				mesh.userData.rotationSpeeds.push(rotationMatrix);
-
-				ids.push(id);
+				addRandomInstance();
 			}
 
 			scene.add(mesh);
+			
+			// Output initial statistics
+			console.log("Initialized BatchedMesh:");
+			logBatchStats();
 		}
 
-		function animateMeshes() {
-			const loopNum = Math.min(api.count, api.dynamic);
+		/**
+		 * Add a random instance to the BatchedMesh
+		 */
+		function addRandomInstance() {
+			// Randomly select a geometry for the new instance
+			const geometryIndexPos = Math.floor(Math.random() * geometryIndices.length);
+			const geometryIndex = geometryIndices[geometryIndexPos];
+			const id = mesh.addInstance(geometryIndex);
 
-			if (api.method === Method.BATCHED) {
-				for (let i = 0; i < loopNum; i++) {
-					const rotationMatrix = mesh.userData.rotationSpeeds[i];
+			// Store which geometry this instance uses
+			instanceGeometryMap[id] = geometryIndex;
+
+			// Set random position, rotation and scale
+			const position = new t3d.Vector3(
+				Math.random() * 40 - 20,
+				Math.random() * 40 - 20,
+				Math.random() * 40 - 20
+			);
+
+			const rotation = new t3d.Euler(
+				Math.random() * Math.PI * 2,
+				Math.random() * Math.PI * 2,
+				Math.random() * Math.PI * 2,
+				'XYZ'
+			);
+
+			const quaternion = new t3d.Quaternion().setFromEuler(rotation);
+			const scale = new t3d.Vector3().setScalar(0.5 + Math.random() * 0.5);
+
+			// Apply transformation
+			matrix.transform(position, scale, quaternion);
+			mesh.setMatrixAt(id, matrix);
+			
+			// Set random color
+			const color = new t3d.Color3(
+				Math.random(),
+				Math.random(),
+				Math.random()
+			);
+			mesh.setColorAt(id, color);
+			
+			// Set visibility (visible by default)
+			mesh.setVisibleAt(id, true);
+			instanceVisibility[id] = true;
+
+			ids.push(id);
+			
+			// Add bounding volumes if enabled
+			if (api.showBoundingSpheres) {
+				addBoundingSphere(id);
+			}
+			
+			if (api.showBoundingBoxes) {
+				addBoundingBox(id);
+			}
+			
+			// Validate that geometry index is valid
+			if (!geometryIndices.includes(geometryIndex)) {
+				console.error(`Attempted to add instance with invalid geometry index ${geometryIndex}`);
+				return -1;
+			}
+			
+			// Validate that instance ID and geometry ID are correctly associated
+			const actualGeoId = mesh.getGeometryIdAt(id);
+			if (actualGeoId !== geometryIndex) {
+				console.error(`Instance ${id} creation inconsistency: requested geometry=${geometryIndex}, actual=${actualGeoId}`);
+			}
+			
+			return id;
+		}
+
+		/**
+		 * Remove the last added instance
+		 */
+		function removeLastInstance() {
+			if (ids.length > 0) {
+				const id = ids.pop();
+				mesh.deleteInstance(id);
+				
+				// Clean up instance association data
+				delete instanceVisibility[id];
+				delete instanceGeometryMap[id];
+				
+				// Reset selection if the removed instance was selected
+				if (selectedInstance === ids.length) {
+					selectedInstance = -1;
+				}
+				
+				// Update bounding volume displays
+				if (api.showBoundingSpheres) {
+					updateBoundingSpheres();
+				}
+				
+				if (api.showBoundingBoxes) {
+					updateBoundingBoxes();
+				}
+			}
+		}
+		
+		/**
+		 * Remove a specific instance by index
+		 * @param {number} index - The index in the ids array to remove
+		 */
+		function removeInstance(index) {
+			if (index >= 0 && index < ids.length) {
+				const id = ids[index];
+				mesh.deleteInstance(id);
+				
+				// Clean up instance association data
+				delete instanceVisibility[id];
+				delete instanceGeometryMap[id];
+				
+				// Remove from ids array
+				ids.splice(index, 1);
+				
+				// Adjust selectedInstance if needed
+				if (selectedInstance >= index) {
+					selectedInstance = selectedInstance > 0 ? selectedInstance - 1 : -1;
+				}
+				
+				// Update bounding volume displays
+				if (api.showBoundingSpheres) {
+					updateBoundingSpheres();
+				}
+				
+				if (api.showBoundingBoxes) {
+					updateBoundingBoxes();
+				}
+			}
+		}
+
+		/**
+		 * Add a bounding sphere helper for the given instance
+		 * @param {number} id - Instance ID
+		 */
+		function addBoundingSphere(id) {
+			const sphere = mesh.getBoundingSphereAt(id, new t3d.Sphere());
+			const sphereHelper = new SphereHelper(sphere);
+			scene.add(sphereHelper);
+			sphereHelpers.push(sphereHelper);
+		}
+		
+		/**
+		 * Add a bounding box helper for the given instance
+		 * @param {number} id - Instance ID
+		 */
+		function addBoundingBox(id) {
+			// Check if BatchedMesh supports getting bounding box
+			if (mesh.getBoundingBoxAt) {
+				const box = mesh.getBoundingBoxAt(id, new t3d.Box3());
+				const boxHelper = new Box3Helper(box);
+				scene.add(boxHelper);
+				boxHelpers.push(boxHelper);
+			}
+		}
+
+		/**
+		 * Update bounding sphere helpers based on current instance positions
+		 */
+		function updateBoundingSpheres() {
+			// Clear existing bounding spheres
+			clearBoundingSpheres();
+			
+			// Add bounding spheres if enabled
+			if (api.showBoundingSpheres && api.method === 'batched') {
+				ids.forEach(id => {
+					addBoundingSphere(id);
+				});
+			}
+		}
+		
+		/**
+		 * Update bounding box helpers based on current instance positions
+		 */
+		function updateBoundingBoxes() {
+			// Clear existing bounding boxes
+			clearBoundingBoxes();
+			
+			// Add bounding boxes if enabled
+			if (api.showBoundingBoxes && api.method === 'batched' && mesh.getBoundingBoxAt) {
+				ids.forEach(id => {
+					addBoundingBox(id);
+				});
+			}
+		}
+		
+		/**
+		 * Update the color of the selected instance
+		 */
+		function updateSelectedInstanceColor() {
+			if (selectedInstance >= 0 && api.method === 'batched') {
+				const id = ids[selectedInstance];
+				const color = new t3d.Color3();
+				color.fromArray(api.instanceColor);
+				mesh.setColorAt(id, color);
+				
+				// Read back color for testing
+				const readColor = new t3d.Color3();
+				mesh.getColorAt(id, readColor);
+				console.log(`Instance ${id} color set to:`, readColor);
+			}
+		}
+
+		/**
+		 * Handle canvas click event to select an instance
+		 * @param {MouseEvent} event - The mouse event
+		 */
+		function onCanvasClick(event) {
+			// Only enable raycasting when using BatchedMesh
+			if (api.method !== 'batched') return;
+			
+			// Calculate normalized device coordinates of mouse position
+			const rect = canvas.getBoundingClientRect();
+			mouse.x = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
+			mouse.y = -((event.clientY - rect.top) / canvas.height) * 2 + 1;
+			
+			// Set raycaster
+			raycaster.setFromCamera(mouse, camera);
+			
+			// Perform raycasting
+			const intersects = raycaster.intersectObject(mesh);
+			
+			if (intersects.length > 0) {
+				// Get the instance ID of the intersection
+				const instanceId = intersects[0].instanceId;
+				// Find the index of this ID in the ids array
+				const index = ids.indexOf(instanceId);
+				
+				if (index !== -1) {
+					selectedInstance = index;
+					console.log(`Selected instance ${index} with ID ${instanceId}`);
+					
+					// Get current color and update GUI
+					const color = new t3d.Color3();
+					mesh.getColorAt(instanceId, color);
+					api.instanceColor = color.toArray();
+					
+					// Update GUI controls
+					for (const controller of Object.values(batchGui.controllers)) {
+						if (controller._name === 'Selected Color') {
+							controller.updateDisplay();
+							break;
+						}
+					}
+					
+					updateCountDisplay();
+				}
+			} else {
+				// Deselect
+				selectedInstance = -1;
+				updateCountDisplay();
+			}
+		}
+
+		/**
+		 * Handle window resize event
+		 */
+		function onWindowResize() {
+			const width = window.innerWidth;
+			const height = window.innerHeight;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+			renderer.backRenderTarget.resize(width, height);
+		}
+
+		/**
+		 * Animation loop
+		 */
+		function animate() {
+			requestAnimationFrame(animate);
+			stats.begin();
+			// Update dynamic objects
+			if(api.method === 'batched') {
+				const rotationMatrix = new t3d.Matrix4();
+				for (let i = 0; i < Math.min(ids.length, api.dynamic); i++) {
 					const id = ids[i];
-
+					
+					// Check if instance still exists
+					if (mesh.hasInstance && !mesh.hasInstance(id)) {
+						continue;
+					}
+					
 					mesh.getMatrixAt(id, matrix);
+					rotationMatrix.makeRotationAxis(axis, 0.01);
 					matrix.multiply(rotationMatrix);
 					mesh.setMatrixAt(id, matrix);
 				}
-			} else {
-				for (let i = 0; i < loopNum; i++) {
-					const child = mesh.children[i];
-					const rotationSpeed = child.userData.rotationSpeed;
 
-					child.euler.set(
-						child.euler.x + rotationSpeed.x,
-						child.euler.y + rotationSpeed.y,
-						child.euler.z + rotationSpeed.z
-					);
+				// Update scene
+				mesh.sortObjects = api.sortObjects;
+				mesh.perObjectFrustumCulled = api.perObjectFrustumCulled;
+
+				mesh.update(camera);
+				
+				// Update bounding sphere positions
+				if (api.showBoundingSpheres) {
+					sphereHelpers.forEach((helper, index) => {
+						if (index < ids.length) {
+							const id = ids[index];
+							mesh.getBoundingSphereAt(id, helper.sphere);
+							// helper.update();
+						}
+					});
+				}
+				
+				// Update bounding box positions
+				if (api.showBoundingBoxes && mesh.getBoundingBoxAt) {
+					boxHelpers.forEach((helper, index) => {
+						if (index < ids.length) {
+							const id = ids[index];
+							mesh.getBoundingBoxAt(id, helper.box);
+							// helper.update();
+						}
+					});
 				}
 			}
-		}
-
-		//
-
-		const gui = new GUI();
-		gui.add(api, 'count', 1, MAX_GEOMETRY_COUNT).step(1).onChange(initMesh);
-		gui.add(api, 'dynamic', 0, MAX_GEOMETRY_COUNT).step(1);
-		gui.add(api, 'method', Method).onChange(initMesh);
-
-		function loop(count) {
-			requestAnimationFrame(loop);
-
-			stats.begin();
-
-			if (api.method === Method.BATCHED) {
-				mesh.update();
+			else {
+				mesh.traverse((child) => {
+					if (child.isMesh) {
+						child.euler.y += 0.01;
+					}
+				});
 			}
 
-			animateMeshes();
+			controls.update();
 
-			controller.update();
-
-			forwardRenderer.render(scene, camera);
-
+			// Use ForwardRenderer to render the scene
+			renderer.render(scene, camera);
 			stats.end();
 		}
-		requestAnimationFrame(loop);
-
-		function onWindowResize() {
-			width = window.innerWidth || 2;
-			height = window.innerHeight || 2;
-
-			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
-
-			forwardRenderer.backRenderTarget.resize(width, height);
+		
+		/**
+		 * Log BatchedMesh statistics
+		 */
+		function logBatchStats() {
+			if (api.method !== 'batched' || !mesh) return;
+			
+			// Get geometry and instance information
+			const geometryCount = geometryIndices.length;
+			const activeInstances = mesh.instanceCount;
+			const totalInstances = ids.length;
+			const unusedVertexCount = mesh.unusedVertexCount;
+			const unusedIndexCount = mesh.unusedIndexCount;
+			
+			console.group('BatchedMesh Statistics');
+			console.log(`Geometry count: ${geometryCount}`);
+			console.log(`Active instances: ${activeInstances}`);
+			console.log(`Tracked instances: ${totalInstances}`);
+			console.log(`Unused vertices: ${unusedVertexCount}`);
+			console.log(`Unused indices: ${unusedIndexCount}`);
+			
+			// Display geometry and instance information as a tree
+			console.group('Geometry Distribution');
+			const geometryUsage = {};
+			
+			// Count usage of each geometry
+			for (const id of ids) {
+				const geoId = instanceGeometryMap[id];
+				geometryUsage[geoId] = (geometryUsage[geoId] || 0) + 1;
+			}
+			
+			// Display instance count for each geometry
+			for (const geoId in geometryUsage) {
+				console.log(`Geometry ${geoId}: ${geometryUsage[geoId]} instances`);
+			}
+			console.groupEnd();
+			
+			// Add geometry memory utilization statistics
+			const totalGeometryCount = mesh._geometryInfo.filter(g => g?.active).length;
+			let reservedVertices = 0;
+			let usedVertices = 0;
+			let reservedIndices = 0;
+			let usedIndices = 0;
+			
+			for (let i = 0; i < mesh._geometryInfo.length; i++) {
+				const geometry = mesh._geometryInfo[i];
+				if (geometry?.active) {
+					reservedVertices += geometry.reservedVertexCount;
+					usedVertices += geometry.vertexCount;
+					if (geometry.indexStart >= 0) {
+						reservedIndices += geometry.reservedIndexCount;
+						usedIndices += geometry.indexCount;
+					}
+				}
+			}
+			
+			const vertexUtilization = usedVertices / reservedVertices * 100;
+			const indexUtilization = reservedIndices > 0 ? usedIndices / reservedIndices * 100 : 100;
+			
+			console.log(`Geometry internal utilization: vertices=${vertexUtilization.toFixed(1)}%, indices=${indexUtilization.toFixed(1)}%`);
+			console.log(`Fragmentation statistics: vertex gaps=${reservedVertices - usedVertices}, index gaps=${reservedIndices - usedIndices}`);
+			
+			console.groupEnd();
 		}
-		window.addEventListener('resize', onWindowResize, false);
+		
+		/**
+		 * Visualize geometry layout in memory
+		 * @param {string} title - Title for the visualization
+		 */
+		function visualizeGeometryLayout(title) {
+			if (api.method !== 'batched' || !mesh) return;
+			
+			console.group(`Geometry Memory Layout - ${title}`);
+			
+			// Get geometry count and memory usage
+			const totalVertexCount = mesh._maxVertexCount;
+			const usedVertexCount = mesh._nextVertexStart;
+			const vertexUsagePercent = (usedVertexCount / totalVertexCount * 100).toFixed(1);
+			
+			const totalIndexCount = mesh._maxIndexCount;
+			const usedIndexCount = mesh._nextIndexStart;
+			const indexUsagePercent = (usedIndexCount / totalIndexCount * 100).toFixed(1);
+			
+			console.log(`Vertices: ${usedVertexCount}/${totalVertexCount} (${vertexUsagePercent}%)`);
+			console.log(`Indices: ${usedIndexCount}/${totalIndexCount} (${indexUsagePercent}%)`);
+			
+			// Visualize geometry distribution
+			let vertexVisual = '';
+			let previousEndVertex = 0;
+			
+			// Sort geometries by vertexStart
+			const sortedGeometries = [];
+			for (let i = 0; i < mesh._geometryInfo.length; i++) {
+				if (mesh._geometryInfo[i]?.active) {
+					sortedGeometries.push({
+						id: i,
+						info: mesh._geometryInfo[i]
+					});
+				}
+			}
+			
+			sortedGeometries.sort((a, b) => a.info.vertexStart - b.info.vertexStart);
+			
+			// Create ASCII art to show geometry layout
+			console.log('Geometry vertex distribution:');
+			let visualLine = '|'; // Start boundary
+			
+			for (const geo of sortedGeometries) {
+				const info = geo.info;
+				const gapSize = info.vertexStart - previousEndVertex;
+				
+				// Show gaps (if any)
+				if (gapSize > 0) {
+					const gapVisual = '-'.repeat(Math.max(1, Math.round(gapSize / totalVertexCount * 50)));
+					visualLine += gapVisual;
+				}
+				
+				// Show geometry
+				const geoSize = info.reservedVertexCount;
+				const geoVisual = `G${geo.id}`.padEnd(Math.max(2, Math.round(geoSize / totalVertexCount * 50)), '#');
+				visualLine += geoVisual;
+				
+				previousEndVertex = info.vertexStart + info.reservedVertexCount;
+			}
+			
+			// Show end gap
+			if (previousEndVertex < totalVertexCount) {
+				const gapVisual = '-'.repeat(Math.max(1, Math.round((totalVertexCount - previousEndVertex) / totalVertexCount * 50)));
+				visualLine += gapVisual;
+			}
+			
+			visualLine += '|'; // End boundary
+			console.log(visualLine);
+			
+			// Output detailed information for each geometry
+			console.group('Geometry Details:');
+			for (const geo of sortedGeometries) {
+				const info = geo.info;
+				console.log(`Geometry ${geo.id}: vertex range [${info.vertexStart}~${info.vertexStart + info.reservedVertexCount - 1}], ` +
+						  `used ${info.vertexCount}/${info.reservedVertexCount}, ` +
+						  `index range [${info.indexStart}~${info.indexStart + info.reservedIndexCount - 1}]`);
+			}
+			console.groupEnd();
+			
+			console.groupEnd();
+		}
+		
+		/**
+		 * Visualize relationships between instances and geometries
+		 */
+		function visualizeInstanceGeometryRelationships() {
+			console.group("Instance-Geometry Relationship Map");
+			
+			// Collect instances for each geometry
+			const geoToInstances = {};
+			for (const id of ids) {
+				const geoId = instanceGeometryMap[id];
+				if (!geoToInstances[geoId]) {
+					geoToInstances[geoId] = [];
+				}
+				geoToInstances[geoId].push(id);
+			}
+			
+			// Output relationship map
+			for (const geoId in geoToInstances) {
+				const instances = geoToInstances[geoId];
+				console.log(`Geometry ${geoId} (${instances.length} instances): ${instances.join(', ')}`);
+			}
+			
+			console.groupEnd();
+		}
 	</script>
 </body>
+
 </html>
