@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - animation / bone attach</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - animation / bone attach
+		<br/>
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Timer } from 't3d/addons/misc/Timer.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { AxisHelper } from 't3d/addons/objects/AxisHelper.js';
+		import { SkeletonHelper } from 't3d/addons/objects/SkeletonHelper.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		const devicePixelRatio = window.devicePixelRatio;
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.floor(width * devicePixelRatio);
+		canvas.height = Math.floor(height * devicePixelRatio);
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.6, 0.7, 0.8, 1);
+		forwardRenderer.matrixAutoUpdate = false;
+
+		const cubeTexturePath = './resources/skybox/pisa/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'px.png',
+			cubeTexturePath + 'nx.png',
+			cubeTexturePath + 'py.png',
+			cubeTexturePath + 'ny.png',
+			cubeTexturePath + 'pz.png',
+			cubeTexturePath + 'nz.png'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(undefined, 10, 100);
+		scene.fog.color.setRGB(0.6, 0.7, 0.8);
+		scene.environment = cubeTexture;
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(3, 2, 3);
+		camera.lookAt(new t3d.Vector3(0, 2, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 1.5, 0);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-4, 5, 4);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.shadow.windowSize = 8;
+		directionalLight.shadow.cameraNear = 2;
+		directionalLight.shadow.cameraFar = 20;
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+
+		// ground
+
+		const groundGeometry = new t3d.PlaneGeometry(1000, 1000);
+		const groundMaterial = new t3d.PBRMaterial();
+		groundMaterial.roughness = 1;
+		groundMaterial.diffuse.setHex(0x888888);
+		const plane = new t3d.Mesh(groundGeometry, groundMaterial);
+		plane.receiveShadow = true;
+		scene.add(plane);
+
+		// models
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		let mixer = null, swordSlot = null;
+
+		const params = { timeScale: 1 };
+
+		const loader = new GLTFLoader(loadingManager);
+		loader.load(
+			'./resources/models/gltf/UinoSpaceman/glTF-Binary/UinoSpaceman.glb'
+		).then(function(result) {
+			const object = result.root;
+		
+			object.traverse(function(node) {
+				if (node.isMesh) {
+					node.castShadow = true;
+					node.frustumCulled = false;
+				}
+			});
+
+			swordSlot = object.getObjectByName('mixamorig_RightHand');
+
+			const action = new t3d.AnimationAction(result.animations[0]);
+			mixer = new t3d.AnimationMixer();
+			action.weight = 1;
+			mixer.addAction(action);
+			scene.add(object);
+
+			const skeletonHelper = new SkeletonHelper(scene);
+			skeletonHelper.visible = false;
+			scene.add(skeletonHelper);
+
+			const gui = new GUI();
+			gui.add(skeletonHelper, 'visible').name('Skeleton');
+			gui.add(swordAxis, 'visible').name('SwordAxis');
+			gui.add(params, 'timeScale', 0, 2).name('timeScale');
+		}).catch(e => console.error(e));
+
+		// sword
+
+		function createSword() {
+			const sword = new t3d.Object3D();
+
+			const bladeGeometry = new t3d.BoxGeometry(0.2, 3, 0.1);
+			const bladeMaterial = new t3d.PhongMaterial();
+			bladeMaterial.diffuse.setHex(0xc0c0c0);
+			bladeMaterial.shininess = 100;
+			bladeMaterial.envMap = undefined;
+			const blade = new t3d.Mesh(bladeGeometry, bladeMaterial);
+			blade.position.y = 2;
+			sword.add(blade);
+
+			const handleGeometry = new t3d.CylinderGeometry(0.1, 0.1, 1, 16);
+			const handleMaterial = new t3d.PhongMaterial();
+			handleMaterial.diffuse.setHex(0x8B4513);
+			handleMaterial.shininess = 30;
+			handleMaterial.envMap = undefined;
+			const handle = new t3d.Mesh(handleGeometry, handleMaterial);
+			handle.position.y = 0;
+			sword.add(handle);
+
+			const guardGeometry = new t3d.BoxGeometry(1, 0.2, 0.2);
+			const guardMaterial = new t3d.PhongMaterial();
+			guardMaterial.diffuse.setHex(0xB8860B);
+			guardMaterial.envMap = undefined;
+			const guard = new t3d.Mesh(guardGeometry, guardMaterial);
+			guard.position.y = 0.5;
+			sword.add(guard);
+
+			const tipGeometry = new t3d.CylinderGeometry(0, 0.1, 0.5, 8);
+			const tipMaterial = new t3d.PhongMaterial();
+			tipMaterial.diffuse.setHex(0xc0c0c0);
+			tipMaterial.shininess = 100;
+			tipMaterial.envMap = undefined;
+			const tip = new t3d.Mesh(tipGeometry, tipMaterial);
+			tip.position.y = 3.75;
+			tip.euler.y = -Math.PI;
+			sword.add(tip);
+
+			const pommelGeometry = new t3d.SphereGeometry(0.2, 16, 16);
+			const pommelMaterial = new t3d.PhongMaterial();
+			pommelMaterial.diffuse.setHex(0xB8860B);
+			pommelMaterial.shininess = 50;
+			pommelMaterial.envMap = undefined;
+			const pommel = new t3d.Mesh(pommelGeometry, pommelMaterial);
+			pommel.position.y = -0.5;
+			sword.add(pommel);
+
+			return sword;
+		}
+
+		const sword = createSword();
+		sword.position.set(0, 15, 0);
+		sword.scale.set(0.3, 0.3, 0.3);
+		sword.euler.set(-Math.PI * 0.1, 0, -Math.PI * 0.5, 'ZYX');
+		scene.add(sword);
+
+		const swordAxis = new AxisHelper(5);
+		swordAxis.material.envMap = undefined;
+		swordAxis.visible = false;
+		sword.add(swordAxis);
+
+		// stats
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		//
+
+		const _scale = new t3d.Vector3(1, 1, 1);
+		const _originalMatrix = new t3d.Matrix4();
+		const _boneTargetMatrix = new t3d.Matrix4();
+
+		sword.updateMatrix();
+		_originalMatrix.copy(sword.worldMatrix);
+
+		const timer = new Timer();
+
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+			timer.update(timestamp);
+
+			scene.updateMatrix();
+
+			if (mixer) {
+				mixer.update(timer.getDelta() * params.timeScale);
+			}
+		
+			if (swordSlot) {
+				_boneTargetMatrix.copy(swordSlot.worldMatrix);
+				_boneTargetMatrix.multiply(_originalMatrix);
+				_boneTargetMatrix.decompose(sword.position, sword.quaternion, _scale);
+				sword.updateMatrix();
+			}
+
+			forwardRenderer.render(scene, camera);
+
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
+
+			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>

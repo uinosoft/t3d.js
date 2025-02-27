@@ -172,6 +172,7 @@
 		"animation_multiple",
 		"animation_crossfade",
 		"animation_blending_additive",
+		"animation_bone_attach",
 		"animation_skinned_instancing",
 		"animation_interpolant"
 	],
