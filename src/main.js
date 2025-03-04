@@ -19,6 +19,7 @@ export { DefaultLoadingManager, LoadingManager } from './loaders/LoadingManager.
 export { Box2 } from './math/Box2.js';
 export { Box3 } from './math/Box3.js';
 export { Color3 } from './math/Color3.js';
+export { Color4 } from './math/Color4.js';
 export { Euler } from './math/Euler.js';
 export { Frustum } from './math/Frustum.js';
 export { MathUtils } from './math/MathUtils.js';

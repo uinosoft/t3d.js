@@ -3,6 +3,7 @@ import { Box3 } from './Box3.js';
 
 const _box3_1 = new Box3();
 const _vec3_1 = new Vector3();
+const _vec3_2 = new Vector3();
 
 /**
  * A sphere defined by a center and radius.
@@ -172,6 +173,35 @@ class Sphere {
 			const delta = (length - this.radius) * 0.5;
 			this.center.addScaledVector(_vec3_1, delta / length);
 			this.radius += delta;
+		}
+
+		return this;
+	}
+
+	/**
+	 * Expands this sphere to enclose both the original sphere and the given sphere.
+	 * @param {Sphere} sphere - The sphere to include.
+	 * @returns {Sphere} A reference to this sphere.
+	 */
+	union(sphere) {
+		if (sphere.isEmpty()) {
+			return this;
+		}
+
+		if (this.isEmpty()) {
+			this.copy(sphere);
+
+			return this;
+		}
+
+		if (this.center.equals(sphere.center)) {
+			this.radius = Math.max(this.radius, sphere.radius);
+		} else {
+			_vec3_2.subVectors(sphere.center, this.center).normalize().multiplyScalar(sphere.radius);
+
+			this.expandByPoint(_vec3_1.addVectors(sphere.center, _vec3_2));
+
+			this.expandByPoint(_vec3_1.addVectors(sphere.center, _vec3_2));
 		}
 
 		return this;

@@ -4711,6 +4711,111 @@
 		return c < 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 0.41666) - 0.055;
 	}
 
+	/**
+	 * Color4 class
+	 */
+	class Color4 {
+		/**
+		 * @param {number} r
+		 * @param {number} g
+		 * @param {number} b
+		 * @param {number} a
+		 */
+		constructor(r = 0, g = 0, b = 0, a = 1) {
+			this.r = r;
+			this.g = g;
+			this.b = b;
+			this.a = a;
+		}
+
+		/**
+		 * Set color from RGBA values
+		 * @param {number} r
+		 * @param {number} g
+		 * @param {number} b
+		 * @param {number} a
+		 * @returns {Color4}
+		 */
+		setRGBA(r, g, b, a) {
+			this.r = r;
+			this.g = g;
+			this.b = b;
+			this.a = a;
+			return this;
+		}
+
+		/**
+		 * Copies the r, g, b and a parameters from c in to this color.
+		 * @param {Color4} c
+		 * @returns {Color4}
+		 */
+		copy(c) {
+			this.r = c.r;
+			this.g = c.g;
+			this.b = c.b;
+			this.a = c.a;
+			return this;
+		}
+
+		/**
+		 * Returns a new Color4 with the same r, g, b and a values as this one.
+		 * @returns {Color4}
+		 */
+		clone() {
+			return new Color4(this.r, this.g, this.b, this.a);
+		}
+
+		/**
+		 * Sets this color's components based on an array formatted like [ r, g, b, a ].
+		 * @param {number[]} array - Array of floats in the form [ r, g, b, a ].
+		 * @param {number} [offset=0] - An offset into the array.
+		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
+		 * @returns {Color4}
+		 */
+		fromArray(array, offset = 0, denormalize = false) {
+			let r = array[offset],
+				g = array[offset + 1],
+				b = array[offset + 2],
+				a = array[offset + 3];
+			if (denormalize) {
+				r = MathUtils.denormalize(r, array);
+				g = MathUtils.denormalize(g, array);
+				b = MathUtils.denormalize(b, array);
+				a = MathUtils.denormalize(a, array);
+			}
+			this.r = r;
+			this.g = g;
+			this.b = b;
+			this.a = a;
+			return this;
+		}
+
+		/**
+		 * Returns an array of the form [ r, g, b, a ].
+		 * @param {number[]} [array] - An array to store the color to.
+		 * @param {number} [offset=0] - An offset into the array.
+		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
+		 * @returns {number[]}
+		 */
+		toArray(array = [], offset = 0, normalize = false) {
+			let r = this.r,
+				g = this.g,
+				b = this.b,
+				a = this.a;
+			if (normalize) {
+				r = MathUtils.normalize(r, array);
+				g = MathUtils.normalize(g, array);
+				b = MathUtils.normalize(b, array);
+				a = MathUtils.normalize(a, array);
+			}
+			array[offset] = r;
+			array[offset + 1] = g;
+			array[offset + 2] = b;
+			array[offset + 3] = a;
+			return array;
+		}
+	}
+
 	const _matrix$1 = new Matrix4();
 
 	/**
@@ -5274,7 +5379,7 @@
 	}
 
 	const _vec3_1$4 = new Vector3();
-	const _vec3_2 = new Vector3();
+	const _vec3_2$1 = new Vector3();
 	const _mat3_1$1 = new Matrix3();
 
 	/**
@@ -5359,7 +5464,7 @@
 		 * @returns {Plane}
 		 */
 		setFromCoplanarPoints(a, b, c) {
-			const normal = _vec3_1$4.subVectors(c, b).cross(_vec3_2.subVectors(a, b)).normalize();
+			const normal = _vec3_1$4.subVectors(c, b).cross(_vec3_2$1.subVectors(a, b)).normalize();
 			// Q: should an error be thrown if normal is zero (e.g. degenerate plane)?
 			this.setFromNormalAndCoplanarPoint(normal, a);
 			return this;
@@ -5913,6 +6018,7 @@
 
 	const _box3_1 = new Box3();
 	const _vec3_1$1 = new Vector3();
+	const _vec3_2 = new Vector3();
 
 	/**
 	 * A sphere defined by a center and radius.
@@ -6065,6 +6171,29 @@
 				const delta = (length - this.radius) * 0.5;
 				this.center.addScaledVector(_vec3_1$1, delta / length);
 				this.radius += delta;
+			}
+			return this;
+		}
+
+		/**
+		 * Expands this sphere to enclose both the original sphere and the given sphere.
+		 * @param {Sphere} sphere - The sphere to include.
+		 * @returns {Sphere} A reference to this sphere.
+		 */
+		union(sphere) {
+			if (sphere.isEmpty()) {
+				return this;
+			}
+			if (this.isEmpty()) {
+				this.copy(sphere);
+				return this;
+			}
+			if (this.center.equals(sphere.center)) {
+				this.radius = Math.max(this.radius, sphere.radius);
+			} else {
+				_vec3_2.subVectors(sphere.center, this.center).normalize().multiplyScalar(sphere.radius);
+				this.expandByPoint(_vec3_1$1.addVectors(sphere.center, _vec3_2));
+				this.expandByPoint(_vec3_1$1.addVectors(sphere.center, _vec3_2));
 			}
 			return this;
 		}
@@ -18818,6 +18947,7 @@
 	exports.CULL_FACE_TYPE = CULL_FACE_TYPE;
 	exports.Camera = Camera;
 	exports.Color3 = Color3;
+	exports.Color4 = Color4;
 	exports.ColorKeyframeTrack = ColorKeyframeTrack;
 	exports.CubeGeometry = CubeGeometry;
 	exports.CubicSplineInterpolant = CubicSplineInterpolant;
