@@ -1687,7 +1687,10 @@ class GLTFWriter {
 	setImageUri(imageDef, dataURL) {
 		const options = this.options;
 
-		if (options.format !== GLTF_FORMAT.GLTF_SEPARATE) return;
+		if (options.format !== GLTF_FORMAT.GLTF_SEPARATE) {
+			imageDef.uri = dataURL;
+			return;
+		}
 
 		const ext = imageDef.mimeType === 'image/jpeg' ? 'jpg' : 'png';
 		const name = this.getUniqueFileName(imageDef.name || 'image', ext);
