@@ -8730,6 +8730,7 @@
 		}
 		raycast(ray, intersects) {
 			const geometry = this.geometry;
+			const material = this.material;
 			const worldMatrix = this.worldMatrix;
 			_sphere.copy(geometry.boundingSphere);
 			_sphere.applyMatrix4(worldMatrix);
@@ -8746,28 +8747,69 @@
 				return;
 			}
 			const uv = geometry.getAttribute('a_Uv');
+			const groups = geometry.groups;
 			let intersection;
 			if (geometry.index) {
 				const index = geometry.index.buffer.array;
-				for (let i = 0; i < index.length; i += 3) {
-					const a = index[i];
-					const b = index[i + 1];
-					const c = index[i + 2];
-					intersection = checkGeometryIntersection(this, ray, _ray, uv, a, b, c);
-					if (intersection) {
-						intersection.faceIndex = Math.floor(i / 3);
-						intersects.push(intersection);
+				if (Array.isArray(material)) {
+					for (let i = 0, il = groups.length; i < il; i++) {
+						const group = groups[i];
+						const groupMaterial = material[group.materialIndex];
+						const start = group.start;
+						const end = Math.min(index.length, group.start + group.count);
+						for (let j = start, jl = end; j < jl; j += 3) {
+							const a = index[j];
+							const b = index[j + 1];
+							const c = index[j + 2];
+							intersection = checkGeometryIntersection(this, groupMaterial, ray, _ray, uv, a, b, c);
+							if (intersection) {
+								intersection.faceIndex = Math.floor(i / 3);
+								intersection.face.materialIndex = group.materialIndex;
+								intersects.push(intersection);
+							}
+						}
+					}
+				} else {
+					for (let i = 0, il = index.length; i < il; i += 3) {
+						const a = index[i];
+						const b = index[i + 1];
+						const c = index[i + 2];
+						intersection = checkGeometryIntersection(this, material, ray, _ray, uv, a, b, c);
+						if (intersection) {
+							intersection.faceIndex = Math.floor(i / 3);
+							intersects.push(intersection);
+						}
 					}
 				}
 			} else {
-				for (let i = 0; i < position.buffer.count; i += 3) {
-					const a = i;
-					const b = i + 1;
-					const c = i + 2;
-					intersection = checkGeometryIntersection(this, ray, _ray, uv, a, b, c);
-					if (intersection) {
-						intersection.faceIndex = Math.floor(i / 3);
-						intersects.push(intersection);
+				if (Array.isArray(material)) {
+					for (let i = 0, il = groups.length; i < il; i++) {
+						const group = groups[i];
+						const groupMaterial = material[group.materialIndex];
+						const start = group.start;
+						const end = Math.min(position.buffer.count, group.start + group.count);
+						for (let j = start, jl = end; j < jl; j += 3) {
+							const a = j;
+							const b = j + 1;
+							const c = j + 2;
+							intersection = checkGeometryIntersection(this, groupMaterial, ray, _ray, uv, a, b, c);
+							if (intersection) {
+								intersection.faceIndex = Math.floor(i / 3);
+								intersection.face.materialIndex = group.materialIndex;
+								intersects.push(intersection);
+							}
+						}
+					}
+				} else {
+					for (let i = 0, il = position.buffer.count; i < il; i += 3) {
+						const a = i;
+						const b = i + 1;
+						const c = i + 2;
+						intersection = checkGeometryIntersection(this, material, ray, _ray, uv, a, b, c);
+						if (intersection) {
+							intersection.faceIndex = Math.floor(i / 3);
+							intersects.push(intersection);
+						}
 					}
 				}
 			}
@@ -8790,11 +8832,11 @@
 	 * @default true
 	 */
 	Mesh.prototype.isMesh = true;
-	function checkGeometryIntersection(object, ray, _ray, uv, a, b, c) {
+	function checkGeometryIntersection(object, material, ray, _ray, uv, a, b, c) {
 		object.getVertexPosition(a, _vA);
 		object.getVertexPosition(b, _vB);
 		object.getVertexPosition(c, _vC);
-		const intersection = checkIntersection(object, ray, _ray, _vA, _vB, _vC, _intersectionPoint);
+		const intersection = checkIntersection(object, material, ray, _ray, _vA, _vB, _vC, _intersectionPoint);
 		if (intersection) {
 			let array;
 			let bufferStride;
@@ -8827,9 +8869,8 @@
 		uv1.add(uv2).add(uv3);
 		return uv1.clone();
 	}
-	function checkIntersection(object, ray, localRay, pA, pB, pC, point) {
+	function checkIntersection(object, material, ray, localRay, pA, pB, pC, point) {
 		let intersect;
-		const material = object.material;
 		if (material.side === DRAW_SIDE.BACK) {
 			intersect = localRay.intersectTriangle(pC, pB, pA, true, point);
 		} else {
