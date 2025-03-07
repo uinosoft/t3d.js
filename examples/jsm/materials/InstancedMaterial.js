@@ -1,44 +1,46 @@
 import { ShaderLib, PBRMaterial, BasicMaterial, DepthMaterial, MATERIAL_TYPE } from 't3d';
 
 const instancing_pars_vert = `
-    #ifdef USE_INSTANCING
-        attribute mat4 instanceMatrix;
-        uniform mat4 instanceOffset;
-    #endif
+#ifdef USE_INSTANCING
+	attribute mat4 instanceMatrix;
+	uniform mat4 instanceOffset;
+#endif
 `;
 
 const instancing_position_vert = `
-    #ifdef USE_INSTANCING
-        mat4 localInstanceMatrix = inverseMat4(instanceOffset) * instanceMatrix * instanceOffset;
-        transformed = (localInstanceMatrix * vec4(transformed, 1.0)).xyz;
-    #endif
+#ifdef USE_INSTANCING
+	mat4 instancingMatrix = inverseMat4(instanceOffset) * instanceMatrix * instanceOffset;
+	transformed = (instancingMatrix * vec4(transformed, 1.0)).xyz;
+#endif
 `;
 
 const instancing_normal_vert = `
-    #ifdef USE_INSTANCING
-        #ifdef USE_INSTANCING
-            objectNormal = (transposeMat4(inverseMat4(localInstanceMatrix)) * vec4(objectNormal, 0.0)).xyz;
-        #endif
+#ifdef USE_INSTANCING
+	mat4 instancingNormalMatrix = transposeMat4(inverseMat4(instancingMatrix));
 
-        #ifdef USE_TANGENT
-            objectTangent = (transposeMat4(inverseMat4(localInstanceMatrix)) * vec4(objectTangent, 0.0)).xyz;
-        #endif
-    #endif
+	objectNormal = (instancingNormalMatrix * vec4(objectNormal, 0.0)).xyz;
+
+	#ifdef USE_TANGENT
+		objectTangent = (instancingNormalMatrix * vec4(objectTangent, 0.0)).xyz;
+	#endif
+#endif
 `;
+
+// InstancedPBRMaterial
 
 let pbr_vert = ShaderLib.pbr_vert;
 
 pbr_vert = pbr_vert.replace('#include <logdepthbuf_pars_vert>', `
-    #include <logdepthbuf_pars_vert>
-    ${instancing_pars_vert}
+#include <logdepthbuf_pars_vert>
+${instancing_pars_vert}
 `);
 pbr_vert = pbr_vert.replace('#include <pvm_vert>', `
-    ${instancing_position_vert}
-    #include <pvm_vert>
+${instancing_position_vert}
+#include <pvm_vert>
 `);
 pbr_vert = pbr_vert.replace('#include <normal_vert>', `
-    ${instancing_normal_vert}
-    #include <normal_vert>
+${instancing_normal_vert}
+#include <normal_vert>
 `);
 
 class InstancedPBRMaterial extends PBRMaterial {
@@ -67,6 +69,8 @@ class InstancedPBRMaterial extends PBRMaterial {
 	}
 
 }
+
+// InstancedBasicMaterial
 
 let basic_vert = ShaderLib.basic_vert;
 
@@ -106,6 +110,8 @@ class InstancedBasicMaterial extends BasicMaterial {
 	}
 
 }
+
+// InstancedDepthMaterial
 
 let depth_vert = ShaderLib.depth_vert;
 
