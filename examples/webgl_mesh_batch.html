@@ -68,10 +68,10 @@
 		controls.autoRotate = true;
 		controls.autoRotateSpeed = 0.3;
 
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
 		scene.add(ambientLight);
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 1.5);
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1.8);
 		directionalLight.lookAt(new t3d.Vector3(0, -25, -25), new t3d.Vector3(0, 1, 0));
 		scene.add(directionalLight);
 
@@ -271,7 +271,7 @@
 			if (intersects.length > 0) {
 				let mesh = intersects[0].object;
 				if (mesh === batchedMesh) {
-					mesh = regularMeshes.children[intersects[0].batchId];
+					mesh = findMeshByBatchId(intersects[0].batchId);
 				}
 
 				select(mesh);
@@ -285,6 +285,16 @@
 		canvas.addEventListener('click', onCanvasClick);
 
 		let targetMesh = null;
+
+		function findMeshByBatchId(batchId) {
+			const children = regularMeshes.children;
+			for (let i = 0, l = children.length; i < l; i++) {
+				if (children[i].userData.batchId === batchId) {
+					return children[i];
+				}
+			}
+			return null;
+		}
 
 		function select(mesh) {
 			targetMesh = mesh;
