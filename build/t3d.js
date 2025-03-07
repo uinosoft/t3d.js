@@ -4507,74 +4507,47 @@
 	}
 
 	/**
-	 * Color3 Class.
+	 * A Color3 instance is represented by RGB components.
 	 */
 	class Color3 {
 		/**
-		 * @param {number} r - (optional) If arguments g and b are defined, the red component of the color.
-		 * 						If they are not defined, it can be a hexadecimal triplet (recommended).
-		 * @param {number} g - (optional) If it is defined, the green component of the color.
-		 * @param {number} b - (optional) If it is defined, the blue component of the color.
+		 * Constructs a new three-component color.
+		 * @param {number} [r] - The red component of the color. If `g` and `b` are not provided, it can be a hexadecimal triplet.
+		 * @param {number} [g] - The green component.
+		 * @param {number} [b] - The blue component.
 		 */
 		constructor(r, g, b) {
+			/**
+			 * The red component.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.r = 0;
+
+			/**
+			 * The green component.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.g = 0;
+
+			/**
+			 * The blue component.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.b = 0;
 			if (g === undefined && b === undefined) {
-				return this.setHex(r);
+				this.setHex(r);
+			} else {
+				this.setRGB(r, g, b);
 			}
-			this.setRGB(r, g, b);
 		}
 
 		/**
-		 * Sets this color to be the color linearly interpolated
-		 * between color1 and color2 where ratio is the percent distance along the line connecting the two colors
-		 * - ratio = 0 will be color1, and ratio = 1 will be color2.
-		 * @param {Color3} c1 - the starting Color.
-		 * @param {Color3} c2 - Color to interpolate towards.
-		 * @param {number} ratio - interpolation factor, typically in the closed interval [0, 1].
-		 */
-		lerpColors(c1, c2, ratio) {
-			this.r = ratio * (c2.r - c1.r) + c1.r;
-			this.g = ratio * (c2.g - c1.g) + c1.g;
-			this.b = ratio * (c2.b - c1.b) + c1.b;
-		}
-
-		/**
-		 * Linearly interpolates this color's RGB values toward the RGB values of the passed argument.
-		 * The ratio argument can be thought of as the ratio between the two colors,
-		 * where 0.0 is this color and 1.0 is the first argument.
-		 * @param {Color3} c - color to converge on.
-		 * @param {number} ratio - interpolation factor in the closed interval [0, 1].
-		 */
-		lerp(c, ratio) {
-			this.lerpColors(this, c, ratio);
-		}
-
-		/**
-		 * Returns a new Color with the same r, g and b values as this one.
-		 * @returns {Color3}
-		 */
-		clone() {
-			return new Color3(this.r, this.g, this.b);
-		}
-
-		/**
-		 * Copies the r, g and b parameters from v in to this color.
-		 * @param {Color3} v
-		 * @returns {Color3}
-		 */
-		copy(v) {
-			this.r = v.r;
-			this.g = v.g;
-			this.b = v.b;
-			return this;
-		}
-
-		/**
-		 * Set from hex.
-		 * @param {number} hex - hexadecimal triplet format.
-		 * @returns {Color3}
+		 * Sets this color from a hexadecimal value.
+		 * @param {number} hex - The hexadecimal value.
+		 * @returns {Color3} A reference to this color.
 		 */
 		setHex(hex) {
 			hex = Math.floor(hex);
@@ -4585,19 +4558,11 @@
 		}
 
 		/**
-		 * Returns the hexadecimal value of this color.
-		 * @returns {number}
-		 */
-		getHex() {
-			return MathUtils.clamp(this.r * 255, 0, 255) << 16 ^ MathUtils.clamp(this.g * 255, 0, 255) << 8 ^ MathUtils.clamp(this.b * 255, 0, 255) << 0;
-		}
-
-		/**
 		 * Sets this color from RGB values.
 		 * @param {number} r - Red channel value between 0.0 and 1.0.
 		 * @param {number} g - Green channel value between 0.0 and 1.0.
 		 * @param {number} b - Blue channel value between 0.0 and 1.0.
-		 * @returns {Color3}
+		 * @returns {Color3} A reference to this color.
 		 */
 		setRGB(r, g, b) {
 			this.r = r;
@@ -4607,11 +4572,11 @@
 		}
 
 		/**
-		 * Set from HSL.
-		 * @param {number} h - hue value between 0.0 and 1.0
-		 * @param {number} s - saturation value between 0.0 and 1.0
-		 * @param {number} l - lightness value between 0.0 and 1.0
-		 * @returns {Color3}
+		 * Set this color from HSL values.
+		 * @param {number} h - Hue value between 0.0 and 1.0.
+		 * @param {number} s - Saturation value between 0.0 and 1.0.
+		 * @param {number} l - Lightness value between 0.0 and 1.0.
+		 * @returns {Color3} A reference to this color.
 		 */
 		setHSL(h, s, l) {
 			// h,s,l ranges are in 0.0 - 1.0
@@ -4631,8 +4596,28 @@
 		}
 
 		/**
+		 * Returns a new color with copied values from this instance.
+		 * @returns {Color3} A clone of this instance.
+		 */
+		clone() {
+			return new this.constructor(this.r, this.g, this.b);
+		}
+
+		/**
+		 * Copies the values of the given color to this instance.
+		 * @param {Color3} color - The color to copy.
+		 * @returns {Color3} A reference to this color.
+		 */
+		copy(color) {
+			this.r = color.r;
+			this.g = color.g;
+			this.b = color.b;
+			return this;
+		}
+
+		/**
 		 * Converts this color from sRGB space to linear space.
-		 * @returns {Color3}
+		 * @returns {Color3} A reference to this color.
 		 */
 		convertSRGBToLinear() {
 			this.r = SRGBToLinear(this.r);
@@ -4643,7 +4628,7 @@
 
 		/**
 		 * Converts this color from linear space to sRGB space.
-		 * @returns {Color3}
+		 * @returns {Color3} A reference to this color.
 		 */
 		convertLinearToSRGB() {
 			this.r = LinearToSRGB(this.r);
@@ -4653,11 +4638,47 @@
 		}
 
 		/**
-		 * Sets this color's components based on an array formatted like [ r, g, b ].
-		 * @param {number[]} array - Array of floats in the form [ r, g, b ].
-		 * @param {number} [offset=0] - An offset into the array.
-		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @returns {Color3}
+		 * Returns the hexadecimal value of this color.
+		 * @returns {number} The hexadecimal value.
+		 */
+		getHex() {
+			return MathUtils.clamp(this.r * 255, 0, 255) << 16 ^ MathUtils.clamp(this.g * 255, 0, 255) << 8 ^ MathUtils.clamp(this.b * 255, 0, 255) << 0;
+		}
+
+		/**
+		 * Linearly interpolates this color's RGB values toward the RGB values of the
+		 * given color. The alpha argument can be thought of as the ratio between
+		 * the two colors, where 0.0 is this color and 1.0 is the first argument.
+		 * @param {Color3} color - The color to converge on.
+		 * @param {number} alpha - The interpolation factor in the closed interval [0,1].
+		 * @returns {Color3} A reference to this color.
+		 */
+		lerp(color, alpha) {
+			return this.lerpColors(this, color, alpha);
+		}
+
+		/**
+		 * Linearly interpolates between the given colors and stores the result in this instance.
+		 * The alpha argument can be thought of as the ratio between the two colors, where 0.0
+		 * is the first and 1.0 is the second color.
+		 * @param {Color3} color1 - The first color.
+		 * @param {Color3} color2 - The second color.
+		 * @param {number} alpha - The interpolation factor in the closed interval [0,1].
+		 * @returns {Color3} A reference to this color.
+		 */
+		lerpColors(color1, color2, alpha) {
+			this.r = MathUtils.lerp(color1.r, color2.r, alpha);
+			this.g = MathUtils.lerp(color1.g, color2.g, alpha);
+			this.b = MathUtils.lerp(color1.b, color2.b, alpha);
+			return this;
+		}
+
+		/**
+		 * Sets this color's RGB components from the given array.
+		 * @param {number[]} array - An array holding the RGB values.
+		 * @param {number} [offset=0] - The offset into the array.
+		 * @param {boolean} [denormalize=false] - If true, denormalize the values, and array should be a typed array.
+		 * @returns {Color3} A reference to this color.
 		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let r = array[offset],
@@ -4675,11 +4696,12 @@
 		}
 
 		/**
-		 * Returns an array of the form [ r, g, b ].
-		 * @param {number[]} [array] - An array to store the color to.
-		 * @param {number} [offset=0] - An offset into the array.
-		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @returns {number[]}
+		 * Writes the RGB components of this color to the given array. If no array is provided,
+		 * the method returns a new instance.
+		 * @param {number[]} [array=[]] - The target array holding the color components.
+		 * @param {number} [offset=0] - Index of the first element in the array.
+		 * @param {boolean} [normalize=false] - If true, normalize the values, and array should be a typed array.
+		 * @returns {number[]} The color components.
 		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let r = this.r,
@@ -4712,29 +4734,53 @@
 	}
 
 	/**
-	 * Color4 class
+	 * A Color4 instance is represented by RGBA components.
 	 */
 	class Color4 {
 		/**
-		 * @param {number} r
-		 * @param {number} g
-		 * @param {number} b
-		 * @param {number} a
+		 * Constructs a new four-component color.
+		 * @param {number} [r=0] - The red value.
+		 * @param {number} [g=0] - The green value.
+		 * @param {number} [b=0] - The blue value.
+		 * @param {number} [a=1] - The alpha value.
 		 */
 		constructor(r = 0, g = 0, b = 0, a = 1) {
+			/**
+			 * The red component.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.r = r;
+
+			/**
+			 * The green component.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.g = g;
+
+			/**
+			 * The blue component.
+			 * @type {number}
+			 * @default 0
+			 */
 			this.b = b;
+
+			/**
+			 * The alpha component.
+			 * @type {number}
+			 * @default 1
+			 */
 			this.a = a;
 		}
 
 		/**
-		 * Set color from RGBA values
-		 * @param {number} r
-		 * @param {number} g
-		 * @param {number} b
-		 * @param {number} a
-		 * @returns {Color4}
+		 * Sets this color from RGBA values.
+		 * @param {number} r - Red channel value between 0.0 and 1.0.
+		 * @param {number} g - Green channel value between 0.0 and 1.0.
+		 * @param {number} b - Blue channel value between 0.0 and 1.0.
+		 * @param {number} a - Alpha channel value between 0.0 and 1.0.
+		 * @returns {Color4} A reference to this color.
 		 */
 		setRGBA(r, g, b, a) {
 			this.r = r;
@@ -4745,32 +4791,32 @@
 		}
 
 		/**
-		 * Copies the r, g, b and a parameters from c in to this color.
-		 * @param {Color4} c
-		 * @returns {Color4}
-		 */
-		copy(c) {
-			this.r = c.r;
-			this.g = c.g;
-			this.b = c.b;
-			this.a = c.a;
-			return this;
-		}
-
-		/**
-		 * Returns a new Color4 with the same r, g, b and a values as this one.
-		 * @returns {Color4}
+		 * Returns a new color with copied values from this instance.
+		 * @returns {Color4} A clone of this instance.
 		 */
 		clone() {
 			return new Color4(this.r, this.g, this.b, this.a);
 		}
 
 		/**
-		 * Sets this color's components based on an array formatted like [ r, g, b, a ].
-		 * @param {number[]} array - Array of floats in the form [ r, g, b, a ].
-		 * @param {number} [offset=0] - An offset into the array.
-		 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-		 * @returns {Color4}
+		 * Copies the values of the given color to this instance.
+		 * @param {Color4} color - The color to copy.
+		 * @returns {Color4} A clone of this instance.
+		 */
+		copy(color) {
+			this.r = color.r;
+			this.g = color.g;
+			this.b = color.b;
+			this.a = color.a;
+			return this;
+		}
+
+		/**
+		 * Sets this color's RGBA components from the given array.
+		 * @param {number[]} array - An array holding the RGBA values.
+		 * @param {number} [offset=0] - The offset into the array.
+		 * @param {boolean} [denormalize=false] - If true, denormalize the values, and array should be a typed array.
+		 * @returns {Color4} A reference to this color.
 		 */
 		fromArray(array, offset = 0, denormalize = false) {
 			let r = array[offset],
@@ -4791,11 +4837,12 @@
 		}
 
 		/**
-		 * Returns an array of the form [ r, g, b, a ].
-		 * @param {number[]} [array] - An array to store the color to.
-		 * @param {number} [offset=0] - An offset into the array.
-		 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-		 * @returns {number[]}
+		 * Writes the RGBA components of this color to the given array. If no array is provided,
+		 * the method returns a new instance.
+		 * @param {number[]} [array=[]] - The target array holding the color components.
+		 * @param {number} [offset=0] - Index of the first element in the array.
+		 * @param {boolean} [normalize=false] - If true, normalize the values, and array should be a typed array.
+		 * @returns {number[]} The color components.
 		 */
 		toArray(array = [], offset = 0, normalize = false) {
 			let r = this.r,
