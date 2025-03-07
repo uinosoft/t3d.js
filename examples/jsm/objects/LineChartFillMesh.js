@@ -289,8 +289,7 @@ function createCurveTexture(curvePath) {
 		}
 	});
 
-	const pixelCount = curveData.length / 4;
-	const size = textureSize(pixelCount);
+	const size = MathUtils.nextPowerOfTwoSquareSize(curveData.length / 4);
 
 	const data = new Float32Array(size * size * 4);
 	data.set(curveData);
@@ -312,10 +311,6 @@ function calculateCumulativeDistances(points, scalar = 1) {
 		if (i > 0) totalDist += point.distanceTo(arr[i - 1]);
 		return totalDist * scalar;
 	});
-}
-
-function textureSize(pixelCount) {
-	return MathUtils.nextPowerOfTwo(Math.ceil(Math.sqrt(pixelCount)));
 }
 
 export { LineChartFillMesh };

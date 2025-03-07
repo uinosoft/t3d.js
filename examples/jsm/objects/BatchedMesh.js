@@ -1,4 +1,4 @@
-import { Mesh, Geometry, Attribute, Buffer, Box3, Sphere, Matrix4, Texture2D, PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER, Frustum, Vector3, Color4 } from 't3d';
+import { Mesh, Geometry, Attribute, Buffer, Box3, Sphere, Matrix4, Texture2D, PIXEL_FORMAT, PIXEL_TYPE, TEXTURE_FILTER, Frustum, Vector3, Color4, MathUtils } from 't3d';
 
 /**
  * A special version of a mesh with multi draw batch rendering support. Use
@@ -1223,8 +1223,7 @@ class BatchingTexture extends Texture2D {
 	}
 
 	setInstanceCount(maxInstanceCount) {
-		let size = Math.sqrt(maxInstanceCount * 4); // 4 pixels needed for 1 matrix
-		size = Math.ceil(size / 4) * 4;
+		let size = MathUtils.nextPowerOfTwoSquareSize(maxInstanceCount * 4); // 4 pixels needed for 1 matrix
 		size = Math.max(size, 4);
 
 		this.image = { data: new Float32Array(size * size * 4), width: size, height: size };
@@ -1256,8 +1255,8 @@ class BatchingIdTexture extends Texture2D {
 	}
 
 	setInstanceCount(maxInstanceCount) {
-		let size = Math.sqrt(maxInstanceCount);
-		size = Math.ceil(size);
+		let size = MathUtils.nextPowerOfTwoSquareSize(maxInstanceCount);
+		size = Math.max(size, 4);
 
 		this.image = { data: new Uint32Array(size * size), width: size, height: size };
 	}
@@ -1278,8 +1277,8 @@ class BatchingColorTexture extends Texture2D {
 	}
 
 	setInstanceCount(maxInstanceCount) {
-		let size = Math.sqrt(maxInstanceCount);
-		size = Math.ceil(size);
+		let size = MathUtils.nextPowerOfTwoSquareSize(maxInstanceCount);
+		size = Math.max(size, 4);
 
 		this.image = { data: new Float32Array(size * size * 4).fill(1), width: size, height: size };
 	}

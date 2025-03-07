@@ -96,6 +96,16 @@ class MathUtils {
 	}
 
 	/**
+	 * Return the next power of two square size of this number.
+	 * This method is usually used to calculate the minimum 2d texture size based on the pixel length.
+	 * @param {number} value - The input number.
+	 * @returns {number} - The result size.
+	 */
+	static nextPowerOfTwoSquareSize(value) {
+		return this.nextPowerOfTwo(Math.ceil(Math.sqrt(value)));
+	}
+
+	/**
 	 * Denormalizes a value based on the type of the provided array.
 	 * @param {number} value - The value to be denormalized.
 	 * @param {TypedArray} array - The typed array to determine the normalization factor.
@@ -14495,9 +14505,8 @@ class Skeleton {
 	}
 
 	generateBoneTexture() {
-		let size = Math.sqrt(this.bones.length * 4);
-		size = MathUtils.nextPowerOfTwo(Math.ceil(size));
-		size = Math.max(4, size);
+		let size = MathUtils.nextPowerOfTwoSquareSize(this.bones.length * 4);
+		size = Math.max(size, 4);
 
 		const boneMatrices = new Float32Array(size * size * 4);
 		boneMatrices.set(this.boneMatrices);

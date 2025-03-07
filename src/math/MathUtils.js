@@ -91,6 +91,16 @@ class MathUtils {
 	}
 
 	/**
+	 * Return the next power of two square size of this number.
+	 * This method is usually used to calculate the minimum 2d texture size based on the pixel length.
+	 * @param {number} value - The input number.
+	 * @returns {number} - The result size.
+	 */
+	static nextPowerOfTwoSquareSize(value) {
+		return this.nextPowerOfTwo(Math.ceil(Math.sqrt(value)));
+	}
+
+	/**
 	 * Denormalizes a value based on the type of the provided array.
 	 * @param {number} value - The value to be denormalized.
 	 * @param {TypedArray} array - The typed array to determine the normalization factor.

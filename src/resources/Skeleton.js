@@ -101,9 +101,8 @@ class Skeleton {
 	}
 
 	generateBoneTexture() {
-		let size = Math.sqrt(this.bones.length * 4);
-		size = MathUtils.nextPowerOfTwo(Math.ceil(size));
-		size = Math.max(4, size);
+		let size = MathUtils.nextPowerOfTwoSquareSize(this.bones.length * 4);
+		size = Math.max(size, 4);
 
 		const boneMatrices = new Float32Array(size * size * 4);
 		boneMatrices.set(this.boneMatrices);
