@@ -1267,8 +1267,6 @@ class BatchingColorTexture extends Texture2D {
 
 	constructor(maxInstanceCount) {
 		super();
-		this.format = PIXEL_FORMAT.RGBA;
-		this.type = PIXEL_TYPE.FLOAT;
 		this.magFilter = TEXTURE_FILTER.NEAREST;
 		this.minFilter = TEXTURE_FILTER.NEAREST;
 		this.generateMipmaps = false;
@@ -1280,16 +1278,16 @@ class BatchingColorTexture extends Texture2D {
 		let size = MathUtils.nextPowerOfTwoSquareSize(maxInstanceCount);
 		size = Math.max(size, 4);
 
-		this.image = { data: new Float32Array(size * size * 4).fill(1), width: size, height: size };
+		this.image = { data: new Uint8Array(size * size * 4).fill(255), width: size, height: size };
 	}
 
 	setInstanceData(instanceId, color) {
-		color.toArray(this.image.data, instanceId * 4);
+		color.toArray(this.image.data, instanceId * 4, true);
 		this.version++;
 	}
 
 	getInstanceData(instanceId, color) {
-		color.fromArray(this.image.data, instanceId * 4);
+		color.fromArray(this.image.data, instanceId * 4, true);
 	}
 
 }
