@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>t3d - GPUPick</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="main.css">
 </head>
-
 <body>
     <div id="info">
         <a href="" target="_blank">t3d</a> - GPUPick
@@ -30,209 +28,243 @@
     </script>
 
     <script type="module">
-        import * as t3d from 't3d';
-        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-        import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
-        import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
-        import PickBuffer from 't3d/addons/PickBuffer.js';
-        import { Timer } from 't3d/addons/misc/Timer.js';
-        import Stats from './libs/stats.module.js';
-        import { GUI } from './libs/lil-gui.esm.min.js';
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import PickBuffer from 't3d/addons/PickBuffer.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
+		import Stats from './libs/stats.module.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 
-        let width = window.innerWidth || 2;
-        let height = window.innerHeight || 2;
-        const near = 0.1;
-        const far = 1000;
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        document.body.appendChild(canvas);
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
 
-        const contextParams = { antialias: true, alpha: false };
-        const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
-        const renderer = new t3d.WebGLRenderer(gl);
-        renderer.asyncReadPixel = true;
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.asyncReadPixel = true;
 
-        // Create scene.
-        const scene = new t3d.Scene();
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-        // Create an geometry help.
-        const normal_material = new t3d.BasicMaterial();
-        normal_material.side = t3d.DRAW_SIDE.DOUBLE;
-        const normal_geometry = new t3d.CylinderGeometry(0.2, 0, 1, 20, 1);
-        const mat4_translate = new t3d.Matrix4();
-        mat4_translate.makeTranslation(0, -0.5, 0);
-        GeometryUtils.applyMatrix4(normal_geometry, mat4_translate);
-        const mat4_rotateX = new t3d.Matrix4();
-        mat4_rotateX.makeRotationAxis(new t3d.Vector3(1, 0, 0), -Math.PI / 2);
-        GeometryUtils.applyMatrix4(normal_geometry, mat4_rotateX);
-        const normal_mersh = new t3d.Mesh(normal_geometry, normal_material);
-        normal_mersh.renderLayer = 2;
-        scene.add(normal_mersh);
+		const scene = new t3d.Scene();
 
-        const ambientLight = new t3d.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
+		const near = 0.1;
+		const far = 1000;
 
-        const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
-        directionalLight.position.set(-40, 40, 0);
-        directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-        scene.add(directionalLight);
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 0, 100);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(60 / 180 * Math.PI, width / height, near, far);
+		scene.add(camera);
 
-        const nanobar = new Nanobar();
-        nanobar.el.style.background = 'gray';
-        const loadingManager = new t3d.LoadingManager(function() {
-        	nanobar.go(100);
-        	nanobar.el.style.background = 'transparent';
-        }, function(url, itemsLoaded, itemsTotal) {
-        	if (itemsLoaded < itemsTotal) {
-        		nanobar.go(itemsLoaded / itemsTotal * 100);
-        	}
-        });
+		const controller = new OrbitControls(camera, canvas);
 
-        const loader = new GLTFLoader(loadingManager);
-        loader.load('./resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
-        	const object = result.root.children[0];
-        	for (let i = 0; i < 3000; i++) {
-        		const monkey = object.clone();
-        		monkey.material = monkey.material.clone();
-        		monkey.material.diffuse.setHSL(Math.random(), 1.0, 0.3);
-        		monkey.position.set(Math.random() * 100 - 50, Math.random() * 60 - 30, Math.random() * 80 - 40);
-        		monkey.euler.x = Math.PI * 2 * Math.random();
-        		monkey.euler.y = Math.PI * 2 * Math.random();
-        		monkey.scale.set(2, 2, 2);
-        		scene.add(monkey);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
 
-        		pickBuffer.setMeshPickId(i + 1, monkey);
-        	}
-        });
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-40, 40, 0);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
 
-        const camera = new t3d.Camera();
-        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-        camera.position.set(0, 0, 90);
-        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-        camera.setPerspective(70 / 180 * Math.PI, width / height, near, far);
-        scene.add(camera);
+		// create normal helper
 
-        // stats
-        const stats = new Stats();
-        stats.showPanel(0);
-        document.body.appendChild(stats.dom);
+		const normalLocalTransform = new t3d.Matrix4();
+		const normalMaterial = new t3d.BasicMaterial();
+		const normalGeometry = new t3d.CylinderGeometry(0.2, 0, 1, 20, 1);
+		normalLocalTransform.makeTranslation(0, -0.5, 0);
+		GeometryUtils.applyMatrix4(normalGeometry, normalLocalTransform);
+		normalLocalTransform.makeRotationAxis(new t3d.Vector3(1, 0, 0), -Math.PI / 2);
+		GeometryUtils.applyMatrix4(normalGeometry, normalLocalTransform);
+		const normalHelper = new t3d.Mesh(normalGeometry, normalMaterial);
+		normalHelper.renderLayer = 2;
+		scene.add(normalHelper);
 
-        const controller = new OrbitControls(camera, canvas);
+		// create meshes
 
-        const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
 
-        const pickBuffer = new PickBuffer(width, height);
+		const loader = new GLTFLoader(loadingManager);
+		loader.load('./resources/models/gltf/suzanne/suzanne.gltf').then(function(result) {
+			const object = result.root.children[0];
 
-        const timer = new Timer();
+			for (let i = 0; i < 3000; i++) {
+				const monkey = object.clone();
+				monkey.material = monkey.material.clone();
+				monkey.material.diffuse.setHSL(Math.random(), 0.5, 0.5);
+				monkey.position.set(Math.random() * 100 - 50, Math.random() * 60 - 30, Math.random() * 80 - 40);
+				monkey.euler.x = Math.PI * 2 * Math.random();
+				monkey.euler.y = Math.PI * 2 * Math.random();
+				monkey.scale.set(2, 2, 2);
+				scene.add(monkey);
 
-        const cameraMatrixCache = {
-        	worldMatrix: new t3d.Matrix4(),
-        	projectionMatrix: new t3d.Matrix4(),
-        	projectionMatrixInverse: new t3d.Matrix4()
-        };
+				pickBuffer.setMeshPickId(i + 1, monkey);
+			}
 
-        const bufferUpdateInterval = 0.1;
-        let bufferUpdateTimer = 0, isReading = false;
+			pickMaterial = object.material.clone();
+			pickMaterial.diffuse.setRGB(1, 0, 0);
+		});
 
-        const spherical = new t3d.Spherical();
-        const normal = new t3d.Vector3();
-        const position = new t3d.Vector3();
+		// pick event
 
-        async function doPick(e) {
-        	// Update pick buffer
-        	const deltaTime = timer.getDelta();
-        	bufferUpdateTimer += deltaTime;
+		let pickMaterial, pickedMesh;
 
-        	if (bufferUpdateTimer > bufferUpdateInterval) {
-        		pickBuffer.render(renderer, scene, camera);
-        		cameraMatrixCache.worldMatrix.copy(camera.worldMatrix);
-        		cameraMatrixCache.projectionMatrix.copy(camera.projectionMatrix);
-        		cameraMatrixCache.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
-        		bufferUpdateTimer = 0;
-        	}
+		const normal = new t3d.Vector3();
+		const position = new t3d.Vector3();
+		const octahedron = new t3d.Vector2();
+		const pixels = new Float32Array(1 * 1 * 4);
 
-        	// Read pixels
+		function octahedronToUnitVector(v2, v3) {
+			v3.set(v2.x, 1.0 - Math.abs(v2.x) - Math.abs(v2.y), v2.y);
+			if (v3.y < 0.0) {
+				const temp = v3.x;
+				v3.x = (1.0 - Math.abs(v3.z)) * Math.sign(v3.x);
+				v3.z = (1.0 - Math.abs(temp)) * Math.sign(v3.z);
+			}
+			v3.normalize();
+		}
 
-        	if (isReading) return;
+		function selectMesh(mesh) {
+			if (pickedMesh) {
+				pickedMesh.material = pickedMesh._oldMaterial;
+				pickedMesh = null;
+			}
 
-        	isReading = true;
+			pickedMesh = mesh;
+			mesh._oldMaterial = mesh.material;
+			mesh.material = pickMaterial;
+		}
 
-        	const pixels = new Float32Array(1 * 1 * 4);
+		const pickBuffer = new PickBuffer(width, height);
 
-        	renderer.setRenderTarget(pickBuffer._rt);
-        	await renderer.readRenderTargetPixels(e.clientX, height - e.clientY, 1, 1, pixels)
-        		.catch(e => {});
+		const timer = new Timer();
 
-        	isReading = false;
+		const cameraMatrixCache = {
+			worldMatrix: new t3d.Matrix4(),
+			projectionMatrix: new t3d.Matrix4(),
+			projectionMatrixInverse: new t3d.Matrix4()
+		};
 
-        	// Calculate position and normal
+		const bufferUpdateInterval = 0.1;
+		let bufferUpdateTimer = 0, isReading = false;
 
-        	const ndcX = (e.clientX / width) * 2.0 - 1.0;
-        	const ndcY = -(e.clientY / height) * 2.0 + 1.0;
-        	const ndcZ = (new t3d.Vector3(0, 0, pixels[2]).applyMatrix4(cameraMatrixCache.projectionMatrix)).z; // viewZ to ndcZ
+		async function doPick(e) {
+			// Update pick buffer
+			const deltaTime = timer.getDelta();
+			bufferUpdateTimer += deltaTime;
 
-        	position.set(ndcX, ndcY, ndcZ)
-        		.applyMatrix4(cameraMatrixCache.projectionMatrixInverse)
-        		.applyMatrix4(cameraMatrixCache.worldMatrix);
+			if (bufferUpdateTimer > bufferUpdateInterval) {
+				pickBuffer.render(renderer, scene, camera);
+				cameraMatrixCache.worldMatrix.copy(camera.worldMatrix);
+				cameraMatrixCache.projectionMatrix.copy(camera.projectionMatrix);
+				cameraMatrixCache.projectionMatrixInverse.copy(camera.projectionMatrixInverse);
+				bufferUpdateTimer = 0;
+			}
 
-        	spherical.set(1, pixels[0], pixels[1]);
-        	normal.setFromSpherical(spherical);
+			// Read pixels
 
-        	// Show pick result
-        
-        	normal_mersh.position.set(0, 0, 0);
-        	normal_mersh.lookAt(normal, new t3d.Vector3(0, 1, 0));
-        	normal_mersh.position.copy(position);
-        
-        	if (!pickBuffer.getMeshByPickId(pixels[3])) {
-        		return;
-        	}
-        	pickBuffer.getMeshByPickId(pixels[3]).material.diffuse.setHSL(Math.random(), 1.0, Math.random());
-        }
-        document.addEventListener('mousemove', doPick, false);
+			if (isReading) return;
 
-        const gui = new GUI();
-        gui.add(renderer, 'asyncReadPixel');
+			isReading = true;
 
-        function loop(timestamp) {
-        	requestAnimationFrame(loop);
+			renderer.setRenderTarget(pickBuffer._rt);
+			await renderer.readRenderTargetPixels(e.clientX, height - e.clientY, 1, 1, pixels)
+				.catch(e => {});
 
-        	stats.begin();
-        
-        	controller.update();
+			isReading = false;
 
-        	timer.update(timestamp);
-        
-        	scene.updateMatrix();
-        	scene.updateRenderStates(camera);
-        	scene.updateRenderQueue(camera);
-        
-        	renderer.setRenderTarget(backRenderTarget);
-        	renderer.setClearColor(0, 0, 0, 0);
-        	renderer.clear(true, true, true);
-        	renderer.renderScene(scene, camera);
-        
-        	stats.end();
-        }
+			// Calculate position and normal
 
-        if (renderer.capabilities.version < 2) {
-        	document.getElementById('notSupported').style.display = '';
-        } else {
-        	requestAnimationFrame(loop);
-        }
+			const ndcX = (e.clientX / width) * 2.0 - 1.0;
+			const ndcY = -(e.clientY / height) * 2.0 + 1.0;
+			const ndcZ = (new t3d.Vector3(0, 0, pixels[2]).applyMatrix4(cameraMatrixCache.projectionMatrix)).z; // viewZ to ndcZ
 
-        function onWindowResize() {
-        	width = window.innerWidth || 2;
-        	height = window.innerHeight || 2;
+			position.set(ndcX, ndcY, ndcZ)
+				.applyMatrix4(cameraMatrixCache.projectionMatrixInverse)
+				.applyMatrix4(cameraMatrixCache.worldMatrix);
 
-        	camera.setPerspective(70 / 180 * Math.PI, width / height, near, far);
-        	backRenderTarget.resize(width, height);
-        	pickBuffer.resize(width, height);
-        }
-        window.addEventListener('resize', onWindowResize, false);
+			octahedron.set(pixels[0], pixels[1]);
+			octahedronToUnitVector(octahedron, normal);
+
+			// Show pick result
+
+			normalHelper.position.set(0, 0, 0);
+			normalHelper.lookAt(normal, new t3d.Vector3(0, 1, 0));
+			normalHelper.position.copy(position);
+
+			if (!pickBuffer.getMeshByPickId(pixels[3])) {
+				return;
+			}
+		
+			selectMesh(pickBuffer.getMeshByPickId(pixels[3]));
+		}
+		document.addEventListener('mousemove', doPick, false);
+
+		// stats
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		// gui
+
+		const gui = new GUI();
+		gui.add(renderer, 'asyncReadPixel');
+
+		//
+
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
+
+			stats.begin();
+
+			controller.update();
+
+			timer.update(timestamp);
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
+			renderer.renderScene(scene, camera);
+
+			stats.end();
+		}
+
+		if (renderer.capabilities.version < 2) {
+			document.getElementById('notSupported').style.display = '';
+		} else {
+			requestAnimationFrame(loop);
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(60 / 180 * Math.PI, width / height, near, far);
+			backRenderTarget.resize(width, height);
+			pickBuffer.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
-
 </html>

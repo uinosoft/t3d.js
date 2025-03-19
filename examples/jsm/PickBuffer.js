@@ -161,35 +161,21 @@ const pickShader = {
 		#include <normal_pars_frag>
 		#include <logdepthbuf_pars_frag>
 
-		uniform highp float u_pickId;
+		uniform float u_pickId;
+
 		varying float viewZ;
 
-		float atan2(float y, float x) {
-			if (x > 0.0) {
-			  return atan(y / x);
-			} else if (x < 0.0) {
-			  if (y >= 0.0) {
-				return atan(y / x) + 3.141592653589793;
-			  } else {
-				return atan(y / x) - 3.141592653589793;
-			  }
-			} else {
-			  if (y > 0.0) {
-				return 1.5707963267948966;
-			  } else if (y < 0.0) {
-				return -1.5707963267948966;
-			  } else {
-				return 0.0;
-			  }
-			}
+		vec2 unitVectorToOctahedron(vec3 v) {
+			vec2 up = v.xz / dot(vec3(1.0), abs(v));
+			vec2 down = (1.0 - abs(up.yx)) * sign(up.xy);
+			return mix(up, down, step(0.0, -v.y));
 		}
-	
+
         void main() {
      		#include <logdepthbuf_frag>
             vec3 normal = normalize(v_Normal);
-			vec2 polar = vec2(acos(min(1., max(-1., normal.y))), atan2(normal.x, normal.z));
 			vec4 pickInformation;
-            pickInformation.xy = polar;
+            pickInformation.xy = unitVectorToOctahedron(normal);
             pickInformation.z = viewZ;
 			pickInformation.w = round(u_pickId);
             gl_FragColor = pickInformation;
