@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - graph</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - sprites
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+>
+    <script src='./ngraph.forcelayout.min.js'></script>
+    <script src='./ngraph.generators.min.js'></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { Clock } from 't3d/addons/Clock.js';
+
+        import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+        import ForceGraphEffect from 't3d/addons/ForceGraphEffect.js';
+        import { TexturePoints } from 't3d/addons/objects/TexturePoints.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const N = 10000;
+
+        const nodes = [...Array(N).keys()].map(id => ({
+        	id
+        }));
+        const links = [...Array(N).keys()]
+        	.filter(id => id)
+        	.map(id => ({
+        		source: id,
+        		target: Math.round(Math.random() * (id - 1))
+        	}));
+
+        const graph = new ForceGraphEffect({ nodes, links });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+
+        const scene = new t3d.Scene();
+        const parms = {
+        	nodesCount: N,
+        	nodesWidth: indexTextureSize(N),
+        	texture: graph.getPointsTexture()
+        };
+        const Points = new TexturePoints(parms);
+        scene.add(Points);
+
+        const camera = new t3d.Camera();
+        camera.position.set(0, 0, 10000);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 200000);
+        scene.add(camera);
+        const controller = new OrbitControls(camera, canvas);
+        const clock = new Clock();
+
+        function loop(timestamp) {
+        	requestAnimationFrame(loop);
+        	controller.update();
+        	const deltaTime = clock.getDelta();
+
+        	graph.update(forwardRenderer, deltaTime);
+        	forwardRenderer.render(scene, camera);
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 2000);
+
+        	forwardRenderer.backRenderTarget.resize(width, height);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+        function indexTextureSize(num) {
+	let power = 1;
+	while (power * power < num) {
+		power *= 2;
+	}
+	return power / 2 > 1 ? power : 2;
+}
+
+    </script>
+</body>
+
+</html>
