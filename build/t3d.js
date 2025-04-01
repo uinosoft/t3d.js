@@ -17512,6 +17512,7 @@
 			bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
 			bufferProperties.version = buffer.version;
 			bufferProperties.__external = false;
+			buffer.updateRange.count = -1; // reset range
 		}
 		_updateGLBuffer(glBuffer, buffer, bufferType) {
 			const gl = this._gl;
