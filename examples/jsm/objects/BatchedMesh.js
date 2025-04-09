@@ -83,8 +83,8 @@ class BatchedMesh extends Mesh {
 
 		// init geometry
 		this.geometry.groups = [{
-			multiDrawStarts: new Uint32Array(maxInstanceCount),
-			multiDrawCounts: new Uint32Array(maxInstanceCount),
+			multiDrawStarts: new Int32Array(maxInstanceCount),
+			multiDrawCounts: new Int32Array(maxInstanceCount),
 			multiDrawCount: 0,
 			materialIndex: 0
 		}];
@@ -631,8 +631,8 @@ class BatchedMesh extends Mesh {
 		}
 
 		// copy the multi draw counts
-		const multiDrawCounts = new Uint32Array(maxInstanceCount);
-		const multiDrawStarts = new Uint32Array(maxInstanceCount);
+		const multiDrawCounts = new Int32Array(maxInstanceCount);
+		const multiDrawStarts = new Int32Array(maxInstanceCount);
 		const geometryGroup = this.geometry.groups[0];
 		copyArrayContents(geometryGroup.multiDrawCounts, multiDrawCounts);
 		copyArrayContents(geometryGroup.multiDrawStarts, multiDrawStarts);
