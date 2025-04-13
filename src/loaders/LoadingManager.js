@@ -1,15 +1,27 @@
 /**
- * Handles and keeps track of loaded and pending data. A default global instance of this class is created and used by loaders if not supplied manually - see {@link DefaultLoadingManager}.
- * In general that should be sufficient, however there are times when it can be useful to have seperate loaders - for example if you want to show seperate loading bars for objects and textures.
- * In addition to observing progress, a LoadingManager can be used to override resource URLs during loading. This may be helpful for assets coming from drag-and-drop events, WebSockets, WebRTC, or other APIs.
+ * Handles and keeps track of loaded and pending data. A default global
+ * instance of this class is created and used by loaders if not supplied
+ * manually.
+ * In general that should be sufficient, however there are times when it can
+ * be useful to have separate loaders - for example if you want to show
+ * separate loading bars for objects and textures.
+ * ```js
+ * const manager = new LoadingManager(
+ *   () => console.log('All items loaded!'),
+ *   (url, itemsLoaded, itemsTotal) => {
+ *     console.log(`Loaded ${itemsLoaded} of ${itemsTotal} items`);
+ *   },
+ *   url => console.error(`Error loading ${url}`)
+ * );
+ * ```
  */
 class LoadingManager {
 
 	/**
-	 * Creates a new LoadingManager.
-	 * @param {Function} [onLoad] — this function will be called when all loaders are done.
-	 * @param {Function} [onProgress] — this function will be called when an item is complete.
-	 * @param {Function} [onError] — this function will be called a loader encounters errors.
+	 * Constructs a new loading manager.
+	 * @param {Function} [onLoad] - Executes when all items have been loaded.
+	 * @param {Function} [onProgress] - Executes when single items have been loaded.
+	 * @param {Function} [onError] - Executes when an error occurs.
 	 */
 	constructor(onLoad, onProgress, onError) {
 		this.isLoading = false;
@@ -18,24 +30,38 @@ class LoadingManager {
 		this.urlModifier = undefined;
 
 		/**
-		 * This function will be called when loading starts.
-		 * The arguments are:
-		 * url — The url of the item just loaded.
-		 * itemsLoaded — the number of items already loaded so far.
-		 * itemsTotal — the total amount of items to be loaded.
-		 * @type {Function}
+		 * Executes when an item starts loading.
+		 * @type {Function|undefined}
 		 * @default undefined
 		 */
 		this.onStart = undefined;
 
+		/**
+		 * Executes when all items have been loaded.
+		 * @type {Function|undefined}
+		 * @default undefined
+		 */
 		this.onLoad = onLoad;
+
+		/**
+		 * Executes when single items have been loaded.
+		 * @type {Function|undefined}
+		 * @default undefined
+		 */
 		this.onProgress = onProgress;
+
+		/**
+		 * Executes when an error occurs.
+		 * @type {Function|undefined}
+		 * @default undefined
+		 */
 		this.onError = onError;
 	}
 
 	/**
-	 * This should be called by any loader using the manager when the loader starts loading an url.
-	 * @param {string} url - the url to load.
+	 * This should be called by any loader using the manager when the loader
+	 * starts loading an item.
+	 * @param {string} url - The URL to load.
 	 */
 	itemStart(url) {
 		this.itemsTotal++;
@@ -50,8 +76,9 @@ class LoadingManager {
 	}
 
 	/**
-	 * This should be called by any loader using the manager when the loader ended loading an url.
-	 * @param {string} url - the loaded url.
+	 * This should be called by any loader using the manager when the loader
+	 * ended loading an item.
+	 * @param {string} url - The URL of the loaded item.
 	 */
 	itemEnd(url) {
 		this.itemsLoaded++;
@@ -70,8 +97,9 @@ class LoadingManager {
 	}
 
 	/**
-	 * This should be called by any loader using the manager when the loader errors loading an url.
-	 * @param {string} url - the loaded url.
+	 * This should be called by any loader using the manager when the loader
+	 * encounters an error when loading an item.
+	 * @param {string} url - The URL of the item that produces an error.
 	 */
 	itemError(url) {
 		if (this.onError !== undefined) {
@@ -80,10 +108,10 @@ class LoadingManager {
 	}
 
 	/**
-	 * Given a URL, uses the URL modifier callback (if any) and returns a resolved URL.
-	 * If no URL modifier is set, returns the original URL.
-	 * @param {string} url - the url to load.
-	 * @returns {string} the resolved URL.
+	 * Given a URL, uses the URL modifier callback (if any) and returns a
+	 * resolved URL. If no URL modifier is set, returns the original URL.
+	 * @param {string} url - The URL to load.
+	 * @returns {string} The resolved URL.
 	 */
 	resolveURL(url) {
 		if (this.urlModifier) {
@@ -94,22 +122,42 @@ class LoadingManager {
 	}
 
 	/**
-	 * If provided, the callback will be passed each resource URL before a request is sent.
-	 * The callback may return the original URL, or a new URL to override loading behavior.
-	 * This behavior can be used to load assets from .ZIP files, drag-and-drop APIs, and Data URIs.
-	 * @param {Function} callback - URL modifier callback. Called with url argument, and must return resolvedURL.
-	 * @returns {LoadingManager} this instance
+	 * If provided, the callback will be passed each resource URL before a
+	 * request is sent. The callback may return the original URL, or a new URL to
+	 * override loading behavior. This behavior can be used to load assets from
+	 * .ZIP files, drag-and-drop APIs, and Data URIs.
+	 * @param {Function} transform - URL modifier callback. Called with an URL and must return a resolved URL.
+	 * @returns {LoadingManager} A reference to this loading manager.
+	 * @example
+	 * const blobs = { 'fish.gltf': blob1, 'diffuse.png': blob2, 'normal.png': blob3 };
+	 *
+	 * const manager = new LoadingManager();
+	 *
+	 * // Initialize loading manager with URL callback.
+	 * const objectURLs = [];
+	 * manager.setURLModifier(url => {
+	 * 	 url = URL.createObjectURL(blobs[url]);
+	 * 	 objectURLs.push(url);
+	 * 	 return url;
+	 * });
+	 *
+	 * // Load as usual, then revoke the blob URLs.
+	 * const loader = new GLTFLoader(manager);
+	 * loader.load('fish.gltf', gltf => {
+	 * 	 scene.add(gltf.scene);
+	 * 	 objectURLs.forEach(url => URL.revokeObjectURL(url));
+	 * });
 	 */
-	setURLModifier(callback) {
-		this.urlModifier = callback;
+	setURLModifier(transform) {
+		this.urlModifier = transform;
 		return this;
 	}
 
 }
 
 /**
- * A global instance of the {@link LoadingManager}, used by most loaders when no custom manager has been specified.
- * This will be sufficient for most purposes, however there may be times when you desire separate loading managers for say, textures and models.
+ * The global default loading manager.
+ * @type {LoadingManager}
  */
 const DefaultLoadingManager = new LoadingManager();
 

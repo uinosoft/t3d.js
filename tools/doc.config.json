@@ -2,6 +2,7 @@
     "source": {
         "include": ["./src"]
     },
+    "plugins": ["plugins/markdown"],
     "templates": {
         "default": {
             "outputSourceFiles": false

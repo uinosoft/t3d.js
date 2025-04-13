@@ -1,24 +1,26 @@
 import { DefaultLoadingManager } from './LoadingManager.js';
 
 /**
- * Base class for implementing loaders.
+ * Abstract base class for loaders.
+ * @abstract
  */
 class Loader {
 
 	/**
-	 * Creates a new Loader.
-	 * @param {LoadingManager} [manager=DefaultLoadingManager] - The loadingManager the loader is using.
+	 * Constructs a new Loader.
+	 * @param {LoadingManager} [manager=DefaultLoadingManager] - The loading manager.
 	 */
 	constructor(manager) {
 		/**
-		 * The loadingManager the loader is using.
+		 * The loading manager.
 		 * @type {LoadingManager}
 		 * @default DefaultLoadingManager
 		 */
 		this.manager = (manager !== undefined) ? manager : DefaultLoadingManager;
 
 		/**
-		 * The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
+		 * The crossOrigin string to implement CORS for loading the url from a
+		 * different domain that allows CORS.
 		 * @type {string}
 		 * @default 'anonymous'
 		 */
@@ -39,7 +41,8 @@ class Loader {
 		this.path = '';
 
 		/**
-		 * The request header used in HTTP request.
+		 * The [request header]{@link https://developer.mozilla.org/en-US/docs/Glossary/Request_header}
+		 * used in HTTP request.
 		 * @type {object}
 		 * @default {}
 		 */
@@ -49,17 +52,18 @@ class Loader {
 	/**
 	 * This method needs to be implement by all concrete loaders.
 	 * It holds the logic for loading the asset from the backend.
+	 * @param {string} url - The path/URL of the file to be loaded.
+	 * @param {Function} onLoad - Executed when the loading process has been finished.
+	 * @param {onProgressCallback} [onProgress] - Executed while the loading is in progress.
+	 * @param {onErrorCallback} [onError] - Executed when errors occur.
 	 */
-	load(/* url, onLoad, onProgress, onError */) {}
+	load(url, onLoad, onProgress, onError) {}
 
 	/**
-	 * This method is equivalent to .load, but returns a Promise.
-	 * onLoad is handled by Promise.resolve and onError is handled by Promise.reject.
-	 * @param {string} url - A string containing the path/URL of the file to be loaded.
-	 * @param {Function} [onProgress] - A function to be called while the loading is in progress.
-	 * The argument will be the ProgressEvent instance, which contains .lengthComputable, .total and .loaded.
-	 * If the server does not set the Content-Length header; .total will be 0.
-	 * @returns {Promise}
+	 * A async version of {@link Loader#load}.
+	 * @param {string} url - The path/URL of the file to be loaded.
+	 * @param {Function} [onProgress] - Executed while the loading is in progress.
+	 * @returns {Promise} A Promise that resolves when the asset has been loaded.
 	 */
 	loadAsync(url, onProgress) {
 		const scope = this;
@@ -69,8 +73,10 @@ class Loader {
 	}
 
 	/**
-	 * @param {string} crossOrigin - The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
-	 * @returns {this}
+	 * Sets the `crossOrigin` String to implement CORS for loading the URL
+	 * from a different domain that allows CORS.
+	 * @param {string} crossOrigin - The `crossOrigin` value.
+	 * @returns {Loader} A reference to this instance.
 	 */
 	setCrossOrigin(crossOrigin) {
 		this.crossOrigin = crossOrigin;
@@ -78,9 +84,11 @@ class Loader {
 	}
 
 	/**
-	 * @param {boolean} value - Whether the XMLHttpRequest uses credentials such as cookies, authorization headers or TLS client certificates.
-	 * Note that this has no effect if you are loading files locally or from the same domain.
-	 * @returns {this}
+	 * Whether the XMLHttpRequest uses credentials such as cookies, authorization
+	 * headers or TLS client certificates, see [XMLHttpRequest.withCredentials]{@link https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials}.
+	 * Note: This setting has no effect if you are loading files locally or from the same domain.
+	 * @param {boolean} value - The `withCredentials` value.
+	 * @returns {Loader} A reference to this instance.
 	 */
 	setWithCredentials(value) {
 		this.withCredentials = value;
@@ -88,8 +96,9 @@ class Loader {
 	}
 
 	/**
-	 * @param {string} path - Set the base path for the asset.
-	 * @returns {this}
+	 * Sets the base path for the asset.
+	 * @param {string} path - The base path.
+	 * @returns {Loader} A reference to this instance.
 	 */
 	setPath(path) {
 		this.path = path;
@@ -97,8 +106,10 @@ class Loader {
 	}
 
 	/**
-	 * @param {object} requestHeader - key: The name of the header whose value is to be set. value: The value to set as the body of the header.
-	 * @returns {this}
+	 * Sets the given request header.
+	 * @param {object} requestHeader - A [request header]{@link https://developer.mozilla.org/en-US/docs/Glossary/Request_header}
+	 * for configuring the HTTP request.
+	 * @returns {Loader} A reference to this instance.
 	 */
 	setRequestHeader(requestHeader) {
 		this.requestHeader = requestHeader;
@@ -106,5 +117,17 @@ class Loader {
 	}
 
 }
+
+/**
+ * Callback for onProgress in loaders.
+ * @callback onProgressCallback
+ * @param {ProgressEvent} event - An instance of `ProgressEvent` that represents the current loading status.
+ */
+
+/**
+ * Callback for onError in loaders.
+ * @callback onErrorCallback
+ * @param {Error} error - The error which occurred during the loading process.
+ */
 
 export { Loader };

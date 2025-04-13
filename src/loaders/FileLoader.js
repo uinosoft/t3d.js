@@ -1,36 +1,45 @@
 import { Loader } from './Loader.js';
 
 /**
- * A low level class for loading resources with Fetch, used internaly by most loaders.
- * It can also be used directly to load any file type that does not have a loader.
+ * A low level class for loading resources with the Fetch API, used internally by
+ * most loaders. It can also be used directly to load any file type that does
+ * not have a loader.
+ * ```js
+ * const loader = new FileLoader();
+ * const data = await loader.loadAsync('example.txt');
+ * ```
  * @extends Loader
  */
 class FileLoader extends Loader {
 
+	/**
+	 * Constructs a new file loader.
+	 * @param {LoadingManager} [manager] - The loading manager.
+	 */
 	constructor(manager) {
 		super(manager);
 
 		/**
 		 * The expected response type. See {@link FileLoader.setResponseType}.
-		 * @type {string}
-		 * @default undefined
+		 * @type {'arraybuffer'|'blob'|'document'|'json'|''}
+		 * @default ''
 		 */
-		this.responseType = undefined;
+		this.responseType = '';
 
 		/**
 		 * The expected mimeType. See {@link FileLoader.setMimeType}.
 		 * @type {string}
-		 * @default undefined
+		 * @default ''
 		 */
-		this.mimeType = undefined;
+		this.mimeType = '';
 	}
 
 	/**
-	 * Load the URL and pass the response to the onLoad function.
-	 * @param {string} url — the path or URL to the file. This can also be a Data URI.
-	 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
-	 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-	 * @param {Function} [onError] — Will be called if an error occurs.
+	 * Starts loading from the given URL and pass the loaded response to the `onLoad()` callback.
+	 * @param {string} url — The path/URL of the file to be loaded. This can also be a data URI.
+	 * @param {Function} [onLoad] — Executed when the loading process has been finished. The argument is the loaded data.
+	 * @param {onProgressCallback} [onProgress] — Executed while the loading is in progress.
+	 * @param {onErrorCallback} [onError] — Executed when errors occur.
 	 */
 	load(url, onLoad, onProgress, onError) {
 		if (url === undefined) url = '';
@@ -67,7 +76,10 @@ class FileLoader extends Loader {
 					}
 
 					const reader = response.body.getReader();
-					const contentLength = response.headers.get('Content-Length');
+
+					// Nginx needs X-File-Size check
+					// https://serverfault.com/questions/482875/why-does-nginx-remove-content-length-header-for-chunked-content
+					const contentLength = response.headers.get('X-File-Size') || response.headers.get('Content-Length');
 					const total = contentLength ? parseInt(contentLength) : 0;
 					const lengthComputable = total !== 0;
 					let loaded = 0;
@@ -84,13 +96,14 @@ class FileLoader extends Loader {
 									} else {
 										loaded += value.byteLength;
 
-										if (onProgress !== undefined) {
-											onProgress(new ProgressEvent('progress', { lengthComputable, loaded, total }));
-										}
+										const event = new ProgressEvent('progress', { lengthComputable, loaded, total });
+										if (onProgress) onProgress(event);
 
 										controller.enqueue(value);
 										readData();
 									}
+								}, error => {
+									controller.error(error);
 								});
 							}
 						}
@@ -117,7 +130,7 @@ class FileLoader extends Loader {
 					case 'json':
 						return response.json();
 					default:
-						if (mimeType === undefined) {
+						if (mimeType === '') {
 							return response.text();
 						} else {
 							// sniff encoding
@@ -145,14 +158,9 @@ class FileLoader extends Loader {
 	}
 
 	/**
-	 * Change the response type. Valid values are:
-	 * text or empty string (default) - returns the data as string.
-	 * arraybuffer - loads the data into a ArrayBuffer and returns that.
-	 * blob - returns the data as a Blob.
-	 * document - parses the file using the DOMParser.
-	 * json - parses the file using JSON.parse.
-	 * @param {string} value
-	 * @returns {FileLoader}
+	 * Sets the expected response type.
+	 * @param {'arraybuffer'|'blob'|'document'|'json'|''} value - The response type.
+	 * @returns {FileLoader} A reference to this file loader.
 	 */
 	setResponseType(value) {
 		this.responseType = value;
@@ -160,10 +168,9 @@ class FileLoader extends Loader {
 	}
 
 	/**
-	 * Set the expected mimeType of the file being loaded.
-	 * Note that in many cases this will be determined automatically, so by default it is undefined.
-	 * @param {string} value
-	 * @returns {FileLoader}
+	 * Sets the expected mime type of the loaded file.
+	 * @param {string} value - The mime type.
+	 * @returns {FileLoader} A reference to this file loader.
 	 */
 	setMimeType(value) {
 		this.mimeType = value;
