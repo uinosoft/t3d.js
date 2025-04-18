@@ -1,14 +1,14 @@
-/* eslint-disable no-undef */
+import { EventDispatcher } from 't3d';
 
 QUnit.module('EventDispatcher');
 
 QUnit.test('Instancing', assert => {
-	const object = new t3d.EventDispatcher();
+	const object = new EventDispatcher();
 	assert.ok(object, 'Can instantiate an EventDispatcher.');
 });
 
 QUnit.test('addEventListener', assert => {
-	const eventDispatcher = new t3d.EventDispatcher();
+	const eventDispatcher = new EventDispatcher();
 
 	const listener = {};
 	eventDispatcher.addEventListener('anyType', listener);
@@ -23,7 +23,7 @@ QUnit.test('addEventListener', assert => {
 });
 
 QUnit.test('removeEventListener', assert => {
-	const eventDispatcher = new t3d.EventDispatcher();
+	const eventDispatcher = new EventDispatcher();
 
 	const listener = {};
 
@@ -44,7 +44,7 @@ QUnit.test('removeEventListener', assert => {
 });
 
 QUnit.test('dispatchEvent', assert => {
-	const eventDispatcher = new t3d.EventDispatcher();
+	const eventDispatcher = new EventDispatcher();
 
 	let callCount = 0;
 	const listener = function() {

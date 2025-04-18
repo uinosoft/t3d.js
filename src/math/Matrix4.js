@@ -135,6 +135,22 @@ class Matrix4 {
 	}
 
 	/**
+	 * Sets this matrix as a scaling transform.
+	 * @param {number} x - The amount to scale in the X axis.
+	 * @param {number} y - The amount to scale in the Y axis.
+	 * @param {number} z - The amount to scale in the Z axis.
+	 * @returns {Matrix4}
+	 */
+	makeScale(x, y, z) {
+		return this.set(
+			x, 0, 0, 0,
+			0, y, 0, 0,
+			0, 0, z, 0,
+			0, 0, 0, 1
+		);
+	}
+
+	/**
 	 * Post-multiplies this matrix by m.
 	 * @param {Matrix4} m
 	 * @returns {Matrix4}

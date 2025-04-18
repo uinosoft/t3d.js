@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+import { Matrix3 } from 't3d';
 
 QUnit.module('Matrix3');
 
@@ -19,7 +19,7 @@ function matrixEquals3(a, b, tolerance) {
 }
 
 QUnit.test('clone', assert => {
-	const a = new t3d.Matrix3().set(0, 1, 2, 3, 4, 5, 6, 7, 8);
+	const a = new Matrix3().set(0, 1, 2, 3, 4, 5, 6, 7, 8);
 	const b = a.clone();
 
 	assert.ok(matrixEquals3(a, b), 'Passed!');

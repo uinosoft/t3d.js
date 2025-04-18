@@ -953,6 +953,17 @@
 		}
 
 		/**
+		 * Sets this matrix as a scaling transform.
+		 * @param {number} x - The amount to scale in the X axis.
+		 * @param {number} y - The amount to scale in the Y axis.
+		 * @param {number} z - The amount to scale in the Z axis.
+		 * @returns {Matrix4}
+		 */
+		makeScale(x, y, z) {
+			return this.set(x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1);
+		}
+
+		/**
 		 * Post-multiplies this matrix by m.
 		 * @param {Matrix4} m
 		 * @returns {Matrix4}
@@ -3407,16 +3418,28 @@
 	}
 
 	/**
-	 * Handles and keeps track of loaded and pending data. A default global instance of this class is created and used by loaders if not supplied manually - see {@link DefaultLoadingManager}.
-	 * In general that should be sufficient, however there are times when it can be useful to have seperate loaders - for example if you want to show seperate loading bars for objects and textures.
-	 * In addition to observing progress, a LoadingManager can be used to override resource URLs during loading. This may be helpful for assets coming from drag-and-drop events, WebSockets, WebRTC, or other APIs.
+	 * Handles and keeps track of loaded and pending data. A default global
+	 * instance of this class is created and used by loaders if not supplied
+	 * manually.
+	 * In general that should be sufficient, however there are times when it can
+	 * be useful to have separate loaders - for example if you want to show
+	 * separate loading bars for objects and textures.
+	 * ```js
+	 * const manager = new LoadingManager(
+	 *	 () => console.log('All items loaded!'),
+	 *	 (url, itemsLoaded, itemsTotal) => {
+	 *		 console.log(`Loaded ${itemsLoaded} of ${itemsTotal} items`);
+	 *	 },
+	 *	 url => console.error(`Error loading ${url}`)
+	 * );
+	 * ```
 	 */
 	class LoadingManager {
 		/**
-		 * Creates a new LoadingManager.
-		 * @param {Function} [onLoad] — this function will be called when all loaders are done.
-		 * @param {Function} [onProgress] — this function will be called when an item is complete.
-		 * @param {Function} [onError] — this function will be called a loader encounters errors.
+		 * Constructs a new loading manager.
+		 * @param {Function} [onLoad] - Executes when all items have been loaded.
+		 * @param {Function} [onProgress] - Executes when single items have been loaded.
+		 * @param {Function} [onError] - Executes when an error occurs.
 		 */
 		constructor(onLoad, onProgress, onError) {
 			this.isLoading = false;
@@ -3425,23 +3448,38 @@
 			this.urlModifier = undefined;
 
 			/**
-			 * This function will be called when loading starts.
-			 * The arguments are:
-			 * url — The url of the item just loaded.
-			 * itemsLoaded — the number of items already loaded so far.
-			 * itemsTotal — the total amount of items to be loaded.
-			 * @type {Function}
+			 * Executes when an item starts loading.
+			 * @type {Function|undefined}
 			 * @default undefined
 			 */
 			this.onStart = undefined;
+
+			/**
+			 * Executes when all items have been loaded.
+			 * @type {Function|undefined}
+			 * @default undefined
+			 */
 			this.onLoad = onLoad;
+
+			/**
+			 * Executes when single items have been loaded.
+			 * @type {Function|undefined}
+			 * @default undefined
+			 */
 			this.onProgress = onProgress;
+
+			/**
+			 * Executes when an error occurs.
+			 * @type {Function|undefined}
+			 * @default undefined
+			 */
 			this.onError = onError;
 		}
 
 		/**
-		 * This should be called by any loader using the manager when the loader starts loading an url.
-		 * @param {string} url - the url to load.
+		 * This should be called by any loader using the manager when the loader
+		 * starts loading an item.
+		 * @param {string} url - The URL to load.
 		 */
 		itemStart(url) {
 			this.itemsTotal++;
@@ -3454,8 +3492,9 @@
 		}
 
 		/**
-		 * This should be called by any loader using the manager when the loader ended loading an url.
-		 * @param {string} url - the loaded url.
+		 * This should be called by any loader using the manager when the loader
+		 * ended loading an item.
+		 * @param {string} url - The URL of the loaded item.
 		 */
 		itemEnd(url) {
 			this.itemsLoaded++;
@@ -3471,8 +3510,9 @@
 		}
 
 		/**
-		 * This should be called by any loader using the manager when the loader errors loading an url.
-		 * @param {string} url - the loaded url.
+		 * This should be called by any loader using the manager when the loader
+		 * encounters an error when loading an item.
+		 * @param {string} url - The URL of the item that produces an error.
 		 */
 		itemError(url) {
 			if (this.onError !== undefined) {
@@ -3481,10 +3521,10 @@
 		}
 
 		/**
-		 * Given a URL, uses the URL modifier callback (if any) and returns a resolved URL.
-		 * If no URL modifier is set, returns the original URL.
-		 * @param {string} url - the url to load.
-		 * @returns {string} the resolved URL.
+		 * Given a URL, uses the URL modifier callback (if any) and returns a
+		 * resolved URL. If no URL modifier is set, returns the original URL.
+		 * @param {string} url - The URL to load.
+		 * @returns {string} The resolved URL.
 		 */
 		resolveURL(url) {
 			if (this.urlModifier) {
@@ -3494,42 +3534,64 @@
 		}
 
 		/**
-		 * If provided, the callback will be passed each resource URL before a request is sent.
-		 * The callback may return the original URL, or a new URL to override loading behavior.
-		 * This behavior can be used to load assets from .ZIP files, drag-and-drop APIs, and Data URIs.
-		 * @param {Function} callback - URL modifier callback. Called with url argument, and must return resolvedURL.
-		 * @returns {LoadingManager} this instance
+		 * If provided, the callback will be passed each resource URL before a
+		 * request is sent. The callback may return the original URL, or a new URL to
+		 * override loading behavior. This behavior can be used to load assets from
+		 * .ZIP files, drag-and-drop APIs, and Data URIs.
+		 * @param {Function} transform - URL modifier callback. Called with an URL and must return a resolved URL.
+		 * @returns {LoadingManager} A reference to this loading manager.
+		 * @example
+		 * const blobs = { 'fish.gltf': blob1, 'diffuse.png': blob2, 'normal.png': blob3 };
+		 *
+		 * const manager = new LoadingManager();
+		 *
+		 * // Initialize loading manager with URL callback.
+		 * const objectURLs = [];
+		 * manager.setURLModifier(url => {
+		 * 	 url = URL.createObjectURL(blobs[url]);
+		 * 	 objectURLs.push(url);
+		 * 	 return url;
+		 * });
+		 *
+		 * // Load as usual, then revoke the blob URLs.
+		 * const loader = new GLTFLoader(manager);
+		 * loader.load('fish.gltf', gltf => {
+		 * 	 scene.add(gltf.scene);
+		 * 	 objectURLs.forEach(url => URL.revokeObjectURL(url));
+		 * });
 		 */
-		setURLModifier(callback) {
-			this.urlModifier = callback;
+		setURLModifier(transform) {
+			this.urlModifier = transform;
 			return this;
 		}
 	}
 
 	/**
-	 * A global instance of the {@link LoadingManager}, used by most loaders when no custom manager has been specified.
-	 * This will be sufficient for most purposes, however there may be times when you desire separate loading managers for say, textures and models.
+	 * The global default loading manager.
+	 * @type {LoadingManager}
 	 */
 	const DefaultLoadingManager = new LoadingManager();
 
 	/**
-	 * Base class for implementing loaders.
+	 * Abstract base class for loaders.
+	 * @abstract
 	 */
 	class Loader {
 		/**
-		 * Creates a new Loader.
-		 * @param {LoadingManager} [manager=DefaultLoadingManager] - The loadingManager the loader is using.
+		 * Constructs a new Loader.
+		 * @param {LoadingManager} [manager=DefaultLoadingManager] - The loading manager.
 		 */
 		constructor(manager) {
 			/**
-			 * The loadingManager the loader is using.
+			 * The loading manager.
 			 * @type {LoadingManager}
 			 * @default DefaultLoadingManager
 			 */
 			this.manager = manager !== undefined ? manager : DefaultLoadingManager;
 
 			/**
-			 * The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
+			 * The crossOrigin string to implement CORS for loading the url from a
+			 * different domain that allows CORS.
 			 * @type {string}
 			 * @default 'anonymous'
 			 */
@@ -3550,7 +3612,8 @@
 			this.path = '';
 
 			/**
-			 * The request header used in HTTP request.
+			 * The [request header]{@link https://developer.mozilla.org/en-US/docs/Glossary/Request_header}
+			 * used in HTTP request.
 			 * @type {object}
 			 * @default {}
 			 */
@@ -3560,17 +3623,18 @@
 		/**
 		 * This method needs to be implement by all concrete loaders.
 		 * It holds the logic for loading the asset from the backend.
+		 * @param {string} url - The path/URL of the file to be loaded.
+		 * @param {Function} onLoad - Executed when the loading process has been finished.
+		 * @param {onProgressCallback} [onProgress] - Executed while the loading is in progress.
+		 * @param {onErrorCallback} [onError] - Executed when errors occur.
 		 */
-		load(/* url, onLoad, onProgress, onError */) {}
+		load(url, onLoad, onProgress, onError) {}
 
 		/**
-		 * This method is equivalent to .load, but returns a Promise.
-		 * onLoad is handled by Promise.resolve and onError is handled by Promise.reject.
-		 * @param {string} url - A string containing the path/URL of the file to be loaded.
-		 * @param {Function} [onProgress] - A function to be called while the loading is in progress.
-		 * The argument will be the ProgressEvent instance, which contains .lengthComputable, .total and .loaded.
-		 * If the server does not set the Content-Length header; .total will be 0.
-		 * @returns {Promise}
+		 * A async version of {@link Loader#load}.
+		 * @param {string} url - The path/URL of the file to be loaded.
+		 * @param {Function} [onProgress] - Executed while the loading is in progress.
+		 * @returns {Promise} A Promise that resolves when the asset has been loaded.
 		 */
 		loadAsync(url, onProgress) {
 			const scope = this;
@@ -3580,8 +3644,10 @@
 		}
 
 		/**
-		 * @param {string} crossOrigin - The crossOrigin string to implement CORS for loading the url from a different domain that allows CORS.
-		 * @returns {this}
+		 * Sets the `crossOrigin` String to implement CORS for loading the URL
+		 * from a different domain that allows CORS.
+		 * @param {string} crossOrigin - The `crossOrigin` value.
+		 * @returns {Loader} A reference to this instance.
 		 */
 		setCrossOrigin(crossOrigin) {
 			this.crossOrigin = crossOrigin;
@@ -3589,9 +3655,11 @@
 		}
 
 		/**
-		 * @param {boolean} value - Whether the XMLHttpRequest uses credentials such as cookies, authorization headers or TLS client certificates.
-		 * Note that this has no effect if you are loading files locally or from the same domain.
-		 * @returns {this}
+		 * Whether the XMLHttpRequest uses credentials such as cookies, authorization
+		 * headers or TLS client certificates, see [XMLHttpRequest.withCredentials]{@link https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/withCredentials}.
+		 * Note: This setting has no effect if you are loading files locally or from the same domain.
+		 * @param {boolean} value - The `withCredentials` value.
+		 * @returns {Loader} A reference to this instance.
 		 */
 		setWithCredentials(value) {
 			this.withCredentials = value;
@@ -3599,8 +3667,9 @@
 		}
 
 		/**
-		 * @param {string} path - Set the base path for the asset.
-		 * @returns {this}
+		 * Sets the base path for the asset.
+		 * @param {string} path - The base path.
+		 * @returns {Loader} A reference to this instance.
 		 */
 		setPath(path) {
 			this.path = path;
@@ -3608,8 +3677,10 @@
 		}
 
 		/**
-		 * @param {object} requestHeader - key: The name of the header whose value is to be set. value: The value to set as the body of the header.
-		 * @returns {this}
+		 * Sets the given request header.
+		 * @param {object} requestHeader - A [request header]{@link https://developer.mozilla.org/en-US/docs/Glossary/Request_header}
+		 * for configuring the HTTP request.
+		 * @returns {Loader} A reference to this instance.
 		 */
 		setRequestHeader(requestHeader) {
 			this.requestHeader = requestHeader;
@@ -3618,35 +3689,44 @@
 	}
 
 	/**
-	 * A low level class for loading resources with Fetch, used internaly by most loaders.
-	 * It can also be used directly to load any file type that does not have a loader.
+	 * A low level class for loading resources with the Fetch API, used internally by
+	 * most loaders. It can also be used directly to load any file type that does
+	 * not have a loader.
+	 * ```js
+	 * const loader = new FileLoader();
+	 * const data = await loader.loadAsync('example.txt');
+	 * ```
 	 * @extends Loader
 	 */
 	class FileLoader extends Loader {
+		/**
+		 * Constructs a new file loader.
+		 * @param {LoadingManager} [manager] - The loading manager.
+		 */
 		constructor(manager) {
 			super(manager);
 
 			/**
 			 * The expected response type. See {@link FileLoader.setResponseType}.
-			 * @type {string}
-			 * @default undefined
+			 * @type {'arraybuffer'|'blob'|'document'|'json'|''}
+			 * @default ''
 			 */
-			this.responseType = undefined;
+			this.responseType = '';
 
 			/**
 			 * The expected mimeType. See {@link FileLoader.setMimeType}.
 			 * @type {string}
-			 * @default undefined
+			 * @default ''
 			 */
-			this.mimeType = undefined;
+			this.mimeType = '';
 		}
 
 		/**
-		 * Load the URL and pass the response to the onLoad function.
-		 * @param {string} url — the path or URL to the file. This can also be a Data URI.
-		 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
-		 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-		 * @param {Function} [onError] — Will be called if an error occurs.
+		 * Starts loading from the given URL and pass the loaded response to the `onLoad()` callback.
+		 * @param {string} url — The path/URL of the file to be loaded. This can also be a data URI.
+		 * @param {Function} [onLoad] — Executed when the loading process has been finished. The argument is the loaded data.
+		 * @param {onProgressCallback} [onProgress] — Executed while the loading is in progress.
+		 * @param {onErrorCallback} [onError] — Executed when errors occur.
 		 */
 		load(url, onLoad, onProgress, onError) {
 			if (url === undefined) url = '';
@@ -3680,7 +3760,10 @@
 						return response;
 					}
 					const reader = response.body.getReader();
-					const contentLength = response.headers.get('Content-Length');
+
+					// Nginx needs X-File-Size check
+					// https://serverfault.com/questions/482875/why-does-nginx-remove-content-length-header-for-chunked-content
+					const contentLength = response.headers.get('X-File-Size') || response.headers.get('Content-Length');
 					const total = contentLength ? parseInt(contentLength) : 0;
 					const lengthComputable = total !== 0;
 					let loaded = 0;
@@ -3698,16 +3781,17 @@
 										controller.close();
 									} else {
 										loaded += value.byteLength;
-										if (onProgress !== undefined) {
-											onProgress(new ProgressEvent('progress', {
-												lengthComputable,
-												loaded,
-												total
-											}));
-										}
+										const event = new ProgressEvent('progress', {
+											lengthComputable,
+											loaded,
+											total
+										});
+										if (onProgress) onProgress(event);
 										controller.enqueue(value);
 										readData();
 									}
+								}, error => {
+									controller.error(error);
 								});
 							}
 						}
@@ -3730,7 +3814,7 @@
 					case 'json':
 						return response.json();
 					default:
-						if (mimeType === undefined) {
+						if (mimeType === '') {
 							return response.text();
 						} else {
 							// sniff encoding
@@ -3753,14 +3837,9 @@
 		}
 
 		/**
-		 * Change the response type. Valid values are:
-		 * text or empty string (default) - returns the data as string.
-		 * arraybuffer - loads the data into a ArrayBuffer and returns that.
-		 * blob - returns the data as a Blob.
-		 * document - parses the file using the DOMParser.
-		 * json - parses the file using JSON.parse.
-		 * @param {string} value
-		 * @returns {FileLoader}
+		 * Sets the expected response type.
+		 * @param {'arraybuffer'|'blob'|'document'|'json'|''} value - The response type.
+		 * @returns {FileLoader} A reference to this file loader.
 		 */
 		setResponseType(value) {
 			this.responseType = value;
@@ -3768,10 +3847,9 @@
 		}
 
 		/**
-		 * Set the expected mimeType of the file being loaded.
-		 * Note that in many cases this will be determined automatically, so by default it is undefined.
-		 * @param {string} value
-		 * @returns {FileLoader}
+		 * Sets the expected mime type of the loaded file.
+		 * @param {string} value - The mime type.
+		 * @returns {FileLoader} A reference to this file loader.
 		 */
 		setMimeType(value) {
 			this.mimeType = value;
@@ -3786,21 +3864,33 @@
 	}
 
 	/**
-	 * A loader for loading an Image.
+	 * A loader for loading images. The class loads images with the HTML `Image` API.
+	 * Please note that 'ImageLoader' not support progress events.
+	 * ```js
+	 * const loader = new ImageLoader();
+	 * const image = await loader.loadAsync('image.png');
+	 * ```
 	 * @extends Loader
 	 */
 	class ImageLoader extends Loader {
+		/**
+		 * Constructs a new image loader.
+		 * @param {LoadingManager} [manager] - The loading manager.
+		 */
 		constructor(manager) {
 			super(manager);
 		}
 
 		/**
-		 * Begin loading from url and return the image object that will contain the data.
-		 * @param {string} url — the path or URL to the file. This can also be a Data URI.
-		 * @param {Function} [onLoad] — Will be called when loading completes. The argument will be the loaded response.
-		 * @param {Function} [onProgress] — Will be called while load progresses. The argument will be the XMLHttpRequest instance, which contains .total and .loaded bytes.
-		 * @param {Function} [onError] — Will be called if an error occurs.
-		 * @returns {HTMLImageElement}
+		 * Starts loading from the given URL and passes the loaded image
+		 * to the `onLoad()` callback. The method also returns a new `Image` object which can
+		 * directly be used for texture creation. If you do it this way, the texture
+		 * may pop up in your scene once the respective loading process is finished.
+		 * @param {string} url - The path/URL of the file to be loaded. This can also be a data URI.
+		 * @param {Function} [onLoad] - Executed when the loading process has been finished. The argument is an `HTMLImageElement`.
+		 * @param {onProgressCallback} [onProgress] - Unsupported in this loader.
+		 * @param {onErrorCallback} [onError] - Executed when errors occur.
+		 * @returns {HTMLImageElement} The image.
 		 */
 		load(url, onLoad, onProgress, onError) {
 			if (url === undefined) url = '';

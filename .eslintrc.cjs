@@ -18,7 +18,8 @@ module.exports = {
 		'Nanobar': 'readonly',
 		'Ammo': 'readonly',
 		'CANNON': 'readonly',
-		'SimplexNoise': 'readonly'
+		'SimplexNoise': 'readonly',
+		'QUnit': 'readonly'
 	},
 	'extends': [
 		'eslint:recommended',
