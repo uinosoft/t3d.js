@@ -5,18 +5,15 @@
 	<title>t3d - ammo softbody volume</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
-	
 </head>
 <body>
-    <div id="info">
-        <a href="" target="_blank">t3d</a> - physics ammo softbody volume
-		<br/>
-        use <a href="https://github.com/kripken/ammo.js/" target="_blank">ammo.js</a>
+    <div id="info" class="dark">
+        <a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d.js</a> - Physics demo Soft Body with <a href="https://github.com/kripken/ammo.js/" target="_blank">ammo.js</a>
         <br/>
-        touch screen to throw a ball
+        Touch screen to throw a ball
     </div>
 
-	<script src="./libs/ammo.js"></script>
+	<script src="./libs/ammo.wasm.js"></script>
 
 	<!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
@@ -34,7 +31,6 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-		import { Clock } from 't3d/addons/Clock.js';
 		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
@@ -42,136 +38,206 @@
 
 		/* eslint-disable new-cap */
 
-		Ammo().then(Ammo => {
-			// - Global variables -
-
-			// Graphics variables
-			let canvas, stats;
-			let camera, controls, scene, forwardRenderer;
-			const clock = new Clock();
-			let clickRequest = false;
-			const mouseCoords = new t3d.Vector2();
-			const raycaster = new Raycaster();
-			const ballMaterial = new t3d.PhongMaterial();
-			ballMaterial.diffuse.setHex(0x202020);
-			const pos = new t3d.Vector3();
-			const quat = new t3d.Quaternion();
-			const textureLoader = new Texture2DLoader();
-		
-			// Physics variables
-			const gravityConstant = -9.8;
-			let physicsWorld;
-			const rigidBodies = [];
-			const softBodies = [];
-			const margin = 0.05;
-			const transformAux1 = new Ammo.btTransform();
-			const softBodyHelpers = new Ammo.btSoftBodyHelpers();
-
-			const geometryMap = new WeakMap();
-
+		Ammo().then(Ammo => { // eslint-disable-line no-undef
 			let width = window.innerWidth || 2;
 			let height = window.innerHeight || 2;
 
-			init();
-			animate();
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			document.body.appendChild(canvas);
 
-			function init() {
-				initGraphics();
+			const forwardRenderer = new ForwardRenderer(canvas);
+			forwardRenderer.setClearColor(0.75, 0.82, 0.9, 1);
 
-				initPhysics();
+			const scene = new t3d.Scene();
 
-				createObjects();
+			const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+			scene.add(ambientLight);
 
-				initInput();
+			const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
+			directionalLight.position.set(-10, 10, 5);
+			directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+			directionalLight.castShadow = true;
+			directionalLight.shadow.mapSize.set(1024, 1024);
+			directionalLight.shadow.windowSize = 40;
+			directionalLight.shadow.cameraNear = 2;
+			directionalLight.shadow.cameraFar = 50;
+			scene.add(directionalLight);
+		
+			const camera = new t3d.Camera();
+			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+			camera.position.set(-7, 5, 8);
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.2, 2000);
+			scene.add(camera);
+
+			const controls = new OrbitControls(camera, canvas);
+			controls.target.set(0, 2, 0);
+
+			// Init physics world
+
+			const collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
+			const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
+			const broadphase = new Ammo.btDbvtBroadphase();
+			const solver = new Ammo.btSequentialImpulseConstraintSolver();
+			const softBodySolver = new Ammo.btDefaultSoftBodySolver();
+			const physicsWorld = new Ammo.btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
+			physicsWorld.setGravity(new Ammo.btVector3(0, -9.8, 0));
+			physicsWorld.getWorldInfo().set_m_gravity(new Ammo.btVector3(0, -9.8, 0));
+
+			const margin = 0.05;
+		
+			const worldTransform = new Ammo.btTransform();
+			const softBodyHelpers = new Ammo.btSoftBodyHelpers();
+
+			const meshes = [];
+			const softMeshes = [];
+			const meshMap = new WeakMap();
+			const geometryMap = new WeakMap();
+
+			function createRigidBody(mesh, mass, shape) {
+				const position = mesh.position;
+				const quaternion = mesh.quaternion;
+
+				const transform = new Ammo.btTransform();
+				transform.setIdentity();
+				transform.setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
+				transform.setRotation(new Ammo.btQuaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w));
+		
+				const motionState = new Ammo.btDefaultMotionState(transform);
+
+				const localInertia = new Ammo.btVector3(0, 0, 0);
+				shape.calculateLocalInertia(mass, localInertia);
+
+				const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
+
+				const body = new Ammo.btRigidBody(rbInfo);
+				physicsWorld.addRigidBody(body);
+
+				if (mass > 0) {
+					meshes.push(mesh);
+					meshMap.set(mesh, body);
+					body.setActivationState(4); // disable deactivation
+				}
+
+				return body;
 			}
 
+			function createSoftBody(mesh, mass, pressure, ammoGeometry) {
+				const softBody = softBodyHelpers.CreateFromTriMesh(
+					physicsWorld.getWorldInfo(),
+					ammoGeometry.vertices,
+					ammoGeometry.indices,
+					ammoGeometry.indices.length / 3,
+					true
+				);
 
-			function initGraphics() {
-				canvas = document.createElement('canvas');
-				canvas.width = width;
-				canvas.height = height;
-				document.body.appendChild(canvas);
+				const sbConfig = softBody.get_m_cfg();
+				sbConfig.set_viterations(40);
+				sbConfig.set_piterations(40);
+				sbConfig.set_collisions(0x11); // Soft-soft and soft-rigid collisions
+				sbConfig.set_kDF(0.1); // Friction
+				sbConfig.set_kDP(0.01); // Damping
+				sbConfig.set_kPR(pressure); // Pressure
 
-				camera = new t3d.Camera();
-				camera.setPerspective(60 / 180 * Math.PI, width / height, 0.2, 2000);
+				// Stiffness
+				softBody.get_m_materials().at(0).set_m_kLST(0.9);
+				softBody.get_m_materials().at(0).set_m_kAST(0.9);
 
-				scene = new t3d.Scene();
+				softBody.setTotalMass(mass, false);
 
-				camera.position.set(-7, 5, 8);
-				scene.add(camera);
+				Ammo.castObject(softBody, Ammo.btCollisionObject).getCollisionShape().setMargin(margin);
+				physicsWorld.addSoftBody(softBody, 1, -1);
+		
+				softBody.setActivationState(4); // Disable deactivation
 
-				controls = new OrbitControls(camera, canvas);
-				controls.target.set(0, 2, 0);
-
-				forwardRenderer = new ForwardRenderer(canvas);
-				forwardRenderer.setClearColor(0.75, 0.82, 0.9, 1);
-
-				const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
-				scene.add(ambientLight);
-
-				const light = new t3d.DirectionalLight(0xffffff, 0.7);
-				light.position.set(-10, 10, 5);
-				light.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-				light.castShadow = true;
-				light.shadow.windowSize = 40;
-				light.shadow.cameraNear = 2;
-				light.shadow.cameraFar = 50;
-				light.shadow.mapSize.set(1024, 1024);
-
-				scene.add(light);
-
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
-				canvas.parentElement.appendChild(stats.domElement);
-
-
-				window.addEventListener('resize', onWindowResize, false);
+				softMeshes.push(mesh);
+				meshMap.set(mesh, softBody);
 			}
 
-			function initPhysics() {
-				// Physics configuration
+			function syncTransforms(deltaTime) {
+				for (let i = 0, il = softMeshes.length; i < il; i++) {
+					const mesh = softMeshes[i];
+					const geometry = mesh.geometry;
+					const softBody = meshMap.get(mesh);
+					const ammoGeometry = geometryMap.get(geometry);
+		
+					const changes = ammoGeometry.changes;
+					const nodes = softBody.get_m_nodes();
 
-				const collisionConfiguration = new Ammo.btSoftBodyRigidBodyCollisionConfiguration();
-				const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
-				const broadphase = new Ammo.btDbvtBroadphase();
-				const solver = new Ammo.btSequentialImpulseConstraintSolver();
-				const softBodySolver = new Ammo.btDefaultSoftBodySolver();
-				physicsWorld = new Ammo.btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration, softBodySolver);
-				physicsWorld.setGravity(new Ammo.btVector3(0, gravityConstant, 0));
-				physicsWorld.getWorldInfo().set_m_gravity(new Ammo.btVector3(0, gravityConstant, 0));
+					const positions = geometry.attributes.a_Position.buffer.array;
+					const normals = geometry.attributes.a_Normal.buffer.array;
+		
+					for (let j = 0, jl = changes.length; j < jl; j++) {
+						const node = nodes.at(changes[j]);
+						const nodePos = node.get_m_x();
+						const nodeNormal = node.get_m_n();
+
+						positions[j * 3] = nodePos.x();
+						positions[j * 3 + 1] = nodePos.y();
+						positions[j * 3 + 2] = nodePos.z();
+
+						normals[j * 3] = nodeNormal.x();
+						normals[j * 3 + 1] = nodeNormal.y();
+						normals[j * 3 + 2] = nodeNormal.z();
+					}
+
+					geometry.attributes.a_Position.buffer.version++;
+					geometry.attributes.a_Normal.buffer.version++;
+				}
+		
+				for (let i = 0, il = meshes.length; i < il; i++) {
+					const mesh = meshes[i];
+					const rigidBody = meshMap.get(mesh);
+					const ms = rigidBody.getMotionState();
+					if (ms) {
+						ms.getWorldTransform(worldTransform);
+						const p = worldTransform.getOrigin();
+						const q = worldTransform.getRotation();
+						mesh.position.set(p.x(), p.y(), p.z());
+						mesh.quaternion.set(q.x(), q.y(), q.z(), q.w());
+					}
+				}
 			}
 
-			function createObjects() {
-				// Ground
-				pos.set(0, -0.5, 0);
-				quat.set(0, 0, 0, 1);
-				const ground = createParalellepiped(40, 1, 40, 0, pos, quat, new t3d.PhongMaterial());
-				ground.castShadow = true;
-				ground.receiveShadow = true;
-				ground.material.diffuse.setRGB(1, 1, 1);
-				ground.material.diffuseMap = textureLoader.load('./resources/grid.png');
-				ground.material.diffuseMap.wrapS = ground.material.diffuseMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
-				ground.material.diffuseMapTransform.setUvTransform(0, 0, 40, 40, 0, 0.5, 0.5);
+			// Helper Variables and Functions to create scene objects
 
-				// Create soft volumes
-				const volumeMass = 15;
+			const textureLoader = new Texture2DLoader();
 
-				const sphereGeometry = new t3d.SphereGeometry(1.5, 40, 25);
-				// sphereGeometry.translate( 5, 5, 0 );
-				createSoftVolume(sphereGeometry, new t3d.Vector3(5, 5, 0), volumeMass, 250);
+			const pos = new t3d.Vector3();
+			const quat = new t3d.Quaternion();
 
-				const boxGeometry = new t3d.BoxGeometry(1, 1, 5, 4, 4, 20);
-				// boxGeometry.translate( - 2, 5, 0 );
-				createSoftVolume(boxGeometry, new t3d.Vector3(-2, 5, 0), volumeMass, 120);
+			function createParalellepiped(sx, sy, sz, mass, pos, quat, material) {
+				const mesh = new t3d.Mesh(new t3d.BoxGeometry(sx, sy, sz), new t3d.PhongMaterial());
+				mesh.position.copy(pos);
+				mesh.quaternion.copy(quat);
+				scene.add(mesh);
 
-				// Ramp
-				pos.set(3, 1, 0);
-				quat.setFromAxisAngle(new t3d.Vector3(0, 0, 1), 30 * Math.PI / 180);
-				const obstacle = createParalellepiped(10, 1, 4, 0, pos, quat, new t3d.PhongMaterial());
-				obstacle.material.diffuse.setHex(0x606060);
-				obstacle.castShadow = true;
-				obstacle.receiveShadow = true;
+				const shape = new Ammo.btBoxShape(new Ammo.btVector3(sx * 0.5, sy * 0.5, sz * 0.5));
+				shape.setMargin(margin);
+
+				createRigidBody(mesh, mass, shape);
+
+				return mesh;
+			}
+
+			function createSoftVolume(bufferGeom, pos, mass, pressure) {
+				const mesh = new t3d.Mesh(bufferGeom, new t3d.PhongMaterial());
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+				mesh.frustumCulled = false;
+				scene.add(mesh);
+
+				mesh.material.diffuse.setRGB(1, 1, 1);
+				mesh.material.diffuseMap = textureLoader.load('./resources/logo.jpg');
+				mesh.material.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		
+				const ammoGeom = processGeometry(mesh.geometry, pos);
+				geometryMap.set(mesh.geometry, ammoGeom);
+
+				createSoftBody(mesh, mass, pressure, ammoGeom);
+
+				return mesh;
 			}
 
 			function processGeometry(geometry, pos) {
@@ -223,147 +289,118 @@
 				};
 			}
 
-			function createSoftVolume(bufferGeom, pos, mass, pressure) {
-				const ammoGeom = processGeometry(bufferGeom, pos);
-				geometryMap.set(bufferGeom, ammoGeom);
+			// Create ground
 
-				const volume = new t3d.Mesh(bufferGeom, new t3d.PhongMaterial());
-				volume.castShadow = true;
-				volume.receiveShadow = true;
-				volume.frustumCulled = false;
-				scene.add(volume);
+			const ground = createParalellepiped(40, 1, 40, 0, pos.set(0, -0.5, 0), quat.set(0, 0, 0, 1));
+			ground.receiveShadow = true;
+			ground.material.diffuse.setRGB(1, 1, 1);
+			ground.material.diffuseMap = textureLoader.load('./resources/grid.png');
+			ground.material.diffuseMap.wrapS = ground.material.diffuseMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+			ground.material.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+			ground.material.diffuseMap.anisotropy = 8;
+			ground.material.diffuseMapTransform.setUvTransform(0, 0, 40, 40, 0, 0.5, 0.5);
 
-				volume.material.diffuse.setRGB(1, 1, 1);
-				volume.material.diffuseMap = textureLoader.load('./resources/logo.jpg');
+			// Create Ramp
 
-				// Volume physic object
+			quat.setFromAxisAngle(new t3d.Vector3(0, 0, 1), 30 * Math.PI / 180);
+			const obstacle = createParalellepiped(10, 1, 4, 0, pos.set(3, 1, 0), quat);
+			obstacle.castShadow = true;
+			obstacle.receiveShadow = true;
+			obstacle.material.diffuse.setHex(0x808080).convertSRGBToLinear();
 
-				const volumeSoftBody = softBodyHelpers.CreateFromTriMesh(
-					physicsWorld.getWorldInfo(),
-					ammoGeom.vertices,
-					ammoGeom.indices,
-					ammoGeom.indices.length / 3,
-					true);
+			// Create soft volumes
+		
+			const sphereGeometry = new t3d.SphereGeometry(1.5, 40, 25);
+			createSoftVolume(sphereGeometry, pos.set(5, 5, 0), 15, 250);
 
-				const sbConfig = volumeSoftBody.get_m_cfg();
-				sbConfig.set_viterations(40);
-				sbConfig.set_piterations(40);
+			const boxGeometry = new t3d.BoxGeometry(1, 1, 5, 4, 4, 20);
+			createSoftVolume(boxGeometry, pos.set(-2, 5, 0), 15, 120);
 
-				// Soft-soft and soft-rigid collisions
-				sbConfig.set_collisions(0x11);
+			// User interaction
 
-				// Friction
-				sbConfig.set_kDF(0.1);
-				// Damping
-				sbConfig.set_kDP(0.01);
-				// Pressure
-				sbConfig.set_kPR(pressure);
-				// Stiffness
-				volumeSoftBody.get_m_materials().at(0).set_m_kLST(0.9);
-				volumeSoftBody.get_m_materials().at(0).set_m_kAST(0.9);
+			let clickRequest = false;
+			const mouseCoords = new t3d.Vector2();
+			const raycaster = new Raycaster();
 
-				volumeSoftBody.setTotalMass(mass, false);
-				Ammo.castObject(volumeSoftBody, Ammo.btCollisionObject).getCollisionShape().setMargin(margin);
-				physicsWorld.addSoftBody(volumeSoftBody, 1, -1);
-				volume.userData.physicsBody = volumeSoftBody;
-				// Disable deactivation
-				volumeSoftBody.setActivationState(4);
+			window.addEventListener('mousedown', function(event) {
+				if (!clickRequest) {
+					mouseCoords.set(
+						(event.clientX / window.innerWidth) * 2 - 1,
+						-(event.clientY / window.innerHeight) * 2 + 1
+					);
 
-				softBodies.push(volume);
-			}
-
-			function createParalellepiped(sx, sy, sz, mass, pos, quat, material) {
-				const tObject = new t3d.Mesh(new t3d.BoxGeometry(sx, sy, sz, 1, 1, 1), material);
-				const shape = new Ammo.btBoxShape(new Ammo.btVector3(sx * 0.5, sy * 0.5, sz * 0.5));
-				shape.setMargin(margin);
-
-				createRigidBody(tObject, shape, mass, pos, quat);
-
-				return tObject;
-			}
-
-			function createRigidBody(tObject, physicsShape, mass, pos, quat) {
-				tObject.position.copy(pos);
-				tObject.quaternion.copy(quat);
-
-				const transform = new Ammo.btTransform();
-				transform.setIdentity();
-				transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
-				transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
-				const motionState = new Ammo.btDefaultMotionState(transform);
-
-				const localInertia = new Ammo.btVector3(0, 0, 0);
-				physicsShape.calculateLocalInertia(mass, localInertia);
-
-				const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, physicsShape, localInertia);
-				const body = new Ammo.btRigidBody(rbInfo);
-
-				tObject.userData.physicsBody = body;
-
-				scene.add(tObject);
-
-				if (mass > 0) {
-					rigidBodies.push(tObject);
-
-					// Disable deactivation
-					body.setActivationState(4);
+					clickRequest = true;
 				}
+			}, false);
 
-				physicsWorld.addRigidBody(body);
+			window.addEventListener('touchstart', function(event) {
+				if (!clickRequest) {
+					mouseCoords.set(
+						(event.touches[0].clientX / window.innerWidth) * 2 - 1,
+						-(event.touches[0].clientY / window.innerHeight) * 2 + 1
+					);
 
-				return body;
-			}
+					clickRequest = true;
+				}
+			}, false);
 
-			function initInput() {
-				window.addEventListener('mousedown', function(event) {
-					if (!clickRequest) {
-						mouseCoords.set(
-							(event.clientX / window.innerWidth) * 2 - 1,
-							-(event.clientY / window.innerHeight) * 2 + 1
-						);
-
-						clickRequest = true;
-					}
-				}, false);
-
-				window.addEventListener('touchstart', function(event) {
-					if (!clickRequest) {
-						mouseCoords.set(
-							(event.touches[0].clientX / window.innerWidth) * 2 - 1,
-							-(event.touches[0].clientY / window.innerHeight) * 2 + 1
-						);
-
-						clickRequest = true;
-					}
-				}, false);
-			}
+			const ballMaterial = new t3d.PhongMaterial();
+			ballMaterial.diffuse.setHex(0x303030).convertSRGBToLinear();
 
 			function processClick() {
 				if (clickRequest) {
 					raycaster.setFromCamera(mouseCoords, camera);
 
-					// Creates a ball
-					const ballMass = 3;
 					const ballRadius = 0.4;
 
 					const ball = new t3d.Mesh(new t3d.SphereGeometry(ballRadius, 18, 16), ballMaterial);
 					ball.castShadow = true;
 					ball.receiveShadow = true;
+					ball.position.copy(raycaster.ray.origin).add(raycaster.ray.direction);
+					scene.add(ball);
+
 					const ballShape = new Ammo.btSphereShape(ballRadius);
 					ballShape.setMargin(margin);
-					pos.copy(raycaster.ray.direction);
-					pos.add(raycaster.ray.origin);
-					quat.set(0, 0, 0, 1);
-					const ballBody = createRigidBody(ball, ballShape, ballMass, pos, quat);
+		
+					const ballBody = createRigidBody(ball, 3, ballShape);
 					ballBody.setFriction(0.5);
 
-					pos.copy(raycaster.ray.direction);
-					pos.multiplyScalar(14);
+					pos.copy(raycaster.ray.direction).multiplyScalar(14);
 					ballBody.setLinearVelocity(new Ammo.btVector3(pos.x, pos.y, pos.z));
 
 					clickRequest = false;
 				}
 			}
+
+			//
+
+			const stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			canvas.parentElement.appendChild(stats.domElement);
+
+			let lastTime = 0;
+			function loop(timestamp) {
+				requestAnimationFrame(loop);
+
+				stats.begin();
+
+				controls.update();
+
+				if (lastTime > 0) {
+					const delta = (timestamp - lastTime) / 1000;
+					physicsWorld.stepSimulation(delta, 1);
+					syncTransforms(delta);
+					processClick();
+				}
+
+				lastTime = timestamp;
+
+				forwardRenderer.render(scene, camera);
+
+				stats.end();
+			}
+			requestAnimationFrame(loop);
 
 			function onWindowResize() {
 				width = window.innerWidth || 2;
@@ -373,81 +410,7 @@
 
 				forwardRenderer.backRenderTarget.resize(width, height);
 			}
-
-			function animate() {
-				requestAnimationFrame(animate);
-
-				stats.begin();
-				render();
-				stats.end();
-			}
-
-			function render() {
-				const deltaTime = clock.getDelta();
-
-				controls.update();
-
-				updatePhysics(deltaTime);
-
-				processClick();
-
-				forwardRenderer.render(scene, camera);
-			}
-
-
-			function updatePhysics(deltaTime) {
-				// Step world
-				physicsWorld.stepSimulation(deltaTime, 1);
-
-				// Update soft volumes
-				for (let i = 0, il = softBodies.length; i < il; i++) {
-					const volume = softBodies[i];
-					const geometry = volume.geometry;
-					const softBody = volume.userData.physicsBody;
-					const ammoGeom = geometryMap.get(geometry);
-					const volumePositions = geometry.attributes.a_Position.buffer.array;
-					const volumeNormals = geometry.attributes.a_Normal.buffer.array;
-					const changes = ammoGeom.changes;
-					const numVerts = changes.length;
-					const nodes = softBody.get_m_nodes();
-					for (let j = 0; j < numVerts; j++) {
-						const node = nodes.at(changes[j]);
-						const nodePos = node.get_m_x();
-						const x = nodePos.x();
-						const y = nodePos.y();
-						const z = nodePos.z();
-						const nodeNormal = node.get_m_n();
-						const nx = nodeNormal.x();
-						const ny = nodeNormal.y();
-						const nz = nodeNormal.z();
-
-						volumePositions[j * 3] = x;
-						volumePositions[j * 3 + 1] = y;
-						volumePositions[j * 3 + 2] = z;
-
-						volumeNormals[j * 3] = nx;
-						volumeNormals[j * 3 + 1] = ny;
-						volumeNormals[j * 3 + 2] = nz;
-					}
-
-					geometry.attributes.a_Position.buffer.version++;
-					geometry.attributes.a_Normal.buffer.version++;
-				}
-
-				// Update rigid bodies
-				for (let i = 0, il = rigidBodies.length; i < il; i++) {
-					const objT3d = rigidBodies[i];
-					const objPhys = objT3d.userData.physicsBody;
-					const ms = objPhys.getMotionState();
-					if (ms) {
-						ms.getWorldTransform(transformAux1);
-						const p = transformAux1.getOrigin();
-						const q = transformAux1.getRotation();
-						objT3d.position.set(p.x(), p.y(), p.z());
-						objT3d.quaternion.set(q.x(), q.y(), q.z(), q.w());
-					}
-				}
-			}
+			window.addEventListener('resize', onWindowResize, false);
 		});
 	</script>
 </body>

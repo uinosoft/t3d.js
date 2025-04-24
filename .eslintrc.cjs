@@ -16,8 +16,6 @@ module.exports = {
 	],
 	'globals': {
 		'Nanobar': 'readonly',
-		'Ammo': 'readonly',
-		'CANNON': 'readonly',
 		'SimplexNoise': 'readonly',
 		'QUnit': 'readonly'
 	},

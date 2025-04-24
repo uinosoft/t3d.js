@@ -159,7 +159,9 @@
 	"physics": [
 		"physics_cannon",
 		"physics_ammo",
-		"physics_ammo_softbody_volume"
+		"physics_ammo_softbody_volume",
+		"physics_rapier",
+		"physics_rapier_character_controller"
 	],
 	"particle": [
 		"particle_particle"

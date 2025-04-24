@@ -7,12 +7,10 @@
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
-    <div id="info">
-        <a href="" target="_blank">t3d</a> - physics cannon
-		<br/>
-        use <a href="http://schteppe.github.io/cannon.js" target="_blank">cannon.js</a>
+    <div id="info" class="dark">
+		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d.js</a> - Physics demo with <a href="http://schteppe.github.io/cannon.js" target="_blank">cannon.js</a>
         <br/>
-        touch screen to add a cube
+		Click once to create a cube, or click and hold to create multiple cubes
     </div>
 
 	<script src="./libs/cannon.min.js"></script>
@@ -33,6 +31,9 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+
+		/* global CANNON */
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -43,101 +44,150 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.setClearColor(0.75, 0.82, 0.9, 1);
 
 		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0xbfd1e5, 50, 80);
 
-		const plane_geometry = new t3d.PlaneGeometry(100, 100);
-		const lambert = new t3d.LambertMaterial();
-		lambert.diffuse.setHex(0xffffff);
-		const plane = new t3d.Mesh(plane_geometry, lambert);
-		plane.position.y = 0;
-		plane.receiveShadow = true;
-		scene.add(plane);
-
-		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.1);
 		scene.add(ambientLight);
 
-		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.7);
-		directionalLight.position.set(-40, 40, 0);
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.75);
+		directionalLight.position.set(-40, 50, 30);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 		directionalLight.castShadow = true;
 		directionalLight.shadow.mapSize.set(1024, 1024);
-		directionalLight.shadow.windowSize = 50;
+		directionalLight.shadow.windowSize = 40;
+		directionalLight.shadow.normalBias = -0.05;
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
-		camera.position.set(0, 30, 45);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(0, 10, 25);
+		camera.lookAt(new t3d.Vector3(0, 1, 0), new t3d.Vector3(0, 1, 0));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
-		// cannon.js init
+		// Init physics world
+
 		const world = new CANNON.World();
 		world.gravity.set(0, -9.8, 0);
 		world.broadphase = new CANNON.NaiveBroadphase();
 		world.solver.iterations = 10;
 
-		const c_plane_shape = new CANNON.Plane();
-		const c_plane_body = new CANNON.Body({
-			mass: 0
-		});
-		c_plane_body.addShape(c_plane_shape);
-		c_plane_body.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-		world.addBody(c_plane_body);
+		const meshes = [];
+		const meshMap = new Map();
 
-		const position = new t3d.Vector3();
-		const sphere_meshes = [];
-		const sphere_bodys = [];
-		let size = 0;
-		function addOneCube() {
-			size++;
+		function createRigidBody(mesh, mass, shape) {
+			const position = mesh.position;
+			const quaternion = mesh.quaternion;
 
-			position.x = Math.random() * 10 - 5;
-			position.y = Math.random() * 10 + 3;
-			position.z = Math.random() * 10 - 5;
-
-			const sphere_geometry = new t3d.BoxGeometry(2, 2, 2);
-			const phong = new t3d.PhongMaterial();
-			phong.diffuse.setHSL(Math.random(), 1, Math.random());
-			const sphere = new t3d.Mesh(sphere_geometry, phong);
-			sphere.position.copy(position);
-			sphere.castShadow = true;
-			scene.add(sphere);
-			sphere_meshes.push(sphere);
-
-			const c_sphere_shape = new CANNON.Box(new CANNON.Vec3(1, 1, 1));
-			const c_sphere_body = new CANNON.Body({
-				mass: 20
+			const body = new CANNON.Body({
+				mass: mass,
+				position: new CANNON.Vec3(position.x, position.y, position.z),
+				quaternion: new CANNON.Quaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w)
 			});
-			c_sphere_body.addShape(c_sphere_shape);
-			c_sphere_body.position.copy(position);
-			c_sphere_body.angularVelocity.set(0, 10, 0);
-			c_sphere_body.velocity.set(0, 0, 0);
-			c_sphere_body.angularDamping = 0.5;
-			world.addBody(c_sphere_body);
-			sphere_bodys.push(c_sphere_body);
+			body.addShape(shape);
+			world.addBody(body);
+
+			if (mass > 0) {
+				meshes.push(mesh);
+				meshMap.set(mesh, body);
+			}
+
+			return body;
 		}
 
-		document.addEventListener('mouseup', addOneCube);
-		document.addEventListener('touchend', addOneCube);
+		function syncTransforms() {
+			for (let i = 0, l = meshes.length; i < l; i++) {
+				const body = meshMap.get(meshes[i]);
+				if (body) {
+					const position = body.position;
+					const quaternion = body.quaternion;
+					meshes[i].position.set(position.x, position.y, position.z);
+					meshes[i].quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+				}
+			}
+		}
 
-		addOneCube();
+		// Create ground
+		
+		const groundMaterial = new t3d.LambertMaterial();
+		groundMaterial.diffuse.setHex(0xffffff);
+		groundMaterial.diffuseMap = new Texture2DLoader().load('./resources/grid.png');
+		groundMaterial.diffuseMap.wrapS = groundMaterial.diffuseMap.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		groundMaterial.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		groundMaterial.diffuseMap.anisotropy = 8;
+		groundMaterial.diffuseMapTransform.setUvTransform(0, 0, 100, 100, 0, 0.5, 0.5);
+		const ground = new t3d.Mesh(new t3d.BoxGeometry(200, 1, 200), groundMaterial);
+		ground.receiveShadow = true;
+		ground.position.y = -1;
+		scene.add(ground);
 
-		let timeTamp = 0;
-		function loop(count) {
+		const shape = new CANNON.Box(new CANNON.Vec3(100, 0.5, 100));
+		const groundBody = createRigidBody(ground, 0, shape);
+		groundBody.material = new CANNON.Material();
+		groundBody.material.friction = 1;
+
+		// Create boxes
+
+		function createOneBox() {
+			const material = new t3d.PhongMaterial();
+			material.diffuse.setHex(0xffffff * Math.random()).convertSRGBToLinear();
+			const box = new t3d.Mesh(new t3d.BoxGeometry(1, 1, 1), material);
+			box.position.x = Math.random() * 2 - 1;
+			box.position.y = Math.random() * 5 + 10;
+			box.position.z = Math.random() * 2 - 1;
+			box.castShadow = true;
+			scene.add(box);
+
+			const shape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
+			const body = createRigidBody(box, 15, shape);
+			body.angularVelocity.set(0, 10, 0);
+			body.material = new CANNON.Material();
+			body.material.friction = 0.5;
+			body.material.restitution = 0.5;
+			body.linearDamping = 0.01;
+			body.angularDamping = 0.1;
+		}
+
+		createOneBox();
+
+		// User interaction
+
+		let isDown = false;
+		let createInterval;
+
+		function onPointerDown(event) {
+			isDown = true;
+			createOneBox();
+			createInterval = setInterval(createOneBox, 100);
+		}
+
+		function onPointerUp(event) {
+			if (isDown) {
+				isDown = false;
+				clearInterval(createInterval);
+			}
+		}
+
+		document.addEventListener('pointerdown', onPointerDown);
+		document.addEventListener('pointerup', onPointerUp);
+		document.addEventListener('pointerleave', onPointerUp);
+
+		//
+		
+		let lastTime = 0;
+		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			const time = count - timeTamp;
-			timeTamp = count;
-
-			// Step the physics world
-			world.step(time / 1000);
-
-			for (let i = 0; i < size; i++) {
-				// Copy transform from Cannon.js to t3d.js
-				sphere_meshes[i].position.copy(sphere_bodys[i].position);
-				sphere_meshes[i].quaternion.copy(sphere_bodys[i].quaternion);
+			if (lastTime > 0) {
+				const delta = (timestamp - lastTime) / 1000;
+				world.step(delta);
+				syncTransforms();
 			}
+
+			lastTime = timestamp;
 
 			forwardRenderer.render(scene, camera);
 		}

@@ -2,18 +2,16 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>t3d - ammo</title>
+	<title>t3d - rapier</title>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
 <body>
     <div id="info" class="dark">
-		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d.js</a> - Physics demo with <a href="https://github.com/kripken/ammo.js/" target="_blank">ammo.js</a>
+		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d.js</a> - Physics demo with <a href="https://rapier.rs" target="_blank">rapier.js</a>
         <br/>
 		Click once to create a cube, or click and hold to create multiple cubes
     </div>
-
-	<script src="./libs/ammo.wasm.js"></script>
 
 	<!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
@@ -32,10 +30,9 @@
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat@0.12.0';
 
-		/* eslint-disable new-cap */
-
-		Ammo().then(Ammo => { // eslint-disable-line no-undef
+		RAPIER.init().then(() => {
 			let width = window.innerWidth || 2;
 			let height = window.innerHeight || 2;
 
@@ -71,36 +68,29 @@
 
 			// Init physics world
 
-			const collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-			const dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
-			const broadphase = new Ammo.btDbvtBroadphase();
-			const solver = new Ammo.btSequentialImpulseConstraintSolver();
-			const physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-			physicsWorld.setGravity(new Ammo.btVector3(0, -9.8, 0));
+			const gravity = { x: 0.0, y: -9.8, z: 0.0 };
+			const world = new RAPIER.World(gravity);
 
 			const meshes = [];
-			const meshMap = new WeakMap();
-
-			const worldTransform = new Ammo.btTransform();
+			const meshMap = new Map();
 
 			function createRigidBody(mesh, mass, shape) {
 				const position = mesh.position;
 				const quaternion = mesh.quaternion;
 
-				const transform = new Ammo.btTransform();
-				transform.setIdentity();
-				transform.setOrigin(new Ammo.btVector3(position.x, position.y, position.z));
-				transform.setRotation(new Ammo.btQuaternion(quaternion.x, quaternion.y, quaternion.z, quaternion.w));
+				let rigidBodyDesc;
+				if (mass === 0) {
+					rigidBodyDesc = RAPIER.RigidBodyDesc.fixed();
+				} else {
+					rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic();
+					shape.setMass(mass);
+				}
 
-				const motionState = new Ammo.btDefaultMotionState(transform);
+				rigidBodyDesc.setTranslation(position.x, position.y, position.z);
+				rigidBodyDesc.setRotation({ x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w });
 
-				const localInertia = new Ammo.btVector3(0, 0, 0);
-				shape.calculateLocalInertia(mass, localInertia);
-
-				const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
-
-				const body = new Ammo.btRigidBody(rbInfo);
-				physicsWorld.addRigidBody(body);
+				const body = world.createRigidBody(rigidBodyDesc);
+				world.createCollider(shape, body);
 
 				if (mass > 0) {
 					meshes.push(mesh);
@@ -112,13 +102,12 @@
 
 			function syncTransforms() {
 				for (let i = 0, l = meshes.length; i < l; i++) {
-					const ms = meshMap.get(meshes[i]).getMotionState();
-					if (ms) {
-						ms.getWorldTransform(worldTransform);
-						const p = worldTransform.getOrigin();
-						const q = worldTransform.getRotation();
-						meshes[i].position.set(p.x(), p.y(), p.z());
-						meshes[i].quaternion.set(q.x(), q.y(), q.z(), q.w());
+					const body = meshMap.get(meshes[i]);
+					if (body) {
+						const position = body.translation();
+						const quaternion = body.rotation();
+						meshes[i].position.set(position.x, position.y, position.z);
+						meshes[i].quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
 					}
 				}
 			}
@@ -137,13 +126,13 @@
 			ground.position.y = -1;
 			scene.add(ground);
 
-			const shape = new Ammo.btBoxShape(new Ammo.btVector3(100, 0.5, 100));
-			shape.setMargin(0.05);
-			const groundBody = createRigidBody(ground, 0, shape);
-			groundBody.setFriction(1);
+			const groundShape = RAPIER.ColliderDesc.cuboid(100, 0.5, 100);
+			groundShape.setFriction(1.0);
+			createRigidBody(ground, 0, groundShape);
+		
 
 			// Create boxes
-		
+
 			function createOneBox() {
 				const material = new t3d.PhongMaterial();
 				material.diffuse.setHex(0xffffff * Math.random()).convertSRGBToLinear();
@@ -154,13 +143,13 @@
 				box.castShadow = true;
 				scene.add(box);
 
-				const shape = new Ammo.btBoxShape(new Ammo.btVector3(0.5, 0.5, 0.5));
-				shape.setMargin(0.05);
-				const body = createRigidBody(box, 15, shape);
-				body.setAngularVelocity(new Ammo.btVector3(0, 10, 0));
-				body.setFriction(0.5);
-				body.setRestitution(0.5);
-				body.setDamping(0.01, 0.1);
+				const boxShape = RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5);
+				const body = createRigidBody(box, 15, boxShape);
+				body.setAngvel({ x: 0.0, y: 10.0, z: 0.0 });
+				boxShape.setFriction(0.5);
+				boxShape.setRestitution(0.5);
+				body.setLinearDamping(0.01);
+				body.setAngularDamping(0.1);
 			}
 
 			createOneBox();
@@ -195,7 +184,8 @@
 
 				if (lastTime > 0) {
 					const delta = (timestamp - lastTime) / 1000;
-					physicsWorld.stepSimulation(delta, 10);
+					world.timestamp = delta;
+					world.step();
 					syncTransforms();
 				}
 
