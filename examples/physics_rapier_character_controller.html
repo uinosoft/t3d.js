@@ -10,7 +10,7 @@
     <div id="info" class="dark">
 		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d.js</a> - Physics demo character controller with <a href="https://rapier.rs" target="_blank">rapier.js</a>
         <br/>
-		WASD to move
+		WASD or Arrow keys to move
     </div>
 
 	<!-- Import maps polyfill -->
@@ -30,6 +30,7 @@
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { CapsuleGeometry } from 't3d/addons/geometries/CapsuleGeometry.js';
 		import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier3d-compat@0.12.0';
 
 		RAPIER.init().then(() => {
@@ -159,12 +160,12 @@
 
 			const characterMaterial = new t3d.PhongMaterial();
 			characterMaterial.diffuse.setHex(0x0000ff).convertSRGBToLinear();
-			const character = new t3d.Mesh(new t3d.BoxGeometry(1, 2, 1), characterMaterial);
+			const character = new t3d.Mesh(new CapsuleGeometry(0.5, 1, 20, 20), characterMaterial);
 			character.castShadow = true;
 			character.position.set(0, 0.5, 0);
 			scene.add(character);
 
-			const characterShape = RAPIER.ColliderDesc.cuboid(0.5, 1, 0.5).setTranslation(0, 0.5, 0);
+			const characterShape = RAPIER.ColliderDesc.capsule(0.5, 0.5).setTranslation(0, 0.5, 0);
 			character.userData.collider = world.createCollider(characterShape);
 
 			const characterController = world.createCharacterController(0.01);

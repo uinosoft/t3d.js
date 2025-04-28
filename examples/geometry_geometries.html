@@ -30,6 +30,7 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { CircleGeometry } from 't3d/addons/geometries/CircleGeometry.js';
+		import { CapsuleGeometry } from 't3d/addons/geometries/CapsuleGeometry.js';
 		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
 		import { TorusBuilder } from 't3d/addons/geometries/builders/TorusBuilder.js';
 		import { LatheBuilder } from 't3d/addons/geometries/builders/LatheBuilder.js';
@@ -83,6 +84,7 @@
 			new t3d.CylinderGeometry(0, 5, 10, 20, 1),
 			new t3d.TorusKnotGeometry(5, 1.5),
 			new CircleGeometry(7),
+			new CapsuleGeometry(5, 8, 20),
 			createGeometryByData(LatheBuilder.getGeometryData([[0, -7], [5, -2], [5, 2], [0, 7]])),
 			createGeometryByData(TorusBuilder.getGeometryData(5, 2, 16, 16)),
 			createGeometryByData(PolyhedronBuilder.getTetrahedronGeometryData(8)),
