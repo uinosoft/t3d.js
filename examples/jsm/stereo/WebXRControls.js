@@ -35,7 +35,6 @@ class WebXRControl {
 						stencil: attributes.stencil,
 						framebufferScaleFactor: 1.0
 					};
-					// eslint-disable-next-line
 					const baseLayer = new XRWebGLLayer(session, gl, layerInit);
 					session.updateRenderState({ baseLayer });
 					return session.requestReferenceSpace('local-floor');

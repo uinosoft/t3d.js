@@ -47,10 +47,11 @@
     "@rollup/plugin-babel": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.0",
     "clean-jsdoc-theme": "^4.2.13",
-    "eslint": "^8.24.0",
+    "eslint": "^9.25.1",
     "eslint-plugin-html": "^8.0.0",
     "eslint-plugin-import": "^2.28.1",
     "eslint-plugin-jsdoc": "^50.6.3",
+    "globals": "^16.0.0",
     "jsdoc": "^4.0.2",
     "qunit": "^2.24.1",
     "rollup": "^4.9.1",
@@ -69,8 +70,8 @@
     "lint-fix": "eslint src --fix",
     "lint-addons": "eslint examples/jsm",
     "lint-addons-fix": "eslint examples/jsm --fix",
-    "lint-examples": "eslint examples --ext .html",
-    "lint-examples-fix": "eslint examples --ext .html --fix",
+    "lint-examples": "eslint \"examples/**/*.html\"",
+    "lint-examples-fix": "eslint \"examples/**/*.html\" --fix",
     "test-unit": "qunit tests/unit/source.unit.js"
   }
 }
