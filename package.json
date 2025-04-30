@@ -72,6 +72,7 @@
     "lint-addons-fix": "eslint examples/jsm --fix",
     "lint-examples": "eslint \"examples/**/*.html\"",
     "lint-examples-fix": "eslint \"examples/**/*.html\" --fix",
+    "lint-tests": "eslint tests",
     "test-unit": "qunit tests/unit/source.unit.js"
   }
 }

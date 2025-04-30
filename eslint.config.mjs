@@ -6,30 +6,24 @@ import globals from 'globals';
 
 export default [
 	js.configs.recommended,
-	importPlugin.flatConfigs.recommended,
-	jsdoc.configs['flat/recommended'],
 	{
-		ignores: ['**/build/**', '**/node_modules/**', 'examples/libs/**']
+		ignores: [
+			'build/**',
+			'node_modules/**',
+			'examples/libs/**'
+		]
 	},
 	{
-		plugins: { jsdoc },
 		languageOptions: {
 			globals: {
 				...globals.browser,
-				...globals.node,
-				Nanobar: 'readonly',
-				SimplexNoise: 'readonly',
-				QUnit: 'readonly'
+				...globals.node
 			},
 			ecmaVersion: 2018,
 			sourceType: 'module'
 		},
-		settings: {
-			jsdoc: {
-				tagNamePreference: {
-					augments: 'extends'
-				}
-			}
+		plugins: {
+			import: importPlugin
 		},
 		rules: {
 			/* Override eslint:recommended */
@@ -209,10 +203,23 @@ export default [
 
 			/* Import(plugin) */
 
-			'import/extensions': ['warn', 'always'],
-			'import/no-unresolved': 0,
-			'import/no-named-as-default-member': 0,
-
+			'import/extensions': ['warn', 'always']
+		}
+	},
+	{
+		files: ['src/**/*.js', 'examples/jsm/**/*.js'],
+		...jsdoc.configs['flat/recommended']
+	},
+	{
+		files: ['src/**/*.js', 'examples/jsm/**/*.js'],
+		settings: {
+			jsdoc: {
+				tagNamePreference: {
+					augments: 'extends'
+				}
+			}
+		},
+		rules: {
 			/* JSDoc(plugin) */
 
 			'jsdoc/no-defaults': 0,
@@ -225,7 +232,24 @@ export default [
 		}
 	},
 	{
-		files: ['examples/**/*.html'],
+		files: ['examples/**/*.html', 'tests/**/*.html'],
 		plugins: { html }
+	},
+	{
+		files: ['examples/**/*.html'],
+		languageOptions: {
+			globals: {
+				Nanobar: 'readonly',
+				SimplexNoise: 'readonly'
+			}
+		}
+	},
+	{
+		files: ['tests/**/*.js'],
+		languageOptions: {
+			globals: {
+				QUnit: 'readonly'
+			}
+		}
 	}
 ];
