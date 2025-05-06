@@ -32,6 +32,7 @@
 		import * as t3d from 't3d';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { Raycaster } from 't3d/addons/Raycaster.js';
+		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import Stats from './libs/stats.module.js';
@@ -232,7 +233,7 @@
 				mesh.material.diffuseMap = textureLoader.load('./resources/logo.jpg');
 				mesh.material.diffuseMap.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		
-				const ammoGeom = processGeometry(mesh.geometry, pos);
+				const ammoGeom = getAmmoGeom(mesh, pos);
 				geometryMap.set(mesh.geometry, ammoGeom);
 
 				createSoftBody(mesh, mass, pressure, ammoGeom);
@@ -240,50 +241,24 @@
 				return mesh;
 			}
 
-			function processGeometry(geometry, pos) {
-				const verticesMap = {}; // Hashmap for looking up vertices by position coordinates (and making sure they are unique)
-				const unique = [], changes = [];
+			function getAmmoGeom(mesh, pos) {
+				const matrix = new t3d.Matrix4();
+				matrix.makeTranslation(pos.x, pos.y, pos.z);
 
-				const v = new t3d.Vector3();
-				let key;
-				const precisionPoints = 4; // number of decimal points, e.g. 4 for epsilon of 0.0001
-				const precision = Math.pow(10, precisionPoints);
-				let i, il;
-				const indices = [];
+				const triangleSoup = new TriangleSoup();
+				triangleSoup.addMesh(mesh, matrix);
+				triangleSoup.mergeVertices();
 
-				const position = geometry.attributes.a_Position;
+				const indices = triangleSoup.indices;
+				const oldIndices = mesh.geometry.index.buffer.array;
 
-				for (i = 0, il = position.buffer.count; i < il; i++) {
-					v.fromArray(position.buffer.array, i * 3);
-					v.add(pos);
-					key = Math.round(v.x * precision) + '_' + Math.round(v.y * precision) + '_' + Math.round(v.z * precision);
-
-					if (verticesMap[key] === undefined) {
-						verticesMap[key] = i;
-						unique.push(v.x, v.y, v.z);
-						changes[i] = unique.length / 3 - 1;
-					} else {
-						// console.log('Duplicate vertex found. ', i, ' could be using ', verticesMap[key]);
-						changes[i] = changes[verticesMap[key]];
-					}
-				}
-
-				const index = geometry.index;
-
-				for (i = 0, il = index.buffer.count; i < il; i++) {
-					v.fromArray(index.buffer.array, i * 3);
-
-					v.x = changes[v.x];
-					v.y = changes[v.y];
-					v.z = changes[v.z];
-
-					if (v.x !== v.y && v.y !== v.z && v.x !== v.z) {
-						indices.push(v.x, v.y, v.z);
-					}
+				const changes = [];
+				for (let i = 0, il = oldIndices.length; i < il; i++) {
+					changes[oldIndices[i]] = indices[i];
 				}
 
 				return {
-					vertices: unique,
+					vertices: triangleSoup.positions,
 					indices: indices,
 					changes: changes
 				};

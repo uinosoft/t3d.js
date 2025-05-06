@@ -36,6 +36,7 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { Raycaster } from 't3d/addons/Raycaster.js';
+		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
 		import { Pathfinding } from 't3d/addons/navigation/Pathfinding.js';
 		import { Zone } from 't3d/addons/navigation/Zone.js';
 		import { PathfindingHelper } from 't3d/addons/navigation/PathfindingHelper.js';
@@ -124,7 +125,11 @@
 			navMesh.castShadow = true;
 			navMesh.isNavMesh = true;
 
-			zone = Zone.createFromGeometry(navMesh.geometry);
+			const triangleSoup = new TriangleSoup();
+			triangleSoup.addMesh(navMesh, new t3d.Matrix4());
+			triangleSoup.mergeVertices();
+
+			zone = Zone.createFromTriangleSoup(triangleSoup);
 
 			// debug
 

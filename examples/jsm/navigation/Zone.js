@@ -1,13 +1,11 @@
-import { Vector3, Plane, Geometry, Buffer, Attribute, MathUtils } from 't3d';
+import { Vector3, Plane, Matrix4, DRAW_MODE } from 't3d';
 import { isPointInPoly } from './Utils.js';
+import { TriangleSoup } from '../math/TriangleSoup.js';
 
 class Zone {
 
-	static createFromGeometry(geometry, tolerance = 1e-4) {
-		// optimize vertices (add index and remove duplicate position) 'unnecessary'
-		geometry = mergeVertices(geometry, tolerance);
-
-		const navMesh = _buildPolygonsFromGeometry(geometry);
+	static createFromTriangleSoup(triangleSoup) {
+		const navMesh = _buildPolygonsFromTriangleSoup(triangleSoup);
 
 		const zone = new Zone();
 
@@ -67,6 +65,22 @@ class Zone {
 		return zone;
 	}
 
+	// deprecated since v0.4.1
+	static createFromGeometry(geometry, tolerance = 1e-4) {
+		console.warn('Zone.createFromGeometry has been deprecated, use Zone.createFromTriangleSoup instead.');
+
+		const fakeMesh = {
+			geometry,
+			material: { drawMode: DRAW_MODE.TRIANGLES }
+		};
+
+		const triangleSoup = new TriangleSoup();
+		triangleSoup.addMesh(fakeMesh, new Matrix4());
+		triangleSoup.mergeVertices(tolerance);
+
+		return this.createFromTriangleSoup(triangleSoup);
+	}
+
 	constructor() {
 		this.vertices = [];
 		this.groups = [];
@@ -113,11 +127,11 @@ const _vector1 = new Vector3();
 const _vector2 = new Vector3();
 const _plane = new Plane();
 
-function _buildPolygonsFromGeometry(geometry) {
+function _buildPolygonsFromTriangleSoup(triangleSoup) {
 	const polygons = [];
 	const vertices = [];
-	const positionAttribute = geometry.getAttribute('a_Position');
-	const indexAttribute = geometry.index;
+
+	const { positions, indices } = triangleSoup;
 
 	// Constructing the neighbor graph brute force is O(n²). To avoid that,
 	// create a map from vertices to the polygons that contain them, and use it
@@ -127,24 +141,16 @@ function _buildPolygonsFromGeometry(geometry) {
 	/** Array of polygon objects by vertex index. */
 	const vertexPolygonMap = [];
 
-	for (let i = 0; i < positionAttribute.buffer.count; i++) {
+	for (let i = 0, l = positions.length; i < l; i += 3) {
 		const vertex = new Vector3();
-		vertex.fromArray(
-			positionAttribute.buffer.array,
-			i * positionAttribute.buffer.stride + positionAttribute.offset,
-			positionAttribute.normalized
-		);
+		vertex.fromArray(positions, i);
 		vertices.push(vertex);
-		vertexPolygonMap[i] = [];
+		vertexPolygonMap[i / 3] = [];
 	}
 
 	// Convert the faces into a custom format that supports more than 3 vertices
-	for (let i = 0; i < indexAttribute.buffer.count; i += 3) {
-		_vector1.fromArray(
-			indexAttribute.buffer.array,
-			i,
-			indexAttribute.normalized
-		);
+	for (let i = 0, l = indices.length; i < l; i += 3) {
+		_vector1.fromArray(indices, i);
 		const a = _vector1.x;
 		const b = _vector1.y;
 		const c = _vector1.z;
@@ -256,76 +262,6 @@ function _getSharedVerticesInOrder(a, b) {
 		);
 		return [];
 	}
-}
-
-// TODO move this to GeometryUtils
-function mergeVertices(geometry, tolerance = 1e-4) {
-	tolerance = Math.max(tolerance, Number.EPSILON);
-
-	// Generate an index buffer if the geometry doesn't have one, or optimize it
-	// if it's already available.
-	const hashToIndex = {};
-	const indices = geometry.index;
-	const positions = geometry.getAttribute('a_Position');
-	const positionBuffer = positions.buffer;
-	const vertexCount = indices ? indices.buffer.count : positionBuffer.count;
-
-	// Next value for triangle indices.
-	let nextIndex = 0;
-
-	const newIndices = [];
-	const newPositions = [];
-
-	// Convert the error tolerance to an amount of decimal places to truncate to.
-	const decimalShift = Math.log10(1 / tolerance);
-	const shiftMultiplier = Math.pow(10, decimalShift);
-
-	for (let i = 0; i < vertexCount; i++) {
-		let index = indices ? indices.buffer.array[i * indices.buffer.stride + indices.offset] : i;
-		if (indices && indices.normalized) {
-			index = MathUtils.denormalize(index, indices.buffer.array);
-		}
-
-		_vector1.fromArray(
-			positionBuffer.array,
-			index * positionBuffer.stride + positions.offset,
-			positions.normalized
-		);
-
-		// Generate a hash for the vertex attributes at the current index 'i'.
-		let hash = '';
-		// Double tilde truncates the decimal value.
-		hash += `${~~(_vector1.x * shiftMultiplier)},`;
-		hash += `${~~(_vector1.y * shiftMultiplier)},`;
-		hash += `${~~(_vector1.z * shiftMultiplier)},`;
-
-		// Add another reference to the vertex if it's already
-		// used by another index.
-		if (hash in hashToIndex) {
-			newIndices.push(hashToIndex[hash]);
-		} else {
-			newPositions.push(_vector1.x);
-			newPositions.push(_vector1.y);
-			newPositions.push(_vector1.z);
-
-			hashToIndex[hash] = nextIndex;
-			newIndices.push(nextIndex);
-			nextIndex++;
-		}
-	}
-	const result = new Geometry();
-	const buffer = new Buffer(
-		new Float32Array(newPositions),
-		positions.size,
-		positions.normalized
-	);
-
-	result.addAttribute(
-		'a_Position',
-		new Attribute(buffer, 3, 0)
-	);
-	result.setIndex(newIndices);
-	return result;
 }
 
 function roundNumber(value, decimals) {
