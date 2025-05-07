@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - navigation recast generation</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+<body>
+	<div id="info">
+		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d</a> - 
+		Navigation mesh generation using <a href="https://github.com/isaac-mason/recast-navigation-js" target="_blank">recast-navigation-js</a><br/>
+		<strong>Controls:</strong> Click to move agent
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/",
+				"@recast-navigation/core": "https://cdn.skypack.dev/@recast-navigation/core@0.39",
+				"@recast-navigation/generators": "https://cdn.skypack.dev/@recast-navigation/generators@0.39"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { Timer } from 't3d/addons/misc/Timer.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { CapsuleGeometry } from 't3d/addons/geometries/CapsuleGeometry.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { TriangleSoupHelper } from 't3d/addons/objects/TriangleSoupHelper.js';
+		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Raycaster } from 't3d/addons/Raycaster.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { init, NavMeshQuery, exportNavMesh, getNavMeshPositionsAndIndices } from '@recast-navigation/core';
+		import { generateSoloNavMesh } from '@recast-navigation/generators';
+
+		init().then(async () => {
+			let width = window.innerWidth || 2;
+			let height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width * window.devicePixelRatio;
+			canvas.height = height * window.devicePixelRatio;
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+			document.body.appendChild(canvas);
+
+			const forwardRenderer = new ForwardRenderer(canvas);
+
+			const scene = new t3d.Scene();
+
+			const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+			scene.add(ambientLight);
+
+			const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+			directionalLight.position.set(6, 10, 6);
+			directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			directionalLight.castShadow = true;
+			directionalLight.shadow.windowSize = 25;
+			directionalLight.shadow.mapSize.set(512, 512);
+			directionalLight.shadow.cameraNear = 0.1;
+			directionalLight.shadow.cameraFar = 50;
+			scene.add(directionalLight);
+
+			const camera = new t3d.Camera();
+			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+			camera.position.set(0, 15, 15);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+			scene.add(camera);
+
+			const controller = new OrbitControls(camera, canvas);
+
+			// Create obstacles and ground
+
+			const nanobar = new Nanobar();
+			nanobar.el.style.background = 'gray';
+
+			const loadingManager = new t3d.LoadingManager(function() {
+				nanobar.go(100);
+				nanobar.el.style.background = 'transparent';
+			}, function(url, itemsLoaded, itemsTotal) {
+				if (itemsLoaded < itemsTotal) {
+					nanobar.go((itemsLoaded / itemsTotal) * 100);
+				}
+			});
+
+			const gltfLoader = new GLTFLoader(loadingManager);
+
+			const { root: sceneModel } = await gltfLoader.load('./resources/navigation/level.glb')
+				.then(result => {
+					result.root.traverse(node => {
+						if (!node.isMesh) return;
+						node.castShadow = true;
+						node.receiveShadow = true;
+						GeometryUtils.computeNormals(node.geometry);
+					});
+					return result;
+				});
+			scene.add(sceneModel);
+
+			// Create player
+
+			const playerGeometry = new CapsuleGeometry(0.15, 0.3, 20, 20);
+			const playerMaterial = new t3d.LambertMaterial();
+			playerMaterial.diffuse.setHex(0xff0000);
+			const playerMesh = new t3d.Mesh(playerGeometry, playerMaterial);
+			playerMesh.position.y = 0.3;
+			playerMesh.castShadow = true;
+
+			const player = new t3d.Object3D();
+			player.add(playerMesh);
+			scene.add(player);
+
+			// Navmesh
+
+			let navMesh, navMeshQuery;
+			const triangleSoup = new TriangleSoup();
+			const triangleSoupHelper = new TriangleSoupHelper(triangleSoup);
+			triangleSoupHelper.wireframe(true);
+			triangleSoupHelper.position.y = 0.01;
+			scene.add(triangleSoupHelper);
+
+			const navMeshConfig = {
+				cs: 0.05, // The meshes are voxelized in order to compute walkable navmesh. This parameter in world units defines the width and depth of 1 voxel.
+				ch: 0.05, // Same as cs but for height of the voxel.
+				walkableSlopeAngle: 45, // Angle in degrees for the maximum walkable slope.
+				walkableHeight: 10, // The height in voxel units that is allowed to walk in.
+				walkableClimb: 7, // The delta in voxel units that can be climbed.
+				walkableRadius: 2, // The radius in voxel units of the agents.
+				maxEdgeLen: 12, // The maximum allowed length for contour edges along the border of the mesh. Voxel units.
+				maxSimplificationError: 1.3, // The maximum distance a simplified contour's border edges should deviate the original raw contour. Voxel units.
+				minRegionArea: 8, // The minimum number of cells allowed to form isolated island areas. Voxel units.
+				mergeRegionArea: 20, // Any regions with a span count smaller than this value will, if possible, be merged with larger regions. Voxel units.
+				maxVertsPerPoly: 6, // The maximum number of vertices allowed for polygons generated during the contour to polygon conversion process. Must be > 3.
+				detailSampleDist: 6, // Sets the sampling distance to use when generating the detail mesh. World units.
+				detailSampleMaxError: .5 // The maximum distance the detail mesh surface should deviate from heightfield data. World Units.
+			};
+
+			function generateNavMesh() {
+				sceneModel.updateMatrix();
+
+				console.time('Collecting Geometry');
+				triangleSoup.clear();
+				sceneModel.traverse(node => {
+					if (!node.isMesh) return;
+					triangleSoup.addMesh(node);
+				});
+				triangleSoup.mergeVertices();
+				console.timeEnd('Collecting Geometry');
+
+				console.time('NavMesh Generation');
+				const result = generateSoloNavMesh(
+					new Float32Array(triangleSoup.positions),
+					new Uint32Array(triangleSoup.indices),
+					navMeshConfig
+				);
+				console.timeEnd('NavMesh Generation');
+
+				if (!result.success) {
+					console.error('Failed to generate navmesh');
+					return false;
+				}
+
+				navMesh = result.navMesh;
+				navMeshQuery = new NavMeshQuery(navMesh);
+
+				const [positions, indices] = getNavMeshPositionsAndIndices(navMesh);
+
+				triangleSoup.positions = positions;
+				triangleSoup.indices = indices;
+
+				triangleSoupHelper.update();
+
+				return true;
+			}
+
+			generateNavMesh();
+
+			const spawnPoint = { x: -0.2, y: 3, z: 2.3 };
+			const playerSpawnPoint = new t3d.Vector3().copy(
+				navMeshQuery.findClosestPoint(spawnPoint).point
+			);
+			player.position.copy(playerSpawnPoint);
+
+			// Player pathfinding
+
+			let path = null;
+			let currentPathIndex = 0;
+		
+			const raycaster = new Raycaster();
+			const mouse = new t3d.Vector2();
+			const mouseDown = new t3d.Vector2();
+
+			function onPointerDown(event) {
+				mouseDown.x = (event.clientX / width) * 2 - 1;
+				mouseDown.y = -(event.clientY / height) * 2 + 1;
+			}
+		
+			function onPointerUp(event) {
+				mouse.x = (event.clientX / width) * 2 - 1;
+				mouse.y = -(event.clientY / height) * 2 + 1;
+
+				if (
+					Math.abs(mouseDown.x - mouse.x) > 0.01 ||
+					Math.abs(mouseDown.y - mouse.y) > 0.01
+				) {
+					return;
+				}
+
+				raycaster.setFromCamera(mouse, camera);
+
+				const intersects = raycaster.intersectObject(sceneModel, true);
+
+				if (intersects.length > 0) {
+					const hitPoint = intersects[0].point;
+		
+					if (navMeshQuery) {
+						const { point, polyRef } = navMeshQuery.findClosestPoint(hitPoint);
+						if (polyRef) {
+							const startResult = navMeshQuery.findClosestPoint(player.position);
+							if (startResult.polyRef) {
+								const pathResult = navMeshQuery.computePath(startResult.point, point);
+								if (pathResult.success) {
+									path = pathResult.path;
+									currentPathIndex = 0;
+								}
+							}
+						}
+					}
+				}
+			}
+		
+			document.addEventListener('pointerdown', onPointerDown, false);
+			document.addEventListener('pointerup', onPointerUp, false);
+
+			const playerSpeed = 5;
+			const playerDirection = new t3d.Vector3();
+		
+			function updatePlayer(deltaTime) {
+				if (path && path.length > 0 && currentPathIndex < path.length) {
+					const targetPos = path[currentPathIndex];
+					const direction = playerDirection.copy(targetPos).sub(player.position);
+					const distance = direction.getLength();
+		
+					if (distance > 0.1) {
+						direction.normalize().multiplyScalar(playerSpeed * deltaTime);
+		
+						// Don't move further than the distance to the target
+						if (direction.getLength() > distance) {
+							direction.normalize().multiplyScalar(distance);
+						}
+		
+						player.position.add(direction);
+					} else {
+						// Close enough to the current path point, move to the next one
+						currentPathIndex++;
+					}
+				}
+			}
+
+			// GUI
+		
+			const gui = new GUI();
+		
+			const navMeshFolder = gui.addFolder('NavMesh Parameters');
+			navMeshFolder.add(navMeshConfig, 'cs', 0.05, 0.2, 0.01).name('Cell Size');
+			navMeshFolder.add(navMeshConfig, 'ch', 0.05, 0.2, 0.01).name('Cell Height');
+			navMeshFolder.add(navMeshConfig, 'walkableSlopeAngle', 0, 90, 1).name('Walkable Slope Angle');
+			navMeshFolder.add(navMeshConfig, 'walkableHeight', 0.1, 40, 0.1).name('Walkable Height');
+			navMeshFolder.add(navMeshConfig, 'walkableClimb', 0.1, 20, 0.1).name('Walkable Climb');
+			navMeshFolder.add(navMeshConfig, 'walkableRadius', 0.1, 10, 0.1).name('Walkable Radius');
+		
+			const advancedFolder = navMeshFolder.addFolder('Advanced').close();
+			advancedFolder.add(navMeshConfig, 'maxEdgeLen', 1, 50).name('Max Edge Length');
+			advancedFolder.add(navMeshConfig, 'maxSimplificationError', 0.1, 3).name('Simplification Error');
+			advancedFolder.add(navMeshConfig, 'minRegionArea', 1, 50).name('Min Region Area');
+			advancedFolder.add(navMeshConfig, 'mergeRegionArea', 1, 100).name('Merge Region Area');
+			advancedFolder.add(navMeshConfig, 'maxVertsPerPoly', 3, 12, 1).name('Max Verts Per Poly');
+			advancedFolder.add(navMeshConfig, 'detailSampleDist', 0, 10).name('Detail Sample Dist');
+			advancedFolder.add(navMeshConfig, 'detailSampleMaxError', 0, 2).name('Detail Sample Max Error');
+		
+			navMeshFolder.add({ generateNavMesh }, 'generateNavMesh').name('Generate NavMesh');
+		
+			const visFolder = gui.addFolder('Visualization').close();
+			visFolder.add(triangleSoupHelper, 'visible').name('NavMesh');
+			visFolder.add(player, 'visible').name('Player');
+		
+			const navMeshIO = gui.addFolder('NavMesh IO').close();
+			navMeshIO.add({
+				save: function() {
+					if (!navMesh) return;
+					const navmeshBuffer = exportNavMesh(navMesh);
+					downloadFile(navmeshBuffer, 'application/octet-stream', 'navmesh.bin');
+				}
+			}, 'save').name('Save NavMesh');
+
+			function downloadFile(data, type, filename) {
+				const blob = new Blob([data], { type });
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+			}
+
+			//
+
+			const timer = new Timer();
+
+			function loop(timestamp) {
+				requestAnimationFrame(loop);
+
+				timer.update(timestamp);
+
+				controller.update();
+
+				updatePlayer(timer.getDelta());
+
+				forwardRenderer.render(scene, camera);
+			}
+			requestAnimationFrame(loop);
+
+			function onWindowResize() {
+				width = window.innerWidth || 2;
+				height = window.innerHeight || 2;
+
+				camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+				forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+				canvas.style.width = width + 'px';
+				canvas.style.height = height + 'px';
+			}
+			window.addEventListener('resize', onWindowResize, false);
+		});
+	</script>
+</body>
+</html>

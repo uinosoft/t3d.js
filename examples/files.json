@@ -163,6 +163,13 @@
 		"physics_rapier",
 		"physics_rapier_character_controller"
 	],
+	"navigation": [
+		"navigation_recast_generation",
+		"navigation_recast_crowd",
+		"navigation_recast_obstacles",
+		"navigation_recast_walking",
+		"navigation_pathfinding"
+	],
 	"particle": [
 		"particle_particle"
 	],
@@ -246,7 +253,6 @@
 		"lab_geometry_images",
 		"lab_terrain",
 		"lab_water_simulation",
-		"lab_path_finding",
 		"lab_histogram",
 		"lab_linechart_fill"
 	]

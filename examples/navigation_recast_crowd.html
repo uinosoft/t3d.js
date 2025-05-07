@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - navigation recast crowd</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+<body>
+	<div id="info">
+		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d</a> - 
+		Navigation recast crowd using <a href="https://github.com/isaac-mason/recast-navigation-js" target="_blank">recast-navigation-js</a><br/>
+		<strong>Controls:</strong> Click to move all agents to that position
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/",
+				"@recast-navigation/core": "https://cdn.skypack.dev/@recast-navigation/core@latest"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { Timer } from 't3d/addons/misc/Timer.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { CapsuleGeometry } from 't3d/addons/geometries/CapsuleGeometry.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { TriangleSoupHelper } from 't3d/addons/objects/TriangleSoupHelper.js';
+		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { Raycaster } from 't3d/addons/Raycaster.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+		import { init, NavMeshQuery, Crowd, getNavMeshPositionsAndIndices, importNavMesh } from '@recast-navigation/core';
+
+		init().then(async () => {
+			let width = window.innerWidth || 2;
+			let height = window.innerHeight || 2;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width * window.devicePixelRatio;
+			canvas.height = height * window.devicePixelRatio;
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+			document.body.appendChild(canvas);
+
+			const forwardRenderer = new ForwardRenderer(canvas);
+
+			const scene = new t3d.Scene();
+
+			const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+			scene.add(ambientLight);
+
+			const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+			directionalLight.position.set(6, 10, 6);
+			directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			directionalLight.castShadow = true;
+			directionalLight.shadow.windowSize = 25;
+			directionalLight.shadow.mapSize.set(512, 512);
+			directionalLight.shadow.cameraNear = 0.1;
+			directionalLight.shadow.cameraFar = 50;
+			scene.add(directionalLight);
+
+			const camera = new t3d.Camera();
+			camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+			camera.position.set(0, 15, 15);
+			camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+			scene.add(camera);
+
+			const controller = new OrbitControls(camera, canvas);
+
+			// gltf loader
+
+			const nanobar = new Nanobar();
+			nanobar.el.style.background = 'gray';
+
+			const loadingManager = new t3d.LoadingManager(function() {
+				nanobar.go(100);
+				nanobar.el.style.background = 'transparent';
+			}, function(url, itemsLoaded, itemsTotal) {
+				if (itemsLoaded < itemsTotal) {
+					nanobar.go((itemsLoaded / itemsTotal) * 100);
+				}
+			});
+
+			const gltfLoader = new GLTFLoader(loadingManager);
+
+			// load the scene model
+
+			const { root: sceneModel } = await gltfLoader.load('./resources/navigation/level.glb')
+				.then(result => {
+					result.root.traverse(node => {
+						if (!node.isMesh) return;
+						node.castShadow = true;
+						node.receiveShadow = true;
+						GeometryUtils.computeNormals(node.geometry);
+					});
+					return result;
+				});
+			scene.add(sceneModel);
+
+			// init navigation
+
+			const navMesh = await fetch('./resources/navigation/level.nav.bin')
+				.then(response => response.arrayBuffer())
+				.then(data => {
+					const { navMesh } = importNavMesh(new Uint8Array(data));
+					return navMesh;
+				});
+
+			const navMeshQuery = new NavMeshQuery(navMesh);
+
+			const [positions, indices] = getNavMeshPositionsAndIndices(navMesh);
+		
+			const triangleSoup = new TriangleSoup();
+			triangleSoup.positions = positions;
+			triangleSoup.indices = indices;
+		
+			const triangleSoupHelper = new TriangleSoupHelper(triangleSoup);
+			triangleSoupHelper.wireframe(true);
+			triangleSoupHelper.position.y = 0.05;
+			scene.add(triangleSoupHelper);
+
+			// Create crowd and agents
+
+			const agentCount = 300;
+			const agentRadius = 0.05;
+
+			const crowd = new Crowd(navMesh, {
+				maxAgents: agentCount,
+				maxAgentRadius: agentRadius
+			});
+
+			const agentObjects = [];
+			const agentMap = new WeakMap();
+		
+			const agentGeometry = new CapsuleGeometry(agentRadius, 0.1, 10, 10);
+			for (let i = 0; i < agentCount; i++) {
+				const { randomPoint } =
+					navMeshQuery.findRandomPointAroundCircle({ x: -0.2, y: 3, z: 2.3 }, 2);
+		
+				const agent = crowd.addAgent(randomPoint, {
+					radius: agentRadius, // Radius of the agent. World Unit.
+					height: 0.2, // Heigh in World Unit.
+					maxAcceleration: 10.0, // Acceleration max in World Unit per second.
+					maxSpeed: 5.0, // Max speed in World Unit per second.
+					separationWeight: 0.5, // How hard the system will try to separate the agent. A Value of 0 means it will not try and agents might collide.
+					collisionQueryRange: agentRadius * 2, // The agent collision system will take care of others within that radius in World Unit.
+    				pathOptimizationRange: 0.0 // How the path will be optimized and made more straight.
+				});
+		
+				const agentMesh = new t3d.Mesh(agentGeometry, new t3d.LambertMaterial());
+				agentMesh.material.diffuse.setHSL(i / agentCount, 0.7, 0.5);
+				agentMesh.position.y = 0.1;
+				agentMesh.castShadow = true;
+				agentMesh.receiveShadow = true;
+		
+				const agentObject = new t3d.Object3D();
+				agentObject.position.copy(randomPoint);
+				agentObject.add(agentMesh);
+				scene.add(agentObject);
+
+				agentObjects.push(agentObject);
+				agentMap.set(agentObject, agent);
+			}
+
+			function updateAgents(dt) {
+				crowd.update(dt);
+
+				for (let i = 0, l = agentObjects.length; i < l; i++) {
+					const agentObject = agentObjects[i];
+					const agent = agentMap.get(agentObject);
+					if (agent) {
+						const position = agent.position();
+						agentObject.position.set(position.x, position.y, position.z);
+					}
+				}
+			}
+
+			// user interaction
+
+			const targetRadius = 1.5;
+
+			const markerSize = 0.2;
+			const targetMarker = new t3d.Mesh(
+				new t3d.BoxGeometry(markerSize, markerSize, markerSize),
+				new t3d.BasicMaterial()
+			);
+			targetMarker.material.diffuse.setRGB(1, 0.5, 0);
+			targetMarker.visible = false;
+			scene.add(targetMarker);
+		
+			const raycaster = new Raycaster();
+			const mouse = new t3d.Vector2();
+			const mouseDown = new t3d.Vector2();
+
+			function onPointerDown(event) {
+				mouseDown.x = (event.clientX / width) * 2 - 1;
+				mouseDown.y = -(event.clientY / height) * 2 + 1;
+			}
+
+			function onPointerUp(event) {
+				mouse.x = (event.clientX / width) * 2 - 1;
+				mouse.y = -(event.clientY / height) * 2 + 1;
+
+				if (
+					Math.abs(mouseDown.x - mouse.x) > 0.01 ||
+					Math.abs(mouseDown.y - mouse.y) > 0.01
+				) {
+					return;
+				}
+
+				raycaster.setFromCamera(mouse, camera);
+		
+				const intersects = raycaster.intersectObject(sceneModel, true);
+		
+				if (intersects.length > 0) {
+					const hitPoint = intersects[0].point;
+		
+					const { point, polyRef } = navMeshQuery.findClosestPoint(hitPoint);
+
+					if (polyRef) {
+						targetMarker.visible = true;
+						targetMarker.position.copy(point);
+
+						for (const agent of crowd.getAgents()) {
+							const { randomPoint } = navMeshQuery.findRandomPointAroundCircle(point, targetRadius);
+							agent.requestMoveTarget(randomPoint);
+						}
+					}
+				}
+			}
+
+			document.addEventListener('pointerdown', onPointerDown, false);
+			document.addEventListener('pointerup', onPointerUp, false);
+
+			// gui
+		
+			const gui = new GUI().close();
+			const debugFolder = gui.addFolder('Debug');
+			debugFolder.add(sceneModel, 'visible').name('Scene Model');
+			debugFolder.add(triangleSoupHelper, 'visible').name('Nav Mesh');
+		
+			//
+
+			const stats = new Stats();
+			stats.showPanel(0);
+			document.body.appendChild(stats.dom);
+
+			const timer = new Timer();
+
+			function loop(timestamp) {
+				requestAnimationFrame(loop);
+
+				stats.begin();
+
+				timer.update(timestamp);
+
+				controller.update();
+
+				const deltaTime = Math.min(timer.getDelta(), 1 / 60);
+		
+				updateAgents(deltaTime);
+		
+				forwardRenderer.render(scene, camera);
+
+				stats.end();
+			}
+			requestAnimationFrame(loop);
+
+			function onWindowResize() {
+				width = window.innerWidth || 2;
+				height = window.innerHeight || 2;
+
+				camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
+
+				forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+
+				canvas.style.width = width + 'px';
+				canvas.style.height = height + 'px';
+			}
+			window.addEventListener('resize', onWindowResize, false);
+		});
+	</script>
+</body>
+</html>
