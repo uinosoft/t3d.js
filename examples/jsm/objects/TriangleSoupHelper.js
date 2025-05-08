@@ -85,4 +85,16 @@ export class TriangleSoupHelper extends Object3D {
 		return this;
 	}
 
+	dispose() {
+		this.mesh.geometry.dispose();
+		this.mesh.material.dispose();
+
+		if (this.wireframeMesh) {
+			this.wireframeMesh.geometry.dispose();
+			this.wireframeMesh.material.dispose();
+		}
+
+		return this;
+	}
+
 }

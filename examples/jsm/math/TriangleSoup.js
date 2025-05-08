@@ -60,11 +60,11 @@ class TriangleSoup {
 
 			for (let i = 0, l = indexArray.length; i < l; i++) {
 				const copyIndex = indexAttribute.normalized ? MathUtils.denormalize(indexArray[i], indexArray) : indexArray[i];
-				indices.push(positionStart + copyIndex);
+				indices.push(positionStart / 3 + copyIndex);
 			}
 		} else {
 			for (let i = 0, l = positionArray.length / 3; i < l; i++) {
-				indices.push(positionStart + i);
+				indices.push(positionStart / 3 + i);
 			}
 		}
 

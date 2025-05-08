@@ -164,6 +164,7 @@
 		"physics_rapier_character_controller"
 	],
 	"navigation": [
+		"navigation_recast_generation",
 		"navigation_recast_walking",
 		"navigation_pathfinding"
 	],
