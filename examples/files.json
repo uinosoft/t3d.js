@@ -166,6 +166,7 @@
 	"navigation": [
 		"navigation_recast_generation",
 		"navigation_recast_crowd",
+		"navigation_recast_obstacles",
 		"navigation_recast_walking",
 		"navigation_pathfinding"
 	],
