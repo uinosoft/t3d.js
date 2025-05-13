@@ -130,10 +130,41 @@
 
 			selected = file;
 
+			 // Scroll the sidebar to show the selected link
+			scrollSelectedIntoView();
+
 			// Reveal "View source" button and set attributes to this example
 			viewSrcButton.style.display = '';
 			viewSrcButton.href = sourceCodeUrl + selected + '.html';
 			viewSrcButton.title = 'View source code for <' + getName(selected) + '> on Gitlab';
+		}
+
+		// Scroll sidebar to show the selected link
+		function scrollSelectedIntoView() {
+			if (selected && links[selected]) {
+				setTimeout(() => {
+					const selectedLink = links[selected];
+					const contentDiv = document.getElementById('content');
+					const containerRect = contentDiv.getBoundingClientRect();
+					const linkRect = selectedLink.getBoundingClientRect();
+
+					// Check if the link is outside the visible area of the sidebar
+					if (linkRect.top < containerRect.top || linkRect.bottom > containerRect.bottom) {
+						 // Mobile-friendly smooth scrolling
+						if ('scrollBehavior' in document.documentElement.style) {
+							// Modern browsers support smooth scrolling
+							contentDiv.scrollTo({
+								top: selectedLink.offsetTop - (contentDiv.clientHeight / 2) + (selectedLink.offsetHeight / 2),
+								behavior: 'smooth'
+							});
+						} else {
+							// Fallback for older browsers
+							const scrollTop = selectedLink.offsetTop - (contentDiv.clientHeight / 2) + (selectedLink.offsetHeight / 2);
+							contentDiv.scrollTop = Math.max(0, scrollTop);
+						}
+					}
+				}, 200); // Add a small delay to ensure DOM is fully rendered
+			}
 		}
 
 		function getName(file) {
