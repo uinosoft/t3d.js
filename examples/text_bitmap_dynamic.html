@@ -39,9 +39,9 @@
 		import * as t3d from 't3d';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
-		import { BitmapTextGeometry } from 't3d/addons/geometries/BitmapTextGeometry.js';
 		import { DynamicFont } from 't3d/addons/DynamicFont.js';
-		import { SDFTextShader } from 't3d/addons/shaders/SDFTextShader.js';
+		import { BitmapTextGeometry } from 't3d/addons/geometries/BitmapTextGeometry.js';
+		import { BitmapTextMaterial } from 't3d/addons/materials/BitmapTextMaterial.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -97,17 +97,13 @@
 		imageTexture.unpackAlignment = 1;
 		imageTexture.generateMipmaps = false;
 
-		const material = new t3d.ShaderMaterial(SDFTextShader);
-		material.transparent = true;
+		const material = new BitmapTextMaterial();
 		material.diffuseMap = imageTexture;
-		material.diffuse.setRGB(1, 1, 1);
-		material.uniforms.gamma = 8;
 		material.uniforms.shadowColor = [1, 0, 0];
 		material.uniforms.shadowOffset = [0.001, -0.001];
 		material.defines.OUTLINE = true;
 		material.uniforms.outlineColor = [0, 0.75, 1];
 		material.uniforms.outlineWidth = 0.06;
-		material.uniforms.outlineGamma = 2.134;
 		material.side = t3d.DRAW_SIDE.DOUBLE;
 
 		const meshScalar = 0.08;
@@ -160,8 +156,9 @@
 
 		const materialFolder = gui.addFolder('material').close();
 		materialFolder.addColor(material, 'diffuse').name('color');
-		materialFolder.add(material.uniforms, 'gamma', 0, 20, 0.01);
+		materialFolder.add(material, 'opacity', 0, 1, 0.1);
 		materialFolder.add(material.uniforms, 'halo', 0, 1, 0.01);
+		materialFolder.add(material.uniforms, 'gamma', 0, 20, 0.01);
 		materialFolder.add(material.defines, 'SHADOW').name('enable').onChange(value => {
 			material.needsUpdate = true;
 		});
@@ -182,7 +179,7 @@
 		debugFolder.add(debugParams, 'atlas');
 		debugFolder.add(debugParams, 'atlasScale', 0.01, 1, 0.01);
 		debugFolder.add({ SDF: false }, 'SDF').onChange(function(value) {
-			material.defines['DEBUG'] = value;
+			material.defines['BITMAP_TYPE'] = value ? 0 : 1;
 			material.needsUpdate = true;
 		});
 

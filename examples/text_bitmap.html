@@ -31,7 +31,7 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { BitmapTextGeometry } from 't3d/addons/geometries/BitmapTextGeometry.js';
-		import { MSDFTextShader } from 't3d/addons/shaders/MSDFTextShader.js';
+		import { BitmapTextMaterial } from 't3d/addons/materials/BitmapTextMaterial.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -76,13 +76,19 @@
 			};
 		
 			const geometry = new BitmapTextGeometry(params);
-			const material = new t3d.ShaderMaterial(MSDFTextShader);
+			const material = new BitmapTextMaterial();
+			material.defines.BITMAP_TYPE = 2;
 			material.transparent = true;
 			material.side = t3d.DRAW_SIDE.DOUBLE;
-			material.uniforms.uMap = atlas;
-
-			const debugMaterial = new t3d.BasicMaterial();
-			debugMaterial.side = t3d.DRAW_SIDE.DOUBLE;
+			material.diffuseMap = atlas;
+			material.uniforms.halo = 0.6;
+			material.uniforms.gamma = 4.0;
+			material.uniforms.shadowColor = [1, 0, 0];
+			material.uniforms.shadowOffset = [0.005, -0.005];
+			material.uniforms.shadowGamma = 2.0;
+			material.uniforms.outlineColor = [0, 0.75, 1];
+			material.uniforms.outlineWidth = 0.37;
+			material.uniforms.outlineGamma = 3.0;
 
 			const meshScalar = 0.08;
 		
@@ -99,10 +105,9 @@
 				mesh.position.y = -geometry.layout.height / 2 * meshScalar;
 			}
 
+			// gui
+
 			const gui = new GUI();
-			gui.add({ debug: false }, 'debug').onChange(value => {
-				mesh.material = value ? debugMaterial : material;
-			});
 			const geometryFolder = gui.addFolder('geometry').onChange(updateTexts);
 			geometryFolder.add(params, 'text');
 			geometryFolder.add(params, 'width', 0, 1000, 1);
@@ -111,23 +116,34 @@
 			geometryFolder.add(params, 'letterSpacing', 0, 100, 1);
 			geometryFolder.add(params, 'lineHeight', 0, 100, 1);
 			geometryFolder.add(params, 'tabSize', 0, 100, 1);
+
 			const materialFolder = gui.addFolder('material').close();
 			materialFolder.addColor(material, 'diffuse').name('color');
 			materialFolder.add(material, 'opacity', 0, 1, 0.1);
-			materialFolder.add(material.uniforms, 'uAlphaTest', 0, 1, 0.1);
-			const strokeFolder = materialFolder.addFolder('stroke').close();
-			strokeFolder.add(material.defines, 'IS_STOKED').onChange(value => {
+			materialFolder.add(material.uniforms, 'halo', 0, 1, 0.01);
+			materialFolder.add(material.uniforms, 'gamma', 0, 20, 0.01);
+			materialFolder.add(material.defines, 'SHADOW').name('enable').onChange(value => {
 				material.needsUpdate = true;
 			});
-			strokeFolder.addColor(material.uniforms, 'uStrokeColor');
-			strokeFolder.add(material.uniforms, 'uStrokeInsetWidth', 0, 0.5, 0.01);
-			strokeFolder.add(material.uniforms, 'uStrokeOutsetWidth', 0, 0.5, 0.01);
-			const smallFolder = materialFolder.addFolder('small').close();
-			smallFolder.add(material.defines, 'IS_SMALL').onChange(value => {
+			materialFolder.addColor(material.uniforms, 'shadowColor');
+			materialFolder.add(material.uniforms.shadowOffset, '0', -0.02, 0.02, 0.001).name('offectX');
+			materialFolder.add(material.uniforms.shadowOffset, '1', -0.02, 0.02, 0.001).name('offectY');
+			materialFolder.add(material.uniforms, 'shadowGamma', 0, 5, 0.001);
+			materialFolder.add(material.defines, 'OUTLINE').name('enable').onChange(value => {
 				material.needsUpdate = true;
 			});
-			smallFolder.add(material.uniforms, 'uThreshold', 0, 0.5, 0.01);
+			materialFolder.addColor(material.uniforms, 'outlineColor');
+			materialFolder.add(material.uniforms, 'outlineWidth', 0, 0.5, 0.001);
+			materialFolder.add(material.uniforms, 'outlineGamma', 0, 5, 0.001);
+
+			const debugFolder = gui.addFolder('debug').close();
+			debugFolder.add({ debug: false }, 'debug').onChange(value => {
+				mesh.material.defines.BITMAP_TYPE = value ? 0 : 2;
+				mesh.material.needsUpdate = true;
+			});
 		});
+
+		//
 
 		function loop(count) {
 			requestAnimationFrame(loop);

@@ -72,7 +72,7 @@ class BitmapTextGeometry extends Geometry {
 		this._visibleGlyphs = glyphs;
 
 		// get vertex data
-		const attributes1 = attributes(glyphs, texWidth, texHeight, flipY, this._layout);
+		const attributes = generateAttributes(glyphs, texWidth, texHeight, flipY, font.info.size);
 		const numIndices = glyphs.length * 6;
 		const indices = new Array(numIndices);
 		for (let i = 0, j = 0; i < numIndices; i += 6, j += 4) {
@@ -85,8 +85,9 @@ class BitmapTextGeometry extends Geometry {
 		}
 
 		// set vertex data
-		this.addAttribute('a_Position', new Attribute(new Buffer(attributes1.positions, 3)));
-		this.addAttribute('a_Uv', new Attribute(new Buffer(attributes1.uvs, 2)));
+		this.addAttribute('a_Position', new Attribute(new Buffer(attributes.positions, 3)));
+		this.addAttribute('a_Uv', new Attribute(new Buffer(attributes.uvs, 2)));
+		this.addAttribute('a_Size', new Attribute(new Buffer(attributes.sizes, 2)));
 		this.setIndex(indices);
 
 		this.computeBoundingBox();
@@ -108,21 +109,20 @@ class BitmapTextGeometry extends Geometry {
 
 }
 
-function attributes(glyphs, texWidth, texHeight, flipY, layout) {
+function generateAttributes(glyphs, texWidth, texHeight, flipY, fontSize) {
 	const uvs = new Float32Array(glyphs.length * 4 * 2);
-	const layoutUvs = new Float32Array(glyphs.length * 4 * 2);
 	const positions = new Float32Array(glyphs.length * 4 * 3);
-	const centers = new Float32Array(glyphs.length * 4 * 2);
+	const sizes = new Float32Array(glyphs.length * 4 * 2);
 
 	let i = 0;
 	let j = 0;
 	let k = 0;
-	let l = 0;
 
 	glyphs.forEach(function(glyph) {
 		const bitmap = glyph.data;
 
-		// UV
+		// UV: texture coordinates
+
 		const bw = (bitmap.x + bitmap.width);
 		const bh = (bitmap.y + bitmap.height);
 
@@ -150,23 +150,7 @@ function attributes(glyphs, texWidth, texHeight, flipY, layout) {
 		uvs[i++] = u1;
 		uvs[i++] = v1;
 
-		// Layout UV: Text block UVS
-
-		// BL
-		layoutUvs[l++] = glyph.position[0] / layout.width;
-		layoutUvs[l++] = (glyph.position[1] + layout.height) / layout.height;
-
-		// TL
-		layoutUvs[l++] = glyph.position[0] / layout.width;
-		layoutUvs[l++] = (glyph.position[1] + layout.height + bitmap.height) / layout.height;
-		// TR
-		layoutUvs[l++] = (glyph.position[0] + bitmap.width) / layout.width;
-		layoutUvs[l++] = (glyph.position[1] + layout.height + bitmap.height) / layout.height;
-		// BR
-		layoutUvs[l++] = (glyph.position[0] + bitmap.width) / layout.width;
-		layoutUvs[l++] = (glyph.position[1] + layout.height) / layout.height;
-
-		// Positions, Centers
+		// Position: the position of the quad vertices
 
 		// bottom left position
 		const x = glyph.position[0] + bitmap.xoffset;
@@ -176,8 +160,6 @@ function attributes(glyphs, texWidth, texHeight, flipY, layout) {
 		const w = bitmap.width;
 		const h = bitmap.height;
 
-		// Position
-
 		// BL
 		positions[j++] = x;
 		positions[j++] = y;
@@ -195,21 +177,24 @@ function attributes(glyphs, texWidth, texHeight, flipY, layout) {
 		positions[j++] = y;
 		positions[j++] = 0;
 
-		// Center
-		centers[k++] = x + w / 2;
-		centers[k++] = y + h / 2;
+		// Size: The size in the unit of 1,0,0 for the standard size of the text.
+		// Currently used to measure the anti-aliasing scaling ratio in the shader.
 
-		centers[k++] = x + w / 2;
-		centers[k++] = y + h / 2;
-
-		centers[k++] = x + w / 2;
-		centers[k++] = y + h / 2;
-
-		centers[k++] = x + w / 2;
-		centers[k++] = y + h / 2;
+		// BL
+		sizes[k++] = 0;
+		sizes[k++] = 0;
+		// TL
+		sizes[k++] = 0;
+		sizes[k++] = h / fontSize;
+		// TR
+		sizes[k++] = w / fontSize;
+		sizes[k++] = h / fontSize;
+		// BR
+		sizes[k++] = w / fontSize;
+		sizes[k++] = 0;
 	});
 
-	return { uvs, layoutUvs, positions, centers };
+	return { uvs, positions, sizes };
 }
 
 /**
