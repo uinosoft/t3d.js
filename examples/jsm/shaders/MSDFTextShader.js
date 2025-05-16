@@ -1,3 +1,5 @@
+console.warn('MSDFTextShader has been deprecated since v0.4.1.');
+
 // reference - https://github.com/leochocolat/three-msdf-text-utils/tree/main/src/MSDFTextMaterial/shaders
 const MSDFTextShader = {
 	name: 'msdf_text',
@@ -24,10 +26,10 @@ const MSDFTextShader = {
 		uniform mat4 u_Model;
 
 		varying vec2 v_Uv;
-		
+
 		void main() {
 			gl_Position = u_ProjectionView * u_Model * vec4(a_Position, 1.0);
-			v_Uv = a_Uv;  
+			v_Uv = a_Uv;
 		}
 	`,
 
@@ -35,10 +37,10 @@ const MSDFTextShader = {
 		uniform vec3 u_Color;
 		uniform float u_Opacity;
 
-		uniform sampler2D uMap; 
+		uniform sampler2D uMap;
 
 		uniform float uAlphaTest;
-		
+
 		uniform vec3 uStrokeColor;
 		uniform float uStrokeOutsetWidth;
 		uniform float uStrokeInsetWidth;

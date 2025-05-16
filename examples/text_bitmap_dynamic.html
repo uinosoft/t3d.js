@@ -138,6 +138,15 @@
 			geometry.update(params);
 		}
 
+		function updateBillboard() {
+			if (material.defines.BILLBOARD && !material.defines.SIZEATTENUATION) {
+				mesh.scale.set(1, 1, 1).multiplyScalar(0.0005);
+			} else {
+				mesh.scale.set(1, 1, 1).multiplyScalar(meshScalar);
+			}
+			material.needsUpdate = true;
+		}
+
 		const gui = new GUI();
 
 		const geometryFolder = gui.addFolder('geometry').onChange(updateTexts);
@@ -153,19 +162,27 @@
 		materialFolder.add(material, 'opacity', 0, 1, 0.1);
 		materialFolder.add(material.uniforms, 'halo', 0, 1, 0.01);
 		materialFolder.add(material.uniforms, 'gamma', 0, 20, 0.01);
-		materialFolder.add(material.defines, 'SHADOW').name('enable').onChange(value => {
+		
+		const shadowFolder = materialFolder.addFolder('shadow');
+		shadowFolder.add(material.defines, 'SHADOW').name('enable').onChange(value => {
 			material.needsUpdate = true;
 		});
-		materialFolder.addColor(material.uniforms, 'shadowColor');
-		materialFolder.add(material.uniforms.shadowOffset, '0', -0.02, 0.02, 0.001).name('offectX');
-		materialFolder.add(material.uniforms.shadowOffset, '1', -0.02, 0.02, 0.001).name('offectY');
-		materialFolder.add(material.uniforms, 'shadowGamma', 0, 10, 0.001);
-		materialFolder.add(material.defines, 'OUTLINE').name('enable').onChange(value => {
+		shadowFolder.addColor(material.uniforms, 'shadowColor');
+		shadowFolder.add(material.uniforms.shadowOffset, '0', -0.02, 0.02, 0.001).name('offectX');
+		shadowFolder.add(material.uniforms.shadowOffset, '1', -0.02, 0.02, 0.001).name('offectY');
+		shadowFolder.add(material.uniforms, 'shadowGamma', 0, 10, 0.001);
+
+		const outlineFolder = materialFolder.addFolder('outline');
+		outlineFolder.add(material.defines, 'OUTLINE').name('enable').onChange(value => {
 			material.needsUpdate = true;
 		});
-		materialFolder.addColor(material.uniforms, 'outlineColor');
-		materialFolder.add(material.uniforms, 'outlineWidth', 0, 0.1, 0.001);
-		materialFolder.add(material.uniforms, 'outlineGamma', 0, 10, 0.001);
+		outlineFolder.addColor(material.uniforms, 'outlineColor');
+		outlineFolder.add(material.uniforms, 'outlineWidth', 0, 0.1, 0.001);
+		outlineFolder.add(material.uniforms, 'outlineGamma', 0, 10, 0.001);
+
+		const billboardFolder = materialFolder.addFolder('billboard').onChange(updateBillboard);
+		billboardFolder.add(material.defines, 'BILLBOARD');
+		billboardFolder.add(material.defines, 'SIZEATTENUATION');
 
 		const debugParams = { atlas: true, atlasScale: 0.2 };
 
