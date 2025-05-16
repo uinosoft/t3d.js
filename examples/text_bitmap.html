@@ -50,7 +50,6 @@
 
 		const camera = new t3d.Camera();
 		camera.position.set(0, 0, 100);
-		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 0, 1));
 		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		scene.add(camera);
 
@@ -72,7 +71,9 @@
 				align: 'center',
 				letterSpacing: 0,
 				lineHeight: 100,
-				tabSize: 1
+				tabSize: 1,
+				centerX: 0,
+				centerY: 0
 			};
 		
 			const geometry = new BitmapTextGeometry(params);
@@ -94,15 +95,14 @@
 		
 			const mesh = new t3d.Mesh(geometry, material);
 			mesh.scale.set(1, 1, 1).multiplyScalar(meshScalar);
-			mesh.euler.x = Math.PI;
 			mesh.position.x = -geometry.layout.width / 2 * meshScalar;
-			mesh.position.y = -geometry.layout.height / 2 * meshScalar;
+			mesh.position.y = geometry.layout.height / 2 * meshScalar;
 			scene.add(mesh);
 
 			function updateTexts() {
 				geometry.update(params);
 				mesh.position.x = -geometry.layout.width / 2 * meshScalar;
-				mesh.position.y = -geometry.layout.height / 2 * meshScalar;
+				mesh.position.y = geometry.layout.height / 2 * meshScalar;
 			}
 
 			// gui

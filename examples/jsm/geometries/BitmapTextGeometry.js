@@ -18,6 +18,8 @@ class BitmapTextGeometry extends Geometry {
 	 * @param {number} [options.baseline=font.common.base] - the baseline height in pixels
 	 * @param {number} [options.lineHeight=font.common.lineHeight] - the line height in pixels
 	 * @param {boolean} [options.flipY=true] - whether the texture will be Y-flipped (default true)
+	 * @param {number} [options.centerX=0.5] - the center of the text in X axis, 0.5 is center, 0 is left, 1 is right
+	 * @param {number} [options.centerY=0.5] - the center of the text in Y axis, 0.5 is center, 0 is top, 1 is bottom
 	 */
 	constructor(options) {
 		super();
@@ -91,6 +93,22 @@ class BitmapTextGeometry extends Geometry {
 		this.setIndex(indices);
 
 		this.computeBoundingBox();
+
+		const centerX = options.centerX !== undefined ? options.centerX : 0.5;
+		const centerY = options.centerY !== undefined ? (1 - options.centerY) : 0.5;
+		if (centerX !== 0 || centerY !== 0) {
+			const xOffset = (this.boundingBox.max.x - this.boundingBox.min.x) * centerX;
+			const yOffset = (this.boundingBox.max.y - this.boundingBox.min.y) * centerY;
+
+			const positions = this.attributes.a_Position.buffer.array;
+			for (let i = 0, l = positions.length; i < l; i += 3) {
+				positions[i] -= xOffset;
+				positions[i + 1] -= yOffset;
+			}
+
+			this.computeBoundingBox();
+		}
+
 		this.computeBoundingSphere();
 	}
 
@@ -162,19 +180,19 @@ function generateAttributes(glyphs, texWidth, texHeight, flipY, fontSize) {
 
 		// BL
 		positions[j++] = x;
-		positions[j++] = y;
+		positions[j++] = -y;
 		positions[j++] = 0;
 		// TL
 		positions[j++] = x;
-		positions[j++] = y + h;
+		positions[j++] = -(y + h);
 		positions[j++] = 0;
 		// TR
 		positions[j++] = x + w;
-		positions[j++] = y + h;
+		positions[j++] = -(y + h);
 		positions[j++] = 0;
 		// BR
 		positions[j++] = x + w;
-		positions[j++] = y;
+		positions[j++] = -y;
 		positions[j++] = 0;
 
 		// Size: The size in the unit of 1,0,0 for the standard size of the text.
