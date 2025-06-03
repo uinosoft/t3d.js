@@ -5,6 +5,7 @@
 [![Issues][issues-badge]][issues-badge-url]
 [![DeepScan grade][deepscan]][deepscan-url]
 [![Discord][discord]][discord-url]
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/uinosoft/t3d.js)
 
 ThingJS 3D Engine (t3d) is a lightweight, web-first, and extendable 3D rendering library. It is used by ThingJS for web3d rendering, but can also be used as a standalone library.
 
@@ -60,11 +61,12 @@ import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 * https://cdn.jsdelivr.net/npm/t3d@latest/build/t3d.min.js
 * https://cdn.jsdelivr.net/npm/t3d@latest/build/t3d.module.min.js
 
-## Usage
+## Quick Start
 
-Draw a simple cube:
+Create a simple rotating cube with PBR materials:
 
 ````javascript
+// Initialize renderer with WebGL2
 const width = window.innerWidth || 2;
 const height = window.innerHeight || 2;
 
@@ -73,6 +75,7 @@ canvas.width = width;
 canvas.height = height;
 document.body.appendChild(canvas);
 
+// Create WebGL2 context and renderer
 const gl = canvas.getContext('webgl2', {
   antialias: true,
   alpha: false
@@ -81,13 +84,16 @@ const renderer = new t3d.WebGLRenderer(gl);
 renderer.setClearColor(0.1, 0.1, 0.1, 1);
 const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
+// Create scene
 const scene = new t3d.Scene();
 
+// Create mesh with PBR material
 const geometry = new t3d.BoxGeometry(8, 8, 8);
 const material = new t3d.PBRMaterial();
 const mesh = new t3d.Mesh(geometry, material);
 scene.add(mesh);
 
+// Add lighting
 const ambientLight = new t3d.AmbientLight(0xffffff);
 scene.add(ambientLight);
 
@@ -96,21 +102,25 @@ directionalLight.position.set(-5, 5, 5);
 directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
 scene.add(directionalLight);
 
+// Set up camera
 const camera = new t3d.Camera();
 camera.position.set(0, 10, 30);
 camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 scene.add(camera);
 
+// Animation loop
 function loop(count) {
   requestAnimationFrame(loop);
 
-  mesh.euler.y = count / 1000 * .5; // rotate cube
+  // Rotate cube
+  mesh.euler.y = count / 1000 * .5;
 
   scene.updateMatrix();
   scene.updateRenderStates(camera);
   scene.updateRenderQueue(camera);
 
+  // Render scene
   renderer.setRenderTarget(backRenderTarget);
   renderer.clear(true, true, false);
   renderer.renderScene(scene, camera);
