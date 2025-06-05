@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - clouds shader</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+		<a href="" target="_blank">t3d</a> - clouds shader<br/>
+		Original shader by <a href="https://www.shadertoy.com/view/lsBfDz" target="_blank">stubbe on ShaderToy</a>
+	</div>
+
+	<script async src="./libs/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+
+		const renderer = new t3d.WebGLRenderer(gl);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const CloudsShader = {
+			name: 'Clouds',
+			uniforms: {
+				'u_CloudNoise': null,
+				'u_Time': 0
+			},
+			vertexShader: /* glsl */`
+				attribute vec3 a_Position;
+				attribute vec2 a_Uv;
+				varying vec2 v_Uv;
+				void main() {
+					gl_Position = vec4(a_Position, 1.0);
+					v_Uv = a_Uv;
+				}
+			`,
+			fragmentShader: /* glsl */`
+				uniform sampler2D u_CloudNoise;
+				uniform vec2 u_RenderTargetSize;
+				uniform float u_Time;
+				varying vec2 v_Uv;
+				#define T texture2D(u_CloudNoise, (s * p.zw + ceil(s * p.x)) / 200.0).y / (s += s) * 4.0
+				void main() {
+					vec2 x = v_Uv * u_RenderTargetSize;
+					vec2 zw = x / u_RenderTargetSize.y - 0.8;
+					vec4 p, d = vec4(0.8, 0.0, zw.x, zw.y);
+					vec4 c = vec4(0.6, 0.7, d.x, d.y);
+					vec4 O = c - d.w;
+					float f, s, t = 200.0 + sin(dot(x, x));
+					for (; --t > 0.0; p = 0.05 * t * d) {
+						p.xz += u_Time;
+						s = 2.0;
+						f = p.w + 1.0 - T - T - T - T;
+						if (f < 0.0) {
+							O += (O - 1.0 - f * c.zyxw) * f * 0.4;
+						}
+					}
+					gl_FragColor = O;
+				}
+			`
+		};
+
+		let cloudsPass;
+
+		new Texture2DLoader().loadAsync('./resources/cloudNoise.png').then(texture => {
+			texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
+			texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+		
+			cloudsPass = new t3d.ShaderPostPass(CloudsShader);
+			cloudsPass.uniforms['u_CloudNoise'] = texture;
+		});
+
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
+
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.setClearColor(0, 0, 0, 0);
+			renderer.clear(true, true, true);
+
+			if (cloudsPass) {
+				cloudsPass.uniforms['u_Time'] = timestamp * 0.0005;
+				cloudsPass.render(renderer);
+			}
+		}
+		requestAnimationFrame(loop);
+
+		window.addEventListener('resize', () => {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+		
+			backRenderTarget.resize(width, height);
+		});
+	</script>
+</body>
+</html> 
