@@ -99,8 +99,6 @@
 
 		sketchPass.uniforms['normalTexture'] = gBuffer.getNormalGlossinessTexture();
 		sketchPass.uniforms['depthTexture'] = gBuffer.getDepthTexture();
-		sketchPass.uniforms['invResolution'][0] = 1 / width;
-		sketchPass.uniforms['invResolution'][1] = 1 / height;
 
 		const copyPass = new t3d.ShaderPostPass(CopyShader);
 		copyPass.material.transparent = true;
@@ -179,9 +177,6 @@
 			gBuffer.resize(width, height);
 
 			tempRenderTarget2.resize(width, height);
-
-			sketchPass.uniforms['invResolution'][0] = 1 / width;
-			sketchPass.uniforms['invResolution'][1] = 1 / height;
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

@@ -139,7 +139,6 @@
 		
 		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
 		fxaaPass.uniforms['tDiffuse'] = tempRenderTarget.texture;
-		fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 
 		const params = { fxaa: true };
 		const gui = new GUI();
@@ -174,8 +173,6 @@
 
 			deferredRenderer.resize(width, height);
 			tempRenderTarget.resize(width, height);
-
-			fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

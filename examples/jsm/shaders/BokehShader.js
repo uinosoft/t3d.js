@@ -13,8 +13,6 @@ const BokehShader = {
 		'tColor': null,
 		'tDepth': null,
 
-		'resolution': [1 / 512, 1 / 512],
-
 		'znear': 0.1,
 		'zfar': 100,
 
@@ -51,7 +49,7 @@ const BokehShader = {
 		uniform sampler2D tColor;
 		uniform sampler2D tDepth;
 
-		uniform vec2 resolution;
+		uniform vec2 u_RenderTargetSize;
 
 		uniform float znear;
 		uniform float zfar;
@@ -116,8 +114,9 @@ const BokehShader = {
 
 			// getting blur x and y step factor
 
-			float w = resolution.x * blur * maxblur + noise.x;
-			float h = resolution.y * blur * maxblur + noise.y;
+			vec2 pixelSize = 1.0 / u_RenderTargetSize;
+			float w = pixelSize.x * blur * maxblur + noise.x;
+			float h = pixelSize.y * blur * maxblur + noise.y;
 
 			// calculation of final color
 

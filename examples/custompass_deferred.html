@@ -580,8 +580,6 @@
 				} else if (params.pass === 'result') {
 					pass.uniforms['tDiffuse'] = resultRenderTarget.texture;
 				}
-
-				fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 		
 				pass.render(renderer);
 			}

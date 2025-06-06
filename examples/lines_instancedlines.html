@@ -59,8 +59,6 @@
 		const instancedLine = new InstancedLine();
 		instancedLine.material.uniforms.lineWidth = params.lineWidth;
 		instancedLine.material.uniforms.cornerThreshold = params.cornerThreshold;
-		instancedLine.material.uniforms.resolution[0] = width;
-		instancedLine.material.uniforms.resolution[1] = height;
 		instancedLine.material.diffuse.setRGB(0, 245 / 255, 255 / 255);
 		instancedLine.geometry.setFromPoints(points);
 		instancedLine.position.set(-100, 0, 0);
@@ -72,8 +70,6 @@
 		instancedLine2.material.defines.LINE_BREAK = true;
 		instancedLine2.material.uniforms.lineWidth = params.lineWidth;
 		instancedLine2.material.uniforms.cornerThreshold = params.cornerThreshold;
-		instancedLine2.material.uniforms.resolution[0] = width;
-		instancedLine2.material.uniforms.resolution[1] = height;
 		instancedLine2.material.diffuseMap = texture;
 		instancedLine2.material.diffuseMapTransform.setUvTransform(0, 0, 0.002, 1, 0, 0.5, 0.5);
 		instancedLine2.geometry.setFromPoints(points, [2, 5]); // Mark line break at index 2 & 5
@@ -126,11 +122,6 @@
 			height = window.innerHeight || 2;
 
 			camera.setPerspective(75 / 180 * Math.PI, width / height, 1, 500);
-
-			instancedLine.material.uniforms.resolution[0] = width;
-			instancedLine.material.uniforms.resolution[1] = height;
-			instancedLine2.material.uniforms.resolution[0] = width;
-			instancedLine2.material.uniforms.resolution[1] = height;
 
 			forwardRenderer.backRenderTarget.resize(width, height);
 		}

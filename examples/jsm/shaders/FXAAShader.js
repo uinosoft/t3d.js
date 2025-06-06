@@ -8,8 +8,7 @@ const FXAAShader = {
 	name: 'fxaa',
 
 	uniforms: {
-		'tDiffuse': null,
-		'resolution': [1 / 1024, 1 / 512]
+		'tDiffuse': null
 	},
 
 	vertexShader: `
@@ -30,11 +29,11 @@ const FXAAShader = {
 	fragmentShader: `
 		uniform sampler2D tDiffuse;
 		varying vec2 v_Uv;
-		
-		uniform vec2 resolution;  
-		
+
+		uniform vec2 u_RenderTargetSize;
+
 		// FXAA 3.11 implementation by NVIDIA, ported to WebGL by Agost Biro (biro@archilogic.com)
-		
+
 		//----------------------------------------------------------------------------------
 		// File:        es3-kepler/FXAA/assets/shaders/FXAA_DefaultES.frag
 		// SDK Version: v3.00
@@ -68,13 +67,13 @@ const FXAAShader = {
 		// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		//
 		//----------------------------------------------------------------------------------
-		
+
 		#define FXAA_PC 1
 		#define FXAA_GLSL_100 1
 		#define FXAA_QUALITY_PRESET 39
-		
+
 		#define FXAA_GREEN_AS_LUMA 1
-		
+
 		/*--------------------------------------------------------------------------*/
 		#ifndef FXAA_PC_CONSOLE
 			//
@@ -192,8 +191,8 @@ const FXAAShader = {
 				#define FXAA_GATHER4_ALPHA 0
 			#endif
 		#endif
-		
-		
+
+
 		/*============================================================================
 								FXAA QUALITY - TUNING KNOBS
 		------------------------------------------------------------------------------
@@ -222,14 +221,14 @@ const FXAAShader = {
 			//
 			#define FXAA_QUALITY_PRESET 12
 		#endif
-		
-		
+
+
 		/*============================================================================
-		
+
 								FXAA QUALITY - PRESETS
-		
+
 		============================================================================*/
-		
+
 		/*============================================================================
 							FXAA QUALITY - MEDIUM DITHER PRESETS
 		============================================================================*/
@@ -289,7 +288,7 @@ const FXAAShader = {
 			#define FXAA_QUALITY_P6 4.0
 			#define FXAA_QUALITY_P7 12.0
 		#endif
-		
+
 		/*============================================================================
 							FXAA QUALITY - LOW DITHER PRESETS
 		============================================================================*/
@@ -407,7 +406,7 @@ const FXAAShader = {
 			#define FXAA_QUALITY_P10 4.0
 			#define FXAA_QUALITY_P11 8.0
 		#endif
-		
+
 		/*============================================================================
 							FXAA QUALITY - EXTREME QUALITY
 		============================================================================*/
@@ -426,13 +425,13 @@ const FXAAShader = {
 			#define FXAA_QUALITY_P10 4.0
 			#define FXAA_QUALITY_P11 8.0
 		#endif
-		
-		
-		
+
+
+
 		/*============================================================================
-		
+
 										API PORTING
-		
+
 		============================================================================*/
 		#if (FXAA_GLSL_100 == 1) || (FXAA_GLSL_120 == 1) || (FXAA_GLSL_130 == 1)
 			#define FxaaBool bool
@@ -525,8 +524,8 @@ const FXAAShader = {
 			#define FxaaTexGreen4(t, p) t.tex.GatherGreen(t.smpl, p)
 			#define FxaaTexOffGreen4(t, p, o) t.tex.GatherGreen(t.smpl, p, o)
 		#endif
-		
-		
+
+
 		/*============================================================================
 						GREEN AS LUMA OPTION SUPPORT FUNCTION
 		============================================================================*/
@@ -535,14 +534,14 @@ const FXAAShader = {
 		#else
 			FxaaFloat FxaaLuma(FxaaFloat4 rgba) { return rgba.y; }
 		#endif
-		
-		
-		
-		
+
+
+
+
 		/*============================================================================
-		
+
 									FXAA3 QUALITY - PC
-		
+
 		============================================================================*/
 		#if (FXAA_PC == 1)
 		/*--------------------------------------------------------------------------*/
@@ -1080,7 +1079,7 @@ const FXAAShader = {
 		}
 		/*==========================================================================*/
 		#endif
-		
+
 		void main() {
 			gl_FragColor = FxaaPixelShader(
 				v_Uv,
@@ -1088,7 +1087,7 @@ const FXAAShader = {
 				tDiffuse,
 				tDiffuse,
 				tDiffuse,
-				resolution,
+				1.0 / u_RenderTargetSize,
 				vec4(0.0),
 				vec4(0.0),
 				vec4(0.0),
@@ -1100,7 +1099,7 @@ const FXAAShader = {
 				0.0,
 				vec4(0.0)
 			);
-			
+
 			// TODO avoid querying texture twice for same texel
 			gl_FragColor.a = texture2D(tDiffuse, v_Uv).a;
 		}

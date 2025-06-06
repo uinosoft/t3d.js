@@ -4,7 +4,6 @@ const MotionBlur2Shader = {
 	uniforms: {
 		'tMotion': null,
 		'tColor': null,
-		'screenSize': [1024, 512],
 		'velocityFactor': 1.0
 	},
 
@@ -26,17 +25,17 @@ const MotionBlur2Shader = {
 
 	fragmentShader: `
 		#define SAMPLES 64.0
-		
+
         varying vec2 v_Uv;
 
         uniform sampler2D tMotion;
         uniform sampler2D tColor;
 
         uniform float velocityFactor;
-        uniform vec2 screenSize;
+        uniform vec2 u_RenderTargetSize;
 
         void main() {
-			vec2 texelSize = 1.0 / screenSize;
+			vec2 texelSize = 1.0 / u_RenderTargetSize;
 			vec4 velocityColor = texture2D(tMotion, v_Uv);
 			velocityColor.rg = velocityColor.rg * 2.0 - vec2(1.0);
 			vec2 velocity = vec2(velocityColor.r, velocityColor.g) * velocityColor.a;

@@ -95,7 +95,6 @@
 
 		const shadowMapPass = new t3d.ShadowMapPass();
 		const blurPass = new t3d.ShaderPostPass(FastGaussianBlurShader);
-		blurPass.uniforms['resolution'] = [1 / width, 1 / height];
 
 		// gui
 		const params = { radius: 5 };
@@ -155,8 +154,6 @@
 			backRenderTarget.resize(width, height);
 			tempRenderTarget1.resize(width, height);
 			tempRenderTarget2.resize(width, height);
-
-			blurPass.uniforms['resolution'] = [1 / width, 1 / height];
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

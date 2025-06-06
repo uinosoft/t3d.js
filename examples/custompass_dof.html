@@ -127,8 +127,6 @@
 		const dofPass = new t3d.ShaderPostPass(BokehShader);
 		dofPass.uniforms['focalDepth'] = 35.36;
 		dofPass.uniforms['focalLength'] = 50;
-		dofPass.uniforms['resolution'][0] = 1 / width;
-		dofPass.uniforms['resolution'][1] = 1 / height;
 		dofPass.uniforms['znear'] = 1;
 		dofPass.uniforms['zfar'] = 500;
 		dofPass.uniforms['gain'] = 0.1;
@@ -207,9 +205,6 @@
 			gBuffer.resize(width, height);
 
 			tempRenderTarget.resize(width, height);
-
-			dofPass.uniforms['resolution'][0] = 1 / width;
-			dofPass.uniforms['resolution'][1] = 1 / height;
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

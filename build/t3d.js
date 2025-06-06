@@ -18826,6 +18826,8 @@
 					uniform.set(scale);
 				} else if (key === 'clippingPlanes') {
 					uniform.set(clippingPlanesData);
+				} else if (key === 'u_RenderTargetSize') {
+					uniform.setValue(currentRenderTarget.width, currentRenderTarget.height);
 				}
 			}
 			const frontFaceCW = object.worldMatrix.determinant() < 0;

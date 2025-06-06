@@ -9,7 +9,6 @@ const SketchShader = {
 	uniforms: {
 		normalTexture: null,
 		depthTexture: null,
-		invResolution: new Float32Array([1 / 512, 1 / 512]),
 		uThreshold: 0.55,
 		uContrast: 0.5,
 		matProjViewInverse: new Float32Array(16),
@@ -36,7 +35,7 @@ const SketchShader = {
 
 		uniform sampler2D normalTexture;
 		uniform sampler2D depthTexture;
-		uniform vec2 invResolution;
+		uniform vec2 u_RenderTargetSize;
 		uniform float uThreshold;
 		uniform float uContrast;
 		uniform mat4 matProjViewInverse;
@@ -63,10 +62,11 @@ const SketchShader = {
 
 		vec4 shade() {
 			vec2 vFragCoord = v_Uv;
-			vec2 coordUp = vFragCoord - vec2(0.0, invResolution.y);
-			vec2 coordDown = vFragCoord + vec2(0.0, invResolution.y);
-			vec2 coordLeft = vFragCoord - vec2(invResolution.x, 0.0);
-			vec2 coordRight = vFragCoord + vec2(invResolution.x, 0.0);
+			vec2 pixelSize = 1.0 / u_RenderTargetSize;
+			vec2 coordUp = vFragCoord - vec2(0.0, pixelSize.y);
+			vec2 coordDown = vFragCoord + vec2(0.0, pixelSize.y);
+			vec2 coordLeft = vFragCoord - vec2(pixelSize.x, 0.0);
+			vec2 coordRight = vFragCoord + vec2(pixelSize.x, 0.0);
 			vec3 posUp, norUp;
 			vec3 posDown, norDown;
 			vec3 posLeft, norLeft;

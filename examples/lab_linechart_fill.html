@@ -179,8 +179,6 @@
 			lines.geometry.setFromPoints(points);
 			lines.material.uniforms.lineWidth = 2.2;
 			lines.material.defines.SWAP_UV = true;
-			lines.material.uniforms.resolution[0] = width;
-			lines.material.uniforms.resolution[1] = height;
 			lines.material.diffuseMap = colorTexture;
 			lines.material.transparent = true;
 			lines.renderOrder = -1;
@@ -246,16 +244,6 @@
 			height = window.innerHeight || 2;
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
-
-			if (lines0) {
-				lines0.material.uniforms.resolution[0] = width;
-				lines0.material.uniforms.resolution[1] = height;
-			}
-
-			if (lines1) {
-				lines1.material.uniforms.resolution[0] = width;
-				lines1.material.uniforms.resolution[1] = height;
-			}
 
 			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 

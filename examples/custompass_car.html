@@ -106,7 +106,6 @@
 		filmPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
 		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
 		fxaaPass.uniforms['tDiffuse'] = tempRenderTarget1.texture;
-		fxaaPass.uniforms['resolution'] = [1 / width, 1 / height];
 
 		// gui
 		const gui = new GUI();

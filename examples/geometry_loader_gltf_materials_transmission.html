@@ -164,7 +164,6 @@
 		const copyPass = new t3d.ShaderPostPass(CopyShader);
 
 		const fxaaPass = new t3d.ShaderPostPass(FXAAShader);
-		fxaaPass.uniforms.resolution = [1 / width, 1 / height];
 
 		const timer = new Timer();
 
@@ -240,8 +239,6 @@
 			sceneRenderTarget.resize(width, height);
 			transmissionRenderTarget.resize(width, height);
 			resultRenderTarget.resize(width, height);
-
-			fxaaPass.uniforms.resolution = [1 / width, 1 / height];
 		}
 		window.addEventListener('resize', onWindowResize, false);
     </script>

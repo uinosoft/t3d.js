@@ -129,8 +129,6 @@
 			motionBlurPass.uniforms.tColor = tempRenderTarget.texture;
 			motionBlurPass.uniforms.tMotion = gBuffer.getMotionTexture();
 			motionBlurPass.uniforms.velocityFactor = 1;
-			motionBlurPass.uniforms['screenSize'][0] = width;
-			motionBlurPass.uniforms['screenSize'][1] = height;
 
 			const params = { motionDebug: false };
 			const gui = new GUI();
@@ -180,8 +178,6 @@
 				backRenderTarget.resize(width, height);
 				tempRenderTarget.resize(width, height);
 				gBuffer.resize(width, height);
-				motionBlurPass.uniforms['screenSize'][0] = width;
-				motionBlurPass.uniforms['screenSize'][1] = height;
 			}
 			window.addEventListener('resize', onWindowResize, false);
 		</script>

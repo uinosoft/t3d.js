@@ -225,7 +225,6 @@ const instancedLineShader = {
 		SCREEN_UV: false // TODO
 	},
 	uniforms: {
-		resolution: [512, 512],
 		lineWidth: 5,
 		cornerThreshold: 0.4
 	},
@@ -260,7 +259,7 @@ const instancedLineShader = {
         #endif
 
         uniform float lineWidth;
-        uniform vec2 resolution;
+        uniform vec2 u_RenderTargetSize;
 
         uniform float cornerThreshold;
 
@@ -281,7 +280,7 @@ const instancedLineShader = {
             vec3 position = a_Position;
             mat4 modelViewMatrix = u_View * u_Model;
 
-            float aspect = resolution.x / resolution.y;
+            float aspect = u_RenderTargetSize.x / u_RenderTargetSize.y;
             float flagY = position.y * 0.5 + 0.5;
 
             // camera space
@@ -386,8 +385,8 @@ const instancedLineShader = {
             // adjust for lineWidth
             offset *= lineWidth * w;
 
-            // adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
-            offset /= resolution.y;
+            // adjust for clip-space to screen-space conversion // maybe this should be based on viewport ...
+            offset /= u_RenderTargetSize.y;
 
             // select end
             vec4 clip = clipCurr;

@@ -21025,6 +21025,8 @@ class WebGLRenderer extends ThinRenderer {
 				uniform.set(scale);
 			} else if (key === 'clippingPlanes') {
 				uniform.set(clippingPlanesData);
+			} else if (key === 'u_RenderTargetSize') {
+				uniform.setValue(currentRenderTarget.width, currentRenderTarget.height);
 			}
 		}
 
