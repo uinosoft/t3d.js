@@ -252,6 +252,10 @@ const instancedLineShader = {
         attribute float instancePrevDist;
         attribute float instanceNextDist;
 
+        #ifdef SCREEN_UV
+            flat varying vec2 v_ScenePos;
+        #endif
+
         #ifdef LINE_BREAK
             attribute float instancePrevBreak;
             attribute float instanceNextBreak;
