@@ -226,7 +226,8 @@ const instancedLineShader = {
 	},
 	uniforms: {
 		lineWidth: 5,
-		cornerThreshold: 0.4
+		cornerThreshold: 0.4,
+        sceneRepet: 50, // How many pixels should be repeated once
 	},
 	vertexShader: `
         #include <common_vert>
@@ -250,6 +251,10 @@ const instancedLineShader = {
 
         attribute float instancePrevDist;
         attribute float instanceNextDist;
+
+        #ifdef SCREEN_UV
+            flat varying vec2 v_ScenePos;
+        #endif
 
         #ifdef LINE_BREAK
             attribute float instancePrevBreak;
@@ -337,6 +342,10 @@ const instancedLineShader = {
             vec2 ndcPrev = clipPrev.xy / clipPrev.w;
             vec2 ndcCurr = clipCurr.xy / clipCurr.w;
             vec2 ndcNext = clipNext.xy / clipNext.w;
+
+            #ifdef SCREEN_UV
+                v_ScenePos = ndcCurr * 0.5 + 0.5;
+            #endif
 
             // direction
             vec2 dir, dir1, dir2;
@@ -455,6 +464,13 @@ const instancedLineShader = {
             varying vec2 v_Uv;
             uniform sampler2D diffuseMap;
         #endif
+        
+        #ifdef SCREEN_UV
+            flat varying vec2 v_ScenePos;
+            uniform vec2 u_RenderTargetSize;
+            uniform float sceneRepet;
+        #endif
+
         #include <alphamap_pars_frag>
 
         #ifdef USE_FOG
@@ -478,7 +494,12 @@ const instancedLineShader = {
             vec4 outColor = vec4(u_Color, u_Opacity);
 
             #ifdef USE_DIFFUSE_MAP
+             #ifdef SCREEN_UV
+                float UvX = length(v_ScenePos * u_RenderTargetSize - gl_FragCoord.xy )/sceneRepet; 
+                outColor *= texture2D(diffuseMap, vec2(UvX,v_Uv.y));
+             #else
                 outColor *= texture2D(diffuseMap, v_Uv);
+             #endif
             #endif
 
             #ifdef USE_ALPHA_MAP
