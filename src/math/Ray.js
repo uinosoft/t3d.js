@@ -338,4 +338,12 @@ class Ray {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Ray.prototype.isRay = true;
+
 export { Ray };

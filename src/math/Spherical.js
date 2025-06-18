@@ -87,4 +87,12 @@ class Spherical {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Spherical.prototype.isSpherical = true;
+
 export { Spherical };

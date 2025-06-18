@@ -82,6 +82,7 @@ class TransformUV extends Matrix3 {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

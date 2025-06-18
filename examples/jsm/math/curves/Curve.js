@@ -1,7 +1,6 @@
 /**
  * Curve
  */
-
 class Curve {
 
 	constructor() {
@@ -133,5 +132,7 @@ class Curve {
 	}
 
 }
+
+Curve.prototype.isCurve = true;
 
 export { Curve };

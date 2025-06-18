@@ -194,4 +194,12 @@ class Plane {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Plane.prototype.isPlane = true;
+
 export { Plane };

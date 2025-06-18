@@ -225,6 +225,14 @@ class Color3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Color3.prototype.isColor3 = true;
+
 function hue2rgb(p, q, t) {
 	if (t < 0) t += 1;
 	if (t > 1) t -= 1;

@@ -392,4 +392,12 @@ class Object3D {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Object3D.prototype.isObject3D = true;
+
 export { Object3D };

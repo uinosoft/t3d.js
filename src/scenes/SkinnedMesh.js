@@ -132,6 +132,7 @@ class SkinnedMesh extends Mesh {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

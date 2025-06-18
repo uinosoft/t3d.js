@@ -218,6 +218,7 @@ class Scene extends Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

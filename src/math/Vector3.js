@@ -555,6 +555,14 @@ class Vector3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Vector3.prototype.isVector3 = true;
+
 const _vector = new Vector3();
 
 export { Vector3 };

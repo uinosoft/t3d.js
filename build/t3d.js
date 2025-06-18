@@ -823,6 +823,14 @@
 			return new Vector3(this.x, this.y, this.z);
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Vector3.prototype.isVector3 = true;
 	const _vector$2 = new Vector3();
 
 	/**
@@ -1481,6 +1489,14 @@
 			return array;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Matrix4.prototype.isMatrix4 = true;
 	const _vec3_1$6 = new Vector3();
 	const _mat4_1$3 = new Matrix4();
 	const _x = new Vector3();
@@ -2138,6 +2154,14 @@
 		}
 		onChangeCallback() {}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Quaternion.prototype.isQuaternion = true;
 
 	/**
 	 * Interpolant serves as the base class for all interpolation algorithms.
@@ -4204,6 +4228,14 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Vector2.prototype.isVector2 = true;
+
+	/**
 	 * Represents an axis-aligned bounding box (AABB) in 2D space.
 	 */
 	class Box2 {
@@ -4248,6 +4280,14 @@
 			return this;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Box2.prototype.isBox2 = true;
 
 	/**
 	 * Represents an axis-aligned bounding box (AABB) in 3D space.
@@ -4569,6 +4609,14 @@
 			return this;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Box3.prototype.isBox3 = true;
 	const _points = [new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3(), new Vector3()];
 	const _vec3_1$5 = new Vector3();
 
@@ -4818,6 +4866,14 @@
 			return array;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Color3.prototype.isColor3 = true;
 	function hue2rgb(p, q, t) {
 		if (t < 0) t += 1;
 		if (t > 1) t -= 1;
@@ -4962,6 +5018,14 @@
 			return array;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Color4.prototype.isColor4 = true;
 
 	const _matrix$1 = new Matrix4();
 
@@ -5184,6 +5248,14 @@
 		}
 		onChangeCallback() {}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Euler.prototype.isEuler = true;
 
 	/**
 	 * The order in which to apply rotations.
@@ -5525,6 +5597,14 @@
 		}
 	}
 
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Matrix3.prototype.isMatrix3 = true;
+
 	const _vec3_1$4 = new Vector3();
 	const _vec3_2$1 = new Vector3();
 	const _mat3_1$1 = new Matrix3();
@@ -5703,6 +5783,14 @@
 		}
 	}
 
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Plane.prototype.isPlane = true;
+
 	const _vec3_1$3 = new Vector3();
 	const _mat3_1 = new Matrix3();
 
@@ -5855,6 +5943,14 @@
 			return this;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Frustum.prototype.isFrustum = true;
 
 	const _vec3_1$2 = new Vector3();
 	const _diff = new Vector3();
@@ -6163,6 +6259,14 @@
 		}
 	}
 
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Ray.prototype.isRay = true;
+
 	const _box3_1 = new Box3();
 	const _vec3_1$1 = new Vector3();
 	const _vec3_2 = new Vector3();
@@ -6366,6 +6470,14 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Sphere.prototype.isSphere = true;
+
+	/**
 	 * Ref: https://en.wikipedia.org/wiki/Spherical_coordinate_system
 	 *
 	 * The poles (phi) are at the positive and negative y axis.
@@ -6444,6 +6556,14 @@
 			return this;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Spherical.prototype.isSpherical = true;
 
 	/**
 	 * Primary reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
@@ -6695,6 +6815,14 @@
 		}
 	}
 
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	SphericalHarmonics3.prototype.isSphericalHarmonics3 = true;
+
 	const _v0 = new Vector3();
 	const _v1 = new Vector3();
 	const _v2 = new Vector3();
@@ -6798,6 +6926,14 @@
 			return this;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Triangle.prototype.isTriangle = true;
 
 	/**
 	 * The vector 4 class
@@ -7067,6 +7203,14 @@
 			return this;
 		}
 	}
+
+	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Vector4.prototype.isVector4 = true;
 
 	/**
 	 * Clone uniforms.
@@ -7471,6 +7615,14 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
+	 * @readonly
+	 * @type {boolean}
+	 * @default true
+	 */
+	Object3D.prototype.isObject3D = true;
+
+	/**
 	 * Abstract base class for lights
 	 * - The light's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed light points down the -Z axis.
 	 * - all other light types inherit the properties and methods described here.
@@ -7534,6 +7686,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -7598,6 +7751,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -8781,6 +8935,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -8923,6 +9078,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -9103,6 +9259,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -9711,6 +9868,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -11179,6 +11337,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -11211,6 +11370,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12263,6 +12423,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12364,6 +12525,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12573,6 +12735,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12608,6 +12771,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12707,6 +12871,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12800,6 +12965,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -12916,6 +13082,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13014,6 +13181,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13143,6 +13311,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13195,6 +13364,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13235,6 +13405,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13356,6 +13527,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13530,6 +13702,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13762,6 +13935,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13796,6 +13970,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13889,6 +14064,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -13923,7 +14099,8 @@
 	}
 
 	/**
-	 * Read-only flag to check if a given object is of type SphericalHarmonicsLight.
+	 * This flag can be used for type testing.
+	 * @readonly
 	 * @type {boolean}
 	 * @default true
 	 */
@@ -14061,6 +14238,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -14083,6 +14261,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true
@@ -14194,6 +14373,7 @@
 	}
 
 	/**
+	 * This flag can be used for type testing.
 	 * @readonly
 	 * @type {boolean}
 	 * @default true

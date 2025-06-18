@@ -34,7 +34,8 @@ class SphericalHarmonicsLight extends Light {
 }
 
 /**
- * Read-only flag to check if a given object is of type SphericalHarmonicsLight.
+ * This flag can be used for type testing.
+ * @readonly
  * @type {boolean}
  * @default true
  */

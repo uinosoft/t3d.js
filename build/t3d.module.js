@@ -852,6 +852,14 @@ class Vector3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Vector3.prototype.isVector3 = true;
+
 const _vector$2 = new Vector3();
 
 /**
@@ -1506,6 +1514,14 @@ class Matrix4 {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Matrix4.prototype.isMatrix4 = true;
 
 const _vec3_1$6 = new Vector3();
 const _mat4_1$3 = new Matrix4();
@@ -2203,6 +2219,14 @@ class Quaternion {
 	onChangeCallback() {}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Quaternion.prototype.isQuaternion = true;
 
 /**
  * Interpolant serves as the base class for all interpolation algorithms.
@@ -4459,6 +4483,14 @@ class Vector2 {
 }
 
 /**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Vector2.prototype.isVector2 = true;
+
+/**
  * Represents an axis-aligned bounding box (AABB) in 2D space.
  */
 class Box2 {
@@ -4506,6 +4538,14 @@ class Box2 {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Box2.prototype.isBox2 = true;
 
 /**
  * Represents an axis-aligned bounding box (AABB) in 3D space.
@@ -4850,6 +4890,14 @@ class Box3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Box3.prototype.isBox3 = true;
+
 const _points = [
 	new Vector3(),
 	new Vector3(),
@@ -5125,6 +5173,14 @@ class Color3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Color3.prototype.isColor3 = true;
+
 function hue2rgb(p, q, t) {
 	if (t < 0) t += 1;
 	if (t > 1) t -= 1;
@@ -5275,6 +5331,14 @@ class Color4 {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Color4.prototype.isColor4 = true;
 
 const _matrix$1 = new Matrix4();
 
@@ -5508,6 +5572,14 @@ class Euler {
 	onChangeCallback() {}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Euler.prototype.isEuler = true;
 
 /**
  * The order in which to apply rotations.
@@ -5881,6 +5953,14 @@ class Matrix3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Matrix3.prototype.isMatrix3 = true;
+
 const _vec3_1$4 = new Vector3();
 const _vec3_2$1 = new Vector3();
 const _mat3_1$1 = new Matrix3();
@@ -6074,6 +6154,14 @@ class Plane {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Plane.prototype.isPlane = true;
+
 const _vec3_1$3 = new Vector3();
 const _mat3_1 = new Matrix3();
 
@@ -6242,6 +6330,14 @@ class Frustum {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Frustum.prototype.isFrustum = true;
 
 const _vec3_1$2 = new Vector3();
 
@@ -6581,6 +6677,14 @@ class Ray {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Ray.prototype.isRay = true;
+
 const _box3_1 = new Box3();
 const _vec3_1$1 = new Vector3();
 const _vec3_2 = new Vector3();
@@ -6810,6 +6914,14 @@ class Sphere {
 }
 
 /**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Sphere.prototype.isSphere = true;
+
+/**
  * Ref: https://en.wikipedia.org/wiki/Spherical_coordinate_system
  *
  * The poles (phi) are at the positive and negative y axis.
@@ -6895,6 +7007,14 @@ class Spherical {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Spherical.prototype.isSpherical = true;
 
 /**
  * Primary reference: https://graphics.stanford.edu/papers/envmap/envmap.pdf
@@ -7150,6 +7270,14 @@ class SphericalHarmonics3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+SphericalHarmonics3.prototype.isSphericalHarmonics3 = true;
+
 const _v0 = new Vector3();
 const _v1 = new Vector3();
 const _v2 = new Vector3();
@@ -7263,6 +7391,14 @@ class Triangle {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Triangle.prototype.isTriangle = true;
 
 /**
  * The vector 4 class
@@ -7544,6 +7680,14 @@ class Vector4 {
 	}
 
 }
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Vector4.prototype.isVector4 = true;
 
 /**
  * Clone uniforms.
@@ -7976,6 +8120,14 @@ class Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Object3D.prototype.isObject3D = true;
+
+/**
  * Abstract base class for lights
  * - The light's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed light points down the -Z axis.
  * - all other light types inherit the properties and methods described here.
@@ -8043,6 +8195,7 @@ class Light extends Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -8114,6 +8267,7 @@ class RectAreaLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -9495,6 +9649,7 @@ class Scene extends Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -9657,6 +9812,7 @@ class Camera extends Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -9878,6 +10034,7 @@ class Mesh extends Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -10558,6 +10715,7 @@ class TransformUV extends Matrix3 {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -12110,6 +12268,7 @@ class Fog {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -12144,6 +12303,7 @@ class FogExp2 {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13318,6 +13478,7 @@ class RenderTargetBase extends EventDispatcher {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13422,6 +13583,7 @@ class RenderBuffer extends EventDispatcher {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13636,6 +13798,7 @@ class TextureBase extends EventDispatcher {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13675,6 +13838,7 @@ class Texture2D extends TextureBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13774,6 +13938,7 @@ class RenderTarget2D extends RenderTargetBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13872,6 +14037,7 @@ class Texture2DArray extends TextureBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -13987,6 +14153,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14090,6 +14257,7 @@ class Texture3D extends TextureBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14219,6 +14387,7 @@ class RenderTarget3D extends RenderTargetBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14282,6 +14451,7 @@ class RenderTargetBack extends RenderTargetBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14326,6 +14496,7 @@ class TextureCube extends TextureBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14448,6 +14619,7 @@ class RenderTargetCube extends RenderTargetBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14638,6 +14810,7 @@ class AmbientLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14914,6 +15087,7 @@ class DirectionalLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -14952,6 +15126,7 @@ class HemisphereLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -15066,6 +15241,7 @@ class PointLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -15105,7 +15281,8 @@ class SphericalHarmonicsLight extends Light {
 }
 
 /**
- * Read-only flag to check if a given object is of type SphericalHarmonicsLight.
+ * This flag can be used for type testing.
+ * @readonly
  * @type {boolean}
  * @default true
  */
@@ -15269,6 +15446,7 @@ class SpotLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -15293,6 +15471,7 @@ class Bone extends Object3D {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true
@@ -15428,6 +15607,7 @@ class SkinnedMesh extends Mesh {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

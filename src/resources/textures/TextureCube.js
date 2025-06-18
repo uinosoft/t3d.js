@@ -38,6 +38,7 @@ class TextureCube extends TextureBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

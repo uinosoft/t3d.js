@@ -691,4 +691,12 @@ class Quaternion {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Quaternion.prototype.isQuaternion = true;
+
 export { Quaternion };

@@ -358,4 +358,12 @@ class Matrix3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Matrix3.prototype.isMatrix3 = true;
+
 export { Matrix3 };

@@ -254,4 +254,12 @@ class SphericalHarmonics3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+SphericalHarmonics3.prototype.isSphericalHarmonics3 = true;
+
 export { SphericalHarmonics3 };

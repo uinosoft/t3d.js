@@ -546,6 +546,8 @@ class OBB {
 
 }
 
+OBB.prototype.isOBB = true;
+
 // helper variables
 
 const a = {

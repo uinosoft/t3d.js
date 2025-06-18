@@ -210,6 +210,7 @@ class TextureBase extends EventDispatcher {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

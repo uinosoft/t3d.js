@@ -134,4 +134,12 @@ class Color4 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Color4.prototype.isColor4 = true;
+
 export { Color4 };

@@ -653,6 +653,14 @@ class Matrix4 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Matrix4.prototype.isMatrix4 = true;
+
 const _vec3_1 = new Vector3();
 const _mat4_1 = new Matrix4();
 

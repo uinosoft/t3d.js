@@ -49,4 +49,12 @@ class Box2 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Box2.prototype.isBox2 = true;
+
 export { Box2 };

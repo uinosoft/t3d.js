@@ -329,4 +329,6 @@ class CurvePath {
 
 }
 
+CurvePath.prototype.isCurvePath = true;
+
 export { CurvePath };

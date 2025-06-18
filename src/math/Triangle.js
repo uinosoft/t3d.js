@@ -114,4 +114,12 @@ class Triangle {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Triangle.prototype.isTriangle = true;
+
 export { Triangle };

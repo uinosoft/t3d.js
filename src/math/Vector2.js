@@ -298,4 +298,12 @@ class Vector2 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Vector2.prototype.isVector2 = true;
+
 export { Vector2 };

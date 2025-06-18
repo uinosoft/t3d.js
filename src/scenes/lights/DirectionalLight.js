@@ -36,6 +36,7 @@ class DirectionalLight extends Light {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

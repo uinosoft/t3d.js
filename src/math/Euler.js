@@ -235,6 +235,14 @@ class Euler {
 }
 
 /**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Euler.prototype.isEuler = true;
+
+/**
  * The order in which to apply rotations.
  * @readonly
  */

@@ -171,4 +171,12 @@ class Frustum {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Frustum.prototype.isFrustum = true;
+
 export { Frustum };

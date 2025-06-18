@@ -111,6 +111,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 }
 
 /**
+ * This flag can be used for type testing.
  * @readonly
  * @type {boolean}
  * @default true

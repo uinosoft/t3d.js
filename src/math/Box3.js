@@ -343,6 +343,14 @@ class Box3 {
 
 }
 
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+Box3.prototype.isBox3 = true;
+
 const _points = [
 	new Vector3(),
 	new Vector3(),
