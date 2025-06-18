@@ -2,7 +2,7 @@
 #include <color_pars_vert>
 #include <logdepthbuf_pars_vert>
 uniform float u_PointSize;
-uniform float u_RenderTargetSize;
+uniform vec2 u_RenderTargetSize;
 void main() {
     #include <begin_vert>
     #include <pvm_vert>

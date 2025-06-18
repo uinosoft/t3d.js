@@ -15924,7 +15924,7 @@ var phong_vert = "#define USE_PHONG\n#include <common_vert>\n#include <normal_pa
 
 var point_frag = "#include <common_frag>\n#include <color_pars_frag>\n#include <diffuseMap_pars_frag>\n#include <fog_pars_frag>\n#include <logdepthbuf_pars_frag>\nvoid main() {\n    #include <begin_frag>\n    #include <color_frag>\n    #include <logdepthbuf_frag>\n    #ifdef USE_DIFFUSE_MAP\n        outColor *= texture2D(diffuseMap, vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y));\n    #endif\n    #include <end_frag>\n    #include <encodings_frag>\n    #include <premultipliedAlpha_frag>\n    #include <fog_frag>\n}";
 
-var point_vert = "#include <common_vert>\n#include <color_pars_vert>\n#include <logdepthbuf_pars_vert>\nuniform float u_PointSize;\nuniform float u_RenderTargetSize;\nvoid main() {\n    #include <begin_vert>\n    #include <pvm_vert>\n    #include <color_vert>\n    vec4 mvPosition = u_View * u_Model * vec4(transformed, 1.0);\n    #ifdef USE_SIZEATTENUATION\n        gl_PointSize = u_PointSize * (u_RenderTargetSize.y * 0.5 / -mvPosition.z);\n    #else\n        gl_PointSize = u_PointSize;\n    #endif\n    #include <logdepthbuf_vert>\n}";
+var point_vert = "#include <common_vert>\n#include <color_pars_vert>\n#include <logdepthbuf_pars_vert>\nuniform float u_PointSize;\nuniform vec2 u_RenderTargetSize;\nvoid main() {\n    #include <begin_vert>\n    #include <pvm_vert>\n    #include <color_vert>\n    vec4 mvPosition = u_View * u_Model * vec4(transformed, 1.0);\n    #ifdef USE_SIZEATTENUATION\n        gl_PointSize = u_PointSize * (u_RenderTargetSize.y * 0.5 / -mvPosition.z);\n    #else\n        gl_PointSize = u_PointSize;\n    #endif\n    #include <logdepthbuf_vert>\n}";
 
 const ShaderLib = {
 	basic_frag: basic_frag,
