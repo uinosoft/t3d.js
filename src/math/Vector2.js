@@ -296,6 +296,11 @@ class Vector2 {
 		return new Vector2(this.x, this.y);
 	}
 
+	* [Symbol.iterator]() {
+		yield this.x;
+		yield this.y;
+	}
+
 }
 
 /**

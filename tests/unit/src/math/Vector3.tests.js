@@ -32,3 +32,11 @@ QUnit.test('clone', assert => {
 	assert.ok(b.y == y, 'Passed!');
 	assert.ok(b.z === z, 'Passed!');
 });
+
+QUnit.test('iterable', assert => {
+	const v = new Vector3(0, 0.5, 1);
+	const array = [...v];
+	assert.strictEqual(array[0], 0, 'Vector3 is iterable.');
+	assert.strictEqual(array[1], 0.5, 'Vector3 is iterable.');
+	assert.strictEqual(array[2], 1, 'Vector3 is iterable.');
+});

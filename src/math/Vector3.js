@@ -553,6 +553,12 @@ class Vector3 {
 		return new Vector3(this.x, this.y, this.z);
 	}
 
+	* [Symbol.iterator]() {
+		yield this.x;
+		yield this.y;
+		yield this.z;
+	}
+
 }
 
 /**

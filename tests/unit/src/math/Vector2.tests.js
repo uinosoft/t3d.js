@@ -28,3 +28,10 @@ QUnit.test('clone', assert => {
 	assert.ok(b.x == x, 'Passed!');
 	assert.ok(b.y == y, 'Passed!');
 });
+
+QUnit.test('iterable', assert => {
+	const v = new Vector2(0, 1);
+	const array = [...v];
+	assert.strictEqual(array[0], 0, 'Vector2 is iterable.');
+	assert.strictEqual(array[1], 1, 'Vector2 is iterable.');
+});

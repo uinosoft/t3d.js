@@ -279,6 +279,13 @@ class Vector4 {
 		return this;
 	}
 
+	* [Symbol.iterator]() {
+		yield this.x;
+		yield this.y;
+		yield this.z;
+		yield this.w;
+	}
+
 }
 
 /**

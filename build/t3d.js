@@ -822,6 +822,11 @@
 		clone() {
 			return new Vector3(this.x, this.y, this.z);
 		}
+		*[Symbol.iterator]() {
+			yield this.x;
+			yield this.y;
+			yield this.z;
+		}
 	}
 
 	/**
@@ -2153,6 +2158,12 @@
 			return this;
 		}
 		onChangeCallback() {}
+		*[Symbol.iterator]() {
+			yield this._x;
+			yield this._y;
+			yield this._z;
+			yield this._w;
+		}
 	}
 
 	/**
@@ -4225,6 +4236,10 @@
 		clone() {
 			return new Vector2(this.x, this.y);
 		}
+		*[Symbol.iterator]() {
+			yield this.x;
+			yield this.y;
+		}
 	}
 
 	/**
@@ -4865,6 +4880,11 @@
 			array[offset + 2] = b;
 			return array;
 		}
+		*[Symbol.iterator]() {
+			yield this.r;
+			yield this.g;
+			yield this.b;
+		}
 	}
 
 	/**
@@ -5016,6 +5036,12 @@
 			array[offset + 2] = b;
 			array[offset + 3] = a;
 			return array;
+		}
+		*[Symbol.iterator]() {
+			yield this.r;
+			yield this.g;
+			yield this.b;
+			yield this.a;
 		}
 	}
 
@@ -5247,6 +5273,12 @@
 			return this;
 		}
 		onChangeCallback() {}
+		*[Symbol.iterator]() {
+			yield this._x;
+			yield this._y;
+			yield this._z;
+			yield this._order;
+		}
 	}
 
 	/**
@@ -7201,6 +7233,12 @@
 			this.z = v.z;
 			this.w = v.w !== undefined ? v.w : 1;
 			return this;
+		}
+		*[Symbol.iterator]() {
+			yield this.x;
+			yield this.y;
+			yield this.z;
+			yield this.w;
 		}
 	}
 

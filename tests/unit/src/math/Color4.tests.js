@@ -53,3 +53,12 @@ QUnit.test('toArray', assert => {
 	assert.ok(array[2] == 0, 'Passed!');
 	assert.ok(array[3] == 128, 'Passed!');
 });
+
+QUnit.test('iterable', assert => {
+	const c = new Color4(0.5, 0.75, 1, 0.5);
+	const array = [...c];
+	assert.strictEqual(array[0], 0.5, 'Color4 is iterable.');
+	assert.strictEqual(array[1], 0.75, 'Color4 is iterable.');
+	assert.strictEqual(array[2], 1, 'Color4 is iterable.');
+	assert.strictEqual(array[3], 0.5, 'Color4 is iterable.');
+});

@@ -223,6 +223,12 @@ class Color3 {
 		return array;
 	}
 
+	* [Symbol.iterator]() {
+		yield this.r;
+		yield this.g;
+		yield this.b;
+	}
+
 }
 
 /**

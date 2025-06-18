@@ -132,6 +132,13 @@ class Color4 {
 		return array;
 	}
 
+	* [Symbol.iterator]() {
+		yield this.r;
+		yield this.g;
+		yield this.b;
+		yield this.a;
+	}
+
 }
 
 /**

@@ -689,6 +689,13 @@ class Quaternion {
 
 	onChangeCallback() {}
 
+	* [Symbol.iterator]() {
+		yield this._x;
+		yield this._y;
+		yield this._z;
+		yield this._w;
+	}
+
 }
 
 /**

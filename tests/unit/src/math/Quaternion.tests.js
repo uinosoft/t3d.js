@@ -61,3 +61,12 @@ QUnit.test('clone', assert => {
 	assert.ok(b.z === z, 'Passed!');
 	assert.ok(b.w === w, 'Passed!');
 });
+
+QUnit.test('iterable', assert => {
+	const q = new Quaternion(0, 0.5, 0.7, 1);
+	const array = [...q];
+	assert.strictEqual(array[0], 0, 'Quaternion is iterable.');
+	assert.strictEqual(array[1], 0.5, 'Quaternion is iterable.');
+	assert.strictEqual(array[2], 0.7, 'Quaternion is iterable.');
+	assert.strictEqual(array[3], 1, 'Quaternion is iterable.');
+});
