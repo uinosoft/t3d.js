@@ -39,7 +39,7 @@ class VertexNormalsHelper extends Mesh {
 		const objGeometry = this.object.geometry;
 
 		if (objGeometry) {
-			_normalMatrix.setFromMatrix4(this.object.worldMatrix).inverse().transpose();
+			_normalMatrix.setFromMatrix4(this.object.worldMatrix).invert().transpose();
 
 			const matrixWorld = this.object.worldMatrix;
 

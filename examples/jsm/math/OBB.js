@@ -323,7 +323,7 @@ class OBB {
 
 		// transform ray to the local space of the OBB
 
-		localRay.copy(ray).applyMatrix4(inverse.getInverse(matrix));
+		localRay.copy(ray).applyMatrix4(inverse.copy(matrix).invert());
 
 		// perform ray <-> AABB intersection test
 
@@ -539,7 +539,7 @@ class OBB {
 
 		this.toBoundingBoxAndTransform(aabb, matrix);
 
-		localFrustum.copy(frustum).applyMatrix4(inverse.getInverse(matrix));
+		localFrustum.copy(frustum).applyMatrix4(inverse.copy(matrix).invert());
 
 		return localFrustum.intersectsBox(aabb);
 	}

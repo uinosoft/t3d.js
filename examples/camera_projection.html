@@ -123,7 +123,7 @@
 
 				// use easeOut to make the transition more 'linear'
 				camera.projectionMatrix.lerpMatrices(projMatrix1, projMatrix2, easeOut(params.projWeight));
-				camera.projectionMatrixInverse.getInverse(camera.projectionMatrix);
+				camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
 
 				// fix skybox projection
 				helperCamera.setPerspective(90 / 180 * Math.PI, width / height, params.near, params.far);

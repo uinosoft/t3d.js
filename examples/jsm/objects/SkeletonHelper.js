@@ -89,7 +89,7 @@ class SkeletonHelper extends Object3D {
 
 		const distanceMap = this._distanceMap;
 
-		_worldMatrixInv.getInverse(this.root.worldMatrix);
+		_worldMatrixInv.copy(this.root.worldMatrix).invert();
 
 		for (let i = 0, j = 0; i < bones.length; i++) {
 			const bone = bones[i];

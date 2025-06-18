@@ -189,8 +189,7 @@
 			renderer.clear(true, true, true);
 
 			projection.copy(camera.projectionMatrix);
-			projectionInv.copy(camera.projectionMatrix).inverse();
-			// viewInverseTranspose.copy(camera.viewMatrix).getInverse(viewInverseTranspose).transpose();
+			projectionInv.copy(camera.projectionMatrix).invert();
 			viewInverseTranspose.copy(camera.worldMatrix).transpose();
 
 			ssaoPass.render(renderer);

@@ -63,7 +63,7 @@ class WebVRControl {
 		// set Left Camera
 		cameraL.projectionMatrix.elements = frameData.leftProjectionMatrix;
 		cameraL.viewMatrix.elements = frameData.leftViewMatrix;
-		cameraL.viewMatrix.inverse().decompose(cameraL.position, cameraL.quaternion, cameraL.scale);
+		cameraL.viewMatrix.invert().decompose(cameraL.position, cameraL.quaternion, cameraL.scale);
 		cameraL.position.add(camera.position);
 		cameraL.updateMatrix();
 		cameraL.rect.set(0, 0, 0.5, 1);
@@ -71,7 +71,7 @@ class WebVRControl {
 		// set Right Camera
 		cameraR.projectionMatrix.elements = frameData.leftProjectionMatrix;
 		cameraR.viewMatrix.elements = frameData.rightViewMatrix;
-		cameraR.viewMatrix.inverse().decompose(cameraR.position, cameraR.quaternion, cameraR.scale);
+		cameraR.viewMatrix.invert().decompose(cameraR.position, cameraR.quaternion, cameraR.scale);
 		cameraR.position.add(camera.position);
 		cameraR.updateMatrix();
 		cameraR.rect.set(0.5, 0, 1, 1);

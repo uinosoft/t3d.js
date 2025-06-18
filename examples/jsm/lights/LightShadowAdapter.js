@@ -135,7 +135,7 @@ export class LightShadowAdapter {
 		_vec3_1.copy(direction).normalize().negate().toArray(shadowBoxRotation.elements, 6); // axis-z
 		_vec3_2.crossVectors(lightUp, _vec3_1).normalize().toArray(shadowBoxRotation.elements, 0); // axis-x
 		_vec3_1.cross(_vec3_2).toArray(shadowBoxRotation.elements, 3); // axis-y
-		shadowBoxRotationInverse.copy(shadowBoxRotation).inverse();
+		shadowBoxRotationInverse.copy(shadowBoxRotation).invert();
 	}
 
 	_setShadowBoxByBoxCamera() {

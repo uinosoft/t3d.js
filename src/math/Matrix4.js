@@ -232,26 +232,19 @@ class Matrix4 {
 	}
 
 	/**
-	 * Take the inverse of this matrix
-	 * @returns {Matrix4}
+	 * Inverts this matrix, using the [analytic method]{@link https://en.wikipedia.org/wiki/Invertible_matrix#Analytic_solution}.
+	 * You can not invert with a determinant of zero. If you attempt this, the method produces
+	 * a zero matrix instead.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
-	inverse() {
-		return this.getInverse(this);
-	}
-
-	/**
-	 * Take the inverse of the matrix
-	 * @param {Matrix4} m
-	 * @returns {Matrix4}
-	 */
-	getInverse(m) {
+	invert() {
 		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
-		const te = this.elements, me = m.elements,
+		const te = this.elements,
 
-			n11 = me[0], n21 = me[1], n31 = me[2], n41 = me[3],
-			n12 = me[4], n22 = me[5], n32 = me[6], n42 = me[7],
-			n13 = me[8], n23 = me[9], n33 = me[10], n43 = me[11],
-			n14 = me[12], n24 = me[13], n34 = me[14], n44 = me[15],
+			n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3],
+			n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7],
+			n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11],
+			n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15],
 
 			t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44,
 			t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44,
@@ -260,10 +253,7 @@ class Matrix4 {
 
 		const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
 
-		if (det === 0) {
-			console.warn('Matrix4: can not invert matrix, determinant is 0');
-			return this.identity();
-		}
+		if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 		const detInv = 1 / det;
 

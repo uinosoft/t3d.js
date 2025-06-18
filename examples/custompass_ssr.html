@@ -216,7 +216,7 @@
 			renderer.clear(true, true, true);
 
 			projection.copy(camera.projectionMatrix);
-			projectionInv.copy(camera.projectionMatrix).inverse();
+			projectionInv.copy(camera.projectionMatrix).invert();
 			viewInverseTranspose.copy(camera.worldMatrix).transpose();
 
 			ssrPass.render(renderer);

@@ -41,7 +41,7 @@ class Plane {
 		target.set(-p1.constant, -p2.constant, -p3.constant);
 
 		// Solve for X by applying the inverse matrix to vector
-		target.applyMatrix3(_mat3_1.inverse());
+		target.applyMatrix3(_mat3_1.invert());
 
 		return target;
 	}
@@ -181,7 +181,7 @@ class Plane {
 	 * @returns {Plane}
 	 */
 	applyMatrix4(matrix, optionalNormalMatrix) {
-		const normalMatrix = optionalNormalMatrix || _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = optionalNormalMatrix || _mat3_1.setFromMatrix4(matrix).invert().transpose();
 
 		const referencePoint = this.coplanarPoint(_vec3_1).applyMatrix4(matrix);
 

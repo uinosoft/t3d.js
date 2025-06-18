@@ -107,7 +107,7 @@ class Camera extends Object3D {
 			0, 0, -2 / (far - near), -(far + near) / (far - near),
 			0, 0, 0, 1
 		);
-		this.projectionMatrixInverse.getInverse(this.projectionMatrix);
+		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
 	}
 
 	/**
@@ -124,7 +124,7 @@ class Camera extends Object3D {
 			0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
 			0, 0, -1, 0
 		);
-		this.projectionMatrixInverse.getInverse(this.projectionMatrix);
+		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
 	}
 
 	getWorldDirection(optionalTarget = new Vector3()) {
@@ -134,7 +134,7 @@ class Camera extends Object3D {
 	updateMatrix(force) {
 		Object3D.prototype.updateMatrix.call(this, force);
 
-		this.viewMatrix.getInverse(this.worldMatrix); // update view matrix
+		this.viewMatrix.copy(this.worldMatrix).invert(); // update view matrix
 
 		this.projectionViewMatrix.multiplyMatrices(this.projectionMatrix, this.viewMatrix); // get PV matrix
 		this.frustum.setFromMatrix(this.projectionViewMatrix); // update frustum

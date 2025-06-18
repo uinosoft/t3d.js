@@ -182,8 +182,8 @@ function getAspect(mat4) {
 function updateStereoCamera(camera, stereoCamera, offsetMat) {
 	stereoCamera.worldMatrix.copy(camera.worldMatrix);
 	stereoCamera.worldMatrix.multiply(offsetMat);
-	stereoCamera.viewMatrix.getInverse(stereoCamera.worldMatrix);
-	stereoCamera.projectionMatrixInverse.getInverse(stereoCamera.projectionMatrix);
+	stereoCamera.viewMatrix.copy(stereoCamera.worldMatrix).invert();
+	stereoCamera.projectionMatrixInverse.copy(stereoCamera.projectionMatrix).invert();
 	stereoCamera.projectionViewMatrix.multiplyMatrices(stereoCamera.projectionMatrix, stereoCamera.viewMatrix);
 	stereoCamera.frustum.setFromMatrix(stereoCamera.projectionViewMatrix);
 }

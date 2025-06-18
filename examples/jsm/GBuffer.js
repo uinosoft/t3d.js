@@ -219,7 +219,7 @@ class GBuffer {
 		this._debugPass.uniforms['albedoMetalnessTexture'] = this.getAlbedoMetalnessTexture();
 		this._debugPass.uniforms['motionTexture'] = this.getMotionTexture();
 		this._debugPass.uniforms['debug'] = DebugTypes[type] || 0;
-		helpMatrix4.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).inverse();
+		helpMatrix4.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert();
 		helpMatrix4.toArray(this._debugPass.uniforms['matProjViewInverse']);
 		this._debugPass.render(renderer);
 	}

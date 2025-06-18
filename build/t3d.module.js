@@ -1100,26 +1100,19 @@ class Matrix4 {
 	}
 
 	/**
-	 * Take the inverse of this matrix
-	 * @returns {Matrix4}
+	 * Inverts this matrix, using the [analytic method]{@link https://en.wikipedia.org/wiki/Invertible_matrix#Analytic_solution}.
+	 * You can not invert with a determinant of zero. If you attempt this, the method produces
+	 * a zero matrix instead.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
-	inverse() {
-		return this.getInverse(this);
-	}
-
-	/**
-	 * Take the inverse of the matrix
-	 * @param {Matrix4} m
-	 * @returns {Matrix4}
-	 */
-	getInverse(m) {
+	invert() {
 		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
-		const te = this.elements, me = m.elements,
+		const te = this.elements,
 
-			n11 = me[0], n21 = me[1], n31 = me[2], n41 = me[3],
-			n12 = me[4], n22 = me[5], n32 = me[6], n42 = me[7],
-			n13 = me[8], n23 = me[9], n33 = me[10], n43 = me[11],
-			n14 = me[12], n24 = me[13], n34 = me[14], n44 = me[15],
+			n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3],
+			n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7],
+			n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11],
+			n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15],
 
 			t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44,
 			t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44,
@@ -1128,10 +1121,7 @@ class Matrix4 {
 
 		const det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
 
-		if (det === 0) {
-			console.warn('Matrix4: can not invert matrix, determinant is 0');
-			return this.identity();
-		}
+		if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 		const detInv = 1 / det;
 
@@ -5704,25 +5694,17 @@ class Matrix3 {
 	}
 
 	/**
-	 * Take the inverse of this matrix
-	 * @returns {Matrix3}
+	 * Inverts this matrix, using the [analytic method]{@link https://en.wikipedia.org/wiki/Invertible_matrix#Analytic_solution}.
+	 * You can not invert with a determinant of zero. If you attempt this, the method produces
+	 * a zero matrix instead.
+	 * @returns {Matrix3} A reference to this matrix.
 	 */
-	inverse() {
-		return this.getInverse(this);
-	}
+	invert() {
+		const te = this.elements,
 
-	/**
-	 * Take the inverse of the matrix
-	 * @param {Matrix3} matrix - The matrix to take the inverse of.
-	 * @returns {Matrix3}
-	 */
-	getInverse(matrix) {
-		const me = matrix.elements,
-			te = this.elements,
-
-			n11 = me[0], n21 = me[1], n31 = me[2],
-			n12 = me[3], n22 = me[4], n32 = me[5],
-			n13 = me[6], n23 = me[7], n33 = me[8],
+			n11 = te[0], n21 = te[1], n31 = te[2],
+			n12 = te[3], n22 = te[4], n32 = te[5],
+			n13 = te[6], n23 = te[7], n33 = te[8],
 
 			t11 = n33 * n22 - n32 * n23,
 			t12 = n32 * n13 - n33 * n12,
@@ -5730,10 +5712,7 @@ class Matrix3 {
 
 			det = n11 * t11 + n21 * t12 + n31 * t13;
 
-		if (det === 0) {
-			console.warn('Matrix3: .getInverse() can not invert matrix, determinant is 0');
-			return this.identity();
-		}
+		if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 		const detInv = 1 / det;
 
@@ -6039,7 +6018,7 @@ class Plane {
 		target.set(-p1.constant, -p2.constant, -p3.constant);
 
 		// Solve for X by applying the inverse matrix to vector
-		target.applyMatrix3(_mat3_1$1.inverse());
+		target.applyMatrix3(_mat3_1$1.invert());
 
 		return target;
 	}
@@ -6179,7 +6158,7 @@ class Plane {
 	 * @returns {Plane}
 	 */
 	applyMatrix4(matrix, optionalNormalMatrix) {
-		const normalMatrix = optionalNormalMatrix || _mat3_1$1.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = optionalNormalMatrix || _mat3_1$1.setFromMatrix4(matrix).invert().transpose();
 
 		const referencePoint = this.coplanarPoint(_vec3_1$4).applyMatrix4(matrix);
 
@@ -6335,7 +6314,7 @@ class Frustum {
 	applyMatrix4(matrix) {
 		const planes = this.planes;
 
-		const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = _mat3_1.setFromMatrix4(matrix).invert().transpose();
 
 		for (let i = 0; i < 6; i++) {
 			planes[i].applyMatrix4(matrix, normalMatrix);
@@ -9359,7 +9338,7 @@ class SceneData {
 	update(scene) {
 		this.useAnchorMatrix = !scene.anchorMatrix.isIdentity();
 		this.anchorMatrix.copy(scene.anchorMatrix);
-		this.anchorMatrixInverse.getInverse(scene.anchorMatrix);
+		this.anchorMatrixInverse.copy(scene.anchorMatrix).invert();
 
 		this.disableShadowSampler = scene.disableShadowSampler;
 
@@ -9805,7 +9784,7 @@ class Camera extends Object3D {
 			0, 0, -2 / (far - near), -(far + near) / (far - near),
 			0, 0, 0, 1
 		);
-		this.projectionMatrixInverse.getInverse(this.projectionMatrix);
+		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
 	}
 
 	/**
@@ -9822,7 +9801,7 @@ class Camera extends Object3D {
 			0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
 			0, 0, -1, 0
 		);
-		this.projectionMatrixInverse.getInverse(this.projectionMatrix);
+		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
 	}
 
 	getWorldDirection(optionalTarget = new Vector3()) {
@@ -9832,7 +9811,7 @@ class Camera extends Object3D {
 	updateMatrix(force) {
 		Object3D.prototype.updateMatrix.call(this, force);
 
-		this.viewMatrix.getInverse(this.worldMatrix); // update view matrix
+		this.viewMatrix.copy(this.worldMatrix).invert(); // update view matrix
 
 		this.projectionViewMatrix.multiplyMatrices(this.projectionMatrix, this.viewMatrix); // get PV matrix
 		this.frustum.setFromMatrix(this.projectionViewMatrix); // update frustum
@@ -9967,7 +9946,7 @@ class Mesh extends Object3D {
 			return;
 		}
 
-		_inverseMatrix.getInverse(worldMatrix);
+		_inverseMatrix.copy(worldMatrix).invert();
 		_ray.copy(ray).applyMatrix4(_inverseMatrix);
 
 		if (!_ray.intersectsBox(geometry.boundingBox)) {
@@ -14767,13 +14746,13 @@ class Skeleton {
 
 		for (let i = 0; i < this.bones.length; i++) {
 			const bone = this.bones[i];
-			bone.worldMatrix.getInverse(boneInverses[i]);
+			bone.worldMatrix.copy(boneInverses[i]).invert();
 		}
 
 		for (let i = 0; i < this.bones.length; i++) {
 			const bone = this.bones[i];
 			if (bone.parent && bone.parent.isBone) {
-				bone.matrix.getInverse(bone.parent.worldMatrix);
+				bone.matrix.copy(bone.parent.worldMatrix).invert();
 				bone.matrix.multiply(bone.worldMatrix);
 			} else {
 				bone.matrix.copy(bone.worldMatrix);
@@ -15577,16 +15556,16 @@ class SkinnedMesh extends Mesh {
 		}
 
 		this.bindMatrix.copy(bindMatrix);
-		this.bindMatrixInverse.getInverse(bindMatrix);
+		this.bindMatrixInverse.copy(bindMatrix).invert();
 	}
 
 	updateMatrix(force) {
 		super.updateMatrix(force);
 
 		if (this.bindMode === 'attached') {
-			this.bindMatrixInverse.getInverse(this.worldMatrix);
+			this.bindMatrixInverse.copy(this.worldMatrix).invert();
 		} else if (this.bindMode === 'detached') {
-			this.bindMatrixInverse.getInverse(this.bindMatrix);
+			this.bindMatrixInverse.copy(this.bindMatrix).invert();
 		} else {
 			console.warn('SkinnedMesh: Unrecognized bindMode: ' + this.bindMode);
 		}
@@ -21559,5 +21538,25 @@ const generateUUID = MathUtils.generateUUID;
 const isPowerOfTwo = MathUtils.isPowerOfTwo;
 const nearestPowerOfTwo = MathUtils.nearestPowerOfTwo;
 const nextPowerOfTwo = MathUtils.nextPowerOfTwo;
+
+// deprecated since 0.4.3
+Matrix4.prototype.inverse = function() {
+	return this.invert();
+};
+
+// deprecated since 0.4.3
+Matrix4.prototype.getInverse = function(m) {
+	return this.copy(m).invert();
+};
+
+// deprecated since 0.4.3
+Matrix3.prototype.inverse = function() {
+	return this.invert();
+};
+
+// deprecated since 0.4.3
+Matrix3.prototype.getInverse = function(m) {
+	return this.copy(m).invert();
+};
 
 export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

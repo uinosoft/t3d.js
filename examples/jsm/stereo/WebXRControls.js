@@ -86,7 +86,7 @@ class WebXRControl {
 				_camera.position.add(camera.position);
 				_camera.updateMatrix();
 				_camera.projectionMatrix.fromArray(view.projectionMatrix);
-				_camera.projectionMatrixInverse.getInverse(_camera.projectionMatrix);
+				_camera.projectionMatrixInverse.copy(_camera.projectionMatrix).invert();
 
 				const x = viewport.x / width;
 				const y = viewport.y / height;

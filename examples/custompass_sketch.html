@@ -147,7 +147,7 @@
 			renderer.setClearColor(0, 0, 0, 0);
 			renderer.clear(true, true, true);
 
-			matProjViewInverse.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).inverse();
+			matProjViewInverse.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert();
 
 			sketchPass.render(renderer);
 

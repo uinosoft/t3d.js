@@ -346,7 +346,7 @@ class BaseControl extends Object3D {
 		const group = this._group;
 
 		group.getWorldMatrix(this._startGroupMatrix);
-		this._startGroupMatrixInverse.getInverse(this._startGroupMatrix);
+		this._startGroupMatrixInverse.copy(this._startGroupMatrix).invert();
 
 		if (group.objects.length > 0) {
 			this._startLocalMatrix.copy(group.objects[0].matrix);
@@ -595,7 +595,7 @@ class TranslateControl extends BaseControl {
 		this._scale = factor;
 
 		this.worldMatrix.copy(_mat4_1);
-		const parentMatrixInverse = _mat4_1.getInverse(this.parent.worldMatrix);
+		const parentMatrixInverse = _mat4_1.copy(this.parent.worldMatrix).invert();
 		this.matrix.multiplyMatrices(parentMatrixInverse, this.worldMatrix);
 		this.matrix.decompose(this.position, this.quaternion, this.scale);
 
@@ -605,7 +605,7 @@ class TranslateControl extends BaseControl {
 	_adaptPlanes() {
 		if (this._moving) return;
 
-		_mat4_1.getInverse(this.worldMatrix).multiply(this._camera.worldMatrix);
+		_mat4_1.copy(this.worldMatrix).invert().multiply(this._camera.worldMatrix);
 		const cameraVector = _vec3_1.setFromMatrixPosition(_mat4_1);
 
 		for (let i = 0, l = this._gizmoPlanes.length; i < l; i++) {
@@ -831,7 +831,7 @@ class ScaleControl extends BaseControl {
 		}
 
 		this.worldMatrix.copy(_mat4_1);
-		const parentMatrixInverse = _mat4_1.getInverse(this.parent.worldMatrix);
+		const parentMatrixInverse = _mat4_1.copy(this.parent.worldMatrix).invert();
 		this.matrix.multiplyMatrices(parentMatrixInverse, this.worldMatrix);
 		this.matrix.decompose(this.position, this.quaternion, this.scale);
 
@@ -1156,7 +1156,7 @@ class RotateControl extends BaseControl {
 		const gizmoPos = _vec3_2.setFromMatrixPosition(this.worldMatrix);
 		const eye = _vec3_3.subVectors(cameraPos, gizmoPos).normalize();
 
-		eye.transformDirection(_mat4_1.getInverse(this.worldMatrix));
+		eye.transformDirection(_mat4_1.copy(this.worldMatrix).invert());
 
 		this._eye.copy(eye);
 
@@ -1196,7 +1196,7 @@ class RotateControl extends BaseControl {
 		factor *= this.size / 8;
 
 		this.worldMatrix.copy(_mat4_1);
-		const parentMatrixInverse = _mat4_1.getInverse(this.parent.worldMatrix);
+		const parentMatrixInverse = _mat4_1.copy(this.parent.worldMatrix).invert();
 		this.matrix.multiplyMatrices(parentMatrixInverse, this.worldMatrix);
 		this.matrix.decompose(this.position, this.quaternion, this.scale);
 

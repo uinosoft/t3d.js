@@ -132,12 +132,12 @@ class VirtualGroup {
 	}
 
 	setWorldMatrix(matrix) {
-		const worldMatrixInverse = this.getWorldMatrix(_mat4_1).inverse();
+		const worldMatrixInverse = this.getWorldMatrix(_mat4_1).invert();
 		this._worldMatrix.copy(matrix);
 		const offsetMatrix = _mat4_2.multiplyMatrices(matrix, worldMatrixInverse);
 		this._objects.forEach(object => {
 			object.worldMatrix.multiplyMatrices(offsetMatrix, object.worldMatrix);
-			const parentMatrixInverse = _mat4_1.getInverse(object.parent.worldMatrix);
+			const parentMatrixInverse = _mat4_1.copy(object.parent.worldMatrix).invert();
 			object.matrix.multiplyMatrices(parentMatrixInverse, object.worldMatrix);
 			object.matrix.decompose(object.position, object.quaternion, object.scale);
 		});

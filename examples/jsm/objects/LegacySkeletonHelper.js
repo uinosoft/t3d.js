@@ -57,7 +57,7 @@ class SkeletonHelper extends Mesh {
 		const geometry = this.geometry;
 		const position = geometry.getAttribute('a_Position');
 
-		worldMatrixInv.getInverse(this.root.worldMatrix);
+		worldMatrixInv.copy(this.root.worldMatrix).invert();
 
 		for (let i = 0, j = 0; i < bones.length; i++) {
 			const bone = bones[i];

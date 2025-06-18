@@ -124,7 +124,7 @@ class DeferredRenderer extends WebGLRenderer {
 		this.setClearColor(0, 0, 0, 0);
 		this.clear(true, true, true);
 
-		matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).inverse();
+		matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).invert();
 		eyePosition.copy(renderStates.camera.position);
 
 		function uploadCommonUniforms(pass) {

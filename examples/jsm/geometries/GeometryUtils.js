@@ -456,7 +456,7 @@ class GeometryUtils {
 			array = normal.buffer.array;
 			count = normal.buffer.count;
 			offset = normal.offset;
-			const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+			const normalMatrix = _mat3_1.setFromMatrix4(matrix).invert().transpose();
 			for (let i = 0; i < count; i++) {
 				_vec3_1.fromArray(array, i * 3 + offset);
 				_vec3_1.applyMatrix3(normalMatrix).normalize();

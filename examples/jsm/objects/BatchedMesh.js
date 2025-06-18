@@ -718,7 +718,7 @@ class BatchedMesh extends Mesh {
 
 		if (sortObjects) {
 			// get the camera position in the local frame
-			_mat4_1.copy(this.worldMatrix).inverse();
+			_mat4_1.copy(this.worldMatrix).invert();
 			_vec3_1.setFromMatrixPosition(camera.worldMatrix).applyMatrix4(_mat4_1);
 			_vec3_2.set(0, 0, -1).transformDirection(camera.worldMatrix).transformDirection(_mat4_1);
 

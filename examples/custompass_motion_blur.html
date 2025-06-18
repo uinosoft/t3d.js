@@ -157,7 +157,7 @@
 			renderer.clear(true, true, true);
 
 			viewProjectionMatrix.copy(camera.viewMatrix).premultiply(camera.projectionMatrix);
-			viewProjectionMatrixInverse.copy(viewProjectionMatrix).inverse();
+			viewProjectionMatrixInverse.copy(viewProjectionMatrix).invert();
 			motionBlurPass.uniforms.worldToClipMatrix.set(viewProjectionMatrix.elements);
 			motionBlurPass.uniforms.clipToWorldMatrix.set(viewProjectionMatrixInverse.elements);
 			motionBlurPass.uniforms.previousWorldToClipMatrix.set(previousViewProjectionMatrix.elements);

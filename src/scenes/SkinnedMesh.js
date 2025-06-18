@@ -57,16 +57,16 @@ class SkinnedMesh extends Mesh {
 		}
 
 		this.bindMatrix.copy(bindMatrix);
-		this.bindMatrixInverse.getInverse(bindMatrix);
+		this.bindMatrixInverse.copy(bindMatrix).invert();
 	}
 
 	updateMatrix(force) {
 		super.updateMatrix(force);
 
 		if (this.bindMode === 'attached') {
-			this.bindMatrixInverse.getInverse(this.worldMatrix);
+			this.bindMatrixInverse.copy(this.worldMatrix).invert();
 		} else if (this.bindMode === 'detached') {
-			this.bindMatrixInverse.getInverse(this.bindMatrix);
+			this.bindMatrixInverse.copy(this.bindMatrix).invert();
 		} else {
 			console.warn('SkinnedMesh: Unrecognized bindMode: ' + this.bindMode);
 		}

@@ -137,7 +137,7 @@ class Frustum {
 	applyMatrix4(matrix) {
 		const planes = this.planes;
 
-		const normalMatrix = _mat3_1.setFromMatrix4(matrix).inverse().transpose();
+		const normalMatrix = _mat3_1.setFromMatrix4(matrix).invert().transpose();
 
 		for (let i = 0; i < 6; i++) {
 			planes[i].applyMatrix4(matrix, normalMatrix);

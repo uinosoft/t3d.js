@@ -324,7 +324,7 @@ class VOXGeometry {
 		if (materialIndexOffset === undefined) materialIndexOffset = 0;
 
 		if (matrix !== undefined) {
-			normalMatrix = new Matrix3().setFromMatrix4(matrix).inverse().transpose();
+			normalMatrix = new Matrix3().setFromMatrix4(matrix).invert().transpose();
 		}
 
 		// vertices

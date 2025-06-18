@@ -108,7 +108,7 @@ class Mesh extends Object3D {
 			return;
 		}
 
-		_inverseMatrix.getInverse(worldMatrix);
+		_inverseMatrix.copy(worldMatrix).invert();
 		_ray.copy(ray).applyMatrix4(_inverseMatrix);
 
 		if (!_ray.intersectsBox(geometry.boundingBox)) {

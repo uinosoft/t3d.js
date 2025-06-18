@@ -369,7 +369,7 @@
 					renderer.clear(true, true, true);
 				}
 
-				matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).inverse();
+				matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).invert();
 				cameraPos.copy(renderStates.camera.position);
 
 				const lightingGroup = renderStates.lighting.getGroup(0);

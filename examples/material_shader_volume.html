@@ -107,7 +107,7 @@
 		
 			controller.update();
 
-			invTransform.copy(box.matrix).inverse();
+			invTransform.copy(box.matrix).invert();
 
 			forwardRenderer.render(scene, camera);
 		}

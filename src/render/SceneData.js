@@ -37,7 +37,7 @@ class SceneData {
 	update(scene) {
 		this.useAnchorMatrix = !scene.anchorMatrix.isIdentity();
 		this.anchorMatrix.copy(scene.anchorMatrix);
-		this.anchorMatrixInverse.getInverse(scene.anchorMatrix);
+		this.anchorMatrixInverse.copy(scene.anchorMatrix).invert();
 
 		this.disableShadowSampler = scene.disableShadowSampler;
 

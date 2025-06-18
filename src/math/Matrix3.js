@@ -71,25 +71,17 @@ class Matrix3 {
 	}
 
 	/**
-	 * Take the inverse of this matrix
-	 * @returns {Matrix3}
+	 * Inverts this matrix, using the [analytic method]{@link https://en.wikipedia.org/wiki/Invertible_matrix#Analytic_solution}.
+	 * You can not invert with a determinant of zero. If you attempt this, the method produces
+	 * a zero matrix instead.
+	 * @returns {Matrix3} A reference to this matrix.
 	 */
-	inverse() {
-		return this.getInverse(this);
-	}
+	invert() {
+		const te = this.elements,
 
-	/**
-	 * Take the inverse of the matrix
-	 * @param {Matrix3} matrix - The matrix to take the inverse of.
-	 * @returns {Matrix3}
-	 */
-	getInverse(matrix) {
-		const me = matrix.elements,
-			te = this.elements,
-
-			n11 = me[0], n21 = me[1], n31 = me[2],
-			n12 = me[3], n22 = me[4], n32 = me[5],
-			n13 = me[6], n23 = me[7], n33 = me[8],
+			n11 = te[0], n21 = te[1], n31 = te[2],
+			n12 = te[3], n22 = te[4], n32 = te[5],
+			n13 = te[6], n23 = te[7], n33 = te[8],
 
 			t11 = n33 * n22 - n32 * n23,
 			t12 = n32 * n13 - n33 * n12,
@@ -97,10 +89,7 @@ class Matrix3 {
 
 			det = n11 * t11 + n21 * t12 + n31 * t13;
 
-		if (det === 0) {
-			console.warn('Matrix3: .getInverse() can not invert matrix, determinant is 0');
-			return this.identity();
-		}
+		if (det === 0) return this.set(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 		const detInv = 1 / det;
 

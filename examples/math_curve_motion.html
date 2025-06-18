@@ -161,7 +161,7 @@
 				-tangent.x, -tangent.y, -tangent.z, 0,
 				0, 0, 0, 1
 			);
-			rotationMatrix.inverse();
+			rotationMatrix.invert();
 
 			quaternion.setFromRotationMatrix(rotationMatrix);
 		}

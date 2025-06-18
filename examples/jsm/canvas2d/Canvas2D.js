@@ -54,7 +54,7 @@ class Canvas2D extends Mesh {
 		// screen canvas used ortho camera
 		this.orthoCamera = new Camera();
 		this.orthoCamera.setOrtho(-width / 2, width / 2, -height / 2, height / 2, 0, 1);
-		this.orthoCamera.viewMatrix.getInverse(this.orthoCamera.worldMatrix); // update view matrix
+		this.orthoCamera.viewMatrix.copy(this.orthoCamera.worldMatrix).invert(); // update view matrix
 
 		this._vertices = [];
 		this._indices = [];
@@ -107,7 +107,7 @@ class Canvas2D extends Mesh {
 	_updateCamera() {
 		if (this.isScreenCanvas) {
 			this.orthoCamera.setOrtho(-this._resolutionSize.x / 2, this._resolutionSize.x / 2, -this._resolutionSize.y / 2, this._resolutionSize.y / 2, 0, 1);
-			this.orthoCamera.viewMatrix.getInverse(this.orthoCamera.worldMatrix); // update view matrix
+			this.orthoCamera.viewMatrix.copy(this.orthoCamera.worldMatrix).invert(); // update view matrix
 		}
 	}
 
