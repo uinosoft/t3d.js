@@ -110,6 +110,11 @@ Matrix4.prototype.getInverse = function(m) {
 };
 
 // deprecated since 0.4.3
+Matrix4.prototype.transform = function(position, scale, quaternion) {
+	return this.compose(position, quaternion, scale);
+};
+
+// deprecated since 0.4.3
 Matrix3.prototype.inverse = function() {
 	return this.invert();
 };

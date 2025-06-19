@@ -472,6 +472,23 @@ class Vector3 {
 	}
 
 	/**
+	 * Returns the angle between the given vector and this instance in radians.
+	 * @param {Vector3} v - The vector to compute the angle with.
+	 * @returns {number} The angle in radians.
+	 */
+	angleTo(v) {
+		const denominator = Math.sqrt(this.getLengthSquared() * v.getLengthSquared());
+
+		if (denominator === 0) return Math.PI / 2;
+
+		const theta = this.dot(v) / denominator;
+
+		// clamp, to handle numerical problems
+
+		return Math.acos(MathUtils.clamp(theta, -1, 1));
+	}
+
+	/**
 	 * Computes the squared distance from this vector to v.
 	 * If you are just comparing the distance with another distance,
 	 * you should compare the distance squared instead as it is slightly more efficient to calculate.

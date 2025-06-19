@@ -1,16 +1,18 @@
 import { Vector3 } from './Vector3.js';
 
 /**
- * 4x4 matrix class.
+ * Represents a 4x4 matrix.
  */
 class Matrix4 {
 
 	/**
-	 * Create a 4x4 matrix.
+	 * Constructs a new 4x4 matrix.
 	 */
 	constructor() {
-		// Keep Matrix elements in double precision for added precision
-		// https:// github.com/mrdoob/three.js/pull/10702
+		/**
+		 * A column-major list of matrix values.
+		 * @type {Array<number>}
+		 */
 		this.elements = [
 			1, 0, 0, 0,
 			0, 1, 0, 0,
@@ -20,8 +22,40 @@ class Matrix4 {
 	}
 
 	/**
-	 * Resets this matrix to the identity matrix.
-	 * @returns {Matrix4}
+	 * Sets the elements of the matrix.The arguments are supposed to be
+	 * in row-major order.
+	 * @param {number} [n11] - 1-1 matrix element.
+	 * @param {number} [n12] - 1-2 matrix element.
+	 * @param {number} [n13] - 1-3 matrix element.
+	 * @param {number} [n14] - 1-4 matrix element.
+	 * @param {number} [n21] - 2-1 matrix element.
+	 * @param {number} [n22] - 2-2 matrix element.
+	 * @param {number} [n23] - 2-3 matrix element.
+	 * @param {number} [n24] - 2-4 matrix element.
+	 * @param {number} [n31] - 3-1 matrix element.
+	 * @param {number} [n32] - 3-2 matrix element.
+	 * @param {number} [n33] - 3-3 matrix element.
+	 * @param {number} [n34] - 3-4 matrix element.
+	 * @param {number} [n41] - 4-1 matrix element.
+	 * @param {number} [n42] - 4-2 matrix element.
+	 * @param {number} [n43] - 4-3 matrix element.
+	 * @param {number} [n44] - 4-4 matrix element.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	set(n11, n12, n13, n14, n21, n22, n23, n24, n31, n32, n33, n34, n41, n42, n43, n44) {
+		const ele = this.elements;
+
+		ele[0] = n11; ele[4] = n12; ele[8] = n13; ele[12] = n14;
+		ele[1] = n21; ele[5] = n22; ele[9] = n23; ele[13] = n24;
+		ele[2] = n31; ele[6] = n32; ele[10] = n33; ele[14] = n34;
+		ele[3] = n41; ele[7] = n42; ele[11] = n43; ele[15] = n44;
+
+		return this;
+	}
+
+	/**
+	 * Sets this matrix to the 4x4 identity matrix.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	identity() {
 		return this.set(
@@ -45,50 +79,17 @@ class Matrix4 {
 	}
 
 	/**
-	 * Set the elements of this matrix to the supplied row-major values n11, n12, ... n44.
-	 * @param {number} n11
-	 * @param {number} n12
-	 * @param {number} n13
-	 * @param {number} n14
-	 * @param {number} n21
-	 * @param {number} n22
-	 * @param {number} n23
-	 * @param {number} n24
-	 * @param {number} n31
-	 * @param {number} n32
-	 * @param {number} n33
-	 * @param {number} n34
-	 * @param {number} n41
-	 * @param {number} n42
-	 * @param {number} n43
-	 * @param {number} n44
-	 * @returns {Matrix4}
-	 */
-	set(n11, n12, n13, n14, n21, n22, n23, n24,
-		n31, n32, n33, n34,
-		n41, n42, n43, n44) {
-		const ele = this.elements;
-
-		ele[0] = n11; ele[4] = n12; ele[8] = n13; ele[12] = n14;
-		ele[1] = n21; ele[5] = n22; ele[9] = n23; ele[13] = n24;
-		ele[2] = n31; ele[6] = n32; ele[10] = n33; ele[14] = n34;
-		ele[3] = n41; ele[7] = n42; ele[11] = n43; ele[15] = n44;
-
-		return this;
-	}
-
-	/**
-	 * Creates a new Matrix4 with identical elements to this one.
-	 * @returns {Matrix4}
+	 * Returns a matrix with copied values from this instance.
+	 * @returns {Matrix4} A clone of this instance.
 	 */
 	clone() {
 		return new Matrix4().fromArray(this.elements);
 	}
 
 	/**
-	 * Copies the elements of matrix m into this matrix.
-	 * @param {Matrix4} m
-	 * @returns {Matrix4}
+	 * Copies the values of the given matrix to this instance.
+	 * @param {Matrix4} m - The matrix to copy.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	copy(m) {
 		const te = this.elements;
@@ -103,9 +104,9 @@ class Matrix4 {
 	}
 
 	/**
-	 * Set the upper 3x3 elements of this matrix to the values of the Matrix3 m.
-	 * @param {Matrix3} m
-	 * @returns {Matrix4}
+	 * Set the upper 3x3 elements of this matrix to the values of given 3x3 matrix.
+	 * @param {Matrix3} m - The 3x3 matrix.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	setFromMatrix3(m) {
 		const me = m.elements;
@@ -119,60 +120,270 @@ class Matrix4 {
 	}
 
 	/**
-	 * Sets this matrix as a translation transform.
-	 * @param {number} x - the amount to translate in the X axis.
-	 * @param {number} y - the amount to translate in the Y axis.
-	 * @param {number} z - the amount to translate in the Z axis.
-	 * @returns {Matrix4}
+	 * Extracts the basis of this matrix into the three axis vectors provided.
+	 * @param {Vector3} xAxis - The basis's x axis.
+	 * @param {Vector3} yAxis - The basis's y axis.
+	 * @param {Vector3} zAxis - The basis's z axis.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
-	makeTranslation(x, y, z) {
-		return this.set(
-			1, 0, 0, x,
-			0, 1, 0, y,
-			0, 0, 1, z,
-			0, 0, 0, 1
-		);
+	extractBasis(xAxis, yAxis, zAxis) {
+		xAxis.setFromMatrixColumn(this, 0);
+		yAxis.setFromMatrixColumn(this, 1);
+		zAxis.setFromMatrixColumn(this, 2);
+
+		return this;
 	}
 
 	/**
-	 * Sets this matrix as a scaling transform.
-	 * @param {number} x - The amount to scale in the X axis.
-	 * @param {number} y - The amount to scale in the Y axis.
-	 * @param {number} z - The amount to scale in the Z axis.
-	 * @returns {Matrix4}
+	 * Sets the given basis vectors to this matrix.
+	 * @param {Vector3} xAxis - The basis's x axis.
+	 * @param {Vector3} yAxis - The basis's y axis.
+	 * @param {Vector3} zAxis - The basis's z axis.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
-	makeScale(x, y, z) {
-		return this.set(
-			x, 0, 0, 0,
-			0, y, 0, 0,
-			0, 0, z, 0,
+	makeBasis(xAxis, yAxis, zAxis) {
+		this.set(
+			xAxis.x, yAxis.x, zAxis.x, 0,
+			xAxis.y, yAxis.y, zAxis.y, 0,
+			xAxis.z, yAxis.z, zAxis.z, 0,
 			0, 0, 0, 1
 		);
+
+		return this;
 	}
 
 	/**
-	 * Post-multiplies this matrix by m.
-	 * @param {Matrix4} m
+	 * Extracts the rotation component of the given matrix
+	 * into this matrix's rotation component.
+	 *
+	 * Note: This method does not support reflection matrices.
+	 * @param {Matrix4} m - The matrix.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	extractRotation(m) {
+		const te = this.elements;
+		const me = m.elements;
+
+		const scaleX = 1 / _vec3_1.setFromMatrixColumn(m, 0).getLength();
+		const scaleY = 1 / _vec3_1.setFromMatrixColumn(m, 1).getLength();
+		const scaleZ = 1 / _vec3_1.setFromMatrixColumn(m, 2).getLength();
+
+		te[0] = me[0] * scaleX;
+		te[1] = me[1] * scaleX;
+		te[2] = me[2] * scaleX;
+		te[3] = 0;
+
+		te[4] = me[4] * scaleY;
+		te[5] = me[5] * scaleY;
+		te[6] = me[6] * scaleY;
+		te[7] = 0;
+
+		te[8] = me[8] * scaleZ;
+		te[9] = me[9] * scaleZ;
+		te[10] = me[10] * scaleZ;
+		te[11] = 0;
+
+		te[12] = 0;
+		te[13] = 0;
+		te[14] = 0;
+		te[15] = 1;
+
+		return this;
+	}
+
+	/**
+	 * Sets the rotation component (the upper left 3x3 matrix) of this matrix to
+	 * the rotation specified by the given Euler angles. The rest of
+	 * the matrix is set to the identity. Depending on the {@link Euler#order},
+	 * there are six possible outcomes. See [this page]{@link https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix}
+	 * for a complete list.
+	 * @param {Euler} euler - The Euler angles.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	makeRotationFromEuler(euler) {
+		const te = this.elements;
+
+		const x = euler.x, y = euler.y, z = euler.z;
+		const a = Math.cos(x), b = Math.sin(x);
+		const c = Math.cos(y), d = Math.sin(y);
+		const e = Math.cos(z), f = Math.sin(z);
+
+		if (euler.order === 'XYZ') {
+			const ae = a * e, af = a * f, be = b * e, bf = b * f;
+
+			te[0] = c * e;
+			te[4] = -c * f;
+			te[8] = d;
+
+			te[1] = af + be * d;
+			te[5] = ae - bf * d;
+			te[9] = -b * c;
+
+			te[2] = bf - ae * d;
+			te[6] = be + af * d;
+			te[10] = a * c;
+		} else if (euler.order === 'YXZ') {
+			const ce = c * e, cf = c * f, de = d * e, df = d * f;
+
+			te[0] = ce + df * b;
+			te[4] = de * b - cf;
+			te[8] = a * d;
+
+			te[1] = a * f;
+			te[5] = a * e;
+			te[9] = -b;
+
+			te[2] = cf * b - de;
+			te[6] = df + ce * b;
+			te[10] = a * c;
+		} else if (euler.order === 'ZXY') {
+			const ce = c * e, cf = c * f, de = d * e, df = d * f;
+
+			te[0] = ce - df * b;
+			te[4] = -a * f;
+			te[8] = de + cf * b;
+
+			te[1] = cf + de * b;
+			te[5] = a * e;
+			te[9] = df - ce * b;
+
+			te[2] = -a * d;
+			te[6] = b;
+			te[10] = a * c;
+		} else if (euler.order === 'ZYX') {
+			const ae = a * e, af = a * f, be = b * e, bf = b * f;
+
+			te[0] = c * e;
+			te[4] = be * d - af;
+			te[8] = ae * d + bf;
+
+			te[1] = c * f;
+			te[5] = bf * d + ae;
+			te[9] = af * d - be;
+
+			te[2] = -d;
+			te[6] = b * c;
+			te[10] = a * c;
+		} else if (euler.order === 'YZX') {
+			const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
+
+			te[0] = c * e;
+			te[4] = bd - ac * f;
+			te[8] = bc * f + ad;
+
+			te[1] = f;
+			te[5] = a * e;
+			te[9] = -b * e;
+
+			te[2] = -d * e;
+			te[6] = ad * f + bc;
+			te[10] = ac - bd * f;
+		} else if (euler.order === 'XZY') {
+			const ac = a * c, ad = a * d, bc = b * c, bd = b * d;
+
+			te[0] = c * e;
+			te[4] = -f;
+			te[8] = d * e;
+
+			te[1] = ac * f + bd;
+			te[5] = a * e;
+			te[9] = ad * f - bc;
+
+			te[2] = bc * f - ad;
+			te[6] = b * e;
+			te[10] = bd * f + ac;
+		}
+
+		// bottom row
+		te[3] = 0;
+		te[7] = 0;
+		te[11] = 0;
+
+		// last column
+		te[12] = 0;
+		te[13] = 0;
+		te[14] = 0;
+		te[15] = 1;
+
+		return this;
+	}
+
+	/**
+	 * Sets the rotation component of this matrix to the rotation specified by q, as outlined here.
+	 * @param {Quaternion} q
 	 * @returns {Matrix4}
+	 */
+	makeRotationFromQuaternion(q) {
+		return this.transform(_zero, _one, q);
+	}
+
+	/**
+	 * Constructs a rotation matrix, looking from eye towards center oriented by the up vector.
+	 * @param {Vector3} eye - The eye vector.
+	 * @param {Vector3} target - The target vector.
+	 * @param {Vector3} up - The up vector.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	lookAtRH(eye, target, up) {
+		const te = this.elements;
+
+		_z.subVectors(eye, target);
+
+		if (_z.getLengthSquared() === 0) {
+			// eye and target are in the same position
+			_z.z = 1;
+		}
+
+		_z.normalize();
+		_x.crossVectors(up, _z);
+
+		if (_x.getLengthSquared() === 0) {
+			// up and z are parallel
+
+			if (Math.abs(up.z) === 1) {
+				_z.x += 0.0001;
+			} else {
+				_z.z += 0.0001;
+			}
+
+			_z.normalize();
+			_x.crossVectors(up, _z);
+		}
+
+		_x.normalize();
+		_y.crossVectors(_z, _x);
+
+		te[0] = _x.x; te[4] = _y.x; te[8] = _z.x;
+		te[1] = _x.y; te[5] = _y.y; te[9] = _z.y;
+		te[2] = _x.z; te[6] = _y.z; te[10] = _z.z;
+
+		return this;
+	}
+
+	/**
+	 * Post-multiplies this matrix by the given 4x4 matrix.
+	 * @param {Matrix4} m - The matrix to multiply with.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	multiply(m) {
 		return this.multiplyMatrices(this, m);
 	}
 
 	/**
-	 * Pre-multiplies this matrix by m.
-	 * @param {Matrix4} m
-	 * @returns {Matrix4}
+	 * Pre-multiplies this matrix by the given 4x4 matrix.
+	 * @param {Matrix4} m - The matrix to multiply with.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	premultiply(m) {
 		return this.multiplyMatrices(m, this);
 	}
 
 	/**
-	 * Sets this matrix to a x b.
-	 * @param {Matrix4} a
-	 * @param {Matrix4} b
-	 * @returns {Matrix4}
+	 * Multiples the given 4x4 matrices and stores the result
+	 * in this matrix.
+	 * @param {Matrix4} a - The first matrix.
+	 * @param {Matrix4} b - The second matrix.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	multiplyMatrices(a, b) {
 		const ae = a.elements;
@@ -213,8 +424,59 @@ class Matrix4 {
 	}
 
 	/**
-	 * Transposes this matrix.
-	 * @returns {Matrix4}
+	 * Computes and returns the determinant of this matrix.
+	 * Based on the method outlined [here]{@link http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html}.
+	 * @returns {number} The determinant.
+	 */
+	determinant() {
+		const te = this.elements;
+
+		const n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
+		const n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
+		const n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
+		const n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
+
+		// TODO: make this more efficient
+
+		return (
+			n41 * (
+				+n14 * n23 * n32
+				- n13 * n24 * n32
+				- n14 * n22 * n33
+				+ n12 * n24 * n33
+				+ n13 * n22 * n34
+				- n12 * n23 * n34
+			) +
+			n42 * (
+				+n11 * n23 * n34
+				 - n11 * n24 * n33
+				 + n14 * n21 * n33
+				 - n13 * n21 * n34
+				 + n13 * n24 * n31
+				 - n14 * n23 * n31
+			) +
+			n43 * (
+				+n11 * n24 * n32
+				 - n11 * n22 * n34
+				 - n14 * n21 * n32
+				 + n12 * n21 * n34
+				 + n14 * n22 * n31
+				 - n12 * n24 * n31
+			) +
+			n44 * (
+				-n13 * n22 * n31
+				 - n11 * n23 * n32
+				 + n11 * n22 * n33
+				 + n13 * n21 * n32
+				 - n12 * n21 * n33
+				 + n12 * n23 * n31
+			)
+		);
+	}
+
+	/**
+	 * Transposes this matrix in place.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	transpose() {
 		const te = this.elements;
@@ -227,6 +489,30 @@ class Matrix4 {
 		tmp = te[3]; te[3] = te[12]; te[12] = tmp;
 		tmp = te[7]; te[7] = te[13]; te[13] = tmp;
 		tmp = te[11]; te[11] = te[14]; te[14] = tmp;
+
+		return this;
+	}
+
+	/**
+	 * Sets the position component for this matrix from the given vector,
+	 * without affecting the rest of the matrix.
+	 * @param {number|Vector3} x - The x component of the vector or alternatively the vector object.
+	 * @param {number} y - The y component of the vector.
+	 * @param {number} z - The z component of the vector.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	setPosition(x, y, z) {
+		const te = this.elements;
+
+		if (x.isVector3) {
+			te[12] = x.x;
+			te[13] = x.y;
+			te[14] = x.z;
+		} else {
+			te[12] = x;
+			te[13] = y;
+			te[14] = z;
+		}
 
 		return this;
 	}
@@ -281,13 +567,101 @@ class Matrix4 {
 	}
 
 	/**
-	 * Make transform from position&scale&quaternion(Quaternion).
-	 * @param {Vector3} position
-	 * @param {Vector3} scale
-	 * @param {Quaternion} quaternion
-	 * @returns {Matrix4}
+	 * Gets the maximum scale value of the three axes.
+	 * @returns {number} The maximum scale.
 	 */
-	transform(position, scale, quaternion) {
+	getMaxScaleOnAxis() {
+		const te = this.elements;
+
+		const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2];
+		const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6];
+		const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
+
+		return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
+	}
+
+	/**
+	 * Sets this matrix as a translation transform from the given vector.
+	 * @param {number|Vector3} x - The amount to translate in the X axis or alternatively a translation vector.
+	 * @param {number} y - The amount to translate in the Y axis.
+	 * @param {number} z - The amount to translate in the z axis.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	makeTranslation(x, y, z) {
+		if (x.isVector3) {
+			this.set(
+
+				1, 0, 0, x.x,
+				0, 1, 0, x.y,
+				0, 0, 1, x.z,
+				0, 0, 0, 1
+
+			);
+		} else {
+			this.set(
+
+				1, 0, 0, x,
+				0, 1, 0, y,
+				0, 0, 1, z,
+				0, 0, 0, 1
+
+			);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Sets this matrix as a rotational transformation around the given axis by
+	 * the given angle.
+	 * This is a somewhat controversial but mathematically sound alternative to
+	 * rotating via Quaternions. See the discussion [here]{@link https://www.gamedev.net/articles/programming/math-and-physics/do-we-really-need-quaternions-r1199}.
+	 * @param {Vector3} axis - The normalized rotation axis.
+	 * @param {number} angle - The rotation in radians.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	makeRotationAxis(axis, angle) {
+		// Based on http://www.gamedev.net/reference/articles/article1199.asp
+
+		const c = Math.cos(angle);
+		const s = Math.sin(angle);
+		const t = 1 - c;
+		const x = axis.x, y = axis.y, z = axis.z;
+		const tx = t * x, ty = t * y;
+
+		return this.set(
+			tx * x + c, tx * y - s * z, tx * z + s * y, 0,
+			tx * y + s * z, ty * y + c, ty * z - s * x, 0,
+			tx * z - s * y, ty * z + s * x, t * z * z + c, 0,
+			0, 0, 0, 1
+		);
+	}
+
+	/**
+	 * Sets this matrix as a scale transformation.
+	 * @param {number} x - The amount to scale in the X axis.
+	 * @param {number} y - The amount to scale in the Y axis.
+	 * @param {number} z - The amount to scale in the Z axis.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	makeScale(x, y, z) {
+		return this.set(
+			x, 0, 0, 0,
+			0, y, 0, 0,
+			0, 0, z, 0,
+			0, 0, 0, 1
+		);
+	}
+
+	/**
+	 * Sets this matrix to the transformation composed of the given position,
+	 * rotation (Quaternion) and scale.
+	 * @param {Vector3} position - The position vector.
+	 * @param {Quaternion} quaternion - The rotation as a Quaternion.
+	 * @param {Vector3} scale - The scale vector.
+	 * @returns {Matrix4} A reference to this matrix.
+	 */
+	compose(position, quaternion, scale) {
 		const te = this.elements;
 
 		const x = quaternion._x, y = quaternion._y, z = quaternion._z, w = quaternion._w;
@@ -322,132 +696,15 @@ class Matrix4 {
 	}
 
 	/**
-	 * Sets the rotation component of this matrix to the rotation specified by q, as outlined here.
-	 * @param {Quaternion} q
-	 * @returns {Matrix4}
-	 */
-	makeRotationFromQuaternion(q) {
-		const te = this.elements;
-
-		const x = q.x, y = q.y, z = q.z, w = q.w;
-		const x2 = x + x, y2 = y + y, z2 = z + z;
-		const xx = x * x2, xy = x * y2, xz = x * z2;
-		const yy = y * y2, yz = y * z2, zz = z * z2;
-		const wx = w * x2, wy = w * y2, wz = w * z2;
-
-		te[0] = 1 - (yy + zz);
-		te[4] = xy - wz;
-		te[8] = xz + wy;
-
-		te[1] = xy + wz;
-		te[5] = 1 - (xx + zz);
-		te[9] = yz - wx;
-
-		te[2] = xz - wy;
-		te[6] = yz + wx;
-		te[10] = 1 - (xx + yy);
-
-		// last column
-		te[3] = 0;
-		te[7] = 0;
-		te[11] = 0;
-
-		// bottom row
-		te[12] = 0;
-		te[13] = 0;
-		te[14] = 0;
-		te[15] = 1;
-
-		return this;
-	}
-
-	/**
-	 * Extracts the rotation component of the supplied matrix m into this matrix's rotation component.
-	 * @param {Matrix4} m
-	 * @returns {Matrix4}
-	 */
-	extractRotation(m) {
-		// this method does not support reflection matrices
-
-		const te = this.elements;
-		const me = m.elements;
-
-		const scaleX = 1 / _vec3_1.setFromMatrixColumn(m, 0).getLength();
-		const scaleY = 1 / _vec3_1.setFromMatrixColumn(m, 1).getLength();
-		const scaleZ = 1 / _vec3_1.setFromMatrixColumn(m, 2).getLength();
-
-		te[0] = me[0] * scaleX;
-		te[1] = me[1] * scaleX;
-		te[2] = me[2] * scaleX;
-		te[3] = 0;
-
-		te[4] = me[4] * scaleY;
-		te[5] = me[5] * scaleY;
-		te[6] = me[6] * scaleY;
-		te[7] = 0;
-
-		te[8] = me[8] * scaleZ;
-		te[9] = me[9] * scaleZ;
-		te[10] = me[10] * scaleZ;
-		te[11] = 0;
-
-		te[12] = 0;
-		te[13] = 0;
-		te[14] = 0;
-		te[15] = 1;
-
-		return this;
-	}
-
-	/**
-	 * Constructs a rotation matrix, looking from eye towards center oriented by the up vector.
-	 * @param {Vector3} eye
-	 * @param {Vector3} target
-	 * @param {Vector3} up
-	 * @returns {Matrix4}
-	 */
-	lookAtRH(eye, target, up) {
-		const te = this.elements;
-
-		_z.subVectors(eye, target);
-
-		if (_z.getLengthSquared() === 0) {
-			// eye and target are in the same position
-			_z.z = 1;
-		}
-
-		_z.normalize();
-		_x.crossVectors(up, _z);
-
-		if (_x.getLengthSquared() === 0) {
-			// up and z are parallel
-
-			if (Math.abs(up.z) === 1) {
-				_z.x += 0.0001;
-			} else {
-				_z.z += 0.0001;
-			}
-
-			_z.normalize();
-			_x.crossVectors(up, _z);
-		}
-
-		_x.normalize();
-		_y.crossVectors(_z, _x);
-
-		te[0] = _x.x; te[4] = _y.x; te[8] = _z.x;
-		te[1] = _x.y; te[5] = _y.y; te[9] = _z.y;
-		te[2] = _x.z; te[6] = _y.z; te[10] = _z.z;
-
-		return this;
-	}
-
-	/**
-	 * Decomposes this matrix into it's position, quaternion and scale components.
-	 * @param {Vector3} position
-	 * @param {Quaternion} quaternion
-	 * @param {Vector3} scale
-	 * @returns {Matrix4}
+	 * Decomposes this matrix into its position, rotation and scale components
+	 * and provides the result in the given objects.
+	 * Note: Not all matrices are decomposable in this way. For example, if an
+	 * object has a non-uniformly scaled parent, then the object's world matrix
+	 * may not be decomposable, and this method may not be appropriate.
+	 * @param {Vector3} position - The position vector.
+	 * @param {Quaternion} quaternion - The rotation as a Quaternion.
+	 * @param {Vector3} scale - The scale vector.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	decompose(position, quaternion, scale) {
 		const te = this.elements;
@@ -495,36 +752,26 @@ class Matrix4 {
 	}
 
 	/**
-	 * Computes and returns the determinant of this matrix.
-	 * @returns {number}
+	 * Returns `true` if this matrix is equal with the given one.
+	 * @param {Matrix4} matrix - The matrix to test for equality.
+	 * @returns {boolean} Whether this matrix is equal with the given one.
 	 */
-	determinant() {
+	equals(matrix) {
 		const te = this.elements;
+		const me = matrix.elements;
 
-		const n11 = te[0], n12 = te[4], n13 = te[8], n14 = te[12];
-		const n21 = te[1], n22 = te[5], n23 = te[9], n24 = te[13];
-		const n31 = te[2], n32 = te[6], n33 = te[10], n34 = te[14];
-		const n41 = te[3], n42 = te[7], n43 = te[11], n44 = te[15];
+		for (let i = 0; i < 16; i++) {
+			if (te[i] !== me[i]) return false;
+		}
 
-		const b0 = n11 * n22 - n12 * n21;
-		const b1 = n11 * n23 - n13 * n21;
-		const b2 = n12 * n23 - n13 * n22;
-		const b3 = n31 * n42 - n32 * n41;
-		const b4 = n31 * n43 - n33 * n41;
-		const b5 = n32 * n43 - n33 * n42;
-		const b6 = n11 * b5 - n12 * b4 + n13 * b3;
-		const b7 = n21 * b5 - n22 * b4 + n23 * b3;
-		const b8 = n31 * b2 - n32 * b1 + n33 * b0;
-		const b9 = n41 * b2 - n42 * b1 + n43 * b0;
-
-		return n24 * b6 - n14 * b7 + n44 * b8 - n34 * b9;
+		return true;
 	}
 
 	/**
-	 * Sets the elements of this matrix based on an array in column-major format.
-	 * @param {number[]} array
-	 * @param {number} [offset=0]
-	 * @returns {Matrix4}
+	 * Sets the elements of the matrix from the given array.
+	 * @param {Array<number>} array - The matrix elements in column-major order.
+	 * @param {number} [offset=0] - Index of the first element in the array.
+	 * @returns {Matrix4} A reference to this matrix.
 	 */
 	fromArray(array, offset = 0) {
 		for (let i = 0; i < 16; i++) {
@@ -535,85 +782,11 @@ class Matrix4 {
 	}
 
 	/**
-	 * Gets the maximum scale value of the 3 axes.
-	 * @returns {number}
-	 */
-	getMaxScaleOnAxis() {
-		const te = this.elements;
-
-		const scaleXSq = te[0] * te[0] + te[1] * te[1] + te[2] * te[2];
-		const scaleYSq = te[4] * te[4] + te[5] * te[5] + te[6] * te[6];
-		const scaleZSq = te[8] * te[8] + te[9] * te[9] + te[10] * te[10];
-
-		return Math.sqrt(Math.max(scaleXSq, scaleYSq, scaleZSq));
-	}
-
-	/**
-	 * Sets this matrix as rotation transform around axis by theta radians.
-	 * @param {Vector3} axis
-	 * @param {number} angle
-	 * @returns {Matrix4}
-	 */
-	makeRotationAxis(axis, angle) {
-		// Based on http://www.gamedev.net/reference/articles/article1199.asp
-
-		const c = Math.cos(angle);
-		const s = Math.sin(angle);
-		const t = 1 - c;
-		const x = axis.x, y = axis.y, z = axis.z;
-		const tx = t * x, ty = t * y;
-
-		return this.set(
-			tx * x + c, tx * y - s * z, tx * z + s * y, 0,
-			tx * y + s * z, ty * y + c, ty * z - s * x, 0,
-			tx * z - s * y, ty * z + s * x, t * z * z + c, 0,
-			0, 0, 0, 1
-		);
-	}
-
-	/**
-	 * Linearly interpolates between two matrix4.
-	 * @param {Matrix4} m1
-	 * @param {Matrix4} m2
-	 * @param {number} ratio
-	 * @returns {Matrix4}
-	 */
-	lerpMatrices(m1, m2, ratio) {
-		if (ratio === 0) return this.copy(m1);
-		if (ratio === 1) return this.copy(m2);
-
-		const te = this.elements,
-			te1 = m1.elements,
-			te2 = m2.elements;
-
-		for (let i = 0; i < 16; i++) {
-			te[i] = te1[i] * (1 - ratio) + te2[i] * ratio;
-		}
-
-		return this;
-	}
-
-	/**
-	 * Return true if this matrix and m are equal.
-	 * @param {Matrix4} m
-	 * @returns {boolean}
-	 */
-	equals(m) {
-		const te = this.elements;
-		const me = m.elements;
-
-		for (let i = 0; i < 16; i++) {
-			if (te[i] !== me[i]) return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Writes the elements of this matrix to an array in column-major format.
-	 * @param {number[]} [array]
-	 * @param {number} [offset=0]
-	 * @returns {number[]}
+	 * Writes the elements of this matrix to the given array. If no array is provided,
+	 * the method returns a new instance.
+	 * @param {Array<number>} [array=[]] - The target array holding the matrix elements in column-major order.
+	 * @param {number} [offset=0] - Index of the first element in the array.
+	 * @returns {Array<number>} The matrix elements in column-major order.
 	 */
 	toArray(array = [], offset = 0) {
 		const te = this.elements;
@@ -641,6 +814,28 @@ class Matrix4 {
 		return array;
 	}
 
+	/**
+	 * Linearly interpolates between two matrix4.
+	 * @param {Matrix4} m1
+	 * @param {Matrix4} m2
+	 * @param {number} ratio
+	 * @returns {Matrix4}
+	 */
+	lerpMatrices(m1, m2, ratio) {
+		if (ratio === 0) return this.copy(m1);
+		if (ratio === 1) return this.copy(m2);
+
+		const te = this.elements,
+			te1 = m1.elements,
+			te2 = m2.elements;
+
+		for (let i = 0; i < 16; i++) {
+			te[i] = te1[i] * (1 - ratio) + te2[i] * ratio;
+		}
+
+		return this;
+	}
+
 }
 
 /**
@@ -653,7 +848,8 @@ Matrix4.prototype.isMatrix4 = true;
 
 const _vec3_1 = new Vector3();
 const _mat4_1 = new Matrix4();
-
+const _zero = new Vector3(0, 0, 0);
+const _one = new Vector3(1, 1, 1);
 const _x = new Vector3();
 const _y = new Vector3();
 const _z = new Vector3();

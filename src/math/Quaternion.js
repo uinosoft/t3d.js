@@ -2,15 +2,16 @@ import { MathUtils } from './MathUtils.js';
 import { Matrix4 } from './Matrix4.js';
 
 /**
- * The Quaternion class
+ * Class for representing a Quaternion.
  */
 class Quaternion {
 
 	/**
-	 * @param {number} [x=0] - x coordinate
-	 * @param {number} [y=0] - y coordinate
-	 * @param {number} [z=0] - z coordinate
-	 * @param {number} [w=1] - w coordinate
+	 * Constructs a new quaternion.
+	 * @param {number} [x=0] - The x value of this quaternion.
+	 * @param {number} [y=0] - The y value of this quaternion.
+	 * @param {number} [z=0] - The z value of this quaternion.
+	 * @param {number} [w=1] - The w value of this quaternion.
 	 */
 	constructor(x = 0, y = 0, z = 0, w = 1) {
 		this._x = x;
@@ -20,14 +21,16 @@ class Quaternion {
 	}
 
 	/**
-	 * Slerp method, operates directly on flat arrays of numbers.
-	 * @param {number[]} dst - The output array.
-	 * @param {number} dstOffset - An offset into the output array.
-	 * @param {number[]} src0 - The source array of the starting quaternion.
-	 * @param {number} srcOffset0 - An offset into the array src0.
-	 * @param {number[]} src1 - The source array of the target quatnerion.
-	 * @param {number} srcOffset1 - An offset into the array src1.
-	 * @param {number} t - Normalized interpolation factor (between 0 and 1).
+	 * Interpolates between two quaternions via SLERP. This implementation assumes the
+	 * quaternion data are managed  in flat arrays.
+	 * @param {Array<number>} dst - The destination array.
+	 * @param {number} dstOffset - An offset into the destination array.
+	 * @param {Array<number>} src0 - The source array of the first quaternion.
+	 * @param {number} srcOffset0 - An offset into the first source array.
+	 * @param {Array<number>} src1 -  The source array of the second quaternion.
+	 * @param {number} srcOffset1 - An offset into the second source array.
+	 * @param {number} t - The interpolation factor in the range `[0,1]`.
+	 * @see {@link Quaternion#slerp}
 	 */
 	static slerpFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1, t) {
 		// fuzz-free, array-based Quaternion SLERP operation
@@ -99,14 +102,16 @@ class Quaternion {
 	}
 
 	/**
-	 * Multipley quaternions, but operates directly on flat arrays of numbers.
-	 * @param {number[]} dst - The output array.
-	 * @param {number} dstOffset - An offset into the output array.
-	 * @param {number[]} src0 - The source array of the starting quaternion.
-	 * @param {number} srcOffset0 - An offset into the array src0.
-	 * @param {number[]} src1 - The source array of the target quatnerion.
-	 * @param {number} srcOffset1 - An offset into the array src1.
-	 * @returns {number[]}
+	 * Multiplies two quaternions. This implementation assumes the quaternion data are managed
+	 * in flat arrays.
+	 * @param {Array<number>} dst - The destination array.
+	 * @param {number} dstOffset - An offset into the destination array.
+	 * @param {Array<number>} src0 - The source array of the first quaternion.
+	 * @param {number} srcOffset0 - An offset into the first source array.
+	 * @param {Array<number>} src1 -  The source array of the second quaternion.
+	 * @param {number} srcOffset1 - An offset into the second source array.
+	 * @returns {Array<number>} The destination array.
+	 * @see {@link Quaternion#multiplyQuaternions}
 	 */
 	static multiplyQuaternionsFlat(dst, dstOffset, src0, srcOffset0, src1, srcOffset1) {
 		const x0 = src0[srcOffset0];
@@ -128,206 +133,70 @@ class Quaternion {
 	}
 
 	/**
+	 * The x value of this quaternion.
 	 * @type {number}
+	 * @default 0
 	 */
 	get x() {
 		return this._x;
 	}
 
-	/**
-	 * @type {number}
-	 */
 	set x(value) {
 		this._x = value;
 		this.onChangeCallback();
 	}
 
 	/**
+	 * The y value of this quaternion.
 	 * @type {number}
+	 * @default 0
 	 */
 	get y() {
 		return this._y;
 	}
 
-	/**
-	 * @type {number}
-	 */
 	set y(value) {
 		this._y = value;
 		this.onChangeCallback();
 	}
 
 	/**
+	 * The z value of this quaternion.
 	 * @type {number}
+	 * @default 0
 	 */
 	get z() {
 		return this._z;
 	}
 
-	/**
-	 * @type {number}
-	 */
 	set z(value) {
 		this._z = value;
 		this.onChangeCallback();
 	}
 
 	/**
+	 * The w value of this quaternion.
 	 * @type {number}
+	 * @default 1
 	 */
 	get w() {
 		return this._w;
 	}
 
-	/**
-	 * @type {number}
-	 */
 	set w(value) {
 		this._w = value;
 		this.onChangeCallback();
 	}
 
 	/**
-	 * Normalizes this quaternion - that is, calculated the quaternion that performs the same rotation as this one,
-	 * but has length equal to 1.
-	 * @returns {Quaternion}
+	 * Sets the quaternion components.
+	 * @param {number} x - The x value of this quaternion.
+	 * @param {number} y - The y value of this quaternion.
+	 * @param {number} z - The z value of this quaternion.
+	 * @param {number} w - The w value of this quaternion.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
-	normalize() {
-		let l = this.length();
-
-		if (l === 0) {
-			this._x = 0;
-			this._y = 0;
-			this._z = 0;
-			this._w = 1;
-		} else {
-			l = 1 / l;
-
-			this._x = this._x * l;
-			this._y = this._y * l;
-			this._z = this._z * l;
-			this._w = this._w * l;
-		}
-
-		this.onChangeCallback();
-
-		return this;
-	}
-
-	/**
-	 * Computes the Euclidean length (straight-line length) of this quaternion, considered as a 4 dimensional vector.
-	 * @returns {number}
-	 */
-	length() {
-		return Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
-	}
-
-	/**
-	 * Linearly interpolates between two quaternions.
-	 * @param {Quaternion} q1
-	 * @param {Quaternion} q2
-	 * @param {number} ratio
-	 * @returns {Quaternion}
-	 */
-	lerpQuaternions(q1, q2, ratio) {
-		if (ratio === 0) return this.copy(q1);
-		if (ratio === 1) return this.copy(q2);
-
-		const w1 = q1._w, x1 = q1._x, y1 = q1._y, z1 = q1._z;
-		let w2 = q2._w, x2 = q2._x, y2 = q2._y, z2 = q2._z;
-
-		const dot = w1 * w2 + x1 * x2 + y1 * y2 + z1 * z2;
-
-		// shortest direction
-		if (dot < 0) {
-			w2 = -w2;
-			x2 = -x2;
-			y2 = -y2;
-			z2 = -z2;
-		}
-
-		this._w = w1 + ratio * (w2 - w1);
-		this._x = x1 + ratio * (x2 - x1);
-		this._y = y1 + ratio * (y2 - y1);
-		this._z = z1 + ratio * (z2 - z1);
-
-		const len = 1.0 / Math.sqrt(this._w * this._w + this._x * this._x + this._y * this._y + this._z * this._z);
-
-		this._w *= len;
-		this._x *= len;
-		this._y *= len;
-		this._z *= len;
-
-		this.onChangeCallback();
-
-		return this;
-	}
-
-	/**
-	 * Spherically interpolates between two quaternions
-	 * providing an interpolation between rotations with constant angle change rate.
-	 * @param {Quaternion} q1
-	 * @param {Quaternion} q2
-	 * @param {number} ratio
-	 * @returns {Quaternion}
-	 */
-	slerpQuaternions(q1, q2, ratio) {
-		if (ratio === 0) return this.copy(q1);
-		if (ratio === 1) return this.copy(q2);
-
-		const w1 = q1._w, x1 = q1._x, y1 = q1._y, z1 = q1._z;
-		let w2 = q2._w, x2 = q2._x, y2 = q2._y, z2 = q2._z;
-
-		let dot = w1 * w2 + x1 * x2 + y1 * y2 + z1 * z2;
-
-		// shortest direction
-		if (dot < 0) {
-			dot = -dot;
-			w2 = -w2;
-			x2 = -x2;
-			y2 = -y2;
-			z2 = -z2;
-		}
-
-		if (dot < 0.95) {
-			const angle = Math.acos(dot);
-			const s = 1 / Math.sin(angle);
-			const s1 = Math.sin(angle * (1 - ratio)) * s;
-			const s2 = Math.sin(angle * ratio) * s;
-
-			this._w = w1 * s1 + w2 * s2;
-			this._x = x1 * s1 + x2 * s2;
-			this._y = y1 * s1 + y2 * s2;
-			this._z = z1 * s1 + z2 * s2;
-		} else {
-			// nearly identical angle, interpolate linearly
-			this._w = w1 + ratio * (w2 - w1);
-			this._x = x1 + ratio * (x2 - x1);
-			this._y = y1 + ratio * (y2 - y1);
-			this._z = z1 + ratio * (z2 - z1);
-
-			const len = 1.0 / Math.sqrt(this._w * this._w + this._x * this._x + this._y * this._y + this._z * this._z);
-
-			this._w *= len;
-			this._x *= len;
-			this._y *= len;
-			this._z *= len;
-		}
-
-		this.onChangeCallback();
-
-		return this;
-	}
-
-	/**
-	 * Sets x, y, z, w properties of this quaternion.
-	 * @param {number} x
-	 * @param {number} y
-	 * @param {number} z
-	 * @param {number} w
-	 * @returns {Quaternion}
-	 */
-	set(x = 0, y = 0, z = 0, w = 1) {
+	set(x, y, z, w) {
 		this._x = x;
 		this._y = y;
 		this._z = z;
@@ -339,23 +208,23 @@ class Quaternion {
 	}
 
 	/**
-	 * Creates a new Quaternion with identical x, y, z and w properties to this one.
-	 * @returns {Quaternion}
+	 * Returns a new quaternion with copied values from this instance.
+	 * @returns {Quaternion} A clone of this instance.
 	 */
 	clone() {
 		return new Quaternion(this._x, this._y, this._z, this._w);
 	}
 
 	/**
-	 * Copies the x, y, z and w properties of q into this quaternion.
-	 * @param {Quaternion} quaternion
-	 * @returns {Quaternion}
+	 * Copies the values of the given quaternion to this instance.
+	 * @param {Quaternion} quaternion - The quaternion to copy.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	copy(quaternion) {
 		this._x = quaternion.x;
 		this._y = quaternion.y;
 		this._z = quaternion.z;
-		this._w = (quaternion.w !== undefined) ? quaternion.w : 1;
+		this._w = quaternion.w;
 
 		this.onChangeCallback();
 
@@ -363,10 +232,11 @@ class Quaternion {
 	}
 
 	/**
-	 * Sets this quaternion from the rotation specified by Euler angle.
-	 * @param {Euler} euler
-	 * @param {boolean} [update=true] - Whether to notify quaternion angle has changed
-	 * @returns {Quaternion}
+	 * Sets this quaternion from the rotation specified by the given
+	 * Euler angles.
+	 * @param {Euler} euler - The Euler angles.
+	 * @param {boolean} [update=true] - Whether the internal `onChange` callback should be executed or not.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	setFromEuler(euler, update = true) {
 		const c1 = Math.cos(euler._x / 2);
@@ -416,11 +286,36 @@ class Quaternion {
 	}
 
 	/**
-	 * Sets this quaternion from rotation component of m.
-	 * @param {Matrix4} m
-	 * @returns {Quaternion}
+	 * Sets this quaternion from the given axis and angle.
+	 * @param {Vector3} axis - The normalized axis.
+	 * @param {number} angle - The angle in radians.
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	setFromAxisAngle(axis, angle) {
+		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+
+		const halfAngle = angle / 2, s = Math.sin(halfAngle);
+
+		this._x = axis.x * s;
+		this._y = axis.y * s;
+		this._z = axis.z * s;
+		this._w = Math.cos(halfAngle);
+
+		this.onChangeCallback();
+
+		return this;
+	}
+
+	/**
+	 * Sets this quaternion from the given rotation matrix.
+	 * @param {Matrix4} m - A 4x4 matrix of which the upper 3x3 of matrix is a pure rotation matrix (i.e. unscaled).
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	setFromRotationMatrix(m) {
+		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+
+		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
+
 		const te = m.elements,
 
 			m11 = te[0], m12 = te[4], m13 = te[8],
@@ -467,14 +362,13 @@ class Quaternion {
 	}
 
 	/**
-	 * vFrom and vTo are assumed to be normalized.
-	 * @param {Vector3} vFrom
-	 * @param {Vector3} vTo
-	 * @returns {Quaternion}
+	 * Sets this quaternion to the rotation required to rotate the direction vector
+	 * `vFrom` to the direction vector `vTo`.
+	 * @param {Vector3} vFrom - The first (normalized) direction vector.
+	 * @param {Vector3} vTo - The second (normalized) direction vector.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	setFromUnitVectors(vFrom, vTo) {
-		// http://lolengine.net/blog/2014/02/24/quaternion-from-two-vectors-final
-
 		// assumes direction vectors vFrom and vTo are normalized
 
 		let r = vFrom.dot(vTo) + 1;
@@ -506,28 +400,107 @@ class Quaternion {
 	}
 
 	/**
-	 * Multiplies this quaternion by q.
-	 * @param {Quaternion} q
-	 * @returns {Quaternion}
+	 * Returns the angle between this quaternion and the given one in radians.
+	 * @param {Quaternion} q - The quaternion to compute the angle with.
+	 * @returns {number} The angle in radians.
+	 */
+	angleTo(q) {
+		return 2 * Math.acos(Math.abs(MathUtils.clamp(this.dot(q), -1, 1)));
+	}
+
+	/**
+	 * Sets this quaternion to the identity quaternion; that is, to the
+	 * quaternion that represents "no rotation".
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	identity() {
+		return this.set(0, 0, 0, 1);
+	}
+
+	/**
+	 * Returns the rotational conjugate of this quaternion. The conjugate of a
+	 * quaternion represents the same rotation in the opposite direction about
+	 * the rotational axis.
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	conjugate() {
+		this._x *= -1;
+		this._y *= -1;
+		this._z *= -1;
+
+		this.onChangeCallback();
+
+		return this;
+	}
+
+	/**
+	 * Calculates the dot product of this quaternion and the given one.
+	 * @param {Quaternion} v - The quaternion to compute the dot product with.
+	 * @returns {number} The result of the dot product.
+	 */
+	dot(v) {
+		return this._x * v._x + this._y * v._y + this._z * v._z + this._w * v._w;
+	}
+
+	/**
+	 * Computes the Euclidean length (straight-line length) of this quaternion,
+	 * considered as a 4 dimensional vector.
+	 * @returns {number} The Euclidean length.
+	 */
+	length() {
+		return Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
+	}
+
+	/**
+	 * Normalizes this quaternion - that is, calculated the quaternion that performs
+	 * the same rotation as this one, but has a length equal to `1`.
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	normalize() {
+		let l = this.length();
+
+		if (l === 0) {
+			this._x = 0;
+			this._y = 0;
+			this._z = 0;
+			this._w = 1;
+		} else {
+			l = 1 / l;
+
+			this._x = this._x * l;
+			this._y = this._y * l;
+			this._z = this._z * l;
+			this._w = this._w * l;
+		}
+
+		this.onChangeCallback();
+
+		return this;
+	}
+
+	/**
+	 * Multiplies this quaternion by the given one.
+	 * @param {Quaternion} q - The quaternion.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	multiply(q) {
 		return this.multiplyQuaternions(this, q);
 	}
 
 	/**
-	 * Pre-multiplies this quaternion by q.
-	 * @param {Quaternion} q
-	 * @returns {Quaternion}
+	 * Pre-multiplies this quaternion by the given one.
+	 * @param {Quaternion} q - The quaternion.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	premultiply(q) {
 		return this.multiplyQuaternions(q, this);
 	}
 
 	/**
-	 * Sets this quaternion to a x b.
-	 * @param {Quaternion} a
-	 * @param {Quaternion} b
-	 * @returns {Quaternion}
+	 * Multiplies the given quaternions and stores the result in this instance.
+	 * @param {Quaternion} a - The first quaternion.
+	 * @param {Quaternion} b - The second quaternion.
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	multiplyQuaternions(a, b) {
 		// from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
@@ -546,9 +519,191 @@ class Quaternion {
 	}
 
 	/**
-	 * Convert the current quaternion to a matrix4
-	 * @param {Matrix4} target
-	 * @returns {Matrix4}
+	 * Linearly interpolates between two quaternions.
+	 * @param {Quaternion} q1
+	 * @param {Quaternion} q2
+	 * @param {number} ratio
+	 * @returns {Quaternion}
+	 */
+	lerpQuaternions(q1, q2, ratio) {
+		if (ratio === 0) return this.copy(q1);
+		if (ratio === 1) return this.copy(q2);
+
+		const w1 = q1._w, x1 = q1._x, y1 = q1._y, z1 = q1._z;
+		let w2 = q2._w, x2 = q2._x, y2 = q2._y, z2 = q2._z;
+
+		const dot = w1 * w2 + x1 * x2 + y1 * y2 + z1 * z2;
+
+		// shortest direction
+		if (dot < 0) {
+			w2 = -w2;
+			x2 = -x2;
+			y2 = -y2;
+			z2 = -z2;
+		}
+
+		this._w = w1 + ratio * (w2 - w1);
+		this._x = x1 + ratio * (x2 - x1);
+		this._y = y1 + ratio * (y2 - y1);
+		this._z = z1 + ratio * (z2 - z1);
+
+		const len = 1.0 / Math.sqrt(this._w * this._w + this._x * this._x + this._y * this._y + this._z * this._z);
+
+		this._w *= len;
+		this._x *= len;
+		this._y *= len;
+		this._z *= len;
+
+		this.onChangeCallback();
+
+		return this;
+	}
+
+	/**
+	 * Performs a spherical linear interpolation between quaternions.
+	 * @param {Quaternion} qb - The target quaternion.
+	 * @param {number} t - The interpolation factor in the closed interval `[0, 1]`.
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	slerp(qb, t) {
+		if (t === 0) return this;
+		if (t === 1) return this.copy(qb);
+
+		const x = this._x, y = this._y, z = this._z, w = this._w;
+
+		// http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
+
+		let cosHalfTheta = w * qb._w + x * qb._x + y * qb._y + z * qb._z;
+
+		if (cosHalfTheta < 0) {
+			this._w = -qb._w;
+			this._x = -qb._x;
+			this._y = -qb._y;
+			this._z = -qb._z;
+
+			cosHalfTheta = -cosHalfTheta;
+		} else {
+			this.copy(qb);
+		}
+
+		if (cosHalfTheta >= 1.0) {
+			this._w = w;
+			this._x = x;
+			this._y = y;
+			this._z = z;
+
+			return this;
+		}
+
+		const sqrSinHalfTheta = 1.0 - cosHalfTheta * cosHalfTheta;
+
+		if (sqrSinHalfTheta <= Number.EPSILON) {
+			const s = 1 - t;
+			this._w = s * w + t * this._w;
+			this._x = s * x + t * this._x;
+			this._y = s * y + t * this._y;
+			this._z = s * z + t * this._z;
+
+			this.normalize(); // normalize calls onChangeCallback()
+
+			return this;
+		}
+
+		const sinHalfTheta = Math.sqrt(sqrSinHalfTheta);
+		const halfTheta = Math.atan2(sinHalfTheta, cosHalfTheta);
+		const ratioA = Math.sin((1 - t) * halfTheta) / sinHalfTheta,
+			ratioB = Math.sin(t * halfTheta) / sinHalfTheta;
+
+		this._w = (w * ratioA + this._w * ratioB);
+		this._x = (x * ratioA + this._x * ratioB);
+		this._y = (y * ratioA + this._y * ratioB);
+		this._z = (z * ratioA + this._z * ratioB);
+
+		this.onChangeCallback();
+
+		return this;
+	}
+
+	/**
+	 * Performs a spherical linear interpolation between the given quaternions
+	 * and stores the result in this quaternion.
+	 * @param {Quaternion} qa - The source quaternion.
+	 * @param {Quaternion} qb - The target quaternion.
+	 * @param {number} t - The interpolation factor in the closed interval `[0, 1]`.
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	slerpQuaternions(qa, qb, t) {
+		return this.copy(qa).slerp(qb, t);
+	}
+
+	/**
+	 * Returns `true` if this quaternion is equal with the given one.
+	 * @param {Quaternion} quaternion - The quaternion to test for equality.
+	 * @returns {boolean} Whether this quaternion is equal with the given one.
+	 */
+	equals(quaternion) {
+		return (quaternion._x === this._x) && (quaternion._y === this._y) && (quaternion._z === this._z) && (quaternion._w === this._w);
+	}
+
+	/**
+	 * Sets this quaternion's components from the given array.
+	 * @param {Array<number>} array - An array holding the quaternion component values.
+	 * @param {number} [offset=0] - The offset into the array.
+	 * @param {boolean} [denormalize=false] - If true, denormalize the values, and array should be a typed array.
+	 * @returns {Quaternion} A reference to this quaternion.
+	 */
+	fromArray(array, offset = 0, denormalize = false) {
+		let x = array[offset], y = array[offset + 1],
+			z = array[offset + 2], w = array[offset + 3];
+
+		if (denormalize) {
+			x = MathUtils.denormalize(x, array);
+			y = MathUtils.denormalize(y, array);
+			z = MathUtils.denormalize(z, array);
+			w = MathUtils.denormalize(w, array);
+		}
+
+		this._x = x;
+		this._y = y;
+		this._z = z;
+		this._w = w;
+
+		this.onChangeCallback();
+
+		return this;
+	}
+
+	/**
+	 * Writes the components of this quaternion to the given array. If no array is provided,
+	 * the method returns a new instance.
+	 * @param {Array<number>} [array=[]] - The target array holding the quaternion components.
+	 * @param {number} [offset=0] - Index of the first element in the array.
+	 * @param {boolean} [normalize=false] - If true, normalize the values, and array should be a typed array.
+	 * @returns {Quaternion} The quaternion components.
+	 */
+	toArray(array = [], offset = 0, normalize = false) {
+		let x = this._x, y = this._y,
+			z = this._z, w = this._w;
+
+		if (normalize) {
+			x = MathUtils.normalize(x, array);
+			y = MathUtils.normalize(y, array);
+			z = MathUtils.normalize(z, array);
+			w = MathUtils.normalize(w, array);
+		}
+
+		array[offset] = x;
+		array[offset + 1] = y;
+		array[offset + 2] = z;
+		array[offset + 3] = w;
+
+		return array;
+	}
+
+	/**
+	 * Convert the current quaternion to a matrix4.
+	 * @param {Matrix4} target - The target matrix to write the quaternion data to.
+	 * @returns {Matrix4} The target matrix with the quaternion data written to it.
 	 */
 	toMatrix4(target = new Matrix4()) {
 		const ele = target.elements;
@@ -578,109 +733,10 @@ class Quaternion {
 	}
 
 	/**
-	 * Returns the rotational conjugate of this quaternion.
-	 * The conjugate of a quaternion represents the same rotation in the opposite direction about the rotational axis.
-	 * @returns {Quaternion}
-	 */
-	conjugate() {
-		this._x *= -1;
-		this._y *= -1;
-		this._z *= -1;
-
-		this.onChangeCallback();
-
-		return this;
-	}
-
-	/**
-	 * Calculates the dot product of quaternions v and this one.
-	 * @param {Quaternion} v
-	 * @returns {Quaternion}
-	 */
-	dot(v) {
-		return this._x * v._x + this._y * v._y + this._z * v._z + this._w * v._w;
-	}
-
-	/**
-	 * Set quaternion from axis angle
-	 * @param {Vector3} axis
-	 * @param {number} angle
-	 * @returns {Quaternion}
-	 */
-	setFromAxisAngle(axis, angle) {
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
-
-		// assumes axis is normalized
-
-		const halfAngle = angle / 2, s = Math.sin(halfAngle);
-
-		this._x = axis.x * s;
-		this._y = axis.y * s;
-		this._z = axis.z * s;
-		this._w = Math.cos(halfAngle);
-
-		this.onChangeCallback();
-
-		return this;
-	}
-
-	/**
-	 * Sets this quaternion's x, y, z and w properties from an array.
-	 * @param {number[]} array - array of format (x, y, z, w) used to construct the quaternion.
-	 * @param {number} [offset=0] - an offset into the array.
-	 * @param {boolean} [denormalize=false] - if true, denormalize the values, and array should be a typed array.
-	 * @returns {Quaternion}
-	 */
-	fromArray(array, offset = 0, denormalize = false) {
-		let x = array[offset], y = array[offset + 1],
-			z = array[offset + 2], w = array[offset + 3];
-
-		if (denormalize) {
-			x = MathUtils.denormalize(x, array);
-			y = MathUtils.denormalize(y, array);
-			z = MathUtils.denormalize(z, array);
-			w = MathUtils.denormalize(w, array);
-		}
-
-		this._x = x;
-		this._y = y;
-		this._z = z;
-		this._w = w;
-
-		this.onChangeCallback();
-
-		return this;
-	}
-
-	/**
-	 * Returns the numerical elements of this quaternion in an array of format [x, y, z, w].
-	 * @param {number[]} [array] - An array to store the quaternion. If not specified, a new array will be created.
-	 * @param {number} [offset=0] - An offset into the array.
-	 * @param {boolean} [normalize=false] - if true, normalize the values, and array should be a typed array.
-	 * @returns {Quaternion}
-	 */
-	toArray(array = [], offset = 0, normalize = false) {
-		let x = this._x, y = this._y,
-			z = this._z, w = this._w;
-
-		if (normalize) {
-			x = MathUtils.normalize(x, array);
-			y = MathUtils.normalize(y, array);
-			z = MathUtils.normalize(z, array);
-			w = MathUtils.normalize(w, array);
-		}
-
-		array[offset] = x;
-		array[offset + 1] = y;
-		array[offset + 2] = z;
-		array[offset + 3] = w;
-
-		return array;
-	}
-
-	/**
+	 * Registers a callback that is called whenever the quaternion's
+	 * angle value changes.
 	 * @param {Function} callback - When the Quaternion angle value changes, the callback method is triggered
-	 * @returns {Quaternion}
+	 * @returns {Quaternion} A reference to this quaternion.
 	 */
 	onChange(callback) {
 		this.onChangeCallback = callback;

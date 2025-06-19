@@ -16,19 +16,29 @@ const _normal = new Vector3();
 class Ray {
 
 	/**
-	 * @param {Vector3} [origin] - the origin of the Ray.
-	 * @param {Vector3} [direction] - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
+	 * Constructs a new ray.
+	 * @param {Vector3} [origin=(0,0,0)] - The origin of the ray.
+	 * @param {Vector3} [direction=(0,0,-1)] - The (normalized) direction of the ray.
 	 */
 	constructor(origin = new Vector3(), direction = new Vector3(0, 0, -1)) {
+		/**
+		 * The origin of the ray.
+		 * @type {Vector3}
+		 */
 		this.origin = origin;
+
+		/**
+		 * The (normalized) direction of the ray.
+		 * @type {Vector3}
+		 */
 		this.direction = direction;
 	}
 
 	/**
-	 * Sets this ray's origin and direction properties by copying the values from the given objects.
-	 * @param {Vector3} origin - the origin of the Ray.
-	 * @param {Vector3} direction - the direction of the Ray. This must be normalized (with Vector3.normalize) for the methods to operate properly.
-	 * @returns {Ray}
+	 * Sets the ray's components by copying the given values.
+	 * @param {Vector3} origin - The origin.
+	 * @param {Vector3} direction - The direction.
+	 * @returns {Ray} A reference to this ray.
 	 */
 	set(origin, direction) {
 		this.origin.copy(origin);
@@ -37,9 +47,9 @@ class Ray {
 	}
 
 	/**
-	 * Copies the origin and direction properties of ray into this ray.
-	 * @param {Ray} ray
-	 * @returns {Ray}
+	 * Copies the values of the given ray to this instance.
+	 * @param {Ray} ray - The ray to copy.
+	 * @returns {Ray} A reference to this ray.
 	 */
 	copy(ray) {
 		this.origin.copy(ray.origin);
@@ -68,6 +78,35 @@ class Ray {
 	 */
 	at(t, optionalTarget = new Vector3()) {
 		return optionalTarget.copy(this.direction).multiplyScalar(t).add(this.origin);
+	}
+
+	/**
+	 * Shift the origin of this ray along its direction by the given distance.
+	 * @param {number} t - The distance along the ray to interpolate.
+	 * @returns {Ray} A reference to this ray.
+	 */
+	recast(t) {
+		this.origin.copy(this.at(t, _vec3_1));
+
+		return this;
+	}
+
+	/**
+	 * Returns the point along this ray that is closest to the given point.
+	 * @param {Vector3} point - A point in 3D space to get the closet location on the ray for.
+	 * @param {Vector3} target - The target vector that is used to store the method's result.
+	 * @returns {Vector3} The closest point on this ray.
+	 */
+	closestPointToPoint(point, target) {
+		target.subVectors(point, this.origin);
+
+		const directionDistance = target.dot(this.direction);
+
+		if (directionDistance < 0) {
+			return target.copy(this.origin);
+		}
+
+		return target.copy(this.origin).addScaledVector(this.direction, directionDistance);
 	}
 
 	/**

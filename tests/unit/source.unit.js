@@ -2,6 +2,7 @@ import './src/math/Box2.tests.js';
 import './src/math/Box3.tests.js';
 import './src/math/Color3.tests.js';
 import './src/math/Color4.tests.js';
+import './src/math/MathUtils.tests.js';
 import './src/math/Matrix3.tests.js';
 import './src/math/Matrix4.tests.js';
 import './src/math/Plane.tests.js';
