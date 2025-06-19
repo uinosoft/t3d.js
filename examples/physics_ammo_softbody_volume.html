@@ -31,7 +31,6 @@
     <script type="module">
 		import * as t3d from 't3d';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
@@ -295,7 +294,7 @@
 
 			let clickRequest = false;
 			const mouseCoords = new t3d.Vector2();
-			const raycaster = new Raycaster();
+			const raycaster = new t3d.Raycaster();
 
 			window.addEventListener('mousedown', function(event) {
 				if (!clickRequest) {

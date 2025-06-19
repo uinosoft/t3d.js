@@ -34,7 +34,6 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { BokehShader } from 't3d/addons/shaders/BokehShader.js';
 		import { GBuffer } from 't3d/addons/GBuffer.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
 		let width = window.innerWidth || 2;
@@ -136,7 +135,7 @@
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.generateMipmaps = false;
 
-		const raycaster = new Raycaster();
+		const raycaster = new t3d.Raycaster();
 
 		const mouse = new t3d.Vector2();
 

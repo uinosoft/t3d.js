@@ -8,9 +8,10 @@ const _edge2 = new Vector3();
 const _normal = new Vector3();
 
 /**
- * A ray that emits from an origin in a certain direction.
- * This is used by the Raycaster to assist with raycasting.
- * Raycasting is used for mouse picking (working out what objects in the 3D space the mouse is over) amongst other things.
+ * A ray that emits from an origin in a certain direction. This is used by
+ * {@link Raycaster} to assist with raycasting. Raycasting is used for
+ * mouse picking (working out what objects in the 3D space the mouse is over)
+ * amongst other things.
  */
 class Ray {
 

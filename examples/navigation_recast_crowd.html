@@ -38,7 +38,6 @@
 		import { TriangleSoupHelper } from 't3d/addons/objects/TriangleSoupHelper.js';
 		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
 		import { init, NavMeshQuery, Crowd, getNavMeshPositionsAndIndices, importNavMesh } from '@recast-navigation/core';
@@ -201,7 +200,7 @@
 			targetMarker.visible = false;
 			scene.add(targetMarker);
 		
-			const raycaster = new Raycaster();
+			const raycaster = new t3d.Raycaster();
 			const mouse = new t3d.Vector2();
 			const mouseDown = new t3d.Vector2();
 

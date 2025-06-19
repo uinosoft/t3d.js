@@ -34,7 +34,6 @@
 		import { GridHelper } from 't3d/addons/objects/GridHelper.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { TransformControls } from 't3d/addons/controls/TransformControls.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -89,7 +88,7 @@
 		const transformControls = new TransformControls(camera, canvas);
 		scene.add(transformControls);
 
-		const raycaster = new Raycaster();
+		const raycaster = new t3d.Raycaster();
 		const mouse = new t3d.Vector2();
 		let shiftKeyPressed = false;
 

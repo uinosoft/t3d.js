@@ -33,7 +33,6 @@
 		import { BatchedMesh } from 't3d/addons/objects/BatchedMesh.js';
 		import { SphereHelper } from 't3d/addons/objects/SphereHelper.js';
 		import { Box3Helper } from 't3d/addons/objects/Box3Helper.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
 
@@ -232,7 +231,7 @@
 		const mouseDownPos = new t3d.Vector2();
 		const mouse = new t3d.Vector2();
 
-		const raycaster = new Raycaster();
+		const raycaster = new t3d.Raycaster();
 
 		function onCanvasMouseDown(event) {
 			const rect = canvas.getBoundingClientRect();

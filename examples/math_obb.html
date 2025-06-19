@@ -29,7 +29,6 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { Timer } from 't3d/addons/misc/Timer.js';
 		import { OBB } from 't3d/addons/math/OBB.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { EdgesBuilder } from 't3d/addons/geometries/builders/EdgesBuilder.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import Stats from './libs/stats.module.js';
@@ -115,7 +114,7 @@
 		hitboxMaterial.drawMode = t3d.DRAW_MODE.LINES;
 		const hitbox = new t3d.Mesh(hitboxGeometry, hitboxMaterial);
 
-		const raycaster = new Raycaster();
+		const raycaster = new t3d.Raycaster();
 
 		const mouse = new t3d.Vector2();
 

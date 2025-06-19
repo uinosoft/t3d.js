@@ -33,7 +33,6 @@
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-		import { Raycaster } from 't3d/addons/Raycaster.js';
 		import { TriangleSoup } from 't3d/addons/math/TriangleSoup.js';
 		import { TriangleSoupHelper } from 't3d/addons/objects/TriangleSoupHelper.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
@@ -139,7 +138,7 @@
 
 		const mouse = new t3d.Vector2();
 		const mouseDown = new t3d.Vector2();
-		const raycaster = new Raycaster();
+		const raycaster = new t3d.Raycaster();
 
 		function onDocumentPointerDown(event) {
 			mouseDown.x = (event.clientX / window.innerWidth) * 2 - 1;

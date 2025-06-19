@@ -1,12 +1,11 @@
 import {
 	Object3D, Vector2, Vector3, Euler, Plane, Matrix4, Quaternion,
-	Mesh, BasicMaterial, ShaderLib,
+	Mesh, BasicMaterial, ShaderLib, Raycaster,
 	CylinderGeometry, PlaneGeometry, BoxGeometry, SphereGeometry, Geometry, Attribute, Buffer,
 	MATERIAL_TYPE, DRAW_SIDE, DRAW_MODE
 } from 't3d';
 import { TorusBuilder } from '../geometries/builders/TorusBuilder.js';
 import { VirtualGroup } from '../math/VirtualGroup.js';
-import { Raycaster } from '../Raycaster.js';
 
 class TransformControls extends Object3D {
 

@@ -85,6 +85,7 @@ export { TextureBase } from './resources/textures/TextureBase.js';
 export { TextureCube } from './resources/textures/TextureCube.js';
 
 export { Query } from './resources/Query.js';
+export { Raycaster } from './resources/Raycaster.js';
 export { RenderBuffer } from './resources/RenderBuffer.js';
 export { Skeleton } from './resources/Skeleton.js';
 export { TransformUV } from './resources/TransformUV.js';

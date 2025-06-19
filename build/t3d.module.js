@@ -6364,9 +6364,10 @@ const _edge2 = new Vector3();
 const _normal = new Vector3();
 
 /**
- * A ray that emits from an origin in a certain direction.
- * This is used by the Raycaster to assist with raycasting.
- * Raycasting is used for mouse picking (working out what objects in the 3D space the mouse is over) amongst other things.
+ * A ray that emits from an origin in a certain direction. This is used by
+ * {@link Raycaster} to assist with raycasting. Raycasting is used for
+ * mouse picking (working out what objects in the 3D space the mouse is over)
+ * amongst other things.
  */
 class Ray {
 
@@ -14697,6 +14698,115 @@ class Query extends EventDispatcher {
 
 }
 
+/**
+ * This class is designed to assist with raycasting. Raycasting is used for
+ * mouse picking (working out what objects in the 3d space the mouse is over)
+ * amongst other things.
+ */
+class Raycaster {
+
+	/**
+	 * Constructs a new raycaster.
+	 * @param {Vector3} origin — The origin vector where the ray casts from.
+	 * @param {Vector3} direction — The (normalized) direction vector that gives direction to the ray.
+	 */
+	constructor(origin, direction) {
+		/**
+		 * The ray used for raycasting.
+		 * @type {Ray}
+		 */
+		this.ray = new Ray(origin, direction);
+	}
+
+	/**
+	 * Updates the ray with a new origin and direction by copying the values from the arguments.
+	 * @param {Vector3} origin — The origin vector where the ray casts from.
+	 * @param {Vector3} direction — The (normalized) direction vector that gives direction to the ray.
+	 */
+	set(origin, direction) {
+		// direction is assumed to be normalized (for accurate distance calculations)
+		this.ray.set(origin, direction);
+	}
+
+	/**
+	 * Uses the given coordinates and camera to compute a new origin and direction for the internal ray.
+	 * @param {Vector2} coords — 2D coordinates of the mouse, in normalized device coordinates (NDC).
+	 * X and Y components should be between `-1` and `1`.
+	 * @param {Camera} camera — The camera from which the ray should originate.
+	 */
+	setFromCamera(coords, camera) {
+		if (camera.projectionMatrix.elements[11] === -1) { // perspective
+			this.ray.origin.setFromMatrixPosition(camera.worldMatrix);
+			this.ray.direction.set(coords.x, coords.y, 0.5).unproject(camera).sub(this.ray.origin).normalize();
+		} else { // orthographic
+			// set origin in plane of camera
+			// projectionMatrix.elements[14] = (near + far) / (near - far)
+			this.ray.origin.set(coords.x, coords.y, camera.projectionMatrix.elements[14]).unproject(camera);
+
+			this.ray.direction.set(0, 0, -1).transformDirection(camera.worldMatrix);
+		}
+	}
+
+	/**
+	 * Checks all intersection between the ray and the object with or without the
+	 * descendants. Intersections are returned sorted by distance, closest first.
+	 * An array of intersections is returned: [ { distance, point, face, faceIndex, object, uv }, ... ]
+	 * @param {Object3D} object — The 3D object to check for intersection with the ray.
+	 * @param {boolean} [recursive=false] — If set to `true`, it also checks all descendants.
+	 * Otherwise it only checks intersection with the object.
+	 * @param {object[]} [intersects=[]] - The target array that holds the result of the method.
+	 * @returns {object[]} An array holding the intersection points.
+	 */
+	intersectObject(object, recursive = false, intersects = []) {
+		intersect(object, this, intersects, recursive);
+
+		intersects.sort(ascSort);
+
+		return intersects;
+	}
+
+	/**
+	 * Checks all intersection between the ray and the objects with or without
+	 * the descendants. Intersections are returned sorted by distance, closest first.
+	 * An array of intersections is returned: [ { distance, point, face, faceIndex, object, uv }, ... ]
+	 * @param {Object3D[]} objects — The 3D objects to check for intersection with the ray.
+	 * @param {boolean} [recursive=false] — If set to `true`, it also checks all descendants.
+	 * Otherwise it only checks intersection with the object.
+	 * @param {object[]} [intersects=[]] - The target array that holds the result of the method.
+	 * @returns {object[]} An array holding the intersection points.
+	 */
+	intersectObjects(objects, recursive = false, intersects = []) {
+		for (let i = 0, l = objects.length; i < l; i++) {
+			intersect(objects[i], this, intersects, recursive);
+		}
+
+		intersects.sort(ascSort);
+
+		return intersects;
+	}
+
+}
+
+function ascSort(a, b) {
+	return a.distance - b.distance;
+}
+
+function intersect(object, raycaster, intersects, recursive) {
+	let propagate = true;
+
+	const result = object.raycast(raycaster.ray, intersects);
+
+	if (result === false) propagate = false;
+
+	if (propagate === true && recursive === true) {
+		const children = object.children;
+
+		for (let i = 0, l = children.length; i < l; i++) {
+			intersect(children[i], raycaster, intersects, true);
+		}
+	}
+}
+
 const _offsetMatrix = new Matrix4();
 
 /**
@@ -21559,4 +21669,4 @@ Matrix3.prototype.getInverse = function(m) {
 	return this.copy(m).invert();
 };
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
