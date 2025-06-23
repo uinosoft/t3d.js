@@ -147,7 +147,7 @@
 			scene.position.copy(anchorOffset);
 
 			if (params.anchor) {
-				scene.anchorMatrix.transform(anchorOffset, anchorScale, anchorQuaternion);
+				scene.anchorMatrix.compose(anchorOffset, anchorQuaternion, anchorScale);
 			} else {
 				scene.anchorMatrix.identity();
 			}

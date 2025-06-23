@@ -6,6 +6,7 @@ import { MathUtils } from './math/MathUtils.js';
 import { RenderStates } from './render/RenderStates.js';
 import { Matrix4 } from './math/Matrix4.js';
 import { Matrix3 } from './math/Matrix3.js';
+import { Vector3 } from './math/Vector3.js';
 
 // deprecated since 0.1.2, add warning since 0.3.0
 export class CubeGeometry extends BoxGeometry {
@@ -122,4 +123,9 @@ Matrix3.prototype.inverse = function() {
 // deprecated since 0.4.3
 Matrix3.prototype.getInverse = function(m) {
 	return this.copy(m).invert();
+};
+
+// deprecated since 0.4.3
+Vector3.prototype.subtract = function(a, target = new Vector3()) {
+	return target.set(this.x - a.x, this.y - a.y, this.z - a.z);
 };

@@ -280,7 +280,7 @@
 
 				scale.set(1, 1, 1);
 
-				matrix.transform(position, scale, tempQuat);
+				matrix.compose(position, tempQuat, scale);
 				matrix.toArray(matrices, i * 16);
 
 				timeOffsetArray[i] = Math.random() * 1000;

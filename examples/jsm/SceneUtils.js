@@ -9,7 +9,7 @@ class SceneUtils {
 
 		while (tempNode !== root && tempNode !== null) {
 			if (tempNode.matrixAutoUpdate || tempNode.matrixNeedsUpdate) {
-				tempNode.matrix.transform(tempNode.position, tempNode.scale, tempNode.quaternion);
+				tempNode.matrix.compose(tempNode.position, tempNode.quaternion, tempNode.scale);
 				tempNode.matrixNeedsUpdate = false;
 				tempNode.worldMatrixNeedsUpdate = true;
 			}

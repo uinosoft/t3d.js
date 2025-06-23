@@ -90,7 +90,7 @@
 			qua.setFromEuler(euler);
 			pos.set(Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25);
 			scale.x = scale.z = Math.random() * 2;
-			mat.transform(pos, scale, qua);
+			mat.compose(pos, qua, scale);
 
 			const clonedGeometry = planeGeometry.clone();
 			GeometryUtils.applyMatrix4(clonedGeometry, mat);

@@ -7,6 +7,7 @@ import './src/math/Matrix3.tests.js';
 import './src/math/Matrix4.tests.js';
 import './src/math/Plane.tests.js';
 import './src/math/Quaternion.tests.js';
+import './src/math/Ray.tests.js';
 import './src/math/Sphere.tests.js';
 import './src/math/Vector2.tests.js';
 import './src/math/Vector3.tests.js';

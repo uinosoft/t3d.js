@@ -275,7 +275,7 @@ class Object3D {
 	 */
 	updateMatrix(force) {
 		if (this.matrixAutoUpdate || this.matrixNeedsUpdate) {
-			this.matrix.transform(this.position, this.scale, this.quaternion);
+			this.matrix.compose(this.position, this.quaternion, this.scale);
 
 			this.matrixNeedsUpdate = false;
 			this.worldMatrixNeedsUpdate = true;

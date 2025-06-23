@@ -443,6 +443,17 @@ class Quaternion {
 	}
 
 	/**
+	 * Computes the squared Euclidean length (straight-line length) of this quaternion,
+	 * considered as a 4 dimensional vector. This can be useful if you are comparing the
+	 * lengths of two quaternions, as this is a slightly more efficient calculation than
+	 * {@link Quaternion#length}.
+	 * @returns {number} The squared Euclidean length.
+	 */
+	lengthSq() {
+		return this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w;
+	}
+
+	/**
 	 * Computes the Euclidean length (straight-line length) of this quaternion,
 	 * considered as a 4 dimensional vector.
 	 * @returns {number} The Euclidean length.

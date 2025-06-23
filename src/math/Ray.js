@@ -59,25 +59,13 @@ class Ray {
 	}
 
 	/**
-	 * Transform this Ray by the Matrix4.
-	 * @param {Matrix4} matrix4 - the Matrix4 to apply to this Ray.
-	 * @returns {Ray}
+	 * Returns a vector that is located at a given distance along this ray.
+	 * @param {number} t - The distance along the ray to retrieve a position for.
+	 * @param {Vector3} target - The target vector that is used to store the method's result.
+	 * @returns {Vector3} A position on the ray.
 	 */
-	applyMatrix4(matrix4) {
-		this.origin.applyMatrix4(matrix4);
-		this.direction.transformDirection(matrix4);
-
-		return this;
-	}
-
-	/**
-	 * Get a Vector3 that is a given distance along this Ray.
-	 * @param {number} t - the distance along the Ray to retrieve a position for.
-	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
-	 * @returns {Vector3}
-	 */
-	at(t, optionalTarget = new Vector3()) {
-		return optionalTarget.copy(this.direction).multiplyScalar(t).add(this.origin);
+	at(t, target = new Vector3()) {
+		return target.copy(this.origin).addScaledVector(this.direction, t);
 	}
 
 	/**
@@ -110,9 +98,18 @@ class Ray {
 	}
 
 	/**
-	 * Get the squared distance of the closest approach between the Ray and the Vector3.
-	 * @param {Vector3} point - the Vector3 to compute a distance to.
-	 * @returns {number}
+	 * Returns the distance of the closest approach between this ray and the given point.
+	 * @param {Vector3} point - A point in 3D space to compute the distance to.
+	 * @returns {number} The distance.
+	 */
+	distanceToPoint(point) {
+		return Math.sqrt(this.distanceSqToPoint(point));
+	}
+
+	/**
+	 * Returns the squared distance of the closest approach between this ray and the given point.
+	 * @param {Vector3} point - A point in 3D space to compute the distance to.
+	 * @returns {number} The squared distance.
 	 */
 	distanceSqToPoint(point) {
 		const directionDistance = _vec3_1.subVectors(point, this.origin).dot(this.direction);
@@ -127,9 +124,61 @@ class Ray {
 	}
 
 	/**
-	 * Get the distance of the closest approach between the Ray and the Plane.
-	 * @param {Plane} plane - the Plane to compute a distance to.
-	 * @returns {number}
+	 * Intersects this ray with the given sphere, returning the intersection
+	 * point or `null` if there is no intersection.
+	 * @param {Sphere} sphere - The sphere to intersect.
+	 * @param {Vector3} target - The target vector that is used to store the method's result.
+	 * @returns {?Vector3} The intersection point.
+	 */
+	intersectSphere(sphere, target) {
+		_vec3_1.subVectors(sphere.center, this.origin);
+		const tca = _vec3_1.dot(this.direction);
+		const d2 = _vec3_1.dot(_vec3_1) - tca * tca;
+		const radius2 = sphere.radius * sphere.radius;
+
+		if (d2 > radius2) {
+			return null;
+		}
+
+		const thc = Math.sqrt(radius2 - d2);
+
+		// t0 = first intersect point - entrance on front of sphere
+		const t0 = tca - thc;
+
+		// t1 = second intersect point - exit point on back of sphere
+		const t1 = tca + thc;
+
+		// test to see if both t0 and t1 are behind the ray - if so, return null
+		if (t0 < 0 && t1 < 0) {
+			return null;
+		}
+
+		// test to see if t0 is behind the ray:
+		// if it is, the ray is inside the sphere, so return the second exit point scaled by t1,
+		// in order to always return an intersect point that is in front of the ray.
+		if (t0 < 0) {
+			return this.at(t1, target);
+		}
+
+		// else t0 is in front of the ray, so return the first collision point scaled by t0
+		return this.at(t0, target);
+	}
+
+	/**
+	 * Returns `true` if this ray intersects with the given sphere.
+	 * @param {Sphere} sphere - The sphere to intersect.
+	 * @returns {boolean} Whether this ray intersects with the given sphere or not.
+	 */
+	intersectsSphere(sphere) {
+		if (sphere.radius < 0) return false; // handle empty spheres
+		return this.distanceSqToPoint(sphere.center) <= (sphere.radius * sphere.radius);
+	}
+
+	/**
+	 * Computes the distance from the ray's origin to the given plane. Returns `null` if the ray
+	 * does not intersect with the plane.
+	 * @param {Plane} plane - The plane to compute the distance to.
+	 * @returns {?number} Whether this ray intersects with the given sphere or not.
 	 */
 	distanceToPlane(plane) {
 		const denominator = plane.normal.dot(this.direction);
@@ -151,25 +200,26 @@ class Ray {
 	}
 
 	/**
-	 * Intersect this Ray with a Plane, returning the intersection point or null if there is no intersection.
-	 * @param {Plane} plane - the Plane to intersect with.
-	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
-	 * @returns {Vector3}
+	 * Intersects this ray with the given plane, returning the intersection
+	 * point or `null` if there is no intersection.
+	 * @param {Plane} plane - The plane to intersect.
+	 * @param {Vector3} target - The target vector that is used to store the method's result.
+	 * @returns {?Vector3} The intersection point.
 	 */
-	intersectPlane(plane, optionalTarget = new Vector3()) {
+	intersectPlane(plane, target) {
 		const t = this.distanceToPlane(plane);
 
 		if (t === null) {
 			return null;
 		}
 
-		return this.at(t, optionalTarget);
+		return this.at(t, target);
 	}
 
 	/**
-	 * Return true if this Ray intersects with the Plane.
-	 * @param {Plane} plane - the plane to intersect with.
-	 * @returns {boolean}
+	 * Returns `true` if this ray intersects with the given plane.
+	 * @param {Plane} plane - The plane to intersect.
+	 * @returns {boolean} Whether this ray intersects with the given plane or not.
 	 */
 	intersectsPlane(plane) {
 		// check if the ray lies on the plane first
@@ -190,21 +240,13 @@ class Ray {
 	}
 
 	/**
-	 * Return true if this Ray intersects with the Box3.
-	 * @param {Box3} box - the Box3 to intersect with.
-	 * @returns {boolean}
+	 * Intersects this ray with the given bounding box, returning the intersection
+	 * point or `null` if there is no intersection.
+	 * @param {Box3} box - The box to intersect.
+	 * @param {Vector3} target - The target vector that is used to store the method's result.
+	 * @returns {?Vector3} The intersection point.
 	 */
-	intersectsBox(box) {
-		return this.intersectBox(box, _vec3_1) !== null;
-	}
-
-	/**
-	 * Intersect this Ray with a Box3, returning the intersection point or null if there is no intersection.
-	 * @param {Box3} box - the Box3 to intersect with.
-	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
-	 * @returns {Vector3}
-	 */
-	intersectBox(box, optionalTarget) {
+	intersectBox(box, target) {
 		let tmin, tmax, tymin, tymax, tzmin, tzmax;
 
 		const invdirx = 1 / this.direction.x,
@@ -256,68 +298,29 @@ class Ray {
 
 		if (tmax < 0) return null;
 
-		return this.at(tmin >= 0 ? tmin : tmax, optionalTarget);
+		return this.at(tmin >= 0 ? tmin : tmax, target);
 	}
 
 	/**
-	 * Return true if this Ray intersects with the Sphere.
-	 * @param {Sphere} sphere - the Sphere to intersect with.
-	 * @returns {boolean}
+	 * Returns `true` if this ray intersects with the given box.
+	 * @param {Box3} box - The box to intersect.
+	 * @returns {boolean} Whether this ray intersects with the given box or not.
 	 */
-	intersectsSphere(sphere) {
-		return this.distanceSqToPoint(sphere.center) <= (sphere.radius * sphere.radius);
+	intersectsBox(box) {
+		return this.intersectBox(box, _vec3_1) !== null;
 	}
 
 	/**
-	 * Intersect this Ray with a Sphere, returning the intersection point or null if there is no intersection.
-	 * @param {Sphere} sphere - the Sphere to intersect with.
-	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
-	 * @returns {Vector3}
+	 * Intersects this ray with the given triangle, returning the intersection
+	 * point or `null` if there is no intersection.
+	 * @param {Vector3} a - The first vertex of the triangle.
+	 * @param {Vector3} b - The second vertex of the triangle.
+	 * @param {Vector3} c - The third vertex of the triangle.
+	 * @param {boolean} backfaceCulling - Whether to use backface culling or not.
+	 * @param {Vector3} target - The target vector that is used to store the method's result.
+	 * @returns {?Vector3} The intersection point.
 	 */
-	intersectSphere(sphere, optionalTarget) {
-		_vec3_1.subVectors(sphere.center, this.origin);
-		const tca = _vec3_1.dot(this.direction);
-		const d2 = _vec3_1.dot(_vec3_1) - tca * tca;
-		const radius2 = sphere.radius * sphere.radius;
-
-		if (d2 > radius2) {
-			return null;
-		}
-
-		const thc = Math.sqrt(radius2 - d2);
-
-		// t0 = first intersect point - entrance on front of sphere
-		const t0 = tca - thc;
-
-		// t1 = second intersect point - exit point on back of sphere
-		const t1 = tca + thc;
-
-		// test to see if both t0 and t1 are behind the ray - if so, return null
-		if (t0 < 0 && t1 < 0) {
-			return null;
-		}
-
-		// test to see if t0 is behind the ray:
-		// if it is, the ray is inside the sphere, so return the second exit point scaled by t1,
-		// in order to always return an intersect point that is in front of the ray.
-		if (t0 < 0) {
-			return this.at(t1, optionalTarget);
-		}
-
-		// else t0 is in front of the ray, so return the first collision point scaled by t0
-		return this.at(t0, optionalTarget);
-	}
-
-	/**
-	 * Intersect this Ray with a triangle, returning the intersection point or null if there is no intersection.
-	 * @param {Vector3} a - The Vector3 point making up the triangle.
-	 * @param {Vector3} b - The Vector3 point making up the triangle.
-	 * @param {Vector3} c - The Vector3 point making up the triangle.
-	 * @param {boolean} backfaceCulling - whether to use backface culling.
-	 * @param {Vector3} [optionalTarget] - the result will be copied into this Vector3.
-	 * @returns {Vector3}
-	 */
-	intersectTriangle(a, b, c, backfaceCulling, optionalTarget) {
+	intersectTriangle(a, b, c, backfaceCulling, target) {
 		// Compute the offset origin, edges, and normal.
 
 		// from https://github.com/pmjoniak/GeometricTools/blob/master/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h
@@ -373,7 +376,36 @@ class Ray {
 		}
 
 		// Ray intersects triangle.
-		return this.at(QdN / DdN, optionalTarget);
+		return this.at(QdN / DdN, target);
+	}
+
+	/**
+	 * Transforms this ray with the given 4x4 transformation matrix.
+	 * @param {Matrix4} matrix4 - The transformation matrix.
+	 * @returns {Ray} A reference to this ray.
+	 */
+	applyMatrix4(matrix4) {
+		this.origin.applyMatrix4(matrix4);
+		this.direction.transformDirection(matrix4);
+
+		return this;
+	}
+
+	/**
+	 * Returns `true` if this ray is equal with the given one.
+	 * @param {Ray} ray - The ray to test for equality.
+	 * @returns {boolean} Whether this ray is equal with the given one.
+	 */
+	equals(ray) {
+		return ray.origin.equals(this.origin) && ray.direction.equals(this.direction);
+	}
+
+	/**
+	 * Returns a new ray with copied values from this instance.
+	 * @returns {Ray} A clone of this instance.
+	 */
+	clone() {
+		return new this.constructor().copy(this);
 	}
 
 }

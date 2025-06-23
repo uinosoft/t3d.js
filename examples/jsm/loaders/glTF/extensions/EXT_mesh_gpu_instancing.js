@@ -112,7 +112,7 @@ function setInstancedAttributes(geometry, instancingDef, accessors) {
 			);
 		}
 
-		m.transform(p, s, q).toArray(matrices, i * 16);
+		m.compose(p, q, s).toArray(matrices, i * 16);
 	}
 
 	const instanceMatrixAttribute = new Attribute(new Buffer(new Float32Array(matrices), 16));

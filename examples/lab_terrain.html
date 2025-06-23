@@ -219,22 +219,22 @@
 				position.y = y + 3;
 				position.z = z;
 
-				matrix.transform(position, scale, orientation);
+				matrix.compose(position, orientation, scale);
 				matrix.toArray(chunkMat, i * 16);
 
 				position.y = y + 9;
 
-				matrix.transform(position, scale, orientation);
+				matrix.compose(position, orientation, scale);
 				matrix.toArray(bottomMat, i * 16);
 
 				position.y = y + 12.5;
 
-				matrix.transform(position, scale, orientation);
+				matrix.compose(position, orientation, scale);
 				matrix.toArray(midMat, i * 16);
 
 				position.y = y + 16;
 
-				matrix.transform(position, scale, orientation);
+				matrix.compose(position, orientation, scale);
 				matrix.toArray(topMat, i * 16);
 			}
 

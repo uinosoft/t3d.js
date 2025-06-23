@@ -143,7 +143,7 @@
 			_scale.y = (Math.random() * 0.5 + 0.5) * mainScale;
 			_scale.z = (Math.random() * 0.5 + 0.5) * mainScale;
 
-			_matrix.transform(_position, _scale, _orientation);
+			_matrix.compose(_position, _orientation, _scale);
 			_matrix.toArray(matrices, index * 16);
 		}
 

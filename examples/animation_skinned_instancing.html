@@ -134,7 +134,7 @@
 				rowLength++;
 			}
 
-			matrix.transform(position, scale, orientation);
+			matrix.compose(position, orientation, scale);
 			matrix.toArray(matrices, i * 16);
 		}
 

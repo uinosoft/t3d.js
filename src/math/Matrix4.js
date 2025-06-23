@@ -314,7 +314,7 @@ class Matrix4 {
 	 * @returns {Matrix4}
 	 */
 	makeRotationFromQuaternion(q) {
-		return this.transform(_zero, _one, q);
+		return this.compose(_zero, q, _one);
 	}
 
 	/**
