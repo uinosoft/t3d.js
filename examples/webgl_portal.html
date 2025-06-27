@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - portal</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - portal
+	</div>
+
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { CurvePath3 } from 't3d/addons/math/curves/Curves.js';
+		import { Clock } from 't3d/addons/Clock.js';
+
+		const canvas = document.createElement('canvas');
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		document.body.appendChild(canvas);
+
+		// renderer
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+
+		const contextParams = { antialias: false, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+
+		// scene
+		const scene = new t3d.Scene();
+
+		// camera
+		const camera = new t3d.Camera();
+		camera.position.set(0, 80, 200);
+		camera.lookAt(new t3d.Vector3(0, 40, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, window.innerWidth / window.innerHeight, 1, 5000);
+		scene.add(camera);
+
+		// controls
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 40, 0);
+		controller.maxDistance = 300;
+		controller.minDistance = 10;
+		// Portals
+		const portalCamera = new t3d.Camera();
+		portalCamera.setPerspective(45 / 180 * Math.PI, 1.0, 0.1, 500.0);
+		scene.add(portalCamera);
+
+		const planeGeo = new t3d.PlaneGeometry(100.1, 100.1);
+		const matrix = new t3d.Quaternion().setFromEuler(new t3d.Euler(Math.PI / 2, 0, 0)).toMatrix4();
+		GeometryUtils.applyMatrix4(planeGeo, matrix);
+
+		// Render targets for portals
+		const leftPortalTexture = new t3d.RenderTarget2D(256, 256);
+		leftPortalTexture.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		leftPortalTexture.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		const leftPortalMaterial = new t3d.BasicMaterial();
+		leftPortalMaterial.diffuseMap = leftPortalTexture.texture;
+		const leftPortal = new t3d.Mesh(planeGeo, leftPortalMaterial);
+		leftPortal.position.set(-49.9, 20, 0);
+		leftPortal.scale.set(0.35, 0.35, 0.35);
+		leftPortal.euler.y = Math.PI / 2;
+		scene.add(leftPortal);
+
+		const rightPortalTexture = new t3d.RenderTarget2D(256, 256);
+		rightPortalTexture.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
+		rightPortalTexture.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+		const rightPortalMaterial = new t3d.BasicMaterial();
+		rightPortalMaterial.diffuseMap = rightPortalTexture.texture;
+		const rightPortal = new t3d.Mesh(planeGeo, rightPortalMaterial);
+		rightPortal.position.set(0, 20, -49.9);
+		rightPortal.scale.set(0.35, 0.35, 0.35);
+		scene.add(rightPortal);
+
+		// planes
+		const planeGeometry = new t3d.PlaneGeometry(100, 100);
+		const planeTopMaterial = new t3d.PhongMaterial();
+		planeTopMaterial.diffuse.setHex(0xffffff);
+
+		const floorMaterial = new t3d.PhongMaterial();
+		floorMaterial.diffuse.setHex(0x8F8F8F);
+		const wallMaterial = new t3d.PhongMaterial();
+		wallMaterial.diffuse.setHex(0x989898);
+
+		const planeTop = createPlane(planeGeometry, planeTopMaterial, [0, 100, 0], [Math.PI, 0, 0]);
+		const planeBottom = createPlane(planeGeometry, floorMaterial, [0, 0, 0], [0, 0, 0]);
+		const planeBack = createPlane(planeGeometry, wallMaterial, [0, 50, -50], [90 / 180 * Math.PI, 0, 0]);
+		const planeFront = createPlane(planeGeometry, wallMaterial, [0, 50, 50], [-90 / 180 * Math.PI, 0, 0]);
+		const planeRight = createPlane(planeGeometry, wallMaterial, [50, 50, 0], [0, 0, 90 / 180 * Math.PI]);
+		const planeLeft = createPlane(planeGeometry, wallMaterial, [-50, 50, 0], [0, 0, -90 / 180 * Math.PI])
+
+		function createPlane(geometry, material, position, euler) {
+			const mesh = new t3d.Mesh(geometry, material);
+			mesh.euler.set(euler[0], euler[1], euler[2]);
+			mesh.position.set(position[0], position[1], position[2]);
+			scene.add(mesh);
+			return mesh;
+		}
+
+		// Lights
+		const mainLight = createPointLight(0xe7e7e7, 0.5, 250, [0, 60, 0]);
+		const greenLight = createPointLight(0x00ff00, 0.5, 1000, [550, 50, 0]);
+		const redLight = createPointLight(0xff0000, 0.5, 1000, [-550, 50, 0]);
+		const blueLight = createPointLight(0xbbbbfe, 0.5, 1000, [0, 50, 550]);
+
+		function createPointLight(color, instance, distance, position){
+			const pointLight = new t3d.PointLight(color, instance, distance, 0);
+			pointLight.position.set(position[0],position[1],position[2])
+			scene.add(pointLight)
+			return pointLight;
+		}
+
+		const matrix4_1 = new t3d.Matrix4();
+		const bottomLeftCorner = new t3d.Vector3();
+		const bottomRightCorner = new t3d.Vector3();
+		const topLeftCorner = new t3d.Vector3();
+		const reflectedPosition = new t3d.Vector3();
+
+		function renderPortal(thisPortalMesh, otherPortalMesh, thisPortalTexture) {
+			const inverseMatrix = matrix4_1.getInverse(thisPortalMesh.worldMatrix);
+			reflectedPosition.copy(camera.position).applyMatrix4(inverseMatrix);
+
+			reflectedPosition.x *= -1.0;
+			reflectedPosition.z *= -1.0;
+
+			reflectedPosition.applyMatrix4(otherPortalMesh.worldMatrix);
+			portalCamera.position.copy(reflectedPosition);
+
+			bottomLeftCorner.set(50.05, -50.05, 0.0).applyMatrix4(otherPortalMesh.worldMatrix);
+			bottomRightCorner.set(-50.05, -50.05, 0.0).applyMatrix4(otherPortalMesh.worldMatrix);
+			topLeftCorner.set(50.05, 50.05, 0.0).applyMatrix4(otherPortalMesh.worldMatrix);
+
+			frameCorners(portalCamera, bottomLeftCorner, bottomRightCorner, topLeftCorner, false);
+
+			thisPortalMesh.visible = false; // Hide this portal from its own rendering
+			scene.updateMatrix();
+			scene.updateRenderStates(portalCamera);
+			scene.updateRenderQueue(portalCamera);
+
+			// Render the portal view
+			renderer.setRenderTarget(thisPortalTexture);
+			renderer.clear(true, true, true);
+			renderer.renderScene(scene, portalCamera);
+			thisPortalMesh.visible = true; // Re-enable this portal's visibility
+		}
+
+		const _va = new t3d.Vector3(); // from pe to pa
+		const _vb = new t3d.Vector3(); // from pe to pb
+		const _vc = new t3d.Vector3(); // from pe to pc
+		const _vr = new t3d.Vector3(); // right axis of screen
+		const _vu = new t3d.Vector3(); // up axis of screen
+		const _vn = new t3d.Vector3(); // normal vector of screen
+		const _vec = new t3d.Vector3(); // temporary vector
+		const _quat = new t3d.Quaternion(); // temporary quaternion
+
+		function frameCorners(camera, bottomLeftCorner, bottomRightCorner, topLeftCorner) {
+			const pa = bottomLeftCorner, pb = bottomRightCorner, pc = topLeftCorner;
+			const pe = camera.position; // eye position
+			const n = 0.1; // distance of near clipping plane
+			const f = 500; // distance of far clipping plane
+
+			_vr.copy(pb).sub(pa).normalize();
+			_vu.copy(pc).sub(pa).normalize();
+			_vn.crossVectors(_vr, _vu).normalize();
+
+			_va.copy(pa).sub(pe); // from pe to pa
+			_vb.copy(pb).sub(pe); // from pe to pb
+			_vc.copy(pc).sub(pe); // from pe to pc
+
+			const d = -_va.dot(_vn); // distance from eye to screen
+			const l = _vr.dot(_va) * n / d; // distance to left screen edge
+			const r = _vr.dot(_vb) * n / d; // distance to right screen edge
+			const b = _vu.dot(_va) * n / d; // distance to bottom screen edge
+			const t = _vu.dot(_vc) * n / d; // distance to top screen edge
+
+			// Set the camera rotation to match the focal plane to the corners' plane
+			_quat.setFromUnitVectors(_vec.set(0, 1, 0), _vu);
+			camera.quaternion.setFromUnitVectors(_vec.set(0, 0, 1).applyQuaternion(_quat), _vn).multiply(_quat);
+
+			camera.projectionMatrix.set(
+				2.0 * n / (r - l), 0.0, (r + l) / (r - l), 0.0,
+				0.0, 2.0 * n / (t - b), (t + b) / (t - b), 0.0,
+				0.0, 0.0, (f + n) / (n - f), 2.0 * f * n / (n - f),
+				0.0, 0.0, -1.0, 0.0
+			);
+
+			camera.projectionMatrixInverse.copy(camera.projectionMatrix).inverse();
+		}
+
+		function createRoadPoints() {
+			const roadRegionHalfSize = new t3d.Vector2(50, 50);
+			const offset = new t3d.Vector3(-50, 0, -50);
+			return [
+				new t3d.Vector3(-roadRegionHalfSize.x, 0, 0).add(offset),
+				new t3d.Vector3(-roadRegionHalfSize.x, 0, -roadRegionHalfSize.y).add(offset),
+				new t3d.Vector3(0, 0, -roadRegionHalfSize.y).add(offset),
+				new t3d.Vector3(roadRegionHalfSize.x, 0, -roadRegionHalfSize.y).add(offset),
+				new t3d.Vector3(roadRegionHalfSize.x, 0, 0).add(offset),
+				new t3d.Vector3(roadRegionHalfSize.x, 0, roadRegionHalfSize.y).add(offset),
+				new t3d.Vector3(0, 0, roadRegionHalfSize.y).add(offset),
+				new t3d.Vector3(-roadRegionHalfSize.x, 0, roadRegionHalfSize.y).add(offset)
+			];
+		}
+
+		function createCurveFrames() {
+			const curvePath3_2 = new CurvePath3();
+			curvePath3_2.setFromPoints(createRoadPoints(), { close: true, bevelRadius: 3.5 });
+			return curvePath3_2.computeFrames({ divisions: 12, up: new t3d.Vector3(0, 1, 0) });
+		}
+
+		const up = new t3d.Vector3(0, 1, 0);
+		const tangent = new t3d.Vector3();
+		const normal = new t3d.Vector3(0, 1, 0);
+		const binormal = new t3d.Vector3();
+
+		function getPositionAndQuaternionOnPath(frames, t, position, quaternion) {
+			const totalLength = frames.lengths[frames.lengths.length - 1];
+			const length = totalLength * t;
+
+			const index = frames.lengths.findIndex(l => l >= length);
+
+			if (index === 0) {
+				tangent.copy(frames.tangents[0]);
+				position.copy(frames.points[0]);
+			} else {
+				const previousLength = frames.lengths[index - 1];
+				const segmentLength = frames.lengths[index] - previousLength;
+				const segmentT = (length - previousLength) / segmentLength;
+				const point = frames.points[index];
+				const previousPoint = frames.points[index - 1];
+
+				tangent.copy(point).sub(previousPoint).normalize();
+				position.copy(tangent).multiplyScalar(segmentLength * segmentT).add(previousPoint);
+			}
+
+			binormal.crossVectors(tangent, up).normalize();
+			normal.crossVectors(binormal, tangent).normalize();
+
+			matrix4_1.set(
+				binormal.x, binormal.y, binormal.z, 0,
+				normal.x, normal.y, normal.z, 0,
+				-tangent.x, -tangent.y, -tangent.z, 0,
+				0, 0, 0, 1
+			);
+			matrix4_1.inverse();
+
+			quaternion.setFromRotationMatrix(matrix4_1);
+		}
+
+		const curveFrames = createCurveFrames();
+
+		const cars = [];
+		const carGeometry = new t3d.CylinderGeometry(0, 2.5, 10);
+		const carMaterial = new t3d.PBRMaterial();
+		carMaterial.clippingPlanes = [new t3d.Plane(new t3d.Vector3(1, 0, 0), 50), new t3d.Plane(new t3d.Vector3(0, 0, 1), 50)];
+
+		for (let i = 0; i < 4; i++) {
+			const car = new t3d.Object3D();
+			const carMesh = new t3d.Mesh(carGeometry, carMaterial);
+			carMesh.euler.set(-Math.PI / 2, 0, 0); // 朝向负z轴
+			carMesh.position.y += 5.45;
+			carMesh.castShadow = true;
+			car.add(carMesh);
+			scene.add(car);
+			cars.push(car);
+		}
+
+		const clock = new Clock();
+
+		let progress = 0;
+
+		function loop() {
+			requestAnimationFrame(loop);
+			const deltaTime = clock.getDelta();
+
+			progress += deltaTime * 0.09;
+			while (progress >= 1) {
+				progress -= 1;
+			}
+
+			for (let i = 0; i < 4; i++) {
+				const t = (progress + i * 0.25) % 1;
+				getPositionAndQuaternionOnPath(curveFrames, t, cars[i].position, cars[i].quaternion);
+			}
+
+			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			// Render the portal
+			renderPortal(leftPortal, rightPortal, leftPortalTexture);
+			renderPortal(rightPortal, leftPortal, rightPortalTexture);
+
+			// Render the main scene
+			renderer.setRenderTarget(backRenderTarget); // Set back to canvas
+			renderer.renderScene(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			const width = window.innerWidth || 2;
+			const height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, window.innerWidth / window.innerHeight, 1, 5000);
+
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+
+</html>
