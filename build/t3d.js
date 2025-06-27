@@ -11082,7 +11082,7 @@
 					return state.isPointLight ? that.getDistanceMaterial(renderable, state.light) : that.getDepthMaterial(renderable, state.light);
 				},
 				ifRender: function (renderable) {
-					return renderable.object.castShadow;
+					return state.light.groupMask & 1 << renderable.material.lightingGroup && renderable.object.castShadow;
 				}
 			};
 		}
