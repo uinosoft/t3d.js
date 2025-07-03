@@ -20,6 +20,14 @@ class RenderTarget2D extends RenderTargetBase {
 
 		this.attach(new Texture2D(), ATTACHMENT.COLOR_ATTACHMENT0);
 		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+
+		/**
+		 * Specifies the active mipmap level.
+		 * This is only available in WebGL2.
+		 * @type {number}
+		 * @default 0
+		 */
+		this.activeMipmapLevel = 0;
 	}
 
 	/**

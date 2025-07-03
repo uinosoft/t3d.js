@@ -57,15 +57,14 @@ class WebGLRenderTargets extends PropertyMap {
 
 		renderTargetProperties.__webglFramebuffer = glFrameBuffer;
 		renderTargetProperties.__drawBuffers = drawBuffers;
+		renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 
 		if (renderTarget.isRenderTargetCube) {
 			renderTargetProperties.__currentActiveCubeFace = renderTarget.activeCubeFace;
-			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
 
 		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
 			renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
-			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		}
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
@@ -85,7 +84,7 @@ class WebGLRenderTargets extends PropertyMap {
 
 			if (attachment.isTexture2D) {
 				const textureProperties = textures.setTexture2D(attachment);
-				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_2D, textureProperties.__webglTexture, 0);
+				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_2D, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
 				state.bindTexture(gl.TEXTURE_2D, null);
 			} else if (attachment.isTextureCube) {
 				const textureProperties = textures.setTextureCube(attachment);
@@ -136,8 +135,9 @@ class WebGLRenderTargets extends PropertyMap {
 			state.currentRenderTarget = renderTarget;
 		}
 
+		renderTargetProperties = this.get(renderTarget);
+
 		if (renderTarget.isRenderTargetCube) {
-			renderTargetProperties = this.get(renderTarget);
 			const activeCubeFace = renderTarget.activeCubeFace;
 			const activeMipmapLevel = renderTarget.activeMipmapLevel;
 			if (renderTargetProperties.__currentActiveCubeFace !== activeCubeFace || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
@@ -151,10 +151,7 @@ class WebGLRenderTargets extends PropertyMap {
 				renderTargetProperties.__currentActiveCubeFace = activeCubeFace;
 				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
 			}
-		}
-
-		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
-			renderTargetProperties = this.get(renderTarget);
+		} else if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
 			const activeLayer = renderTarget.activeLayer;
 			const activeMipmapLevel = renderTarget.activeMipmapLevel;
 			if (renderTargetProperties.__currentActiveLayer !== activeLayer || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
@@ -166,6 +163,18 @@ class WebGLRenderTargets extends PropertyMap {
 					}
 				}
 				renderTargetProperties.__currentActiveLayer = activeLayer;
+				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
+			}
+		} else if (renderTarget.isRenderTarget2D) {
+			const activeMipmapLevel = renderTarget.activeMipmapLevel;
+			if (renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
+				for (const attachTarget in renderTarget._attachments) {
+					const attachment = renderTarget._attachments[attachTarget];
+					if (attachment.isTexture2D) {
+						const textureProperties = textures.get(attachment);
+						gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_2D, textureProperties.__webglTexture, activeMipmapLevel);
+					}
+				}
 				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
 			}
 		}
