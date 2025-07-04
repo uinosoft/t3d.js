@@ -36,12 +36,36 @@ const TubeBuilder = {
 		const circum = radius * 2 * Math.PI;
 		const totalLength = frames.lengths[lastIndex];
 
-		const normalVector = new Vector3();
 		const quaternion = new Quaternion();
+		const segmentVector = new Vector3();
+		const normalVector = new Vector3();
+		const offsetVector = new Vector3();
+
+		const angleBisector = new Vector3();
+
+		const vector1 = new Vector3();
+		const vector2 = new Vector3();
+
+		function stretchVectorAlongDirection(vector, direction, scale, target) {
+			const parallel = vector1.copy(direction).multiplyScalar(vector.dot(direction));
+			const perpendicular = vector2.copy(vector).sub(parallel);
+			return target.copy(perpendicular).addScaledVector(parallel, scale);
+		}
+
 		let verticesCount = 0;
+
 		for (let i = 0; i < frameLength; i++) {
 			const uvDist = frames.lengths[i] / circum;
 			const uvDist2 = frames.lengths[i] / totalLength;
+
+			const sharp = frames.sharps[i];
+			const widthScale = frames.widthScales[i];
+
+			if (sharp) {
+				vector1.subVectors(frames.points[i - 1], frames.points[i]).normalize();
+				vector2.subVectors(frames.points[i + 1], frames.points[i]).normalize();
+				angleBisector.addVectors(vector1, vector2).normalize();
+			}
 
 			for (let r = 0; r <= radialSegments; r++) {
 				let _r = r;
@@ -49,15 +73,25 @@ const TubeBuilder = {
 					_r = 0;
 				}
 
-				normalVector.copy(frames.normals[i]);
+				segmentVector.copy(frames.normals[i]);
 				quaternion.setFromAxisAngle(frames.tangents[i], startRad + Math.PI * 2 * _r / radialSegments);
-				normalVector.applyQuaternion(quaternion).normalize();
+				segmentVector.applyQuaternion(quaternion).normalize();
 
-				positions.push(
-					frames.points[i].x + normalVector.x * radius * frames.widthScales[i],
-					frames.points[i].y + normalVector.y * radius * frames.widthScales[i],
-					frames.points[i].z + normalVector.z * radius * frames.widthScales[i]
-				);
+				if (sharp) {
+					// At sharp corners, the cross-section is not a circle, but an ellipse.
+					// Here, we stretch the cross-section according to the direction of the angle bisector.
+					stretchVectorAlongDirection(segmentVector, angleBisector, widthScale, offsetVector);
+					offsetVector.multiplyScalar(radius).add(frames.points[i]);
+					stretchVectorAlongDirection(segmentVector, angleBisector, 1 / widthScale, normalVector);
+					normalVector.normalize();
+				} else {
+					// fallback to simple calculation, because the angle is not obvious,
+					// the benefit of precise stretching is not obvious
+					offsetVector.copy(segmentVector).multiplyScalar(radius * widthScale).add(frames.points[i]);
+					normalVector.copy(segmentVector);
+				}
+
+				positions.push(offsetVector.x, offsetVector.y, offsetVector.z);
 				normals.push(normalVector.x, normalVector.y, normalVector.z);
 				uvs.push(uvDist, r / radialSegments);
 				uvs2.push(uvDist2, r / radialSegments);
