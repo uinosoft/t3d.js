@@ -41,17 +41,6 @@ const TubeBuilder = {
 		const normalVector = new Vector3();
 		const offsetVector = new Vector3();
 
-		const angleBisector = new Vector3();
-
-		const vector1 = new Vector3();
-		const vector2 = new Vector3();
-
-		function stretchVectorAlongDirection(vector, direction, scale, target) {
-			const parallel = vector1.copy(direction).multiplyScalar(vector.dot(direction));
-			const perpendicular = vector2.copy(vector).sub(parallel);
-			return target.copy(perpendicular).addScaledVector(parallel, scale);
-		}
-
 		let verticesCount = 0;
 
 		for (let i = 0; i < frameLength; i++) {
@@ -60,12 +49,6 @@ const TubeBuilder = {
 
 			const sharp = frames.sharps[i];
 			const widthScale = frames.widthScales[i];
-
-			if (sharp) {
-				vector1.subVectors(frames.points[i - 1], frames.points[i]).normalize();
-				vector2.subVectors(frames.points[i + 1], frames.points[i]).normalize();
-				angleBisector.addVectors(vector1, vector2).normalize();
-			}
 
 			for (let r = 0; r <= radialSegments; r++) {
 				let _r = r;
@@ -80,10 +63,12 @@ const TubeBuilder = {
 				if (sharp) {
 					// At sharp corners, the cross-section is not a circle, but an ellipse.
 					// Here, we stretch the cross-section according to the direction of the angle bisector.
-					stretchVectorAlongDirection(segmentVector, angleBisector, widthScale, offsetVector);
-					offsetVector.multiplyScalar(radius).add(frames.points[i]);
-					stretchVectorAlongDirection(segmentVector, angleBisector, 1 / widthScale, normalVector);
-					normalVector.normalize();
+					offsetVector.copy(segmentVector)
+						.scaleAlong(frames.bisectors[i], widthScale)
+						.multiplyScalar(radius).add(frames.points[i]);
+					normalVector.copy(segmentVector)
+						.scaleAlong(frames.bisectors[i], 1 / widthScale)
+						.normalize();
 				} else {
 					// fallback to simple calculation, because the angle is not obvious,
 					// the benefit of precise stretching is not obvious

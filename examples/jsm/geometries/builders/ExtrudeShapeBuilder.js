@@ -178,7 +178,13 @@ const position = new Vector3();
 function setPositionByPathFrames(frames, index, x, y, positions) {
 	normal.copy(frames.normals[index]).multiplyScalar(y);
 	binormal.copy(frames.binormals[index]).multiplyScalar(x);
-	position.copy(frames.points[index]).add(normal).add(binormal);
+
+	position.copy(normal).add(binormal);
+	if (frames.sharps[index]) {
+		position.scaleAlong(frames.bisectors[index], frames.widthScales[index]);
+	}
+	position.add(frames.points[index]);
+
 	positions.push(position.x, position.y, position.z);
 }
 

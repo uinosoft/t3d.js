@@ -25,6 +25,7 @@ class CurvePath3 extends CurvePath {
 		const tangents = [];
 		const normals = [];
 		const binormals = [];
+		const bisectors = [];
 		const lengths = [];
 		const widthScales = [];
 		const sharps = [];
@@ -72,6 +73,7 @@ class CurvePath3 extends CurvePath {
 		tangents[0] = new Vector3();
 		normals[0] = new Vector3();
 		binormals[0] = new Vector3();
+		bisectors[0] = new Vector3();
 
 		tangents[0].subVectors(points[1], points[0]).normalize();
 
@@ -99,6 +101,7 @@ class CurvePath3 extends CurvePath {
 
 		binormals[0].crossVectors(tangents[0], normals[0]).normalize();
 		normals[0].crossVectors(binormals[0], tangents[0]).normalize();
+		bisectors[0].copy(binormals[0]);
 
 		lengths[0] = 0;
 		widthScales[0] = 1;
@@ -113,6 +116,7 @@ class CurvePath3 extends CurvePath {
 			const tangent = new Vector3();
 			const normal = new Vector3();
 			const binormal = new Vector3();
+			const bisector = new Vector3();
 
 			lastDir.subVectors(points[i], points[i - 1]);
 			nextDir.subVectors(points[i + 1], points[i]);
@@ -121,6 +125,8 @@ class CurvePath3 extends CurvePath {
 
 			lastDir.normalize();
 			nextDir.normalize();
+
+			bisector.subVectors(nextDir, lastDir).normalize();
 
 			const tangentType = tangentTypes[i];
 			if (tangentType === 1) {
@@ -157,6 +163,7 @@ class CurvePath3 extends CurvePath {
 			tangents[i] = tangent;
 			normals[i] = normal;
 			binormals[i] = binormal;
+			bisectors[i] = bisector;
 
 			const _cos = lastDir.dot(nextDir);
 
@@ -172,6 +179,7 @@ class CurvePath3 extends CurvePath {
 		const tangent = new Vector3();
 		const normal = new Vector3();
 		const binormal = new Vector3();
+		const bisector = new Vector3();
 
 		tangent.subVectors(points[lastIndex], points[lastIndex - 1]);
 		const dist = tangent.getLength();
@@ -192,10 +200,12 @@ class CurvePath3 extends CurvePath {
 		}
 
 		binormal.crossVectors(tangent, normal).normalize();
+		bisector.copy(binormal);
 
 		tangents[lastIndex] = tangent;
 		normals[lastIndex] = normal;
 		binormals[lastIndex] = binormal;
+		bisectors[lastIndex] = bisector;
 
 		lengths[lastIndex] = lengths[lastIndex - 1] + dist;
 		widthScales[lastIndex] = 1;
@@ -207,6 +217,7 @@ class CurvePath3 extends CurvePath {
 			tangents[0].copy(tangent);
 			normals[0].copy(normal);
 			binormals[0].copy(binormal);
+			bisectors[0].copy(bisector);
 		}
 
 		return {
@@ -214,6 +225,7 @@ class CurvePath3 extends CurvePath {
 			tangents,
 			normals,
 			binormals,
+			bisectors,
 			lengths,
 			widthScales,
 			sharps,

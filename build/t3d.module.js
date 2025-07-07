@@ -752,6 +752,17 @@ class Vector3 {
 	}
 
 	/**
+	 * Scales this vector along the given direction vector by the given scale factor.
+	 * @param {Vector3} direction - The (normalized) direction vector to scale along.
+	 * @param {number} scale - The scale factor.
+	 * @returns {Vector3} A reference to this vector.
+	 */
+	scaleAlong(direction, scale) {
+		_vector$2.copy(direction).multiplyScalar(this.dot(direction));
+		return this.sub(_vector$2).addScaledVector(_vector$2, scale);
+	}
+
+	/**
 	 * Returns the angle between the given vector and this instance in radians.
 	 * @param {Vector3} v - The vector to compute the angle with.
 	 * @returns {number} The angle in radians.
