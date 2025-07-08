@@ -149,7 +149,7 @@ class CurvePath3 extends CurvePath {
 
 				binormal.crossVectors(tangent, normal).normalize();
 			} else {
-				normal.copy(normals[i - 1]);
+				normal.copy(up || normals[i - 1]);
 
 				if (tangent.dot(normal) === 1) {
 					binormal.crossVectors(nextDir, normal).normalize();
