@@ -9,7 +9,7 @@ class LightingData {
 		this.groupList = [];
 		this.groupList.push(new LightingGroup()); // create default group 0
 
-		this._locked = false;
+		this._locked = true;
 	}
 
 	getGroup(id) {
@@ -34,13 +34,15 @@ class LightingData {
 		}
 	}
 
-	begin(lock) {
-		this._locked = lock;
-
-		if (lock) return;
+	begin() {
+		if (!this._locked) {
+			console.warn('LightingData: begin() called without end().');
+		}
 
 		this.lightsArray.length = 0;
 		this.shadowsNum = 0;
+
+		this._locked = false;
 	}
 
 	collect(light) {
@@ -54,8 +56,6 @@ class LightingData {
 	}
 
 	end(sceneData) {
-		if (this._locked) return;
-
 		const lightsArray = this.lightsArray;
 		const shadowsNum = this.shadowsNum;
 		const groupList = this.groupList;
@@ -75,6 +75,8 @@ class LightingData {
 		for (i = 0, l = groupList.length; i < l; i++) {
 			groupList[i].end(sceneData);
 		}
+
+		this._locked = true;
 	}
 
 	_distribute(light, shadow) {

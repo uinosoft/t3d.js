@@ -7967,6 +7967,65 @@
 	 */
 	Object3D.prototype.isObject3D = true;
 
+	const _plane_1 = new Plane();
+	let _sceneDataId = 0;
+
+	/**
+	 * SceneData collect all render states about scene, Including lights.
+	 */
+	class SceneData {
+		constructor() {
+			this.id = _sceneDataId++;
+			this.version = 0;
+			this.useAnchorMatrix = false;
+			this.anchorMatrix = new Matrix4();
+			this.anchorMatrixInverse = new Matrix4();
+			this.disableShadowSampler = false;
+			this.logarithmicDepthBuffer = false;
+			this.fog = null;
+			this.environment = null;
+			this.envDiffuseIntensity = 1;
+			this.envSpecularIntensity = 1;
+			this.clippingPlanesData = new Float32Array([]);
+			this.numClippingPlanes = 0;
+		}
+
+		/**
+		 * Update scene data.
+		 * @param {Scene} scene
+		 */
+		update(scene) {
+			this.useAnchorMatrix = !scene.anchorMatrix.isIdentity();
+			this.anchorMatrix.copy(scene.anchorMatrix);
+			this.anchorMatrixInverse.copy(scene.anchorMatrix).invert();
+			this.disableShadowSampler = scene.disableShadowSampler;
+			this.logarithmicDepthBuffer = scene.logarithmicDepthBuffer;
+			this.fog = scene.fog;
+			this.environment = scene.environment;
+			this.envDiffuseIntensity = scene.envDiffuseIntensity;
+			this.envSpecularIntensity = scene.envSpecularIntensity;
+			if (this.clippingPlanesData.length < scene.clippingPlanes.length * 4) {
+				this.clippingPlanesData = new Float32Array(scene.clippingPlanes.length * 4);
+			}
+			this.setClippingPlanesData(scene.clippingPlanes, this.clippingPlanesData);
+			this.numClippingPlanes = scene.clippingPlanes.length;
+			this.version++;
+		}
+		setClippingPlanesData(clippingPlanes, clippingPlanesData) {
+			for (let i = 0; i < clippingPlanes.length; i++) {
+				_plane_1.copy(clippingPlanes[i]);
+				if (this.useAnchorMatrix) {
+					_plane_1.applyMatrix4(this.anchorMatrixInverse);
+				}
+				clippingPlanesData[i * 4 + 0] = _plane_1.normal.x;
+				clippingPlanesData[i * 4 + 1] = _plane_1.normal.y;
+				clippingPlanesData[i * 4 + 2] = _plane_1.normal.z;
+				clippingPlanesData[i * 4 + 3] = _plane_1.constant;
+			}
+			return clippingPlanesData;
+		}
+	}
+
 	/**
 	 * Abstract base class for lights
 	 * - The light's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed light points down the -Z axis.
@@ -8569,7 +8628,7 @@
 			this.groupList = [];
 			this.groupList.push(new LightingGroup()); // create default group 0
 
-			this._locked = false;
+			this._locked = true;
 		}
 		getGroup(id) {
 			return this.groupList[id];
@@ -8590,11 +8649,13 @@
 				}
 			}
 		}
-		begin(lock) {
-			this._locked = lock;
-			if (lock) return;
+		begin() {
+			if (!this._locked) {
+				console.warn('LightingData: begin() called without end().');
+			}
 			this.lightsArray.length = 0;
 			this.shadowsNum = 0;
+			this._locked = false;
 		}
 		collect(light) {
 			if (this._locked) return;
@@ -8604,7 +8665,6 @@
 			}
 		}
 		end(sceneData) {
-			if (this._locked) return;
 			const lightsArray = this.lightsArray;
 			const shadowsNum = this.shadowsNum;
 			const groupList = this.groupList;
@@ -8619,6 +8679,7 @@
 			for (i = 0, l = groupList.length; i < l; i++) {
 				groupList[i].end(sceneData);
 			}
+			this._locked = true;
 		}
 		_distribute(light, shadow) {
 			const groupMask = light.groupMask;
@@ -8645,6 +8706,78 @@
 	}
 	function castShadow(light) {
 		return light.shadow && light.castShadow;
+	}
+
+	function _isPerspectiveMatrix$1(m) {
+		return m.elements[11] === -1;
+	}
+	let _cameraDataId = 0;
+
+	/**
+	 * RenderStates collect all render states about scene and camera.
+	 */
+	class RenderStates {
+		constructor(sceneData, lightingData) {
+			this.scene = sceneData;
+			this.lighting = lightingData;
+			this.camera = {
+				id: _cameraDataId++,
+				version: 0,
+				near: 0,
+				far: 0,
+				position: new Vector3(),
+				logDepthCameraNear: 0,
+				logDepthBufFC: 0,
+				viewMatrix: new Matrix4(),
+				projectionMatrix: new Matrix4(),
+				projectionViewMatrix: new Matrix4(),
+				rect: new Vector4(0, 0, 1, 1)
+			};
+			this.gammaFactor = 2.0;
+			this.outputEncoding = TEXEL_ENCODING_TYPE.LINEAR;
+		}
+
+		/**
+		 * Update render states about camera.
+		 * @param {Camera} camera
+		 */
+		updateCamera(camera) {
+			const sceneData = this.scene;
+			const cameraData = this.camera;
+			const projectionMatrix = camera.projectionMatrix;
+			let cameraNear = 0,
+				cameraFar = 0;
+			if (_isPerspectiveMatrix$1(projectionMatrix)) {
+				cameraNear = projectionMatrix.elements[14] / (projectionMatrix.elements[10] - 1);
+				cameraFar = projectionMatrix.elements[14] / (projectionMatrix.elements[10] + 1);
+			} else {
+				cameraNear = (projectionMatrix.elements[14] + 1) / projectionMatrix.elements[10];
+				cameraFar = (projectionMatrix.elements[14] - 1) / projectionMatrix.elements[10];
+			}
+			cameraData.near = cameraNear;
+			cameraData.far = cameraFar;
+			if (sceneData.logarithmicDepthBuffer) {
+				cameraData.logDepthCameraNear = cameraNear;
+				cameraData.logDepthBufFC = 2.0 / (Math.log(cameraFar - cameraNear + 1.0) * Math.LOG2E);
+			} else {
+				cameraData.logDepthCameraNear = 0;
+				cameraData.logDepthBufFC = 0;
+			}
+			cameraData.position.setFromMatrixPosition(camera.worldMatrix);
+			if (sceneData.useAnchorMatrix) {
+				cameraData.position.applyMatrix4(sceneData.anchorMatrixInverse);
+			}
+			cameraData.viewMatrix.copy(camera.viewMatrix);
+			if (sceneData.useAnchorMatrix) {
+				cameraData.viewMatrix.multiply(sceneData.anchorMatrix);
+			}
+			cameraData.projectionMatrix.copy(projectionMatrix);
+			cameraData.projectionViewMatrix.copy(projectionMatrix).multiply(cameraData.viewMatrix);
+			cameraData.rect.copy(camera.rect);
+			cameraData.version++;
+			this.gammaFactor = camera.gammaFactor;
+			this.outputEncoding = camera.outputEncoding;
+		}
 	}
 
 	/**
@@ -8955,136 +9088,176 @@
 		return a.id - b.id;
 	}
 
-	const _plane_1 = new Plane();
-	let _sceneDataId = 0;
-
 	/**
-	 * SceneData collect all render states about scene, Including lights.
+	 * RenderCollector traverses the scene graph and collects all necessary rendering information.
+	 * It manages scene data, lighting data, and per-camera render states/queues.
 	 */
-	class SceneData {
+	class RenderCollector {
+		/**
+		 * Creates a new RenderCollector instance.
+		 * In most cases, RenderCollector does not need to be created manually,
+		 * as Scene will automatically create one. See {@link Scene#collector}.
+		 */
 		constructor() {
-			this.id = _sceneDataId++;
-			this.version = 0;
-			this.useAnchorMatrix = false;
-			this.anchorMatrix = new Matrix4();
-			this.anchorMatrixInverse = new Matrix4();
-			this.disableShadowSampler = false;
-			this.logarithmicDepthBuffer = false;
-			this.fog = null;
-			this.environment = null;
-			this.envDiffuseIntensity = 1;
-			this.envSpecularIntensity = 1;
-			this.clippingPlanesData = new Float32Array([]);
-			this.numClippingPlanes = 0;
-		}
+			// collects scene and lighting data for single scene
 
-		/**
-		 * Update scene data.
-		 * @param {Scene} scene
-		 */
-		update(scene) {
-			this.useAnchorMatrix = !scene.anchorMatrix.isIdentity();
-			this.anchorMatrix.copy(scene.anchorMatrix);
-			this.anchorMatrixInverse.copy(scene.anchorMatrix).invert();
-			this.disableShadowSampler = scene.disableShadowSampler;
-			this.logarithmicDepthBuffer = scene.logarithmicDepthBuffer;
-			this.fog = scene.fog;
-			this.environment = scene.environment;
-			this.envDiffuseIntensity = scene.envDiffuseIntensity;
-			this.envSpecularIntensity = scene.envSpecularIntensity;
-			if (this.clippingPlanesData.length < scene.clippingPlanes.length * 4) {
-				this.clippingPlanesData = new Float32Array(scene.clippingPlanes.length * 4);
-			}
-			this.setClippingPlanesData(scene.clippingPlanes, this.clippingPlanesData);
-			this.numClippingPlanes = scene.clippingPlanes.length;
-			this.version++;
-		}
-		setClippingPlanesData(clippingPlanes, clippingPlanesData) {
-			for (let i = 0; i < clippingPlanes.length; i++) {
-				_plane_1.copy(clippingPlanes[i]);
-				if (this.useAnchorMatrix) {
-					_plane_1.applyMatrix4(this.anchorMatrixInverse);
+			this.sceneData = new SceneData();
+			this.lightingData = new LightingData();
+
+			// collects render states and render queues for each camera
+
+			this._renderStatesMap = new WeakMap();
+			this._renderQueueMap = new WeakMap();
+
+			// internal states
+
+			this._lightingNeedsUpdate = true;
+			this._skeletonVersion = 1;
+			const _boundingSphere = new Sphere();
+
+			/**
+			 * Visibility checking function called during scene traversal.
+			 * Determines whether an object should be included in the render queue.
+			 * Can be overridden to implement custom culling logic (LOD, distance, etc.).
+			 * @param {Object3D} object - The object to test for visibility.
+			 * @param {Camera} camera - The camera to test against.
+			 * @returns {boolean} True if the object should be rendered, false to cull it.
+			 * @type {Function}
+			 * @example
+			 * // Custom visibility check that always returns true
+			 * collector.checkVisibility = function(object, camera) {
+			 *		 return true;
+			 * };
+			 */
+			this.checkVisibility = function (object, camera) {
+				if (!object.renderable) {
+					return false;
 				}
-				clippingPlanesData[i * 4 + 0] = _plane_1.normal.x;
-				clippingPlanesData[i * 4 + 1] = _plane_1.normal.y;
-				clippingPlanesData[i * 4 + 2] = _plane_1.normal.z;
-				clippingPlanesData[i * 4 + 3] = _plane_1.constant;
-			}
-			return clippingPlanesData;
-		}
-	}
-
-	function _isPerspectiveMatrix$1(m) {
-		return m.elements[11] === -1;
-	}
-	let _cameraDataId = 0;
-
-	/**
-	 * RenderStates collect all render states about scene and camera.
-	 */
-	class RenderStates {
-		constructor(sceneData, lightingData) {
-			this.scene = sceneData;
-			this.lighting = lightingData;
-			this.camera = {
-				id: _cameraDataId++,
-				version: 0,
-				near: 0,
-				far: 0,
-				position: new Vector3(),
-				logDepthCameraNear: 0,
-				logDepthBufFC: 0,
-				viewMatrix: new Matrix4(),
-				projectionMatrix: new Matrix4(),
-				projectionViewMatrix: new Matrix4(),
-				rect: new Vector4(0, 0, 1, 1)
+				if (!object.frustumCulled || !camera.frustumCulled) {
+					return true;
+				}
+				_boundingSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
+				return camera.frustum.intersectsSphere(_boundingSphere);
 			};
-			this.gammaFactor = 2.0;
-			this.outputEncoding = TEXEL_ENCODING_TYPE.LINEAR;
 		}
 
 		/**
-		 * Update render states about camera.
-		 * @param {Camera} camera
+		 * Setting this property to `true` indicates the lighting data needs to be updated.
+		 * Lighting data updates are triggered by the {@link RenderCollector#traverseAndCollect} method.
+		 * @type {boolean}
+		 * @default false
+		 * @param {boolean} value
 		 */
-		updateCamera(camera) {
-			const sceneData = this.scene;
-			const cameraData = this.camera;
-			const projectionMatrix = camera.projectionMatrix;
-			let cameraNear = 0,
-				cameraFar = 0;
-			if (_isPerspectiveMatrix$1(projectionMatrix)) {
-				cameraNear = projectionMatrix.elements[14] / (projectionMatrix.elements[10] - 1);
-				cameraFar = projectionMatrix.elements[14] / (projectionMatrix.elements[10] + 1);
-			} else {
-				cameraNear = (projectionMatrix.elements[14] + 1) / projectionMatrix.elements[10];
-				cameraFar = (projectionMatrix.elements[14] - 1) / projectionMatrix.elements[10];
+		set lightingNeedsUpdate(value) {
+			if (value) {
+				this._lightingNeedsUpdate = true;
 			}
-			cameraData.near = cameraNear;
-			cameraData.far = cameraFar;
-			if (sceneData.logarithmicDepthBuffer) {
-				cameraData.logDepthCameraNear = cameraNear;
-				cameraData.logDepthBufFC = 2.0 / (Math.log(cameraFar - cameraNear + 1.0) * Math.LOG2E);
-			} else {
-				cameraData.logDepthCameraNear = 0;
-				cameraData.logDepthBufFC = 0;
+		}
+
+		/**
+		 * Setting this property to `true` indicates all skeletons in the scene should be updated.
+		 * Skeleton updates are triggered by the {@link RenderCollector#traverseAndCollect} method.
+		 * @type {boolean}
+		 * @default false
+		 * @param {boolean} value
+		 */
+		set skeletonNeedsUpdate(value) {
+			if (value) {
+				this._skeletonVersion++;
 			}
-			cameraData.position.setFromMatrixPosition(camera.worldMatrix);
-			if (sceneData.useAnchorMatrix) {
-				cameraData.position.applyMatrix4(sceneData.anchorMatrixInverse);
+		}
+
+		/**
+		 * Get the RenderStates for the scene and camera.
+		 * If the RenderStates for the camera does not exist, it will be created.
+		 * @param {Camera} camera - The render camera.
+		 * @returns {RenderStates} The target render states.
+		 */
+		getRenderStates(camera) {
+			let renderStates = this._renderStatesMap.get(camera);
+			if (!renderStates) {
+				// every camera has its own RenderStates
+				// but they share the same scene and lighting data
+				renderStates = new RenderStates(this.sceneData, this.lightingData);
+				this._renderStatesMap.set(camera, renderStates);
 			}
-			cameraData.viewMatrix.copy(camera.viewMatrix);
-			if (sceneData.useAnchorMatrix) {
-				cameraData.viewMatrix.multiply(sceneData.anchorMatrix);
+			return renderStates;
+		}
+
+		/**
+		 * Get the RenderQueue for the scene and camera.
+		 * If the RenderQueue for the camera does not exist, it will be created.
+		 * @param {Camera} camera - The render camera.
+		 * @returns {RenderQueue} The target render queue.
+		 */
+		getRenderQueue(camera) {
+			let renderQueue = this._renderQueueMap.get(camera);
+			if (!renderQueue) {
+				renderQueue = new RenderQueue();
+				this._renderQueueMap.set(camera, renderQueue);
 			}
-			cameraData.projectionMatrix.copy(projectionMatrix);
-			cameraData.projectionViewMatrix.copy(projectionMatrix).multiply(cameraData.viewMatrix);
-			cameraData.rect.copy(camera.rect);
-			cameraData.version++;
-			this.gammaFactor = camera.gammaFactor;
-			this.outputEncoding = camera.outputEncoding;
+			return renderQueue;
+		}
+
+		/**
+		 * Traverse the scene and collect all renderable objects, lights and skeletons.
+		 * This method will update the RenderQueue and RenderStates for the camera.
+		 * @param {Scene} scene - The scene to traverse.
+		 * @param {Camera} camera - The camera to collect renderable objects for.
+		 * @returns {RenderQueue} The collected render queue.
+		 */
+		traverseAndCollect(scene, camera) {
+			const sceneData = this.sceneData;
+			const lightingData = this.lightingData;
+			const lightingNeedsUpdate = this._lightingNeedsUpdate;
+			const renderQueue = this.getRenderQueue(camera);
+			if (lightingNeedsUpdate) {
+				lightingData.begin();
+			}
+			renderQueue.begin();
+			this._traverseAndCollect(scene, camera, renderQueue);
+			renderQueue.end();
+			if (lightingNeedsUpdate) {
+				lightingData.end(sceneData);
+				this._lightingNeedsUpdate = false;
+			}
+
+			// Since skeletons may be referenced by different mesh,
+			// it is necessary to collect skeletons in the scene in order to avoid repeated updates.
+			// For IOS platform, we should try to avoid repeated texture updates within one frame,
+			// otherwise the performance will be seriously degraded.
+			const skeletonVersion = this._skeletonVersion;
+			for (const skeleton of _skeletons) {
+				// Skeleton version ensures uncollected skeletons will be updated in subsequent frames
+				if (skeleton._version !== skeletonVersion) {
+					skeleton.updateBones(sceneData);
+					skeleton._version = skeletonVersion;
+				}
+			}
+			_skeletons.clear();
+			return renderQueue;
+		}
+		_traverseAndCollect(object, camera, renderQueue) {
+			if (!object.visible) {
+				return;
+			}
+			if (object.isMesh) {
+				if (this.checkVisibility(object, camera)) {
+					renderQueue.push(object, camera);
+					if (object.skeleton) {
+						_skeletons.add(object.skeleton);
+					}
+				}
+			} else if (object.isLight) {
+				this.lightingData.collect(object);
+			}
+			const children = object.children;
+			for (let i = 0, l = children.length; i < l; i++) {
+				this._traverseAndCollect(children[i], camera, renderQueue);
+			}
 		}
 	}
+	const _skeletons = new Set();
 
 	/**
 	 * Scenes allow you to set up what and where is to be rendered,
@@ -9162,11 +9335,12 @@
 			 * @type {Matrix4}
 			 */
 			this.anchorMatrix = new Matrix4();
-			this._sceneData = new SceneData();
-			this._lightingData = new LightingData();
-			this._renderQueueMap = new WeakMap();
-			this._renderStatesMap = new WeakMap();
-			this._skeletonVersion = 0;
+
+			/**
+			 * A {@link RenderCollector} instance for this scene.
+			 * @type {RenderCollector}
+			 */
+			this.collector = new RenderCollector();
 		}
 
 		/**
@@ -9175,29 +9349,10 @@
 		 * @default 1
 		 */
 		set maxLightingGroups(value) {
-			this._lightingData.setMaxGroupCount(value);
+			this.collector.lightingData.setMaxGroupCount(value);
 		}
 		get maxLightingGroups() {
-			return this._lightingData.groupList.length;
-		}
-
-		/**
-		 * Update {@link RenderStates} for the scene and camera.
-		 * The lighting data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
-		 * @param {Camera} camera - The camera.
-		 * @param {boolean} [updateScene=true] - Whether to update scene data.
-		 * @returns {RenderStates} - The result render states.
-		 */
-		updateRenderStates(camera, updateScene = true) {
-			if (!this._renderStatesMap.has(camera)) {
-				this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightingData));
-			}
-			const renderStates = this._renderStatesMap.get(camera);
-			if (updateScene) {
-				this._sceneData.update(this);
-			}
-			renderStates.updateCamera(camera);
-			return renderStates;
+			return this.collector.lightingData.groupList.length;
 		}
 
 		/**
@@ -9208,7 +9363,34 @@
 		 * @returns {RenderQueue} - The target render queue.
 		 */
 		getRenderStates(camera) {
-			return this._renderStatesMap.get(camera);
+			return this.collector.getRenderStates(camera);
+		}
+
+		/**
+		 * Get {@link RenderQueue} for the scene and camera.
+		 * The RenderQueue will be updated by calling {@link Scene#updateRenderQueue}.
+		 * @param {Camera} camera - The camera.
+		 * @returns {RenderQueue} - The target render queue.
+		 */
+		getRenderQueue(camera) {
+			return this.collector.getRenderQueue(camera);
+		}
+
+		/**
+		 * Update {@link RenderStates} for the scene and camera.
+		 * The lighting data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
+		 * @param {Camera} camera - The camera.
+		 * @param {boolean} [updateScene=true] - Whether to update scene data.
+		 * @returns {RenderStates} - The result render states.
+		 */
+		updateRenderStates(camera, updateScene = true) {
+			const collector = this.collector;
+			if (updateScene) {
+				collector.sceneData.update(this);
+			}
+			const renderStates = collector.getRenderStates(camera);
+			renderStates.updateCamera(camera);
+			return renderStates;
 		}
 
 		/**
@@ -9221,61 +9403,10 @@
 		 * @returns {RenderQueue} - The result render queue.
 		 */
 		updateRenderQueue(camera, collectLights = true, updateSkeletons = true) {
-			if (!this._renderQueueMap.has(camera)) {
-				this._renderQueueMap.set(camera, new RenderQueue());
-			}
-			const renderQueue = this._renderQueueMap.get(camera);
-			const lightingData = this._lightingData;
-			lightingData.begin(!collectLights);
-			renderQueue.begin();
-			this._pushToRenderQueue(this, camera, renderQueue);
-			renderQueue.end();
-			lightingData.end(this._sceneData);
-			if (updateSkeletons) {
-				this._skeletonVersion++;
-			}
-
-			// Since skeletons may be referenced by different mesh, it is necessary to collect skeletons in the scene in order to avoid repeated updates.
-			// For IOS platform, we should try to avoid repeated texture updates within one frame, otherwise the performance will be seriously degraded.
-			for (const skeleton of renderQueue.skeletons) {
-				if (skeleton._version !== this._skeletonVersion) {
-					skeleton.updateBones(this._sceneData);
-					skeleton._version = this._skeletonVersion;
-				}
-			}
-			return renderQueue;
-		}
-
-		/**
-		 * Get {@link RenderQueue} for the scene and camera.
-		 * The RenderQueue will be updated by calling {@link Scene#updateRenderQueue}.
-		 * @param {Camera} camera - The camera.
-		 * @returns {RenderQueue} - The target render queue.
-		 */
-		getRenderQueue(camera) {
-			return this._renderQueueMap.get(camera);
-		}
-		_pushToRenderQueue(object, camera, renderQueue) {
-			if (!object.visible) {
-				return;
-			}
-			if (object.geometry && object.material && object.renderable) {
-				if (object.frustumCulled && camera.frustumCulled) {
-					// frustum test, only test bounding sphere
-					_boundingSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
-					if (camera.frustum.intersectsSphere(_boundingSphere)) {
-						renderQueue.push(object, camera);
-					}
-				} else {
-					renderQueue.push(object, camera);
-				}
-			} else if (object.isLight) {
-				this._lightingData.collect(object);
-			}
-			const children = object.children;
-			for (let i = 0, l = children.length; i < l; i++) {
-				this._pushToRenderQueue(children[i], camera, renderQueue);
-			}
+			const collector = this.collector;
+			collector.lightingNeedsUpdate = collectLights;
+			collector.skeletonNeedsUpdate = updateSkeletons;
+			return collector.traverseAndCollect(this, camera);
 		}
 	}
 
@@ -9286,7 +9417,6 @@
 	 * @default true
 	 */
 	Scene.prototype.isScene = true;
-	const _boundingSphere = new Sphere();
 
 	/**
 	 * The camera used for rendering a 3D scene.
@@ -11138,8 +11268,9 @@
 		render(renderer, scene) {
 			oldClearColor.copy(renderer.getClearColor());
 			renderer.setClearColor(1, 1, 1, 1);
-			const lightsArray = scene._lightingData.lightsArray;
-			const shadowsNum = scene._lightingData.shadowsNum;
+			const lightingData = scene.collector.lightingData;
+			const lightsArray = lightingData.lightsArray;
+			const shadowsNum = lightingData.shadowsNum;
 			for (let i = 0; i < shadowsNum; i++) {
 				const light = lightsArray[i];
 				const shadow = light.shadow;
@@ -19694,8 +19825,24 @@
 		_lightData: {
 			configurable: true,
 			get: function () {
-				console.warn('Scene: ._lightData has been deprecated since v0.4.0, use ._lightingData.getGroup(0) instead.');
-				return this._lightingData.getGroup(0);
+				console.warn('Scene: ._lightData has been deprecated since v0.4.0, use .collector.lightingData.getGroup(0) instead.');
+				return this.collector.lightingData.getGroup(0);
+			}
+		},
+		// deprecated since 0.4.4
+		_sceneData: {
+			configurable: true,
+			get: function () {
+				// console.warn('Scene: ._sceneData has been deprecated since v0.4.4, use .collector.sceneData instead.');
+				return this.collector.sceneData;
+			}
+		},
+		// deprecated since 0.4.4
+		_lightingData: {
+			configurable: true,
+			get: function () {
+				// console.warn('Scene: ._lightingData has been deprecated since v0.4.4, use .collector.lightingData instead.');
+				return this.collector.lightingData;
 			}
 		}
 	});

@@ -76,8 +76,24 @@ Object.defineProperties(Scene.prototype, {
 	_lightData: {
 		configurable: true,
 		get: function() {
-			console.warn('Scene: ._lightData has been deprecated since v0.4.0, use ._lightingData.getGroup(0) instead.');
-			return this._lightingData.getGroup(0);
+			console.warn('Scene: ._lightData has been deprecated since v0.4.0, use .collector.lightingData.getGroup(0) instead.');
+			return this.collector.lightingData.getGroup(0);
+		}
+	},
+	// deprecated since 0.4.4
+	_sceneData: {
+		configurable: true,
+		get: function() {
+			// console.warn('Scene: ._sceneData has been deprecated since v0.4.4, use .collector.sceneData instead.');
+			return this.collector.sceneData;
+		}
+	},
+	// deprecated since 0.4.4
+	_lightingData: {
+		configurable: true,
+		get: function() {
+			// console.warn('Scene: ._lightingData has been deprecated since v0.4.4, use .collector.lightingData instead.');
+			return this.collector.lightingData;
 		}
 	}
 });

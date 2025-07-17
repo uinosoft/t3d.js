@@ -1,10 +1,6 @@
 import { Object3D } from './Object3D.js';
 import { Matrix4 } from '../math/Matrix4.js';
-import { LightingData } from '../render/LightingData.js';
-import { RenderQueue } from '../render/RenderQueue.js';
-import { SceneData } from '../render/SceneData.js';
-import { RenderStates } from '../render/RenderStates.js';
-import { Sphere } from '../math/Sphere.js';
+import { RenderCollector } from '../render/RenderCollector.js';
 
 /**
  * Scenes allow you to set up what and where is to be rendered,
@@ -84,13 +80,11 @@ class Scene extends Object3D {
 		 */
 		this.anchorMatrix = new Matrix4();
 
-		this._sceneData = new SceneData();
-		this._lightingData = new LightingData();
-
-		this._renderQueueMap = new WeakMap();
-		this._renderStatesMap = new WeakMap();
-
-		this._skeletonVersion = 0;
+		/**
+		 * A {@link RenderCollector} instance for this scene.
+		 * @type {RenderCollector}
+		 */
+		this.collector = new RenderCollector();
 	}
 
 	/**
@@ -99,33 +93,10 @@ class Scene extends Object3D {
 	 * @default 1
 	 */
 	set maxLightingGroups(value) {
-		this._lightingData.setMaxGroupCount(value);
+		this.collector.lightingData.setMaxGroupCount(value);
 	}
 	get maxLightingGroups() {
-		return this._lightingData.groupList.length;
-	}
-
-	/**
-	 * Update {@link RenderStates} for the scene and camera.
-	 * The lighting data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
-	 * @param {Camera} camera - The camera.
-	 * @param {boolean} [updateScene=true] - Whether to update scene data.
-	 * @returns {RenderStates} - The result render states.
-	 */
-	updateRenderStates(camera, updateScene = true) {
-		if (!this._renderStatesMap.has(camera)) {
-			this._renderStatesMap.set(camera, new RenderStates(this._sceneData, this._lightingData));
-		}
-
-		const renderStates = this._renderStatesMap.get(camera);
-
-		if (updateScene) {
-			this._sceneData.update(this);
-		}
-
-		renderStates.updateCamera(camera);
-
-		return renderStates;
+		return this.collector.lightingData.groupList.length;
 	}
 
 	/**
@@ -136,7 +107,38 @@ class Scene extends Object3D {
 	 * @returns {RenderQueue} - The target render queue.
 	 */
 	getRenderStates(camera) {
-		return this._renderStatesMap.get(camera);
+		return this.collector.getRenderStates(camera);
+	}
+
+	/**
+	 * Get {@link RenderQueue} for the scene and camera.
+	 * The RenderQueue will be updated by calling {@link Scene#updateRenderQueue}.
+	 * @param {Camera} camera - The camera.
+	 * @returns {RenderQueue} - The target render queue.
+	 */
+	getRenderQueue(camera) {
+		return this.collector.getRenderQueue(camera);
+	}
+
+	/**
+	 * Update {@link RenderStates} for the scene and camera.
+	 * The lighting data in RenderStates will be empty unless calling {@link Scene#updateRenderQueue}.
+	 * @param {Camera} camera - The camera.
+	 * @param {boolean} [updateScene=true] - Whether to update scene data.
+	 * @returns {RenderStates} - The result render states.
+	 */
+	updateRenderStates(camera, updateScene = true) {
+		const collector = this.collector;
+
+		if (updateScene) {
+			collector.sceneData.update(this);
+		}
+
+		const renderStates = collector.getRenderStates(camera);
+
+		renderStates.updateCamera(camera);
+
+		return renderStates;
 	}
 
 	/**
@@ -149,70 +151,12 @@ class Scene extends Object3D {
 	 * @returns {RenderQueue} - The result render queue.
 	 */
 	updateRenderQueue(camera, collectLights = true, updateSkeletons = true) {
-		if (!this._renderQueueMap.has(camera)) {
-			this._renderQueueMap.set(camera, new RenderQueue());
-		}
+		const collector = this.collector;
 
-		const renderQueue = this._renderQueueMap.get(camera);
-		const lightingData = this._lightingData;
+		collector.lightingNeedsUpdate = collectLights;
+		collector.skeletonNeedsUpdate = updateSkeletons;
 
-		lightingData.begin(!collectLights);
-		renderQueue.begin();
-
-		this._pushToRenderQueue(this, camera, renderQueue);
-
-		renderQueue.end();
-		lightingData.end(this._sceneData);
-
-		if (updateSkeletons) {
-			this._skeletonVersion++;
-		}
-
-		// Since skeletons may be referenced by different mesh, it is necessary to collect skeletons in the scene in order to avoid repeated updates.
-		// For IOS platform, we should try to avoid repeated texture updates within one frame, otherwise the performance will be seriously degraded.
-		for (const skeleton of renderQueue.skeletons) {
-			if (skeleton._version !== this._skeletonVersion) {
-				skeleton.updateBones(this._sceneData);
-				skeleton._version = this._skeletonVersion;
-			}
-		}
-
-		return renderQueue;
-	}
-
-	/**
-	 * Get {@link RenderQueue} for the scene and camera.
-	 * The RenderQueue will be updated by calling {@link Scene#updateRenderQueue}.
-	 * @param {Camera} camera - The camera.
-	 * @returns {RenderQueue} - The target render queue.
-	 */
-	getRenderQueue(camera) {
-		return this._renderQueueMap.get(camera);
-	}
-
-	_pushToRenderQueue(object, camera, renderQueue) {
-		if (!object.visible) {
-			return;
-		}
-
-		if (object.geometry && object.material && object.renderable) {
-			if (object.frustumCulled && camera.frustumCulled) {
-				// frustum test, only test bounding sphere
-				_boundingSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
-				if (camera.frustum.intersectsSphere(_boundingSphere)) {
-					renderQueue.push(object, camera);
-				}
-			} else {
-				renderQueue.push(object, camera);
-			}
-		} else if (object.isLight) {
-			this._lightingData.collect(object);
-		}
-
-		const children = object.children;
-		for (let i = 0, l = children.length; i < l; i++) {
-			this._pushToRenderQueue(children[i], camera, renderQueue);
-		}
+		return collector.traverseAndCollect(this, camera);
 	}
 
 }
@@ -224,7 +168,5 @@ class Scene extends Object3D {
  * @default true
  */
 Scene.prototype.isScene = true;
-
-const _boundingSphere = new Sphere();
 
 export { Scene };

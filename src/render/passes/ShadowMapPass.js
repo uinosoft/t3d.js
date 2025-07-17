@@ -92,8 +92,9 @@ class ShadowMapPass {
 		oldClearColor.copy(renderer.getClearColor());
 		renderer.setClearColor(1, 1, 1, 1);
 
-		const lightsArray = scene._lightingData.lightsArray;
-		const shadowsNum = scene._lightingData.shadowsNum;
+		const lightingData = scene.collector.lightingData;
+		const lightsArray = lightingData.lightsArray;
+		const shadowsNum = lightingData.shadowsNum;
 
 		for (let i = 0; i < shadowsNum; i++) {
 			const light = lightsArray[i];
