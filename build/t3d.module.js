@@ -9942,6 +9942,8 @@ class Scene extends Object3D {
 
 		this._renderQueueMap = new WeakMap();
 		this._renderStatesMap = new WeakMap();
+
+		this._skeletonVersion = 0;
 	}
 
 	/**
@@ -10016,10 +10018,15 @@ class Scene extends Object3D {
 		lightingData.end(this._sceneData);
 
 		if (updateSkeletons) {
-			// Since skeletons may be referenced by different mesh, it is necessary to collect skeletons in the scene in order to avoid repeated updates.
-			// For IOS platform, we should try to avoid repeated texture updates within one frame, otherwise the performance will be seriously degraded.
-			for (const skeleton of renderQueue.skeletons) {
+			this._skeletonVersion++;
+		}
+
+		// Since skeletons may be referenced by different mesh, it is necessary to collect skeletons in the scene in order to avoid repeated updates.
+		// For IOS platform, we should try to avoid repeated texture updates within one frame, otherwise the performance will be seriously degraded.
+		for (const skeleton of renderQueue.skeletons) {
+			if (skeleton._version !== this._skeletonVersion) {
 				skeleton.updateBones(this._sceneData);
+				skeleton._version = this._skeletonVersion;
 			}
 		}
 
@@ -15242,6 +15249,8 @@ class Skeleton {
 		 * @default undefined
 		 */
 		this.boneTexture = undefined;
+
+		this._version = 0;
 	}
 
 	/**
