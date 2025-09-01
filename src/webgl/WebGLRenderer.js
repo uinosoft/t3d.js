@@ -52,6 +52,35 @@ function getLightingGroup(lighting, material) {
 	return _emptyLightingGroup;
 }
 
+function clientWaitAsync(gl) {
+	const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+	gl.flush();
+
+	return new Promise(function(resolve, reject) {
+		function test() {
+			const res = gl.clientWaitSync(sync, gl.SYNC_FLUSH_COMMANDS_BIT, 0);
+
+			if (res === gl.WAIT_FAILED) {
+				gl.deleteSync(sync);
+				reject();
+				return;
+			}
+
+			if (res === gl.TIMEOUT_EXPIRED) {
+				requestAnimationFrame(test);
+				return;
+			}
+
+			gl.deleteSync(sync);
+
+			resolve();
+		}
+
+		test();
+	});
+}
+
 /**
  * The WebGL renderer.
  * @extends ThinRenderer
@@ -115,6 +144,7 @@ class WebGLRenderer extends ThinRenderer {
 
 		this.capabilities = capabilities;
 
+		this._constants = constants;
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
 		this._renderTargets = renderTargets;
@@ -175,17 +205,73 @@ class WebGLRenderer extends ThinRenderer {
 		this._renderTargets.blitRenderTarget(read, draw, color, depth, stencil);
 	}
 
-	readRenderTargetPixels(x, y, width, height, buffer) {
-		if (this.asyncReadPixel) {
-			return this._renderTargets.readRenderTargetPixelsAsync(x, y, width, height, buffer);
-		} else {
-			this._renderTargets.readRenderTargetPixels(x, y, width, height, buffer);
-			return Promise.resolve(buffer);
-		}
-	}
-
 	updateRenderTargetMipmap(renderTarget) {
 		this._renderTargets.updateRenderTargetMipmap(renderTarget);
+	}
+
+	readTexturePixels(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {
+		const gl = this.context;
+		const constants = this._constants;
+		const state = this._state;
+		const renderTargets = this._renderTargets;
+		const textures = this._textures;
+
+		if (!this._bindTextureToDummyFrameBuffer(texture, zIndex, mipLevel)) {
+			return Promise.reject('WebGLRenderer.readTexturePixels: Unsupported texture.');
+		}
+
+		const glType = constants.getGLType(texture.type);
+		const glFormat = constants.getGLFormat(texture.format);
+
+		const textureProperties = textures.get(texture);
+		if (textureProperties.__readBuffer === undefined) {
+			textureProperties.__readBuffer = gl.createBuffer();
+		}
+		gl.bindBuffer(gl.PIXEL_PACK_BUFFER, textureProperties.__readBuffer);
+		gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.STREAM_READ);
+
+		gl.readPixels(x, y, width, height, glFormat, glType, 0);
+
+		// restore framebuffer binding
+		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+			renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
+		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+		return clientWaitAsync(gl).then(() => {
+			if (!textureProperties.__readBuffer) {
+				throw new Error('WebGLRenderer.readTexturePixels: Texture has been disposed.');
+			}
+
+			gl.bindBuffer(gl.PIXEL_PACK_BUFFER, textureProperties.__readBuffer);
+			gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, buffer);
+			gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+
+			return buffer;
+		});
+	}
+
+	readTexturePixelsSync(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {
+		const gl = this.context;
+		const constants = this._constants;
+		const state = this._state;
+		const renderTargets = this._renderTargets;
+
+		if (!this._bindTextureToDummyFrameBuffer(texture, zIndex, mipLevel)) {
+			console.warn('WebGLRenderer.readTexturePixels: Unsupported texture.');
+			return buffer;
+		}
+
+		const glType = constants.getGLType(texture.type);
+		const glFormat = constants.getGLFormat(texture.format);
+
+		gl.readPixels(x, y, width, height, glFormat, glType, buffer);
+
+		// restore framebuffer binding
+		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+			renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
+		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+
+		return buffer;
 	}
 
 	setTextureExternal(texture, webglTexture) {
@@ -662,6 +748,40 @@ class WebGLRenderer extends ThinRenderer {
 			}
 			renderInfo.update(drawCount, material.drawMode, instanceCount < 0 ? 1 : instanceCount);
 		}
+	}
+
+	_bindTextureToDummyFrameBuffer(texture, zIndex, mipLevel) {
+		const gl = this.context;
+		const textures = this._textures;
+		const state = this._state;
+
+		if (!this._dummyFrameBuffer) {
+			this._dummyFrameBuffer = gl.createFramebuffer();
+		}
+
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this._dummyFrameBuffer);
+
+		if (texture.isTexture2D) {
+			const textureProperties = textures.setTexture2D(texture);
+			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textureProperties.__webglTexture, mipLevel);
+			state.bindTexture(gl.TEXTURE_2D, null);
+		} else if (texture.isTextureCube) {
+			const textureProperties = textures.setTextureCube(texture);
+			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_CUBE_MAP_POSITIVE_X + zIndex, textureProperties.__webglTexture, mipLevel);
+			state.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+		} else if (texture.isTexture3D) {
+			const textureProperties = textures.setTexture3D(texture);
+			gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, textureProperties.__webglTexture, mipLevel, zIndex);
+			state.bindTexture(gl.TEXTURE_3D, null);
+		} else if (texture.isTexture2DArray) {
+			const textureProperties = textures.setTexture2DArray(texture);
+			gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, textureProperties.__webglTexture, mipLevel, zIndex);
+			state.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+		} else {
+			return false;
+		}
+
+		return true;
 	}
 
 }

@@ -42,7 +42,7 @@ class PMREMGenerator {
 		 * @type {boolean}
 		 * @default false
 		 */
-		this.legacy = false;
+		this.legacy = true;
 
 		// init
 
@@ -164,9 +164,11 @@ class PMREMGenerator {
 				for (let j = 0; j < 6; j++) {
 					const mipmapData = target.mipmaps[i][j];
 					mipmapData.data = new Uint16Array(mipmapData.width * mipmapData.height * 4);
-					renderTarget.activeCubeFace = j;
-					renderer.setRenderTarget(renderTarget);
-					renderer.readRenderTargetPixels(0, 0, mipmapData.width, mipmapData.height, mipmapData.data);
+					renderer.readTexturePixelsSync(
+						renderTarget.texture,
+						0, 0, mipmapData.width, mipmapData.height,
+						mipmapData.data, j
+					);
 					if (i === 0) {
 						target.images[j] = mipmapData;
 					}

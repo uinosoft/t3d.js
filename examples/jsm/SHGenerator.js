@@ -56,9 +56,10 @@ class SHGenerator {
 		reflectionProbe.render(renderer, dummyScene);
 		for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
 			const data = new ArrayCtor(cubeRenderTarget.width * cubeRenderTarget.height * 4);
-			cubeRenderTarget.activeCubeFace = faceIndex;
-			renderer.setRenderTarget(cubeRenderTarget);
-			renderer.readRenderTargetPixels(0, 0, cubeRenderTarget.width, cubeRenderTarget.height, data);
+			renderer.readTexturePixelsSync(
+				cubeRenderTarget.texture,
+				0, 0, cubeRenderTarget.width, cubeRenderTarget.height,
+				data, faceIndex);
 			const pixelSize = 2 / imageWidth;
 
 			for (let i = 0, il = data.length; i < il; i += 4) { // RGBA assumed

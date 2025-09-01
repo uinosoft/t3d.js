@@ -26,6 +26,10 @@ class WebGLTextures extends PropertyMap {
 				gl.deleteTexture(textureProperties.__webglTexture);
 			}
 
+			if (textureProperties.__readBuffer) {
+				gl.deleteBuffer(textureProperties.__readBuffer);
+			}
+
 			that.delete(texture);
 		}
 

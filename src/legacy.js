@@ -38,6 +38,19 @@ Object.defineProperties(WebGLRenderer.prototype, {
 			console.warn('WebGLRenderer: .gl has been deprecated, use .context instead.');
 			return this.context;
 		}
+	},
+	// deprecated since 0.4.5
+	asyncReadPixel: {
+		configurable: true,
+		get: function() {
+			if (this._asyncReadPixel === undefined) {
+				this._asyncReadPixel = false;
+			}
+			return this._asyncReadPixel;
+		},
+		set: function(value) {
+			this._asyncReadPixel = value;
+		}
 	}
 });
 
@@ -45,6 +58,29 @@ Object.defineProperties(WebGLRenderer.prototype, {
 WebGLRenderer.prototype.render = function(renderable, renderStates, options) {
 	console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
 	this.renderRenderableItem(renderable, renderStates, options);
+};
+
+// deprecated since 0.4.5, use readTexturePixels instead
+WebGLRenderer.prototype.readRenderTargetPixels = function(x, y, width, height, buffer) {
+	const state = this._state;
+	const renderTarget = state.currentRenderTarget;
+
+	const zIndex = renderTarget.activeCubeFace || renderTarget.activeLayer || 0;
+	const mipLevel = renderTarget.activeMipmapLevel || 0;
+
+	if (renderTarget && renderTarget.texture) {
+		if ((x >= 0 && x <= (renderTarget.width - width)) && (y >= 0 && y <= (renderTarget.height - height))) {
+			if (this.asyncReadPixel) {
+				return this.readTexturePixels(renderTarget.texture, x, y, width, height, buffer, zIndex, mipLevel);
+			} else {
+				this.readTexturePixelsSync(renderTarget.texture, x, y, width, height, buffer, zIndex, mipLevel);
+				return Promise.resolve(buffer);
+			}
+		}
+	}
+
+	console.warn('WebGLRenderer.readRenderTargetPixels: readPixels from renderTarget failed.');
+	return Promise.reject();
 };
 
 // Renderer, as an alias of WebGLRenderer, will exist for a long time.

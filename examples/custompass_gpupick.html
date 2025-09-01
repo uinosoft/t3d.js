@@ -48,7 +48,6 @@
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
-		renderer.asyncReadPixel = true;
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
@@ -183,9 +182,13 @@
 
 			isReading = true;
 
-			renderer.setRenderTarget(pickBuffer._rt);
-			await renderer.readRenderTargetPixels(e.clientX, height - e.clientY, 1, 1, pixels)
-				.catch(e => {});
+			if (params.asyncReadPixel) {
+				await renderer.readTexturePixels(pickBuffer._rt.texture, e.clientX, height - e.clientY, 1, 1, pixels).catch(e => {
+					console.warn(e);
+				});
+			} else {
+				renderer.readTexturePixelsSync(pickBuffer._rt.texture, e.clientX, height - e.clientY, 1, 1, pixels);
+			}
 
 			isReading = false;
 
@@ -224,8 +227,10 @@
 
 		// gui
 
+		const params = { asyncReadPixel: true };
+
 		const gui = new GUI();
-		gui.add(renderer, 'asyncReadPixel');
+		gui.add(params, 'asyncReadPixel');
 
 		//
 

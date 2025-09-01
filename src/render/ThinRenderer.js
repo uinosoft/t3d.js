@@ -63,13 +63,6 @@ class ThinRenderer {
 			}
 		};
 
-		/**
-		 * Whether to perform readPixel operations asynchronously.
-		 * @type {boolean}
-		 * @default false
-		 */
-		this.asyncReadPixel = false;
-
 		this._passInfo = {
 			// Whether the renderer is in the process of pass rendering.
 			// If true, means that the beginRender method has been called but the endRender method has not been called.
@@ -198,23 +191,40 @@ class ThinRenderer {
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {}
 
 	/**
-	 * Reads the pixel data from the current render target into the provided buffer.
-	 * The Renderer.asyncReadPixel property determines whether this operation is synchronous or asynchronous.
-	 * To maintain consistency, this method always returns a Promise object.
-	 * @param {number} x - The x coordinate of the rectangle to read from.
-	 * @param {number} y - The y coordinate of the rectangle to read from.
-	 * @param {number} width - The width of the rectangle to read from.
-	 * @param {number} height - The height of the rectangle to read from.
-	 * @param {TypedArray} buffer Uint8Array is the only destination type supported in all cases, other types are renderTarget and platform dependent.
-	 * @returns {Promise<TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the pixel data.
-	 */
-	readRenderTargetPixels(x, y, width, height, buffer) {}
-
-	/**
 	 * Generate mipmaps for the renderTarget you pass in.
 	 * @param {RenderTargetBase} renderTarget - The renderTarget to update.
 	 */
 	updateRenderTargetMipmap(renderTarget) {}
+
+	/**
+	 * Read pixels from a texture.
+	 * This is an asynchronous operation. See {@link ThinRenderer#readTexturePixelsSync} for the synchronous version.
+	 * @param {TextureBase} texture - The texture to read from.
+	 * @param {number} x - The x coordinate of the rectangle to read from.
+	 * @param {number} y - The y coordinate of the rectangle to read from.
+	 * @param {number} width - The width of the rectangle to read from.
+	 * @param {number} height - The height of the rectangle to read from.
+	 * @param {TypedArray} buffer - The buffer to store the pixel data.
+	 * @param {number} [zIndex=0] - For CubeTexture, the face index; for Texture3D/TextureArray, the layer/slice index.
+	 * @param {number} [mipLevel=0] - The mip level to read.
+	 * @returns {Promise<TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the pixel data.
+	 */
+	readTexturePixels(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {}
+
+	/**
+	 * Read pixels from a texture.
+	 * This is a synchronous operation. See {@link ThinRenderer#readTexturePixels} for the asynchronous version.
+	 * @param {TextureBase} texture - The texture to read from.
+	 * @param {number} x - The x coordinate of the rectangle to read from.
+	 * @param {number} y - The y coordinate of the rectangle to read from.
+	 * @param {number} width - The width of the rectangle to read from.
+	 * @param {number} height - The height of the rectangle to read from.
+	 * @param {TypedArray} buffer - The buffer to store the pixel data.
+	 * @param {number} [zIndex=0] - For CubeTexture, the face index; for Texture3D/TextureArray, the layer/slice index.
+	 * @param {number} [mipLevel=0] - The mip level to read.
+	 * @returns {TypedArray} The passed in buffer after it has been filled with the pixel data.
+	 */
+	readTexturePixelsSync(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {}
 
 	/**
 	 * Bind webglTexture to Texture.
