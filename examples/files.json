@@ -248,6 +248,7 @@
 		"lab_clouds_shader",
 		"lab_earth",
 		"lab_ocean",
+		"lab_ocean_fft",
 		"lab_ground",
 		"lab_texture_variation",
 		"lab_ik",

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>t3d - fft ocean</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - fft ocean, 
+		referrence to <a href="https://stackblitz.com/edit/fft-2d" target="_blank">"Ocean generator"</a><br />
+		"Lighthouse on Island" model by <a href="https://sketchfab.com/spaceexpert" target="_blank">spaceexpert</a>
+		(<a href="http://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>) - 
+		modified: water surface removed<br/>
+		<div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support webgl2</div>
+    </div>
+
+	<script src="./libs/nanobar.js"></script>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type='importmap'>
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+	</script>
+
+    <script type='module'>
+		import * as t3d from 't3d';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { OceanFieldBuilder, OceanMaterial } from 't3d/addons/ocean/index.js';
+		import { EnvTextureCubeLoader } from 't3d/addons/loaders/EnvLoader.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams);
+
+		if (!gl) {
+			document.getElementById('notSupported').style.display = '';
+			throw new Error('Not supported webgl2 !');
+		}
+
+		const forwardRenderer = new ForwardRenderer(canvas, gl);
+
+		const scene = new t3d.Scene();
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(-65, 12, 65);
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 5000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.maxPolarAngle = Math.PI / 2 - 0.01;
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1);
+		directionalLight.position.set(-77.31, 16.33, -61.28);
+		directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.windowSize = 30;
+		directionalLight.shadow.mapSize.set(1024, 1024);
+		directionalLight.shadow.bias = -0.0003;
+		directionalLight.shadow.normalBias = 0.05;
+		scene.add(directionalLight);
+
+		const nanobar = new Nanobar();
+		nanobar.el.style.background = 'gray';
+
+		const loadingManager = new t3d.LoadingManager(function() {
+			nanobar.go(100);
+			nanobar.el.style.background = 'transparent';
+		}, function(url, itemsLoaded, itemsTotal) {
+			if (itemsLoaded < itemsTotal) {
+				nanobar.go(itemsLoaded / itemsTotal * 100);
+			}
+		});
+
+		const envTextureLoader = new EnvTextureCubeLoader(loadingManager);
+		envTextureLoader.setRenderer(forwardRenderer);
+		envTextureLoader.loadAsync('./resources/hdr/Grand_Canyon_C.env').then(cubeTexture => {
+			scene.environment = cubeTexture;
+
+			const skyBox = new SkyBox(cubeTexture);
+			skyBox.gamma = true;
+			skyBox.level = 4;
+			scene.add(skyBox);
+		});
+
+		let birdModel = null;
+
+		new GLTFLoader(loadingManager).load(
+			'./resources/models/gltf/lighthouse.glb'
+		).then(function(result) {
+			console.timeEnd('GLTFLoader');
+
+			const object = result.root;
+			birdModel = object.children[0].children[0].children[0].children[4];
+
+			object.scale.set(50, 50, 50);
+			object.position.set(0, 6.5, 0);
+
+			object.traverse(node => {
+				node.castShadow = true;
+				node.receiveShadow = true;
+			});
+
+			scene.add(object);
+		}).catch(e => console.error(e));
+
+		// Create Ocean Field
+
+		const buildParams = {
+			cascades: [
+				{
+					size: 450.0,
+					strength: 0.8,
+					croppiness: -1.2,
+					minWave: 0,
+					maxWave: 100
+				},
+				{
+					size: 103.0,
+					strength: 0.8,
+					croppiness: -1.5,
+					minWave: 0,
+					maxWave: 100
+				},
+				{
+					size: 13,
+					strength: 0.9,
+					croppiness: -1.5,
+					minWave: 0,
+					maxWave: 7
+				}
+			],
+			resolution: 256,
+			wind: [5.0, 5.0],
+			alignment: 0.01,
+			randomSeed: 0
+		};
+
+		const oceanBuilder = new OceanFieldBuilder(forwardRenderer);
+		const oceanField = oceanBuilder.build(buildParams);
+
+		// Create Ocean Mesh
+
+		const oceanGeometry = new t3d.PlaneGeometry(128, 128, 128, 128);
+
+		const oceanMaterial = new OceanMaterial();
+		oceanMaterial.setOceanField(oceanField);
+
+		const ocean = new t3d.Mesh(oceanGeometry, oceanMaterial);
+		scene.add(ocean);
+
+		const wireframeOceanGeometry = new t3d.Geometry();
+		wireframeOceanGeometry.attributes = oceanGeometry.attributes;
+		wireframeOceanGeometry.morphAttributes = oceanGeometry.morphAttributes;
+		wireframeOceanGeometry.index = GeometryUtils.getWireframeAttribute(oceanGeometry);
+		wireframeOceanGeometry.boundingBox = oceanGeometry.boundingBox;
+		wireframeOceanGeometry.boundingSphere = oceanGeometry.boundingSphere;
+
+		// GUI
+
+		const gui = new GUI();
+
+		const windFolder = gui.addFolder('Wind').onChange(() => {
+			oceanBuilder.update(oceanField, buildParams);
+			oceanMaterial.setOceanField(oceanField);
+		});
+		windFolder.add(buildParams.wind, '0', 0, 31, 1).name('X');
+		windFolder.add(buildParams.wind, '1', 0, 31, 1).name('Y');
+
+		gui.add(oceanMaterial.uniforms, 'foamSpreading', 0, 2, 0.1).name('Foam spreading');
+		gui.add(oceanMaterial.uniforms, 'foamContrast', 0, 8, 0.1).name('Foam contrast');
+		gui.add(buildParams, 'alignment', 0, 4, 0.01).onChange(() => {
+			oceanBuilder.update(oceanField, buildParams);
+			oceanMaterial.setOceanField(oceanField);
+		}).name('Alignment');
+		gui.add(buildParams, 'randomSeed', 0, 1024, 1).onChange(() => {
+			oceanBuilder.update(oceanField, buildParams);
+			oceanMaterial.setOceanField(oceanField);
+		}).name('Random seed');
+
+		let i = 0;
+		for (const cascade of buildParams.cascades) {
+			const cascadeFolder = gui.addFolder(`Cascade ${i}`).onChange(() => {
+				oceanBuilder.update(oceanField, buildParams);
+				oceanMaterial.setOceanField(oceanField);
+			}).close();
+			i++;
+			cascadeFolder.add(cascade, 'size', 0, 1000, 1).name('Size');
+			cascadeFolder.add(cascade, 'strength', 0, 10, 0.1).name('Strength');
+			cascadeFolder.add(cascade, 'croppiness', -2, 2, 0.1).name('Croppiness');
+			cascadeFolder.add(cascade, 'minWave', 0, 1000, 1).name('Min wave length');
+			cascadeFolder.add(cascade, 'maxWave', 0, 1000, 1).name('Max wave length');
+		}
+
+		const debugFolder = gui.addFolder('Debug').close();
+		debugFolder.add({ wireframe: false }, 'wireframe').onChange(v => {
+			ocean.geometry = v ? wireframeOceanGeometry : oceanGeometry;
+			oceanMaterial.drawMode = v ? t3d.DRAW_MODE.LINES : t3d.DRAW_MODE.TRIANGLES;
+		});
+
+		//
+
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
+		
+			controller.update();
+		
+			oceanField.update(timestamp / 1000);
+
+			if (birdModel) {
+				birdModel.euler.y = timestamp * 0.0005;
+			}
+
+			forwardRenderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 5000);
+			forwardRenderer.backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
