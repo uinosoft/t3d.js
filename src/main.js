@@ -84,7 +84,7 @@ export { Texture3D } from './resources/textures/Texture3D.js';
 export { TextureBase } from './resources/textures/TextureBase.js';
 export { TextureCube } from './resources/textures/TextureCube.js';
 
-export { Query } from './resources/Query.js';
+export { QuerySet } from './resources/QuerySet.js';
 export { Raycaster } from './resources/Raycaster.js';
 export { RenderBuffer } from './resources/RenderBuffer.js';
 export { Skeleton } from './resources/Skeleton.js';
@@ -118,7 +118,7 @@ export { WebGLCapabilities } from './webgl/WebGLCapabilities.js';
 export { WebGLGeometries } from './webgl/WebGLGeometries.js';
 export { WebGLProgram } from './webgl/WebGLProgram.js';
 export { WebGLPrograms } from './webgl/WebGLPrograms.js';
-export { WebGLQueries } from './webgl/WebGLQueries.js';
+export { WebGLQuerySets } from './webgl/WebGLQuerySets.js';
 export { WebGLRenderer } from './webgl/WebGLRenderer.js';
 export { WebGLState } from './webgl/WebGLState.js';
 export { WebGLTextures } from './webgl/WebGLTextures.js';

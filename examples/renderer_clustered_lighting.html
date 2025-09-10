@@ -237,8 +237,8 @@
 		stats.showPanel(3);
 		document.body.appendChild(stats.dom);
 
-		let queryInProgress = false, timer = 0;
-		const timerElapsedQuery = new t3d.Query(), supportTimerQuery = !!renderer.capabilities.timerQuery;
+		let isQuerySetReading = false;
+		const timerQuerySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.TIMESTAMP, 2);
 
 		const clusteredDebugMaterial = new t3d.ShaderMaterial(ClusteredDebugShader);
 		clusteredDebugMaterial.acceptLight = true;
@@ -271,38 +271,28 @@
 			}
 
 			scene.updateMatrix();
-			const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
-			const renderStates = scene.updateRenderStates(camera);
-
-			if (supportTimerQuery && !queryInProgress) {
-				renderer.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);
-			}
+			scene.updateRenderQueue(camera);
+			scene.updateRenderStates(camera);
 
 			shadowMapPass.render(renderer, scene);
 		
 			renderer.setRenderTarget(backRenderTarget);
 			renderer.clear(true, true, false);
-		
-			renderer.beginRender();
-			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOptions);
-			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOptions);
-			renderer.endRender();
+			renderer.setTimestampWrites(timerQuerySet, 0, 1);
 
-			if (supportTimerQuery && !queryInProgress) {
-				renderer.endQuery(timerElapsedQuery);
-				queryInProgress = true;
-			}
+			renderer.renderScene(scene, camera, renderOptions);
 
-			if (supportTimerQuery && queryInProgress) {
-				if (renderer.isQueryResultAvailable(timerElapsedQuery)) {
-					timer = renderer.getQueryResult(timerElapsedQuery);
-					queryInProgress = false;
-				}
+			if (!isQuerySetReading) {
+				renderer.readQuerySetResults(timerQuerySet, [0, 1])
+					.then(buffer => {
+						const time = (buffer[1] - buffer[0]) / 1e6;
+						gpuPanel.update(time, 10);
+						isQuerySetReading = false;
+					});
+				isQuerySetReading = true;
 			}
 
 			stats.end();
-
-			gpuPanel.update(timer / 1000000, 10);
 		}
 		requestAnimationFrame(loop);
 

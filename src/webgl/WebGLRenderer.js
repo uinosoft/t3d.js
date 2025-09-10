@@ -9,7 +9,7 @@ import { WebGLBuffers } from './WebGLBuffers.js';
 import { WebGLGeometries } from './WebGLGeometries.js';
 import { WebGLMaterials } from './WebGLMaterials.js';
 import { WebGLVertexArrayBindings } from './WebGLVertexArrayBindings.js';
-import { WebGLQueries } from './WebGLQueries.js';
+import { WebGLQuerySets } from './WebGLQuerySets.js';
 import { WebGLLights } from './WebGLLights.js';
 import { Vector4 } from '../math/Vector4.js';
 import { Matrix4 } from '../math/Matrix4.js';
@@ -110,7 +110,6 @@ class WebGLRenderer extends ThinRenderer {
 		this._materials = null;
 		this._state = null;
 		this._vertexArrayBindings = null;
-		this._queries = null;
 
 		this.init();
 
@@ -140,7 +139,7 @@ class WebGLRenderer extends ThinRenderer {
 		const lights = new WebGLLights(prefix, capabilities, textures);
 		const programs = new WebGLPrograms(gl, state, capabilities);
 		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
-		const queries = new WebGLQueries(prefix, gl, capabilities);
+		const querySets = new WebGLQuerySets(prefix, gl, capabilities);
 
 		this.capabilities = capabilities;
 
@@ -155,20 +154,54 @@ class WebGLRenderer extends ThinRenderer {
 		this._materials = materials;
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
-		this._queries = queries;
+		this._querySets = querySets;
+	}
+
+	beginRender() {
+		super.beginRender();
+
+		if (this._currentOcclusionQuerySet) {
+			this._querySets.setQuerySet(this._currentOcclusionQuerySet);
+		}
+
+		if (this._currentTimestampWrites.querySet) {
+			this._querySets.setQuerySet(this._currentTimestampWrites.querySet);
+
+			if (this.capabilities.canUseTimestamp) {
+				this._querySets.queryCounter(
+					this._currentTimestampWrites.querySet,
+					this._currentTimestampWrites.beginningOfPassWriteIndex
+				);
+			} else { // fallback to use TIME_ELAPSED_EXT
+				this._querySets.beginQuery(
+					this._currentTimestampWrites.querySet,
+					this._currentTimestampWrites.endOfPassWriteIndex
+				);
+			}
+		}
 	}
 
 	endRender() {
-		super.endRender();
-
-		this._currentMaterial = null;
+		if (this._currentTimestampWrites.querySet) {
+			if (this.capabilities.canUseTimestamp) {
+				this._querySets.queryCounter(
+					this._currentTimestampWrites.querySet,
+					this._currentTimestampWrites.endOfPassWriteIndex
+				);
+			} else { // fallback to use TIME_ELAPSED_EXT
+				this._querySets.endQuery(this._currentTimestampWrites.querySet);
+			}
+		}
 
 		// Ensure depth buffer writing is enabled so it can be cleared on next render
-
 		const state = this._state;
 		state.depthBuffer.setTest(true);
 		state.depthBuffer.setMask(true);
 		state.colorBuffer.setMask(true);
+
+		this._currentMaterial = null;
+
+		super.endRender();
 	}
 
 	clear(color, depth, stencil) {
@@ -294,28 +327,20 @@ class WebGLRenderer extends ThinRenderer {
 		this._state.reset();
 	}
 
-	beginQuery(query, target) {
-		this._queries.begin(query, target);
+	beginOcclusionQuery(index) {
+		const querySet = this._currentOcclusionQuerySet;
+		if (!querySet) return;
+		this._querySets.beginQuery(querySet, index);
 	}
 
-	endQuery(query) {
-		this._queries.end(query);
+	endOcclusionQuery() {
+		const querySet = this._currentOcclusionQuerySet;
+		if (!querySet) return;
+		this._querySets.endQuery(querySet);
 	}
 
-	queryCounter(query) {
-		this._queries.counter(query);
-	}
-
-	isTimerQueryDisjoint(query) {
-		return this._queries.isTimerDisjoint(query);
-	}
-
-	isQueryResultAvailable(query) {
-		return this._queries.isResultAvailable(query);
-	}
-
-	getQueryResult(query) {
-		return this._queries.getResult(query);
+	async readQuerySetResults(querySet, dstBuffer, firstQuery = 0, queryCount = querySet.count) {
+		return this._querySets.readQuerySetResults(querySet, dstBuffer, firstQuery, queryCount);
 	}
 
 	renderRenderableItem(renderable, renderStates, options) {

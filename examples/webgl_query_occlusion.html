@@ -34,197 +34,169 @@
     </script>
 
     <script type="module">
-        import * as t3d from 't3d';
-        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-        import { Timer } from 't3d/addons/misc/Timer.js';
-        import { GUI } from './libs/lil-gui.esm.min.js';
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Timer } from 't3d/addons/misc/Timer.js';
 
-        let width = window.innerWidth || 2;
-        let height = window.innerHeight || 2;
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        document.body.appendChild(canvas);
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
 
-        const contextParams = { antialias: true, alpha: false };
-        const gl = canvas.getContext('webgl2', contextParams);
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams);
 
-        if (!gl) {
-        	document.getElementById('notSupported').style.display = '';
-        }
+		if (!gl) {
+			document.getElementById('notSupported').style.display = '';
+			throw new Error('Not supported webgl2 !');
+		}
 
-        // gui params
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(0.1, 0.1, 0.1, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-        const params = { enabled: true };
+		const scene = new t3d.Scene();
 
-        const renderer = new t3d.WebGLRenderer(gl);
-        renderer.setClearColor(0.1, 0.1, 0.1, 1);
-        const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const camera = new t3d.Camera();
+		camera.position.set(-359, 80, 251);
+		camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
 
-        const scene = new t3d.Scene();
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
+		camera.add(directionalLight);
 
-        // camera
+		const mainLight = new t3d.PointLight(0xffffff, 1, 250, 0.1);
+		mainLight.position.y = 60;
+		scene.add(mainLight);
 
-        const camera = new t3d.Camera();
-        camera.position.set(-359, 80, 251);
-        camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
-        scene.add(camera);
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 50, 0);
 
-        // planes
+		// planes
 
-        const planeGeometry = new t3d.PlaneGeometry(100, 100);
+		const planeGeometry = new t3d.PlaneGeometry(100, 100);
 
-        const planeTopMaterial = new t3d.PhongMaterial();
-        planeTopMaterial.diffuse.setHex(0xffffff);
+		const planeTopMaterial = new t3d.PhongMaterial();
+		planeTopMaterial.diffuse.setHex(0xffffff);
 
-        const floorMaterial = new t3d.PhongMaterial();
-        floorMaterial.diffuse.setHex(0x8F8F8F);
+		const floorMaterial = new t3d.PhongMaterial();
+		floorMaterial.diffuse.setHex(0x8F8F8F);
 
-        const wallMaterial = new t3d.PhongMaterial();
-        wallMaterial.diffuse.setHex(0x989898);
+		const wallMaterial = new t3d.PhongMaterial();
+		wallMaterial.diffuse.setHex(0x989898);
 
-        const planeTop = new t3d.Mesh(planeGeometry, planeTopMaterial);
-        planeTop.euler.set(Math.PI, 0, 0);
-        planeTop.position.y = 100;
-        scene.add(planeTop);
+		const planeTop = new t3d.Mesh(planeGeometry, planeTopMaterial);
+		planeTop.euler.set(Math.PI, 0, 0);
+		planeTop.position.y = 100;
+		scene.add(planeTop);
 
-        const planeBottom = new t3d.Mesh(planeGeometry, floorMaterial);
-        scene.add(planeBottom);
+		const planeBottom = new t3d.Mesh(planeGeometry, floorMaterial);
+		scene.add(planeBottom);
 
-        const planeBack = new t3d.Mesh(planeGeometry, wallMaterial);
-        planeBack.euler.set(90 / 180 * Math.PI, 0, 0);
-        planeBack.position.z = -50;
-        planeBack.position.y = 50;
-        scene.add(planeBack);
+		const planeBack = new t3d.Mesh(planeGeometry, wallMaterial);
+		planeBack.euler.set(90 / 180 * Math.PI, 0, 0);
+		planeBack.position.z = -50;
+		planeBack.position.y = 50;
+		scene.add(planeBack);
 
-        const planeFront = new t3d.Mesh(planeGeometry, wallMaterial);
-        planeFront.euler.set(-90 / 180 * Math.PI, 0, 0);
-        planeFront.position.z = 50;
-        planeFront.position.y = 50;
-        scene.add(planeFront);
+		const planeFront = new t3d.Mesh(planeGeometry, wallMaterial);
+		planeFront.euler.set(-90 / 180 * Math.PI, 0, 0);
+		planeFront.position.z = 50;
+		planeFront.position.y = 50;
+		scene.add(planeFront);
 
-        const planeRight = new t3d.Mesh(planeGeometry, wallMaterial);
-        planeRight.position.x = 50;
-        planeRight.position.y = 50;
-        planeRight.euler.set(0, 0, 90 / 180 * Math.PI);
-        scene.add(planeRight);
+		const planeRight = new t3d.Mesh(planeGeometry, wallMaterial);
+		planeRight.position.x = 50;
+		planeRight.position.y = 50;
+		planeRight.euler.set(0, 0, 90 / 180 * Math.PI);
+		scene.add(planeRight);
 
-        const planeLeft = new t3d.Mesh(planeGeometry, wallMaterial);
-        planeLeft.position.x = -50;
-        planeLeft.position.y = 50;
-        planeLeft.euler.set(0, 0, -90 / 180 * Math.PI);
-        scene.add(planeLeft);
+		const planeLeft = new t3d.Mesh(planeGeometry, wallMaterial);
+		planeLeft.position.x = -50;
+		planeLeft.position.y = 50;
+		planeLeft.euler.set(0, 0, -90 / 180 * Math.PI);
+		scene.add(planeLeft);
 
-        // create t3d occlusion query
+		const phong = new t3d.PhongMaterial();
 
-        const occlusionQuery = new t3d.Query();
+		const boxGeometry = new t3d.BoxGeometry(10, 50, 30);
 
-        let queryInProgress = false;
-        let sphereIsOccluded = false;
+		const cube = new t3d.Mesh(boxGeometry, phong);
+		cube.position.y = 25.1;
+		scene.add(cube);
 
-        const phong = new t3d.PhongMaterial();
+		const sphereGeometry = new t3d.SphereGeometry(4, 32, 32);
 
-        const boxGeometry = new t3d.BoxGeometry(10, 50, 30);
+		const sphere = new t3d.Mesh(sphereGeometry, phong);
+		sphere.position.set(-20, 30, 0);
+		sphere.userData.isSphere = true;
+		sphere.renderOrder = 1; // Make sure the sphere render after the cube
+		scene.add(sphere);
 
-        const cube = new t3d.Mesh(boxGeometry, phong);
-        cube.position.y = 25.1;
-        scene.add(cube);
+		// create occlusion query set
+		const querySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.OCCLUSION, 1);
 
-        const sphereGeometry = new t3d.SphereGeometry(4, 32, 32);
+		const renderOption = {
+			beforeRender: renderable => {
+				if (renderable.object.userData.isSphere) {
+					renderer.beginOcclusionQuery(0);
+				}
+			},
+			afterRender: renderable => {
+				if (renderable.object.userData.isSphere) {
+					renderer.endOcclusionQuery();
+				}
+			}
+		};
 
-        const sphere = new t3d.Mesh(sphereGeometry, phong);
-        sphere.position.set(-20, 30, 0);
-        sphere.userData.isSphere = true;
-        sphere.renderOrder = 1; // Make sure the sphere render after the cube
-        scene.add(sphere);
+		const dstBuffer = new Array(1);
+		let reading = false;
 
-        // lights
+		const timer = new Timer();
 
-        const directionalLight = new t3d.DirectionalLight(0xffffff, 0.2);
-        camera.add(directionalLight);
+		function loop(timestamp) {
+			requestAnimationFrame(loop);
 
-        const mainLight = new t3d.PointLight(0xffffff, 1, 250, 0.1);
-        mainLight.position.y = 60;
-        scene.add(mainLight);
+			timer.update(timestamp);
 
-        const controller = new OrbitControls(camera, canvas);
-        controller.target.set(0, 50, 0);
+			const elapsedTime = timer.getElapsed();
+			sphere.position.set(Math.cos(elapsedTime * 2) * 30, Math.abs(Math.cos(elapsedTime * 4)) * 20 + 5, Math.sin(elapsedTime * 2) * 30);
 
-        const gui = new GUI();
-        gui.add(params, 'enabled');
+			controller.update();
 
-        const timer = new Timer();
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
 
-        const renderOption = {
-        	beforeRender: renderable => {
-        		if (renderable.object.userData.isSphere) {
-        			if (params.enabled && !queryInProgress) {
-        				renderer.beginQuery(occlusionQuery, t3d.QUERY_TYPE.ANY_SAMPLES_PASSED);
-        			}
-        		}
-        	},
-        	afterRender: renderable => {
-        		if (renderable.object.userData.isSphere) {
-        			if (params.enabled && !queryInProgress) {
-        				renderer.endQuery(occlusionQuery);
-        				queryInProgress = true;
-        			}
-        		}
-        	}
-        };
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+			renderer.setOcclusionQuerySet(querySet);
 
-        function loop(timestamp) {
-        	requestAnimationFrame(loop);
+			renderer.renderScene(scene, camera, renderOption);
 
-        	timer.update(timestamp);
+			if (!reading) {
+				renderer.readQuerySetResults(querySet, dstBuffer)
+					.then(buffer => {
+						mainLight.color.setHex(buffer[0] === 0 ? 0xFF9898 : 0x98FB98);
+						reading = false;
+					});
+				reading = true;
+			}
+		}
+		requestAnimationFrame(loop);
 
-        	const elapsedTime = timer.getElapsed();
-        	sphere.position.set(Math.cos(elapsedTime * 2) * 30, Math.abs(Math.cos(elapsedTime * 4)) * 20 + 5, Math.sin(elapsedTime * 2) * 30);
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
 
-        	controller.update();
+			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
 
-        	scene.updateMatrix();
-        	const renderStates = scene.updateRenderStates(camera);
-        	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
-
-        	renderer.setRenderTarget(backRenderTarget);
-        	renderer.clear(true, true, false);
-
-        	renderer.beginRender();
-        	renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
-        	renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
-        	renderer.endRender();
-
-        	if (params.enabled) {
-        		if (queryInProgress) {
-        			if (renderer.isQueryResultAvailable(occlusionQuery)) {
-        				sphereIsOccluded = !renderer.getQueryResult(occlusionQuery);
-        				queryInProgress = false;
-        			}
-        		}
-        	} else {
-        		queryInProgress = false;
-        		sphereIsOccluded = false;
-        	}
-
-        	if (sphereIsOccluded) {
-        		mainLight.color.setHex(0xFF9898);
-        	} else {
-        		mainLight.color.setHex(0x98FB98);
-        	}
-        }
-        requestAnimationFrame(loop);
-
-        function onWindowResize() {
-        	width = window.innerWidth || 2;
-        	height = window.innerHeight || 2;
-
-        	camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
-
-        	backRenderTarget.resize(width, height);
-        }
-        window.addEventListener('resize', onWindowResize, false);
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

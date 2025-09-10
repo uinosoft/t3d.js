@@ -378,14 +378,13 @@ const BUFFER_USAGE = {
 export { BUFFER_USAGE };
 
 /**
- * Enum for QUERY_TYPE
+ * Enum for QUERYSET_TYPE
  * @readonly
  * @enum {number}
  */
-const QUERY_TYPE = {
-	ANY_SAMPLES_PASSED: 7000,
-	ANY_SAMPLES_PASSED_CONSERVATIVE: 7001,
-	TIME_ELAPSED: 7002
+const QUERYSET_TYPE = {
+	OCCLUSION: 8000,
+	TIMESTAMP: 8001
 };
 
-export { QUERY_TYPE };
+export { QUERYSET_TYPE };

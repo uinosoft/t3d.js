@@ -70,6 +70,14 @@ class ThinRenderer {
 			// The pass rendering count
 			count: 0
 		};
+
+		this._currentOcclusionQuerySet = null;
+
+		this._currentTimestampWrites = {
+			querySet: null,
+			beginningOfPassWriteIndex: -1,
+			endOfPassWriteIndex: -1
+		};
 	}
 
 	/**
@@ -85,6 +93,10 @@ class ThinRenderer {
 	endRender() {
 		this._passInfo.enabled = false;
 		this._passInfo.count++;
+
+		// Automatically clear the occlusion query set and timestamp writes
+		this._currentOcclusionQuerySet = null;
+		this._currentTimestampWrites.querySet = null;
 	}
 
 	/**
@@ -260,45 +272,50 @@ class ThinRenderer {
 	resetState() {}
 
 	/**
-	 * Begin a query instance.
-	 * @param {Query} query
-	 * @param {QUERY_TYPE} target
+	 * Set the occlusion query set.
+	 * Call this method before {@link ThinRenderer#beginRender} to set it,
+	 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
+	 * @param {QuerySet} querySet - The occlusion query set to set.
 	 */
-	beginQuery(query, target) {}
+	setOcclusionQuerySet(querySet) {
+		this._currentOcclusionQuerySet = querySet;
+	}
 
 	/**
-	 * End a query instance.
-	 * @param {Query} query
+	 * Set the timestamp writes.
+	 * Call this method before {@link ThinRenderer#beginRender} to set it,
+	 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
+	 * @param {QuerySet} querySet - The timestamp query set to set.
+	 * @param {number} [beginIndex=0] - The beginning of pass write index in the query set.
+	 * @param {number} [endIndex=1] - The end of pass write index in the query set.
 	 */
-	endQuery(query) {}
+	setTimestampWrites(querySet, beginIndex = 0, endIndex = 1) {
+		this._currentTimestampWrites.querySet = querySet;
+		this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
+		this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
+	}
 
 	/**
-	 * Records the current time into the corresponding query object.
-	 * @param {Query} query
+	 * Begin an occlusion query.
+	 * @param {number} index - The query index in the current occlusion query set.
 	 */
-	queryCounter(query) {}
+	beginOcclusionQuery(index) {}
 
 	/**
-	 * Returns true if the timer query was disjoint, indicating that timing results are invalid.
-	 * This is rare and might occur, for example, if the GPU was throttled while timing.
-	 * @param {Query} query
-	 * @returns {boolean} Returns true if the timer query was disjoint.
+	 * End the current occlusion query.
 	 */
-	isTimerQueryDisjoint(query) {}
+	endOcclusionQuery() {}
 
 	/**
-	 * Check if the query result is available.
-	 * @param {Query} query
-	 * @returns {boolean} If query result is available.
+	 * Read back the results of a query set.
+	 * This is an asynchronous operation.
+	 * @param {QuerySet} querySet - The query set to read from.
+	 * @param {Array|TypedArray} dstBuffer - The buffer to store the results.
+	 * @param {number} [firstQuery=0] - The first query index to read.
+	 * @param {number} [queryCount=querySet.count] - The number of queries to read.
+	 * @returns {Promise<Array|TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the results.
 	 */
-	isQueryResultAvailable(query) {}
-
-	/**
-	 * Get the query result.
-	 * @param {Query} query
-	 * @returns {number} The query result.
-	 */
-	getQueryResult(query) {}
+	readQuerySetResults(querySet, dstBuffer, firstQuery = 0, queryCount = querySet.count) {}
 
 	/**
 	 * Used for context lost and restored.

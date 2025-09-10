@@ -1,5 +1,8 @@
 import { Mesh, Query, QUERY_TYPE } from 't3d';
 
+// deprecated since v0.4.4
+// console.warn('OcclusionTester has been deprecated. Use addons/misc/OcclusionProxyManager instead.');
+
 class OcclusionTester extends Mesh {
 
 	constructor(geometry, material) {

@@ -232,7 +232,7 @@
 		"webgl_clipculldistance",
 		"webgl_renderinfo",
 		"webgl_query_occlusion",
-		"webgl_query_occlusion_tester",
+		"webgl_query_occlusion_proxy",
 		"webgl_query_timer",
 		"webgl_helpers",
 		"webgl_contextlost",

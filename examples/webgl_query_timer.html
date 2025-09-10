@@ -31,131 +31,115 @@
     </script>
 
     <script type="module">
-        import * as t3d from 't3d';
-        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-        import { GUI } from './libs/lil-gui.esm.min.js';
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 
-        let width = window.innerWidth || 2;
-        let height = window.innerHeight || 2;
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        document.body.appendChild(canvas);
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
 
-        const contextParams = { antialias: true, alpha: false };
-        const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 
-        const renderer = new t3d.WebGLRenderer(gl);
-        renderer.setClearColor(0.1, 0.1, 0.1, 1);
-        const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const renderer = new t3d.WebGLRenderer(gl);
+		renderer.setClearColor(0.1, 0.1, 0.1, 1);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-        if (!renderer.capabilities.timerQuery) {
-        	document.getElementById('notSupported').style.display = '';
-        }
+		if (!renderer.capabilities.timerQuery) {
+			document.getElementById('notSupported').style.display = '';
+			throw new Error('Your browser does not support timer query !');
+		}
 
-        const scene = new t3d.Scene();
+		const scene = new t3d.Scene();
 
-        // meshes
+		const camera = new t3d.Camera();
+		camera.position.set(1000, 500, 1000);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
+		scene.add(camera);
 
-        const sphere_geometry = new t3d.SphereGeometry(20, 20, 20);
+		const controller = new OrbitControls(camera, canvas);
+		controller.target.set(0, 0, 0);
 
-        for (let i = 0; i < 2000; i++) {
-        	const phong = new t3d.PhongMaterial();
-        	phong.diffuse.setHex(0xF9E3B1);
-        	const sphere = new t3d.Mesh(sphere_geometry, phong);
-        	sphere.position.x = Math.random() * 500 - 250;
-        	sphere.position.y = Math.random() * 500 - 250;
-        	sphere.position.z = Math.random() * 500 - 250;
-        	scene.add(sphere);
-        }
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
+		scene.add(ambientLight);
 
-        // camera
+		const directLight = new t3d.DirectionalLight(0xffffff);
+		directLight.intensity = 0.6;
+		directLight.position.set(40, 40, 0);
+		directLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directLight);
 
-        const camera = new t3d.Camera();
-        camera.position.set(1000, 500, 1000);
-        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
-        scene.add(camera);
+		// meshes
 
-        // lights
+		const sphere_geometry = new t3d.SphereGeometry(20, 20, 20);
 
-        const ambientLight = new t3d.AmbientLight(0xffffff, 0.4);
-        scene.add(ambientLight);
+		for (let i = 0; i < 2000; i++) {
+			const phong = new t3d.PhongMaterial();
+			phong.diffuse.setHex(0xF9E3B1);
+			const sphere = new t3d.Mesh(sphere_geometry, phong);
+			sphere.position.x = Math.random() * 500 - 250;
+			sphere.position.y = Math.random() * 500 - 250;
+			sphere.position.z = Math.random() * 500 - 250;
+			scene.add(sphere);
+		}
 
-        const directLight = new t3d.DirectionalLight(0xffffff);
-        directLight.intensity = 0.6;
-        directLight.position.set(40, 40, 0);
-        directLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
-        scene.add(directLight);
+		// gui params
 
-        const controller = new OrbitControls(camera, canvas);
-        controller.target.set(0, 0, 0);
+		const params = { timer: 0 };
 
-        const timerElapsedQuery = new t3d.Query();
+		const gui = new GUI();
 
-        // gui params
+		const capabilities = renderer.capabilities;
+		gui.add({ version: 'WebGL ' + capabilities.version }, 'version').name('WebGL Version').disable();
+		gui.add(capabilities, 'canUseTimestamp').name('Support Timestamp').disable();
+		gui.add(params, 'timer').name('GPU Frame Time (ms)').disable().listen();
 
-        const params = { timer: 0 };
+		const querySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.TIMESTAMP, 2);
 
-        const gui = new GUI();
+		let reading = false;
+		const dstBuffer = new Array(2);
 
-        const capabilities = renderer.capabilities;
-        gui.add({ version: 'WebGL ' + capabilities.version }, 'version').disable();
-        gui.add(capabilities, 'canUseTimestamp').disable();
+		function loop(count) {
+			requestAnimationFrame(loop);
 
-        gui.add(params, 'timer').disable().listen();
+			controller.update();
 
-        const renderOption = {};
-        let queryInProgress = false;
-        let timer = 0;
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
 
-        function loop(count) {
-        	requestAnimationFrame(loop);
+			renderer.setRenderTarget(backRenderTarget);
+			renderer.clear(true, true, false);
+			renderer.setTimestampWrites(querySet, 0, 1);
 
-        	controller.update();
+			renderer.renderScene(scene, camera);
 
-        	scene.updateMatrix();
-        	const renderStates = scene.updateRenderStates(camera);
-        	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
+			if (!reading) {
+				renderer.readQuerySetResults(querySet, dstBuffer)
+					.then(buffer => {
+						params.timer = ((buffer[1] - buffer[0]) / 1e6).toFixed(4);
+						setTimeout(() => { reading = false }, 150);
+					});
+				reading = true;
+			}
+		}
+		requestAnimationFrame(loop);
 
-        	renderer.setRenderTarget(backRenderTarget);
-        	renderer.clear(true, true, false);
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
 
-        	if (!queryInProgress) {
-        		renderer.beginQuery(timerElapsedQuery, t3d.QUERY_TYPE.TIME_ELAPSED);
-        	}
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
 
-        	renderer.beginRender();
-        	renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
-        	renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
-        	renderer.endRender();
-
-        	if (!queryInProgress) {
-        		renderer.endQuery(timerElapsedQuery);
-        		queryInProgress = true;
-        	}
-
-        	if (queryInProgress) {
-        		if (renderer.isQueryResultAvailable(timerElapsedQuery)) {
-        			timer = renderer.getQueryResult(timerElapsedQuery);
-        			queryInProgress = false;
-        		}
-        	}
-
-        	params.timer = timer / 1000000;
-        }
-        requestAnimationFrame(loop);
-
-        function onWindowResize() {
-        	width = window.innerWidth || 2;
-        	height = window.innerHeight || 2;
-
-        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
-
-        	backRenderTarget.resize(width, height);
-        }
-        window.addEventListener('resize', onWindowResize, false);
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

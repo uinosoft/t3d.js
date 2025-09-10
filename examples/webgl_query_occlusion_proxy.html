@@ -3,14 +3,14 @@
 
 <head>
     <meta charset="utf-8">
-    <title>t3d - occlusion query tester</title>
+    <title>t3d - occlusion query proxy</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="main.css">
 </head>
 
 <body>
     <div id="info">
-        <a href="" target="_blank">t3d</a> - occlusion query tester<br />  
+        <a href="" target="_blank">t3d</a> - occlusion query proxy<br />  
         The sprite becomes translucent when it is occluded.<br />
 		Only available in WebGL2.0.<br />
         <div id="notSupported" style="display:none">
@@ -38,7 +38,7 @@
 		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { Sprite } from 't3d/addons/objects/Sprite.js';
 		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
-		import { OcclusionTester, OcclusionIfRender, OcclusionBeforeRender, OcclusionAfterRender } from 't3d/addons/objects/OcclusionTester.js';
+		import { OcclusionProxyManager, OcclusionProxy, OcclusionRenderOptions } from 't3d/addons/misc/OcclusionProxyManager.js';
 		import TWEEN from './libs/tween.module.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 
@@ -92,17 +92,17 @@
 		const sphere = new t3d.Mesh(sphereGeometry, sphereMaterial);
 		scene.add(sphere);
 
-		// create sprites with occlusion tester
+		// create sprites with occlusion proxies
 
-		const testerGeometryData = PolyhedronBuilder.getTetrahedronGeometryData(1);
+		const proxyGeometryData = PolyhedronBuilder.getTetrahedronGeometryData(1);
 		const tetrahedronGeometry = new t3d.Geometry();
-		tetrahedronGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(testerGeometryData.positions), 3)));
+		tetrahedronGeometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(proxyGeometryData.positions), 3)));
 		tetrahedronGeometry.computeBoundingSphere();
 
-		const testerMaterial = new t3d.BasicMaterial();
-		testerMaterial.depthWrite = false;
-		testerMaterial.colorWrite = false;
-		testerMaterial.diffuse.setHex(0xff00ff);
+		const proxyMaterial = new t3d.BasicMaterial();
+		proxyMaterial.depthWrite = false;
+		proxyMaterial.colorWrite = false;
+		proxyMaterial.diffuse.setHex(0xff00ff);
 
 		const spriteTexture = new Texture2DLoader().load('./resources/sprites/sprite0.png');
 
@@ -110,6 +110,8 @@
 		scene.add(sprites);
 
 		const tweenGroup = new TWEEN.Group();
+
+		const occlusionManager = new OcclusionProxyManager(150);
 
 		for (let i = 0; i < 150; i++) {
 			const radius = 5 + Math.random() * 5;
@@ -121,7 +123,7 @@
 				radius * Math.sin(theta) * Math.sin(phi),
 				radius * Math.cos(theta)
 			);
-
+			sprite.add(createProxy(sprite));
 			sprites.add(sprite);
 		}
 
@@ -135,18 +137,17 @@
 			sprite.material.diffuseMap = spriteTexture;
 			sprite.material.transparent = true;
 
-			// attach occlusion tester
+			return sprite;
+		}
 
-			const occlusionTester = new OcclusionTester(tetrahedronGeometry, testerMaterial);
-			occlusionTester.scale.setScalar(0.5); // fit the sprite size
-		
-			sprite.add(occlusionTester);
-
-			occlusionTester.onOcclusionChange = function(occluded) {
+		function createProxy(sprite) {
+			const proxy = new OcclusionProxy(tetrahedronGeometry, proxyMaterial);
+			proxy.scale.setScalar(0.5); // fit the sprite size
+			proxy.onOcclusionChange = function(occluded) {
 				styleChange(sprite, occluded);
 			};
-
-			return sprite;
+			occlusionManager.addProxy(proxy);
+			return proxy;
 		}
 
 		function styleChange(sprite, occluded) {
@@ -168,21 +169,22 @@
 
 		// gui
 
-		const params = { occlusionTest: true, debug: false };
+		const params = { enableOcclusionQuery: true, debug: false };
 		const gui = new GUI();
-		gui.add(params, 'occlusionTest').name('Occlusion Test').onChange(function(value) {
+		gui.add(params, 'enableOcclusionQuery').name('Occlusion Enabled').onChange(function(value) {
 			// reset all sprites to front style
 			sprites.children.forEach(sprite => {
 				if (value) {
-					sprite.children[0].dispose();
+					occlusionManager.addProxy(sprite.children[0]);
 				} else {
+					occlusionManager.removeProxy(sprite.children[0]);
 					styleChange(sprite, false);
 				}
 			});
 		});
-		gui.add(params, 'debug').name('Debug').onChange(function(value) {
-			// show or hide occlusion tester
-			testerMaterial.colorWrite = value;
+		gui.add(params, 'debug').name('Proxy Debug').onChange(function(value) {
+			// show or hide occlusion proxy
+			proxyMaterial.colorWrite = value;
 
 			// show or hide sprites
 			sprites.children.forEach(sprite => {
@@ -194,37 +196,20 @@
 
 		const renderOption = {};
 
-		const testerRenderOption = {
-			ifRender: OcclusionIfRender,
-			beforeRender: OcclusionBeforeRender,
-			afterRender: OcclusionAfterRender
-		};
-
-		let frames = 0;
-
 		function loop(count) {
 			requestAnimationFrame(loop);
 
 			controller.update();
 			tweenGroup.update();
 
-			// update all occlusion testers every 5 frames
-			if (params.occlusionTest && frames > 5) {
-				sprites.children.forEach(sprite => {
-					sprite.children[0].update(renderer);
-				});
-				frames = 0;
-			}
-			frames++;
-
 			scene.updateMatrix();
 			const renderStates = scene.updateRenderStates(camera);
 			const renderQueue = scene.updateRenderQueue(camera);
 
+			// Main layer
+
 			renderer.setRenderTarget(backRenderTarget);
 			renderer.clear(true, true, false);
-
-			// Main layer
 
 			const mainLayer = renderQueue.getLayer(0);
 			renderer.beginRender();
@@ -236,8 +221,13 @@
 
 			const occlusionLayer = renderQueue.getLayer(1);
 			if (occlusionLayer && occlusionLayer.opaqueCount > 0) {
+				renderer.setRenderTarget(backRenderTarget);
+				if (params.enableOcclusionQuery) {
+					renderer.setOcclusionQuerySet(occlusionManager.querySet);
+				}
+		
 				renderer.beginRender();
-				renderer.renderRenderableList(occlusionLayer.opaque, renderStates, testerRenderOption);
+				renderer.renderRenderableList(occlusionLayer.opaque, renderStates, OcclusionRenderOptions);
 				renderer.endRender();
 			}
 
@@ -245,12 +235,19 @@
 
 			const overlayLayer = renderQueue.getLayer(2);
 			if (overlayLayer && (overlayLayer.opaqueCount + overlayLayer.transparentCount) > 0) {
+				renderer.setRenderTarget(backRenderTarget);
 				renderer.clear(false, true, false);
 
 				renderer.beginRender();
 				renderer.renderRenderableList(overlayLayer.opaque, renderStates, renderOption);
 				renderer.renderRenderableList(overlayLayer.transparent, renderStates, renderOption);
 				renderer.endRender();
+			}
+
+			// Occlusion result sync
+
+			if (params.enableOcclusionQuery) {
+				occlusionManager.update(renderer);
 			}
 		}
 		requestAnimationFrame(loop);

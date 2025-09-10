@@ -3335,14 +3335,13 @@ const BUFFER_USAGE = {
 };
 
 /**
- * Enum for QUERY_TYPE
+ * Enum for QUERYSET_TYPE
  * @readonly
  * @enum {number}
  */
-const QUERY_TYPE = {
-	ANY_SAMPLES_PASSED: 7000,
-	ANY_SAMPLES_PASSED_CONSERVATIVE: 7001,
-	TIME_ELAPSED: 7002
+const QUERYSET_TYPE = {
+	OCCLUSION: 8000,
+	TIMESTAMP: 8001
 };
 
 /**
@@ -12560,6 +12559,14 @@ class ThinRenderer {
 			// The pass rendering count
 			count: 0
 		};
+
+		this._currentOcclusionQuerySet = null;
+
+		this._currentTimestampWrites = {
+			querySet: null,
+			beginningOfPassWriteIndex: -1,
+			endOfPassWriteIndex: -1
+		};
 	}
 
 	/**
@@ -12575,6 +12582,10 @@ class ThinRenderer {
 	endRender() {
 		this._passInfo.enabled = false;
 		this._passInfo.count++;
+
+		// Automatically clear the occlusion query set and timestamp writes
+		this._currentOcclusionQuerySet = null;
+		this._currentTimestampWrites.querySet = null;
 	}
 
 	/**
@@ -12750,45 +12761,50 @@ class ThinRenderer {
 	resetState() {}
 
 	/**
-	 * Begin a query instance.
-	 * @param {Query} query
-	 * @param {QUERY_TYPE} target
+	 * Set the occlusion query set.
+	 * Call this method before {@link ThinRenderer#beginRender} to set it,
+	 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
+	 * @param {QuerySet} querySet - The occlusion query set to set.
 	 */
-	beginQuery(query, target) {}
+	setOcclusionQuerySet(querySet) {
+		this._currentOcclusionQuerySet = querySet;
+	}
 
 	/**
-	 * End a query instance.
-	 * @param {Query} query
+	 * Set the timestamp writes.
+	 * Call this method before {@link ThinRenderer#beginRender} to set it,
+	 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
+	 * @param {QuerySet} querySet - The timestamp query set to set.
+	 * @param {number} [beginIndex=0] - The beginning of pass write index in the query set.
+	 * @param {number} [endIndex=1] - The end of pass write index in the query set.
 	 */
-	endQuery(query) {}
+	setTimestampWrites(querySet, beginIndex = 0, endIndex = 1) {
+		this._currentTimestampWrites.querySet = querySet;
+		this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
+		this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
+	}
 
 	/**
-	 * Records the current time into the corresponding query object.
-	 * @param {Query} query
+	 * Begin an occlusion query.
+	 * @param {number} index - The query index in the current occlusion query set.
 	 */
-	queryCounter(query) {}
+	beginOcclusionQuery(index) {}
 
 	/**
-	 * Returns true if the timer query was disjoint, indicating that timing results are invalid.
-	 * This is rare and might occur, for example, if the GPU was throttled while timing.
-	 * @param {Query} query
-	 * @returns {boolean} Returns true if the timer query was disjoint.
+	 * End the current occlusion query.
 	 */
-	isTimerQueryDisjoint(query) {}
+	endOcclusionQuery() {}
 
 	/**
-	 * Check if the query result is available.
-	 * @param {Query} query
-	 * @returns {boolean} If query result is available.
+	 * Read back the results of a query set.
+	 * This is an asynchronous operation.
+	 * @param {QuerySet} querySet - The query set to read from.
+	 * @param {Array|TypedArray} dstBuffer - The buffer to store the results.
+	 * @param {number} [firstQuery=0] - The first query index to read.
+	 * @param {number} [queryCount=querySet.count] - The number of queries to read.
+	 * @returns {Promise<Array|TypedArray>} A promise that resolves with the passed in buffer after it has been filled with the results.
 	 */
-	isQueryResultAvailable(query) {}
-
-	/**
-	 * Get the query result.
-	 * @param {Query} query
-	 * @returns {number} The query result.
-	 */
-	getQueryResult(query) {}
+	readQuerySetResults(querySet, dstBuffer, firstQuery = 0, queryCount = querySet.count) {}
 
 	/**
 	 * Used for context lost and restored.
@@ -15227,23 +15243,61 @@ Object.defineProperties(RenderTargetCube.prototype, {
 
 });
 
-let _queryId = 0;
+let _querySetId = 0;
 
 /**
- * A Query object provides single unified API for using WebGL asynchronus queries,
- * which include query objects ('Occlusion' and 'Transform Feedback') and timer queries.
+ * A QuerySet holds a set of queries of a particular type.
  * @extends EventDispatcher
  */
-class Query extends EventDispatcher {
+class QuerySet extends EventDispatcher {
 
-	constructor() {
+	/**
+	 * Creates a new QuerySet.
+	 * @param {QUERYSET_TYPE} type - The type of the query set.
+	 * @param {number} count - The number of queries in the set.
+	 */
+	constructor(type, count) {
 		super();
-		this.id = _queryId++;
+
+		/**
+		 * Unique number for this query set instance.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.id = _querySetId++;
+
+		/**
+		 * The name of the query set.
+		 * @type {string}
+		 * @default ""
+		 */
+		this.name = '';
+
+		/**
+		 * The type of the query set.
+		 * @readonly
+		 * @type {QUERYSET_TYPE}
+		 */
+		this.type = type;
+
+		/**
+		 * The max number of queries in the set.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.count = count;
+
+		/**
+		 * Indicates whether the query set operates in conservative mode.
+		 * This property only applies to occlusion query sets in WebGL renderer.
+		 * @type {boolean}
+		 * @default true
+		 */
+		this.conservative = true;
 	}
 
 	/**
-	 * Disposes the Query object.
-	 * Rejects any pending query.
+	 * Dispose this query set.
 	 */
 	dispose() {
 		this.dispatchEvent({ type: 'dispose' });
@@ -18233,7 +18287,7 @@ function unrollLoops(string) {
 
 const extensionPattern = /#extension .*/g;
 
-class WebGLQueries extends PropertyMap {
+class WebGLQuerySets extends PropertyMap {
 
 	constructor(prefix, gl, capabilities) {
 		super(prefix);
@@ -18244,125 +18298,188 @@ class WebGLQueries extends PropertyMap {
 		const timerQuery = capabilities.timerQuery;
 		const that = this;
 
-		const onQueryDispose = event => {
-			const query = event.target;
-			const queryProperties = that.get(query);
+		function onQuerySetDispose(event) {
+			const querySet = event.target;
+			const querySetProperties = that.get(querySet);
 
-			query.removeEventListener('dispose', onQueryDispose);
+			querySet.removeEventListener('dispose', onQuerySetDispose);
 
-			if (queryProperties._webglQuery) {
-				if (capabilities.version > 1) {
-					gl.deleteQuery(queryProperties._webglQuery);
-				} else {
-					timerQuery.deleteQueryEXT(queryProperties._webglQuery);
-				}
+			if (querySetProperties._queriesGL) {
+				const queriesGL = querySetProperties._queriesGL;
+				queriesGL.forEach(queryGL => {
+					if (queryGL) {
+						if (capabilities.version > 1) {
+							gl.deleteQuery(queryGL);
+						} else {
+							timerQuery.deleteQueryEXT(queryGL);
+						}
+					}
+				});
 			}
 
-			that.delete(query);
-		};
+			querySetProperties._isDisposed = true;
 
-		this._onQueryDispose = onQueryDispose;
-
-		this._typeToGL = {
-			[QUERY_TYPE.ANY_SAMPLES_PASSED]: 0x8C2F,
-			[QUERY_TYPE.ANY_SAMPLES_PASSED_CONSERVATIVE]: 0x8D6A,
-			[QUERY_TYPE.TIME_ELAPSED]: 0x88BF
-		};
-	}
-
-	_get(query) {
-		const capabilities = this._capabilities;
-
-		const queryProperties = this.get(query);
-
-		if (queryProperties._webglQuery === undefined) {
-			query.addEventListener('dispose', this._onQueryDispose);
-
-			queryProperties._webglQuery = capabilities.version > 1 ? this._gl.createQuery() : capabilities.timerQuery.createQueryEXT();
-			queryProperties._target = null;
-			queryProperties._result = null;
+			that.delete(querySet);
 		}
 
-		return queryProperties;
+		this._onQuerySetDispose = onQuerySetDispose;
+
+		this._checkResultAvailable = capabilities.version > 1
+			? queryGL => gl.getQueryParameter(queryGL, gl.QUERY_RESULT_AVAILABLE)
+			: queryGL => timerQuery.getQueryObjectEXT(queryGL, timerQuery.QUERY_RESULT_AVAILABLE_EXT);
+
+		this._getQueryResult = capabilities.version > 1
+			? queryGL => gl.getQueryParameter(queryGL, gl.QUERY_RESULT)
+			: queryGL => timerQuery.getQueryObjectEXT(queryGL, timerQuery.QUERY_RESULT_EXT);
 	}
 
-	begin(query, target) {
-		const capabilities = this._capabilities;
-		const typeToGL = this._typeToGL;
+	setQuerySet(querySet) {
+		const querySetProperties = this.get(querySet);
 
-		const queryProperties = this._get(query);
+		if (querySetProperties._queriesGL === undefined) {
+			querySet.addEventListener('dispose', this._onQuerySetDispose);
 
-		if (capabilities.version > 1) {
-			this._gl.beginQuery(typeToGL[target], queryProperties._webglQuery);
-		} else {
-			capabilities.timerQuery.beginQueryEXT(typeToGL[target], queryProperties._webglQuery);
-		}
+			querySetProperties._queriesGL = new Array(querySet.count).fill(null);
+			querySetProperties._valueCache = new Array(querySet.count).fill(0);
+			querySetProperties._valueCacheValid = new Array(querySet.count).fill(true);
 
-		queryProperties._target = target;
-		queryProperties._result = null; // clear the last result.
-	}
+			const gl = this._gl;
+			const capabilities = this._capabilities;
 
-	end(query) {
-		const capabilities = this._capabilities;
-		const typeToGL = this._typeToGL;
-
-		const queryProperties = this._get(query);
-
-		if (capabilities.version > 1) {
-			this._gl.endQuery(typeToGL[queryProperties._target]);
-		} else {
-			capabilities.timerQuery.endQueryEXT(typeToGL[queryProperties._target]);
-		}
-	}
-
-	counter(query) {
-		const timerQuery = this._capabilities.timerQuery;
-
-		const queryProperties = this._get(query);
-
-		timerQuery.queryCounterEXT(queryProperties._webglQuery, timerQuery.TIMESTAMP_EXT);
-
-		queryProperties._target = timerQuery.TIMESTAMP_EXT;
-		queryProperties._result = null; // clear the last result.
-	}
-
-	isResultAvailable(query) {
-		const gl = this._gl;
-		const capabilities = this._capabilities;
-		const timerQuery = capabilities.timerQuery;
-
-		const queryProperties = this._get(query);
-
-		let available;
-		if (capabilities.version > 1) {
-			available = gl.getQueryParameter(queryProperties._webglQuery, gl.QUERY_RESULT_AVAILABLE);
-		} else {
-			available = timerQuery.getQueryObjectEXT(queryProperties._webglQuery, timerQuery.QUERY_RESULT_AVAILABLE);
-		}
-
-		return available;
-	}
-
-	isTimerDisjoint() {
-		return this._gl.getParameter(this._capabilities.timerQuery.GPU_DISJOINT_EXT);
-	}
-
-	getResult(query) {
-		const gl = this._gl;
-		const capabilities = this._capabilities;
-		const timerQuery = capabilities.timerQuery;
-
-		const queryProperties = this._get(query);
-
-		if (queryProperties._result === null) {
-			if (capabilities.version > 1) {
-				queryProperties._result = gl.getQueryParameter(queryProperties._webglQuery, gl.QUERY_RESULT);
+			if (querySet.type === QUERYSET_TYPE.OCCLUSION) {
+				querySetProperties._targetGL = querySet.conservative
+					? gl.ANY_SAMPLES_PASSED_CONSERVATIVE
+					: gl.ANY_SAMPLES_PASSED;
 			} else {
-				queryProperties._result = timerQuery.getQueryObjectEXT(queryProperties._webglQuery, timerQuery.QUERY_RESULT_EXT);
+				// If timestamp is supported, this variable will not be used,
+				// so it is okay to set it to TIME_ELAPSED_EXT here.
+				querySetProperties._targetGL = capabilities.timerQuery.TIME_ELAPSED_EXT;
 			}
+
+			querySetProperties._activeIndex = -1;
+			querySetProperties._reading = false;
+		}
+	}
+
+	beginQuery(querySet, index) {
+		const gl = this._gl;
+
+		const querySetProperties = this.get(querySet);
+
+		if (querySetProperties._reading) {
+			return;
 		}
 
-		return queryProperties._result;
+		const queryGL = this._getQueryGLByIndex(querySetProperties._queriesGL, index);
+
+		if (this._capabilities.version > 1) {
+			gl.beginQuery(querySetProperties._targetGL, queryGL);
+		} else {
+			this._capabilities.timerQuery.beginQueryEXT(querySetProperties._targetGL, queryGL);
+		}
+
+		querySetProperties._activeIndex = index;
+	}
+
+	endQuery(querySet) {
+		const querySetProperties = this.get(querySet);
+
+		if (querySetProperties._reading || querySetProperties._activeIndex < 0) {
+			return;
+		}
+
+		if (this._capabilities.version > 1) {
+			this._gl.endQuery(querySetProperties._targetGL);
+		} else {
+			this._capabilities.timerQuery.endQueryEXT(querySetProperties._targetGL);
+		}
+
+		querySetProperties._valueCacheValid[querySetProperties._activeIndex] = false;
+		querySetProperties._activeIndex = -1;
+	}
+
+	queryCounter(querySet, index) {
+		const capabilities = this._capabilities;
+		const timerQuery = capabilities.timerQuery;
+
+		const querySetProperties = this.get(querySet);
+
+		if (querySetProperties._reading) {
+			return;
+		}
+
+		const queryGL = this._getQueryGLByIndex(querySetProperties._queriesGL, index);
+		timerQuery.queryCounterEXT(queryGL, timerQuery.TIMESTAMP_EXT);
+
+		querySetProperties._valueCacheValid[index] = false;
+	}
+
+	readQuerySetResults(querySet, dstBuffer, firstQuery, queryCount) {
+		const querySetProperties = this.get(querySet);
+
+		querySetProperties._reading = true;
+
+		return new Promise((resolve, reject) => {
+			const checkQueries = () => {
+				if (querySetProperties._isDisposed) {
+					reject(new Error('QuerySet has been disposed'));
+					return;
+				}
+
+				let completed = true;
+
+				try {
+					for (let i = firstQuery; i < queryCount; i++) {
+						const queryGL = querySetProperties._queriesGL[i];
+						const valueCacheValid = querySetProperties._valueCacheValid[i];
+						if (!valueCacheValid) {
+							if (this._checkResultAvailable(queryGL)) {
+								const result = this._getQueryResult(queryGL);
+								querySetProperties._valueCache[i] = result;
+								querySetProperties._valueCacheValid[i] = true;
+							} else {
+								completed = false;
+								break;
+							}
+						}
+					}
+				} catch (e) {
+					for (let i = firstQuery; i < queryCount; i++) {
+						querySetProperties._valueCacheValid[i] = true;
+					}
+					querySetProperties._reading = false;
+					reject(e);
+					return;
+				}
+
+				if (completed) {
+					for (let i = firstQuery; i < queryCount; i++) {
+						dstBuffer[i - firstQuery] = querySetProperties._valueCache[i];
+					}
+
+					querySetProperties._reading = false;
+					resolve(dstBuffer);
+				} else {
+					requestAnimationFrame(checkQueries);
+				}
+			};
+
+			checkQueries();
+		});
+	}
+
+	_getQueryGLByIndex(queriesGL, index) {
+		let queryGL = queriesGL[index];
+		if (!queryGL) {
+			const gl = this._gl;
+			const capabilities = this._capabilities;
+
+			queryGL = capabilities.version > 1
+				? gl.createQuery()
+				: capabilities.timerQuery.createQueryEXT();
+			queriesGL[index] = queryGL;
+		}
+		return queryGL;
 	}
 
 }
@@ -21477,7 +21594,6 @@ class WebGLRenderer extends ThinRenderer {
 		this._materials = null;
 		this._state = null;
 		this._vertexArrayBindings = null;
-		this._queries = null;
 
 		this.init();
 
@@ -21507,7 +21623,7 @@ class WebGLRenderer extends ThinRenderer {
 		const lights = new WebGLLights(prefix, capabilities, textures);
 		const programs = new WebGLPrograms(gl, state, capabilities);
 		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
-		const queries = new WebGLQueries(prefix, gl, capabilities);
+		const querySets = new WebGLQuerySets(prefix, gl, capabilities);
 
 		this.capabilities = capabilities;
 
@@ -21522,20 +21638,54 @@ class WebGLRenderer extends ThinRenderer {
 		this._materials = materials;
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
-		this._queries = queries;
+		this._querySets = querySets;
+	}
+
+	beginRender() {
+		super.beginRender();
+
+		if (this._currentOcclusionQuerySet) {
+			this._querySets.setQuerySet(this._currentOcclusionQuerySet);
+		}
+
+		if (this._currentTimestampWrites.querySet) {
+			this._querySets.setQuerySet(this._currentTimestampWrites.querySet);
+
+			if (this.capabilities.canUseTimestamp) {
+				this._querySets.queryCounter(
+					this._currentTimestampWrites.querySet,
+					this._currentTimestampWrites.beginningOfPassWriteIndex
+				);
+			} else { // fallback to use TIME_ELAPSED_EXT
+				this._querySets.beginQuery(
+					this._currentTimestampWrites.querySet,
+					this._currentTimestampWrites.endOfPassWriteIndex
+				);
+			}
+		}
 	}
 
 	endRender() {
-		super.endRender();
-
-		this._currentMaterial = null;
+		if (this._currentTimestampWrites.querySet) {
+			if (this.capabilities.canUseTimestamp) {
+				this._querySets.queryCounter(
+					this._currentTimestampWrites.querySet,
+					this._currentTimestampWrites.endOfPassWriteIndex
+				);
+			} else { // fallback to use TIME_ELAPSED_EXT
+				this._querySets.endQuery(this._currentTimestampWrites.querySet);
+			}
+		}
 
 		// Ensure depth buffer writing is enabled so it can be cleared on next render
-
 		const state = this._state;
 		state.depthBuffer.setTest(true);
 		state.depthBuffer.setMask(true);
 		state.colorBuffer.setMask(true);
+
+		this._currentMaterial = null;
+
+		super.endRender();
 	}
 
 	clear(color, depth, stencil) {
@@ -21661,28 +21811,20 @@ class WebGLRenderer extends ThinRenderer {
 		this._state.reset();
 	}
 
-	beginQuery(query, target) {
-		this._queries.begin(query, target);
+	beginOcclusionQuery(index) {
+		const querySet = this._currentOcclusionQuerySet;
+		if (!querySet) return;
+		this._querySets.beginQuery(querySet, index);
 	}
 
-	endQuery(query) {
-		this._queries.end(query);
+	endOcclusionQuery() {
+		const querySet = this._currentOcclusionQuerySet;
+		if (!querySet) return;
+		this._querySets.endQuery(querySet);
 	}
 
-	queryCounter(query) {
-		this._queries.counter(query);
-	}
-
-	isTimerQueryDisjoint(query) {
-		return this._queries.isTimerDisjoint(query);
-	}
-
-	isQueryResultAvailable(query) {
-		return this._queries.isResultAvailable(query);
-	}
-
-	getQueryResult(query) {
-		return this._queries.getResult(query);
+	async readQuerySetResults(querySet, dstBuffer, firstQuery = 0, queryCount = querySet.count) {
+		return this._querySets.readQuerySetResults(querySet, dstBuffer, firstQuery, queryCount);
 	}
 
 	renderRenderableItem(renderable, renderStates, options) {
@@ -22327,4 +22469,196 @@ Vector3.prototype.subtract = function(a, target = new Vector3()) {
 	return target.set(this.x - a.x, this.y - a.y, this.z - a.z);
 };
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+// The old version of Query API has been deprecated since 0.4.4
+
+const QUERY_TYPE = {
+	ANY_SAMPLES_PASSED: 7000,
+	ANY_SAMPLES_PASSED_CONSERVATIVE: 7001,
+	TIME_ELAPSED: 7002
+};
+
+let _queryId = 0;
+class Query extends EventDispatcher {
+
+	constructor() {
+		super();
+		this.id = _queryId++;
+	}
+
+	dispose() {
+		this.dispatchEvent({ type: 'dispose' });
+	}
+
+}
+
+WebGLRenderer.prototype.beginQuery = function(query, target) {
+	this._queries.begin(query, target);
+};
+
+WebGLRenderer.prototype.endQuery = function(query) {
+	this._queries.end(query);
+};
+
+WebGLRenderer.prototype.queryCounter = function(query) {
+	this._queries.counter(query);
+};
+
+WebGLRenderer.prototype.isTimerQueryDisjoint = function(query) {
+	return this._queries.isTimerDisjoint(query);
+};
+
+WebGLRenderer.prototype.isQueryResultAvailable = function(query) {
+	return this._queries.isResultAvailable(query);
+};
+
+WebGLRenderer.prototype.getQueryResult = function(query) {
+	return this._queries.getResult(query);
+};
+
+Object.defineProperties(WebGLRenderer.prototype, {
+	_queries: {
+		configurable: true,
+		get: function() {
+			if (this.__queries === undefined) {
+				this.__queries = new WebGLQueries(`_gl${this.id}`, this.context, this.capabilities);
+			}
+			return this.__queries;
+		}
+	}
+});
+
+class WebGLQueries extends PropertyMap {
+
+	constructor(prefix, gl, capabilities) {
+		super(prefix);
+
+		this._gl = gl;
+		this._capabilities = capabilities;
+
+		const timerQuery = capabilities.timerQuery;
+		const that = this;
+
+		const onQueryDispose = event => {
+			const query = event.target;
+			const queryProperties = that.get(query);
+
+			query.removeEventListener('dispose', onQueryDispose);
+
+			if (queryProperties._webglQuery) {
+				if (capabilities.version > 1) {
+					gl.deleteQuery(queryProperties._webglQuery);
+				} else {
+					timerQuery.deleteQueryEXT(queryProperties._webglQuery);
+				}
+			}
+
+			that.delete(query);
+		};
+
+		this._onQueryDispose = onQueryDispose;
+
+		this._typeToGL = {
+			[QUERY_TYPE.ANY_SAMPLES_PASSED]: 0x8C2F,
+			[QUERY_TYPE.ANY_SAMPLES_PASSED_CONSERVATIVE]: 0x8D6A,
+			[QUERY_TYPE.TIME_ELAPSED]: 0x88BF
+		};
+	}
+
+	_get(query) {
+		const capabilities = this._capabilities;
+
+		const queryProperties = this.get(query);
+
+		if (queryProperties._webglQuery === undefined) {
+			query.addEventListener('dispose', this._onQueryDispose);
+
+			queryProperties._webglQuery = capabilities.version > 1 ? this._gl.createQuery() : capabilities.timerQuery.createQueryEXT();
+			queryProperties._target = null;
+			queryProperties._result = null;
+		}
+
+		return queryProperties;
+	}
+
+	begin(query, target) {
+		const capabilities = this._capabilities;
+		const typeToGL = this._typeToGL;
+
+		const queryProperties = this._get(query);
+
+		if (capabilities.version > 1) {
+			this._gl.beginQuery(typeToGL[target], queryProperties._webglQuery);
+		} else {
+			capabilities.timerQuery.beginQueryEXT(typeToGL[target], queryProperties._webglQuery);
+		}
+
+		queryProperties._target = target;
+		queryProperties._result = null; // clear the last result.
+	}
+
+	end(query) {
+		const capabilities = this._capabilities;
+		const typeToGL = this._typeToGL;
+
+		const queryProperties = this._get(query);
+
+		if (capabilities.version > 1) {
+			this._gl.endQuery(typeToGL[queryProperties._target]);
+		} else {
+			capabilities.timerQuery.endQueryEXT(typeToGL[queryProperties._target]);
+		}
+	}
+
+	counter(query) {
+		const timerQuery = this._capabilities.timerQuery;
+
+		const queryProperties = this._get(query);
+
+		timerQuery.queryCounterEXT(queryProperties._webglQuery, timerQuery.TIMESTAMP_EXT);
+
+		queryProperties._target = timerQuery.TIMESTAMP_EXT;
+		queryProperties._result = null; // clear the last result.
+	}
+
+	isResultAvailable(query) {
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+		const timerQuery = capabilities.timerQuery;
+
+		const queryProperties = this._get(query);
+
+		let available;
+		if (capabilities.version > 1) {
+			available = gl.getQueryParameter(queryProperties._webglQuery, gl.QUERY_RESULT_AVAILABLE);
+		} else {
+			available = timerQuery.getQueryObjectEXT(queryProperties._webglQuery, timerQuery.QUERY_RESULT_AVAILABLE);
+		}
+
+		return available;
+	}
+
+	isTimerDisjoint() {
+		return this._gl.getParameter(this._capabilities.timerQuery.GPU_DISJOINT_EXT);
+	}
+
+	getResult(query) {
+		const gl = this._gl;
+		const capabilities = this._capabilities;
+		const timerQuery = capabilities.timerQuery;
+
+		const queryProperties = this._get(query);
+
+		if (queryProperties._result === null) {
+			if (capabilities.version > 1) {
+				queryProperties._result = gl.getQueryParameter(queryProperties._webglQuery, gl.QUERY_RESULT);
+			} else {
+				queryProperties._result = timerQuery.getQueryObjectEXT(queryProperties._webglQuery, timerQuery.QUERY_RESULT_EXT);
+			}
+		}
+
+		return queryProperties._result;
+	}
+
+}
+
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubeGeometry, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, Group, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, Renderer, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
