@@ -110,8 +110,6 @@
 		new GLTFLoader(loadingManager).load(
 			'./resources/models/gltf/lighthouse.glb'
 		).then(function(result) {
-			console.timeEnd('GLTFLoader');
-
 			const object = result.root;
 			birdModel = object.children[0].children[0].children[0].children[4];
 

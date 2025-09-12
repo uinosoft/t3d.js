@@ -6,7 +6,7 @@ import {
 	Color3,
 	DRAW_MODE,
 	Geometry,
-	Object3D,
+	Mesh,
 	ShaderMaterial,
 	Vector3
 } from 't3d';
@@ -15,16 +15,14 @@ import {
  * A particle container
  * reference three.js - flimshaw - Charlie Hoey - http://charliehoey.com
  */
-class ParticleContainer extends Object3D {
+class ParticleContainer extends Mesh {
 
 	constructor(options = {}) {
-		super();
+		super(new Geometry(), new ShaderMaterial(ParticleContainer.GPUParticleShader));
 
 		this.maxParticleCount = options.maxParticleCount || 10000;
 		this.particleNoiseTex = options.particleNoiseTex || null;
 		this.particleSpriteTex = options.particleSpriteTex || null;
-
-		this.geometry = new Geometry();
 
 		const vertices = [];
 		for (let i = 0; i < this.maxParticleCount; i++) {
@@ -49,7 +47,6 @@ class ParticleContainer extends Object3D {
 
 		this.particleCursor = 0;
 
-		this.material = new ShaderMaterial(ParticleContainer.GPUParticleShader);
 		this.material.uniforms['tSprite'] = this.particleSpriteTex;
 		this.material.uniforms['tNoise'] = this.particleNoiseTex;
 		this.material.transparent = true;
