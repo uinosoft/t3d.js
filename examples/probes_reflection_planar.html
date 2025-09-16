@@ -211,7 +211,7 @@
 
 			forwardRenderer.shadowMapPass.render(forwardRenderer, scene);
 
-			forwardRenderer.setClearColor(0, 0, 0, 0);
+			forwardRenderer.backRenderTarget.setColorClearValue(0, 0, 0, 0);
 
 			// clear reflection before render probes
 			// to avoid self reflection
@@ -231,7 +231,7 @@
 			wallPlane.material.uniforms.reflectNormalScale = params.reflectNormalScale;
 			groundPlane.material.uniforms.reflectNormalScale = params.reflectNormalScale * 2;
 
-			forwardRenderer.setClearColor(0.2, 0.2, 0.2, 1);
+			forwardRenderer.backRenderTarget.setColorClearValue(0.2, 0.2, 0.2, 1);
 
 			forwardRenderer.render(scene, camera);
 		}

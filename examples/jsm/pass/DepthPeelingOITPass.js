@@ -89,25 +89,29 @@ class DepthPeelingOITPass {
 	}
 
 	renderBuffer(renderer, scene, camera) {
-		renderer.setRenderTarget(this._renderTarget1);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, false, false);
+		this._renderTarget1
+			.setColorClearValue(0, 0, 0, 0)
+			.setClear(true, false, false);
+		renderer.beginRender(this._renderTarget1);
+		renderer.endRender();
 
-		renderer.setRenderTarget(this._renderTarget2);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, false, false);
+		this._renderTarget2
+			.setColorClearValue(0, 0, 0, 0)
+			.setClear(true, false, false);
+		renderer.beginRender(this._renderTarget2);
+		renderer.endRender();
 
-		renderer.setRenderTarget(this._depthClearRenderTarget1);
-		renderer.setClearColor(-99999, -99999, 0, 0);
-		renderer.clear(true, false, false);
+		this._depthClearRenderTarget1
+			.setColorClearValue(-99999, -99999, 0, 0)
+			.setClear(true, false, false);
+		renderer.beginRender(this._depthClearRenderTarget1);
+		renderer.endRender();
 
-		renderer.setRenderTarget(this._depthClearRenderTarget2);
-		renderer.setClearColor(-99999, -99999, 0, 0);
-		renderer.clear(true, false, false);
-
-		renderer.setRenderTarget(this._backBlendRenderTarget);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, false, false);
+		this._depthClearRenderTarget2
+			.setColorClearValue(-99999, -99999, 0, 0)
+			.setClear(true, false, false);
+		renderer.beginRender(this._depthClearRenderTarget2);
+		renderer.endRender();
 
 		for (let i = 0; i < this.loop; i++) {
 			const writeRenderTarget = i % 2 === 0 ? this._renderTarget1 : this._renderTarget2;
@@ -116,17 +120,14 @@ class DepthPeelingOITPass {
 
 			// clear write render target
 
-			renderer.setRenderTarget(writeRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, false, false);
+			writeRenderTarget.setClear(true, false, false);
+			renderer.beginRender(writeRenderTarget);
+			renderer.endRender();
 
-			renderer.setRenderTarget(depthClearRenderTarget);
-			renderer.setClearColor(-99999, -99999, 0, 0);
-			renderer.clear(true, false, false);
+			renderer.beginRender(depthClearRenderTarget);
+			renderer.endRender();
 
 			// render write render target
-
-			renderer.setRenderTarget(writeRenderTarget);
 
 			const renderStates = scene.getRenderStates(camera);
 			const renderQueue = scene.getRenderQueue(camera);
@@ -137,26 +138,25 @@ class DepthPeelingOITPass {
 			this._renderInfos.frontColorTexture = readRenderTarget._attachments[ATTACHMENT.COLOR_ATTACHMENT1];
 			this._renderInfos.depthPeelingTexture = readRenderTarget._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
 
-			renderer.beginRender();
-
+			writeRenderTarget.setClear(false, false, false);
+			renderer.beginRender(writeRenderTarget);
 			let renderQueueLayer;
 			for (let j = 0, l = renderQueue.layerList.length; j < l; j++) {
 				renderQueueLayer = renderQueue.layerList[j];
 				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, renderOptions);
 			}
-
 			renderer.endRender();
 
 			// accumulate back color
 
-			renderer.setRenderTarget(this._backBlendRenderTarget);
 			this._backBlendPass.uniforms.uBackColor = writeRenderTarget._attachments[ATTACHMENT.COLOR_ATTACHMENT2];
-			this._backBlendPass.render(renderer);
+			this._backBlendRenderTarget.setClear(i === 0, false, false);
+			this._backBlendPass.render(renderer, this._backBlendRenderTarget);
 		}
 	}
 
-	render(renderer) {
-		this._mixPass.render(renderer);
+	render(renderer, renderTarget) {
+		this._mixPass.render(renderer, renderTarget);
 	}
 
 }

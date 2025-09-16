@@ -18,6 +18,10 @@ class WeightedBlendedOITPass {
 
 		this._renderTarget.attach(accumulateAlphaTexture, ATTACHMENT.COLOR_ATTACHMENT1);
 
+		this._renderTarget
+			.setColorClearValue(0, 0, 0, 1)
+			.setClear(true, false, false);
+
 		this._mixPass = new ShaderPostPass(WeightedBlendedMixShader);
 		this._mixPass.material.transparent = true;
 		this._mixPass.material.blending = BLEND_TYPE.CUSTOM;
@@ -56,10 +60,6 @@ class WeightedBlendedOITPass {
 	}
 
 	renderBuffer(renderer, scene, camera) {
-		renderer.setRenderTarget(this._renderTarget);
-		renderer.setClearColor(0, 0, 0, 1.0);
-		renderer.clear(true, false, false);
-
 		const renderStates = scene.getRenderStates(camera);
 		const renderQueue = scene.getRenderQueue(camera);
 
@@ -68,7 +68,7 @@ class WeightedBlendedOITPass {
 
 		const renderOptions = this._renderOptions;
 
-		renderer.beginRender();
+		renderer.beginRender(this._renderTarget);
 
 		let renderQueueLayer;
 		for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {
@@ -79,8 +79,8 @@ class WeightedBlendedOITPass {
 		renderer.endRender();
 	}
 
-	render(renderer) {
-		this._mixPass.render(renderer);
+	render(renderer, renderTarget) {
+		this._mixPass.render(renderer, renderTarget);
 	}
 
 }

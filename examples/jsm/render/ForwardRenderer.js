@@ -68,13 +68,15 @@ class ForwardRenderer extends WebGLRenderer {
 		 * @default true
 		 */
 		this.renderQueueAutoUpdate = true;
+	}
 
-		/**
-		 * Defines whether the renderer should automatically clear its output before rendering a frame.
-		 * @type {boolean}
-		 * @default true
-		 */
-		this.autoClear = true;
+	set autoClear(value) {
+		console.warn('ForwardRenderer: autoClear has been deprecated. Use renderTarget.setClear(...) instead.');
+	}
+
+	get autoClear() {
+		console.warn('ForwardRenderer: autoClear has been deprecated. Use renderTarget.setClear(...) instead.');
+		return true;
 	}
 
 	/**
@@ -83,9 +85,13 @@ class ForwardRenderer extends WebGLRenderer {
 	 * @param {Scene} scene - The scene.
 	 * @param {Camera} camera - The camera.
 	 * @param {RenderTargetBase} [renderTarget] - The render is done to the renderTarget (if specified) or to the canvas as usual.
-	 * @param {boolean} [forceClear=false] - If set true, the depth, stencil and color buffers will be cleared before rendering even if the renderer's autoClear property is false.
+	 * @param {boolean} [forceClear=false] - Deprecated. Whether to clear the output before rendering. Use renderTarget.setClear(...) instead.
 	 */
 	render(scene, camera, renderTarget, forceClear) {
+		if (forceClear !== undefined) {
+			console.warn('The fourth parameter forceClear has been deprecated. Use renderTarget.setClear(...) instead.');
+		}
+
 		this.matrixAutoUpdate && scene.updateMatrix();
 
 		this.renderStatesAutoUpdate && scene.updateRenderStates(camera);
@@ -100,13 +106,8 @@ class ForwardRenderer extends WebGLRenderer {
 		if (renderTarget === undefined) {
 			renderTarget = this.backRenderTarget;
 		}
-		this.setRenderTarget(renderTarget);
 
-		if (this.autoClear || forceClear) {
-			this.clear(true, true, true);
-		}
-
-		this.renderScene(scene, camera);
+		this.renderScene(scene, camera, renderTarget);
 
 		if (renderTarget.texture) {
 			this.updateRenderTargetMipmap(renderTarget);

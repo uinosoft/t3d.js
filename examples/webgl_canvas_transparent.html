@@ -38,7 +38,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas, { antialias: true, alpha: true });
-		forwardRenderer.setClearColor(0, 0, 0, 0);
+		forwardRenderer.backRenderTarget.setColorClearValue(0, 0, 0, 0);
 
 		const scene = new t3d.Scene();
 

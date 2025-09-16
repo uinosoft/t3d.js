@@ -97,7 +97,7 @@
 		container.appendChild(cloudsCanvas);
 
 		const forwardRenderer = new ForwardRenderer(cloudsCanvas, { antialias: true, alpha: true });
-		forwardRenderer.setClearColor(0, 0, 0, 0);
+		forwardRenderer.backRenderTarget.setColorClearValue(0, 0, 0, 0);
 
 		const scene = new t3d.Scene();
 		

@@ -80,12 +80,9 @@ class UnrealBloomPass {
 	update(renderer, sceneRenderTarget, outputRenderTarget) {
 		// Step 1: highlight
 
-		renderer.setRenderTarget(this.tempRenderTarget);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, true, false);
 		this.highlightPass.uniforms.luminosityThreshold = this.threshold;
 		this.highlightPass.uniforms.tDiffuse = sceneRenderTarget.texture;
-		this.highlightPass.render(renderer);
+		this.highlightPass.render(renderer, this.tempRenderTarget);
 
 		// Step 2: blur
 
@@ -95,44 +92,39 @@ class UnrealBloomPass {
 			this.separableBlurPasses[i].uniforms.colorTexture = inputRenderTarget.texture;
 			this.separableBlurPasses[i].uniforms.direction[0] = 1;
 			this.separableBlurPasses[i].uniforms.direction[1] = 0;
-			renderer.setRenderTarget(this.renderTargetsHorizontal[i]);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, false);
-			this.separableBlurPasses[i].render(renderer);
+			this.separableBlurPasses[i].render(renderer, this.renderTargetsHorizontal[i]);
 
 			this.separableBlurPasses[i].uniforms.colorTexture = this.renderTargetsHorizontal[i].texture;
 			this.separableBlurPasses[i].uniforms.direction[0] = 0;
 			this.separableBlurPasses[i].uniforms.direction[1] = 1;
-			renderer.setRenderTarget(this.renderTargetsVertical[i]);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, false);
-			this.separableBlurPasses[i].render(renderer);
+			this.separableBlurPasses[i].render(renderer, this.renderTargetsVertical[i]);
+
 			inputRenderTarget = this.renderTargetsVertical[i];
 		}
 
 		// Step 3: composite all the mips
 
-		renderer.setRenderTarget(this.renderTargetsHorizontal[0]);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, true, false);
 		this.compositePass.uniforms.bloomRadius = this.radius;
 		this.compositePass.uniforms.strength = this.strength;
-		this.compositePass.render(renderer);
+		this.compositePass.render(renderer, this.renderTargetsHorizontal[0]);
 
 		// Step 4: blend it additively
 
-		renderer.setRenderTarget(sceneRenderTarget);
+		const oldInputClearColor = sceneRenderTarget.clearColor;
+		const oldInputClearDepth = sceneRenderTarget.clearDepth;
+		const oldInputClearStencil = sceneRenderTarget.clearStencil;
+
 		this.copyPass.uniforms.tDiffuse = this.renderTargetsHorizontal[0].texture;
-		this.copyPass.render(renderer);
+		sceneRenderTarget.setClear(false, false, false); // avoid clear
+		this.copyPass.render(renderer, sceneRenderTarget);
+
+		sceneRenderTarget.setClear(oldInputClearColor, oldInputClearDepth, oldInputClearStencil);
 
 		// Step 5: color mapping  over the output render target
 
-		renderer.setRenderTarget(outputRenderTarget);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, true, false);
 		this.toneMappingPass.uniforms.tDiffuse = sceneRenderTarget.texture;
 		this.toneMappingPass.uniforms.toneMappingExposure = this.toneMappingExposure;
-		this.toneMappingPass.render(renderer);
+		this.toneMappingPass.render(renderer, outputRenderTarget);
 	}
 
 	dispose() {
@@ -187,6 +179,9 @@ function createTempRenderTarget(width, height) {
 	renderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
 	renderTarget.texture.generateMipmaps = false;
 	renderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+
+	renderTarget.setClear(true, false, false);
+
 	return renderTarget;
 }
 
@@ -283,7 +278,7 @@ const compositeShader = {
 		uniform float bloomFactors[5];
 
 		varying vec2 v_Uv;
-	
+
 		float lerpBloomFactor(const in float factor) {
 			float mirrorFactor = 1.2 - factor;
 			return mix(factor, mirrorFactor, bloomRadius);

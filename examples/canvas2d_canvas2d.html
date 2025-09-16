@@ -145,16 +145,11 @@
 			scene.updateMatrix();
 			const renderStates = scene.updateRenderStates(camera);
 
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
 			const renderQueue = scene.updateRenderQueue(camera);
 			const mainLayer = renderQueue.getLayer(0);
 			const uiLayer = renderQueue.getLayer(1);
 
-			renderer.beginRender();
+			renderer.beginRender(backRenderTarget);
 		
 			renderer.renderRenderableList(mainLayer.opaque, renderStates);
 

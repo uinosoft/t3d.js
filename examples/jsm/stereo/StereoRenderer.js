@@ -32,10 +32,7 @@ class StereoRenderer extends ForwardRenderer {
 			this._state.currentRenderTarget = null;
 		}
 
-		if (this.autoClear || forceClear) {
-			this.clear(true, true, true);
-		}
-
+		this.clear(true, true, true);
 		this.renderScene(scene, cameraL);
 
 		scene.updateRenderStates(cameraR, false);

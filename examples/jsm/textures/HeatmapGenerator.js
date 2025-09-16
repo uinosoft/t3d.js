@@ -28,6 +28,9 @@ class HeatmapGenerator {
 
 		this._grayRenderTarget = new RenderTarget2D(width, height);
 		this._grayRenderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		this._grayRenderTarget
+			.setColorClearValue(0, 0, 0, 1)
+			.setClear(true, false, false);
 
 		const scene = new Scene();
 
@@ -62,6 +65,9 @@ class HeatmapGenerator {
 
 		this._colorizeRenderTarget = new RenderTarget2D(width, height);
 		this._colorizeRenderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		this._colorizeRenderTarget
+			.setColorClearValue(0, 0, 0, 0)
+			.setClear(true, false, false);
 
 		this._colorizePass = new ShaderPostPass(heatmapColorizeShader);
 		this._colorizePass.material.depthTest = false;
@@ -164,18 +170,18 @@ class HeatmapGenerator {
 
 		// Render gray texture
 
-		renderer.getClearColor().toArray(_tempClearColor); // save clear color
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
+		renderer.getClearColor().toArray(_tempClearColor);
 
-		renderer.setRenderTarget(this._grayRenderTarget);
-		renderer.setClearColor(0, 0, 0, 1);
-		renderer.clear(true, true, true);
-
-		renderer.beginRender();
+		renderer.beginRender(this._grayRenderTarget);
 		renderer.renderRenderableList(this._renderQueueLayer.transparent, this._renderStates);
 		renderer.endRender();
 
 		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
 
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
 		renderer.setClearColor(..._tempClearColor);
 
 		return this;
@@ -190,18 +196,18 @@ class HeatmapGenerator {
 	 * @returns {HeatmapGenerator} this
 	 */
 	colorize(renderer, gradientTexture, options = {}) {
-		renderer.getClearColor().toArray(_tempClearColor); // save clear color
-
-		renderer.setRenderTarget(this._colorizeRenderTarget);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, false, false);
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
+		renderer.getClearColor().toArray(_tempClearColor);
 
 		this._colorizePass.material.uniforms.colormap = gradientTexture;
 		this._colorizePass.material.uniforms.alphaLerp = options.alpha ? 1 : 0;
-		this._colorizePass.render(renderer);
+		this._colorizePass.render(renderer, this._colorizeRenderTarget);
 
 		renderer.updateRenderTargetMipmap(this._colorizeRenderTarget);
 
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
 		renderer.setClearColor(..._tempClearColor);
 
 		return this;

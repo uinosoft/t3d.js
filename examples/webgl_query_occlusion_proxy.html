@@ -58,8 +58,8 @@
 		}
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		renderer.setClearColor(0.1, 0.1, 0.1, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
 
 		const scene = new t3d.Scene();
 
@@ -207,12 +207,11 @@
 			const renderQueue = scene.updateRenderQueue(camera);
 
 			// Main layer
-
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.clear(true, true, false);
-
+		
 			const mainLayer = renderQueue.getLayer(0);
-			renderer.beginRender();
+
+			backRenderTarget.setClear(true, true, false);
+			renderer.beginRender(backRenderTarget);
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
 			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
 			renderer.endRender();
@@ -221,24 +220,24 @@
 
 			const occlusionLayer = renderQueue.getLayer(1);
 			if (occlusionLayer && occlusionLayer.opaqueCount > 0) {
-				renderer.setRenderTarget(backRenderTarget);
+				backRenderTarget.setClear(false, false, false);
 				if (params.enableOcclusionQuery) {
-					renderer.setOcclusionQuerySet(occlusionManager.querySet);
+					backRenderTarget.setOcclusionQuerySet(occlusionManager.querySet);
 				}
 		
-				renderer.beginRender();
+				renderer.beginRender(backRenderTarget);
 				renderer.renderRenderableList(occlusionLayer.opaque, renderStates, OcclusionRenderOptions);
 				renderer.endRender();
+		
+				backRenderTarget.setOcclusionQuerySet(null);
 			}
 
 			// Overlay layer
 
 			const overlayLayer = renderQueue.getLayer(2);
 			if (overlayLayer && (overlayLayer.opaqueCount + overlayLayer.transparentCount) > 0) {
-				renderer.setRenderTarget(backRenderTarget);
-				renderer.clear(false, true, false);
-
-				renderer.beginRender();
+				backRenderTarget.setClear(false, true, false);
+				renderer.beginRender(backRenderTarget);
 				renderer.renderRenderableList(overlayLayer.opaque, renderStates, renderOption);
 				renderer.renderRenderableList(overlayLayer.transparent, renderStates, renderOption);
 				renderer.endRender();

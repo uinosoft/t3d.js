@@ -45,9 +45,9 @@
 		const contextParams = { antialias: true, alpha: false, stencil: true };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
-		renderer.setClearColor(54 / 255, 103 / 255, 149 / 255, 1);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(54 / 255, 103 / 255, 149 / 255, 1);
 
 		const scene = new t3d.Scene();
 
@@ -172,16 +172,19 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 		
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.clear(true, true, true);
-		
 			// render main pass
-			renderer.renderScene(scene, camera);
+		
+			backRenderTarget.setClear(true, true, true);
+			renderer.renderScene(scene, camera, backRenderTarget);
 
 			// render xray pass
+
 			const renderStates = scene.getRenderStates(camera);
 			const mainLayer = scene.getRenderQueue(camera).getLayer(0);
-			renderer.beginRender();
+
+			backRenderTarget.setClear(false, false, false);
+
+			renderer.beginRender(backRenderTarget);
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
 			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
 			renderer.endRender();

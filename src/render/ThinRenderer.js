@@ -82,8 +82,9 @@ class ThinRenderer {
 
 	/**
 	 * Begin rendering.
+	 * @param {RenderTargetBase} renderTarget - The render target to render to.
 	 */
-	beginRender() {
+	beginRender(renderTarget) {
 		this._passInfo.enabled = true;
 	}
 
@@ -136,13 +137,21 @@ class ThinRenderer {
 	 * If you need a customized rendering process, it is recommended to use renderRenderableList method.
 	 * @param {Scene} scene - The scene to render.
 	 * @param {Camera} camera - The camera used to render the scene.
+	 * @param {RenderTargetBase} renderTarget - The render target to render to.
 	 * @param {RenderOptions} [options] - The render options for this scene render task.
 	 */
-	renderScene(scene, camera, options = {}) {
+	renderScene(scene, camera, renderTarget, options = {}) {
+		// Compatibility handling: if there are only 3 arguments,
+		// and the third is not a RenderTarget, treat it as options.
+		if (arguments.length === 3 && (!renderTarget || !renderTarget.isRenderTarget)) {
+			options = renderTarget;
+			renderTarget = null;
+		}
+
 		const renderStates = scene.getRenderStates(camera);
 		const renderQueue = scene.getRenderQueue(camera);
 
-		this.beginRender();
+		this.beginRender(renderTarget);
 
 		let renderQueueLayer;
 		for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {
@@ -153,43 +162,6 @@ class ThinRenderer {
 
 		this.endRender();
 	}
-
-	/**
-	 * Clear the color, depth and stencil buffers.
-	 * @param {boolean} [color=false] - Clear color buffer.
-	 * @param {boolean} [depth=false] - Clear depth buffer.
-	 * @param {boolean} [stencil=false] - Clear stencil buffer.
-	 */
-	clear(color, depth, stencil) {}
-
-	/**
-	 * Set clear color.
-	 * @param {number} r - Red component in the range 0.0 - 1.0.
-	 * @param {number} g - Green component in the range 0.0 - 1.0.
-	 * @param {number} b - Blue component in the range 0.0 - 1.0.
-	 * @param {number} a - Alpha component in the range 0.0 - 1.0.
-	 * @param {number} premultipliedAlpha - Whether the alpha is premultiplied.
-	 */
-	setClearColor(r, g, b, a, premultipliedAlpha) {}
-
-	/**
-	 * Returns a Vector4 instance with the current clear color and alpha.
-	 * Note: Do not modify the value of Vector4, it is read-only.
-	 * @returns {Vector4}
-	 */
-	getClearColor() {}
-
-	/**
-	 * This method sets the active rendertarget.
-	 * @param {RenderTargetBase} renderTarget The renderTarget that needs to be activated.
-	 */
-	setRenderTarget(renderTarget) {}
-
-	/**
-	 * Returns the current RenderTarget if there are; returns null otherwise.
-	 * @returns {RenderTargetBase | null}
-	 */
-	getRenderTarget() {}
 
 	/**
 	 * Copy a frame buffer to another.
@@ -270,30 +242,6 @@ class ThinRenderer {
 	 * This is useful when you use multiple renderers in one application.
 	 */
 	resetState() {}
-
-	/**
-	 * Set the occlusion query set.
-	 * Call this method before {@link ThinRenderer#beginRender} to set it,
-	 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
-	 * @param {QuerySet} querySet - The occlusion query set to set.
-	 */
-	setOcclusionQuerySet(querySet) {
-		this._currentOcclusionQuerySet = querySet;
-	}
-
-	/**
-	 * Set the timestamp writes.
-	 * Call this method before {@link ThinRenderer#beginRender} to set it,
-	 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
-	 * @param {QuerySet} querySet - The timestamp query set to set.
-	 * @param {number} [beginIndex=0] - The beginning of pass write index in the query set.
-	 * @param {number} [endIndex=1] - The end of pass write index in the query set.
-	 */
-	setTimestampWrites(querySet, beginIndex = 0, endIndex = 1) {
-		this._currentTimestampWrites.querySet = querySet;
-		this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
-		this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
-	}
 
 	/**
 	 * Begin an occlusion query.

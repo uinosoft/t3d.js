@@ -39,7 +39,6 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.autoClear = false;
 
 		const floorTexture = new Texture2DLoader().load('./resources/hardwood2_diffuse.jpg');
 
@@ -120,9 +119,6 @@
 
 			mask.position.z = 30 * Math.cos(count / 1000);
 
-			forwardRenderer.setClearColor(0, 0, 0, 0);
-			forwardRenderer.clear(true, true, true);
-
 			directionalLight.color.setHex(0xffffff);
 			directionalLightHelper.update();
 			directionalLightHelper.visible = true;
@@ -133,11 +129,11 @@
 			cube.visible = false;
 			sphere.visible = true;
 
+			forwardRenderer.backRenderTarget.setClear(true, true, true);
 			forwardRenderer.render(scene, camera);
-			forwardRenderer.clear(false, true, false);
-
+		
+			forwardRenderer.backRenderTarget.setClear(false, true, false);
 			forwardRenderer.render(stencilScene, camera);
-			forwardRenderer.clear(false, true, false);
 
 			directionalLight.color.setHex(0xffaaaa);
 			directionalLightHelper.visible = false;
@@ -148,6 +144,7 @@
 			cube.visible = true;
 			sphere.visible = false;
 
+			forwardRenderer.backRenderTarget.setClear(false, true, false);
 			forwardRenderer.render(scene, camera);
 		}
 		requestAnimationFrame(loop);

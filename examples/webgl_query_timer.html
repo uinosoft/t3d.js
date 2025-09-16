@@ -47,8 +47,10 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		renderer.setClearColor(0.1, 0.1, 0.1, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget
+			.setColorClearValue(0.1, 0.1, 0.1, 1)
+			.setClear(true, true, false);
 
 		if (!renderer.capabilities.timerQuery) {
 			document.getElementById('notSupported').style.display = '';
@@ -101,6 +103,7 @@
 		gui.add(params, 'timer').name('GPU Frame Time (ms)').disable().listen();
 
 		const querySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.TIMESTAMP, 2);
+		backRenderTarget.setTimestampWrites(querySet, 0, 1);
 
 		let reading = false;
 		const dstBuffer = new Array(2);
@@ -114,11 +117,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.clear(true, true, false);
-			renderer.setTimestampWrites(querySet, 0, 1);
-
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, backRenderTarget);
 
 			if (!reading) {
 				renderer.readQuerySetResults(querySet, dstBuffer)

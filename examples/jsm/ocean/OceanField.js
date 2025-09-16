@@ -87,16 +87,19 @@ export class OceanField {
 
 	createRenderTargets() {
 		this.spectrumRenderTarget = new RenderTarget2D(this.params.resolution, this.params.resolution);
+		this.spectrumRenderTarget.setClear(false, false, false);
 		for (let slot = 0; slot < this.spectrumTextures.length; slot++) {
 			this.spectrumRenderTarget.attach(this.spectrumTextures[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);
 		}
 
 		this.pingPongRenderTarget = new RenderTarget2D(this.params.resolution, this.params.resolution);
+		this.pingPongRenderTarget.setClear(false, false, false);
 		for (let slot = 0; slot < this.pingPongTextures.length; slot++) {
 			this.pingPongRenderTarget.attach(this.pingPongTextures[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);
 		}
 
 		this.postIfft2RenderTarget = new RenderTarget2D(this.params.resolution, this.params.resolution);
+		this.postIfft2RenderTarget.setClear(false, false, false);
 		for (let slot = 0; slot < this._dataMaps.length; slot++) {
 			this.postIfft2RenderTarget.attach(this._dataMaps[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);
 		}
@@ -107,8 +110,7 @@ export class OceanField {
 		this.hkPass.uniforms.h0Texture1 = this.h0Textures[1];
 		this.hkPass.uniforms.h0Texture2 = this.h0Textures[2];
 		this.hkPass.uniforms.t = time;
-		this.renderer.setRenderTarget(this.spectrumRenderTarget);
-		this.hkPass.render(this.renderer);
+		this.hkPass.render(this.renderer, this.spectrumRenderTarget);
 	}
 
 	ifft2() {
@@ -121,7 +123,6 @@ export class OceanField {
 		this.fft2hPass.material.uniforms['butterfly'] = this.butterflyTexture;
 
 		for (let phase = 0; phase < phases; phase++) {
-			this.renderer.setRenderTarget(pingPongRenderTargets[pingPong]);
 			this.fft2hPass.uniforms.phase = phase;
 			this.fft2hPass.uniforms.spectrum0 = pingPongTextures[pingPong][0];
 			this.fft2hPass.uniforms.spectrum1 = pingPongTextures[pingPong][1];
@@ -129,7 +130,7 @@ export class OceanField {
 			this.fft2hPass.uniforms.spectrum3 = pingPongTextures[pingPong][3];
 			this.fft2hPass.uniforms.spectrum4 = pingPongTextures[pingPong][4];
 			this.fft2hPass.uniforms.spectrum5 = pingPongTextures[pingPong][5];
-			this.fft2hPass.render(this.renderer);
+			this.fft2hPass.render(this.renderer, pingPongRenderTargets[pingPong]);
 			pingPong = (pingPong + 1) % 2;
 		}
 
@@ -137,7 +138,6 @@ export class OceanField {
 		this.fft2vPass.material.uniforms['butterfly'] = this.butterflyTexture;
 
 		for (let phase = 0; phase < phases; phase++) {
-			this.renderer.setRenderTarget(pingPongRenderTargets[pingPong]);
 			this.fft2vPass.uniforms.phase = phase;
 			this.fft2vPass.uniforms.spectrum0 = pingPongTextures[pingPong][0];
 			this.fft2vPass.uniforms.spectrum1 = pingPongTextures[pingPong][1];
@@ -145,7 +145,7 @@ export class OceanField {
 			this.fft2vPass.uniforms.spectrum3 = pingPongTextures[pingPong][3];
 			this.fft2vPass.uniforms.spectrum4 = pingPongTextures[pingPong][4];
 			this.fft2vPass.uniforms.spectrum5 = pingPongTextures[pingPong][5];
-			this.fft2vPass.render(this.renderer);
+			this.fft2vPass.render(this.renderer, pingPongRenderTargets[pingPong]);
 			pingPong = (pingPong + 1) % 2;
 		}
 
@@ -159,8 +159,7 @@ export class OceanField {
 		this.postfft2Pass.uniforms.ifft3 = this.ifftTextures[3];
 		this.postfft2Pass.uniforms.ifft4 = this.ifftTextures[4];
 		this.postfft2Pass.uniforms.ifft5 = this.ifftTextures[5];
-		this.renderer.setRenderTarget(this.postIfft2RenderTarget);
-		this.postfft2Pass.render(this.renderer);
+		this.postfft2Pass.render(this.renderer, this.postIfft2RenderTarget);
 	}
 
 }

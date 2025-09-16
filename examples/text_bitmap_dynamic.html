@@ -55,7 +55,6 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.autoClear = false;
 
 		const scene = new t3d.Scene();
 
@@ -199,11 +198,12 @@
 
 			controller.update();
 
-			forwardRenderer.clear(true, true, true);
+			forwardRenderer.backRenderTarget.setClear(true, true, true);
 			forwardRenderer.render(scene, camera);
 
 			if (debugParams.atlas) {
 				debugCamera.rect.set(0, 0, debugParams.atlasScale, debugParams.atlasScale * width / height);
+				forwardRenderer.backRenderTarget.setClear(false, false, false);
 				forwardRenderer.render(debugScene, debugCamera);
 			}
 		}

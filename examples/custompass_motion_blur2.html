@@ -153,18 +153,12 @@
 
 				gBuffer.update(renderer, scene, camera);
 
-				renderer.setRenderTarget(tempRenderTarget);
-				renderer.setClearColor(0, 0, 0, 0);
-				renderer.clear(true, true, true);
-				renderer.renderScene(scene, camera);
+				renderer.renderScene(scene, camera, tempRenderTarget);
 
-				renderer.setRenderTarget(backRenderTarget);
-				renderer.setClearColor(0, 0, 0, 1);
-				renderer.clear(true, true, true);
 				if (params.motionDebug) {
-					gBuffer.renderDebug(renderer, camera, 'velocity');
+					gBuffer.renderDebug(renderer, camera, 'velocity', backRenderTarget);
 				} else {
-					motionBlurPass.render(renderer);
+					motionBlurPass.render(renderer, backRenderTarget);
 				}
 			}
 			requestAnimationFrame(loop);

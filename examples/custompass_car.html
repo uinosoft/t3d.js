@@ -134,34 +134,10 @@
 			scene.updateRenderQueue(camera);
 
 			shadowMapPass.render(renderer, scene);
-
-			renderer.setRenderTarget(tempRenderTarget1);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(scene, camera);
-
-			renderer.setRenderTarget(tempRenderTarget2);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			colorAdjustPass.render(renderer);
-
-			renderer.setRenderTarget(tempRenderTarget1);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			filmPass.render(renderer);
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-		
-			fxaaPass.render(renderer);
+			renderer.renderScene(scene, camera, tempRenderTarget1);
+			colorAdjustPass.render(renderer, tempRenderTarget2);
+			filmPass.render(renderer, tempRenderTarget1);
+			fxaaPass.render(renderer, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

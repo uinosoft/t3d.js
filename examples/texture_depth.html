@@ -37,8 +37,8 @@
 		canvas.height = height;
 		document.body.appendChild(canvas);
 
-		// custom pass
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
 		const renderer = new t3d.WebGLRenderer(gl);
@@ -100,19 +100,9 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(tempRenderTarget);
+			renderer.renderScene(scene, camera, tempRenderTarget);
 
-			renderer.setClearColor(0.2, 0.2, 0.2, 1);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(scene, camera);
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			depthLinearPass.render(renderer, scene);
+			depthLinearPass.render(renderer, backRenderTarget);
 		}
 
 		requestAnimationFrame(loop);

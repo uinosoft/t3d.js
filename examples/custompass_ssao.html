@@ -183,41 +183,30 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.setRenderTarget(tempRenderTarget2);
-
-			renderer.setClearColor(1, 1, 1, 1);
-			renderer.clear(true, true, true);
-
 			projection.copy(camera.projectionMatrix);
 			projectionInv.copy(camera.projectionMatrix).invert();
 			viewInverseTranspose.copy(camera.worldMatrix).transpose();
 
-			ssaoPass.render(renderer);
-
-			renderer.setRenderTarget(tempRenderTarget3);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
+			tempRenderTarget2.setColorClearValue(1, 1, 1, 1);
+			ssaoPass.render(renderer, tempRenderTarget2);
 
 			blurPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
 			blurPass.uniforms['direction'] = 0;
-			blurPass.render(renderer);
+			blurPass.render(renderer, tempRenderTarget3);
 
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0.5, 0.5, 0.5, 1);
-			renderer.clear(true, true, true);
+			backRenderTarget.setColorClearValue(0.5, 0.5, 0.5, 1);
 
 			if (beauty) {
-				renderer.renderScene(scene, camera);
-
+				backRenderTarget.setClear(true, true, true);
+				renderer.renderScene(scene, camera, backRenderTarget);
 				blurPass.material.blending = t3d.BLEND_TYPE.CUSTOM;
 			}
 
 			if (ssao) {
 				blurPass.uniforms['tDiffuse'] = tempRenderTarget3.texture;
 				blurPass.uniforms['direction'] = 1;
-				blurPass.render(renderer);
+				backRenderTarget.setClear(!beauty, false, false);
+				blurPass.render(renderer, backRenderTarget);
 			}
 
 			if (beauty) {

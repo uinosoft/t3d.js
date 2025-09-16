@@ -55,8 +55,10 @@
 		}
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		renderer.setClearColor(0.1, 0.1, 0.1, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget
+			.setColorClearValue(0.1, 0.1, 0.1, 1)
+			.setClear(true, true, false);
 
 		const scene = new t3d.Scene();
 
@@ -138,6 +140,7 @@
 
 		// create occlusion query set
 		const querySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.OCCLUSION, 1);
+		backRenderTarget.setOcclusionQuerySet(querySet);
 
 		const renderOption = {
 			beforeRender: renderable => {
@@ -171,11 +174,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.clear(true, true, false);
-			renderer.setOcclusionQuerySet(querySet);
-
-			renderer.renderScene(scene, camera, renderOption);
+			renderer.renderScene(scene, camera, backRenderTarget, renderOption);
 
 			if (!reading) {
 				renderer.readQuerySetResults(querySet, dstBuffer)

@@ -54,6 +54,7 @@
 		renderTarget.texture.type = t3d.PIXEL_TYPE.HALF_FLOAT;
 		renderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		renderTarget.texture.generateMipmaps = false;
+		renderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const scene = new t3d.Scene();
 
@@ -102,16 +103,10 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(renderTarget);
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, true);
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, renderTarget);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.setClearColor(1, 0, 0, 1);
-			renderer.clear(true, true, true);
 			outputPass.uniforms.tDiffuse = renderTarget.texture;
-			outputPass.render(renderer);
+			outputPass.render(renderer, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

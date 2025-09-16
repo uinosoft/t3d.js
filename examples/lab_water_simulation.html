@@ -322,10 +322,7 @@
 			const waterTexture = waterSimulation._currentRTT.texture;
 			water.material.uniforms.water = waterTexture;
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.setClearColor(1, 1, 1, 1);
-			renderer.clear(true, true, true);
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, backRenderTarget);
 		}
 
 		requestAnimationFrame(loop);

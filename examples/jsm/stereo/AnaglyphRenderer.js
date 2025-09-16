@@ -72,16 +72,12 @@ class AnaglyphRenderer extends ForwardRenderer {
 			this.shadowNeedsUpdate = false;
 		}
 
-		this.setRenderTarget(this._renderTargetL);
-		this.clear(true, true, true);
-		this.renderScene(scene, cameraL);
+		this.renderScene(scene, cameraL, this._renderTargetL);
 
 		scene.updateRenderStates(cameraR, false);
 		scene.updateRenderQueue(cameraR, false, false);
 
-		this.setRenderTarget(this._renderTargetR);
-		this.clear(true, true, true);
-		this.renderScene(scene, cameraR);
+		this.renderScene(scene, cameraR, this._renderTargetR);
 
 		if (this._renderTargetL.texture) {
 			this.updateRenderTargetMipmap(this._renderTargetL);
@@ -90,9 +86,7 @@ class AnaglyphRenderer extends ForwardRenderer {
 			this.updateRenderTargetMipmap(this._renderTargetR);
 		}
 
-		this.setRenderTarget(this.backRenderTarget);
-		this.clear(true, true, true);
-		this._shaderPostPass.render(this);
+		this._shaderPostPass.render(this, this.backRenderTarget);
 	}
 
 	updateCamera(camera, stereoCamera) {

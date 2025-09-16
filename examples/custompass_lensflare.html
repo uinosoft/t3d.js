@@ -331,13 +331,13 @@
 		});
 		gui.add(params, 'debug');
 
-		function renderLayer(id) {
+		function renderLayer(id, renderTarget) {
 			const renderStates = scene.getRenderStates(camera);
 			const renderQueue = scene.getRenderQueue(camera);
 
 			const renderQueueLayer = renderQueue.layerList[id];
 
-			renderer.beginRender();
+			renderer.beginRender(renderTarget);
 			renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
 			renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
 			renderer.endRender();
@@ -376,32 +376,24 @@
 
 			// Render main scene, write depth buffer.
 
-			renderer.setRenderTarget(sceneRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-			renderLayer(0);
+			sceneRenderTarget.clearColor = true;
+			renderLayer(0, sceneRenderTarget);
 
 			// Render lens flare occlusion mesh, test depth.
 
-			renderer.setRenderTarget(occlusionRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, false, true);
-			renderLayer(1);
+			occlusionRenderTarget.clearDepth = false;
+			renderLayer(1, occlusionRenderTarget);
 
 			// Render and Clip occlusion map.
 
-			renderer.setRenderTarget(resultRenderTarget);
 			renderer.blitRenderTarget(occlusionRenderTarget, resultRenderTarget, true, true, true);
 
-			renderer.setRenderTarget(clippedOcclusionRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
 			clipPass.uniforms.tDiffuse = resultRenderTarget.texture;
 			clipPass.uniforms.clipRect[0] = ((screenPosition.x - params.occlusionScale * height / width) * 0.5 + 0.5);
 			clipPass.uniforms.clipRect[1] = ((screenPosition.y - params.occlusionScale) * 0.5 + 0.5);
 			clipPass.uniforms.clipRect[2] = params.occlusionScale * height / width;
 			clipPass.uniforms.clipRect[3] = params.occlusionScale;
-			clipPass.render(renderer);
+			clipPass.render(renderer, clippedOcclusionRenderTarget);
 
 			lensflares.forEach(function(lensflare) {
 				const lensflareMaterial = lensflare.material;
@@ -410,32 +402,25 @@
 
 			// Render lens flares overlay resultRenderTarget
 
-			renderer.setRenderTarget(sceneRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(false, true, true);
-			renderLayer(2);
+			sceneRenderTarget.clearColor = false;
+			renderLayer(2, sceneRenderTarget);
 
 			// Blit color buffer to resultRenderTarget
 
-			renderer.setRenderTarget(resultRenderTarget);
 			renderer.blitRenderTarget(sceneRenderTarget, resultRenderTarget);
 
 			// Copy resultRenderTarget to screen
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
 			copyPass.uniforms.tDiffuse = resultRenderTarget.texture;
-			copyPass.render(renderer);
+			backRenderTarget.clearColor = true;
+			copyPass.render(renderer, backRenderTarget);
 
 			if (params.debug) {
 				// Copy clipped occlusion map to left bottom corner (1/25) of the screen
-				renderer.setRenderTarget(backRenderTarget);
-				renderer.setClearColor(0, 0, 0, 0);
-				renderer.clear(false, true, true);
 				copyPass.uniforms.tDiffuse = clippedOcclusionRenderTarget.texture;
 				copyPass.renderStates.camera.rect.set(0, 0, 0.2, 0.2);
-				copyPass.render(renderer);
+				backRenderTarget.clearColor = false;
+				copyPass.render(renderer, backRenderTarget);
 				copyPass.renderStates.camera.rect.set(0, 0, 1, 1);
 			}
 		}

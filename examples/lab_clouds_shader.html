@@ -93,13 +93,9 @@
 		function loop(timestamp) {
 			requestAnimationFrame(loop);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
 			if (cloudsPass) {
 				cloudsPass.uniforms['u_Time'] = timestamp * 0.0005;
-				cloudsPass.render(renderer);
+				cloudsPass.render(renderer, backRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);

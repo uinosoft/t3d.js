@@ -89,11 +89,7 @@ class GBuffer {
 				this._renderTarget1.attach(this._texture2, ATTACHMENT.COLOR_ATTACHMENT1);
 			}
 
-			renderer.setRenderTarget(this._renderTarget1);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.beginRender();
+			renderer.beginRender(this._renderTarget1);
 			renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 				getMaterial: function(renderable) {
 					return materialCache.getMrtMaterial(renderable);
@@ -105,11 +101,7 @@ class GBuffer {
 			renderer.endRender();
 		} else {
 			if (this.enableNormalGlossiness) {
-				renderer.setRenderTarget(this._renderTarget1);
-				renderer.setClearColor(0, 0, 0, 0);
-				renderer.clear(true, true, true);
-
-				renderer.beginRender();
+				renderer.beginRender(this._renderTarget1);
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
 						return materialCache.getNormalGlossinessMaterial(renderable);
@@ -122,11 +114,7 @@ class GBuffer {
 			}
 
 			if (this.enableAlbedoMetalness) {
-				renderer.setRenderTarget(this._renderTarget2);
-				renderer.setClearColor(0, 0, 0, 0);
-				renderer.clear(true, true, true);
-
-				renderer.beginRender();
+				renderer.beginRender(this._renderTarget2);
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
 						return materialCache.getAlbedoMetalnessMaterial(renderable);
@@ -140,10 +128,6 @@ class GBuffer {
 		}
 
 		if (this.enableMotion) {
-			renderer.setRenderTarget(this._renderTarget3);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
 			const renderConfig = {
 				getMaterial: function(renderable) {
 					return materialCache.getMotionMaterial(renderable);
@@ -192,7 +176,7 @@ class GBuffer {
 				}
 			};
 
-			renderer.beginRender();
+			renderer.beginRender(this._renderTarget3);
 			renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, renderConfig);
 			renderer.renderRenderableList(renderQueueLayer.transparent, renderStates, renderConfig);
 			renderer.endRender();
@@ -211,9 +195,10 @@ class GBuffer {
 	 * + 'velocity'
 	 * @param {ThinRenderer} renderer
 	 * @param {Camera} camera
-	 * @param {string} [type='normal']
+	 * @param {string} type
+	 * @param {RenderTargetBase} renderTarget
 	 */
-	renderDebug(renderer, camera, type) {
+	renderDebug(renderer, camera, type, renderTarget) {
 		this._debugPass.uniforms['normalGlossinessTexture'] = this.getNormalGlossinessTexture();
 		this._debugPass.uniforms['depthTexture'] = this.getDepthTexture();
 		this._debugPass.uniforms['albedoMetalnessTexture'] = this.getAlbedoMetalnessTexture();
@@ -221,7 +206,7 @@ class GBuffer {
 		this._debugPass.uniforms['debug'] = DebugTypes[type] || 0;
 		helpMatrix4.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert();
 		helpMatrix4.toArray(this._debugPass.uniforms['matProjViewInverse']);
-		this._debugPass.render(renderer);
+		this._debugPass.render(renderer, renderTarget);
 	}
 
 	/**

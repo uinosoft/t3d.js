@@ -8,11 +8,13 @@ class WaterSimulation {
 		rt1.texture.type = PIXEL_TYPE.HALF_FLOAT;
 		rt1.texture.minFilter = rt1.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		rt1.texture.generateMipmaps = false;
+		rt1.setClear(false, false, false);
 
 		const rt2 = new RenderTarget2D(width, height);
 		rt2.texture.type = PIXEL_TYPE.HALF_FLOAT;
 		rt2.texture.minFilter = rt2.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		rt2.texture.generateMipmaps = false;
+		rt2.setClear(false, false, false);
 
 		this._currentRTT = rt1;
 		this._nextRTT = rt2;
@@ -36,8 +38,7 @@ class WaterSimulation {
 
 		this._dropPass.uniforms.dropTexture = this._currentRTT.texture;
 
-		renderer.setRenderTarget(this._nextRTT);
-		this._dropPass.render(renderer);
+		this._dropPass.render(renderer, this._nextRTT);
 		this._swapRTT();
 	}
 
@@ -46,8 +47,7 @@ class WaterSimulation {
 		this._normalPass.uniforms.delta[0] = 1 / this._currentRTT.width;
 		this._normalPass.uniforms.delta[1] = 1 / this._currentRTT.height;
 
-		renderer.setRenderTarget(this._nextRTT);
-		this._normalPass.render(renderer);
+		this._normalPass.render(renderer, this._nextRTT);
 		this._swapRTT();
 	}
 
@@ -56,8 +56,7 @@ class WaterSimulation {
 		this._updatePass.uniforms.delta[0] = 1 / this._currentRTT.width;
 		this._updatePass.uniforms.delta[1] = 1 / this._currentRTT.height;
 
-		renderer.setRenderTarget(this._nextRTT);
-		this._updatePass.render(renderer);
+		this._updatePass.render(renderer, this._nextRTT);
 		this._swapRTT();
 	}
 
@@ -152,7 +151,7 @@ const updateShader = {
 			vec4 info = texture2D(flow, v_Uv);
 			vec2 dx = vec2(delta.x, 0.0);
 			vec2 dy = vec2(0.0, delta.y);
-			
+
 			float average = (
 				texture2D(flow, v_Uv - dx).r +
 				texture2D(flow, v_Uv - dy).r +

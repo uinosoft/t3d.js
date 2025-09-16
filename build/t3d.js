@@ -11126,10 +11126,11 @@
 
 		/**
 		 * Render the post pass.
-		 * @param {ThinRenderer} renderer
+		 * @param {ThinRenderer} renderer - The renderer.
+		 * @param {RenderTarget} renderTarget - The render target.
 		 */
-		render(renderer) {
-			renderer.beginRender();
+		render(renderer, renderTarget) {
+			renderer.beginRender(renderTarget);
 			renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
 			renderer.endRender();
 		}
@@ -11265,8 +11266,9 @@
 		 * @param {Scene} scene
 		 */
 		render(renderer, scene) {
+			// @deprecated
+			// This can be deleted when renderer.setClearColor is completely removed.
 			oldClearColor.copy(renderer.getClearColor());
-			renderer.setClearColor(1, 1, 1, 1);
 			const lightingData = scene.collector.lightingData;
 			const lightsArray = lightingData.lightsArray;
 			const shadowsNum = lightingData.shadowsNum;
@@ -11287,11 +11289,10 @@
 						shadow.update(light, j);
 						shadowTarget.activeCubeFace = j;
 					}
-					renderer.setRenderTarget(shadowTarget);
-					renderer.clear(true, true);
+					shadowTarget.setColorClearValue(1, 1, 1, 1).setClear(true, true, false);
 					const renderStates = scene.updateRenderStates(camera, j === 0);
 					const renderQueue = scene.updateRenderQueue(camera, false, false);
-					renderer.beginRender();
+					renderer.beginRender(shadowTarget);
 					for (let k = 0; k < renderQueue.layerList.length; k++) {
 						const renderQueueLayer = renderQueue.layerList[k];
 						if (this.shadowLayers !== null && this.shadowLayers.indexOf(renderQueueLayer.id) === -1) continue;
@@ -11308,6 +11309,9 @@
 
 				shadow.needsUpdate = false;
 			}
+
+			// @deprecated
+			// This can be deleted when renderer.setClearColor is completely removed.
 			renderer.setClearColor(oldClearColor.x, oldClearColor.y, oldClearColor.z, oldClearColor.w);
 		}
 	}
@@ -11560,8 +11564,9 @@
 
 		/**
 		 * Begin rendering.
+		 * @param {RenderTargetBase} renderTarget - The render target to render to.
 		 */
-		beginRender() {
+		beginRender(renderTarget) {
 			this._passInfo.enabled = true;
 		}
 
@@ -11614,12 +11619,19 @@
 		 * If you need a customized rendering process, it is recommended to use renderRenderableList method.
 		 * @param {Scene} scene - The scene to render.
 		 * @param {Camera} camera - The camera used to render the scene.
+		 * @param {RenderTargetBase} renderTarget - The render target to render to.
 		 * @param {RenderOptions} [options] - The render options for this scene render task.
 		 */
-		renderScene(scene, camera, options = {}) {
+		renderScene(scene, camera, renderTarget, options = {}) {
+			// Compatibility handling: if there are only 3 arguments,
+			// and the third is not a RenderTarget, treat it as options.
+			if (arguments.length === 3 && (!renderTarget || !renderTarget.isRenderTarget)) {
+				options = renderTarget;
+				renderTarget = null;
+			}
 			const renderStates = scene.getRenderStates(camera);
 			const renderQueue = scene.getRenderQueue(camera);
-			this.beginRender();
+			this.beginRender(renderTarget);
 			let renderQueueLayer;
 			for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {
 				renderQueueLayer = renderQueue.layerList[i];
@@ -11628,43 +11640,6 @@
 			}
 			this.endRender();
 		}
-
-		/**
-		 * Clear the color, depth and stencil buffers.
-		 * @param {boolean} [color=false] - Clear color buffer.
-		 * @param {boolean} [depth=false] - Clear depth buffer.
-		 * @param {boolean} [stencil=false] - Clear stencil buffer.
-		 */
-		clear(color, depth, stencil) {}
-
-		/**
-		 * Set clear color.
-		 * @param {number} r - Red component in the range 0.0 - 1.0.
-		 * @param {number} g - Green component in the range 0.0 - 1.0.
-		 * @param {number} b - Blue component in the range 0.0 - 1.0.
-		 * @param {number} a - Alpha component in the range 0.0 - 1.0.
-		 * @param {number} premultipliedAlpha - Whether the alpha is premultiplied.
-		 */
-		setClearColor(r, g, b, a, premultipliedAlpha) {}
-
-		/**
-		 * Returns a Vector4 instance with the current clear color and alpha.
-		 * Note: Do not modify the value of Vector4, it is read-only.
-		 * @returns {Vector4}
-		 */
-		getClearColor() {}
-
-		/**
-		 * This method sets the active rendertarget.
-		 * @param {RenderTargetBase} renderTarget The renderTarget that needs to be activated.
-		 */
-		setRenderTarget(renderTarget) {}
-
-		/**
-		 * Returns the current RenderTarget if there are; returns null otherwise.
-		 * @returns {RenderTargetBase | null}
-		 */
-		getRenderTarget() {}
 
 		/**
 		 * Copy a frame buffer to another.
@@ -11745,30 +11720,6 @@
 		 * This is useful when you use multiple renderers in one application.
 		 */
 		resetState() {}
-
-		/**
-		 * Set the occlusion query set.
-		 * Call this method before {@link ThinRenderer#beginRender} to set it,
-		 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
-		 * @param {QuerySet} querySet - The occlusion query set to set.
-		 */
-		setOcclusionQuerySet(querySet) {
-			this._currentOcclusionQuerySet = querySet;
-		}
-
-		/**
-		 * Set the timestamp writes.
-		 * Call this method before {@link ThinRenderer#beginRender} to set it,
-		 * and it will be automatically cleared after {@link ThinRenderer#endRender}.
-		 * @param {QuerySet} querySet - The timestamp query set to set.
-		 * @param {number} [beginIndex=0] - The beginning of pass write index in the query set.
-		 * @param {number} [endIndex=1] - The end of pass write index in the query set.
-		 */
-		setTimestampWrites(querySet, beginIndex = 0, endIndex = 1) {
-			this._currentTimestampWrites.querySet = querySet;
-			this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
-			this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
-		}
 
 		/**
 		 * Begin an occlusion query.
@@ -12872,7 +12823,9 @@
 	}
 
 	/**
-	 * Render Target is the wrapping class of gl.framebuffer.
+	 * RenderTargetBase is an abstract class representing a rendering target,
+	 * which encapsulates the configuration for a render pass,
+	 * including clear states, attachments, and other rendering parameters.
 	 * @extends EventDispatcher
 	 * @abstract
 	 */
@@ -12895,6 +12848,67 @@
 			 * @type {number}
 			 */
 			this.height = height;
+
+			/**
+			 * Whether to clear the color buffer before rendering to this render target.
+			 * @type {boolean}
+			 * @default true
+			 */
+			this.clearColor = true;
+
+			/**
+			 * Whether to clear the depth buffer before rendering to this render target.
+			 * @type {boolean}
+			 * @default true
+			 */
+			this.clearDepth = true;
+
+			/**
+			 * Whether to clear the stencil buffer before rendering to this render target.
+			 * @type {boolean}
+			 * @default true
+			 */
+			this.clearStencil = true;
+
+			/**
+			 * Clear color value.
+			 * @type {Color4}
+			 */
+			this.colorClearValue = new Color4(0, 0, 0, 0);
+
+			/**
+			 * Clear depth value.
+			 * @type {number}
+			 * @default 1
+			 */
+			this.depthClearValue = 1;
+
+			/**
+			 * Clear stencil value.
+			 * @type {number}
+			 * @default 0
+			 */
+			this.stencilClearValue = 0;
+
+			/**
+			 * A querySet that will store the occlusion query results. If null, occlusion queries are disabled.
+			 * @type {QuerySet|null}
+			 * @default null
+			 */
+			this.occlusionQuerySet = null;
+
+			/**
+			 * An array of objects defining where and when timestamp query values will be written.
+			 * @type {object}
+			 * @property {QuerySet|null} querySet - A timestamp querySet. If null, timestamp queries are disabled.
+			 * @property {number} beginningOfPassWriteIndex - A number specifying the query index in querySet where the timestamp at the beginning of the render pass will be written.
+			 * @property {number} endOfPassWriteIndex - A number specifying the query index in querySet where the timestamp at the end of the render pass will be written.
+			 */
+			this.timestampWrites = {
+				querySet: null,
+				beginningOfPassWriteIndex: 0,
+				endOfPassWriteIndex: 1
+			};
 		}
 
 		/**
@@ -12919,6 +12933,77 @@
 			this.dispatchEvent({
 				type: 'dispose'
 			});
+		}
+
+		/**
+		 * Sets the clear state.
+		 * @param {boolean} [color] - Whether to clear the color buffer.
+		 * @param {boolean} [depth] - Whether to clear the depth buffer.
+		 * @param {boolean} [stencil] - Whether to clear the stencil buffer.
+		 * @returns {RenderTargetBase} A reference to this render target.
+		 */
+		setClear(color, depth, stencil) {
+			this.clearColor = color !== undefined ? color : this.clearColor;
+			this.clearDepth = depth !== undefined ? depth : this.clearDepth;
+			this.clearStencil = stencil !== undefined ? stencil : this.clearStencil;
+			return this;
+		}
+
+		/**
+		 * Sets the clear values.
+		 * @param {number} r - Red channel value between 0.0 and 1.0.
+		 * @param {number} g - Green channel value between 0.0 and 1.0.
+		 * @param {number} b - Blue channel value between 0.0 and 1.0.
+		 * @param {number} a - Alpha channel value between 0.0 and 1.0.
+		 * @returns {RenderTargetBase} A reference to this render target.
+		 */
+		setColorClearValue(r, g, b, a) {
+			this.colorClearValue.setRGBA(r, g, b, a);
+			return this;
+		}
+
+		/**
+		 * Sets the clear depth value.
+		 * @param {number} depth - The depth value.
+		 * @returns {RenderTargetBase} A reference to this render target.
+		 */
+		setDepthClearValue(depth) {
+			this.depthClearValue = depth;
+			return this;
+		}
+
+		/**
+		 * Sets the clear stencil value.
+		 * @param {number} stencil - The stencil value.
+		 * @returns {RenderTargetBase} A reference to this render target.
+		 */
+		setStencilClearValue(stencil) {
+			this.stencilClearValue = stencil;
+			return this;
+		}
+
+		/**
+		 * Sets the occlusion query set.
+		 * @param {QuerySet|null} querySet - The occlusion query set. If null, occlusion queries are disabled.
+		 * @returns {RenderTargetBase} A reference to this render target.
+		 */
+		setOcclusionQuerySet(querySet) {
+			this.occlusionQuerySet = querySet;
+			return this;
+		}
+
+		/**
+		 * Sets the timestamp query set and the query indices.
+		 * @param {QuerySet|null} querySet - The timestamp query set. If null, timestamp queries are disabled.
+		 * @param {number} [beginIndex=0] - The query index in querySet where the timestamp at the beginning of the render pass will be written.
+		 * @param {number} [endIndex=1] - The query index in querySet where the timestamp at the end of the render pass will be written.
+		 * @returns {RenderTargetBase} A reference to this render target.
+		 */
+		setTimestampWrites(querySet, beginIndex = 0, endIndex = 1) {
+			this.timestampWrites.querySet = querySet;
+			this.timestampWrites.beginningOfPassWriteIndex = beginIndex;
+			this.timestampWrites.endOfPassWriteIndex = endIndex;
+			return this;
 		}
 	}
 
@@ -18290,13 +18375,30 @@
 		}
 		blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 			const gl = this._gl;
+			const state = this._state;
 			const capabilities = this._capabilities;
 			if (capabilities.version < 2) {
 				console.warn('WebGLRenderTargets: blitFramebuffer not support by WebGL' + capabilities.version);
 				return;
 			}
-			const readBuffer = this.get(read).__webglFramebuffer;
-			const drawBuffer = this.get(draw).__webglFramebuffer;
+			let needRestoreFramebuffer = false;
+			let readBuffer = this.get(read).__webglFramebuffer;
+			if (!readBuffer) {
+				this._setupRenderTarget(read);
+				readBuffer = this.get(read).__webglFramebuffer;
+				needRestoreFramebuffer = true;
+			}
+			let drawBuffer = this.get(draw).__webglFramebuffer;
+			if (!drawBuffer) {
+				this._setupRenderTarget(draw);
+				drawBuffer = this.get(draw).__webglFramebuffer;
+				needRestoreFramebuffer = true;
+			}
+			if (needRestoreFramebuffer) {
+				// restore framebuffer binding
+				const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack ? this.get(state.currentRenderTarget).__webglFramebuffer : null;
+				gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+			}
 			gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
 			gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, drawBuffer);
 			let mask = 0;
@@ -19386,8 +19488,34 @@
 			this._vertexArrayBindings = vertexArrayBindings;
 			this._querySets = querySets;
 		}
-		beginRender() {
-			super.beginRender();
+		beginRender(renderTarget) {
+			super.beginRender(renderTarget);
+			if (renderTarget) {
+				this._renderTargets.setRenderTarget(renderTarget);
+				const gl = this.context;
+				const state = this._state;
+				let clearBits = 0;
+				if (renderTarget.clearColor) {
+					state.colorBuffer.setClear(renderTarget.colorClearValue.r, renderTarget.colorClearValue.g, renderTarget.colorClearValue.b, renderTarget.colorClearValue.a);
+					clearBits |= gl.COLOR_BUFFER_BIT;
+				}
+				if (renderTarget.clearDepth) {
+					state.depthBuffer.setClear(renderTarget.depthClearValue);
+					clearBits |= gl.DEPTH_BUFFER_BIT;
+				}
+				if (renderTarget.clearStencil) {
+					state.stencilBuffer.setClear(renderTarget.stencilClearValue);
+					clearBits |= gl.STENCIL_BUFFER_BIT;
+				}
+				if (clearBits > 0) {
+					// Prevent warning when bits is equal to zero
+					gl.clear(clearBits);
+				}
+				this._currentOcclusionQuerySet = renderTarget.occlusionQuerySet;
+				this._currentTimestampWrites.querySet = renderTarget.timestampWrites.querySet;
+				this._currentTimestampWrites.beginningOfPassWriteIndex = renderTarget.timestampWrites.beginningOfPassWriteIndex;
+				this._currentTimestampWrites.endOfPassWriteIndex = renderTarget.timestampWrites.endOfPassWriteIndex;
+			}
 			if (this._currentOcclusionQuerySet) {
 				this._querySets.setQuerySet(this._currentOcclusionQuerySet);
 			}
@@ -19418,29 +19546,6 @@
 			state.colorBuffer.setMask(true);
 			this._currentMaterial = null;
 			super.endRender();
-		}
-		clear(color, depth, stencil) {
-			const gl = this.context;
-			let bits = 0;
-			if (color === undefined || color) bits |= gl.COLOR_BUFFER_BIT;
-			if (depth === undefined || depth) bits |= gl.DEPTH_BUFFER_BIT;
-			if (stencil === undefined || stencil) bits |= gl.STENCIL_BUFFER_BIT;
-			if (bits > 0) {
-				// Prevent warning when bits is equal to zero
-				gl.clear(bits);
-			}
-		}
-		setClearColor(r, g, b, a, premultipliedAlpha) {
-			this._state.colorBuffer.setClear(r, g, b, a, premultipliedAlpha);
-		}
-		getClearColor() {
-			return this._state.colorBuffer.getClear();
-		}
-		setRenderTarget(renderTarget) {
-			this._renderTargets.setRenderTarget(renderTarget);
-		}
-		getRenderTarget() {
-			return this._state.currentRenderTarget;
 		}
 		blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 			this._renderTargets.blitRenderTarget(read, draw, color, depth, stencil);
@@ -20222,6 +20327,51 @@
 			return queryProperties._result;
 		}
 	}
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.clear = function (color, depth, stencil) {
+		const gl = this.context;
+		let bits = 0;
+		if (color === undefined || color) bits |= gl.COLOR_BUFFER_BIT;
+		if (depth === undefined || depth) bits |= gl.DEPTH_BUFFER_BIT;
+		if (stencil === undefined || stencil) bits |= gl.STENCIL_BUFFER_BIT;
+		if (bits > 0) {
+			// Prevent warning when bits is equal to zero
+			gl.clear(bits);
+		}
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.setClearColor = function (r, g, b, a, premultipliedAlpha) {
+		this._state.colorBuffer.setClear(r, g, b, a, premultipliedAlpha);
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.getClearColor = function () {
+		return this._state.colorBuffer.getClear();
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.setRenderTarget = function (renderTarget) {
+		this._renderTargets.setRenderTarget(renderTarget);
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.getRenderTarget = function () {
+		return this._state.currentRenderTarget;
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.setOcclusionQuerySet = function (querySet) {
+		this._currentOcclusionQuerySet = querySet;
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.setTimestampWrites = function (querySet, beginIndex = 0, endIndex = 1) {
+		this._currentTimestampWrites.querySet = querySet;
+		this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
+		this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
+	};
 
 	exports.ATTACHMENT = ATTACHMENT;
 	exports.AmbientLight = AmbientLight;

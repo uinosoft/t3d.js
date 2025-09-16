@@ -11,6 +11,7 @@ export class OceanFieldBuilder {
 	constructor(renderer) {
 		this.renderer = renderer;
 		this.renderTarget = new RenderTarget2D(4, 4);
+		this.renderTarget.setClear(false, false, false);
 		this.butterflyTexture = new Map();
 		this.noiseTexture = new Map();
 		this.h0Pass = new ShaderPostPass(H0Shader);
@@ -71,7 +72,6 @@ export class OceanFieldBuilder {
 			this.renderTarget.attach(h0Textures[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);
 		}
 		this.renderTarget.resize(params.resolution, params.resolution);
-		this.renderer.setRenderTarget(this.renderTarget);
 
 		this.h0Pass.uniforms.noise = this.getNoiseTexture(params.resolution, params.randomSeed);
 		this.h0Pass.uniforms.resolution = params.resolution;
@@ -85,7 +85,7 @@ export class OceanFieldBuilder {
 			this.h0Pass.uniforms.cascades[i].maxK = 2.0 * Math.PI / params.cascades[i].minWave;
 		}
 
-		this.h0Pass.render(this.renderer);
+		this.h0Pass.render(this.renderer, this.renderTarget);
 	}
 
 	getNoiseTexture(size, randomSeed) {

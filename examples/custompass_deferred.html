@@ -139,6 +139,7 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const normalDepthRenderTarget = new t3d.RenderTarget2D(width, height);
 		normalDepthRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
@@ -251,24 +252,14 @@
 			shadowMapPass.render(renderer, scene);
 
 			if (params.render === 'forward') {
-				renderer.setRenderTarget(backRenderTarget);
-
-				renderer.setClearColor(0, 0, 0, 1);
-				renderer.clear(true, true, true);
-
-				renderer.beginRender();
+				renderer.beginRender(backRenderTarget);
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
 				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
 				renderer.endRender();
 			} else {
 				// render normalDepth texture
 
-				renderer.setRenderTarget(normalDepthRenderTarget);
-
-				renderer.setClearColor(0, 0, 0, 0);
-				renderer.clear(true, true, true);
-
-				renderer.beginRender();
+				renderer.beginRender(normalDepthRenderTarget);
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 					getMaterial: function(renderable) {
 						if (params.render == 'prelight-deferred') {
@@ -302,13 +293,8 @@
 
 				if (params.render == 'deferred') {
 					// render color texture
-
-					renderer.setRenderTarget(colorRenderTarget);
-
-					renderer.setClearColor(0, 0, 0, 0);
-					renderer.clear(true, true, true);
-
-					renderer.beginRender();
+					colorRenderTarget.setClear(true, true, true);
+					renderer.beginRender(colorRenderTarget);
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
 							colorMaterial.diffuse.copy(renderable.material.diffuse);
@@ -340,34 +326,30 @@
 						}
 					});
 					renderer.endRender();
-				}
-
-
-				if (params.render == 'deferred') {
+		
 					// render emissive light
-
-					renderer.setRenderTarget(resultRenderTarget);
-
-					renderer.setClearColor(0, 0, 0, 0);
-					renderer.clear(true, true, true);
-
 					emissiveLightPass.uniforms['samplerColor'] = colorRenderTarget.texture;
 					emissiveLightPass.uniforms['viewWidth'] = width;
 					emissiveLightPass.uniforms['viewHeight'] = height;
-					emissiveLightPass.render(renderer);
+					resultRenderTarget.setClear(true, true, true);
+					emissiveLightPass.render(renderer, resultRenderTarget);
 				}
-		
 
 				// todo support ambient light
 
 				// render lights
 
-				if (params.render == 'prelight-deferred') {
-					renderer.setRenderTarget(colorRenderTarget);
+				const accumulateTarget = params.render == 'prelight-deferred'
+					? colorRenderTarget
+					: resultRenderTarget;
 
-					renderer.setClearColor(0, 0, 0, 0);
-					renderer.clear(true, true, true);
+				if (params.render == 'prelight-deferred') {
+					accumulateTarget.setClear(true, true, true);
+					renderer.beginRender(accumulateTarget);
+					renderer.endRender();
 				}
+
+				accumulateTarget.setClear(false, false, false);
 
 				matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).invert();
 				cameraPos.copy(renderStates.camera.position);
@@ -375,6 +357,7 @@
 				const lightingGroup = renderStates.lighting.getGroup(0);
 
 				// directional
+		
 				const d_Pass = params.render == 'prelight-deferred' ? directionalLightPrePass : directionalLightPass;
 				if (params.render !== 'prelight-deferred') {
 					d_Pass.uniforms['samplerNormalDepth'] = normalDepthRenderTarget.texture;
@@ -413,10 +396,11 @@
 						d_Pass.material.defines['SHADOW'] = 0;
 					}
 
-					d_Pass.render(renderer);
+					d_Pass.render(renderer, accumulateTarget);
 				}
 
 				// point
+		
 				const p_Pass = params.render == 'prelight-deferred' ? pointLightPrePass : pointLightPass;
 				if (params.render !== 'prelight-deferred') {
 					p_Pass.uniforms['samplerNormalDepth'] = normalDepthRenderTarget.texture;
@@ -459,10 +443,11 @@
 						p_Pass.material.defines['SHADOW'] = 0;
 					}
 
-					p_Pass.render(renderer);
+					p_Pass.render(renderer, accumulateTarget);
 				}
 
 				// spot lights
+		
 				const s_Pass = params.render == 'prelight-deferred' ? spotLightPrePass : spotLightPass;
 				if (params.render !== 'prelight-deferred') {
 					s_Pass.uniforms['samplerNormalDepth'] = normalDepthRenderTarget.texture;
@@ -506,22 +491,18 @@
 						s_Pass.material.defines['SHADOW'] = 0;
 					}
 
-					s_Pass.render(renderer);
+					s_Pass.render(renderer, accumulateTarget);
 				}
 
 				if (params.render == 'prelight-deferred') {
 					// reconstruction
-
-					renderer.setRenderTarget(resultRenderTarget);
-
-					renderer.setClearColor(0, 0, 0, 1);
-					renderer.clear(true, true, true);
-
+		
 					reconstructionMaterial.uniforms['viewWidth'] = width;
 					reconstructionMaterial.uniforms['viewHeight'] = height;
 					reconstructionMaterial.uniforms['samplerLight'] = colorRenderTarget.texture;
 
-					renderer.beginRender();
+					resultRenderTarget.setClear(true, true, true);
+					renderer.beginRender(resultRenderTarget);
 					renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, {
 						getMaterial: function(renderable) {
 							if (renderable.material.acceptLight) {
@@ -559,17 +540,13 @@
 				// prelight-deferred support transparent objects
 				if (params.render == 'prelight-deferred') {
 					// render transparent objects forward
-					renderer.beginRender();
+					resultRenderTarget.setClear(false, false, false);
+					renderer.beginRender(resultRenderTarget);
 					renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
 					renderer.endRender();
 				}
 
 				// output
-
-				renderer.setRenderTarget(backRenderTarget);
-
-				renderer.setClearColor(0, 0, 0, 1);
-				renderer.clear(true, true, true);
 
 				const pass = params.fxaa ? fxaaPass : copyPass;
 
@@ -581,7 +558,7 @@
 					pass.uniforms['tDiffuse'] = resultRenderTarget.texture;
 				}
 		
-				pass.render(renderer);
+				pass.render(renderer, backRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);

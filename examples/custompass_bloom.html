@@ -168,43 +168,27 @@
 
 			shadowMapPass.render(renderer, scene);
 
-			renderer.setRenderTarget(tempRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, tempRenderTarget);
 
-			renderer.setRenderTarget(tempRenderTarget1);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-			highLightPass.render(renderer);
+			highLightPass.render(renderer, tempRenderTarget1);
 
-			renderer.setRenderTarget(tempRenderTarget2);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-			blurXPass.render(renderer);
+			blurXPass.render(renderer, tempRenderTarget2);
 
-			renderer.setRenderTarget(tempRenderTarget1);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-			blurYPass.render(renderer);
+			blurYPass.render(renderer, tempRenderTarget1);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
 			copyPass.material.transparent = false;
 			copyPass.uniforms.tDiffuse = tempRenderTarget.texture;
 			copyPass.uniforms.opacity = 1;
-			copyPass.render(renderer);
+			backRenderTarget.setClear(true, true, true);
+			copyPass.render(renderer, backRenderTarget);
 
 			if (bloomParams.enable) {
-				renderer.setRenderTarget(backRenderTarget);
-				// renderer.setClearColor(0, 0, 0, 0);
-				// renderer.clear(true, true, true);
 				copyPass.material.transparent = true;
 				copyPass.material.blending = t3d.BLEND_TYPE.ADD;
 				copyPass.uniforms.tDiffuse = tempRenderTarget1.texture;
 				copyPass.uniforms.opacity = bloomParams.intensity;
-				copyPass.render(renderer);
+				backRenderTarget.setClear(false, false, false);
+				copyPass.render(renderer, backRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);

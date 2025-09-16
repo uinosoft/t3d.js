@@ -170,49 +170,37 @@
 
 			// Step1: render scene to sceneRenderTarget
 
-			renderer.setRenderTarget(sceneRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.beginRender();
-
+			renderer.beginRender(sceneRenderTarget);
 			renderer.renderRenderableList(mainRenderQueueLayer.opaque, renderStates, {});
 			renderer.renderRenderableList(mainRenderQueueLayer.transparent, renderStates, {});
-
 			renderer.endRender();
 
 			renderer.updateRenderTargetMipmap(sceneRenderTarget);
 
 			// Step2: render transmission to transmissionRenderTarget
 
-			renderer.setRenderTarget(transmissionRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, false, false);
-
-			renderer.beginRender();
-
+			transmissionRenderTarget.setClear(true, false, false);
+			renderer.beginRender(transmissionRenderTarget);
 			renderer.renderRenderableList(transmissionRenderQueueLayer.opaque, renderStates, renderOptions);
 			renderer.renderRenderableList(transmissionRenderQueueLayer.transparent, renderStates, renderOptions);
-
 			renderer.endRender();
 
 			// Step3: blend sceneRenderTarget and transmissionRenderTarget to resultRenderTarget
 
-			renderer.setRenderTarget(resultRenderTarget);
+			resultRenderTarget.setClear(false, false, false);
 
 			copyPass.material.transparent = false;
 			copyPass.material.uniforms.tDiffuse = sceneRenderTarget.texture;
-			copyPass.render(renderer);
+			copyPass.render(renderer, resultRenderTarget);
 
 			copyPass.material.transparent = true;
 			copyPass.material.uniforms.tDiffuse = transmissionRenderTarget.texture;
-			copyPass.render(renderer);
+			copyPass.render(renderer, resultRenderTarget);
 
 			// Step4: render resultRenderTarget to screen
 
-			renderer.setRenderTarget(backRenderTarget);
 			fxaaPass.material.uniforms.tDiffuse = resultRenderTarget.texture;
-			fxaaPass.render(renderer);
+			fxaaPass.render(renderer, backRenderTarget);
 		}
 
 		function onWindowResize() {

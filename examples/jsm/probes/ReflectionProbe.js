@@ -51,15 +51,12 @@ class ReflectionProbe {
 			this.camera.lookAt(this.lookTarget, this.ups[i]);
 			this.camera.updateMatrix();
 
-			this.renderTarget.activeCubeFace = i;
-			renderer.setRenderTarget(this.renderTarget);
-
-			renderer.clear(true, true, true); // TODO depth bug here?
-
 			const renderStates = scene.updateRenderStates(this.camera, false);
 			const renderQueue = scene.updateRenderQueue(this.camera, false, false);
 
-			renderer.beginRender();
+			this.renderTarget.activeCubeFace = i;
+
+			renderer.beginRender(this.renderTarget);
 
 			let renderQueueLayer;
 			for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {

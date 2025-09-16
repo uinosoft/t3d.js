@@ -53,8 +53,10 @@
 
 		const renderer = new t3d.WebGLRenderer(gl);
 		renderer.shaderCompileOptions.compileAsynchronously = true;
-		renderer.setClearColor(0.1, 0.1, 0.1, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget
+			.setColorClearValue(0.1, 0.1, 0.1, 1)
+			.setClear(true, true, false);
 		const shadowMapPass = new t3d.ShadowMapPass();
 
 		const scene = new t3d.Scene();
@@ -239,6 +241,7 @@
 
 		let isQuerySetReading = false;
 		const timerQuerySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.TIMESTAMP, 2);
+		backRenderTarget.setTimestampWrites(timerQuerySet, 0, 1);
 
 		const clusteredDebugMaterial = new t3d.ShaderMaterial(ClusteredDebugShader);
 		clusteredDebugMaterial.acceptLight = true;
@@ -275,12 +278,8 @@
 			scene.updateRenderStates(camera);
 
 			shadowMapPass.render(renderer, scene);
-		
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.clear(true, true, false);
-			renderer.setTimestampWrites(timerQuerySet, 0, 1);
 
-			renderer.renderScene(scene, camera, renderOptions);
+			renderer.renderScene(scene, camera, backRenderTarget, renderOptions);
 
 			if (!isQuerySetReading) {
 				renderer.readQuerySetResults(timerQuerySet, [0, 1])

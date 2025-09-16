@@ -151,11 +151,6 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(tempRenderTarget1);
-
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, true);
-
 			viewProjectionMatrix.copy(camera.viewMatrix).premultiply(camera.projectionMatrix);
 			viewProjectionMatrixInverse.copy(viewProjectionMatrix).invert();
 			motionBlurPass.uniforms.worldToClipMatrix.set(viewProjectionMatrix.elements);
@@ -166,14 +161,11 @@
 			previousViewProjectionMatrix.copy(viewProjectionMatrix);
 			previousCameraPosition.copy(camera.position);
 
-			renderer.renderScene(scene, camera);
+			tempRenderTarget1.setColorClearValue(0, 0, 0, 1);
+			renderer.renderScene(scene, camera, tempRenderTarget1);
 
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, true);
-
-			motionBlurPass.render(renderer);
+			backRenderTarget.setColorClearValue(0, 0, 0, 1);
+			motionBlurPass.render(renderer, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

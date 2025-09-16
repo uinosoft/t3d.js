@@ -375,3 +375,50 @@ export class WebGLQueries extends PropertyMap {
 	}
 
 }
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.clear = function(color, depth, stencil) {
+	const gl = this.context;
+
+	let bits = 0;
+
+	if (color === undefined || color) bits |= gl.COLOR_BUFFER_BIT;
+	if (depth === undefined || depth) bits |= gl.DEPTH_BUFFER_BIT;
+	if (stencil === undefined || stencil) bits |= gl.STENCIL_BUFFER_BIT;
+
+	if (bits > 0) { // Prevent warning when bits is equal to zero
+		gl.clear(bits);
+	}
+};
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.setClearColor = function(r, g, b, a, premultipliedAlpha) {
+	this._state.colorBuffer.setClear(r, g, b, a, premultipliedAlpha);
+};
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.getClearColor = function() {
+	return this._state.colorBuffer.getClear();
+};
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.setRenderTarget = function(renderTarget) {
+	this._renderTargets.setRenderTarget(renderTarget);
+};
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.getRenderTarget = function() {
+	return this._state.currentRenderTarget;
+};
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.setOcclusionQuerySet = function(querySet) {
+	this._currentOcclusionQuerySet = querySet;
+};
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.setTimestampWrites = function(querySet, beginIndex = 0, endIndex = 1) {
+	this._currentTimestampWrites.querySet = querySet;
+	this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
+	this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
+};

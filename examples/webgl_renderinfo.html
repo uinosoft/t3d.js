@@ -27,111 +27,109 @@
     </script>
 
     <script type="module">
-        import * as t3d from 't3d';
-        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
-        import { GUI } from './libs/lil-gui.esm.min.js';
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
 
-        let width = window.innerWidth || 2;
-        let height = window.innerHeight || 2;
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        document.body.appendChild(canvas);
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
 
-        const gl = canvas.getContext('webgl2', {
-        	antialias: true
-        });
+		const gl = canvas.getContext('webgl2', {
+			antialias: true
+		});
 
-        const renderer = new t3d.WebGLRenderer(gl);
-        renderer.setClearColor(0.1, 0.1, 0.1, 1);
-        const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const renderer = new t3d.WebGLRenderer(gl);
+		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget
+			.setColorClearValue(0.1, 0.1, 0.1, 1)
+			.setClear(true, true, false);
 
-        const scene = new t3d.Scene();
+		const scene = new t3d.Scene();
 
-        const positionAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array([
-        	-5, -5, 0,
-        	-5, 5, 0,
-        	0, -5, 0,
-        	0, 5, 0,
-        	5, -5, 0,
-        	5, 5, 0
-        ]), 3));
+		const positionAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array([
+			-5, -5, 0,
+			-5, 5, 0,
+			0, -5, 0,
+			0, 5, 0,
+			5, -5, 0,
+			5, 5, 0
+		]), 3));
 
-        const drawModes = ['LINES', 'LINE_STRIP', 'LINE_LOOP', 'TRIANGLES', 'TRIANGLE_STRIP', 'TRIANGLE_FAN', 'POINTS'];
+		const drawModes = ['LINES', 'LINE_STRIP', 'LINE_LOOP', 'TRIANGLES', 'TRIANGLE_STRIP', 'TRIANGLE_FAN', 'POINTS'];
 
-        const type = {
-        	drawMode: 'LINES'
-        };
+		const type = {
+			drawMode: 'LINES'
+		};
 
-        const geometry = new t3d.Geometry();
-        geometry.addAttribute('a_Position', positionAttribute);
-        const material = new t3d.BasicMaterial();
-        material.side = t3d.DRAW_SIDE.DOUBLE;
-        material.drawMode = t3d.DRAW_MODE.LINES;
-        const mesh = new t3d.Mesh(geometry, material);
-        scene.add(mesh);
+		const geometry = new t3d.Geometry();
+		geometry.addAttribute('a_Position', positionAttribute);
+		const material = new t3d.BasicMaterial();
+		material.side = t3d.DRAW_SIDE.DOUBLE;
+		material.drawMode = t3d.DRAW_MODE.LINES;
+		const mesh = new t3d.Mesh(geometry, material);
+		scene.add(mesh);
 
-        const pointsMaterial = new t3d.PointsMaterial();
+		const pointsMaterial = new t3d.PointsMaterial();
 
-        const camera = new t3d.Camera();
-        camera.position.set(0, 10, 30);
-        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-        camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-        scene.add(camera);
+		const camera = new t3d.Camera();
+		camera.position.set(0, 10, 30);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
 
-        const controller = new OrbitControls(camera, canvas);
+		const controller = new OrbitControls(camera, canvas);
 
-        const renderInfo = new t3d.RenderInfo();
+		const renderInfo = new t3d.RenderInfo();
 
-        const gui = new GUI();
-        gui.add({ RenderInfo: 'Render' }, 'RenderInfo').disable();
+		const gui = new GUI();
+		gui.add({ RenderInfo: 'Render' }, 'RenderInfo').disable();
 
-        gui.add(type, 'drawMode', drawModes).onChange(value => {
-        	if (value == 'POINTS') {
-        		mesh.material = pointsMaterial;
-        	} else {
-        		mesh.material == pointsMaterial ? mesh.material = material : null;
-        		material.drawMode = t3d.DRAW_MODE[value];
-        	}
-        });
+		gui.add(type, 'drawMode', drawModes).onChange(value => {
+			if (value == 'POINTS') {
+				mesh.material = pointsMaterial;
+			} else {
+				mesh.material == pointsMaterial ? mesh.material = material : null;
+				material.drawMode = t3d.DRAW_MODE[value];
+			}
+		});
 
-        gui.add(renderInfo.render, 'calls').disable().listen();
-        gui.add(renderInfo.render, 'triangles').disable().listen();
-        gui.add(renderInfo.render, 'lines').disable().listen();
-        gui.add(renderInfo.render, 'points').disable().listen();
+		gui.add(renderInfo.render, 'calls').disable().listen();
+		gui.add(renderInfo.render, 'triangles').disable().listen();
+		gui.add(renderInfo.render, 'lines').disable().listen();
+		gui.add(renderInfo.render, 'points').disable().listen();
 
-        function loop(count) {
-        	requestAnimationFrame(loop);
+		function loop(count) {
+			requestAnimationFrame(loop);
 
-        	controller.update();
+			controller.update();
 
-        	scene.updateMatrix();
-        	const renderStates = scene.updateRenderStates(camera);
-        	const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
+			scene.updateMatrix();
+			const renderStates = scene.updateRenderStates(camera);
+			const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 
-        	renderer.setRenderTarget(backRenderTarget);
-        	renderer.clear(true, true, false);
+			renderInfo.reset();
 
-        	renderInfo.reset();
+			renderer.beginRender(backRenderTarget);
+			renderer.renderRenderableList(mainLayer.opaque, renderStates, { renderInfo: renderInfo });
+			renderer.renderRenderableList(mainLayer.transparent, renderStates, { renderInfo: renderInfo });
+			renderer.endRender();
+		}
+		requestAnimationFrame(loop);
 
-        	renderer.beginRender();
-        	renderer.renderRenderableList(mainLayer.opaque, renderStates, { renderInfo: renderInfo });
-        	renderer.renderRenderableList(mainLayer.transparent, renderStates, { renderInfo: renderInfo });
-        	renderer.endRender();
-        }
-        requestAnimationFrame(loop);
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
 
-        function onWindowResize() {
-        	width = window.innerWidth || 2;
-        	height = window.innerHeight || 2;
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-        	camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
-
-        	backRenderTarget.resize(width, height);
-        }
-        window.addEventListener('resize', onWindowResize, false);
-
+			backRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
     </script>
 </body>
 

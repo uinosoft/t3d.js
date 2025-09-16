@@ -101,14 +101,10 @@ class PlanarReflectionProbe {
 
 		// Render
 
-		renderer.setRenderTarget(this.renderTarget);
-
-		renderer.clear(true, true, true);
-
 		const renderStates = scene.updateRenderStates(mirrorCamera, false);
 		const renderQueue = scene.updateRenderQueue(mirrorCamera, false, false);
 
-		renderer.beginRender();
+		renderer.beginRender(this.renderTarget);
 
 		let renderQueueLayer;
 		for (let i = 0, l = renderQueue.layerList.length; i < l; i++) {

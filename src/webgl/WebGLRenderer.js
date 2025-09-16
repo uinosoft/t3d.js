@@ -157,8 +157,46 @@ class WebGLRenderer extends ThinRenderer {
 		this._querySets = querySets;
 	}
 
-	beginRender() {
-		super.beginRender();
+	beginRender(renderTarget) {
+		super.beginRender(renderTarget);
+
+		if (renderTarget) {
+			this._renderTargets.setRenderTarget(renderTarget);
+
+			const gl = this.context;
+			const state = this._state;
+
+			let clearBits = 0;
+
+			if (renderTarget.clearColor) {
+				state.colorBuffer.setClear(
+					renderTarget.colorClearValue.r,
+					renderTarget.colorClearValue.g,
+					renderTarget.colorClearValue.b,
+					renderTarget.colorClearValue.a
+				);
+				clearBits |= gl.COLOR_BUFFER_BIT;
+			}
+
+			if (renderTarget.clearDepth) {
+				state.depthBuffer.setClear(renderTarget.depthClearValue);
+				clearBits |= gl.DEPTH_BUFFER_BIT;
+			}
+
+			if (renderTarget.clearStencil) {
+				state.stencilBuffer.setClear(renderTarget.stencilClearValue);
+				clearBits |= gl.STENCIL_BUFFER_BIT;
+			}
+
+			if (clearBits > 0) { // Prevent warning when bits is equal to zero
+				gl.clear(clearBits);
+			}
+
+			this._currentOcclusionQuerySet = renderTarget.occlusionQuerySet;
+			this._currentTimestampWrites.querySet = renderTarget.timestampWrites.querySet;
+			this._currentTimestampWrites.beginningOfPassWriteIndex = renderTarget.timestampWrites.beginningOfPassWriteIndex;
+			this._currentTimestampWrites.endOfPassWriteIndex = renderTarget.timestampWrites.endOfPassWriteIndex;
+		}
 
 		if (this._currentOcclusionQuerySet) {
 			this._querySets.setQuerySet(this._currentOcclusionQuerySet);
@@ -202,36 +240,6 @@ class WebGLRenderer extends ThinRenderer {
 		this._currentMaterial = null;
 
 		super.endRender();
-	}
-
-	clear(color, depth, stencil) {
-		const gl = this.context;
-
-		let bits = 0;
-
-		if (color === undefined || color) bits |= gl.COLOR_BUFFER_BIT;
-		if (depth === undefined || depth) bits |= gl.DEPTH_BUFFER_BIT;
-		if (stencil === undefined || stencil) bits |= gl.STENCIL_BUFFER_BIT;
-
-		if (bits > 0) { // Prevent warning when bits is equal to zero
-			gl.clear(bits);
-		}
-	}
-
-	setClearColor(r, g, b, a, premultipliedAlpha) {
-		this._state.colorBuffer.setClear(r, g, b, a, premultipliedAlpha);
-	}
-
-	getClearColor() {
-		return this._state.colorBuffer.getClear();
-	}
-
-	setRenderTarget(renderTarget) {
-		this._renderTargets.setRenderTarget(renderTarget);
-	}
-
-	getRenderTarget() {
-		return this._state.currentRenderTarget;
 	}
 
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {

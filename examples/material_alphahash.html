@@ -164,12 +164,8 @@
 
 				gBuffer.update(renderer, scene, camera);
 
-				renderer.setRenderTarget(backRenderTarget);
-
-				renderer.setClearColor(0, 0, 0, 1);
-				renderer.clear(true, true, true);
-
-				gBuffer.renderDebug(renderer, camera, 'velocity');
+				backRenderTarget.setColorClearValue(0, 0, 0, 1);
+				gBuffer.renderDebug(renderer, camera, 'velocity', backRenderTarget);
 
 				return;
 			}
@@ -178,13 +174,9 @@
 				scene.updateMatrix();
 				scene.updateRenderStates(camera);
 				scene.updateRenderQueue(camera);
-
-				renderer.setRenderTarget(backRenderTarget);
-
-				renderer.setClearColor(0.3, 0.3, 0.3, 1);
-				renderer.clear(true, true, true);
 		
-				renderer.renderScene(scene, camera);
+				backRenderTarget.setColorClearValue(0.3, 0.3, 0.3, 1);
+				renderer.renderScene(scene, camera, backRenderTarget);
 				return;
 			}
 
@@ -205,14 +197,7 @@
 
 				if (params.dynamic) {
 					gBuffer.update(renderer, scene, camera);
-				}
 
-				renderer.setRenderTarget(tempRenderTarget);
-
-				renderer.setClearColor(0.3, 0.3, 0.3, 1);
-				renderer.clear(true, true, true);
-
-				if (params.dynamic) {
 					if (superSampling.finished()) {
 						superSampling._frame = 1;
 					}
@@ -222,7 +207,8 @@
 				superSampling.jitterProjection(camera, width, height);
 
 				scene.updateRenderStates(camera, false);
-				renderer.renderScene(scene, camera);
+				tempRenderTarget.setColorClearValue(0.3, 0.3, 0.3, 1);
+				renderer.renderScene(scene, camera, tempRenderTarget);
 
 				camera.projectionMatrix.copy(oldProjectionMatrix);
 
@@ -232,14 +218,9 @@
 			}
 
 			copyPass.uniforms['tDiffuse'] = tex;
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-		
 			copyPass.material.transparent = true;
-			copyPass.render(renderer);
+			backRenderTarget.setColorClearValue(0, 0, 0, 0);
+			copyPass.render(renderer, backRenderTarget);
 		}
 
 		requestAnimationFrame(loop);

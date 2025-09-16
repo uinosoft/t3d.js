@@ -42,7 +42,7 @@
 			document.body.appendChild(canvas);
 
 			const forwardRenderer = new ForwardRenderer(canvas);
-			forwardRenderer.setClearColor(0.75, 0.82, 0.9, 1);
+			forwardRenderer.backRenderTarget.setColorClearValue(0.75, 0.82, 0.9, 1);
 
 			const scene = new t3d.Scene();
 			scene.fog = new t3d.Fog(0xbfd1e5, 50, 80);

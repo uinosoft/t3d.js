@@ -104,9 +104,13 @@ class DeferredRenderer extends WebGLRenderer {
 	}
 
 	render(scene, camera, renderTarget) {
+		renderTarget = renderTarget || this.backRenderTarget;
+
+		const oldClearColor = renderTarget.clearColor;
+
 		const gBuffer = this.gBuffer;
-		const width = this.backRenderTarget.width;
-		const height = this.backRenderTarget.height;
+		const width = renderTarget.width;
+		const height = renderTarget.height;
 
 		scene.updateMatrix();
 		const renderStates = scene.updateRenderStates(camera);
@@ -119,10 +123,6 @@ class DeferredRenderer extends WebGLRenderer {
 		gBuffer.update(this, scene, camera);
 
 		// Step 2: light accum
-
-		this.setRenderTarget(renderTarget || this.backRenderTarget);
-		this.setClearColor(0, 0, 0, 0);
-		this.clear(true, true, true);
 
 		matProjViewInverse.copy(renderStates.camera.projectionViewMatrix).invert();
 		eyePosition.copy(renderStates.camera.position);
@@ -173,8 +173,10 @@ class DeferredRenderer extends WebGLRenderer {
 				pass.uniforms['shadowMatrix'].set(lightingGroup.directionalShadowMatrix, i * 16);
 			}
 
-			pass.render(this);
+			pass.render(this, renderTarget);
 		}
+
+		renderTarget.clearColor = false;
 
 		// point
 
@@ -210,7 +212,7 @@ class DeferredRenderer extends WebGLRenderer {
 				pass.uniforms['shadowCameraRange'][1] = shadow.shadowCameraRange[1];
 			}
 
-			pass.render(this);
+			pass.render(this, renderTarget);
 		}
 
 		// spot
@@ -248,7 +250,7 @@ class DeferredRenderer extends WebGLRenderer {
 				pass.uniforms['shadowMatrix'].set(lightingGroup.spotShadowMatrix, i * 16);
 			}
 
-			pass.render(this);
+			pass.render(this, renderTarget);
 		}
 
 		// ambientCubemap
@@ -260,8 +262,12 @@ class DeferredRenderer extends WebGLRenderer {
 			pass.uniforms['cubeMap'] = this.ambientCubemap;
 			pass.uniforms['intensity'] = this.ambientCubemapIntensity;
 
-			pass.render(this);
+			pass.render(this, renderTarget);
 		}
+
+		// restore
+
+		renderTarget.clearColor = oldClearColor;
 	}
 
 }

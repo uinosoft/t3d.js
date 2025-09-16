@@ -203,48 +203,23 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.setRenderTarget(tempRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(scene, camera);
-
-			renderer.setRenderTarget(tempRenderTarget2);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
+			renderer.renderScene(scene, camera, tempRenderTarget);
 
 			projection.copy(camera.projectionMatrix);
 			projectionInv.copy(camera.projectionMatrix).invert();
 			viewInverseTranspose.copy(camera.worldMatrix).transpose();
 
-			ssrPass.render(renderer);
-
-			renderer.setRenderTarget(tempRenderTarget3);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
+			ssrPass.render(renderer, tempRenderTarget2);
 
 			blurPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
 			blurPass.uniforms['direction'] = 0;
-			blurPass.render(renderer);
-
-			renderer.setRenderTarget(tempRenderTarget2);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
+			blurPass.render(renderer, tempRenderTarget3);
 
 			blurPass.uniforms['tDiffuse'] = tempRenderTarget3.texture;
 			blurPass.uniforms['direction'] = 1;
-			blurPass.render(renderer);
+			blurPass.render(renderer, tempRenderTarget2);
 
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, true);
-
-			blendPass.render(renderer);
+			blendPass.render(renderer, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

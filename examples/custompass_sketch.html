@@ -77,6 +77,7 @@
 
 		// custom pass
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(1, 1, 1, 1);
 
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
@@ -142,27 +143,19 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.setRenderTarget(tempRenderTarget2);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
 			matProjViewInverse.multiplyMatrices(camera.projectionMatrix, camera.viewMatrix).invert();
 
-			sketchPass.render(renderer);
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(1, 1, 1, 0);
-			renderer.clear(true, true, true);
+			sketchPass.render(renderer, tempRenderTarget2);
 
 			if (beauty) {
-				renderer.renderScene(scene, camera);
+				backRenderTarget.clearColor = true;
+				renderer.renderScene(scene, camera, backRenderTarget);
 			}
 
 			if (sketch) {
 				copyPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
-				copyPass.render(renderer);
+				backRenderTarget.setClear(!beauty, true, true);
+				copyPass.render(renderer, backRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);

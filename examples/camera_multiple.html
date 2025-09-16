@@ -98,8 +98,6 @@
 		cameraMini.add(skyBox);
 		sceneMini.add(cameraMini);
 
-		forwardRenderer.autoClear = false;
-
 		function loop(count) {
 			requestAnimationFrame(loop);
 
@@ -112,14 +110,14 @@
 			cameraMini.position.z = 100 * Math.cos(count / 1000 * .5);
 			cameraMini.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 
-			forwardRenderer.setClearColor(0, 0, 0, 0);
-			forwardRenderer.clear(true, true, true);
-
+			forwardRenderer.backRenderTarget
+				.setColorClearValue(0, 0, 0, 0)
+				.setClear(true, true, true);
 			forwardRenderer.render(scene, camera);
 
-			forwardRenderer.setClearColor(1, 0, 0, 1);
-			forwardRenderer.clear(false, true, true);
-
+			forwardRenderer.backRenderTarget
+				.setColorClearValue(1, 0, 0, 1)
+				.setClear(false, true, true);
 			forwardRenderer.render(sceneMini, cameraMini);
 		}
 		requestAnimationFrame(loop);

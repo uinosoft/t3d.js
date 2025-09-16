@@ -137,31 +137,15 @@
 			depthScene.updateRenderStates(camera);
 			depthScene.updateRenderQueue(camera, false, false);
 
-			renderer.setRenderTarget(tempRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(depthScene, camera);
-
-			renderer.setRenderTarget(tempRenderTarget2);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, false, true);
+			renderer.renderScene(depthScene, camera, tempRenderTarget);
 		
-			renderer.renderScene(scene, camera);
-
-			renderer.setRenderTarget(tempRenderTarget3);
+			tempRenderTarget2.clearDepth = false;
+			renderer.renderScene(scene, camera, tempRenderTarget2);
 
 			renderer.blitRenderTarget(tempRenderTarget2, tempRenderTarget3);
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
 		
 			copyPass.uniforms.tDiffuse = tempRenderTarget3.texture;
-			copyPass.render(renderer);
+			copyPass.render(renderer, backRenderTarget);
 		}
 		
 		if (renderer.capabilities.version < 2) {

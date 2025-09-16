@@ -140,6 +140,9 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget
+			.setColorClearValue(0.1, 0.1, 0.1, 1)
+			.setClear(true, true, false);
 
 		function loop(count) {
 			requestAnimationFrame(loop);
@@ -156,11 +159,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, false);
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

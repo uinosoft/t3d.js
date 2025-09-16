@@ -178,6 +178,7 @@ class WebGLRenderTargets extends PropertyMap {
 
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 		const gl = this._gl;
+		const state = this._state;
 		const capabilities = this._capabilities;
 
 		if (capabilities.version < 2) {
@@ -185,8 +186,28 @@ class WebGLRenderTargets extends PropertyMap {
 			return;
 		}
 
-		const readBuffer = this.get(read).__webglFramebuffer;
-		const drawBuffer = this.get(draw).__webglFramebuffer;
+		let needRestoreFramebuffer = false;
+
+		let readBuffer = this.get(read).__webglFramebuffer;
+		if (!readBuffer) {
+			this._setupRenderTarget(read);
+			readBuffer = this.get(read).__webglFramebuffer;
+			needRestoreFramebuffer = true;
+		}
+
+		let drawBuffer = this.get(draw).__webglFramebuffer;
+		if (!drawBuffer) {
+			this._setupRenderTarget(draw);
+			drawBuffer = this.get(draw).__webglFramebuffer;
+			needRestoreFramebuffer = true;
+		}
+
+		if (needRestoreFramebuffer) { // restore framebuffer binding
+			const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+				this.get(state.currentRenderTarget).__webglFramebuffer : null;
+			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+		}
+
 		gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
 		gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, drawBuffer);
 

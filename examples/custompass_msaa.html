@@ -120,32 +120,21 @@
 			scene.updateRenderQueue(camera);
 
 			if (params.msaa) {
-				renderer.setRenderTarget(getMultipleSamplingRenderTarget(params.samplers));
-
-				renderer.setClearColor(0, 0, 0, 0);
-				renderer.clear(true, true, true);
-
-				renderer.renderScene(scene, camera);
-
-				renderer.setRenderTarget(tempRenderTarget);
+				renderer.renderScene(scene, camera, getMultipleSamplingRenderTarget(params.samplers));
 
 				if (renderer.capabilities.version < 2) {
 					document.getElementById('notSupported').style.display = '';
 				} else {
-					renderer.blitRenderTarget(getMultipleSamplingRenderTarget(params.samplers), tempRenderTarget, true, true, false);
+					renderer.blitRenderTarget(
+						getMultipleSamplingRenderTarget(params.samplers), tempRenderTarget,
+						true, true, false
+					);
 				}
-			}
 
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			if (params.msaa) {
 				copyPass.uniforms.tDiffuse = tempRenderTarget.texture;
-				copyPass.render(renderer);
+				copyPass.render(renderer, backRenderTarget);
 			} else {
-				renderer.renderScene(scene, camera);
+				renderer.renderScene(scene, camera, backRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);

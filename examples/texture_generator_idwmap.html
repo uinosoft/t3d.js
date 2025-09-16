@@ -45,8 +45,8 @@
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
-		renderer.setClearColor(0.6, 0.6, 0.6, 1);
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0.6, 0.6, 0.6, 1);
 
 		const scene = new t3d.Scene();
 
@@ -119,9 +119,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.clear(true, true, true);
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, backRenderTarget);
 		}
 
 		requestAnimationFrame(loop);

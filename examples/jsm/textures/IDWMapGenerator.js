@@ -24,6 +24,9 @@ class IDWMapGenerator {
 
 		this._grayRenderTarget = new RenderTarget2D(width, height);
 		this._grayRenderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		this._grayRenderTarget
+			.setColorClearValue(0, 0, 0, 1)
+			.setClear(true, false, false);
 
 		const pointTexture = new Texture2D();
 		pointTexture.type = PIXEL_TYPE.FLOAT;
@@ -46,6 +49,9 @@ class IDWMapGenerator {
 
 		this._colorizeRenderTarget = new RenderTarget2D(width, height);
 		this._colorizeRenderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		this._colorizeRenderTarget
+			.setColorClearValue(0, 0, 0, 0)
+			.setClear(true, false, false);
 
 		this._colorizePass = new ShaderPostPass(idwmapColorizeShader);
 		this._colorizePass.material.depthTest = false;
@@ -165,11 +171,9 @@ class IDWMapGenerator {
 
 		// Render gray texture
 
-		renderer.getClearColor().toArray(_tempClearColor); // save clear color
-
-		renderer.setRenderTarget(this._grayRenderTarget);
-		renderer.setClearColor(0, 0, 0, 1);
-		renderer.clear(true, true, true);
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
+		renderer.getClearColor().toArray(_tempClearColor);
 
 		if (this._grayPass.material.defines.POINTS_NUM !== dataLength) {
 			this._grayPass.material.defines.POINTS_NUM = dataLength;
@@ -179,10 +183,12 @@ class IDWMapGenerator {
 		this._grayPass.material.uniforms.idw_exponent = exponent;
 		this._grayPass.material.uniforms.pointTextureSize = textureSize;
 
-		this._grayPass.render(renderer);
+		this._grayPass.render(renderer, this._grayRenderTarget);
 
 		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
 
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
 		renderer.setClearColor(..._tempClearColor);
 
 		return this;
@@ -197,21 +203,21 @@ class IDWMapGenerator {
 	 * @returns {IDWMapGenerator} this
 	 */
 	colorize(renderer, gradientTexture, options = {}) {
-		renderer.getClearColor().toArray(_tempClearColor); // save clear color
-
-		renderer.setRenderTarget(this._colorizeRenderTarget);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, false, false);
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
+		renderer.getClearColor().toArray(_tempClearColor);
 
 		if (this._colorizePass.material.defines.ISOLINE !== !!options.isoline) {
 			this._colorizePass.material.defines.ISOLINE = !!options.isoline;
 			this._colorizePass.material.needsUpdate = true;
 		}
 		this._colorizePass.material.uniforms.colormap = gradientTexture;
-		this._colorizePass.render(renderer);
+		this._colorizePass.render(renderer, this._colorizeRenderTarget);
 
 		renderer.updateRenderTargetMipmap(this._colorizeRenderTarget);
 
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
 		renderer.setClearColor(..._tempClearColor);
 
 		return this;

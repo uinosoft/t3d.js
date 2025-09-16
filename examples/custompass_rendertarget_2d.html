@@ -43,6 +43,7 @@
 		const renderer = new t3d.WebGLRenderer(gl);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
 
 		const scene = new t3d.Scene();
 
@@ -92,11 +93,8 @@
 				dymmyScene.updateRenderQueue(dymmyCamera);
 
 				renderTarget2D.activeMipmapLevel = i;
-				renderer.setRenderTarget(renderTarget2D);
-				renderer.setClearColor(0.3, 0.3, 0.3, 1);
-				renderer.clear(true, true, true);
-		
-				renderer.renderScene(dymmyScene, dymmyCamera);
+				renderTarget2D.setColorClearValue(0.3, 0.3, 0.3, 1);
+				renderer.renderScene(dymmyScene, dymmyCamera, renderTarget2D);
 
 				dymmyCamera.rect.z /= 2;
 				dymmyCamera.rect.w /= 2;
@@ -122,10 +120,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.setRenderTarget(backRenderTarget);
-			renderer.setClearColor(0.1, 0.1, 0.1, 1);
-			renderer.clear(true, true, true);
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

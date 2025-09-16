@@ -45,7 +45,7 @@
 		document.body.appendChild(canvas);
 
 		const renderer = new ForwardRenderer(canvas);
-		renderer.setClearColor(0.1, 0.1, 0.1, 1);
+		renderer.backRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
 		renderer.matrixAutoUpdate = false;
 
 		const capabilities = renderer.capabilities;

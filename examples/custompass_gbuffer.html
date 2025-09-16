@@ -82,6 +82,7 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -106,13 +107,7 @@
 			scene.updateRenderQueue(camera);
 
 			gBuffer.update(renderer, scene, camera);
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, true);
-
-			gBuffer.renderDebug(renderer, camera, params.debug);
+			gBuffer.renderDebug(renderer, camera, params.debug, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

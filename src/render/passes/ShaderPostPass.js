@@ -55,10 +55,11 @@ class ShaderPostPass {
 
 	/**
 	 * Render the post pass.
-	 * @param {ThinRenderer} renderer
+	 * @param {ThinRenderer} renderer - The renderer.
+	 * @param {RenderTarget} renderTarget - The render target.
 	 */
-	render(renderer) {
-		renderer.beginRender();
+	render(renderer, renderTarget) {
+		renderer.beginRender(renderTarget);
 		renderer.renderRenderableList(this.renderQueueLayer.opaque, this.renderStates, this.renderConfig);
 		renderer.endRender();
 	}

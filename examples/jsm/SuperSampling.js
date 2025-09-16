@@ -106,12 +106,7 @@ class SuperSampling {
 		this._taaPass.uniforms['stillBlending'] = first ? 0 : 0.9;
 		this._taaPass.uniforms['motionBlending'] = first ? 0 : 0.2;
 
-		renderer.setRenderTarget(this._output);
-
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, true, true);
-
-		this._taaPass.render(renderer);
+		this._taaPass.render(renderer, this._output);
 
 		const temp = this._prevFrame;
 		this._prevFrame = this._output;

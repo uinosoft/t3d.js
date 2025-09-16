@@ -113,6 +113,7 @@
 
 		// custom pass
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		backRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -176,21 +177,11 @@
 
 			gBuffer.update(renderer, scene, camera);
 
-			renderer.setRenderTarget(tempRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(scene, camera);
-
-			renderer.setRenderTarget(backRenderTarget);
-
-			renderer.setClearColor(0, 0, 0, 1);
-			renderer.clear(true, true, true);
+			renderer.renderScene(scene, camera, tempRenderTarget);
 
 			dofPass.uniforms['tColor'] = tempRenderTarget.texture;
 			dofPass.uniforms['tDepth'] = gBuffer.getDepthTexture();
-			dofPass.render(renderer);
+			dofPass.render(renderer, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
 

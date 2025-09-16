@@ -31,16 +31,12 @@ export default class PickBuffer {
 	}
 
 	render(renderer, scene, camera) {
-		renderer.setRenderTarget(this._rt);
-		renderer.setClearColor(0, 0, 0, 0);
-		renderer.clear(true, true, true);
-
 		const renderOptions = this._renderOptions;
 
 		const renderStates = scene.getRenderStates(camera);
 		const renderQueue = scene.getRenderQueue(camera);
 
-		renderer.beginRender();
+		renderer.beginRender(this._rt);
 
 		const layers = this.layers;
 		for (let i = 0, l = layers.length; i < l; i++) {

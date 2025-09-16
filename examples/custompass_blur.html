@@ -119,24 +119,16 @@
 
 			shadowMapPass.render(renderer, scene);
 
-			renderer.setRenderTarget(tempRenderTarget1);
-
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			renderer.renderScene(scene, camera);
+			renderer.renderScene(scene, camera, tempRenderTarget1);
 
 			const iterations = Math.floor(params.radius / 2) * 2 + 2;
 			let read = tempRenderTarget1, write = tempRenderTarget2, temp;
-			renderer.setClearColor(0, 0, 0, 0);
 			for (let i = 0; i < iterations; i++) {
 				const radius = params.radius * (1 + i) / iterations;
-				renderer.setRenderTarget(i === (iterations - 1) ? backRenderTarget : write);
-				renderer.clear(true, true, true);
 				blurPass.uniforms.tDiffuse = read.texture;
 				blurPass.uniforms.direction[0] = i % 2 === 0 ? radius : 0;
 				blurPass.uniforms.direction[1] = i % 2 === 1 ? radius : 0;
-				blurPass.render(renderer);
+				blurPass.render(renderer, i === (iterations - 1) ? backRenderTarget : write);
 
 				temp = read;
 				read = write;

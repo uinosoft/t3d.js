@@ -145,24 +145,16 @@
 			scene.updateRenderQueue(camera);
 		
 			if (params.type == 0) {
-				renderer.setRenderTarget(backRenderTarget);
-				renderer.setClearColor(0, 0, 0, 0.0);
-				renderer.clear(true, true, true);
-				renderer.renderScene(scene, camera);
+				backRenderTarget.setClear(true, true, true);
+				renderer.renderScene(scene, camera, backRenderTarget);
 			} else if (params.type == 1) {
 				depthPeelingOITPass.renderBuffer(renderer, scene, camera);
-
-				renderer.setRenderTarget(backRenderTarget);
-				renderer.setClearColor(0, 0, 0, 0.0);
-				renderer.clear(true, false, false);
-				depthPeelingOITPass.render(renderer);
+				backRenderTarget.setClear(true, false, false);
+				depthPeelingOITPass.render(renderer, backRenderTarget);
 			} else {
 				weightedBlendedOITPass.renderBuffer(renderer, scene, camera);
-
-				renderer.setRenderTarget(backRenderTarget);
-				renderer.setClearColor(0, 0, 0, 0.0);
-				renderer.clear(true, false, false);
-				weightedBlendedOITPass.render(renderer);
+				backRenderTarget.setClear(true, false, false);
+				weightedBlendedOITPass.render(renderer, backRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);

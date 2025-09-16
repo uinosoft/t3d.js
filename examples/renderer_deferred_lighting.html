@@ -200,8 +200,7 @@
 
 			if (params.fxaa) {
 				deferredRenderer.render(scene, camera, tempRenderTarget);
-				deferredRenderer.setRenderTarget(deferredRenderer.backRenderTarget);
-				fxaaPass.render(deferredRenderer);
+				fxaaPass.render(deferredRenderer, deferredRenderer.backRenderTarget);
 			} else {
 				deferredRenderer.render(scene, camera);
 			}

@@ -89,8 +89,9 @@ class ShadowMapPass {
 	 * @param {Scene} scene
 	 */
 	render(renderer, scene) {
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
 		oldClearColor.copy(renderer.getClearColor());
-		renderer.setClearColor(1, 1, 1, 1);
 
 		const lightingData = scene.collector.lightingData;
 		const lightsArray = lightingData.lightsArray;
@@ -119,13 +120,14 @@ class ShadowMapPass {
 					shadowTarget.activeCubeFace = j;
 				}
 
-				renderer.setRenderTarget(shadowTarget);
-				renderer.clear(true, true);
+				shadowTarget
+					.setColorClearValue(1, 1, 1, 1)
+					.setClear(true, true, false);
 
 				const renderStates = scene.updateRenderStates(camera, j === 0);
 				const renderQueue = scene.updateRenderQueue(camera, false, false);
 
-				renderer.beginRender();
+				renderer.beginRender(shadowTarget);
 
 				for (let k = 0; k < renderQueue.layerList.length; k++) {
 					const renderQueueLayer = renderQueue.layerList[k];
@@ -148,6 +150,8 @@ class ShadowMapPass {
 			shadow.needsUpdate = false;
 		}
 
+		// @deprecated
+		// This can be deleted when renderer.setClearColor is completely removed.
 		renderer.setClearColor(oldClearColor.x, oldClearColor.y, oldClearColor.z, oldClearColor.w);
 	}
 

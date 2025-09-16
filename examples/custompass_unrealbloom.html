@@ -143,12 +143,8 @@
 			scene.updateMatrix();
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
-		
-			renderer.setRenderTarget(tempRenderTarget);
-			renderer.setClearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-			renderer.renderScene(scene, camera);
-		
+
+			renderer.renderScene(scene, camera, tempRenderTarget);
 			bloomPass.update(renderer, tempRenderTarget, backRenderTarget);
 		}
 		requestAnimationFrame(loop);
