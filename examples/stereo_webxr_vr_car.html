@@ -94,6 +94,8 @@
 		camera.near = 1;
 		camera.far = 1000;
 		scene.add(camera);
+
+		let webxrRenderTarget;
 		
 		const webxrControl = new WebXRControl(camera);
 		webxrControl.enter(stereoRenderer.context).then(function(context) {
@@ -108,7 +110,12 @@
 
 			webxrControl.update(frame, width, height);
 
-			stereoRenderer.render(scene, camera, webxrControl.getFramebuffer());
+			if (!webxrRenderTarget) {
+				webxrRenderTarget = new t3d.RenderTarget2D(width, height);
+				stereoRenderer.setFramebufferExternal(webxrRenderTarget, webxrControl.getFramebuffer());
+			}
+
+			stereoRenderer.render(scene, camera, webxrRenderTarget);
 		}
 
 		function onWindowResize() {
@@ -116,6 +123,12 @@
 			height = window.innerHeight || 2;
 
 			stereoRenderer.backRenderTarget.resize(width, height);
+		
+			if (webxrRenderTarget) {
+				webxrRenderTarget.resize(width, height);
+				// resize will lose the binding of external framebuffer, so we need to set it again.
+				stereoRenderer.setFramebufferExternal(webxrRenderTarget, webxrControl.getFramebuffer());
+			}
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

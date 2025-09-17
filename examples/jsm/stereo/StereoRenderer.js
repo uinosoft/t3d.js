@@ -6,7 +6,7 @@ class StereoRenderer extends ForwardRenderer {
 		super(view, options);
 	}
 
-	render(scene, camera, renderTarget, forceClear) {
+	render(scene, camera, renderTarget) {
 		const cameraL = camera.cameraL;
 		const cameraR = camera.cameraR;
 
@@ -21,27 +21,21 @@ class StereoRenderer extends ForwardRenderer {
 			this.shadowNeedsUpdate = false;
 		}
 
-		if (renderTarget === undefined || renderTarget === null || renderTarget.isRenderTarget) {
-			if (renderTarget === undefined || renderTarget === null) {
-				renderTarget = this.backRenderTarget;
-			}
-			this.setRenderTarget(renderTarget);
-		} else {
-			// TODO remove this
-			this.context.bindFramebuffer(this.context.FRAMEBUFFER, renderTarget);
-			this._state.currentRenderTarget = null;
-		}
+		renderTarget = renderTarget || this.backRenderTarget;
 
-		this.clear(true, true, true);
-		this.renderScene(scene, cameraL);
+		this.renderScene(scene, cameraL, renderTarget);
 
 		scene.updateRenderStates(cameraR, false);
 		scene.updateRenderQueue(cameraR, false, false);
-		this.renderScene(scene, cameraR);
 
-		if (renderTarget.texture) {
-			this.updateRenderTargetMipmap(renderTarget);
-		}
+		const oldClearColor = renderTarget.clearColor;
+		const oldClearDepth = renderTarget.clearDepth;
+		const oldClearStencil = renderTarget.clearStencil;
+
+		renderTarget.setClear(false, false, false);
+		this.renderScene(scene, cameraR, renderTarget);
+
+		renderTarget.setClear(oldClearColor, oldClearDepth, oldClearStencil);
 	}
 
 }

@@ -20237,7 +20237,7 @@ class WebGLRenderTargets extends PropertyMap {
 
 			const renderTargetProperties = that.get(renderTarget);
 
-			if (renderTargetProperties.__webglFramebuffer) {
+			if (renderTargetProperties.__webglFramebuffer && !renderTargetProperties.__external) {
 				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 			}
 
@@ -20346,6 +20346,8 @@ class WebGLRenderTargets extends PropertyMap {
 		}
 
 		renderTargetProperties = this.get(renderTarget);
+
+		if (renderTargetProperties.__external) return;
 
 		if (renderTarget.isRenderTargetCube) {
 			const activeCubeFace = renderTarget.activeCubeFace;
@@ -20458,6 +20460,21 @@ class WebGLRenderTargets extends PropertyMap {
 			gl.generateMipmap(glTarget);
 			state.bindTexture(glTarget, null);
 		}
+	}
+
+	setFramebufferExternal(renderTarget, webglFramebuffer) {
+		const renderTargetProperties = this.get(renderTarget);
+
+		if (!renderTargetProperties.__external) {
+			if (renderTargetProperties.__webglFramebuffer) {
+				this._gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
+			} else {
+				renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
+			}
+		}
+
+		renderTargetProperties.__webglFramebuffer = webglFramebuffer;
+		renderTargetProperties.__external = true;
 	}
 
 }
@@ -21917,6 +21934,10 @@ class WebGLRenderer extends ThinRenderer {
 
 	setBufferExternal(buffer, webglBuffer) {
 		this._buffers.setBufferExternal(buffer, webglBuffer);
+	}
+
+	setFramebufferExternal(renderTarget, webglFramebuffer) {
+		this._renderTargets.setFramebufferExternal(renderTarget, webglFramebuffer);
 	}
 
 	resetVertexArrayBindings(force) {

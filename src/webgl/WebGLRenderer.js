@@ -327,6 +327,10 @@ class WebGLRenderer extends ThinRenderer {
 		this._buffers.setBufferExternal(buffer, webglBuffer);
 	}
 
+	setFramebufferExternal(renderTarget, webglFramebuffer) {
+		this._renderTargets.setFramebufferExternal(renderTarget, webglFramebuffer);
+	}
+
 	resetVertexArrayBindings(force) {
 		this._vertexArrayBindings.reset(force);
 	}

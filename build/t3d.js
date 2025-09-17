@@ -18244,7 +18244,7 @@
 				const renderTarget = event.target;
 				renderTarget.removeEventListener('dispose', onRenderTargetDispose);
 				const renderTargetProperties = that.get(renderTarget);
-				if (renderTargetProperties.__webglFramebuffer) {
+				if (renderTargetProperties.__webglFramebuffer && !renderTargetProperties.__external) {
 					gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
 				}
 				that.delete(renderTarget);
@@ -18331,6 +18331,7 @@
 				state.currentRenderTarget = renderTarget;
 			}
 			renderTargetProperties = this.get(renderTarget);
+			if (renderTargetProperties.__external) return;
 			if (renderTarget.isRenderTargetCube) {
 				const activeCubeFace = renderTarget.activeCubeFace;
 				const activeMipmapLevel = renderTarget.activeMipmapLevel;
@@ -18424,6 +18425,18 @@
 				gl.generateMipmap(glTarget);
 				state.bindTexture(glTarget, null);
 			}
+		}
+		setFramebufferExternal(renderTarget, webglFramebuffer) {
+			const renderTargetProperties = this.get(renderTarget);
+			if (!renderTargetProperties.__external) {
+				if (renderTargetProperties.__webglFramebuffer) {
+					this._gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
+				} else {
+					renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
+				}
+			}
+			renderTargetProperties.__webglFramebuffer = webglFramebuffer;
+			renderTargetProperties.__external = true;
 		}
 	}
 	const attachTargetToGL = {
@@ -19611,6 +19624,9 @@
 		}
 		setBufferExternal(buffer, webglBuffer) {
 			this._buffers.setBufferExternal(buffer, webglBuffer);
+		}
+		setFramebufferExternal(renderTarget, webglFramebuffer) {
+			this._renderTargets.setFramebufferExternal(renderTarget, webglFramebuffer);
 		}
 		resetVertexArrayBindings(force) {
 			this._vertexArrayBindings.reset(force);
