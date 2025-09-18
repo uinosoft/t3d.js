@@ -211,27 +211,6 @@ class ThinRenderer {
 	readTexturePixelsSync(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {}
 
 	/**
-	 * Bind webglTexture to Texture.
-	 * @param {TextureBase} texture
-	 * @param {WebGLTexture} webglTexture
-	 */
-	setTextureExternal(texture, webglTexture) {}
-
-	/**
-	 * Bind webglRenderbuffer to RenderBuffer.
-	 * @param {RenderBuffer} renderBuffer
-	 * @param {WebGLRenderbuffer} webglRenderbuffer
-	 */
-	setRenderBufferExternal(renderBuffer, webglRenderbuffer) {}
-
-	/**
-	 * Bind webglBuffer to Buffer.
-	 * @param {Buffer} buffer
-	 * @param {WebGLBuffer} webglBuffer
-	 */
-	setBufferExternal(buffer, webglBuffer) {}
-
-	/**
 	 * Reset vertex array object bindings.
 	 * @param {boolean} [force=false] - Whether clear the current vertex array object.
 	 */
