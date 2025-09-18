@@ -5606,6 +5606,24 @@
 		}
 
 		/**
+		 * Computes and returns the determinant of this matrix.
+		 * @returns {number} The determinant.
+		 */
+		determinant() {
+			const te = this.elements;
+			const a = te[0],
+				b = te[1],
+				c = te[2],
+				d = te[3],
+				e = te[4],
+				f = te[5],
+				g = te[6],
+				h = te[7],
+				i = te[8];
+			return a * e * i - a * f * h - b * d * i + b * f * g + c * d * h - c * e * g;
+		}
+
+		/**
 		 * Inverts this matrix, using the [analytic method]{@link https://en.wikipedia.org/wiki/Invertible_matrix#Analytic_solution}.
 		 * You can not invert with a determinant of zero. If you attempt this, the method produces
 		 * a zero matrix instead.
@@ -19361,6 +19379,7 @@
 	}
 
 	const helpVector4 = new Vector4();
+	const helpMatrix3 = new Matrix3();
 	const helpMatrix4 = new Matrix4();
 	const influencesList = new WeakMap();
 	const morphInfluences = new Float32Array(8);
@@ -19735,7 +19754,7 @@
 					uniform.setValue(currentRenderTarget.width, currentRenderTarget.height);
 				}
 			}
-			const frontFaceCW = object.worldMatrix.determinant() < 0;
+			const frontFaceCW = helpMatrix3.setFromMatrix4(object.worldMatrix).determinant() < 0;
 			state.setMaterial(material, frontFaceCW);
 			const viewport = helpVector4.set(currentRenderTarget.width, currentRenderTarget.height, currentRenderTarget.width, currentRenderTarget.height).multiply(cameraData.rect);
 			viewport.z -= viewport.x;

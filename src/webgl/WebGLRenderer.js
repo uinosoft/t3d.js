@@ -13,10 +13,12 @@ import { WebGLQuerySets } from './WebGLQuerySets.js';
 import { WebGLLights } from './WebGLLights.js';
 import { Vector4 } from '../math/Vector4.js';
 import { Matrix4 } from '../math/Matrix4.js';
+import { Matrix3 } from '../math/Matrix3.js';
 import { ThinRenderer } from '../render/ThinRenderer.js';
 import { LightingGroup } from '../render/LightingGroup.js';
 
 const helpVector4 = new Vector4();
+const helpMatrix3 = new Matrix3();
 const helpMatrix4 = new Matrix4();
 
 const influencesList = new WeakMap();
@@ -464,7 +466,7 @@ class WebGLRenderer extends ThinRenderer {
 			}
 		}
 
-		const frontFaceCW = object.worldMatrix.determinant() < 0;
+		const frontFaceCW = helpMatrix3.setFromMatrix4(object.worldMatrix).determinant() < 0;
 		state.setMaterial(material, frontFaceCW);
 
 		const viewport = helpVector4.set(
