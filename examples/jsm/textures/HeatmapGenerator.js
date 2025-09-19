@@ -178,7 +178,7 @@ class HeatmapGenerator {
 		renderer.renderRenderableList(this._renderQueueLayer.transparent, this._renderStates);
 		renderer.endRender();
 
-		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
+		renderer.generateMipmaps(this._grayRenderTarget.texture);
 
 		// @deprecated
 		// This can be deleted when renderer.setClearColor is completely removed.
@@ -204,7 +204,7 @@ class HeatmapGenerator {
 		this._colorizePass.material.uniforms.alphaLerp = options.alpha ? 1 : 0;
 		this._colorizePass.render(renderer, this._colorizeRenderTarget);
 
-		renderer.updateRenderTargetMipmap(this._colorizeRenderTarget);
+		renderer.generateMipmaps(this._colorizeRenderTarget.texture);
 
 		// @deprecated
 		// This can be deleted when renderer.setClearColor is completely removed.

@@ -189,7 +189,7 @@
 			renderer.renderRenderableList(mainRenderQueueLayer.transparent, renderStates, {});
 			renderer.endRender();
 
-			renderer.updateRenderTargetMipmap(sceneRenderTarget);
+			renderer.generateMipmaps(sceneRenderTarget.texture);
 
 			// Step2: render transmission to transmissionRenderTarget
 

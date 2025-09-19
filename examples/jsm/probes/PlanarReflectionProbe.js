@@ -115,7 +115,7 @@ class PlanarReflectionProbe {
 
 		renderer.endRender();
 
-		renderer.updateRenderTargetMipmap(this.renderTarget);
+		renderer.generateMipmaps(this.renderTarget.texture);
 	}
 
 }

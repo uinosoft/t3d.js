@@ -175,10 +175,10 @@ class ThinRenderer {
 	blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {}
 
 	/**
-	 * Generate mipmaps for the renderTarget you pass in.
-	 * @param {RenderTargetBase} renderTarget - The renderTarget to update.
+	 * Generate mipmaps for the texture you pass in.
+	 * @param {TextureBase} texture - The texture to update.
 	 */
-	updateRenderTargetMipmap(renderTarget) {}
+	generateMipmaps(texture) {}
 
 	/**
 	 * Read pixels from a texture.

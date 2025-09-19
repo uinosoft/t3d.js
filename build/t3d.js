@@ -11321,10 +11321,6 @@
 					}
 					renderer.endRender();
 				}
-
-				// set generateMipmaps false
-				// renderer.updateRenderTargetMipmap(shadowTarget);
-
 				shadow.needsUpdate = false;
 			}
 
@@ -11671,10 +11667,10 @@
 		blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {}
 
 		/**
-		 * Generate mipmaps for the renderTarget you pass in.
-		 * @param {RenderTargetBase} renderTarget - The renderTarget to update.
+		 * Generate mipmaps for the texture you pass in.
+		 * @param {TextureBase} texture - The texture to update.
 		 */
-		updateRenderTargetMipmap(renderTarget) {}
+		generateMipmaps(texture) {}
 
 		/**
 		 * Read pixels from a texture.
@@ -17699,24 +17695,25 @@
 				slot = gl.TEXTURE0 + slot;
 			}
 			const textureProperties = this.get(texture);
+			textureProperties.__webglTarget = gl.TEXTURE_2D;
 			if (texture.image && textureProperties.__version !== texture.version && (!texture.image.rtt || slot === undefined) && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
 					textureProperties.__webglTexture = gl.createTexture();
 				}
 				state.activeTexture(slot);
-				state.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture);
+				state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 				let image = texture.image;
 				const isDom = domCheck(image);
 				if (isDom) {
 					image = clampToMaxSize(image, capabilities.maxTextureSize);
-					if (textureNeedsPowerOfTwo(texture) && _isPowerOfTwo$1(image) === false && capabilities.version < 2) {
+					if (textureNeedsPowerOfTwo(texture) && _isPowerOfTwo(image) === false && capabilities.version < 2) {
 						image = makePowerOf2(image);
 					}
 				}
-				const needFallback = !_isPowerOfTwo$1(image) && capabilities.version < 2;
+				const needFallback = !_isPowerOfTwo(image) && capabilities.version < 2;
 				this._setPixelStores(texture);
-				this._setTextureParameters(texture, needFallback);
+				this._setTextureParameters(texture, textureProperties.__webglTarget, needFallback);
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
 					glInternalFormat = texture.internalformat !== null ? constants.getGLInternalFormat(texture.internalformat) : getGLInternalFormat(gl, capabilities, glFormat, glType);
@@ -17726,12 +17723,12 @@
 					if (mipmaps.length > 0 && !needFallback) {
 						for (let i = 0, il = mipmaps.length; i < il; i++) {
 							mipmap = mipmaps[i];
-							gl.texImage2D(gl.TEXTURE_2D, i, glInternalFormat, glFormat, glType, mipmap);
+							gl.texImage2D(textureProperties.__webglTarget, i, glInternalFormat, glFormat, glType, mipmap);
 						}
 						texture.generateMipmaps = false;
 						textureProperties.__maxMipLevel = mipmaps.length - 1;
 					} else {
-						gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, glFormat, glType, image);
+						gl.texImage2D(textureProperties.__webglTarget, 0, glInternalFormat, glFormat, glType, image);
 						textureProperties.__maxMipLevel = 0;
 					}
 				} else {
@@ -17739,23 +17736,25 @@
 						const isCompressed = image.isCompressed;
 						for (let i = 0, il = mipmaps.length; i < il; i++) {
 							mipmap = mipmaps[i];
-							isCompressed ? gl.compressedTexImage2D(gl.TEXTURE_2D, i, glInternalFormat, mipmap.width, mipmap.height, 0, mipmap.data) : gl.texImage2D(gl.TEXTURE_2D, i, glInternalFormat, mipmap.width, mipmap.height, texture.border, glFormat, glType, mipmap.data);
+							isCompressed ? gl.compressedTexImage2D(textureProperties.__webglTarget, i, glInternalFormat, mipmap.width, mipmap.height, 0, mipmap.data) : gl.texImage2D(textureProperties.__webglTarget, i, glInternalFormat, mipmap.width, mipmap.height, texture.border, glFormat, glType, mipmap.data);
 						}
 						texture.generateMipmaps = false;
 						textureProperties.__maxMipLevel = mipmaps.length - 1;
 					} else {
-						gl.texImage2D(gl.TEXTURE_2D, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
+						gl.texImage2D(textureProperties.__webglTarget, 0, glInternalFormat, image.width, image.height, texture.border, glFormat, glType, image.data);
 						textureProperties.__maxMipLevel = 0;
 					}
 				}
+				textureProperties.__width = image.width;
+				textureProperties.__height = image.height;
 				if (texture.generateMipmaps && !needFallback) {
-					this._generateMipmap(gl.TEXTURE_2D, texture, image.width, image.height);
+					this.generateMipmaps(texture);
 				}
 				textureProperties.__version = texture.version;
 				return textureProperties;
 			}
 			state.activeTexture(slot);
-			state.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture);
+			state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 			return textureProperties;
 		}
 		setTextureCube(texture, slot) {
@@ -17767,13 +17766,14 @@
 				slot = gl.TEXTURE0 + slot;
 			}
 			const textureProperties = this.get(texture);
+			textureProperties.__webglTarget = gl.TEXTURE_CUBE_MAP;
 			if (texture.images.length === 6 && textureProperties.__version !== texture.version && (!texture.images[0].rtt || slot === undefined) && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
 					textureProperties.__webglTexture = gl.createTexture();
 				}
 				state.activeTexture(slot);
-				state.bindTexture(gl.TEXTURE_CUBE_MAP, textureProperties.__webglTexture);
+				state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 				const images = [];
 				let needFallback = false;
 				for (let i = 0; i < 6; i++) {
@@ -17781,18 +17781,18 @@
 					const isDom = domCheck(image);
 					if (isDom) {
 						image = clampToMaxSize(image, capabilities.maxTextureSize);
-						if (textureNeedsPowerOfTwo(texture) && _isPowerOfTwo$1(image) === false && capabilities.version < 2) {
+						if (textureNeedsPowerOfTwo(texture) && _isPowerOfTwo(image) === false && capabilities.version < 2) {
 							image = makePowerOf2(image);
 						}
 					}
-					if (!_isPowerOfTwo$1(image) && capabilities.version < 2) {
+					if (!_isPowerOfTwo(image) && capabilities.version < 2) {
 						needFallback = true;
 					}
 					images[i] = image;
 					image.__isDom = isDom;
 				}
 				this._setPixelStores(texture);
-				this._setTextureParameters(texture, needFallback);
+				this._setTextureParameters(texture, textureProperties.__webglTarget, needFallback);
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
 					glInternalFormat = texture.internalformat !== null ? constants.getGLInternalFormat(texture.internalformat) : getGLInternalFormat(gl, capabilities, glFormat, glType);
@@ -17828,14 +17828,16 @@
 						}
 					}
 				}
+				textureProperties.__width = images[0].width;
+				textureProperties.__height = images[0].height;
 				if (texture.generateMipmaps && !needFallback) {
-					this._generateMipmap(gl.TEXTURE_CUBE_MAP, texture, images[0].width, images[0].height);
+					this.generateMipmaps(texture);
 				}
 				textureProperties.__version = texture.version;
 				return textureProperties;
 			}
 			state.activeTexture(slot);
-			state.bindTexture(gl.TEXTURE_CUBE_MAP, textureProperties.__webglTexture);
+			state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 			return textureProperties;
 		}
 		setTexture3D(texture, slot) {
@@ -17851,28 +17853,31 @@
 				slot = gl.TEXTURE0 + slot;
 			}
 			const textureProperties = this.get(texture);
+			textureProperties.__webglTarget = gl.TEXTURE_3D;
 			if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
 					textureProperties.__webglTexture = gl.createTexture();
 				}
 				state.activeTexture(slot);
-				state.bindTexture(gl.TEXTURE_3D, textureProperties.__webglTexture);
+				state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 				this._setPixelStores(texture);
-				this._setTextureParameters(texture, false);
+				this._setTextureParameters(texture, textureProperties.__webglTarget, false);
 				const image = texture.image;
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
 					glInternalFormat = texture.internalformat !== null ? constants.getGLInternalFormat(texture.internalformat) : getGLInternalFormat(gl, capabilities, glFormat, glType);
-				gl.texImage3D(gl.TEXTURE_3D, 0, glInternalFormat, image.width, image.height, image.depth, texture.border, glFormat, glType, image.data);
+				gl.texImage3D(textureProperties.__webglTarget, 0, glInternalFormat, image.width, image.height, image.depth, texture.border, glFormat, glType, image.data);
+				textureProperties.__width = image.width;
+				textureProperties.__height = image.height;
 				if (texture.generateMipmaps) {
-					this._generateMipmap(gl.TEXTURE_3D, texture, image.width, image.height);
+					this.generateMipmaps(texture);
 				}
 				textureProperties.__version = texture.version;
 				return textureProperties;
 			}
 			state.activeTexture(slot);
-			state.bindTexture(gl.TEXTURE_3D, textureProperties.__webglTexture);
+			state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 			return textureProperties;
 		}
 		setTexture2DArray(texture, slot) {
@@ -17888,15 +17893,16 @@
 				slot = gl.TEXTURE0 + slot;
 			}
 			const textureProperties = this.get(texture);
+			textureProperties.__webglTarget = gl.TEXTURE_2D_ARRAY;
 			if (texture.image && textureProperties.__version !== texture.version && !textureProperties.__external) {
 				if (textureProperties.__webglTexture === undefined) {
 					texture.addEventListener('dispose', this._onTextureDispose);
 					textureProperties.__webglTexture = gl.createTexture();
 				}
 				state.activeTexture(slot);
-				state.bindTexture(gl.TEXTURE_2D_ARRAY, textureProperties.__webglTexture);
+				state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 				this._setPixelStores(texture);
-				this._setTextureParameters(texture, false);
+				this._setTextureParameters(texture, textureProperties.__webglTarget, false);
 				const image = texture.image;
 				const glFormat = constants.getGLFormat(texture.format),
 					glType = constants.getGLType(texture.type),
@@ -17905,21 +17911,32 @@
 					for (const layerIndex of texture.layerUpdates) {
 						const layerByteLength = getByteLength(image.width, image.height, texture.format, texture.type);
 						const layerData = image.data.subarray(layerIndex * layerByteLength / image.data.BYTES_PER_ELEMENT, (layerIndex + 1) * layerByteLength / image.data.BYTES_PER_ELEMENT);
-						gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, layerIndex, image.width, image.height, 1, glFormat, glType, layerData);
+						gl.texSubImage3D(textureProperties.__webglTarget, 0, 0, 0, layerIndex, image.width, image.height, 1, glFormat, glType, layerData);
 					}
 					texture.layerUpdates.clear();
 				} else {
-					gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, glInternalFormat, image.width, image.height, image.depth, texture.border, glFormat, glType, image.data);
+					gl.texImage3D(textureProperties.__webglTarget, 0, glInternalFormat, image.width, image.height, image.depth, texture.border, glFormat, glType, image.data);
 				}
+				textureProperties.__width = image.width;
+				textureProperties.__height = image.height;
 				if (texture.generateMipmaps) {
-					this._generateMipmap(gl.TEXTURE_2D_ARRAY, texture, image.width, image.height);
+					this.generateMipmaps(texture);
 				}
 				textureProperties.__version = texture.version;
 				return textureProperties;
 			}
 			state.activeTexture(slot);
-			state.bindTexture(gl.TEXTURE_2D_ARRAY, textureProperties.__webglTexture);
+			state.bindTexture(textureProperties.__webglTarget, textureProperties.__webglTexture);
 			return textureProperties;
+		}
+		generateMipmaps(texture) {
+			const gl = this._gl;
+			const textureProperties = this.get(texture);
+			gl.generateMipmap(textureProperties.__webglTarget);
+			const width = textureProperties.__width,
+				height = textureProperties.__height;
+			// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
+			textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
 		}
 		setTextureExternal(texture, webglTexture) {
 			const gl = this._gl;
@@ -17941,15 +17958,11 @@
 			gl.pixelStorei(gl.UNPACK_ALIGNMENT, texture.unpackAlignment);
 			gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
 		}
-		_setTextureParameters(texture, needFallback) {
+		_setTextureParameters(texture, textureType, needFallback) {
 			const gl = this._gl;
 			const capabilities = this._capabilities;
 			const wrappingToGL = this._wrappingToGL;
 			const filterToGL = this._filterToGL;
-			let textureType = gl.TEXTURE_2D;
-			if (texture.isTextureCube) textureType = gl.TEXTURE_CUBE_MAP;
-			if (texture.isTexture3D) textureType = gl.TEXTURE_3D;
-			if (texture.isTexture2DArray) textureType = gl.TEXTURE_2D_ARRAY;
 			let wrapS = texture.wrapS,
 				wrapT = texture.wrapT,
 				wrapR = texture.wrapR,
@@ -17994,13 +18007,6 @@
 				}
 			}
 		}
-		_generateMipmap(target, texture, width, height) {
-			const gl = this._gl;
-			gl.generateMipmap(target);
-			const textureProperties = this.get(texture);
-			// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
-			textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
-		}
 	}
 	function textureNeedsPowerOfTwo(texture) {
 		return texture.wrapS !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.wrapT !== TEXTURE_WRAP.CLAMP_TO_EDGE || texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR;
@@ -18011,7 +18017,7 @@
 		}
 		return TEXTURE_FILTER.LINEAR;
 	}
-	function _isPowerOfTwo$1(image) {
+	function _isPowerOfTwo(image) {
 		return MathUtils.isPowerOfTwo(image.width) && MathUtils.isPowerOfTwo(image.height);
 	}
 	function makePowerOf2(image) {
@@ -18408,21 +18414,6 @@
 
 			gl.blitFramebuffer(0, 0, read.width, read.height, 0, 0, draw.width, draw.height, mask, gl.NEAREST);
 		}
-		updateRenderTargetMipmap(renderTarget) {
-			const gl = this._gl;
-			const state = this._state;
-			const capabilities = this._capabilities;
-			const texture = renderTarget.texture;
-			if (texture.generateMipmaps && texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR && (_isPowerOfTwo(renderTarget) || capabilities.version >= 2)) {
-				let glTarget = gl.TEXTURE_2D;
-				if (texture.isTextureCube) glTarget = gl.TEXTURE_CUBE_MAP;
-				if (texture.isTexture3D) glTarget = gl.TEXTURE_3D;
-				const webglTexture = this._textures.get(texture).__webglTexture;
-				state.bindTexture(glTarget, webglTexture);
-				gl.generateMipmap(glTarget);
-				state.bindTexture(glTarget, null);
-			}
-		}
 		setFramebufferExternal(renderTarget, webglFramebuffer) {
 			const renderTargetProperties = this.get(renderTarget);
 			if (!renderTargetProperties.__external) {
@@ -18459,9 +18450,6 @@
 	};
 	function drawBufferSort(a, b) {
 		return a - b;
-	}
-	function _isPowerOfTwo(renderTarget) {
-		return MathUtils.isPowerOfTwo(renderTarget.width) && MathUtils.isPowerOfTwo(renderTarget.height);
 	}
 
 	class WebGLBuffers extends PropertyMap {
@@ -19768,8 +19756,19 @@
 		blitRenderTarget(read, draw, color = true, depth = true, stencil = true) {
 			this._renderTargets.blitRenderTarget(read, draw, color, depth, stencil);
 		}
-		updateRenderTargetMipmap(renderTarget) {
-			this._renderTargets.updateRenderTargetMipmap(renderTarget);
+		generateMipmaps(texture) {
+			const state = this._state;
+			const capabilities = this.capabilities;
+			const textures = this._textures;
+			const textureProperties = textures.get(texture);
+			if (!textureProperties.__webglTexture) return;
+			const powerOfTwo = MathUtils.isPowerOfTwo(textureProperties.__width) && MathUtils.isPowerOfTwo(textureProperties.__height);
+			if (texture.generateMipmaps && texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR && (powerOfTwo || capabilities.version >= 2)) {
+				const target = textureProperties.__webglTarget;
+				state.bindTexture(target, textureProperties.__webglTexture);
+				textures.generateMipmaps(texture);
+				state.bindTexture(target, null);
+			}
 		}
 		readTexturePixels(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {
 			const gl = this.context;
@@ -20409,6 +20408,13 @@
 		this._currentTimestampWrites.querySet = querySet;
 		this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
 		this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
+	};
+
+	// deprecated since 0.5.0
+	WebGLRenderer.prototype.updateRenderTargetMipmap = function (renderTarget) {
+		if (renderTarget.texture) {
+			this.generateMipmaps(renderTarget.texture);
+		}
 	};
 
 	exports.ATTACHMENT = ATTACHMENT;

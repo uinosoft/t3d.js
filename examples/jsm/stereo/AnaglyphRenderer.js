@@ -80,10 +80,10 @@ class AnaglyphRenderer extends ForwardRenderer {
 		this.renderScene(scene, cameraR, this._renderTargetR);
 
 		if (this._renderTargetL.texture) {
-			this.updateRenderTargetMipmap(this._renderTargetL);
+			this.generateMipmaps(this._renderTargetL.texture);
 		}
 		if (this._renderTargetR.texture) {
-			this.updateRenderTargetMipmap(this._renderTargetR);
+			this.generateMipmaps(this._renderTargetR.texture);
 		}
 
 		this._shaderPostPass.render(this, this.backRenderTarget);

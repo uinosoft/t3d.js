@@ -422,3 +422,10 @@ WebGLRenderer.prototype.setTimestampWrites = function(querySet, beginIndex = 0, 
 	this._currentTimestampWrites.beginningOfPassWriteIndex = beginIndex;
 	this._currentTimestampWrites.endOfPassWriteIndex = endIndex;
 };
+
+// deprecated since 0.5.0
+WebGLRenderer.prototype.updateRenderTargetMipmap = function(renderTarget) {
+	if (renderTarget.texture) {
+		this.generateMipmaps(renderTarget.texture);
+	}
+};

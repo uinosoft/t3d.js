@@ -144,9 +144,6 @@ class ShadowMapPass {
 				renderer.endRender();
 			}
 
-			// set generateMipmaps false
-			// renderer.updateRenderTargetMipmap(shadowTarget);
-
 			shadow.needsUpdate = false;
 		}
 

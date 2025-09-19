@@ -185,7 +185,7 @@ class IDWMapGenerator {
 
 		this._grayPass.render(renderer, this._grayRenderTarget);
 
-		renderer.updateRenderTargetMipmap(this._grayRenderTarget);
+		renderer.generateMipmaps(this._grayRenderTarget.texture);
 
 		// @deprecated
 		// This can be deleted when renderer.setClearColor is completely removed.
@@ -214,7 +214,7 @@ class IDWMapGenerator {
 		this._colorizePass.material.uniforms.colormap = gradientTexture;
 		this._colorizePass.render(renderer, this._colorizeRenderTarget);
 
-		renderer.updateRenderTargetMipmap(this._colorizeRenderTarget);
+		renderer.generateMipmaps(this._colorizeRenderTarget.texture);
 
 		// @deprecated
 		// This can be deleted when renderer.setClearColor is completely removed.

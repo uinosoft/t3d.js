@@ -14,8 +14,10 @@ import { WebGLLights } from './WebGLLights.js';
 import { Vector4 } from '../math/Vector4.js';
 import { Matrix4 } from '../math/Matrix4.js';
 import { Matrix3 } from '../math/Matrix3.js';
+import { MathUtils } from '../math/MathUtils.js';
 import { ThinRenderer } from '../render/ThinRenderer.js';
 import { LightingGroup } from '../render/LightingGroup.js';
+import { TEXTURE_FILTER } from '../const.js';
 
 const helpVector4 = new Vector4();
 const helpMatrix3 = new Matrix3();
@@ -493,8 +495,29 @@ class WebGLRenderer extends ThinRenderer {
 		this._renderTargets.blitRenderTarget(read, draw, color, depth, stencil);
 	}
 
-	updateRenderTargetMipmap(renderTarget) {
-		this._renderTargets.updateRenderTargetMipmap(renderTarget);
+	generateMipmaps(texture) {
+		const state = this._state;
+		const capabilities = this.capabilities;
+		const textures = this._textures;
+
+		const textureProperties = textures.get(texture);
+
+		if (!textureProperties.__webglTexture) return;
+
+		const powerOfTwo = MathUtils.isPowerOfTwo(textureProperties.__width)
+			&& MathUtils.isPowerOfTwo(textureProperties.__height);
+
+		if (
+			texture.generateMipmaps
+			&& texture.minFilter !== TEXTURE_FILTER.NEAREST
+			&& texture.minFilter !== TEXTURE_FILTER.LINEAR
+			&& (powerOfTwo || capabilities.version >= 2)
+		) {
+			const target = textureProperties.__webglTarget;
+			state.bindTexture(target, textureProperties.__webglTexture);
+			textures.generateMipmaps(texture);
+			state.bindTexture(target, null);
+		}
 	}
 
 	readTexturePixels(texture, x, y, width, height, buffer, zIndex = 0, mipLevel = 0) {

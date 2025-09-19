@@ -1,6 +1,5 @@
-import { ATTACHMENT, TEXTURE_FILTER } from '../const.js';
+import { ATTACHMENT } from '../const.js';
 import { PropertyMap } from '../render/PropertyMap.js';
-import { MathUtils } from '../math/MathUtils.js';
 
 class WebGLRenderTargets extends PropertyMap {
 
@@ -227,27 +226,6 @@ class WebGLRenderTargets extends PropertyMap {
 		);
 	}
 
-	updateRenderTargetMipmap(renderTarget) {
-		const gl = this._gl;
-		const state = this._state;
-		const capabilities = this._capabilities;
-
-		const texture = renderTarget.texture;
-
-		if (texture.generateMipmaps && texture.minFilter !== TEXTURE_FILTER.NEAREST && texture.minFilter !== TEXTURE_FILTER.LINEAR &&
-			(_isPowerOfTwo(renderTarget) || capabilities.version >= 2)) {
-			let glTarget = gl.TEXTURE_2D;
-			if (texture.isTextureCube) glTarget = gl.TEXTURE_CUBE_MAP;
-			if (texture.isTexture3D) glTarget = gl.TEXTURE_3D;
-
-			const webglTexture = this._textures.get(texture).__webglTexture;
-
-			state.bindTexture(glTarget, webglTexture);
-			gl.generateMipmap(glTarget);
-			state.bindTexture(glTarget, null);
-		}
-	}
-
 	setFramebufferExternal(renderTarget, webglFramebuffer) {
 		const renderTargetProperties = this.get(renderTarget);
 
@@ -289,10 +267,6 @@ const attachTargetToGL = {
 
 function drawBufferSort(a, b) {
 	return a - b;
-}
-
-function _isPowerOfTwo(renderTarget) {
-	return MathUtils.isPowerOfTwo(renderTarget.width) && MathUtils.isPowerOfTwo(renderTarget.height);
 }
 
 export { WebGLRenderTargets };
