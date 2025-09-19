@@ -235,7 +235,7 @@ class CurvePath3 extends CurvePath {
 
 	// deprecated since 0.4.0
 	setFromPoints(points, options = {}) {
-		// console.warn('CurvePath3: setFromPoints() has been deprecated. Use setBeveledCurves() instead.');
+		console.warn('CurvePath3: setFromPoints() has been deprecated. Use setBeveledCurves() instead.');
 		super.setBeveledCurves(points, options);
 	}
 

@@ -531,12 +531,6 @@ class GeometryUtils {
 		));
 	}
 
-	// deprecated since v0.2.0, add warning since v0.3.0
-	static mergeBufferAttributes(attributes) {
-		console.warn('GeometryUtils: mergeBufferAttributes() has been renamed to mergeAttributes().');
-		return this.mergeAttributes(attributes);
-	}
-
 }
 
 const _vec3_1 = new Vector3();

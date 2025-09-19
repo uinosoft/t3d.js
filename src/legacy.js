@@ -1,6 +1,4 @@
 import { WebGLRenderer } from './webgl/WebGLRenderer.js';
-import { BoxGeometry } from './resources/geometries/BoxGeometry.js';
-import { Object3D } from './scenes/Object3D.js';
 import { Scene } from './scenes/Scene.js';
 import { MathUtils } from './math/MathUtils.js';
 import { RenderStates } from './render/RenderStates.js';
@@ -10,37 +8,7 @@ import { Vector3 } from './math/Vector3.js';
 import { EventDispatcher } from './EventDispatcher.js';
 import { PropertyMap } from './render/PropertyMap.js';
 
-// deprecated since 0.1.2, add warning since 0.3.0
-export class CubeGeometry extends BoxGeometry {
-
-	constructor(width, height, depth, widthSegments, heightSegments, depthSegments) {
-		super(width, height, depth, widthSegments, heightSegments, depthSegments);
-		console.warn('CubeGeometry has been deprecated, use BoxGeometry instead.');
-	}
-
-}
-
-// deprecated since 0.1.2, add warning since 0.3.0
-export class Group extends Object3D {
-
-	constructor() {
-		super();
-		console.warn('Group has been deprecated, use Object3D instead.');
-	}
-
-}
-
-Group.prototype.isGroup = true;
-
 Object.defineProperties(WebGLRenderer.prototype, {
-	// deprecated since 0.2.0, add warning since 0.3.0
-	gl: {
-		configurable: true,
-		get: function() {
-			console.warn('WebGLRenderer: .gl has been deprecated, use .context instead.');
-			return this.context;
-		}
-	},
 	// deprecated since 0.4.5
 	asyncReadPixel: {
 		configurable: true,
@@ -55,12 +23,6 @@ Object.defineProperties(WebGLRenderer.prototype, {
 		}
 	}
 });
-
-// deprecated since 0.1.6, add warning since 0.3.0
-WebGLRenderer.prototype.render = function(renderable, renderStates, options) {
-	console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
-	this.renderRenderableItem(renderable, renderStates, options);
-};
 
 // deprecated since 0.4.5, use readTexturePixels instead
 WebGLRenderer.prototype.readRenderTargetPixels = function(x, y, width, height, buffer) {
@@ -84,18 +46,6 @@ WebGLRenderer.prototype.readRenderTargetPixels = function(x, y, width, height, b
 	console.warn('WebGLRenderer.readRenderTargetPixels: readPixels from renderTarget failed.');
 	return Promise.reject();
 };
-
-// Renderer, as an alias of WebGLRenderer, will exist for a long time.
-// When the compatibility of renderPass is removed, it can be moved to main.js
-export class Renderer extends WebGLRenderer {
-
-	// deprecated since 0.2.0, add warning since 0.3.0
-	get renderPass() {
-		console.warn('Renderer: .renderPass has been deprecated, use WebGLRenderer instead.');
-		return this;
-	}
-
-}
 
 Object.defineProperties(Scene.prototype, {
 	// deprecated since 0.2.7, add warning since 0.4.0
@@ -122,7 +72,7 @@ Object.defineProperties(Scene.prototype, {
 	_sceneData: {
 		configurable: true,
 		get: function() {
-			// console.warn('Scene: ._sceneData has been deprecated since v0.4.4, use .collector.sceneData instead.');
+			console.warn('Scene: ._sceneData has been deprecated since v0.4.4, use .collector.sceneData instead.');
 			return this.collector.sceneData;
 		}
 	},
@@ -130,7 +80,7 @@ Object.defineProperties(Scene.prototype, {
 	_lightingData: {
 		configurable: true,
 		get: function() {
-			// console.warn('Scene: ._lightingData has been deprecated since v0.4.4, use .collector.lightingData instead.');
+			console.warn('Scene: ._lightingData has been deprecated since v0.4.4, use .collector.lightingData instead.');
 			return this.collector.lightingData;
 		}
 	}

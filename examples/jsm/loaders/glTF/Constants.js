@@ -33,14 +33,6 @@ export const ALPHA_MODES = {
 	BLEND: 'BLEND'
 };
 
-// deprecated since v0.3.1
-export const PATH_PROPERTIES = {
-	scale: 'scale',
-	translation: 'position',
-	rotation: 'quaternion',
-	weights: 'morphTargetInfluences'
-};
-
 export const ACCESSOR_TYPE_SIZES = {
 	'SCALAR': 1,
 	'VEC2': 2,

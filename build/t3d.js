@@ -19732,11 +19732,7 @@
 				}
 
 				// other internal uniforms
-				if (key === 'u_PointScale') {
-					// TODO: remove this after 0.5.0, use u_RenderTargetSize instead
-					const scale = currentRenderTarget.height * 0.5;
-					uniform.set(scale);
-				} else if (key === 'clippingPlanes') {
+				if (key === 'clippingPlanes') {
 					uniform.set(clippingPlanesData);
 				} else if (key === 'u_RenderTargetSize') {
 					uniform.setValue(currentRenderTarget.width, currentRenderTarget.height);
@@ -20057,31 +20053,7 @@
 		}
 	}
 
-	// deprecated since 0.1.2, add warning since 0.3.0
-	class CubeGeometry extends BoxGeometry {
-		constructor(width, height, depth, widthSegments, heightSegments, depthSegments) {
-			super(width, height, depth, widthSegments, heightSegments, depthSegments);
-			console.warn('CubeGeometry has been deprecated, use BoxGeometry instead.');
-		}
-	}
-
-	// deprecated since 0.1.2, add warning since 0.3.0
-	class Group extends Object3D {
-		constructor() {
-			super();
-			console.warn('Group has been deprecated, use Object3D instead.');
-		}
-	}
-	Group.prototype.isGroup = true;
 	Object.defineProperties(WebGLRenderer.prototype, {
-		// deprecated since 0.2.0, add warning since 0.3.0
-		gl: {
-			configurable: true,
-			get: function () {
-				console.warn('WebGLRenderer: .gl has been deprecated, use .context instead.');
-				return this.context;
-			}
-		},
 		// deprecated since 0.4.5
 		asyncReadPixel: {
 			configurable: true,
@@ -20096,12 +20068,6 @@
 			}
 		}
 	});
-
-	// deprecated since 0.1.6, add warning since 0.3.0
-	WebGLRenderer.prototype.render = function (renderable, renderStates, options) {
-		console.warn('WebGLRenderer: .render() has been renamed to .renderRenderableItem().');
-		this.renderRenderableItem(renderable, renderStates, options);
-	};
 
 	// deprecated since 0.4.5, use readTexturePixels instead
 	WebGLRenderer.prototype.readRenderTargetPixels = function (x, y, width, height, buffer) {
@@ -20122,16 +20088,6 @@
 		console.warn('WebGLRenderer.readRenderTargetPixels: readPixels from renderTarget failed.');
 		return Promise.reject();
 	};
-
-	// Renderer, as an alias of WebGLRenderer, will exist for a long time.
-	// When the compatibility of renderPass is removed, it can be moved to main.js
-	class Renderer extends WebGLRenderer {
-		// deprecated since 0.2.0, add warning since 0.3.0
-		get renderPass() {
-			console.warn('Renderer: .renderPass has been deprecated, use WebGLRenderer instead.');
-			return this;
-		}
-	}
 	Object.defineProperties(Scene.prototype, {
 		// deprecated since 0.2.7, add warning since 0.4.0
 		environmentLightIntensity: {
@@ -20157,7 +20113,7 @@
 		_sceneData: {
 			configurable: true,
 			get: function () {
-				// console.warn('Scene: ._sceneData has been deprecated since v0.4.4, use .collector.sceneData instead.');
+				console.warn('Scene: ._sceneData has been deprecated since v0.4.4, use .collector.sceneData instead.');
 				return this.collector.sceneData;
 			}
 		},
@@ -20165,7 +20121,7 @@
 		_lightingData: {
 			configurable: true,
 			get: function () {
-				// console.warn('Scene: ._lightingData has been deprecated since v0.4.4, use .collector.lightingData instead.');
+				console.warn('Scene: ._lightingData has been deprecated since v0.4.4, use .collector.lightingData instead.');
 				return this.collector.lightingData;
 			}
 		}
@@ -20439,7 +20395,6 @@
 	exports.Color3 = Color3;
 	exports.Color4 = Color4;
 	exports.ColorKeyframeTrack = ColorKeyframeTrack;
-	exports.CubeGeometry = CubeGeometry;
 	exports.CubicSplineInterpolant = CubicSplineInterpolant;
 	exports.CylinderGeometry = CylinderGeometry;
 	exports.DRAW_MODE = DRAW_MODE;
@@ -20457,7 +20412,6 @@
 	exports.FogExp2 = FogExp2;
 	exports.Frustum = Frustum;
 	exports.Geometry = Geometry;
-	exports.Group = Group;
 	exports.HemisphereLight = HemisphereLight;
 	exports.ImageLoader = ImageLoader;
 	exports.KeyframeClip = KeyframeClip;
@@ -20513,7 +20467,6 @@
 	exports.RenderTargetBack = RenderTargetBack;
 	exports.RenderTargetBase = RenderTargetBase;
 	exports.RenderTargetCube = RenderTargetCube;
-	exports.Renderer = Renderer;
 	exports.SHADING_TYPE = SHADING_TYPE;
 	exports.SHADOW_TYPE = SHADOW_TYPE;
 	exports.Scene = Scene;

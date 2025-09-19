@@ -457,11 +457,7 @@ class WebGLRenderer extends ThinRenderer {
 			}
 
 			// other internal uniforms
-			if (key === 'u_PointScale') {
-				// TODO: remove this after 0.5.0, use u_RenderTargetSize instead
-				const scale = currentRenderTarget.height * 0.5;
-				uniform.set(scale);
-			} else if (key === 'clippingPlanes') {
+			if (key === 'clippingPlanes') {
 				uniform.set(clippingPlanesData);
 			} else if (key === 'u_RenderTargetSize') {
 				uniform.setValue(currentRenderTarget.width, currentRenderTarget.height);
