@@ -8,17 +8,20 @@ let _rendererId = 0;
  */
 class ThinRenderer {
 
-	/**
-	 * @param {WebGLRenderingContext|WebGPURenderingContext} context - The Rendering Context privided by canvas.
-	 */
-	constructor(context) {
-		this.id = _rendererId++;
+	constructor() {
+		/**
+		 * The unique id of this renderer.
+		 * This will be incremented when the context is lost and restored.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.id = 0; // assigned in init method
 
 		/**
 		 * The Rendering Context privided by canvas.
 		 * @type {WebGLRenderingContext|WebGPURenderingContext}
 		 */
-		this.context = context;
+		this.context = null; // assigned in init method
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
@@ -79,6 +82,16 @@ class ThinRenderer {
 			endOfPassWriteIndex: -1
 		};
 	}
+
+	/**
+	 * Initialize this renderer with a rendering context.
+	 * This method is called automatically by {@link WebGLRenderer} constructor when a context is provided.
+	 * For WebGPURenderer, you must call this method manually and wait for the promise to resolve.
+	 * @param {WebGLRenderingContext|WebGPURenderingContext} context - The rendering context.
+	 * @param {object} [options] - The options for initializing this renderer.
+	 * @returns {Promise<ThinRenderer>} A promise that resolves when initialization completes.
+	 */
+	init(context, options = {}) {}
 
 	/**
 	 * Begin rendering.

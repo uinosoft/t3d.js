@@ -132,7 +132,7 @@
 
 		const onContextRestored = function() {
 			console.log('Context restored');
-			forwardRenderer.init();
+			forwardRenderer.init(forwardRenderer.context);
 			isContextLost = false;
 		};
 

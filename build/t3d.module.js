@@ -12513,17 +12513,20 @@ let _rendererId = 0;
  */
 class ThinRenderer {
 
-	/**
-	 * @param {WebGLRenderingContext|WebGPURenderingContext} context - The Rendering Context privided by canvas.
-	 */
-	constructor(context) {
-		this.id = _rendererId++;
+	constructor() {
+		/**
+		 * The unique id of this renderer.
+		 * This will be incremented when the context is lost and restored.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.id = 0; // assigned in init method
 
 		/**
 		 * The Rendering Context privided by canvas.
 		 * @type {WebGLRenderingContext|WebGPURenderingContext}
 		 */
-		this.context = context;
+		this.context = null; // assigned in init method
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
@@ -12584,6 +12587,16 @@ class ThinRenderer {
 			endOfPassWriteIndex: -1
 		};
 	}
+
+	/**
+	 * Initialize this renderer with a rendering context.
+	 * This method is called automatically by {@link WebGLRenderer} constructor when a context is provided.
+	 * For WebGPURenderer, you must call this method manually and wait for the promise to resolve.
+	 * @param {WebGLRenderingContext|WebGPURenderingContext} context - The rendering context.
+	 * @param {object} [options] - The options for initializing this renderer.
+	 * @returns {Promise<ThinRenderer>} A promise that resolves when initialization completes.
+	 */
+	init(context, options = {}) {}
 
 	/**
 	 * Begin rendering.
@@ -21680,11 +21693,13 @@ function clientWaitAsync(gl) {
 class WebGLRenderer extends ThinRenderer {
 
 	/**
-	 * Create a WebGL renderer.
-	 * @param {WebGLRenderingContext} context - The Rendering Context privided by canvas.
+	 * Create a WebGLRenderer.
+	 * @param {WebGLRenderingContext} [context] - The WebGL Rendering Context privided by canvas.
+	 * If not provided, you must call {@link WebGLRenderer.init} method with a valid context
+	 * before using this renderer.
 	 */
 	constructor(context) {
-		super(context);
+		super();
 
 		/**
 		 * An object containing details about the capabilities of the current RenderingContext.
@@ -21703,35 +21718,40 @@ class WebGLRenderer extends ThinRenderer {
 		this._state = null;
 		this._vertexArrayBindings = null;
 
-		this.init();
+		if (context) {
+			this.init(context);
+		}
 
 		// Cache current material if beginRender is called.
 		this._currentMaterial = null;
 	}
 
-	/**
-	 * Initialize the renderer.
-	 * This method will be called automatically by the constructor.
-	 * In the case of context lost, you can call this function to restart the renderer.
-	 */
-	init() {
-		const gl = this.context;
+	init(context, options = {}) {
+		if (!context) {
+			context = this.context;
+		}
+
+		if (!context) {
+			throw new Error('WebGLRenderer.init: context must be provided.');
+		}
+
+		this.context = context;
 
 		const prefix = `_gl${this.increaseId()}`;
 
-		const capabilities = new WebGLCapabilities(gl);
-		const constants = new WebGLConstants(gl, capabilities);
-		const state = new WebGLState(gl, capabilities);
-		const textures = new WebGLTextures(prefix, gl, state, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(prefix, gl, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(prefix, gl, state, capabilities, textures, renderBuffers, constants);
-		const buffers = new WebGLBuffers(prefix, gl, capabilities);
-		const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, gl, capabilities, buffers);
-		const geometries = new WebGLGeometries(prefix, gl, buffers, vertexArrayBindings);
+		const capabilities = new WebGLCapabilities(context);
+		const constants = new WebGLConstants(context, capabilities);
+		const state = new WebGLState(context, capabilities);
+		const textures = new WebGLTextures(prefix, context, state, capabilities, constants);
+		const renderBuffers = new WebGLRenderBuffers(prefix, context, capabilities, constants);
+		const renderTargets = new WebGLRenderTargets(prefix, context, state, capabilities, textures, renderBuffers, constants);
+		const buffers = new WebGLBuffers(prefix, context, capabilities);
+		const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, context, capabilities, buffers);
+		const geometries = new WebGLGeometries(prefix, context, buffers, vertexArrayBindings);
 		const lights = new WebGLLights(prefix, capabilities, textures);
-		const programs = new WebGLPrograms(gl, state, capabilities);
+		const programs = new WebGLPrograms(context, state, capabilities);
 		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
-		const querySets = new WebGLQuerySets(prefix, gl, capabilities);
+		const querySets = new WebGLQuerySets(prefix, context, capabilities);
 
 		this.capabilities = capabilities;
 
@@ -21747,6 +21767,8 @@ class WebGLRenderer extends ThinRenderer {
 		this._state = state;
 		this._vertexArrayBindings = vertexArrayBindings;
 		this._querySets = querySets;
+
+		return Promise.resolve(this);
 	}
 
 	beginRender(renderTarget) {
