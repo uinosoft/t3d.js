@@ -1,12 +1,13 @@
 import { RenderTargetBase } from './RenderTargetBase.js';
 
 /**
- * Render Target that render to canvas element.
+ * Render Target that render to screen (canvas).
  * @extends RenderTargetBase
  */
 class RenderTargetBack extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTargetBack.
 	 * @param {HTMLCanvasElement} view - The canvas element which the Render Target rendered to.
 	 */
 	constructor(view) {
@@ -28,7 +29,7 @@ class RenderTargetBack extends RenderTargetBase {
 	}
 
 	dispose() {
-		// TODO dispose canvas?
+		// do nothing
 	}
 
 }

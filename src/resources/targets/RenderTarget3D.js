@@ -9,6 +9,7 @@ import { ATTACHMENT } from '../../const.js';
 class RenderTarget3D extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTarget3D.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 * @param {number} depth - The depth of the render target.

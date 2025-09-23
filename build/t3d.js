@@ -12826,10 +12826,6 @@
 	 * @abstract
 	 */
 	class RenderTargetBase extends EventDispatcher {
-		/**
-		 * @param {number} width - The width of the render target.
-		 * @param {number} height - The height of the render target.
-		 */
 		constructor(width, height) {
 			super();
 
@@ -13365,6 +13361,7 @@
 	 */
 	class RenderTarget2D extends RenderTargetBase {
 		/**
+		 * Create a new RenderTarget2D.
 		 * @param {number} width - The width of the render target.
 		 * @param {number} height - The height of the render target.
 		 */
@@ -13567,6 +13564,7 @@
 	 */
 	class RenderTarget2DArray extends RenderTargetBase {
 		/**
+		 * Create a new RenderTarget2DArray.
 		 * @param {number} width - The width of the render target.
 		 * @param {number} height - The height of the render target.
 		 * @param {number} depth - The depth of the render target.
@@ -13783,6 +13781,7 @@
 	 */
 	class RenderTarget3D extends RenderTargetBase {
 		/**
+		 * Create a new RenderTarget3D.
 		 * @param {number} width - The width of the render target.
 		 * @param {number} height - The height of the render target.
 		 * @param {number} depth - The depth of the render target.
@@ -13925,11 +13924,12 @@
 	});
 
 	/**
-	 * Render Target that render to canvas element.
+	 * Render Target that render to screen (canvas).
 	 * @extends RenderTargetBase
 	 */
 	class RenderTargetBack extends RenderTargetBase {
 		/**
+		 * Create a new RenderTargetBack.
 		 * @param {HTMLCanvasElement} view - The canvas element which the Render Target rendered to.
 		 */
 		constructor(view) {
@@ -13948,7 +13948,7 @@
 			this.height = height;
 		}
 		dispose() {
-			// TODO dispose canvas?
+			// do nothing
 		}
 	}
 
@@ -14007,6 +14007,7 @@
 	 */
 	class RenderTargetCube extends RenderTargetBase {
 		/**
+		 * Create a new RenderTargetCube.
 		 * @param {number} width - The width of the render target.
 		 * @param {number} height - The height of the render target.
 		 */

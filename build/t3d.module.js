@@ -13964,10 +13964,6 @@ class PointsMaterial extends Material {
  */
 class RenderTargetBase extends EventDispatcher {
 
-	/**
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 */
 	constructor(width, height) {
 		super();
 
@@ -14516,6 +14512,7 @@ Texture2D.prototype.isTexture2D = true;
 class RenderTarget2D extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTarget2D.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 */
@@ -14723,6 +14720,7 @@ Texture2DArray.prototype.isTexture2DArray = true;
 class RenderTarget2DArray extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTarget2DArray.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 * @param {number} depth - The depth of the render target.
@@ -14943,6 +14941,7 @@ Texture3D.prototype.isTexture3D = true;
 class RenderTarget3D extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTarget3D.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 * @param {number} depth - The depth of the render target.
@@ -15090,12 +15089,13 @@ Object.defineProperties(RenderTarget3D.prototype, {
 });
 
 /**
- * Render Target that render to canvas element.
+ * Render Target that render to screen (canvas).
  * @extends RenderTargetBase
  */
 class RenderTargetBack extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTargetBack.
 	 * @param {HTMLCanvasElement} view - The canvas element which the Render Target rendered to.
 	 */
 	constructor(view) {
@@ -15117,7 +15117,7 @@ class RenderTargetBack extends RenderTargetBase {
 	}
 
 	dispose() {
-		// TODO dispose canvas?
+		// do nothing
 	}
 
 }
@@ -15182,6 +15182,7 @@ TextureCube.prototype.isTextureCube = true;
 class RenderTargetCube extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTargetCube.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 */

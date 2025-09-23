@@ -10,10 +10,6 @@ import { Color4 } from '../../math/Color4.js';
  */
 class RenderTargetBase extends EventDispatcher {
 
-	/**
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 */
 	constructor(width, height) {
 		super();
 

@@ -10,6 +10,7 @@ import { ATTACHMENT, PIXEL_FORMAT } from '../../const.js';
 class RenderTargetCube extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTargetCube.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 */

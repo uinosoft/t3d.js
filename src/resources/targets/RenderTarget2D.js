@@ -10,6 +10,7 @@ import { ATTACHMENT, PIXEL_FORMAT } from '../../const.js';
 class RenderTarget2D extends RenderTargetBase {
 
 	/**
+	 * Create a new RenderTarget2D.
 	 * @param {number} width - The width of the render target.
 	 * @param {number} height - The height of the render target.
 	 */
