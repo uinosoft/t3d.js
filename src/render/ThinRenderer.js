@@ -73,14 +73,6 @@ class ThinRenderer {
 			// The pass rendering count
 			count: 0
 		};
-
-		this._currentOcclusionQuerySet = null;
-
-		this._currentTimestampWrites = {
-			querySet: null,
-			beginningOfPassWriteIndex: -1,
-			endOfPassWriteIndex: -1
-		};
 	}
 
 	/**
@@ -107,10 +99,6 @@ class ThinRenderer {
 	endRender() {
 		this._passInfo.enabled = false;
 		this._passInfo.count++;
-
-		// Automatically clear the occlusion query set and timestamp writes
-		this._currentOcclusionQuerySet = null;
-		this._currentTimestampWrites.querySet = null;
 	}
 
 	/**

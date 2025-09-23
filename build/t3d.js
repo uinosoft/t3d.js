@@ -11571,12 +11571,6 @@
 				// The pass rendering count
 				count: 0
 			};
-			this._currentOcclusionQuerySet = null;
-			this._currentTimestampWrites = {
-				querySet: null,
-				beginningOfPassWriteIndex: -1,
-				endOfPassWriteIndex: -1
-			};
 		}
 
 		/**
@@ -11603,10 +11597,6 @@
 		endRender() {
 			this._passInfo.enabled = false;
 			this._passInfo.count++;
-
-			// Automatically clear the occlusion query set and timestamp writes
-			this._currentOcclusionQuerySet = null;
-			this._currentTimestampWrites.querySet = null;
 		}
 
 		/**
@@ -19467,6 +19457,12 @@
 
 			// Cache current material if beginRender is called.
 			this._currentMaterial = null;
+			this._currentOcclusionQuerySet = null;
+			this._currentTimestampWrites = {
+				querySet: null,
+				beginningOfPassWriteIndex: -1,
+				endOfPassWriteIndex: -1
+			};
 		}
 		init(context, options = {}) {
 			if (!context) {
@@ -19562,6 +19558,10 @@
 			state.depthBuffer.setMask(true);
 			state.colorBuffer.setMask(true);
 			this._currentMaterial = null;
+
+			// Automatically clear the occlusion query set and timestamp writes
+			this._currentOcclusionQuerySet = null;
+			this._currentTimestampWrites.querySet = null;
 			super.endRender();
 		}
 		renderRenderableItem(renderable, renderStates, options) {
