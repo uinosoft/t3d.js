@@ -29,7 +29,7 @@ WebGLRenderer.prototype.readRenderTargetPixels = function(x, y, width, height, b
 	const state = this._state;
 	const renderTarget = state.currentRenderTarget;
 
-	const zIndex = renderTarget.activeCubeFace || renderTarget.activeLayer || 0;
+	const zIndex = renderTarget.activeLayer || renderTarget.activeLayer || 0;
 	const mipLevel = renderTarget.activeMipmapLevel || 0;
 
 	if (renderTarget && renderTarget.texture) {

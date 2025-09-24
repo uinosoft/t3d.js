@@ -117,7 +117,7 @@ class ShadowMapPass {
 			for (let j = 0; j < faces; j++) {
 				if (isPointLight) {
 					shadow.update(light, j);
-					shadowTarget.activeCubeFace = j;
+					shadowTarget.activeLayer = j;
 				}
 
 				shadowTarget

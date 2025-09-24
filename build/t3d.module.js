@@ -12266,7 +12266,7 @@ class ShadowMapPass {
 			for (let j = 0; j < faces; j++) {
 				if (isPointLight) {
 					shadow.update(light, j);
-					shadowTarget.activeCubeFace = j;
+					shadowTarget.activeLayer = j;
 				}
 
 				shadowTarget
@@ -15267,11 +15267,12 @@ class RenderTargetCube extends RenderTargetBase {
 		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 
 		/**
-		 * The activeCubeFace property corresponds to a cube side (PX 0, NX 1, PY 2, NY 3, PZ 4, NZ 5).
+		 * The active layer index for rendering.
+		 * For cube render targets, this represents the active cube face.
 		 * @type {number}
 		 * @default 0
 		 */
-		this.activeCubeFace = 0;
+		this.activeLayer = 0;
 
 		/**
 		 * Specifies the active mipmap level.
@@ -15280,6 +15281,20 @@ class RenderTargetCube extends RenderTargetBase {
 		 * @default 0
 		 */
 		this.activeMipmapLevel = 0;
+	}
+
+	/**
+	 * An alias for {@link RenderTargetCube#activeLayer}, representing the
+	 * currently rendered cube face.
+	 * @type {number}
+	 * @default 0
+	 */
+	set activeCubeFace(value) {
+		this.activeLayer = value;
+	}
+
+	get activeCubeFace() {
+		return this.activeLayer;
 	}
 
 	/**
@@ -20329,14 +20344,7 @@ class WebGLRenderTargets extends PropertyMap {
 		renderTargetProperties.__webglFramebuffer = glFrameBuffer;
 		renderTargetProperties.__drawBuffers = drawBuffers;
 		renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
-
-		if (renderTarget.isRenderTargetCube) {
-			renderTargetProperties.__currentActiveCubeFace = renderTarget.activeCubeFace;
-		}
-
-		if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
-			renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
-		}
+		renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
 
@@ -20359,7 +20367,7 @@ class WebGLRenderTargets extends PropertyMap {
 				state.bindTexture(gl.TEXTURE_2D, null);
 			} else if (attachment.isTextureCube) {
 				const textureProperties = textures.setTextureCube(attachment);
-				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_CUBE_MAP_POSITIVE_X + renderTarget.activeCubeFace, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
+				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_CUBE_MAP_POSITIVE_X + renderTarget.activeLayer, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
 				state.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 			} else if (attachment.isTexture3D) {
 				const textureProperties = textures.setTexture3D(attachment);
@@ -20410,46 +20418,26 @@ class WebGLRenderTargets extends PropertyMap {
 
 		if (renderTargetProperties.__external) return;
 
-		if (renderTarget.isRenderTargetCube) {
-			const activeCubeFace = renderTarget.activeCubeFace;
-			const activeMipmapLevel = renderTarget.activeMipmapLevel;
-			if (renderTargetProperties.__currentActiveCubeFace !== activeCubeFace || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
-				for (const attachTarget in renderTarget._attachments) {
-					const attachment = renderTarget._attachments[attachTarget];
-					if (attachment.isTextureCube) {
-						const textureProperties = textures.get(attachment);
-						gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_CUBE_MAP_POSITIVE_X + activeCubeFace, textureProperties.__webglTexture, activeMipmapLevel);
-					}
+		const activeLayer = renderTarget.activeLayer;
+		const activeMipmapLevel = renderTarget.activeMipmapLevel;
+		if (renderTargetProperties.__currentActiveLayer !== activeLayer || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
+			for (const attachTarget in renderTarget._attachments) {
+				const attachment = renderTarget._attachments[attachTarget];
+
+				if (!attachment.isTexture) continue;
+
+				const textureProperties = textures.get(attachment);
+
+				if (attachment.isTexture2D) {
+					gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_2D, textureProperties.__webglTexture, activeMipmapLevel);
+				} else if (attachment.isTextureCube) {
+					gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_CUBE_MAP_POSITIVE_X + activeLayer, textureProperties.__webglTexture, activeMipmapLevel);
+				} else if (attachment.isTexture3D || attachment.isTexture2DArray) {
+					gl.framebufferTextureLayer(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], textureProperties.__webglTexture, activeMipmapLevel, activeLayer);
 				}
-				renderTargetProperties.__currentActiveCubeFace = activeCubeFace;
-				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
 			}
-		} else if (renderTarget.isRenderTarget3D || renderTarget.isRenderTarget2DArray) {
-			const activeLayer = renderTarget.activeLayer;
-			const activeMipmapLevel = renderTarget.activeMipmapLevel;
-			if (renderTargetProperties.__currentActiveLayer !== activeLayer || renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
-				for (const attachTarget in renderTarget._attachments) {
-					const attachment = renderTarget._attachments[attachTarget];
-					if (attachment.isTexture3D || attachment.isTexture2DArray) {
-						const textureProperties = textures.get(attachment);
-						gl.framebufferTextureLayer(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], textureProperties.__webglTexture, activeMipmapLevel, activeLayer);
-					}
-				}
-				renderTargetProperties.__currentActiveLayer = activeLayer;
-				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
-			}
-		} else if (renderTarget.isRenderTarget2D) {
-			const activeMipmapLevel = renderTarget.activeMipmapLevel;
-			if (renderTargetProperties.__currentActiveMipmapLevel !== activeMipmapLevel) {
-				for (const attachTarget in renderTarget._attachments) {
-					const attachment = renderTarget._attachments[attachTarget];
-					if (attachment.isTexture2D) {
-						const textureProperties = textures.get(attachment);
-						gl.framebufferTexture2D(gl.FRAMEBUFFER, attachTargetToGL[attachTarget], gl.TEXTURE_2D, textureProperties.__webglTexture, activeMipmapLevel);
-					}
-				}
-				renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
-			}
+			renderTargetProperties.__currentActiveLayer = activeLayer;
+			renderTargetProperties.__currentActiveMipmapLevel = activeMipmapLevel;
 		}
 	}
 
@@ -22548,7 +22536,7 @@ WebGLRenderer.prototype.readRenderTargetPixels = function(x, y, width, height, b
 	const state = this._state;
 	const renderTarget = state.currentRenderTarget;
 
-	const zIndex = renderTarget.activeCubeFace || renderTarget.activeLayer || 0;
+	const zIndex = renderTarget.activeLayer || renderTarget.activeLayer || 0;
 	const mipLevel = renderTarget.activeMipmapLevel || 0;
 
 	if (renderTarget && renderTarget.texture) {

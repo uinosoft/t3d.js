@@ -23,11 +23,12 @@ class RenderTargetCube extends RenderTargetBase {
 		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 
 		/**
-		 * The activeCubeFace property corresponds to a cube side (PX 0, NX 1, PY 2, NY 3, PZ 4, NZ 5).
+		 * The active layer index for rendering.
+		 * For cube render targets, this represents the active cube face.
 		 * @type {number}
 		 * @default 0
 		 */
-		this.activeCubeFace = 0;
+		this.activeLayer = 0;
 
 		/**
 		 * Specifies the active mipmap level.
@@ -36,6 +37,20 @@ class RenderTargetCube extends RenderTargetBase {
 		 * @default 0
 		 */
 		this.activeMipmapLevel = 0;
+	}
+
+	/**
+	 * An alias for {@link RenderTargetCube#activeLayer}, representing the
+	 * currently rendered cube face.
+	 * @type {number}
+	 * @default 0
+	 */
+	set activeCubeFace(value) {
+		this.activeLayer = value;
+	}
+
+	get activeCubeFace() {
+		return this.activeLayer;
 	}
 
 	/**

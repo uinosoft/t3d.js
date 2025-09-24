@@ -54,7 +54,7 @@ class ReflectionProbe {
 			const renderStates = scene.updateRenderStates(this.camera, false);
 			const renderQueue = scene.updateRenderQueue(this.camera, false, false);
 
-			this.renderTarget.activeCubeFace = i;
+			this.renderTarget.activeLayer = i;
 
 			renderer.beginRender(this.renderTarget);
 
