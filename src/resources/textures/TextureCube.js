@@ -35,6 +35,30 @@ class TextureCube extends TextureBase {
 		return this;
 	}
 
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height) {
+		let changed = false;
+
+		for (let i = 0; i < 6; i++) {
+			if (this.images[i] && this.images[i].rtt) {
+				if (this.images[i].width !== width || this.images[i].height !== height) {
+					this.images[i].width = width;
+					this.images[i].height = height;
+					changed = true;
+				}
+			} else {
+				this.images[i] = { rtt: true, data: null, width, height };
+				changed = true;
+			}
+		}
+
+		if (changed) {
+			this.version++;
+		}
+	}
+
 }
 
 /**

@@ -39,16 +39,7 @@ class RenderTarget2D extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture2D) {
-			if (target.image && target.image.rtt) {
-				if (target.image.width !== this.width || target.image.height !== this.height) {
-					target.version++;
-					target.image.width = this.width;
-					target.image.height = this.height;
-				}
-			} else {
-				target.version++;
-				target.image = { rtt: true, data: null, width: this.width, height: this.height };
-			}
+			target.resizeForRender(this.width, this.height);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -77,8 +68,7 @@ class RenderTarget2D extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTexture2D) {
-					target.image = { rtt: true, data: null, width: this.width, height: this.height };
-					target.version++;
+					target.resizeForRender(this.width, this.height);
 				} else {
 					target.resize(width, height);
 				}

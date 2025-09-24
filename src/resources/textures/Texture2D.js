@@ -30,6 +30,22 @@ class Texture2D extends TextureBase {
 		return this;
 	}
 
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height) {
+		if (this.image && this.image.rtt) {
+			if (this.image.width !== width || this.image.height !== height) {
+				this.version++;
+				this.image.width = width;
+				this.image.height = height;
+			}
+		} else {
+			this.version++;
+			this.image = { rtt: true, data: null, width, height };
+		}
+	}
+
 }
 
 /**

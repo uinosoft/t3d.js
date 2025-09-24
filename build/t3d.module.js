@@ -14455,6 +14455,16 @@ class TextureBase extends EventDispatcher {
 		this.version = 0;
 	}
 
+	/**
+	 * Resize the texture and mark it for render to texture.
+	 * @param {number} width - The new width of the texture.
+	 * @param {number} height - The new height of the texture.
+	 * @param {number} [depth] - The new depth of the texture.
+	 * Only {@link Texture3D} and {@link Texture2DArray} will use this parameter.
+	 * If not specified, the depth will not be changed.
+	 */
+	resizeForRender(width, height, depth) {}
+
 }
 
 /**
@@ -14493,6 +14503,22 @@ class Texture2D extends TextureBase {
 		this.image = source.image;
 
 		return this;
+	}
+
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height) {
+		if (this.image && this.image.rtt) {
+			if (this.image.width !== width || this.image.height !== height) {
+				this.version++;
+				this.image.width = width;
+				this.image.height = height;
+			}
+		} else {
+			this.version++;
+			this.image = { rtt: true, data: null, width, height };
+		}
 	}
 
 }
@@ -14541,16 +14567,7 @@ class RenderTarget2D extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture2D) {
-			if (target.image && target.image.rtt) {
-				if (target.image.width !== this.width || target.image.height !== this.height) {
-					target.version++;
-					target.image.width = this.width;
-					target.image.height = this.height;
-				}
-			} else {
-				target.version++;
-				target.image = { rtt: true, data: null, width: this.width, height: this.height };
-			}
+			target.resizeForRender(this.width, this.height);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -14579,8 +14596,7 @@ class RenderTarget2D extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTexture2D) {
-					target.image = { rtt: true, data: null, width: this.width, height: this.height };
-					target.version++;
+					target.resizeForRender(this.width, this.height);
 				} else {
 					target.resize(width, height);
 				}
@@ -14703,6 +14719,33 @@ class Texture2DArray extends TextureBase {
 		return this;
 	}
 
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height, depth) {
+		const resizeDepth = depth !== undefined;
+
+		if (this.image && this.image.rtt) {
+			if (
+				this.image.width !== width
+				|| this.image.height !== height
+				|| (resizeDepth && this.image.depth !== depth)
+			) {
+				this.version++;
+				this.image.width = width;
+				this.image.height = height;
+				if (resizeDepth) this.image.depth = depth;
+			}
+		} else {
+			this.version++;
+			const oldDepth = (this.image && this.image.depth) ? this.image.depth : 1;
+			this.image = {
+				rtt: true, data: null, width, height,
+				depth: resizeDepth ? depth : oldDepth
+			};
+		}
+	}
+
 }
 
 /**
@@ -14759,17 +14802,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture2DArray) {
-			if (target.image && target.image.rtt) {
-				if (target.image.width !== this.width || target.image.height !== this.height || target.image.depth !== this.depth) {
-					target.version++;
-					target.image.width = this.width;
-					target.image.height = this.height;
-					target.image.depth = this.depth;
-				}
-			} else {
-				target.version++;
-				target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
-			}
+			target.resizeForRender(this.width, this.height, this.depth);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -14809,8 +14842,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTexture2DArray) {
-					target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
-					target.version++;
+					target.resizeForRender(this.width, this.height, this.depth);
 				} else {
 					target.resize(width, height);
 				}
@@ -14924,6 +14956,33 @@ class Texture3D extends TextureBase {
 		return this;
 	}
 
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height, depth) {
+		const resizeDepth = depth !== undefined;
+
+		if (this.image && this.image.rtt) {
+			if (
+				this.image.width !== width
+				|| this.image.height !== height
+				|| (resizeDepth && this.image.depth !== depth)
+			) {
+				this.version++;
+				this.image.width = width;
+				this.image.height = height;
+				if (resizeDepth) this.image.depth = depth;
+			}
+		} else {
+			this.version++;
+			const oldDepth = (this.image && this.image.depth) ? this.image.depth : 1;
+			this.image = {
+				rtt: true, data: null, width, height,
+				depth: resizeDepth ? depth : oldDepth
+			};
+		}
+	}
+
 }
 
 /**
@@ -14980,17 +15039,7 @@ class RenderTarget3D extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture3D) {
-			if (target.image && target.image.rtt) {
-				if (target.image.width !== this.width || target.image.height !== this.height || target.image.depth !== this.depth) {
-					target.version++;
-					target.image.width = this.width;
-					target.image.height = this.height;
-					target.image.depth = this.depth;
-				}
-			} else {
-				target.version++;
-				target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
-			}
+			target.resizeForRender(this.width, this.height, this.depth);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -15030,8 +15079,7 @@ class RenderTarget3D extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTexture3D) {
-					target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
-					target.version++;
+					target.resizeForRender(this.width, this.height, this.depth);
 				} else {
 					target.resize(width, height);
 				}
@@ -15165,6 +15213,30 @@ class TextureCube extends TextureBase {
 		return this;
 	}
 
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height) {
+		let changed = false;
+
+		for (let i = 0; i < 6; i++) {
+			if (this.images[i] && this.images[i].rtt) {
+				if (this.images[i].width !== width || this.images[i].height !== height) {
+					this.images[i].width = width;
+					this.images[i].height = height;
+					changed = true;
+				}
+			} else {
+				this.images[i] = { rtt: true, data: null, width, height };
+				changed = true;
+			}
+		}
+
+		if (changed) {
+			this.version++;
+		}
+	}
+
 }
 
 /**
@@ -15218,24 +15290,7 @@ class RenderTargetCube extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTextureCube) {
-			let changed = false;
-
-			for (let i = 0; i < 6; i++) {
-				if (target.images[i] && target.images[i].rtt) {
-					if (target.images[i].width !== this.width || target.images[i].height !== this.height) {
-						target.images[i].width = this.width;
-						target.images[i].height = this.height;
-						changed = true;
-					}
-				} else {
-					target.images[i] = { rtt: true, data: null, width: this.width, height: this.height };
-					changed = true;
-				}
-			}
-
-			if (changed) {
-				target.version++;
-			}
+			target.resizeForRender(this.width, this.height);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -15264,10 +15319,7 @@ class RenderTargetCube extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTextureCube) {
-					for (let i = 0; i < 6; i++) {
-						target.images[i] = { rtt: true, data: null, width: this.width, height: this.height };
-					}
-					target.version++;
+					target.resizeForRender(this.width, this.height);
 				} else {
 					target.resize(width, height);
 				}

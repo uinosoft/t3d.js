@@ -48,17 +48,7 @@ class RenderTarget3D extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture3D) {
-			if (target.image && target.image.rtt) {
-				if (target.image.width !== this.width || target.image.height !== this.height || target.image.depth !== this.depth) {
-					target.version++;
-					target.image.width = this.width;
-					target.image.height = this.height;
-					target.image.depth = this.depth;
-				}
-			} else {
-				target.version++;
-				target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
-			}
+			target.resizeForRender(this.width, this.height, this.depth);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -98,8 +88,7 @@ class RenderTarget3D extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTexture3D) {
-					target.image = { rtt: true, data: null, width: this.width, height: this.height, depth: this.depth };
-					target.version++;
+					target.resizeForRender(this.width, this.height, this.depth);
 				} else {
 					target.resize(width, height);
 				}

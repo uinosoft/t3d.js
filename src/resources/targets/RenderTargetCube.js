@@ -46,24 +46,7 @@ class RenderTargetCube extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTextureCube) {
-			let changed = false;
-
-			for (let i = 0; i < 6; i++) {
-				if (target.images[i] && target.images[i].rtt) {
-					if (target.images[i].width !== this.width || target.images[i].height !== this.height) {
-						target.images[i].width = this.width;
-						target.images[i].height = this.height;
-						changed = true;
-					}
-				} else {
-					target.images[i] = { rtt: true, data: null, width: this.width, height: this.height };
-					changed = true;
-				}
-			}
-
-			if (changed) {
-				target.version++;
-			}
+			target.resizeForRender(this.width, this.height);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -92,10 +75,7 @@ class RenderTargetCube extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTextureCube) {
-					for (let i = 0; i < 6; i++) {
-						target.images[i] = { rtt: true, data: null, width: this.width, height: this.height };
-					}
-					target.version++;
+					target.resizeForRender(this.width, this.height);
 				} else {
 					target.resize(width, height);
 				}

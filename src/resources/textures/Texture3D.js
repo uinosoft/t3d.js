@@ -72,6 +72,33 @@ class Texture3D extends TextureBase {
 		return this;
 	}
 
+	/**
+	 * @override
+	 */
+	resizeForRender(width, height, depth) {
+		const resizeDepth = depth !== undefined;
+
+		if (this.image && this.image.rtt) {
+			if (
+				this.image.width !== width
+				|| this.image.height !== height
+				|| (resizeDepth && this.image.depth !== depth)
+			) {
+				this.version++;
+				this.image.width = width;
+				this.image.height = height;
+				if (resizeDepth) this.image.depth = depth;
+			}
+		} else {
+			this.version++;
+			const oldDepth = (this.image && this.image.depth) ? this.image.depth : 1;
+			this.image = {
+				rtt: true, data: null, width, height,
+				depth: resizeDepth ? depth : oldDepth
+			};
+		}
+	}
+
 }
 
 /**
