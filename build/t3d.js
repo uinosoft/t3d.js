@@ -12904,6 +12904,7 @@
 		}
 
 		/**
+		 * Resize the render target to the specified dimensions.
 		 * @abstract
 		 */
 		resize() {
@@ -12911,6 +12912,7 @@
 		}
 
 		/**
+		 * Dispose the render target.
 		 * @abstract
 		 */
 		dispose() {
@@ -13862,9 +13864,9 @@
 	 * Render Target that render to screen (canvas).
 	 * @extends RenderTargetBase
 	 */
-	class RenderTargetBack extends RenderTargetBase {
+	class ScreenRenderTarget extends RenderTargetBase {
 		/**
-		 * Create a new RenderTargetBack.
+		 * Create a new ScreenRenderTarget.
 		 * @param {HTMLCanvasElement} view - The canvas element which the Render Target rendered to.
 		 */
 		constructor(view) {
@@ -13906,7 +13908,7 @@
 	 * @type {boolean}
 	 * @default true
 	 */
-	RenderTargetBack.prototype.isRenderTargetBack = true;
+	ScreenRenderTarget.prototype.isScreenRenderTarget = true;
 
 	let _querySetId = 0;
 
@@ -18087,7 +18089,7 @@
 			const textures = this._textures;
 			let renderTargetProperties;
 			if (state.currentRenderTarget !== renderTarget) {
-				if (renderTarget.isRenderTargetBack) {
+				if (renderTarget.isScreenRenderTarget) {
 					gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 				} else {
 					renderTargetProperties = this.get(renderTarget);
@@ -18143,7 +18145,7 @@
 			}
 			if (needRestoreFramebuffer) {
 				// restore framebuffer binding
-				const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack ? this.get(state.currentRenderTarget).__webglFramebuffer : null;
+				const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget ? this.get(state.currentRenderTarget).__webglFramebuffer : null;
 				gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 			}
 			gl.bindFramebuffer(gl.READ_FRAMEBUFFER, readBuffer);
@@ -19544,7 +19546,7 @@
 			gl.readPixels(x, y, width, height, glFormat, glType, 0);
 
 			// restore framebuffer binding
-			const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack ? renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
+			const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget ? renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
 			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 			return clientWaitAsync(gl).then(() => {
 				if (!textureProperties.__readBuffer) {
@@ -19570,7 +19572,7 @@
 			gl.readPixels(x, y, width, height, glFormat, glType, buffer);
 
 			// restore framebuffer binding
-			const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack ? renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
+			const framebuffer = state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget ? renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
 			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 			return buffer;
 		}
@@ -20183,6 +20185,9 @@
 	}
 	RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
 
+	// deprecated since 0.5.0
+	ScreenRenderTarget.prototype.isRenderTargetBack = true;
+
 	exports.ATTACHMENT = ATTACHMENT;
 	exports.AmbientLight = AmbientLight;
 	exports.AnimationAction = AnimationAction;
@@ -20275,13 +20280,14 @@
 	exports.RenderTarget2D = RenderTarget2D;
 	exports.RenderTarget2DArray = RenderTarget2DArray;
 	exports.RenderTarget3D = RenderTarget3D;
-	exports.RenderTargetBack = RenderTargetBack;
+	exports.RenderTargetBack = ScreenRenderTarget;
 	exports.RenderTargetBase = RenderTargetBase;
 	exports.RenderTargetCube = RenderTargetCube;
 	exports.SHADING_TYPE = SHADING_TYPE;
 	exports.SHADOW_TYPE = SHADOW_TYPE;
 	exports.Scene = Scene;
 	exports.SceneData = SceneData;
+	exports.ScreenRenderTarget = ScreenRenderTarget;
 	exports.ShaderChunk = ShaderChunk;
 	exports.ShaderLib = ShaderLib;
 	exports.ShaderMaterial = ShaderMaterial;

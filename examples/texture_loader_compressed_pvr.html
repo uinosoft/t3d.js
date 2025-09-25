@@ -118,7 +118,7 @@
 
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

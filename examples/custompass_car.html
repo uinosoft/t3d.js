@@ -82,7 +82,7 @@
 		scene.add(camera);
 
 		// custom pass
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 		const tempRenderTarget1 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget1.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget1.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
@@ -137,7 +137,7 @@
 			renderer.renderScene(scene, camera, tempRenderTarget1);
 			colorAdjustPass.render(renderer, tempRenderTarget2);
 			filmPass.render(renderer, tempRenderTarget1);
-			fxaaPass.render(renderer, backRenderTarget);
+			fxaaPass.render(renderer, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -147,7 +147,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			tempRenderTarget1.resize(width, height);
 			tempRenderTarget2.resize(width, height);
 		}

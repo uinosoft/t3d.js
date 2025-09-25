@@ -49,7 +49,7 @@
 		const forwardRenderer = new ForwardRenderer(canvas, {
 			antialias: true
 		});
-		forwardRenderer.backRenderTarget.setColorClearValue(251 / 255, 243 / 255, 228 / 255, 1);
+		forwardRenderer.screenRenderTarget.setColorClearValue(251 / 255, 243 / 255, 228 / 255, 1);
 
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(undefined, 18, 25);
@@ -166,7 +166,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			forwardRenderer.screenRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
 			canvas.style.width = width + 'px';
 			canvas.style.height = height + 'px';

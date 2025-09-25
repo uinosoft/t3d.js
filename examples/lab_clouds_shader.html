@@ -37,7 +37,7 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const CloudsShader = {
 			name: 'Clouds',
@@ -95,7 +95,7 @@
 
 			if (cloudsPass) {
 				cloudsPass.uniforms['u_Time'] = timestamp * 0.0005;
-				cloudsPass.render(renderer, backRenderTarget);
+				cloudsPass.render(renderer, screenRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);
@@ -104,7 +104,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 		
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		});
 	</script>
 </body>

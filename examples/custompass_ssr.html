@@ -115,7 +115,7 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		// custom pass
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
@@ -219,7 +219,7 @@
 			blurPass.uniforms['direction'] = 1;
 			blurPass.render(renderer, tempRenderTarget2);
 
-			blendPass.render(renderer, backRenderTarget);
+			blendPass.render(renderer, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -229,7 +229,7 @@
 
 			camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 500);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			gBuffer.resize(width, height);
 
 			tempRenderTarget2.resize(width, height);

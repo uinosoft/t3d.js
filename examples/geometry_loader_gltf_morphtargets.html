@@ -169,7 +169,7 @@
 
 			animation && animation.update(clock.getDelta());
 
-			forwardRenderer.backRenderTarget.setColorClearValue(hemisphereLight.color.r, hemisphereLight.color.g, hemisphereLight.color.b, 1);
+			forwardRenderer.screenRenderTarget.setColorClearValue(hemisphereLight.color.r, hemisphereLight.color.g, hemisphereLight.color.b, 1);
 
 			forwardRenderer.render(scene, camera);
 		}
@@ -181,7 +181,7 @@
 
 			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 5000);
 
-			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			forwardRenderer.screenRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
 			canvas.style.width = width + 'px';
 			canvas.style.height = height + 'px';

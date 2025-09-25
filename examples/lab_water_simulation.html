@@ -61,7 +61,7 @@
 
 		const shadowMapPass = new t3d.ShadowMapPass();
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const cubeTexturePath = './resources/skybox/Park2/';
 		const cubeTexture = new TextureCubeLoader().load([
@@ -322,7 +322,7 @@
 			const waterTexture = waterSimulation._currentRTT.texture;
 			water.material.uniforms.water = waterTexture;
 
-			renderer.renderScene(scene, camera, backRenderTarget);
+			renderer.renderScene(scene, camera, screenRenderTarget);
 		}
 
 		requestAnimationFrame(loop);
@@ -333,7 +333,7 @@
 
 			camera.setPerspective((45 / 180) * Math.PI, width / height, 0.1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 
 		window.addEventListener('resize', onWindowResize, false);

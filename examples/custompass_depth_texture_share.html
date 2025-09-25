@@ -89,7 +89,7 @@
 		
 		const copyPass = new t3d.ShaderPostPass(CopyShader);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const depthTexture = new t3d.Texture2D();
 		depthTexture.image = { data: null, width: 4, height: 4 };
@@ -142,7 +142,7 @@
 			renderer.renderScene(scene, camera, tempRenderTarget2);
 		
 			copyPass.uniforms.tDiffuse = tempRenderTarget2.texture;
-			copyPass.render(renderer, backRenderTarget);
+			copyPass.render(renderer, screenRenderTarget);
 		}
 		
 		if (renderer.capabilities.version < 2) {
@@ -157,7 +157,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			tempRenderTarget.resize(width, height);
 			tempRenderTarget2.resize(width, height);
 		}

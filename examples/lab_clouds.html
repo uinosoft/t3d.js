@@ -97,7 +97,7 @@
 		container.appendChild(cloudsCanvas);
 
 		const forwardRenderer = new ForwardRenderer(cloudsCanvas, { antialias: true, alpha: true });
-		forwardRenderer.backRenderTarget.setColorClearValue(0, 0, 0, 0);
+		forwardRenderer.screenRenderTarget.setColorClearValue(0, 0, 0, 0);
 
 		const scene = new t3d.Scene();
 		
@@ -184,7 +184,7 @@
 
 			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 3000);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

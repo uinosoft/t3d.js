@@ -72,7 +72,7 @@
 		
 		const copyPass = new t3d.ShaderPostPass(CopyShader);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
@@ -132,9 +132,9 @@
 				}
 
 				copyPass.uniforms.tDiffuse = tempRenderTarget.texture;
-				copyPass.render(renderer, backRenderTarget);
+				copyPass.render(renderer, screenRenderTarget);
 			} else {
-				renderer.renderScene(scene, camera, backRenderTarget);
+				renderer.renderScene(scene, camera, screenRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);
@@ -145,7 +145,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			tempRenderTarget.resize(width, height);
 
 			for (const key in renderTargets) {

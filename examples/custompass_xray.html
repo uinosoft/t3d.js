@@ -46,8 +46,8 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(54 / 255, 103 / 255, 149 / 255, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(54 / 255, 103 / 255, 149 / 255, 1);
 
 		const scene = new t3d.Scene();
 
@@ -174,17 +174,17 @@
 		
 			// render main pass
 		
-			backRenderTarget.setClear(true, true, true);
-			renderer.renderScene(scene, camera, backRenderTarget);
+			screenRenderTarget.setClear(true, true, true);
+			renderer.renderScene(scene, camera, screenRenderTarget);
 
 			// render xray pass
 
 			const renderStates = scene.getRenderStates(camera);
 			const mainLayer = scene.getRenderQueue(camera).getLayer(0);
 
-			backRenderTarget.setClear(false, false, false);
+			screenRenderTarget.setClear(false, false, false);
 
-			renderer.beginRender(backRenderTarget);
+			renderer.beginRender(screenRenderTarget);
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
 			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
 			renderer.endRender();
@@ -197,7 +197,7 @@
 
 			camera.setPerspective(50 / 180 * Math.PI, width / height, 0.01, 100);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

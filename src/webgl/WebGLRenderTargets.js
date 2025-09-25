@@ -109,7 +109,7 @@ class WebGLRenderTargets extends PropertyMap {
 		let renderTargetProperties;
 
 		if (state.currentRenderTarget !== renderTarget) {
-			if (renderTarget.isRenderTargetBack) {
+			if (renderTarget.isScreenRenderTarget) {
 				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			} else {
 				renderTargetProperties = this.get(renderTarget);
@@ -177,7 +177,7 @@ class WebGLRenderTargets extends PropertyMap {
 		}
 
 		if (needRestoreFramebuffer) { // restore framebuffer binding
-			const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+			const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget) ?
 				this.get(state.currentRenderTarget).__webglFramebuffer : null;
 			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 		}

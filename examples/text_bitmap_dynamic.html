@@ -198,12 +198,12 @@
 
 			controller.update();
 
-			forwardRenderer.backRenderTarget.setClear(true, true, true);
+			forwardRenderer.screenRenderTarget.setClear(true, true, true);
 			forwardRenderer.render(scene, camera);
 
 			if (debugParams.atlas) {
 				debugCamera.rect.set(0, 0, debugParams.atlasScale, debugParams.atlasScale * width / height);
-				forwardRenderer.backRenderTarget.setClear(false, false, false);
+				forwardRenderer.screenRenderTarget.setClear(false, false, false);
 				forwardRenderer.render(debugScene, debugCamera);
 			}
 		}
@@ -215,7 +215,7 @@
 
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 5000);
 
-			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			forwardRenderer.screenRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
 			canvas.style.width = width + 'px';
 			canvas.style.height = height + 'px';

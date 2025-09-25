@@ -1,5 +1,5 @@
 import {
-	RenderTargetBack,
+	ScreenRenderTarget,
 	ShadowMapPass,
 	WebGLRenderer
 } from 't3d';
@@ -30,7 +30,7 @@ class ForwardRenderer extends WebGLRenderer {
 			console.info('ForwardRenderer use WebGL1 because of your browser not support WebGL2.');
 		}
 
-		this.backRenderTarget = new RenderTargetBack(view);
+		this.screenRenderTarget = new ScreenRenderTarget(view);
 
 		this.shadowMapPass = new ShadowMapPass();
 
@@ -79,6 +79,15 @@ class ForwardRenderer extends WebGLRenderer {
 		return true;
 	}
 
+	// deprecated since 0.5.0
+	set backRenderTarget(value) {
+		this.screenRenderTarget = value;
+	}
+
+	get backRenderTarget() {
+		return this.screenRenderTarget;
+	}
+
 	/**
 	 * Render a scene using a camera.
 	 * The render is done to the renderTarget (if specified) or to the canvas as usual.
@@ -104,7 +113,7 @@ class ForwardRenderer extends WebGLRenderer {
 		}
 
 		if (renderTarget === undefined) {
-			renderTarget = this.backRenderTarget;
+			renderTarget = this.screenRenderTarget;
 		}
 
 		this.renderScene(scene, camera, renderTarget);

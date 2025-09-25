@@ -211,7 +211,7 @@
 
 			forwardRenderer.shadowMapPass.render(forwardRenderer, scene);
 
-			forwardRenderer.backRenderTarget.setColorClearValue(0, 0, 0, 0);
+			forwardRenderer.screenRenderTarget.setColorClearValue(0, 0, 0, 0);
 
 			// clear reflection before render probes
 			// to avoid self reflection
@@ -231,7 +231,7 @@
 			wallPlane.material.uniforms.reflectNormalScale = params.reflectNormalScale;
 			groundPlane.material.uniforms.reflectNormalScale = params.reflectNormalScale * 2;
 
-			forwardRenderer.backRenderTarget.setColorClearValue(0.2, 0.2, 0.2, 1);
+			forwardRenderer.screenRenderTarget.setColorClearValue(0.2, 0.2, 0.2, 1);
 
 			forwardRenderer.render(scene, camera);
 		}
@@ -243,7 +243,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

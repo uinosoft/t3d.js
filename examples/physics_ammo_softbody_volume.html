@@ -48,7 +48,7 @@
 			document.body.appendChild(canvas);
 
 			const forwardRenderer = new ForwardRenderer(canvas);
-			forwardRenderer.backRenderTarget.setColorClearValue(0.75, 0.82, 0.9, 1);
+			forwardRenderer.screenRenderTarget.setColorClearValue(0.75, 0.82, 0.9, 1);
 
 			const scene = new t3d.Scene();
 
@@ -382,7 +382,7 @@
 
 				camera.setPerspective(60 / 180 * Math.PI, window.innerWidth / window.innerHeight, 0.2, 2000);
 
-				forwardRenderer.backRenderTarget.resize(width, height);
+				forwardRenderer.screenRenderTarget.resize(width, height);
 			}
 			window.addEventListener('resize', onWindowResize, false);
 		});

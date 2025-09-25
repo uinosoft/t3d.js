@@ -21,7 +21,7 @@ class StereoRenderer extends ForwardRenderer {
 			this.shadowNeedsUpdate = false;
 		}
 
-		renderTarget = renderTarget || this.backRenderTarget;
+		renderTarget = renderTarget || this.screenRenderTarget;
 
 		this.renderScene(scene, cameraL, renderTarget);
 

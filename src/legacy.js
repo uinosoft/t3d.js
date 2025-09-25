@@ -7,6 +7,7 @@ import { Matrix3 } from './math/Matrix3.js';
 import { Vector3 } from './math/Vector3.js';
 import { EventDispatcher } from './EventDispatcher.js';
 import { PropertyMap } from './render/PropertyMap.js';
+import { ScreenRenderTarget } from './resources/targets/ScreenRenderTarget.js';
 import { OffscreenRenderTarget } from './resources/targets/OffscreenRenderTarget.js';
 import { RenderBuffer } from './resources/RenderBuffer.js';
 import { Texture2D } from './resources/textures/Texture2D.js';
@@ -451,3 +452,7 @@ export class RenderTarget2DArray extends OffscreenRenderTarget {
 
 }
 RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
+
+// deprecated since 0.5.0
+ScreenRenderTarget.prototype.isRenderTargetBack = true;
+export { ScreenRenderTarget as RenderTargetBack };

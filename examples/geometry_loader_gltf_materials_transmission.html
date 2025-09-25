@@ -50,7 +50,7 @@
 
 		const scene = new t3d.Scene();
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
@@ -214,7 +214,7 @@
 			// Step4: render resultRenderTarget to screen
 
 			fxaaPass.material.uniforms.tDiffuse = resultRenderTarget.texture;
-			fxaaPass.render(renderer, backRenderTarget);
+			fxaaPass.render(renderer, screenRenderTarget);
 		}
 
 		function onWindowResize() {
@@ -223,7 +223,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.01, 20);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			sceneRenderTarget.resize(width, height);
 			transmissionRenderTarget.resize(width, height);
 			resultRenderTarget.resize(width, height);

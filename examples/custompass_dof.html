@@ -112,8 +112,8 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		// custom pass
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(0, 0, 0, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -181,7 +181,7 @@
 
 			dofPass.uniforms['tColor'] = tempRenderTarget.texture;
 			dofPass.uniforms['tDepth'] = gBuffer.getDepthTexture();
-			dofPass.render(renderer, backRenderTarget);
+			dofPass.render(renderer, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -191,7 +191,7 @@
 
 			camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 500);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			gBuffer.resize(width, height);
 
 			tempRenderTarget.resize(width, height);

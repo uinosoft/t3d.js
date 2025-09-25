@@ -40,8 +40,8 @@
 		canvas.height = height;
 		document.body.appendChild(canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(0.6, 0.6, 0.6, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0.6, 0.6, 0.6, 1);
 
 		const contextParams = { antialias: true, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -143,13 +143,13 @@
 			const renderStates = scene.updateRenderStates(camera);
 			const renderQueue = scene.updateRenderQueue(camera);
 
-			backRenderTarget.setClear(true, true, true);
-			renderer.renderScene(scene, camera, backRenderTarget);
+			screenRenderTarget.setClear(true, true, true);
+			renderer.renderScene(scene, camera, screenRenderTarget);
 
 			// Render planar shadows
 
-			backRenderTarget.setClear(false, false, false);
-			renderer.beginRender(backRenderTarget);
+			screenRenderTarget.setClear(false, false, false);
+			renderer.beginRender(screenRenderTarget);
 			for (let i = 0; i < renderQueue.layerList.length; i++) {
 				const renderQueueLayer = renderQueue.layerList[i];
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates, shadowRenderOptions);
@@ -165,7 +165,7 @@
 
 			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
     </script>

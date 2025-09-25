@@ -110,12 +110,12 @@
 			cameraMini.position.z = 100 * Math.cos(count / 1000 * .5);
 			cameraMini.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
 
-			forwardRenderer.backRenderTarget
+			forwardRenderer.screenRenderTarget
 				.setColorClearValue(0, 0, 0, 0)
 				.setClear(true, true, true);
 			forwardRenderer.render(scene, camera);
 
-			forwardRenderer.backRenderTarget
+			forwardRenderer.screenRenderTarget
 				.setColorClearValue(1, 0, 0, 1)
 				.setClear(false, true, true);
 			forwardRenderer.render(sceneMini, cameraMini);
@@ -129,7 +129,7 @@
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 			cameraMini.setPerspective(45 / 180 * Math.PI, width / height, 1, 10000);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

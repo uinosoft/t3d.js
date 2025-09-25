@@ -241,7 +241,7 @@
 
 		// Render targets
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const depthRenderBuffer = new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH24_STENCIL8, multipleSampling);
 
@@ -412,15 +412,15 @@
 			// Copy resultRenderTarget to screen
 
 			copyPass.uniforms.tDiffuse = resultRenderTarget.texture;
-			backRenderTarget.clearColor = true;
-			copyPass.render(renderer, backRenderTarget);
+			screenRenderTarget.clearColor = true;
+			copyPass.render(renderer, screenRenderTarget);
 
 			if (params.debug) {
 				// Copy clipped occlusion map to left bottom corner (1/25) of the screen
 				copyPass.uniforms.tDiffuse = clippedOcclusionRenderTarget.texture;
 				copyPass.renderStates.camera.rect.set(0, 0, 0.2, 0.2);
-				backRenderTarget.clearColor = false;
-				copyPass.render(renderer, backRenderTarget);
+				screenRenderTarget.clearColor = false;
+				copyPass.render(renderer, screenRenderTarget);
 				copyPass.renderStates.camera.rect.set(0, 0, 1, 1);
 			}
 		}
@@ -433,7 +433,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			sceneRenderTarget.resize(width, height);
 			occlusionRenderTarget.resize(width, height);
 			resultRenderTarget.resize(width, height);

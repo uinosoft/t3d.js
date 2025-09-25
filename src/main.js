@@ -72,7 +72,7 @@ export { PointsMaterial } from './resources/materials/PointsMaterial.js';
 export { ShaderMaterial } from './resources/materials/ShaderMaterial.js';
 
 export { OffscreenRenderTarget } from './resources/targets/OffscreenRenderTarget.js';
-export { RenderTargetBack } from './resources/targets/RenderTargetBack.js';
+export { ScreenRenderTarget } from './resources/targets/ScreenRenderTarget.js';
 export { RenderTargetBase } from './resources/targets/RenderTargetBase.js';
 
 export { Texture2D } from './resources/textures/Texture2D.js';

@@ -68,8 +68,8 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget
 			.setColorClearValue(0.1, 0.1, 0.1, 1)
 			.setClear(true, true, false);
 
@@ -153,7 +153,7 @@
 
 			const renderStates = scene.updateRenderStates(camera);
 
-			renderer.beginRender(backRenderTarget);
+			renderer.beginRender(screenRenderTarget);
 			renderer.renderRenderableList(compileList.opaque, renderStates, compileOption);
 			renderer.endRender();
 		}
@@ -216,7 +216,7 @@
 			const renderStates = scene.updateRenderStates(camera);
 			const mainLayer = scene.updateRenderQueue(camera).getLayer(0);
 
-			renderer.beginRender(backRenderTarget);
+			renderer.beginRender(screenRenderTarget);
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
 			renderer.endRender();
 
@@ -238,7 +238,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

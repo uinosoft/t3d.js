@@ -113,7 +113,7 @@
 			const controller = new OrbitControls(camera, canvas);
 			controller.target.set(0, 1, 0);
 
-			const backRenderTarget = new t3d.RenderTargetBack(canvas);
+			const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 			const gBuffer = new GBuffer(width, height);
 			gBuffer.enableNormalGlossiness = false;
@@ -156,9 +156,9 @@
 				renderer.renderScene(scene, camera, tempRenderTarget);
 
 				if (params.motionDebug) {
-					gBuffer.renderDebug(renderer, camera, 'velocity', backRenderTarget);
+					gBuffer.renderDebug(renderer, camera, 'velocity', screenRenderTarget);
 				} else {
-					motionBlurPass.render(renderer, backRenderTarget);
+					motionBlurPass.render(renderer, screenRenderTarget);
 				}
 			}
 			requestAnimationFrame(loop);
@@ -169,7 +169,7 @@
 
 				camera.setPerspective((60 / 180) * Math.PI, width / height, 1, 1000);
 
-				backRenderTarget.resize(width, height);
+				screenRenderTarget.resize(width, height);
 				tempRenderTarget.resize(width, height);
 				gBuffer.resize(width, height);
 			}

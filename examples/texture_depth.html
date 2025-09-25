@@ -37,8 +37,8 @@
 		canvas.height = height;
 		document.body.appendChild(canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(0, 0, 0, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
 		const renderer = new t3d.WebGLRenderer(gl);
@@ -102,7 +102,7 @@
 
 			renderer.renderScene(scene, camera, tempRenderTarget);
 
-			depthLinearPass.render(renderer, backRenderTarget);
+			depthLinearPass.render(renderer, screenRenderTarget);
 		}
 
 		requestAnimationFrame(loop);
@@ -114,7 +114,7 @@
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 2, 300);
 			// camera.setOrtho(- width / 4 / 2, width / 4 / 2, - height / 4 / 2, height / 4 / 2, 2, 300);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			tempRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);

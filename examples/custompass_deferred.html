@@ -138,8 +138,8 @@
 
 		const controller = new OrbitControls(camera, canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(0, 0, 0, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const normalDepthRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		normalDepthRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
@@ -252,7 +252,7 @@
 			shadowMapPass.render(renderer, scene);
 
 			if (params.render === 'forward') {
-				renderer.beginRender(backRenderTarget);
+				renderer.beginRender(screenRenderTarget);
 				renderer.renderRenderableList(renderQueueLayer.opaque, renderStates);
 				renderer.renderRenderableList(renderQueueLayer.transparent, renderStates);
 				renderer.endRender();
@@ -558,7 +558,7 @@
 					pass.uniforms['tDiffuse'] = resultRenderTarget.texture;
 				}
 		
-				pass.render(renderer, backRenderTarget);
+				pass.render(renderer, screenRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);
@@ -569,7 +569,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			normalDepthRenderTarget.resize(width, height);
 			colorRenderTarget.resize(width, height);
 			resultRenderTarget.resize(width, height);

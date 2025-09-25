@@ -57,8 +57,8 @@
 			InfiniteGridShader.fragmentShader = '#extension GL_EXT_frag_depth : enable \n' + InfiniteGridShader.fragmentShader;
 		}
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget
 			.setColorClearValue(0, 0, 0, 1)
 			.setClear(true, true, false);
 
@@ -168,7 +168,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderScene(scene, camera, backRenderTarget);
+			renderer.renderScene(scene, camera, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -178,7 +178,7 @@
 
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

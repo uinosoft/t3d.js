@@ -44,8 +44,8 @@
 		});
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget
 			.setColorClearValue(0.1, 0.1, 0.1, 1)
 			.setClear(true, true, false);
 
@@ -114,7 +114,7 @@
 
 			renderInfo.reset();
 
-			renderer.beginRender(backRenderTarget);
+			renderer.beginRender(screenRenderTarget);
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, { renderInfo: renderInfo });
 			renderer.renderRenderableList(mainLayer.transparent, renderStates, { renderInfo: renderInfo });
 			renderer.endRender();
@@ -127,7 +127,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
     </script>

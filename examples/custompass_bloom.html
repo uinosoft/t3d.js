@@ -97,7 +97,7 @@
 
 		const controller = new OrbitControls(camera, canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -179,16 +179,16 @@
 			copyPass.material.transparent = false;
 			copyPass.uniforms.tDiffuse = tempRenderTarget.texture;
 			copyPass.uniforms.opacity = 1;
-			backRenderTarget.setClear(true, true, true);
-			copyPass.render(renderer, backRenderTarget);
+			screenRenderTarget.setClear(true, true, true);
+			copyPass.render(renderer, screenRenderTarget);
 
 			if (bloomParams.enable) {
 				copyPass.material.transparent = true;
 				copyPass.material.blending = t3d.BLEND_TYPE.ADD;
 				copyPass.uniforms.tDiffuse = tempRenderTarget1.texture;
 				copyPass.uniforms.opacity = bloomParams.intensity;
-				backRenderTarget.setClear(false, false, false);
-				copyPass.render(renderer, backRenderTarget);
+				screenRenderTarget.setClear(false, false, false);
+				copyPass.render(renderer, screenRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);
@@ -199,7 +199,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			tempRenderTarget.resize(width, height);
 			tempRenderTarget1.resize(width, height);
 

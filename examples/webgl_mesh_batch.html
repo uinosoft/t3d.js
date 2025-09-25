@@ -45,7 +45,7 @@
 		document.body.appendChild(canvas);
 
 		const renderer = new ForwardRenderer(canvas);
-		renderer.backRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
+		renderer.screenRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
 		renderer.matrixAutoUpdate = false;
 
 		const capabilities = renderer.capabilities;
@@ -400,7 +400,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 		
-			renderer.backRenderTarget.resize(width, height);
+			renderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize);
 	</script>

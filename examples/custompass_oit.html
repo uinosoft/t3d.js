@@ -42,7 +42,7 @@
 		canvas.height = height;
 		document.body.appendChild(canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams);
@@ -145,16 +145,16 @@
 			scene.updateRenderQueue(camera);
 		
 			if (params.type == 0) {
-				backRenderTarget.setClear(true, true, true);
-				renderer.renderScene(scene, camera, backRenderTarget);
+				screenRenderTarget.setClear(true, true, true);
+				renderer.renderScene(scene, camera, screenRenderTarget);
 			} else if (params.type == 1) {
 				depthPeelingOITPass.renderBuffer(renderer, scene, camera);
-				backRenderTarget.setClear(true, false, false);
-				depthPeelingOITPass.render(renderer, backRenderTarget);
+				screenRenderTarget.setClear(true, false, false);
+				depthPeelingOITPass.render(renderer, screenRenderTarget);
 			} else {
 				weightedBlendedOITPass.renderBuffer(renderer, scene, camera);
-				backRenderTarget.setClear(true, false, false);
-				weightedBlendedOITPass.render(renderer, backRenderTarget);
+				screenRenderTarget.setClear(true, false, false);
+				weightedBlendedOITPass.render(renderer, screenRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);
@@ -163,7 +163,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			depthPeelingOITPass.resize(width, height);
 			weightedBlendedOITPass.resize(width, height);
 

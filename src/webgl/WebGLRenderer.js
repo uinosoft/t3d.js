@@ -561,7 +561,7 @@ class WebGLRenderer extends ThinRenderer {
 		gl.readPixels(x, y, width, height, glFormat, glType, 0);
 
 		// restore framebuffer binding
-		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget) ?
 			renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
 		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
@@ -595,7 +595,7 @@ class WebGLRenderer extends ThinRenderer {
 		gl.readPixels(x, y, width, height, glFormat, glType, buffer);
 
 		// restore framebuffer binding
-		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget) ?
 			renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
 		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 

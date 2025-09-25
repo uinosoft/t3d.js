@@ -58,8 +58,8 @@
 		}
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0.1, 0.1, 0.1, 1);
 
 		const scene = new t3d.Scene();
 
@@ -210,8 +210,8 @@
 		
 			const mainLayer = renderQueue.getLayer(0);
 
-			backRenderTarget.setClear(true, true, false);
-			renderer.beginRender(backRenderTarget);
+			screenRenderTarget.setClear(true, true, false);
+			renderer.beginRender(screenRenderTarget);
 			renderer.renderRenderableList(mainLayer.opaque, renderStates, renderOption);
 			renderer.renderRenderableList(mainLayer.transparent, renderStates, renderOption);
 			renderer.endRender();
@@ -220,24 +220,24 @@
 
 			const occlusionLayer = renderQueue.getLayer(1);
 			if (occlusionLayer && occlusionLayer.opaqueCount > 0) {
-				backRenderTarget.setClear(false, false, false);
+				screenRenderTarget.setClear(false, false, false);
 				if (params.enableOcclusionQuery) {
-					backRenderTarget.setOcclusionQuerySet(occlusionManager.querySet);
+					screenRenderTarget.setOcclusionQuerySet(occlusionManager.querySet);
 				}
 		
-				renderer.beginRender(backRenderTarget);
+				renderer.beginRender(screenRenderTarget);
 				renderer.renderRenderableList(occlusionLayer.opaque, renderStates, OcclusionRenderOptions);
 				renderer.endRender();
 		
-				backRenderTarget.setOcclusionQuerySet(null);
+				screenRenderTarget.setOcclusionQuerySet(null);
 			}
 
 			// Overlay layer
 
 			const overlayLayer = renderQueue.getLayer(2);
 			if (overlayLayer && (overlayLayer.opaqueCount + overlayLayer.transparentCount) > 0) {
-				backRenderTarget.setClear(false, true, false);
-				renderer.beginRender(backRenderTarget);
+				screenRenderTarget.setClear(false, true, false);
+				renderer.beginRender(screenRenderTarget);
 				renderer.renderRenderableList(overlayLayer.opaque, renderStates, renderOption);
 				renderer.renderRenderableList(overlayLayer.transparent, renderStates, renderOption);
 				renderer.endRender();
@@ -257,7 +257,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 800);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

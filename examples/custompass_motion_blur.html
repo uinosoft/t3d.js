@@ -82,7 +82,7 @@
 
 		const controller = new OrbitControls(camera, canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		function createRenderTarget() {
 			const renderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
@@ -164,8 +164,8 @@
 			tempRenderTarget1.setColorClearValue(0, 0, 0, 1);
 			renderer.renderScene(scene, camera, tempRenderTarget1);
 
-			backRenderTarget.setColorClearValue(0, 0, 0, 1);
-			motionBlurPass.render(renderer, backRenderTarget);
+			screenRenderTarget.setColorClearValue(0, 0, 0, 1);
+			motionBlurPass.render(renderer, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -175,7 +175,7 @@
 
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 
 			tempRenderTarget1.resize(width, height);
 		}

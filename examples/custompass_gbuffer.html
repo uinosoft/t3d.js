@@ -81,8 +81,8 @@
 
 		const controller = new OrbitControls(camera, canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(0, 0, 0, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0, 0, 0, 1);
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -107,7 +107,7 @@
 			scene.updateRenderQueue(camera);
 
 			gBuffer.update(renderer, scene, camera);
-			gBuffer.renderDebug(renderer, camera, params.debug, backRenderTarget);
+			gBuffer.renderDebug(renderer, camera, params.debug, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -117,7 +117,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			gBuffer.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);

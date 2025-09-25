@@ -129,10 +129,10 @@
 			cube.visible = false;
 			sphere.visible = true;
 
-			forwardRenderer.backRenderTarget.setClear(true, true, true);
+			forwardRenderer.screenRenderTarget.setClear(true, true, true);
 			forwardRenderer.render(scene, camera);
 		
-			forwardRenderer.backRenderTarget.setClear(false, true, false);
+			forwardRenderer.screenRenderTarget.setClear(false, true, false);
 			forwardRenderer.render(stencilScene, camera);
 
 			directionalLight.color.setHex(0xffaaaa);
@@ -144,7 +144,7 @@
 			cube.visible = true;
 			sphere.visible = false;
 
-			forwardRenderer.backRenderTarget.setClear(false, true, false);
+			forwardRenderer.screenRenderTarget.setClear(false, true, false);
 			forwardRenderer.render(scene, camera);
 		}
 		requestAnimationFrame(loop);
@@ -155,7 +155,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

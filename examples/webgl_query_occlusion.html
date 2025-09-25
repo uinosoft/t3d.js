@@ -55,8 +55,8 @@
 		}
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget
 			.setColorClearValue(0.1, 0.1, 0.1, 1)
 			.setClear(true, true, false);
 
@@ -140,7 +140,7 @@
 
 		// create occlusion query set
 		const querySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.OCCLUSION, 1);
-		backRenderTarget.setOcclusionQuerySet(querySet);
+		screenRenderTarget.setOcclusionQuerySet(querySet);
 
 		const renderOption = {
 			beforeRender: renderable => {
@@ -174,7 +174,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderScene(scene, camera, backRenderTarget, renderOption);
+			renderer.renderScene(scene, camera, screenRenderTarget, renderOption);
 
 			if (!reading) {
 				renderer.readQuerySetResults(querySet, dstBuffer)
@@ -193,7 +193,7 @@
 
 			camera.setPerspective(30 / 180 * Math.PI, width / height, 1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
     </script>

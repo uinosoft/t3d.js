@@ -40,7 +40,7 @@
 		canvas.height = height;
 		document.body.appendChild(canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -106,7 +106,7 @@
 			renderer.renderScene(scene, camera, renderTarget);
 
 			outputPass.uniforms.tDiffuse = renderTarget.texture;
-			outputPass.render(renderer, backRenderTarget);
+			outputPass.render(renderer, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -118,7 +118,7 @@
 
 			camera.setOrtho(-aspect, aspect, -1, 1, 0, 1);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			renderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);

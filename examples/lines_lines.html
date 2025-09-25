@@ -120,7 +120,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			forwardRenderer.screenRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
 			canvas.style.width = width + 'px';
 			canvas.style.height = height + 'px';

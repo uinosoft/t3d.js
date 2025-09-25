@@ -53,8 +53,8 @@
 
 		const renderer = new t3d.WebGLRenderer(gl);
 		renderer.shaderCompileOptions.compileAsynchronously = true;
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget
 			.setColorClearValue(0.1, 0.1, 0.1, 1)
 			.setClear(true, true, false);
 		const shadowMapPass = new t3d.ShadowMapPass();
@@ -241,7 +241,7 @@
 
 		let isQuerySetReading = false;
 		const timerQuerySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.TIMESTAMP, 2);
-		backRenderTarget.setTimestampWrites(timerQuerySet, 0, 1);
+		screenRenderTarget.setTimestampWrites(timerQuerySet, 0, 1);
 
 		const clusteredDebugMaterial = new t3d.ShaderMaterial(ClusteredDebugShader);
 		clusteredDebugMaterial.acceptLight = true;
@@ -279,7 +279,7 @@
 
 			shadowMapPass.render(renderer, scene);
 
-			renderer.renderScene(scene, camera, backRenderTarget, renderOptions);
+			renderer.renderScene(scene, camera, screenRenderTarget, renderOptions);
 
 			if (!isQuerySetReading) {
 				renderer.readQuerySetResults(timerQuerySet, [0, 1])
@@ -301,7 +301,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

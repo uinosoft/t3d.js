@@ -175,7 +175,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.backRenderTarget.setColorClearValue(0.6, 0.7, 0.8, 1);
+		forwardRenderer.screenRenderTarget.setColorClearValue(0.6, 0.7, 0.8, 1);
 
 		const scene = new t3d.Scene();
 		scene.fog = new t3d.Fog(undefined, 10, 500);
@@ -310,7 +310,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

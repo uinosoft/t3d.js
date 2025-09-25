@@ -47,7 +47,7 @@
 
 		const renderer = new t3d.WebGLRenderer(gl);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const scene = new t3d.Scene();
 
@@ -145,7 +145,7 @@
 			scene.updateRenderQueue(camera);
 
 			renderer.renderScene(scene, camera, tempRenderTarget);
-			bloomPass.update(renderer, tempRenderTarget, backRenderTarget);
+			bloomPass.update(renderer, tempRenderTarget, screenRenderTarget);
 		}
 		requestAnimationFrame(loop);
 
@@ -156,7 +156,7 @@
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 500);
 		
 			tempRenderTarget.resize(width, height);
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			bloomPass.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);

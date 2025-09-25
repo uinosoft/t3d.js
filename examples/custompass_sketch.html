@@ -76,8 +76,8 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		// custom pass
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget.setColorClearValue(1, 1, 1, 1);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(1, 1, 1, 1);
 
 		const contextParams = { antialias: true, alpha: false };
 		// todo webgl 1.0 has bug on android here?
@@ -148,14 +148,14 @@
 			sketchPass.render(renderer, tempRenderTarget2);
 
 			if (beauty) {
-				backRenderTarget.clearColor = true;
-				renderer.renderScene(scene, camera, backRenderTarget);
+				screenRenderTarget.clearColor = true;
+				renderer.renderScene(scene, camera, screenRenderTarget);
 			}
 
 			if (sketch) {
 				copyPass.uniforms['tDiffuse'] = tempRenderTarget2.texture;
-				backRenderTarget.setClear(!beauty, true, true);
-				copyPass.render(renderer, backRenderTarget);
+				screenRenderTarget.setClear(!beauty, true, true);
+				copyPass.render(renderer, screenRenderTarget);
 			}
 		}
 		requestAnimationFrame(loop);
@@ -166,7 +166,7 @@
 
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 1000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 			gBuffer.resize(width, height);
 
 			tempRenderTarget2.resize(width, height);

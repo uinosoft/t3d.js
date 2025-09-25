@@ -51,7 +51,7 @@
 		document.body.appendChild(canvas);
 
 		const forwardRenderer = new ForwardRenderer(canvas);
-		forwardRenderer.backRenderTarget.setColorClearValue(0.6, 0.7, 0.8, 1);
+		forwardRenderer.screenRenderTarget.setColorClearValue(0.6, 0.7, 0.8, 1);
 
 		const cubeTexturePath = './resources/skybox/pisa/';
 		const cubeTexture = new TextureCubeLoader().load([
@@ -178,7 +178,7 @@
 
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
 
-			forwardRenderer.backRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
+			forwardRenderer.screenRenderTarget.resize(Math.floor(width * devicePixelRatio), Math.floor(height * devicePixelRatio));
 
 			canvas.style.width = width + 'px';
 			canvas.style.height = height + 'px';

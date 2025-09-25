@@ -108,7 +108,7 @@
 			// camera.setPerspective(45 / 180 * Math.PI, width / height, 2, 400);
 			camera.setOrtho(-width / 4 / 2, width / 4 / 2, -height / 4 / 2, height / 4 / 2, 2, 300);
 
-			forwardRenderer.backRenderTarget.resize(width, height);
+			forwardRenderer.screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
 	</script>

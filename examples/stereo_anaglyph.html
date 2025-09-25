@@ -121,7 +121,7 @@
 			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 100);
 			camera.aspect = width / height;
 
-			anaglyphRenderer.backRenderTarget.resize(width, height);
+			anaglyphRenderer.screenRenderTarget.resize(width, height);
 			anaglyphRenderer.resize(width, height);
 		}
 

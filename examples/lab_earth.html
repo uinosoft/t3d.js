@@ -166,7 +166,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
 
-			forwardRenderer.backRenderTarget.resize(useDevicePixelRatio ? width * devicePixelRatio : width, useDevicePixelRatio ? height * devicePixelRatio : height);
+			forwardRenderer.screenRenderTarget.resize(useDevicePixelRatio ? width * devicePixelRatio : width, useDevicePixelRatio ? height * devicePixelRatio : height);
 			canvas.style.width = width + 'px';
 			canvas.style.height = height + 'px';
 		}

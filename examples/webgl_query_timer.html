@@ -47,8 +47,8 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 
 		const renderer = new t3d.WebGLRenderer(gl);
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		backRenderTarget
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget
 			.setColorClearValue(0.1, 0.1, 0.1, 1)
 			.setClear(true, true, false);
 
@@ -103,7 +103,7 @@
 		gui.add(params, 'timer').name('GPU Frame Time (ms)').disable().listen();
 
 		const querySet = new t3d.QuerySet(t3d.QUERYSET_TYPE.TIMESTAMP, 2);
-		backRenderTarget.setTimestampWrites(querySet, 0, 1);
+		screenRenderTarget.setTimestampWrites(querySet, 0, 1);
 
 		let reading = false;
 		const dstBuffer = new Array(2);
@@ -117,7 +117,7 @@
 			scene.updateRenderStates(camera);
 			scene.updateRenderQueue(camera);
 
-			renderer.renderScene(scene, camera, backRenderTarget);
+			renderer.renderScene(scene, camera, screenRenderTarget);
 
 			if (!reading) {
 				renderer.readQuerySetResults(querySet, dstBuffer)
@@ -136,7 +136,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 2000);
 
-			backRenderTarget.resize(width, height);
+			screenRenderTarget.resize(width, height);
 		}
 		window.addEventListener('resize', onWindowResize, false);
     </script>

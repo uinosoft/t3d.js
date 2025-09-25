@@ -14042,6 +14042,7 @@ class RenderTargetBase extends EventDispatcher {
 	}
 
 	/**
+	 * Resize the render target to the specified dimensions.
 	 * @abstract
 	 */
 	resize() {
@@ -14049,6 +14050,7 @@ class RenderTargetBase extends EventDispatcher {
 	}
 
 	/**
+	 * Dispose the render target.
 	 * @abstract
 	 */
 	dispose() {
@@ -15024,10 +15026,10 @@ OffscreenRenderTarget.prototype.isOffscreenRenderTarget = true;
  * Render Target that render to screen (canvas).
  * @extends RenderTargetBase
  */
-class RenderTargetBack extends RenderTargetBase {
+class ScreenRenderTarget extends RenderTargetBase {
 
 	/**
-	 * Create a new RenderTargetBack.
+	 * Create a new ScreenRenderTarget.
 	 * @param {HTMLCanvasElement} view - The canvas element which the Render Target rendered to.
 	 */
 	constructor(view) {
@@ -15069,7 +15071,7 @@ class RenderTargetBack extends RenderTargetBase {
  * @type {boolean}
  * @default true
  */
-RenderTargetBack.prototype.isRenderTargetBack = true;
+ScreenRenderTarget.prototype.isScreenRenderTarget = true;
 
 let _querySetId = 0;
 
@@ -20082,7 +20084,7 @@ class WebGLRenderTargets extends PropertyMap {
 		let renderTargetProperties;
 
 		if (state.currentRenderTarget !== renderTarget) {
-			if (renderTarget.isRenderTargetBack) {
+			if (renderTarget.isScreenRenderTarget) {
 				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 			} else {
 				renderTargetProperties = this.get(renderTarget);
@@ -20150,7 +20152,7 @@ class WebGLRenderTargets extends PropertyMap {
 		}
 
 		if (needRestoreFramebuffer) { // restore framebuffer binding
-			const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+			const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget) ?
 				this.get(state.currentRenderTarget).__webglFramebuffer : null;
 			gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 		}
@@ -21873,7 +21875,7 @@ class WebGLRenderer extends ThinRenderer {
 		gl.readPixels(x, y, width, height, glFormat, glType, 0);
 
 		// restore framebuffer binding
-		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget) ?
 			renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
 		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
@@ -21907,7 +21909,7 @@ class WebGLRenderer extends ThinRenderer {
 		gl.readPixels(x, y, width, height, glFormat, glType, buffer);
 
 		// restore framebuffer binding
-		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isRenderTargetBack) ?
+		const framebuffer = (state.currentRenderTarget && !state.currentRenderTarget.isScreenRenderTarget) ?
 			renderTargets.get(state.currentRenderTarget).__webglFramebuffer : null;
 		gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
 
@@ -22634,4 +22636,7 @@ class RenderTarget2DArray extends OffscreenRenderTarget {
 }
 RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, OffscreenRenderTarget, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+// deprecated since 0.5.0
+ScreenRenderTarget.prototype.isRenderTargetBack = true;
+
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, OffscreenRenderTarget, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, ScreenRenderTarget as RenderTargetBack, RenderTargetBase, RenderTargetCube, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ScreenRenderTarget, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

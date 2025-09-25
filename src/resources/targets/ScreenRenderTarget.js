@@ -4,10 +4,10 @@ import { RenderTargetBase } from './RenderTargetBase.js';
  * Render Target that render to screen (canvas).
  * @extends RenderTargetBase
  */
-class RenderTargetBack extends RenderTargetBase {
+class ScreenRenderTarget extends RenderTargetBase {
 
 	/**
-	 * Create a new RenderTargetBack.
+	 * Create a new ScreenRenderTarget.
 	 * @param {HTMLCanvasElement} view - The canvas element which the Render Target rendered to.
 	 */
 	constructor(view) {
@@ -49,6 +49,6 @@ class RenderTargetBack extends RenderTargetBase {
  * @type {boolean}
  * @default true
  */
-RenderTargetBack.prototype.isRenderTargetBack = true;
+ScreenRenderTarget.prototype.isScreenRenderTarget = true;
 
-export { RenderTargetBack };
+export { ScreenRenderTarget };

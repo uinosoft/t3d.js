@@ -1,7 +1,7 @@
 import {
 	BLEND_TYPE,
 	Matrix4,
-	RenderTargetBack,
+	ScreenRenderTarget,
 	ShaderPostPass,
 	ShadowMapPass,
 	Vector3,
@@ -35,10 +35,10 @@ class DeferredRenderer extends WebGLRenderer {
 
 		this.shadowMapPass = new ShadowMapPass();
 
-		this.backRenderTarget = new RenderTargetBack(view);
+		this.screenRenderTarget = new ScreenRenderTarget(view);
 
-		const width = this.backRenderTarget.width;
-		const height = this.backRenderTarget.height;
+		const width = view.width;
+		const height = view.height;
 
 		this.gBuffer = new GBuffer(width, height);
 
@@ -98,13 +98,22 @@ class DeferredRenderer extends WebGLRenderer {
 		this.ambientCubemapIntensity = 1.0;
 	}
 
+	// deprecated since 0.5.0
+	set backRenderTarget(value) {
+		this.screenRenderTarget = value;
+	}
+
+	get backRenderTarget() {
+		return this.screenRenderTarget;
+	}
+
 	resize(width, height) {
-		this.backRenderTarget.resize(width, height);
+		this.screenRenderTarget.resize(width, height);
 		this.gBuffer.resize(width, height);
 	}
 
 	render(scene, camera, renderTarget) {
-		renderTarget = renderTarget || this.backRenderTarget;
+		renderTarget = renderTarget || this.screenRenderTarget;
 
 		const oldClearColor = renderTarget.clearColor;
 

@@ -44,7 +44,7 @@
 		canvas.style.height = height + 'px';
 		document.body.appendChild(canvas);
 
-		const backRenderTarget = new t3d.RenderTargetBack(canvas);
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
 
 		const contextParams = { antialias: false, alpha: false };
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
@@ -164,8 +164,8 @@
 
 				gBuffer.update(renderer, scene, camera);
 
-				backRenderTarget.setColorClearValue(0, 0, 0, 1);
-				gBuffer.renderDebug(renderer, camera, 'velocity', backRenderTarget);
+				screenRenderTarget.setColorClearValue(0, 0, 0, 1);
+				gBuffer.renderDebug(renderer, camera, 'velocity', screenRenderTarget);
 
 				return;
 			}
@@ -175,8 +175,8 @@
 				scene.updateRenderStates(camera);
 				scene.updateRenderQueue(camera);
 		
-				backRenderTarget.setColorClearValue(0.3, 0.3, 0.3, 1);
-				renderer.renderScene(scene, camera, backRenderTarget);
+				screenRenderTarget.setColorClearValue(0.3, 0.3, 0.3, 1);
+				renderer.renderScene(scene, camera, screenRenderTarget);
 				return;
 			}
 
@@ -219,8 +219,8 @@
 
 			copyPass.uniforms['tDiffuse'] = tex;
 			copyPass.material.transparent = true;
-			backRenderTarget.setColorClearValue(0, 0, 0, 0);
-			copyPass.render(renderer, backRenderTarget);
+			screenRenderTarget.setColorClearValue(0, 0, 0, 0);
+			copyPass.render(renderer, screenRenderTarget);
 		}
 
 		requestAnimationFrame(loop);
@@ -231,7 +231,7 @@
 
 			camera.setPerspective(45 / 180 * Math.PI, width / height, 0.1, 1000);
 
-			backRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
+			screenRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 			tempRenderTarget.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
 
 			gBuffer.resize(width * window.devicePixelRatio, height * window.devicePixelRatio);
