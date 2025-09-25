@@ -1,4 +1,4 @@
-import { Camera, RenderTarget2D, Vector3, Vector4, Plane, Matrix4, TEXTURE_FILTER } from 't3d';
+import { Camera, OffscreenRenderTarget, Vector3, Vector4, Plane, Matrix4, TEXTURE_FILTER } from 't3d';
 
 
 /**
@@ -7,13 +7,13 @@ import { Camera, RenderTarget2D, Vector3, Vector4, Plane, Matrix4, TEXTURE_FILTE
 class PlanarReflectionProbe {
 
 	/**
-	 * @param {RenderTarget2D} [renderTarget] - The reflection render is done to the renderTarget (if specified).
+	 * @param {OffscreenRenderTarget} [renderTarget] - The reflection render is done to the renderTarget (if specified).
 	 */
 	constructor(renderTarget) {
 		this.plane = new Plane();
 
 		if (!renderTarget) {
-			renderTarget = new RenderTarget2D(1024, 1024);
+			renderTarget = OffscreenRenderTarget.create2D(1024, 1024);
 			renderTarget.texture.minFilter = TEXTURE_FILTER.LINEAR;
 			renderTarget.texture.generateMipmaps = false;
 		}

@@ -59,7 +59,7 @@
 		function renderTexture2D(size = 512) {
 			const maxMipLevels = Math.floor(Math.log2(size)) + 1;
 
-			const renderTarget2D = new t3d.RenderTarget2D(size, size);
+			const renderTarget2D = t3d.OffscreenRenderTarget.create2D(size, size);
 			renderTarget2D.detach(t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 			renderTarget2D.texture.generateMipmaps = false;
 

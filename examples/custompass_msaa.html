@@ -74,7 +74,7 @@
 
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.detach(t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
@@ -86,7 +86,7 @@
 		const renderTargets = {};
 		function getMultipleSamplingRenderTarget(value) {
 			if (!renderTargets[value]) {
-				const renderTarget = new t3d.RenderTarget2D(width, height);
+				const renderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 				renderTarget.attach(
 					new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, value),
 					t3d.ATTACHMENT.COLOR_ATTACHMENT0

@@ -94,7 +94,7 @@
 
 		const depthRenderBuffer = new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH24_STENCIL8, 4);
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.attach(
 			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, 4),
 			t3d.ATTACHMENT.COLOR_ATTACHMENT0
@@ -104,7 +104,7 @@
 			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
 		);
 
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.attach(
 			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, 4),
 			t3d.ATTACHMENT.COLOR_ATTACHMENT0
@@ -114,7 +114,7 @@
 			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
 		);
 
-		const tempRenderTarget3 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget3 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget3.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 

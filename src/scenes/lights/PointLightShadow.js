@@ -1,6 +1,6 @@
 import { LightShadow } from './LightShadow.js';
 import { TEXTURE_FILTER } from '../../const.js';
-import { RenderTargetCube } from '../../resources/targets/RenderTargetCube.js';
+import { OffscreenRenderTarget } from '../../resources/targets/OffscreenRenderTarget.js';
 import { Vector3 } from '../../math/Vector3.js';
 
 /**
@@ -12,7 +12,7 @@ class PointLightShadow extends LightShadow {
 	constructor() {
 		super();
 
-		this.renderTarget = new RenderTargetCube(this.mapSize.x, this.mapSize.y);
+		this.renderTarget = OffscreenRenderTarget.createCube(this.mapSize.x, this.mapSize.y);
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;

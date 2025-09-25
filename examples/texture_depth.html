@@ -67,7 +67,7 @@
 
 		const controller = new OrbitControls(camera, canvas);
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget.texture.generateMipmaps = false;

@@ -1,5 +1,5 @@
 import {
-	RenderTarget2D,
+	OffscreenRenderTarget,
 	ShaderPostPass,
 	Texture2D,
 	TEXTURE_FILTER,
@@ -22,7 +22,7 @@ class IDWMapGenerator {
 	constructor(width = 1024, height = 1024) {
 		// Gray pass
 
-		this._grayRenderTarget = new RenderTarget2D(width, height);
+		this._grayRenderTarget = OffscreenRenderTarget.create2D(width, height);
 		this._grayRenderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 		this._grayRenderTarget
 			.setColorClearValue(0, 0, 0, 1)
@@ -47,7 +47,7 @@ class IDWMapGenerator {
 
 		// Colorize pass
 
-		this._colorizeRenderTarget = new RenderTarget2D(width, height);
+		this._colorizeRenderTarget = OffscreenRenderTarget.create2D(width, height);
 		this._colorizeRenderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 		this._colorizeRenderTarget
 			.setColorClearValue(0, 0, 0, 0)

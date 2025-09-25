@@ -49,7 +49,7 @@
 		outputPass.material.defines.SRGB_COLOR_SPACE = true;
 		outputPass.material.defines.REINHARD_TONE_MAPPING = true;
 
-		const renderTarget = new t3d.RenderTarget2D(width, height);
+		const renderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		renderTarget.texture.type = t3d.PIXEL_TYPE.HALF_FLOAT;
 		renderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		renderTarget.texture.generateMipmaps = false;

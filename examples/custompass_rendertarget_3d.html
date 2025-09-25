@@ -56,7 +56,7 @@
 		const controller = new OrbitControls(camera, canvas);
 
 		function renderTexture3D(size = 64) {
-			const renderTarget3D = new t3d.RenderTarget3D(size, size, size);
+			const renderTarget3D = t3d.OffscreenRenderTarget.create3D(size, size, size);
 			renderTarget3D.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 			renderTarget3D.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 

@@ -1,7 +1,7 @@
 import {
 	ATTACHMENT,
 	Matrix4,
-	RenderTarget2D,
+	OffscreenRenderTarget,
 	SHADING_TYPE,
 	ShaderMaterial,
 	ShaderPostPass,
@@ -14,7 +14,7 @@ import {
 class GBuffer {
 
 	constructor(width, height) {
-		this._renderTarget1 = new RenderTarget2D(width, height);
+		this._renderTarget1 = OffscreenRenderTarget.create2D(width, height);
 		this._renderTarget1.texture.minFilter = TEXTURE_FILTER.NEAREST;
 		this._renderTarget1.texture.magFilter = TEXTURE_FILTER.NEAREST;
 		this._renderTarget1.texture.type = PIXEL_TYPE.HALF_FLOAT;
@@ -35,12 +35,12 @@ class GBuffer {
 		this._texture2.magFilter = TEXTURE_FILTER.LINEAR;
 		this._texture2.generateMipmaps = false;
 
-		this._renderTarget2 = new RenderTarget2D(width, height);
+		this._renderTarget2 = OffscreenRenderTarget.create2D(width, height);
 		this._renderTarget2.texture.minFilter = TEXTURE_FILTER.LINEAR;
 		this._renderTarget2.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		this._renderTarget2.texture.generateMipmaps = false;
 
-		this._renderTarget3 = new RenderTarget2D(width, height);
+		this._renderTarget3 = OffscreenRenderTarget.create2D(width, height);
 		this._renderTarget3.texture.type = PIXEL_TYPE.HALF_FLOAT;
 		this._renderTarget3.texture.minFilter = TEXTURE_FILTER.NEAREST;
 		this._renderTarget3.texture.magFilter = TEXTURE_FILTER.NEAREST;

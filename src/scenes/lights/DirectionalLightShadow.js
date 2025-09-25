@@ -1,7 +1,7 @@
 import { LightShadow } from './LightShadow.js';
 import { TEXTURE_FILTER, PIXEL_FORMAT, PIXEL_TYPE, ATTACHMENT, COMPARE_FUNC } from '../../const.js';
 import { Texture2D } from '../../resources/textures/Texture2D.js';
-import { RenderTarget2D } from '../../resources/targets/RenderTarget2D.js';
+import { OffscreenRenderTarget } from '../../resources/targets/OffscreenRenderTarget.js';
 import { RenderBuffer } from '../../resources/RenderBuffer.js';
 
 /**
@@ -29,7 +29,7 @@ class DirectionalLightShadow extends LightShadow {
 		 */
 		this.frustumEdgeFalloff = 0.0;
 
-		this.renderTarget = new RenderTarget2D(this.mapSize.x, this.mapSize.y);
+		this.renderTarget = OffscreenRenderTarget.create2D(this.mapSize.x, this.mapSize.y);
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;

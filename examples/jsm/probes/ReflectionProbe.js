@@ -1,4 +1,4 @@
-import { TEXTURE_FILTER, Camera, Vector3, RenderTargetCube } from 't3d';
+import { TEXTURE_FILTER, Camera, Vector3, OffscreenRenderTarget } from 't3d';
 
 /**
  * A Reflection Probe is rather like a camera that captures a spherical view of its surroundings in all directions.
@@ -7,7 +7,7 @@ import { TEXTURE_FILTER, Camera, Vector3, RenderTargetCube } from 't3d';
 class ReflectionProbe {
 
 	/**
-	 * @param {RenderTargetCube} [renderTarget] - The reflection render is done to the renderTarget (if specified).
+	 * @param {OffscreenRenderTarget} [renderTarget] - The reflection render is done to the renderTarget (if specified).
 	 */
 	constructor(renderTarget) {
 		this.camera = new Camera();
@@ -26,7 +26,7 @@ class ReflectionProbe {
 		this.position = new Vector3();
 		this.lookTarget = new Vector3();
 
-		this.renderTarget = renderTarget || new RenderTargetCube(512, 512);
+		this.renderTarget = renderTarget || OffscreenRenderTarget.createCube(512, 512);
 		this.renderTexture = this.renderTarget.texture;
 		this.renderTexture.minFilter = TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
 

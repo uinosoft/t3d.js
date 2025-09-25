@@ -129,17 +129,17 @@
 
 		const ssrPass = new t3d.ShaderPostPass(SSRShader);
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.generateMipmaps = false;
 
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget2.texture.generateMipmaps = false;
 
-		const tempRenderTarget3 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget3 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget3.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget3.texture.generateMipmaps = false;

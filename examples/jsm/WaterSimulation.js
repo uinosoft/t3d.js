@@ -1,16 +1,16 @@
-import { RenderTarget2D, ShaderPostPass, PIXEL_TYPE, TEXTURE_FILTER } from 't3d';
+import { OffscreenRenderTarget, ShaderPostPass, PIXEL_TYPE, TEXTURE_FILTER } from 't3d';
 
 // refer: madebyevan.com/webgl-water
 class WaterSimulation {
 
 	constructor(width = 256, height = 256) {
-		const rt1 = new RenderTarget2D(width, height);
+		const rt1 = OffscreenRenderTarget.create2D(width, height);
 		rt1.texture.type = PIXEL_TYPE.HALF_FLOAT;
 		rt1.texture.minFilter = rt1.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		rt1.texture.generateMipmaps = false;
 		rt1.setClear(false, false, false);
 
-		const rt2 = new RenderTarget2D(width, height);
+		const rt2 = OffscreenRenderTarget.create2D(width, height);
 		rt2.texture.type = PIXEL_TYPE.HALF_FLOAT;
 		rt2.texture.minFilter = rt2.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		rt2.texture.generateMipmaps = false;

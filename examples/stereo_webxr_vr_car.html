@@ -111,7 +111,7 @@
 			webxrControl.update(frame, width, height);
 
 			if (!webxrRenderTarget) {
-				webxrRenderTarget = new t3d.RenderTarget2D(width, height);
+				webxrRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 				stereoRenderer.setFramebufferExternal(webxrRenderTarget, webxrControl.getFramebuffer());
 			}
 

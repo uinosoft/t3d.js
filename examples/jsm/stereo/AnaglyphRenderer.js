@@ -1,6 +1,6 @@
 import {
 	TEXTURE_FILTER,
-	RenderTarget2D,
+	OffscreenRenderTarget,
 	Matrix4,
 	Matrix3,
 	ShaderPostPass
@@ -35,11 +35,11 @@ class AnaglyphRenderer extends ForwardRenderer {
 		const width = view.width;
 		const height = view.height;
 
-		const _renderTargetL = this._renderTargetL = new RenderTarget2D(width, height);
+		const _renderTargetL = this._renderTargetL = OffscreenRenderTarget.create2D(width, height);
 		_renderTargetL.texture.minFilter = TEXTURE_FILTER.LINEAR;
 		_renderTargetL.texture.magFilter = TEXTURE_FILTER.NEAREST;
 
-		const _renderTargetR = this._renderTargetR = new RenderTarget2D(width, height);
+		const _renderTargetR = this._renderTargetR = OffscreenRenderTarget.create2D(width, height);
 		_renderTargetR.texture.minFilter = TEXTURE_FILTER.LINEAR;
 		_renderTargetR.texture.magFilter = TEXTURE_FILTER.NEAREST;
 

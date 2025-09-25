@@ -103,17 +103,17 @@
 		const gl = canvas.getContext('webgl2', contextParams) || canvas.getContext('webgl', contextParams);
 		const renderer = new t3d.WebGLRenderer(gl);
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.generateMipmaps = false;
 
-		const tempRenderTarget1 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget1 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget1.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget1.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget1.generateMipmaps = false;
 
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget2.generateMipmaps = false;

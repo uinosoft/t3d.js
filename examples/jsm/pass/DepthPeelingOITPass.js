@@ -1,11 +1,11 @@
-import { ShaderPostPass, RenderTarget2D, Texture2D, ATTACHMENT, TEXTURE_FILTER, PIXEL_TYPE, BLEND_FACTOR, BLEND_TYPE, BLEND_EQUATION, ShaderLib, PBRMaterial, MATERIAL_TYPE } from 't3d';
+import { ShaderPostPass, OffscreenRenderTarget, Texture2D, ATTACHMENT, TEXTURE_FILTER, PIXEL_TYPE, BLEND_FACTOR, BLEND_TYPE, BLEND_EQUATION, ShaderLib, PBRMaterial, MATERIAL_TYPE } from 't3d';
 
 // TODO: Share depth attachment with opaque render target
 class DepthPeelingOITPass {
 
 	constructor(width, height) {
-		this._renderTarget1 = new RenderTarget2D(width, height);
-		this._renderTarget2 = new RenderTarget2D(width, height);
+		this._renderTarget1 = OffscreenRenderTarget.create2D(width, height);
+		this._renderTarget2 = OffscreenRenderTarget.create2D(width, height);
 
 		// 0: depth range, 1: front color, 2: back color
 		this._renderTarget1.attach(createFloatColorTexture(), ATTACHMENT.COLOR_ATTACHMENT0);
@@ -16,15 +16,15 @@ class DepthPeelingOITPass {
 		this._renderTarget2.attach(createFloatColorTexture(PIXEL_TYPE.HALF_FLOAT), ATTACHMENT.COLOR_ATTACHMENT1);
 		this._renderTarget2.attach(createFloatColorTexture(PIXEL_TYPE.HALF_FLOAT), ATTACHMENT.COLOR_ATTACHMENT2);
 
-		this._depthClearRenderTarget1 = new RenderTarget2D(width, height);
+		this._depthClearRenderTarget1 = OffscreenRenderTarget.create2D(width, height);
 		this._depthClearRenderTarget1.attach(this._renderTarget1._attachments[ATTACHMENT.COLOR_ATTACHMENT0], ATTACHMENT.COLOR_ATTACHMENT0);
 		this._depthClearRenderTarget1.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 
-		this._depthClearRenderTarget2 = new RenderTarget2D(width, height);
+		this._depthClearRenderTarget2 = OffscreenRenderTarget.create2D(width, height);
 		this._depthClearRenderTarget2.attach(this._renderTarget2._attachments[ATTACHMENT.COLOR_ATTACHMENT0], ATTACHMENT.COLOR_ATTACHMENT0);
 		this._depthClearRenderTarget2.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 
-		this._backBlendRenderTarget = new RenderTarget2D(width, height);
+		this._backBlendRenderTarget = OffscreenRenderTarget.create2D(width, height);
 
 		this._backBlendPass = new ShaderPostPass(DepthPeelingBackBlendShader);
 		this._backBlendPass.material.transparent = true;

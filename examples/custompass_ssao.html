@@ -95,12 +95,12 @@
 		ssaoPass.uniforms['bias'] = radius / 50;
 		ssaoPass.uniforms['radius'] = radius;
 
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.generateMipmaps = false;
 
-		const tempRenderTarget3 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget3 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget3.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget3.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget3.texture.generateMipmaps = false;

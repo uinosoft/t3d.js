@@ -100,7 +100,7 @@
 		depthTexture.generateMipmaps = false;
 		depthTexture.flipY = false;
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget.attach(
@@ -108,7 +108,7 @@
 			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
 		);
 
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;

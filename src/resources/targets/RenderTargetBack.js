@@ -20,6 +20,12 @@ class RenderTargetBack extends RenderTargetBase {
 		this.view = view;
 	}
 
+	/**
+	 * Resizes the render target to the specified dimensions.
+	 * This method will set the width and height properties of the canvas.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 */
 	resize(width, height) {
 		this.view.width = width;
 		this.view.height = height;
@@ -28,8 +34,11 @@ class RenderTargetBack extends RenderTargetBase {
 		this.height = height;
 	}
 
+	/**
+	 * Dispatches a dispose event.
+	 */
 	dispose() {
-		// do nothing
+		this.dispatchEvent({ type: 'dispose' });
 	}
 
 }

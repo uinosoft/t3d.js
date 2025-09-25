@@ -14042,26 +14042,17 @@ class RenderTargetBase extends EventDispatcher {
 	}
 
 	/**
-	 * Resize the render target.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 * @returns {boolean} - If size changed.
+	 * @abstract
 	 */
-	resize(width, height) {
-		if (this.width !== width || this.height !== height) {
-			this.width = width;
-			this.height = height;
-			return true;
-		}
-
-		return false;
+	resize() {
+		throw new Error('RenderTargetBase: resize method must be implemented by subclass');
 	}
 
 	/**
-	 * Dispatches a dispose event.
+	 * @abstract
 	 */
 	dispose() {
-		this.dispatchEvent({ type: 'dispose' });
+		throw new Error('RenderTargetBase: dispose method must be implemented by subclass');
 	}
 
 	/**
@@ -14532,189 +14523,36 @@ class Texture2D extends TextureBase {
 Texture2D.prototype.isTexture2D = true;
 
 /**
- * Render Target that render to 2d texture.
- * @extends RenderTargetBase
- */
-class RenderTarget2D extends RenderTargetBase {
-
-	/**
-	 * Create a new RenderTarget2D.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 */
-	constructor(width, height) {
-		super(width, height);
-
-		this._attachments = {};
-
-		this.attach(new Texture2D(), ATTACHMENT.COLOR_ATTACHMENT0);
-		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
-
-		/**
-		 * Specifies the active mipmap level.
-		 * This is only available in WebGL2.
-		 * @type {number}
-		 * @default 0
-		 */
-		this.activeMipmapLevel = 0;
-	}
-
-	/**
-	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
-	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {Texture2D|RenderBuffer} target
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture2D) {
-			target.resizeAsAttachment(this.width, this.height);
-		} else {
-			target.resize(this.width, this.height);
-		}
-
-		this._attachments[attachment] = target;
-	}
-
-	/**
-	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		delete this._attachments[attachment];
-	}
-
-	/**
-	 * @override
-	 */
-	resize(width, height) {
-		const changed = super.resize(width, height);
-
-		if (changed) {
-			this.dispose(false);
-
-			for (const attachment in this._attachments) {
-				const target = this._attachments[attachment];
-
-				if (target.isTexture2D) {
-					target.resizeAsAttachment(this.width, this.height);
-				} else {
-					target.resize(width, height);
-				}
-			}
-		}
-
-		return changed;
-	}
-
-	/**
-	 * Dispose the render target.
-	 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
-	 */
-	dispose(disposeAttachments = true) {
-		super.dispose();
-
-		if (disposeAttachments) {
-			for (const attachment in this._attachments) {
-				this._attachments[attachment].dispose();
-			}
-		}
-	}
-
-}
-
-/**
- * This flag can be used for type testing.
- * @readonly
- * @type {boolean}
- * @default true
- */
-RenderTarget2D.prototype.isRenderTarget2D = true;
-
-Object.defineProperties(RenderTarget2D.prototype, {
-
-	texture: {
-
-		set: function(texture) {
-			if (texture) {
-				if (texture.isTexture2D) {
-					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
-				}
-			} else {
-				this.detach(ATTACHMENT.COLOR_ATTACHMENT0);
-			}
-		},
-
-		get: function() {
-			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture2D ? target : null;
-		}
-
-	}
-
-});
-
-/**
- * Creates a 2d texture. (WebGL 2.0)
+ * Creates a cube texture.
  * @extends TextureBase
  */
-class Texture2DArray extends TextureBase {
+class TextureCube extends TextureBase {
 
 	constructor() {
 		super();
 
 		/**
-		 * Image data for this texture.
-		 * @type {object}
-		 * @default null
+		 * Images data for this texture.
+		 * @type {HTMLImageElement[]}
+		 * @default []
 		 */
-		this.image = { data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]), width: 2, height: 2, depth: 2 };
-
-		/**
-		 * @default PIXEL_FORMAT.RED
-		 */
-		this.format = PIXEL_FORMAT.RED;
-
-		/**
-		 * @default TEXTURE_FILTER.NEAREST
-		 */
-		this.magFilter = TEXTURE_FILTER.NEAREST;
-
-		/**
-		 * @default TEXTURE_FILTER.NEAREST
-		 */
-		this.minFilter = TEXTURE_FILTER.NEAREST;
-
-		/**
-		 * @default false
-		 */
-		this.generateMipmaps = false;
+		this.images = [];
 
 		/**
 		 * @default false
 		 */
 		this.flipY = false;
-
-		/**
-		 * @default 1
-		 */
-		this.unpackAlignment = 1;
-
-		/**
-		 * A set of all layers which need to be updated in the texture.
-		 * @type {Set}
-		 */
-		this.layerUpdates = new Set();
 	}
 
 	/**
-	 * Copy the given 2d texture into this texture.
-	 * @param {Texture2DArray} source - The 2d texture to be copied.
-	 * @returns {Texture2DArray}
+	 * Copy the given cube texture into this texture.
+	 * @param {TextureCube} source - The cube texture to be copied.
+	 * @returns {TextureCube}
 	 */
 	copy(source) {
 		super.copy(source);
 
-		this.image = source.image;
+		this.images = source.images.slice(0);
 
 		return this;
 	}
@@ -14722,134 +14560,25 @@ class Texture2DArray extends TextureBase {
 	/**
 	 * @override
 	 */
-	resizeAsAttachment(width, height, depth) {
-		const resizeDepth = depth !== undefined;
-
-		if (this.image && this.image.rtt) {
-			if (
-				this.image.width !== width
-				|| this.image.height !== height
-				|| (resizeDepth && this.image.depth !== depth)
-			) {
-				this.version++;
-				this.image.width = width;
-				this.image.height = height;
-				if (resizeDepth) this.image.depth = depth;
-			}
-		} else {
-			this.version++;
-			const oldDepth = (this.image && this.image.depth) ? this.image.depth : 1;
-			this.image = {
-				rtt: true, data: null, width, height,
-				depth: resizeDepth ? depth : oldDepth
-			};
-		}
-	}
-
-}
-
-/**
- * This flag can be used for type testing.
- * @readonly
- * @type {boolean}
- * @default true
- */
-Texture2DArray.prototype.isTexture2DArray = true;
-
-/**
- * Render Target that render to 2d array texture.
- * @extends RenderTargetBase
- */
-class RenderTarget2DArray extends RenderTargetBase {
-
-	/**
-	 * Create a new RenderTarget2DArray.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 * @param {number} depth - The depth of the render target.
-	 */
-	constructor(width, height, depth) {
-		super(width, height);
-
-		this.depth = depth;
-
-		this._attachments = {};
-
-		this.attach(new Texture2DArray(), ATTACHMENT.COLOR_ATTACHMENT0);
-
-		/**
-		 * Specifies the layer.
-		 * This is only available in WebGL2.
-		 * @type {number}
-		 * @default 0
-		 */
-		this.activeLayer = 0;
-
-		/**
-		 * Specifies the active mipmap level.
-		 * This is only available in WebGL2.
-		 * @type {number}
-		 * @default 0
-		 */
-		this.activeMipmapLevel = 0;
-	}
-
-	/**
-	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
-	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {Texture2DArray|RenderBuffer} target
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture2DArray) {
-			target.resizeAsAttachment(this.width, this.height, this.depth);
-		} else {
-			target.resize(this.width, this.height);
-		}
-
-		this._attachments[attachment] = target;
-	}
-
-	/**
-	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		delete this._attachments[attachment];
-	}
-
-	/**
-	 * Resize the render target.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 * @param {number} depth - The depth of the render target.
-	 * @returns {boolean} - If size changed.
-	 */
-	resize(width, height, depth) {
+	resizeAsAttachment(width, height) {
 		let changed = false;
 
-		if (this.width !== width || this.height !== height || this.depth !== depth) {
-			this.width = width;
-			this.height = height;
-			this.depth = depth;
-			changed = true;
+		for (let i = 0; i < 6; i++) {
+			if (this.images[i] && this.images[i].rtt) {
+				if (this.images[i].width !== width || this.images[i].height !== height) {
+					this.images[i].width = width;
+					this.images[i].height = height;
+					changed = true;
+				}
+			} else {
+				this.images[i] = { rtt: true, data: null, width, height };
+				changed = true;
+			}
 		}
 
 		if (changed) {
-			this.dispose(false);
-
-			for (const attachment in this._attachments) {
-				const target = this._attachments[attachment];
-
-				if (target.isTexture2DArray) {
-					target.resizeAsAttachment(this.width, this.height, this.depth);
-				} else {
-					target.resize(width, height);
-				}
-			}
+			this.version++;
 		}
-
-		return changed;
 	}
 
 }
@@ -14860,30 +14589,7 @@ class RenderTarget2DArray extends RenderTargetBase {
  * @type {boolean}
  * @default true
  */
-RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
-
-Object.defineProperties(RenderTarget2DArray.prototype, {
-
-	texture: {
-
-		set: function(texture) {
-			if (texture) {
-				if (texture.isTexture2DArray) {
-					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
-				}
-			} else {
-				this.detach(ATTACHMENT.COLOR_ATTACHMENT0);
-			}
-		},
-
-		get: function() {
-			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture2DArray ? target : null;
-		}
-
-	}
-
-});
+TextureCube.prototype.isTextureCube = true;
 
 /**
  * Creates a 3D texture. (WebGL 2.0)
@@ -14994,112 +14700,95 @@ class Texture3D extends TextureBase {
 Texture3D.prototype.isTexture3D = true;
 
 /**
- * Render Target that render to 3d texture.
- * @extends RenderTargetBase
+ * Creates a 2d texture. (WebGL 2.0)
+ * @extends TextureBase
  */
-class RenderTarget3D extends RenderTargetBase {
+class Texture2DArray extends TextureBase {
 
-	/**
-	 * Create a new RenderTarget3D.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 * @param {number} depth - The depth of the render target.
-	 */
-	constructor(width, height, depth) {
-		super(width, height);
-
-		this.depth = depth;
-
-		this._attachments = {};
-
-		this.attach(new Texture3D(), ATTACHMENT.COLOR_ATTACHMENT0);
+	constructor() {
+		super();
 
 		/**
-		 * Specifies the layer.
-		 * This is only available in WebGL2.
-		 * @type {number}
-		 * @default 0
+		 * Image data for this texture.
+		 * @type {object}
+		 * @default null
 		 */
-		this.activeLayer = 0;
+		this.image = { data: new Uint8Array([255, 255, 255, 255, 255, 255, 255, 255]), width: 2, height: 2, depth: 2 };
 
 		/**
-		 * Specifies the active mipmap level.
-		 * This is only available in WebGL2.
-		 * @type {number}
-		 * @default 0
+		 * @default PIXEL_FORMAT.RED
 		 */
-		this.activeMipmapLevel = 0;
+		this.format = PIXEL_FORMAT.RED;
+
+		/**
+		 * @default TEXTURE_FILTER.NEAREST
+		 */
+		this.magFilter = TEXTURE_FILTER.NEAREST;
+
+		/**
+		 * @default TEXTURE_FILTER.NEAREST
+		 */
+		this.minFilter = TEXTURE_FILTER.NEAREST;
+
+		/**
+		 * @default false
+		 */
+		this.generateMipmaps = false;
+
+		/**
+		 * @default false
+		 */
+		this.flipY = false;
+
+		/**
+		 * @default 1
+		 */
+		this.unpackAlignment = 1;
+
+		/**
+		 * A set of all layers which need to be updated in the texture.
+		 * @type {Set}
+		 */
+		this.layerUpdates = new Set();
 	}
 
 	/**
-	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
-	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {Texture3D|RenderBuffer} target
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
+	 * Copy the given 2d texture into this texture.
+	 * @param {Texture2DArray} source - The 2d texture to be copied.
+	 * @returns {Texture2DArray}
 	 */
-	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTexture3D) {
-			target.resizeAsAttachment(this.width, this.height, this.depth);
+	copy(source) {
+		super.copy(source);
+
+		this.image = source.image;
+
+		return this;
+	}
+
+	/**
+	 * @override
+	 */
+	resizeAsAttachment(width, height, depth) {
+		const resizeDepth = depth !== undefined;
+
+		if (this.image && this.image.rtt) {
+			if (
+				this.image.width !== width
+				|| this.image.height !== height
+				|| (resizeDepth && this.image.depth !== depth)
+			) {
+				this.version++;
+				this.image.width = width;
+				this.image.height = height;
+				if (resizeDepth) this.image.depth = depth;
+			}
 		} else {
-			target.resize(this.width, this.height);
-		}
-
-		this._attachments[attachment] = target;
-	}
-
-	/**
-	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		delete this._attachments[attachment];
-	}
-
-	/**
-	 * Resize the render target.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 * @param {number} depth - The depth of the render target.
-	 * @returns {boolean} - If size changed.
-	 */
-	resize(width, height, depth) {
-		let changed = false;
-
-		if (this.width !== width || this.height !== height || this.depth !== depth) {
-			this.width = width;
-			this.height = height;
-			this.depth = depth;
-			changed = true;
-		}
-
-		if (changed) {
-			this.dispose(false);
-
-			for (const attachment in this._attachments) {
-				const target = this._attachments[attachment];
-
-				if (target.isTexture3D) {
-					target.resizeAsAttachment(this.width, this.height, this.depth);
-				} else {
-					target.resize(width, height);
-				}
-			}
-		}
-
-		return changed;
-	}
-
-	/**
-	 * Dispose the render target.
-	 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
-	 */
-	dispose(disposeAttachments = true) {
-		super.dispose();
-
-		if (disposeAttachments) {
-			for (const attachment in this._attachments) {
-				this._attachments[attachment].dispose();
-			}
+			this.version++;
+			const oldDepth = (this.image && this.image.depth) ? this.image.depth : 1;
+			this.image = {
+				rtt: true, data: null, width, height,
+				depth: resizeDepth ? depth : oldDepth
+			};
 		}
 	}
 
@@ -15111,30 +14800,225 @@ class RenderTarget3D extends RenderTargetBase {
  * @type {boolean}
  * @default true
  */
-RenderTarget3D.prototype.isRenderTarget3D = true;
+Texture2DArray.prototype.isTexture2DArray = true;
 
-Object.defineProperties(RenderTarget3D.prototype, {
+/**
+ * Render Target that render to offscreen textures or renderbuffers.
+ * @extends RenderTargetBase
+ */
+class OffscreenRenderTarget extends RenderTargetBase {
 
-	texture: {
+	/**
+	 * Create a new OffscreenRenderTarget.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 */
+	constructor(width, height) {
+		super(width, height);
 
-		set: function(texture) {
-			if (texture) {
-				if (texture.isTexture3D) {
-					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
-				}
-			} else {
-				this.detach(ATTACHMENT.COLOR_ATTACHMENT0);
-			}
-		},
+		/**
+		 * The active layer index for rendering.
+		 * For cube render targets, this represents the active cube face.
+		 * @type {number}
+		 * @default 0
+		 */
+		this.activeLayer = 0;
 
-		get: function() {
-			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTexture3D ? target : null;
-		}
+		/**
+		 * The active mipmap level for rendering.
+		 * Not supported in WebGL1.
+		 * @type {number}
+		 * @default 0
+		 */
+		this.activeMipmapLevel = 0;
 
+		this._attachments = {};
 	}
 
-});
+	/**
+	 * Resize the render target to the specified dimensions.
+	 * This will resize all attached attachments.
+	 * @param {number} width - The new width of the render target.
+	 * @param {number} height - The new height of the render target.
+	 * @param {number} [depth] - **DEPRECATED**: Depth parameter is no longer used.
+	 * Individual textures manage their own depth dimensions.
+	 */
+	resize(width, height, depth) {
+		if (arguments.length > 2) {
+			console.warn('OffscreenRenderTarget.resize(): The depth parameter is deprecated. ' +
+				'RenderTarget no longer manages texture depth as it is not required by the rendering backend. ' +
+				'Use texture.resizeAsAttachment() directly to control texture dimensions.');
+		}
+
+		if (this.width === width && this.height === height) return;
+
+		this.width = width;
+		this.height = height;
+
+		this.dispose(false);
+
+		for (const attachment in this._attachments) {
+			const target = this._attachments[attachment];
+
+			if (target.isTexture) {
+				target.resizeAsAttachment(width, height);
+			} else {
+				target.resize(width, height);
+			}
+		}
+	}
+
+	/**
+	 * Dispose the render target.
+	 * @param {boolean} [disposeAttachments=true] - Whether to dispose attachments as well.
+	 */
+	dispose(disposeAttachments = true) {
+		this.dispatchEvent({ type: 'dispose' });
+
+		if (disposeAttachments) {
+			for (const attachment in this._attachments) {
+				this._attachments[attachment].dispose();
+			}
+		}
+	}
+
+	/**
+	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
+	 * Notice: For now, dynamic Attachment during rendering is not supported.
+	 * @param  {TextureBase|RenderBuffer} target - The texture or renderbuffer to attach.
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0] - The attachment point.
+	 * @returns {OffscreenRenderTarget} Self for chaining.
+	 */
+	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
+		if (target.isTexture) {
+			target.resizeAsAttachment(this.width, this.height);
+		} else {
+			target.resize(this.width, this.height);
+		}
+
+		this._attachments[attachment] = target;
+
+		return this;
+	}
+
+	/**
+	 * Detach a texture(RTT) or renderbuffer.
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0] - The attachment point to detach.
+	 * @returns {OffscreenRenderTarget} Self for chaining.
+	 */
+	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
+		delete this._attachments[attachment];
+		return this;
+	}
+
+	/**
+	 * Get the attached attachment at the specified attachment point.
+	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0] - The attachment point.
+	 * @returns {TextureBase|RenderBuffer|null} The attached texture or renderbuffer.
+	 */
+	getAttachment(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
+		return this._attachments[attachment] || null;
+	}
+
+	/**
+	 * The main texture attachment which is the first color attachment.
+	 * @type {TextureBase|null}
+	 */
+	set texture(texture) {
+		if (texture && texture.isTexture) {
+			this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+		} else {
+			this.detach(ATTACHMENT.COLOR_ATTACHMENT0);
+		}
+	}
+
+	get texture() {
+		const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
+		return target && target.isTexture ? target : null;
+	}
+
+	/**
+	 * An alias for {@link OffscreenRenderTarget#activeLayer}. Specifically represents
+	 * the currently rendered cube face (0-5) when using cube textures.
+	 * @type {number}
+	 */
+	set activeCubeFace(value) {
+		this.activeLayer = value;
+	}
+
+	get activeCubeFace() {
+		return this.activeLayer;
+	}
+
+	/**
+	 * Create a simple offscreen render target with a color texture and
+	 * a depth-stencil renderbuffer.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @returns {OffscreenRenderTarget} The created offscreen render target.
+	 */
+	static create2D(width, height) {
+		const renderTarget = new OffscreenRenderTarget(width, height);
+		renderTarget.attach(new Texture2D(), ATTACHMENT.COLOR_ATTACHMENT0);
+		renderTarget.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		return renderTarget;
+	}
+
+	/**
+	 * Create a simple offscreen render target with a cube color texture and
+	 * a depth-stencil renderbuffer.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @returns {OffscreenRenderTarget} The created offscreen render target.
+	 */
+	static createCube(width, height) {
+		const renderTarget = new OffscreenRenderTarget(width, height);
+		renderTarget.attach(new TextureCube(), ATTACHMENT.COLOR_ATTACHMENT0);
+		renderTarget.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+		return renderTarget;
+	}
+
+	/**
+	 * Create a simple offscreen render target with a 3D color texture.
+	 * Note: No depth-stencil attachment is created by default.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @param {number} depth - The depth of the 3D texture.
+	 * @returns {OffscreenRenderTarget} The created offscreen render target.
+	 */
+	static create3D(width, height, depth) {
+		const renderTarget = new OffscreenRenderTarget(width, height);
+		const texture = new Texture3D();
+		texture.resizeAsAttachment(width, height, depth);
+		renderTarget.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+		return renderTarget;
+	}
+
+	/**
+	 * Create a simple offscreen render target with a 2D array color texture.
+	 * Note: No depth-stencil attachment is created by default.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 * @param {number} depth - The depth of the 2D array texture (number of layers).
+	 * @returns {OffscreenRenderTarget} The created offscreen render target.
+	 */
+	static create2DArray(width, height, depth) {
+		const renderTarget = new OffscreenRenderTarget(width, height);
+		const texture = new Texture2DArray();
+		texture.resizeAsAttachment(width, height, depth);
+		renderTarget.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+		return renderTarget;
+	}
+
+}
+
+/**
+ * This flag can be used for type testing.
+ * @readonly
+ * @type {boolean}
+ * @default true
+ */
+OffscreenRenderTarget.prototype.isOffscreenRenderTarget = true;
 
 /**
  * Render Target that render to screen (canvas).
@@ -15156,6 +15040,12 @@ class RenderTargetBack extends RenderTargetBase {
 		this.view = view;
 	}
 
+	/**
+	 * Resizes the render target to the specified dimensions.
+	 * This method will set the width and height properties of the canvas.
+	 * @param {number} width - The width of the render target.
+	 * @param {number} height - The height of the render target.
+	 */
 	resize(width, height) {
 		this.view.width = width;
 		this.view.height = height;
@@ -15164,8 +15054,11 @@ class RenderTargetBack extends RenderTargetBase {
 		this.height = height;
 	}
 
+	/**
+	 * Dispatches a dispose event.
+	 */
 	dispose() {
-		// do nothing
+		this.dispatchEvent({ type: 'dispose' });
 	}
 
 }
@@ -15177,217 +15070,6 @@ class RenderTargetBack extends RenderTargetBase {
  * @default true
  */
 RenderTargetBack.prototype.isRenderTargetBack = true;
-
-/**
- * Creates a cube texture.
- * @extends TextureBase
- */
-class TextureCube extends TextureBase {
-
-	constructor() {
-		super();
-
-		/**
-		 * Images data for this texture.
-		 * @type {HTMLImageElement[]}
-		 * @default []
-		 */
-		this.images = [];
-
-		/**
-		 * @default false
-		 */
-		this.flipY = false;
-	}
-
-	/**
-	 * Copy the given cube texture into this texture.
-	 * @param {TextureCube} source - The cube texture to be copied.
-	 * @returns {TextureCube}
-	 */
-	copy(source) {
-		super.copy(source);
-
-		this.images = source.images.slice(0);
-
-		return this;
-	}
-
-	/**
-	 * @override
-	 */
-	resizeAsAttachment(width, height) {
-		let changed = false;
-
-		for (let i = 0; i < 6; i++) {
-			if (this.images[i] && this.images[i].rtt) {
-				if (this.images[i].width !== width || this.images[i].height !== height) {
-					this.images[i].width = width;
-					this.images[i].height = height;
-					changed = true;
-				}
-			} else {
-				this.images[i] = { rtt: true, data: null, width, height };
-				changed = true;
-			}
-		}
-
-		if (changed) {
-			this.version++;
-		}
-	}
-
-}
-
-/**
- * This flag can be used for type testing.
- * @readonly
- * @type {boolean}
- * @default true
- */
-TextureCube.prototype.isTextureCube = true;
-
-/**
- * Render Target that render to cube texture.
- * @extends RenderTargetBase
- */
-class RenderTargetCube extends RenderTargetBase {
-
-	/**
-	 * Create a new RenderTargetCube.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 */
-	constructor(width, height) {
-		super(width, height);
-
-		this._attachments = {};
-
-		this.attach(new TextureCube(), ATTACHMENT.COLOR_ATTACHMENT0);
-		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
-
-		/**
-		 * The active layer index for rendering.
-		 * For cube render targets, this represents the active cube face.
-		 * @type {number}
-		 * @default 0
-		 */
-		this.activeLayer = 0;
-
-		/**
-		 * Specifies the active mipmap level.
-		 * This is only available in WebGL2.
-		 * @type {number}
-		 * @default 0
-		 */
-		this.activeMipmapLevel = 0;
-	}
-
-	/**
-	 * An alias for {@link RenderTargetCube#activeLayer}, representing the
-	 * currently rendered cube face.
-	 * @type {number}
-	 * @default 0
-	 */
-	set activeCubeFace(value) {
-		this.activeLayer = value;
-	}
-
-	get activeCubeFace() {
-		return this.activeLayer;
-	}
-
-	/**
-	 * Attach a texture(RTT) or renderbuffer to the framebuffer.
-	 * Notice: For now, dynamic Attachment during rendering is not supported.
-	 * @param  {TextureCube|RenderBuffer} target
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		if (target.isTextureCube) {
-			target.resizeAsAttachment(this.width, this.height);
-		} else {
-			target.resize(this.width, this.height);
-		}
-
-		this._attachments[attachment] = target;
-	}
-
-	/**
-	 * Detach a texture(RTT) or renderbuffer.
-	 * @param  {ATTACHMENT} [attachment=ATTACHMENT.COLOR_ATTACHMENT0]
-	 */
-	detach(attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
-		delete this._attachments[attachment];
-	}
-
-	/**
-	 * @override
-	 */
-	resize(width, height) {
-		const changed = super.resize(width, height);
-
-		if (changed) {
-			this.dispose(false);
-
-			for (const attachment in this._attachments) {
-				const target = this._attachments[attachment];
-
-				if (target.isTextureCube) {
-					target.resizeAsAttachment(this.width, this.height);
-				} else {
-					target.resize(width, height);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Dispose the render target.
-	 * @param {boolean} [disposeAttachments=true] whether to dispose textures and render buffers attached on this render target.
-	 */
-	dispose(disposeAttachments = true) {
-		super.dispose();
-
-		if (disposeAttachments) {
-			for (const attachment in this._attachments) {
-				this._attachments[attachment].dispose();
-			}
-		}
-	}
-
-}
-
-/**
- * This flag can be used for type testing.
- * @readonly
- * @type {boolean}
- * @default true
- */
-RenderTargetCube.prototype.isRenderTargetCube = true;
-
-Object.defineProperties(RenderTargetCube.prototype, {
-
-	texture: {
-
-		set: function(texture) {
-			if (texture) {
-				if (texture.isTextureCube) {
-					this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
-				}
-			} else {
-				this.detach(ATTACHMENT.COLOR_ATTACHMENT0);
-			}
-		},
-
-		get: function() {
-			const target = this._attachments[ATTACHMENT.COLOR_ATTACHMENT0];
-			return target.isTextureCube ? target : null;
-		}
-
-	}
-
-});
 
 let _querySetId = 0;
 
@@ -15862,7 +15544,7 @@ class DirectionalLightShadow extends LightShadow {
 		 */
 		this.frustumEdgeFalloff = 0.0;
 
-		this.renderTarget = new RenderTarget2D(this.mapSize.x, this.mapSize.y);
+		this.renderTarget = OffscreenRenderTarget.create2D(this.mapSize.x, this.mapSize.y);
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;
@@ -16029,7 +15711,7 @@ class PointLightShadow extends LightShadow {
 	constructor() {
 		super();
 
-		this.renderTarget = new RenderTargetCube(this.mapSize.x, this.mapSize.y);
+		this.renderTarget = OffscreenRenderTarget.createCube(this.mapSize.x, this.mapSize.y);
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;
@@ -16191,7 +15873,7 @@ class SpotLightShadow extends LightShadow {
 		 */
 		this.frustumEdgeFalloff = 0.0;
 
-		this.renderTarget = new RenderTarget2D(this.mapSize.x, this.mapSize.y);
+		this.renderTarget = OffscreenRenderTarget.create2D(this.mapSize.x, this.mapSize.y);
 
 		const map = this.renderTarget.texture;
 		map.generateMipmaps = false;
@@ -22887,4 +22569,69 @@ WebGLRenderer.prototype.updateRenderTargetMipmap = function(renderTarget) {
 	}
 };
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+Object.defineProperties(OffscreenRenderTarget.prototype, {
+	// deprecated since 0.5.0
+	depth: {
+		configurable: true,
+		get: function() {
+			console.warn('OffscreenRenderTarget: .depth property is deprecated.');
+			return 1;
+		}
+	}
+});
+
+// deprecated since 0.5.0
+class RenderTarget2D extends OffscreenRenderTarget {
+
+	constructor(width, height) {
+		super(width, height);
+
+		this.attach(new Texture2D(), ATTACHMENT.COLOR_ATTACHMENT0);
+		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+	}
+
+}
+RenderTarget2D.prototype.isRenderTarget2D = true;
+
+// deprecated since 0.5.0
+class RenderTargetCube extends OffscreenRenderTarget {
+
+	constructor(width, height) {
+		super(width, height);
+
+		this.attach(new TextureCube(), ATTACHMENT.COLOR_ATTACHMENT0);
+		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+	}
+
+}
+RenderTargetCube.prototype.isRenderTargetCube = true;
+
+// deprecated since 0.5.0
+class RenderTarget3D extends OffscreenRenderTarget {
+
+	constructor(width, height, depth) {
+		super(width, height);
+
+		const texture = new Texture3D();
+		texture.resizeAsAttachment(width, height, depth);
+		this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+	}
+
+}
+RenderTarget3D.prototype.isRenderTarget3D = true;
+
+// deprecated since 0.5.0
+class RenderTarget2DArray extends OffscreenRenderTarget {
+
+	constructor(width, height, depth) {
+		super(width, height);
+
+		const texture = new Texture2DArray();
+		texture.resizeAsAttachment(width, height, depth);
+		this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+	}
+
+}
+RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
+
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, OffscreenRenderTarget, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, RenderTargetBack, RenderTargetBase, RenderTargetCube, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

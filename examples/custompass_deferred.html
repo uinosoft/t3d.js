@@ -141,19 +141,19 @@
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 		backRenderTarget.setColorClearValue(0, 0, 0, 1);
 
-		const normalDepthRenderTarget = new t3d.RenderTarget2D(width, height);
+		const normalDepthRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		normalDepthRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		normalDepthRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		normalDepthRenderTarget.texture.type = isMobile ? t3d.PIXEL_TYPE.HALF_FLOAT : t3d.PIXEL_TYPE.FLOAT;
 		normalDepthRenderTarget.texture.generateMipmaps = false;
 
-		const colorRenderTarget = new t3d.RenderTarget2D(width, height);
+		const colorRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		colorRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		colorRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		colorRenderTarget.texture.type = isMobile ? t3d.PIXEL_TYPE.HALF_FLOAT : t3d.PIXEL_TYPE.FLOAT;
 		colorRenderTarget.texture.generateMipmaps = false;
 
-		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		const resultRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		// resultRenderTarget.texture.type = t3d.PIXEL_TYPE.FLOAT;

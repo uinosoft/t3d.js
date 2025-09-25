@@ -2,7 +2,7 @@ import {
 	BoxGeometry,
 	DRAW_SIDE,
 	Mesh,
-	RenderTargetCube,
+	OffscreenRenderTarget,
 	Scene,
 	ShaderMaterial,
 	Texture2D,
@@ -120,7 +120,7 @@ class PMREMGenerator {
 
 		// Prepare render target
 
-		const renderTarget = new RenderTargetCube(cubeSize, cubeSize);
+		const renderTarget = OffscreenRenderTarget.createCube(cubeSize, cubeSize);
 		renderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 
 		if (legacy) {

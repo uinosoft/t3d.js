@@ -88,26 +88,19 @@ class RenderTargetBase extends EventDispatcher {
 	}
 
 	/**
-	 * Resize the render target.
-	 * @param {number} width - The width of the render target.
-	 * @param {number} height - The height of the render target.
-	 * @returns {boolean} - If size changed.
+	 * Resize the render target to the specified dimensions.
+	 * @abstract
 	 */
-	resize(width, height) {
-		if (this.width !== width || this.height !== height) {
-			this.width = width;
-			this.height = height;
-			return true;
-		}
-
-		return false;
+	resize() {
+		throw new Error('RenderTargetBase: resize method must be implemented by subclass');
 	}
 
 	/**
-	 * Dispatches a dispose event.
+	 * Dispose the render target.
+	 * @abstract
 	 */
 	dispose() {
-		this.dispatchEvent({ type: 'dispose' });
+		throw new Error('RenderTargetBase: dispose method must be implemented by subclass');
 	}
 
 	/**

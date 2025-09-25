@@ -1,7 +1,7 @@
 import {
 	Vector3,
 	Color3,
-	RenderTargetCube,
+	OffscreenRenderTarget,
 	Scene,
 	PIXEL_TYPE,
 	PIXEL_FORMAT,
@@ -31,7 +31,7 @@ class SHGenerator {
 			ArrayCtor = Uint8Array,
 			format = PIXEL_FORMAT.RGBA;
 
-		const cubeRenderTarget = new RenderTargetCube(256, 256);
+		const cubeRenderTarget = OffscreenRenderTarget.createCube(256, 256);
 		cubeRenderTarget.texture.type = textureType;
 		cubeRenderTarget.texture.format = format;
 

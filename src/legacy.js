@@ -7,6 +7,13 @@ import { Matrix3 } from './math/Matrix3.js';
 import { Vector3 } from './math/Vector3.js';
 import { EventDispatcher } from './EventDispatcher.js';
 import { PropertyMap } from './render/PropertyMap.js';
+import { OffscreenRenderTarget } from './resources/targets/OffscreenRenderTarget.js';
+import { RenderBuffer } from './resources/RenderBuffer.js';
+import { Texture2D } from './resources/textures/Texture2D.js';
+import { TextureCube } from './resources/textures/TextureCube.js';
+import { Texture3D } from './resources/textures/Texture3D.js';
+import { Texture2DArray } from './resources/textures/Texture2DArray.js';
+import { ATTACHMENT, PIXEL_FORMAT } from './const.js';
 
 Object.defineProperties(WebGLRenderer.prototype, {
 	// deprecated since 0.4.5
@@ -379,3 +386,68 @@ WebGLRenderer.prototype.updateRenderTargetMipmap = function(renderTarget) {
 		this.generateMipmaps(renderTarget.texture);
 	}
 };
+
+Object.defineProperties(OffscreenRenderTarget.prototype, {
+	// deprecated since 0.5.0
+	depth: {
+		configurable: true,
+		get: function() {
+			console.warn('OffscreenRenderTarget: .depth property is deprecated.');
+			return 1;
+		}
+	}
+});
+
+// deprecated since 0.5.0
+export class RenderTarget2D extends OffscreenRenderTarget {
+
+	constructor(width, height) {
+		super(width, height);
+
+		this.attach(new Texture2D(), ATTACHMENT.COLOR_ATTACHMENT0);
+		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+	}
+
+}
+RenderTarget2D.prototype.isRenderTarget2D = true;
+
+// deprecated since 0.5.0
+export class RenderTargetCube extends OffscreenRenderTarget {
+
+	constructor(width, height) {
+		super(width, height);
+
+		this.attach(new TextureCube(), ATTACHMENT.COLOR_ATTACHMENT0);
+		this.attach(new RenderBuffer(width, height, PIXEL_FORMAT.DEPTH_STENCIL), ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
+	}
+
+}
+RenderTargetCube.prototype.isRenderTargetCube = true;
+
+// deprecated since 0.5.0
+export class RenderTarget3D extends OffscreenRenderTarget {
+
+	constructor(width, height, depth) {
+		super(width, height);
+
+		const texture = new Texture3D();
+		texture.resizeAsAttachment(width, height, depth);
+		this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+	}
+
+}
+RenderTarget3D.prototype.isRenderTarget3D = true;
+
+// deprecated since 0.5.0
+export class RenderTarget2DArray extends OffscreenRenderTarget {
+
+	constructor(width, height, depth) {
+		super(width, height);
+
+		const texture = new Texture2DArray();
+		texture.resizeAsAttachment(width, height, depth);
+		this.attach(texture, ATTACHMENT.COLOR_ATTACHMENT0);
+	}
+
+}
+RenderTarget2DArray.prototype.isRenderTarget2DArray = true;

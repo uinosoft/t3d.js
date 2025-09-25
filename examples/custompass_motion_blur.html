@@ -85,7 +85,7 @@
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
 
 		function createRenderTarget() {
-			const renderTarget = new t3d.RenderTarget2D(width, height);
+			const renderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 			renderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 			renderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 			renderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;

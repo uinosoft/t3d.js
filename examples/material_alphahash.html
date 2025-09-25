@@ -109,7 +109,7 @@
 
 		// taa passes
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget.texture.generateMipmaps = false;

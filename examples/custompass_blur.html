@@ -81,11 +81,11 @@
 
 		// custom pass
 		const backRenderTarget = new t3d.RenderTargetBack(canvas);
-		const tempRenderTarget1 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget1 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget1.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget1.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget1.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 

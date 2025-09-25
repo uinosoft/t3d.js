@@ -89,7 +89,7 @@
 
 		const sketchPass = new t3d.ShaderPostPass(SketchShader);
 
-		const tempRenderTarget2 = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget2 = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget2.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 		tempRenderTarget2.texture.generateMipmaps = false;

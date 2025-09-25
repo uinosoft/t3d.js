@@ -106,7 +106,7 @@
 
 		// Passes
 
-		const tempRenderTarget = new t3d.RenderTarget2D(width, height);
+		const tempRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		tempRenderTarget.texture.type = t3d.PIXEL_TYPE.HALF_FLOAT;
 		if (renderer.capabilities.version > 1) {
 			tempRenderTarget.texture.format = t3d.PIXEL_FORMAT.RGB;

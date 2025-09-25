@@ -1,6 +1,6 @@
 // Reference: https://stackblitz.com/edit/fft-2d?file=ocean%2Focean-field.ts
 
-import { RenderTarget2D, TEXTURE_FILTER, ShaderPostPass, ATTACHMENT } from 't3d';
+import { OffscreenRenderTarget, TEXTURE_FILTER, ShaderPostPass, ATTACHMENT } from 't3d';
 import { HkShader } from './shaders/HkShader.js';
 import { FFT2HShader } from './shaders/FFT2HShader.js';
 import { FFT2VShader } from './shaders/FFT2VShader.js';
@@ -86,19 +86,19 @@ export class OceanField {
 	}
 
 	createRenderTargets() {
-		this.spectrumRenderTarget = new RenderTarget2D(this.params.resolution, this.params.resolution);
+		this.spectrumRenderTarget = new OffscreenRenderTarget(this.params.resolution, this.params.resolution);
 		this.spectrumRenderTarget.setClear(false, false, false);
 		for (let slot = 0; slot < this.spectrumTextures.length; slot++) {
 			this.spectrumRenderTarget.attach(this.spectrumTextures[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);
 		}
 
-		this.pingPongRenderTarget = new RenderTarget2D(this.params.resolution, this.params.resolution);
+		this.pingPongRenderTarget = new OffscreenRenderTarget(this.params.resolution, this.params.resolution);
 		this.pingPongRenderTarget.setClear(false, false, false);
 		for (let slot = 0; slot < this.pingPongTextures.length; slot++) {
 			this.pingPongRenderTarget.attach(this.pingPongTextures[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);
 		}
 
-		this.postIfft2RenderTarget = new RenderTarget2D(this.params.resolution, this.params.resolution);
+		this.postIfft2RenderTarget = new OffscreenRenderTarget(this.params.resolution, this.params.resolution);
 		this.postIfft2RenderTarget.setClear(false, false, false);
 		for (let slot = 0; slot < this._dataMaps.length; slot++) {
 			this.postIfft2RenderTarget.attach(this._dataMaps[slot], ATTACHMENT.COLOR_ATTACHMENT0 + slot);

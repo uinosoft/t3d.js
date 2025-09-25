@@ -245,7 +245,7 @@
 
 		const depthRenderBuffer = new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.DEPTH24_STENCIL8, multipleSampling);
 
-		const sceneRenderTarget = new t3d.RenderTarget2D(width, height);
+		const sceneRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		sceneRenderTarget.attach(
 			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, multipleSampling),
 			t3d.ATTACHMENT.COLOR_ATTACHMENT0
@@ -255,7 +255,7 @@
 			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
 		);
 
-		const occlusionRenderTarget = new t3d.RenderTarget2D(width, height);
+		const occlusionRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		occlusionRenderTarget.attach(
 			new t3d.RenderBuffer(width, height, t3d.PIXEL_FORMAT.RGBA8, multipleSampling),
 			t3d.ATTACHMENT.COLOR_ATTACHMENT0
@@ -265,11 +265,11 @@
 			t3d.ATTACHMENT.DEPTH_STENCIL_ATTACHMENT
 		);
 
-		const clippedOcclusionRenderTarget = new t3d.RenderTarget2D(64, 64);
+		const clippedOcclusionRenderTarget = t3d.OffscreenRenderTarget.create2D(64, 64);
 		clippedOcclusionRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		clippedOcclusionRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 
-		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		const resultRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
 		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
 

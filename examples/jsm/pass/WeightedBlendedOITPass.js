@@ -1,10 +1,10 @@
-import { ShaderPostPass, RenderTarget2D, Texture2D, ATTACHMENT, TEXTURE_FILTER, PIXEL_TYPE, BLEND_FACTOR, BLEND_TYPE, ShaderLib, PBRMaterial, MATERIAL_TYPE } from 't3d';
+import { ShaderPostPass, OffscreenRenderTarget, Texture2D, ATTACHMENT, TEXTURE_FILTER, PIXEL_TYPE, BLEND_FACTOR, BLEND_TYPE, ShaderLib, PBRMaterial, MATERIAL_TYPE } from 't3d';
 
 // TODO: Share depth attachment with opaque render target
 class WeightedBlendedOITPass {
 
 	constructor(width, height) {
-		this._renderTarget = new RenderTarget2D(width, height);
+		this._renderTarget = OffscreenRenderTarget.create2D(width, height);
 		this._renderTarget.texture.type = PIXEL_TYPE.FLOAT;
 		this._renderTarget.texture.minFilter = TEXTURE_FILTER.NEAREST;
 		this._renderTarget.texture.magFilter = TEXTURE_FILTER.NEAREST;

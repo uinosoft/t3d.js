@@ -4,7 +4,7 @@
 
 import {
 	Matrix4,
-	RenderTarget2D,
+	OffscreenRenderTarget,
 	ShaderPostPass,
 	TEXTURE_FILTER
 } from 't3d';
@@ -25,14 +25,14 @@ class SuperSampling {
 
 		this._haltonSequence = haltonSequence;
 
-		const prevFrame = new RenderTarget2D(width, height);
+		const prevFrame = OffscreenRenderTarget.create2D(width, height);
 		prevFrame.texture.minFilter = TEXTURE_FILTER.LINEAR;
 		prevFrame.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		prevFrame.texture.generateMipmaps = false;
 
 		this._prevFrame = prevFrame;
 
-		const output = new RenderTarget2D(width, height);
+		const output = OffscreenRenderTarget.create2D(width, height);
 		output.texture.minFilter = TEXTURE_FILTER.LINEAR;
 		output.texture.magFilter = TEXTURE_FILTER.LINEAR;
 		output.texture.generateMipmaps = false;

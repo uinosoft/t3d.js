@@ -1,4 +1,4 @@
-import { ATTACHMENT, BoxGeometry, DRAW_SIDE, Mesh, PIXEL_FORMAT, PIXEL_TYPE, RenderTargetCube, Scene, ShaderMaterial, TextureCube } from 't3d';
+import { ATTACHMENT, BoxGeometry, DRAW_SIDE, Mesh, PIXEL_FORMAT, PIXEL_TYPE, OffscreenRenderTarget, Scene, ShaderMaterial, TextureCube } from 't3d';
 import { ReflectionProbe } from '../probes/ReflectionProbe.js';
 
 /**
@@ -74,7 +74,7 @@ export class RGBDDecoder {
 
 		// Prepare render target
 
-		const renderTarget = new RenderTargetCube(cubeSize, cubeSize);
+		const renderTarget = OffscreenRenderTarget.createCube(cubeSize, cubeSize);
 		renderTarget.detach(ATTACHMENT.DEPTH_STENCIL_ATTACHMENT);
 		renderTarget.attach(target, ATTACHMENT.COLOR_ATTACHMENT0);
 

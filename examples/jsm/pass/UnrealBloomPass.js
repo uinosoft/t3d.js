@@ -1,4 +1,4 @@
-import { BLEND_TYPE, ShaderPostPass, RenderTarget2D, TEXTURE_FILTER, PIXEL_TYPE, PIXEL_FORMAT, ATTACHMENT } from 't3d';
+import { BLEND_TYPE, ShaderPostPass, OffscreenRenderTarget, TEXTURE_FILTER, PIXEL_TYPE, PIXEL_FORMAT, ATTACHMENT } from 't3d';
 import { CopyShader } from '../shaders/CopyShader.js';
 import { LuminosityHighPassShader } from '../shaders/LuminosityHighPassShader.js';
 
@@ -168,7 +168,7 @@ UnrealBloomPass.supportWebGL1 = false;
 const kernelSizeArray = [3, 5, 7, 9, 11];
 
 function createTempRenderTarget(width, height) {
-	const renderTarget = new RenderTarget2D(width, height);
+	const renderTarget = OffscreenRenderTarget.create2D(width, height);
 	renderTarget.texture.type = PIXEL_TYPE.HALF_FLOAT;
 
 	if (!UnrealBloomPass.supportWebGL1) {

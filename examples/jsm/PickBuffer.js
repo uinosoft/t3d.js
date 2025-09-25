@@ -1,9 +1,9 @@
-import { RenderTarget2D, PIXEL_TYPE, TEXTURE_FILTER, SHADING_TYPE, ShaderMaterial } from 't3d';
+import { OffscreenRenderTarget, PIXEL_TYPE, TEXTURE_FILTER, SHADING_TYPE, ShaderMaterial } from 't3d';
 
 export default class PickBuffer {
 
 	constructor(width, height) {
-		this._rt = new RenderTarget2D(width, height);
+		this._rt = OffscreenRenderTarget.create2D(width, height);
 		this._rt.texture.minFilter = TEXTURE_FILTER.NEAREST;
 		this._rt.texture.magFilter = TEXTURE_FILTER.NEAREST;
 		this._rt.texture.generateMipmaps = false;

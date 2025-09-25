@@ -118,16 +118,16 @@
 			scene.add(object);
 		}).catch(e => console.error(e));
 
-		const sceneRenderTarget = new t3d.RenderTarget2D(width, height);
+		const sceneRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		sceneRenderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 
-		const transmissionRenderTarget = new t3d.RenderTarget2D(width, height);
+		const transmissionRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		transmissionRenderTarget.texture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		transmissionRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		transmissionRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		transmissionRenderTarget.texture.generateMipmaps = false;
 
-		const resultRenderTarget = new t3d.RenderTarget2D(width, height);
+		const resultRenderTarget = t3d.OffscreenRenderTarget.create2D(width, height);
 		resultRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.LINEAR;
 		resultRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
 		resultRenderTarget.texture.generateMipmaps = false;

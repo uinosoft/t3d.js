@@ -1,6 +1,6 @@
 // Reference: https://stackblitz.com/edit/fft-2d?file=ocean%2Focean-field-builder.ts
 
-import { RenderTarget2D, ATTACHMENT, TEXTURE_FILTER, TEXTURE_WRAP, ShaderPostPass } from 't3d';
+import { OffscreenRenderTarget, ATTACHMENT, TEXTURE_FILTER, TEXTURE_WRAP, ShaderPostPass } from 't3d';
 import { createButterflyTexture } from './Butterfly.js';
 import { OceanField } from './OceanField.js';
 import { H0Shader } from './shaders/H0Shader.js';
@@ -10,7 +10,7 @@ export class OceanFieldBuilder {
 
 	constructor(renderer) {
 		this.renderer = renderer;
-		this.renderTarget = new RenderTarget2D(4, 4);
+		this.renderTarget = OffscreenRenderTarget.create2D(4, 4);
 		this.renderTarget.setClear(false, false, false);
 		this.butterflyTexture = new Map();
 		this.noiseTexture = new Map();
