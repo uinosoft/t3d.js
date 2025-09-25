@@ -33,7 +33,7 @@ class Texture2D extends TextureBase {
 	/**
 	 * @override
 	 */
-	resizeForRender(width, height) {
+	resizeAsAttachment(width, height) {
 		if (this.image && this.image.rtt) {
 			if (this.image.width !== width || this.image.height !== height) {
 				this.version++;

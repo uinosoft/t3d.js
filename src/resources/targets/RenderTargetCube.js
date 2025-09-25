@@ -61,7 +61,7 @@ class RenderTargetCube extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTextureCube) {
-			target.resizeForRender(this.width, this.height);
+			target.resizeAsAttachment(this.width, this.height);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -90,7 +90,7 @@ class RenderTargetCube extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTextureCube) {
-					target.resizeForRender(this.width, this.height);
+					target.resizeAsAttachment(this.width, this.height);
 				} else {
 					target.resize(width, height);
 				}

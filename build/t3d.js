@@ -13311,14 +13311,14 @@
 		}
 
 		/**
-		 * Resize the texture and mark it for render to texture.
+		 * Resize the texture for use as a render target attachment.
 		 * @param {number} width - The new width of the texture.
 		 * @param {number} height - The new height of the texture.
 		 * @param {number} [depth] - The new depth of the texture.
 		 * Only {@link Texture3D} and {@link Texture2DArray} will use this parameter.
 		 * If not specified, the depth will not be changed.
 		 */
-		resizeForRender(width, height, depth) {}
+		resizeAsAttachment(width, height, depth) {}
 	}
 
 	/**
@@ -13359,7 +13359,7 @@
 		/**
 		 * @override
 		 */
-		resizeForRender(width, height) {
+		resizeAsAttachment(width, height) {
 			if (this.image && this.image.rtt) {
 				if (this.image.width !== width || this.image.height !== height) {
 					this.version++;
@@ -13419,7 +13419,7 @@
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTexture2D) {
-				target.resizeForRender(this.width, this.height);
+				target.resizeAsAttachment(this.width, this.height);
 			} else {
 				target.resize(this.width, this.height);
 			}
@@ -13444,7 +13444,7 @@
 				for (const attachment in this._attachments) {
 					const target = this._attachments[attachment];
 					if (target.isTexture2D) {
-						target.resizeForRender(this.width, this.height);
+						target.resizeAsAttachment(this.width, this.height);
 					} else {
 						target.resize(width, height);
 					}
@@ -13563,7 +13563,7 @@
 		/**
 		 * @override
 		 */
-		resizeForRender(width, height, depth) {
+		resizeAsAttachment(width, height, depth) {
 			const resizeDepth = depth !== undefined;
 			if (this.image && this.image.rtt) {
 				if (this.image.width !== width || this.image.height !== height || resizeDepth && this.image.depth !== depth) {
@@ -13636,7 +13636,7 @@
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTexture2DArray) {
-				target.resizeForRender(this.width, this.height, this.depth);
+				target.resizeAsAttachment(this.width, this.height, this.depth);
 			} else {
 				target.resize(this.width, this.height);
 			}
@@ -13671,7 +13671,7 @@
 				for (const attachment in this._attachments) {
 					const target = this._attachments[attachment];
 					if (target.isTexture2DArray) {
-						target.resizeForRender(this.width, this.height, this.depth);
+						target.resizeAsAttachment(this.width, this.height, this.depth);
 					} else {
 						target.resize(width, height);
 					}
@@ -13782,7 +13782,7 @@
 		/**
 		 * @override
 		 */
-		resizeForRender(width, height, depth) {
+		resizeAsAttachment(width, height, depth) {
 			const resizeDepth = depth !== undefined;
 			if (this.image && this.image.rtt) {
 				if (this.image.width !== width || this.image.height !== height || resizeDepth && this.image.depth !== depth) {
@@ -13855,7 +13855,7 @@
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTexture3D) {
-				target.resizeForRender(this.width, this.height, this.depth);
+				target.resizeAsAttachment(this.width, this.height, this.depth);
 			} else {
 				target.resize(this.width, this.height);
 			}
@@ -13890,7 +13890,7 @@
 				for (const attachment in this._attachments) {
 					const target = this._attachments[attachment];
 					if (target.isTexture3D) {
-						target.resizeForRender(this.width, this.height, this.depth);
+						target.resizeAsAttachment(this.width, this.height, this.depth);
 					} else {
 						target.resize(width, height);
 					}
@@ -14010,7 +14010,7 @@
 		/**
 		 * @override
 		 */
-		resizeForRender(width, height) {
+		resizeAsAttachment(width, height) {
 			let changed = false;
 			for (let i = 0; i < 6; i++) {
 				if (this.images[i] && this.images[i].rtt) {
@@ -14097,7 +14097,7 @@
 		 */
 		attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 			if (target.isTextureCube) {
-				target.resizeForRender(this.width, this.height);
+				target.resizeAsAttachment(this.width, this.height);
 			} else {
 				target.resize(this.width, this.height);
 			}
@@ -14122,7 +14122,7 @@
 				for (const attachment in this._attachments) {
 					const target = this._attachments[attachment];
 					if (target.isTextureCube) {
-						target.resizeForRender(this.width, this.height);
+						target.resizeAsAttachment(this.width, this.height);
 					} else {
 						target.resize(width, height);
 					}

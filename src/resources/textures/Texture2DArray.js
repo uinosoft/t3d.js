@@ -70,7 +70,7 @@ class Texture2DArray extends TextureBase {
 	/**
 	 * @override
 	 */
-	resizeForRender(width, height, depth) {
+	resizeAsAttachment(width, height, depth) {
 		const resizeDepth = depth !== undefined;
 
 		if (this.image && this.image.rtt) {

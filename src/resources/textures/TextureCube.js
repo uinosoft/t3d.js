@@ -38,7 +38,7 @@ class TextureCube extends TextureBase {
 	/**
 	 * @override
 	 */
-	resizeForRender(width, height) {
+	resizeAsAttachment(width, height) {
 		let changed = false;
 
 		for (let i = 0; i < 6; i++) {

@@ -48,7 +48,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 	 */
 	attach(target, attachment = ATTACHMENT.COLOR_ATTACHMENT0) {
 		if (target.isTexture2DArray) {
-			target.resizeForRender(this.width, this.height, this.depth);
+			target.resizeAsAttachment(this.width, this.height, this.depth);
 		} else {
 			target.resize(this.width, this.height);
 		}
@@ -88,7 +88,7 @@ class RenderTarget2DArray extends RenderTargetBase {
 				const target = this._attachments[attachment];
 
 				if (target.isTexture2DArray) {
-					target.resizeForRender(this.width, this.height, this.depth);
+					target.resizeAsAttachment(this.width, this.height, this.depth);
 				} else {
 					target.resize(width, height);
 				}

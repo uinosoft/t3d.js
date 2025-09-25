@@ -208,14 +208,14 @@ class TextureBase extends EventDispatcher {
 	}
 
 	/**
-	 * Resize the texture and mark it for render to texture.
+	 * Resize the texture for use as a render target attachment.
 	 * @param {number} width - The new width of the texture.
 	 * @param {number} height - The new height of the texture.
 	 * @param {number} [depth] - The new depth of the texture.
 	 * Only {@link Texture3D} and {@link Texture2DArray} will use this parameter.
 	 * If not specified, the depth will not be changed.
 	 */
-	resizeForRender(width, height, depth) {}
+	resizeAsAttachment(width, height, depth) {}
 
 }
 
