@@ -1,5 +1,8 @@
 import { Bone, Camera, Object3D, Mesh, SkinnedMesh } from 't3d';
 import { GLTFUtils } from '../GLTFUtils.js';
+import { GaussianSplattingMesh } from '../../../3dgs/GaussianSplattingMesh.js';
+
+
 
 export class NodeParser {
 
@@ -12,6 +15,7 @@ export class NodeParser {
 
 		const lightsExt = loader.extensions.get('KHR_lights_punctual');
 		const instancingExt = loader.extensions.get('EXT_mesh_gpu_instancing');
+		const spzExt = loader.extensions.get('KHR_gaussian_splatting');
 
 		const cameras = [];
 		const lights = [];
@@ -31,6 +35,8 @@ export class NodeParser {
 			} else if (meshID !== undefined) {
 				if (EXT_mesh_gpu_instancing && instancingExt) {
 					node = instancingExt.getInstancedMesh(context, gltfNode);
+				} else if (spzExt) {
+					node = createSplatMesh(context, gltfNode);
 				} else {
 					node = createMesh(context, gltfNode);
 				}
@@ -121,6 +127,25 @@ function createMesh(context, gltfNode) {
 			}
 		}
 
+		return mesh;
+	});
+
+	if (meshes.length > 1) {
+		const parent = new Object3D();
+		meshes.forEach(mesh => parent.add(mesh));
+		return parent;
+	} else {
+		return meshes[0];
+	}
+}
+
+function createSplatMesh(context, gltfNode) {
+	const { primitives } = context;
+
+	const { mesh: meshID } = gltfNode;
+
+	const meshes = primitives[meshID].map(primitive => {
+		const mesh = new GaussianSplattingMesh(primitive.splatBuffer, true);
 		return mesh;
 	});
 

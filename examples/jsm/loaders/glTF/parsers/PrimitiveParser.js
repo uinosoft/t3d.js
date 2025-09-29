@@ -10,6 +10,7 @@ export class PrimitiveParser {
 		if (!gltf.meshes) return;
 
 		const dracoExt = loader.extensions.get('KHR_draco_mesh_compression');
+		const spzExt = loader.extensions.get('KHR_gaussian_splatting');
 
 		const materialCache = new Map();
 		const geometryPromiseCache = new Map();
@@ -26,7 +27,7 @@ export class PrimitiveParser {
 					mode,
 					material
 				} = gltfPrimitive;
-				const { KHR_draco_mesh_compression } = extensions;
+				const { KHR_draco_mesh_compression, KHR_gaussian_splatting } = extensions;
 
 				let geometryPromise;
 
@@ -36,19 +37,31 @@ export class PrimitiveParser {
 				} else {
 					if (KHR_draco_mesh_compression && dracoExt) {
 						geometryPromise = dracoExt.getGeometry(KHR_draco_mesh_compression, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getDRACOLoader());
+					} else if (KHR_gaussian_splatting && spzExt) {
+						geometryPromise = spzExt.getGeometry(KHR_gaussian_splatting, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getSPZLoader());
 					} else {
 						geometryPromise = Promise.resolve(new Geometry());
 					}
-
-					geometryPromise = geometryPromise.then(geometry => {
-						parseGeometryFromGLTFPrimitive(geometry, gltfPrimitive, gltf, accessors);
-						return geometry;
-					});
-
+					if (KHR_gaussian_splatting && spzExt) {
+						geometryPromise = geometryPromise.then(splatBuffer => {
+							return splatBuffer;
+						});
+					} else {
+						geometryPromise = geometryPromise.then(geometry => {
+							parseGeometryFromGLTFPrimitive(geometry, gltfPrimitive, gltf, accessors);
+							return geometry;
+						});
+					}
 					geometryPromiseCache.set(geometryKey, geometryPromise);
 				}
 
 				const primitivePromise = geometryPromise.then(geometry => {
+					if (geometry._isSplatBuffer) {
+						const primitive = {
+							splatBuffer: geometry
+						};
+						return primitive;
+					}
 					const primitive = {
 						mode,
 						geometry,

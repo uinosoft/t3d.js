@@ -24,7 +24,12 @@ export const ATTRIBUTES = {
 	COLOR0: 'a_Color', // deprecated
 	COLOR: 'a_Color', // deprecated
 	WEIGHT: 'skinWeight', // deprecated
-	JOINT: 'skinIndex' // deprecated
+	JOINT: 'skinIndex', // deprecated
+	'KHR_gaussian_splatting:SCALE': 'a_Scale',
+	'KHR_gaussian_splatting:ROTATION': 'a_Rotation',
+	'KHR_gaussian_splatting:SH_DEGREE_1_COEF_0': 'a_SH_Degree_1_Coef_0',
+	'KHR_gaussian_splatting:SH_DEGREE_1_COEF_1': 'a_SH_Degree_1_Coef_1',
+	'KHR_gaussian_splatting:SH_DEGREE_1_COEF_2': 'a_SH_Degree_1_Coef_2'
 };
 
 export const ALPHA_MODES = {

@@ -21,6 +21,7 @@ import { GLTFUtils } from './GLTFUtils.js';
 
 import { EXT_meshopt_compression } from './extensions/EXT_meshopt_compression.js';
 import { KHR_draco_mesh_compression } from './extensions/KHR_draco_mesh_compression.js';
+import { KHR_gaussian_splatting } from './extensions/KHR_gaussian_splatting.js';
 import { KHR_lights_punctual } from './extensions/KHR_lights_punctual.js';
 import { KHR_materials_clearcoat } from './extensions/KHR_materials_clearcoat.js';
 import { KHR_materials_pbrSpecularGlossiness } from './extensions/KHR_materials_pbrSpecularGlossiness.js';
@@ -56,7 +57,8 @@ const DefaultExtensions = new Map([
 	['KHR_mesh_quantization', {}], // This is supported by default
 	['KHR_texture_basisu', KHR_texture_basisu],
 	['KHR_texture_transform', KHR_texture_transform],
-	['KHR_animation_pointer', KHR_animation_pointer]
+	['KHR_animation_pointer', KHR_animation_pointer],
+	['KHR_gaussian_splatting', KHR_gaussian_splatting]
 ]);
 
 export class GLTFLoader {
@@ -159,6 +161,14 @@ export class GLTFLoader {
 
 	getDRACOLoader() {
 		return this._dracoLoader;
+	}
+
+	setSPZLoader(spzLoader) {
+		this._spzLoader = spzLoader;
+		return this;
+	}
+	getSPZLoader() {
+		return this._spzLoader;
 	}
 
 	setMeshoptDecoder(meshoptDecoder) {
