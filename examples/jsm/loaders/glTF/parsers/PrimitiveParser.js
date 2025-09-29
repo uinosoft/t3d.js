@@ -38,7 +38,7 @@ export class PrimitiveParser {
 					if (KHR_draco_mesh_compression && dracoExt) {
 						geometryPromise = dracoExt.getGeometry(KHR_draco_mesh_compression, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getDRACOLoader());
 					} else if (KHR_gaussian_splatting && spzExt) {
-						geometryPromise = spzExt.getGeometry(KHR_gaussian_splatting, bufferViews, gltfPrimitive.attributes, gltf.accessors, loader.getSPZLoader());
+						geometryPromise = spzExt.getGeometry(KHR_gaussian_splatting, bufferViews, loader.getSPZLoader());
 					} else {
 						geometryPromise = Promise.resolve(new Geometry());
 					}
