@@ -147,7 +147,7 @@ function generateSetter(uniform, pureArray) {
 		case gl.UNSIGNED_INT_SAMPLER_2D:
 			uniform.setValue = function(value, textures) {
 				const unit = textures.allocTexUnit();
-				textures.setTexture2D(value || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), unit);
+				textures.setTexture(value || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), unit);
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
@@ -157,7 +157,7 @@ function generateSetter(uniform, pureArray) {
 					const n = value.length;
 					const units = allocTexUnits(textures, n);
 					for (let i = 0; i !== n; ++i) {
-						textures.setTexture2D(value[i] || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), units[i]);
+						textures.setTexture(value[i] || (type === gl.SAMPLER_2D_SHADOW ? emptyShadowTexture : emptyTexture), units[i]);
 					}
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
@@ -173,7 +173,7 @@ function generateSetter(uniform, pureArray) {
 		case gl.UNSIGNED_INT_SAMPLER_2D_ARRAY:
 			uniform.setValue = function(value, textures) {
 				const unit = textures.allocTexUnit();
-				textures.setTexture2DArray(value || emptyTexture2dArray, unit);
+				textures.setTexture(value || emptyTexture2dArray, unit);
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
@@ -183,7 +183,7 @@ function generateSetter(uniform, pureArray) {
 					const n = value.length;
 					const units = allocTexUnits(textures, n);
 					for (let i = 0; i !== n; ++i) {
-						textures.setTexture2DArray(value[i] || emptyTexture2dArray, units[i]);
+						textures.setTexture(value[i] || emptyTexture2dArray, units[i]);
 					}
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
@@ -197,7 +197,7 @@ function generateSetter(uniform, pureArray) {
 		case gl.SAMPLER_CUBE_SHADOW:
 			uniform.setValue = function(value, textures) {
 				const unit = textures.allocTexUnit();
-				textures.setTextureCube(value || emptyCubeTexture, unit);
+				textures.setTexture(value || emptyCubeTexture, unit);
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
@@ -207,7 +207,7 @@ function generateSetter(uniform, pureArray) {
 					const n = value.length;
 					const units = allocTexUnits(textures, n);
 					for (let i = 0; i !== n; ++i) {
-						textures.setTextureCube(value[i] || emptyCubeTexture, units[i]);
+						textures.setTexture(value[i] || emptyCubeTexture, units[i]);
 					}
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);
@@ -220,7 +220,7 @@ function generateSetter(uniform, pureArray) {
 		case gl.SAMPLER_3D:
 			uniform.setValue = function(value, textures) {
 				const unit = textures.allocTexUnit();
-				textures.setTexture3D(value || emptyTexture3d, unit);
+				textures.setTexture(value || emptyTexture3d, unit);
 				if (cache[0] === unit) return;
 				gl.uniform1i(location, unit);
 				cache[0] = unit;
@@ -230,7 +230,7 @@ function generateSetter(uniform, pureArray) {
 					const n = value.length;
 					const units = allocTexUnits(textures, n);
 					for (let i = 0; i !== n; ++i) {
-						textures.setTexture3D(value[i] || emptyTexture3d, units[i]);
+						textures.setTexture(value[i] || emptyTexture3d, units[i]);
 					}
 					if (arraysEqual(cache, units)) return;
 					gl.uniform1iv(location, units);

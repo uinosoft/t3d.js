@@ -70,22 +70,16 @@ class WebGLRenderTargets extends PropertyMap {
 
 			const attachment = renderTarget._attachments[attachTarget];
 
-			if (attachment.isTexture2D) {
-				const textureProperties = textures.setTexture2D(attachment);
-				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_2D, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
-				state.bindTexture(gl.TEXTURE_2D, null);
-			} else if (attachment.isTextureCube) {
-				const textureProperties = textures.setTextureCube(attachment);
-				gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_CUBE_MAP_POSITIVE_X + renderTarget.activeLayer, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
-				state.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-			} else if (attachment.isTexture3D) {
-				const textureProperties = textures.setTexture3D(attachment);
-				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
-				state.bindTexture(gl.TEXTURE_3D, null);
-			} else if (attachment.isTexture2DArray) {
-				const textureProperties = textures.setTexture2DArray(attachment);
-				gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
-				state.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+			if (attachment.isTexture) {
+				const textureProperties = textures.setTexture(attachment);
+				if (attachment.isTexture2D) {
+					gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_2D, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
+				} else if (attachment.isTextureCube) {
+					gl.framebufferTexture2D(gl.FRAMEBUFFER, glAttachTarget, gl.TEXTURE_CUBE_MAP_POSITIVE_X + renderTarget.activeLayer, textureProperties.__webglTexture, renderTarget.activeMipmapLevel);
+				} else if (attachment.isTexture3D || attachment.isTexture2DArray) {
+					gl.framebufferTextureLayer(gl.FRAMEBUFFER, glAttachTarget, textureProperties.__webglTexture, renderTarget.activeMipmapLevel, renderTarget.activeLayer);
+				}
+				state.bindTexture(textureProperties.__webglTarget, null);
 			} else {
 				const renderBufferProperties = renderBuffers.setRenderBuffer(attachment);
 				gl.framebufferRenderbuffer(gl.FRAMEBUFFER, glAttachTarget, gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);

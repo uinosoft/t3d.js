@@ -850,6 +850,8 @@ class WebGLRenderer extends ThinRenderer {
 	}
 
 	_bindTextureToDummyFrameBuffer(texture, zIndex, mipLevel) {
+		if (!texture.isTexture) return false;
+
 		const gl = this.context;
 		const textures = this._textures;
 		const state = this._state;
@@ -860,25 +862,15 @@ class WebGLRenderer extends ThinRenderer {
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, this._dummyFrameBuffer);
 
+		const textureProperties = textures.setTexture(texture);
 		if (texture.isTexture2D) {
-			const textureProperties = textures.setTexture2D(texture);
 			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textureProperties.__webglTexture, mipLevel);
-			state.bindTexture(gl.TEXTURE_2D, null);
 		} else if (texture.isTextureCube) {
-			const textureProperties = textures.setTextureCube(texture);
 			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_CUBE_MAP_POSITIVE_X + zIndex, textureProperties.__webglTexture, mipLevel);
-			state.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-		} else if (texture.isTexture3D) {
-			const textureProperties = textures.setTexture3D(texture);
+		} else if (texture.isTexture3D || texture.isTexture2DArray) {
 			gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, textureProperties.__webglTexture, mipLevel, zIndex);
-			state.bindTexture(gl.TEXTURE_3D, null);
-		} else if (texture.isTexture2DArray) {
-			const textureProperties = textures.setTexture2DArray(texture);
-			gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, textureProperties.__webglTexture, mipLevel, zIndex);
-			state.bindTexture(gl.TEXTURE_2D_ARRAY, null);
-		} else {
-			return false;
 		}
+		state.bindTexture(textureProperties.__webglTarget, null);
 
 		return true;
 	}

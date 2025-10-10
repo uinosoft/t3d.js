@@ -1,4 +1,5 @@
 import { WebGLRenderer } from './webgl/WebGLRenderer.js';
+import { WebGLTextures } from './webgl/WebGLTextures.js';
 import { Scene } from './scenes/Scene.js';
 import { MathUtils } from './math/MathUtils.js';
 import { RenderStates } from './render/RenderStates.js';
@@ -53,6 +54,24 @@ WebGLRenderer.prototype.readRenderTargetPixels = function(x, y, width, height, b
 
 	console.warn('WebGLRenderer.readRenderTargetPixels: readPixels from renderTarget failed.');
 	return Promise.reject();
+};
+
+// deprecated since 0.5.1
+WebGLTextures.prototype.setTexture2D = function(texture, slot) {
+	// console.warn('WebGLTextures: .setTexture2D() has been deprecated, use .setTexture() instead.');
+	return this.setTexture(texture, slot);
+};
+WebGLTextures.prototype.setTextureCube = function(texture, slot) {
+	// console.warn('WebGLTextures: .setTextureCube() has been deprecated, use .setTexture() instead.');
+	return this.setTexture(texture, slot);
+};
+WebGLTextures.prototype.setTexture3D = function(texture, slot) {
+	// console.warn('WebGLTextures: .setTexture3D() has been deprecated, use .setTexture() instead.');
+	return this.setTexture(texture, slot);
+};
+WebGLTextures.prototype.setTexture2DArray = function(texture, slot) {
+	// console.warn('WebGLTextures: .setTexture2DArray() has been deprecated, use .setTexture() instead.');
+	return this.setTexture(texture, slot);
 };
 
 Object.defineProperties(Scene.prototype, {
