@@ -59,6 +59,7 @@ class KTX2Loader extends Loader {
 
 		this.workerConfig = {
 			astcSupported: capabilities.getExtension('WEBGL_compressed_texture_astc') ? true : false,
+			astcHDRSupported: capabilities.getExtension('WEBGL_compressed_texture_astc') ? true : false,
 			etc1Supported: capabilities.getExtension('WEBGL_compressed_texture_etc1') ? true : false,
 			etc2Supported: capabilities.getExtension('WEBGL_compressed_texture_etc') ? true : false,
 			dxtSupported: capabilities.getExtension('WEBGL_compressed_texture_s3tc') ? true : false,
@@ -91,6 +92,7 @@ class KTX2Loader extends Loader {
 					const body = [
 						'/* constants */',
 						'let _EngineFormat = ' + JSON.stringify(KTX2Loader.EngineFormat),
+						'let _EngineType = ' + JSON.stringify(KTX2Loader.EngineType),
 						'let _TranscoderFormat = ' + JSON.stringify(KTX2Loader.TranscoderFormat),
 						'let _BasisFormat = ' + JSON.stringify(KTX2Loader.BasisFormat),
 						'/* basis_transcoder.js */',
@@ -159,8 +161,13 @@ class KTX2Loader extends Loader {
 		const { read, VK_FORMAT_UNDEFINED, KHR_DF_FLAG_ALPHA_PREMULTIPLIED } = _ktxParser;
 
 		const container = read(new Uint8Array(buffer));
+		const isBasisHDR = FORMAT_MAP[container.vkFormat]
+			&& container.dataFormatDescriptor[0].colorModel === 0xA7;
 
-		if (container.vkFormat !== VK_FORMAT_UNDEFINED) {
+
+		const needsTranscoder = container.vkFormat === VK_FORMAT_UNDEFINED
+			|| isBasisHDR && !this.workerConfig.astcHDRSupported;
+		if (!needsTranscoder) {
 			return createTextureData(container);
 		}
 
@@ -168,9 +175,9 @@ class KTX2Loader extends Loader {
 		const texturePending = this.init().then(() => {
 			return this.workerPool.postMessage({ type: 'transcode', buffer, taskConfig: taskConfig }, [buffer]);
 		}).then(e => {
-			const { faces, width, height, format, type, error, dfdFlags } = e.data;
+			const { type: messageType, error, data: { faces, width, height, format, type, dfdFlags } } = e.data;
 
-			if (type === 'error') return Promise.reject(error);
+			if (messageType === 'error') return Promise.reject(error);
 
 			const mipmaps = faces[0].mipmaps;
 
@@ -185,7 +192,7 @@ class KTX2Loader extends Loader {
 			textureData.mipmaps = mipmaps;
 
 			textureData.format = format;
-			textureData.type = PIXEL_TYPE.UNSIGNED_BYTE;
+			textureData.type = type;
 			textureData.minFilter = mipmaps.length === 1 ? TEXTURE_FILTER.LINEAR : TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR;
 			textureData.magFilter = TEXTURE_FILTER.LINEAR;
 			textureData.generateMipmaps = false;
@@ -216,6 +223,7 @@ class KTX2Loader extends Loader {
 
 KTX2Loader.BasisFormat = {
 	ETC1S: 0,
+	UASTC_HDR: 2,
 	UASTC_4x4: 1
 };
 
@@ -236,7 +244,10 @@ KTX2Loader.TranscoderFormat = {
 	RGBA32: 13,
 	RGB565: 14,
 	BGR565: 15,
-	RGBA4444: 16
+	RGBA4444: 16,
+	BC6H: 22,
+	RGB_HALF: 24,
+	RGBA_HALF: 25
 };
 
 KTX2Loader.EngineFormat = {
@@ -249,7 +260,14 @@ KTX2Loader.EngineFormat = {
 	RGB_ETC1_Format: PIXEL_FORMAT.RGB_ETC1,
 	// RGB_ETC2_Format: RGB_ETC2_Format, TODO
 	RGB_PVRTC_4BPPV1_Format: PIXEL_FORMAT.RGB_PVRTC_4BPPV1,
-	RGB_S3TC_DXT1_Format: PIXEL_FORMAT.RGB_S3TC_DXT1
+	RGB_S3TC_DXT1_Format: PIXEL_FORMAT.RGB_S3TC_DXT1,
+	RGB_BPTC_UNSIGNED_Format: PIXEL_FORMAT.RGB_BPTC_UNSIGNED_FORMAT
+};
+
+KTX2Loader.EngineType = {
+	FloatType: 1507,
+	HalfFloatType: 1508,
+	UnsignedByteType: 1500
 };
 
 /* WEB WORKER */
@@ -262,6 +280,7 @@ KTX2Loader.BasisWorker = function() {
 	const EngineFormat = _EngineFormat; // eslint-disable-line no-undef
 	const TranscoderFormat = _TranscoderFormat; // eslint-disable-line no-undef
 	const BasisFormat = _BasisFormat; // eslint-disable-line no-undef
+	const EngineType = _EngineType; // eslint-disable-line no-undef
 
 	self.addEventListener('message', function(e) {
 		const message = e.data;
@@ -275,9 +294,9 @@ KTX2Loader.BasisWorker = function() {
 			case 'transcode':
 				transcoderPending.then(() => {
 					try {
-						const { faces, buffers, width, height, hasAlpha, format, dfdFlags } = transcode(message.buffer);
+						const { faces, buffers, width, height, hasAlpha, format, type, dfdFlags } = transcode(message.buffer);
 
-						self.postMessage({ type: 'transcode', id: message.id, faces, width, height, hasAlpha, format, dfdFlags }, buffers);
+						self.postMessage({ type: 'transcode', id: message.id, data: { faces, width, height, hasAlpha, format, type, dfdFlags } }, buffers);
 					} catch (error) {
 						console.error(error);
 
@@ -314,7 +333,17 @@ KTX2Loader.BasisWorker = function() {
 			throw new Error('KTX2Loader: Invalid or unsupported .ktx2 file');
 		}
 
-		const basisFormat = ktx2File.isUASTC() ? BasisFormat.UASTC_4x4 : BasisFormat.ETC1S;
+		let basisFormat;
+
+		if (ktx2File.isUASTC()) {
+			basisFormat = BasisFormat.UASTC_4x4;
+		} else if (ktx2File.isETC1S()) {
+			basisFormat = BasisFormat.ETC1S;
+		} else if (ktx2File.isHDR()) {
+			basisFormat = BasisFormat.UASTC_HDR;
+		} else {
+			throw new Error('T3D.KTX2Loader: Unknown Basis encoding');
+		}
 		const width = ktx2File.getWidth();
 		const height = ktx2File.getHeight();
 		const layerCount = ktx2File.getLayers() || 1;
@@ -323,7 +352,7 @@ KTX2Loader.BasisWorker = function() {
 		const hasAlpha = ktx2File.getHasAlpha();
 		const dfdFlags = ktx2File.getDFDFlags();
 
-		const { transcoderFormat, engineFormat } = getTranscoderFormat(basisFormat, width, height, hasAlpha);
+		const { transcoderFormat, engineFormat, engineType } = getTranscoderFormat(basisFormat, width, height, hasAlpha);
 
 		if (!width || !height || !levelCount) {
 			cleanup();
@@ -340,15 +369,11 @@ KTX2Loader.BasisWorker = function() {
 
 		for (let face = 0; face < faceCount; face++) {
 			const mipmaps = [];
-
 			for (let mip = 0; mip < levelCount; mip++) {
 				const layerMips = [];
-
 				let mipWidth, mipHeight;
-
 				for (let layer = 0; layer < layerCount; layer++) {
 					const levelInfo = ktx2File.getImageLevelInfo(mip, layer, face);
-
 					if (face === 0 && mip === 0 && layer === 0 && (levelInfo.origWidth % 4 !== 0 || levelInfo.origHeight % 4 !== 0)) {
 						console.warn('KTX2Loader: ETC1S and UASTC textures should use multiple-of-four dimensions.');
 					}
@@ -362,8 +387,12 @@ KTX2Loader.BasisWorker = function() {
 						mipHeight = levelInfo.height;
 					}
 
-					const dst = new Uint8Array(ktx2File.getImageTranscodedSizeInBytes(mip, layer, 0, transcoderFormat));
+					let dst = new Uint8Array(ktx2File.getImageTranscodedSizeInBytes(mip, layer, 0, transcoderFormat));
 					const status = ktx2File.transcodeImage(dst, mip, layer, face, transcoderFormat, 0, -1, -1);
+
+					if (engineType === EngineType.HalfFloatType) {
+						dst = new Uint16Array(dst.buffer, dst.byteOffset, dst.byteLength / Uint16Array.BYTES_PER_ELEMENT);
+					}
 
 					if (!status) {
 						cleanup();
@@ -379,12 +408,12 @@ KTX2Loader.BasisWorker = function() {
 				buffers.push(mipData.buffer);
 			}
 
-			faces.push({ mipmaps, width, height, format: engineFormat });
+			faces.push({ mipmaps, width, height, format: engineFormat, type: engineType });
 		}
 
 		cleanup();
 
-		return { faces, buffers, width, height, hasAlpha, format: engineFormat, dfdFlags };
+		return { faces, buffers, width, height, hasAlpha, dfdFlags, format: engineFormat, type: engineType };
 	}
 
 	//
@@ -402,6 +431,7 @@ KTX2Loader.BasisWorker = function() {
 			basisFormat: [BasisFormat.UASTC_4x4],
 			transcoderFormat: [TranscoderFormat.ASTC_4x4, TranscoderFormat.ASTC_4x4],
 			engineFormat: [EngineFormat.RGBA_ASTC_4x4_Format, EngineFormat.RGBA_ASTC_4x4_Format],
+			engineType: [EngineType.UnsignedByteType],
 			priorityETC1S: Infinity,
 			priorityUASTC: 1,
 			needsPowerOfTwo: false
@@ -411,6 +441,7 @@ KTX2Loader.BasisWorker = function() {
 			basisFormat: [BasisFormat.ETC1S, BasisFormat.UASTC_4x4],
 			transcoderFormat: [TranscoderFormat.BC7_M5, TranscoderFormat.BC7_M5],
 			engineFormat: [EngineFormat.RGBA_BPTC_Format, EngineFormat.RGBA_BPTC_Format],
+			engineType: [EngineType.UnsignedByteType],
 			priorityETC1S: 3,
 			priorityUASTC: 2,
 			needsPowerOfTwo: false
@@ -420,6 +451,7 @@ KTX2Loader.BasisWorker = function() {
 			basisFormat: [BasisFormat.ETC1S, BasisFormat.UASTC_4x4],
 			transcoderFormat: [TranscoderFormat.BC1, TranscoderFormat.BC3],
 			engineFormat: [EngineFormat.RGB_S3TC_DXT1_Format, EngineFormat.RGBA_S3TC_DXT5_Format],
+			engineType: [EngineType.UnsignedByteType],
 			priorityETC1S: 4,
 			priorityUASTC: 5,
 			needsPowerOfTwo: false
@@ -429,6 +461,7 @@ KTX2Loader.BasisWorker = function() {
 			basisFormat: [BasisFormat.ETC1S, BasisFormat.UASTC_4x4],
 			transcoderFormat: [TranscoderFormat.ETC1, TranscoderFormat.ETC2],
 			engineFormat: [EngineFormat.RGB_ETC2_Format, EngineFormat.RGBA_ETC2_EAC_Format],
+			engineType: [EngineType.UnsignedByteType],
 			priorityETC1S: 1,
 			priorityUASTC: 3,
 			needsPowerOfTwo: false
@@ -438,6 +471,7 @@ KTX2Loader.BasisWorker = function() {
 			basisFormat: [BasisFormat.ETC1S, BasisFormat.UASTC_4x4],
 			transcoderFormat: [TranscoderFormat.ETC1],
 			engineFormat: [EngineFormat.RGB_ETC1_Format],
+			engineType: [EngineType.UnsignedByteType],
 			priorityETC1S: 2,
 			priorityUASTC: 4,
 			needsPowerOfTwo: false
@@ -447,45 +481,75 @@ KTX2Loader.BasisWorker = function() {
 			basisFormat: [BasisFormat.ETC1S, BasisFormat.UASTC_4x4],
 			transcoderFormat: [TranscoderFormat.PVRTC1_4_RGB, TranscoderFormat.PVRTC1_4_RGBA],
 			engineFormat: [EngineFormat.RGB_PVRTC_4BPPV1_Format, EngineFormat.RGBA_PVRTC_4BPPV1_Format],
+			engineType: [EngineType.HalfFloatType],
 			priorityETC1S: 5,
 			priorityUASTC: 6,
 			needsPowerOfTwo: true
+		},
+		{
+			if: 'bptcSupported',
+			basisFormat: [BasisFormat.UASTC_HDR],
+			transcoderFormat: [TranscoderFormat.BC6H],
+			engineFormat: [EngineFormat.RGB_BPTC_UNSIGNED_Format],
+			engineType: [EngineType.HalfFloatType],
+			priorityHDR: 1,
+			needsPowerOfTwo: false
+		},
+		// Uncompressed fallbacks.
+
+		{
+			basisFormat: [BasisFormat.ETC1S, BasisFormat.UASTC_4x4],
+			transcoderFormat: [TranscoderFormat.RGBA32, TranscoderFormat.RGBA32],
+			engineFormat: [EngineFormat.RGBAFormat, EngineFormat.RGBAFormat],
+			engineType: [EngineType.UnsignedByteType, EngineType.UnsignedByteType],
+			priorityETC1S: 100,
+			priorityUASTC: 100,
+			needsPowerOfTwo: false
 		}
 	];
 
-	const ETC1S_OPTIONS = FORMAT_OPTIONS.sort(function(a, b) {
-		return a.priorityETC1S - b.priorityETC1S;
-	});
-	const UASTC_OPTIONS = FORMAT_OPTIONS.sort(function(a, b) {
-		return a.priorityUASTC - b.priorityUASTC;
-	});
+	const OPTIONS = {
+		[BasisFormat.ETC1S]: FORMAT_OPTIONS
+			.filter(opt => opt.basisFormat.includes(BasisFormat.ETC1S))
+			.sort((a, b) => a.priorityETC1S - b.priorityETC1S),
+
+		[BasisFormat.UASTC_4x4]: FORMAT_OPTIONS
+			.filter(opt => opt.basisFormat.includes(BasisFormat.UASTC_4x4))
+			.sort((a, b) => a.priorityUASTC - b.priorityUASTC),
+
+		[BasisFormat.UASTC_HDR]: FORMAT_OPTIONS
+			.filter(opt => opt.basisFormat.includes(BasisFormat.UASTC_HDR))
+			.sort((a, b) => a.priorityHDR - b.priorityHDR)
+	};
 
 	function getTranscoderFormat(basisFormat, width, height, hasAlpha) {
 		let transcoderFormat;
 		let engineFormat;
-
-		const options = basisFormat === BasisFormat.ETC1S ? ETC1S_OPTIONS : UASTC_OPTIONS;
+		let engineType;
+		const options = OPTIONS[basisFormat];
 
 		for (let i = 0; i < options.length; i++) {
 			const opt = options[i];
 
-			if (!config[opt.if]) continue;
+			if (opt.if && !config[opt.if]) continue;
 			if (!opt.basisFormat.includes(basisFormat)) continue;
 			if (hasAlpha && opt.transcoderFormat.length < 2) continue;
 			if (opt.needsPowerOfTwo && !(isPowerOfTwo(width) && isPowerOfTwo(height))) continue;
 
-			transcoderFormat = opt.transcoderFormat[hasAlpha ? 1 : 0];
-			engineFormat = opt.engineFormat[hasAlpha ? 1 : 0];
+			 transcoderFormat = opt.transcoderFormat[hasAlpha ? 1 : 0];
+			 engineFormat = opt.engineFormat[hasAlpha ? 1 : 0];
+			 engineType = opt.engineType[0];
 
-			return { transcoderFormat, engineFormat };
+			return { transcoderFormat, engineFormat, engineType };
 		}
 
 		console.warn('KTX2Loader: No suitable compressed texture format found. Decoding to RGBA32.');
 
 		transcoderFormat = TranscoderFormat.RGBA32;
 		engineFormat = EngineFormat.RGBAFormat;
+		engineType = EngineType.UnsignedByteType;
 
-		return { transcoderFormat, engineFormat };
+		return { transcoderFormat, engineFormat, engineType };
 	}
 
 	function isPowerOfTwo(value) {
@@ -538,7 +602,9 @@ function setFORMAT_MAP() {
 		[_ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_FORMAT.Red,
 		[_ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_FORMAT.Red,
 		[_ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_FORMAT.Red,
-		[_ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_FORMAT.Red
+		[_ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_FORMAT.Red,
+
+		[_ktxParser.VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK_EXT]: PIXEL_FORMAT.RGB_BPTC_UNSIGNED_FORMAT
 
 		// TODO: support ASTC formats
 	};
@@ -560,7 +626,8 @@ function setTYPE_MAP() {
 		[_ktxParser.VK_FORMAT_R32_SFLOAT]: PIXEL_TYPE.FLOAT,
 		[_ktxParser.VK_FORMAT_R16_SFLOAT]: PIXEL_TYPE.HALF_FLOAT,
 		[_ktxParser.VK_FORMAT_R8_SRGB]: PIXEL_TYPE.UNSIGNED_BYTE,
-		[_ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE
+		[_ktxParser.VK_FORMAT_R8_UNORM]: PIXEL_TYPE.UNSIGNED_BYTE,
+		[_ktxParser.VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK_EXT]: PIXEL_TYPE.HALF_FLOAT
 	};
 }
 

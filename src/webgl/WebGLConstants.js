@@ -147,10 +147,12 @@ class WebGLConstants {
 		}
 
 		// BPTC
-		if (format === PIXEL_FORMAT.RGBA_BPTC) {
+		if (format === PIXEL_FORMAT.RGBA_BPTC || format === PIXEL_FORMAT.RGB_BPTC_SIGNED_FORMAT || format === PIXEL_FORMAT.RGB_BPTC_UNSIGNED_FORMAT) {
 			extension = capabilities.getExtension('EXT_texture_compression_bptc');
 			if (extension) {
-				return extension.COMPRESSED_RGBA_BPTC_UNORM_EXT;
+				if (format === PIXEL_FORMAT.RGBA_BPTC) return extension.COMPRESSED_RGBA_BPTC_UNORM_EXT;
+				if (format === PIXEL_FORMAT.RGB_BPTC_SIGNED_FORMAT) return extension.COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT;
+				if (format === PIXEL_FORMAT.RGB_BPTC_UNSIGNED_FORMAT) return extension.COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT;
 			} else {
 				console.warn('extension EXT_texture_compression_bptc is not support.');
 				return null;
