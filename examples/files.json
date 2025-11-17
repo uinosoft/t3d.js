@@ -258,6 +258,8 @@
 		"lab_terrain",
 		"lab_water_simulation",
 		"lab_histogram",
-		"lab_linechart_fill"
+		"lab_linechart_fill",
+		"lab_impostor_octahedral",
+		"lab_impostor_octahedral_instancing"
 	]
 }

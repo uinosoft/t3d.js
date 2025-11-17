@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - octahedral impostor instancing</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - octahedral impostor instancing (200k)
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { Terrain } from 't3d/addons/objects/Terrain.js';
+		import { LightShadowAdapter } from 't3d/addons/lights/LightShadowAdapter.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { OctahedralTextureGenerator } from 't3d/addons/impostor/OctahedralTextureGenerator.js';
+		import { OctahedralImpostor, OctahedralImpostorDepthMaterial } from 't3d/addons/impostor/OctahedralImpostor.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		const contextParams = { antialias: true, alpha: false };
+		const gl = canvas.getContext('webgl2', contextParams);
+		const renderer = new t3d.WebGLRenderer(gl);
+
+		const shadowMapPass = new t3d.ShadowMapPass(renderer);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x000000, 10, 2000);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+		camera.position.set(0, 30, 100);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.2);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 0.5);
+		directionalLight.castShadow = true;
+		directionalLight.shadow.mapSize.set(2048, 2048);
+		directionalLight.shadow.bias = -0.0001;
+		directionalLight.shadow.normalBias = 0.0;
+		directionalLight.shadow.frustumEdgeFalloff = -0.5;
+		scene.add(directionalLight);
+
+		const shadowAdapter = new LightShadowAdapter(directionalLight);
+		shadowAdapter.bindCameraDistance = 400;
+		shadowAdapter.bindCamera = camera;
+
+		// Terrain
+
+		const heightmapImage = new Image();
+		heightmapImage.src = './resources/terrain/heightmap.png';
+		const texture2DLoader = new Texture2DLoader();
+		const snow = texture2DLoader.load('./resources/terrain/snow.jpg');
+		const grass = texture2DLoader.load('./resources/terrain/grass.jpg');
+		const sand = texture2DLoader.load('./resources/terrain/sand.jpg');
+		const stone = texture2DLoader.load('./resources/terrain/stone.jpg');
+
+		heightmapImage.onload = function() {
+			const terrain = new Terrain({
+				width: 1024,
+				height: 1024,
+				heightmap: heightmapImage,
+				maxHeight: 100,
+				minHeight: -100
+			});
+			shadowAdapter.bindBox.fromBox3(terrain.geometry.boundingBox);
+			terrain.material.uniforms.texture_0 = sand;
+			terrain.material.uniforms.texture_1 = grass;
+			terrain.material.uniforms.texture_2 = stone;
+			terrain.material.uniforms.texture_3 = snow;
+			terrain.material.uniforms.texture_4 = stone;
+			terrain.receiveShadow = true;
+
+			buildTree(terrain);
+			scene.add(terrain);
+			loadGltf();
+		};
+
+		// Trees
+
+		const maxInstanceCount = 200000;
+
+		const worldMatrices = [];
+		function buildTree(terrain) {
+			const position = new t3d.Vector3();
+			const orientation = new t3d.Quaternion();
+			const scale = new t3d.Vector3(0.5, 0.5, 0.5);
+			const matrix = new t3d.Matrix4();
+			for (let i = 0; i < maxInstanceCount; i++) {
+				const x = Math.random() * 1023 - 512;
+				const z = Math.random() * 1023 - 512;
+				const y = terrain.getHeightAt(x, z);
+
+				const scaleRange = 0.2 + Math.random() * 0.5;
+				scale.set(scaleRange, scaleRange, scaleRange);
+
+				position.x = x;
+				position.y = y;
+				position.z = z;
+
+				matrix.compose(position, orientation, scale);
+				matrix.toArray(worldMatrices, i * 16);
+			}
+		}
+		
+		function loadGltf() {
+			const loader = new GLTFLoader();
+			loader.load(
+				'./resources/models/gltf/tree.glb'
+			).then(function(result) {
+				const octahedralTextureGenerator = new OctahedralTextureGenerator(4096 * 2, 16);
+
+				const { transform, albedoTexture, infoTexture } = octahedralTextureGenerator.render(renderer, result.root);
+
+				const impostor = new OctahedralImpostor();
+				impostor.castShadow = true;
+				impostor.geometry.instanceCount = maxInstanceCount;
+
+				impostor.material.defines.USE_INSTANCING = true;
+				impostor.material.diffuseMap = albedoTexture;
+				impostor.material.normalMap = infoTexture;
+				impostor.material.uniforms.spritesPerSide = 16;
+				transform.toArray(impostor.material.uniforms.impostorTransform);
+
+				const instanceMatrixAttribute = new t3d.Attribute(new t3d.Buffer(new Float32Array(worldMatrices), 16));
+				instanceMatrixAttribute.divisor = 1;
+
+				impostor.geometry.addAttribute('instanceMatrix', instanceMatrixAttribute);
+		
+				scene.add(impostor);
+			}).catch(e => console.error(e));
+		}
+
+		const params = { phi: 42, theta: 100 };
+
+		function updateLightDirection() {
+			shadowAdapter.direction.setFromSphericalAngles(params.phi / 180 * Math.PI, params.theta / 180 * Math.PI);
+		}
+		updateLightDirection();
+		
+		const gui = new GUI();
+
+		const lightFolder = gui.addFolder('Light').onChange(updateLightDirection);
+		lightFolder.add(params, 'phi', 0.1, 90, 0.1);
+		lightFolder.add(params, 'theta', 0, 360, 0.1);
+
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+		
+			camera.updateMatrix();
+			shadowAdapter.update();
+		
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+		
+			shadowMapPass.render(renderer, scene);
+
+			renderer.renderScene(scene, camera, screenRenderTarget);
+		}
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 5000);
+
+			screenRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+
+		const depthMaterials = [];
+
+		shadowMapPass.getDepthMaterial = function(renderable) {
+			const useSkinning = !!renderable.object.skeleton;
+			const useMorphing = renderable.geometry.morphAttributes.position && renderable.geometry.morphAttributes.position.length > 0;
+			const useInstancing = renderable.material.defines.USE_INSTANCING;
+			const index = useMorphing << 0 | useSkinning << 1 | useInstancing << 2;
+
+			let material = depthMaterials[index];
+			if (material === undefined) {
+				material = useInstancing ? new OctahedralImpostorDepthMaterial() : new t3d.DepthMaterial();
+				if (useInstancing) {
+					material.uniforms.impostorTransform = renderable.material.uniforms.impostorTransform;
+					material.defines.USE_INSTANCING = true;
+					material.uniforms.spritesPerSide = renderable.material.uniforms.spritesPerSide;
+					material.diffuseMap = renderable.material.diffuseMap;
+				}
+			}
+			depthMaterials[index] = material;
+
+			return material;
+		};
+	</script>
+</body>
+</html>
