@@ -173,7 +173,7 @@ class Geometry extends EventDispatcher {
 		const position = this.attributes['a_Position'] || this.attributes['position'];
 
 		if (position) {
-			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset, position.normalized);
 		}
 
 		const morphAttributesPosition = this.morphAttributes.position;
@@ -182,7 +182,7 @@ class Geometry extends EventDispatcher {
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
 				const morphAttribute = morphAttributesPosition[i];
 
-				_box3.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
+				_box3.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset, morphAttribute.normalized);
 
 				_vector.addVectors(this.boundingBox.min, _box3.min);
 				this.boundingBox.expandByPoint(_vector);
@@ -209,12 +209,12 @@ class Geometry extends EventDispatcher {
 		const positionOffset = position.offset;
 
 		if (morphAttributesPosition) {
-			_box3.setFromArray(position.buffer.array, bufferStride, positionOffset);
+			_box3.setFromArray(position.buffer.array, bufferStride, positionOffset, position.normalized);
 
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
 				const morphAttribute = morphAttributesPosition[i];
 
-				_boxMorphTargets.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
+				_boxMorphTargets.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset, morphAttribute.normalized);
 
 				_vector.addVectors(_box3.min, _boxMorphTargets.min);
 				_box3.expandByPoint(_vector);
@@ -252,7 +252,7 @@ class Geometry extends EventDispatcher {
 
 			this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
 		} else {
-			this.boundingSphere.setFromArray(position.buffer.array, bufferStride, positionOffset);
+			this.boundingSphere.setFromArray(position.buffer.array, bufferStride, positionOffset, position.normalized);
 		}
 	}
 

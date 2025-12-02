@@ -4973,11 +4973,12 @@ class Box3 {
 	/**
 	 * Sets the upper and lower bounds of this box to include all of the data in array.
 	 * @param {number[]} array - An array of position data that the resulting box will envelop.
-	 * @param {number} [gap=3]
-	 * @param {number} [offset=0]
-	 * @returns {Box3}
+	 * @param {number} [gap=3] - The number of elements between the start of each position in the array.
+	 * @param {number} [offset=0] - The offset in each gap where the position data starts.
+	 * @param {boolean} [denormalize=false] - Whether to denormalize the values in the array.
+	 * @returns {Box3} A reference to this box.
 	 */
-	setFromArray(array, gap = 3, offset = 0) {
+	setFromArray(array, gap = 3, offset = 0, denormalize = false) {
 		let minX = +Infinity;
 		let minY = +Infinity;
 		let minZ = +Infinity;
@@ -4987,9 +4988,15 @@ class Box3 {
 		let maxZ = -Infinity;
 
 		for (let i = 0, l = array.length; i < l; i += gap) {
-			const x = array[i + offset];
-			const y = array[i + offset + 1];
-			const z = array[i + offset + 2];
+			let x = array[i + offset];
+			let y = array[i + offset + 1];
+			let z = array[i + offset + 2];
+
+			if (denormalize) {
+				x = MathUtils.denormalize(x, denormalize);
+				y = MathUtils.denormalize(y, denormalize);
+				z = MathUtils.denormalize(z, denormalize);
+			}
 
 			if (x < minX) minX = x;
 			if (y < minY) minY = y;
@@ -7176,19 +7183,20 @@ class Sphere {
 
 	/**
 	 * Computes the minimum bounding sphere for an array of points.
-	 * @param {number[]} array - an Array of Vector3 positions.
-	 * @param {number} [gap=3] - array gap.
-	 * @param {number} [offset=0] - array offset.
-	 * @returns {Sphere}
+	 * @param {number[]} array - An Array of position data that the resulting sphere will envelop.
+	 * @param {number} [gap=3] - The number of elements between the start of each position in the array.
+	 * @param {number} [offset=0] - The offset in each gap where the position data starts.
+	 * @param {boolean} [denormalize=false] - whether to denormalize the values in the array.
+	 * @returns {Sphere} A reference to this sphere.
 	 */
-	setFromArray(array, gap = 3, offset = 0) {
+	setFromArray(array, gap = 3, offset = 0, denormalize = false) {
 		const center = this.center;
 
-		_box3_1.setFromArray(array, gap).getCenter(center);
+		_box3_1.setFromArray(array, gap, offset, denormalize).getCenter(center);
 
 		let maxRadiusSq = 0;
 		for (let i = 0, l = array.length; i < l; i += gap) {
-			_vec3_1$1.fromArray(array, i + offset);
+			_vec3_1$1.fromArray(array, i + offset, denormalize);
 			maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vec3_1$1));
 		}
 		this.radius = Math.sqrt(maxRadiusSq);
@@ -11028,7 +11036,7 @@ class Geometry extends EventDispatcher {
 		const position = this.attributes['a_Position'] || this.attributes['position'];
 
 		if (position) {
-			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset);
+			this.boundingBox.setFromArray(position.buffer.array, position.buffer.stride, position.offset, position.normalized);
 		}
 
 		const morphAttributesPosition = this.morphAttributes.position;
@@ -11037,7 +11045,7 @@ class Geometry extends EventDispatcher {
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
 				const morphAttribute = morphAttributesPosition[i];
 
-				_box3.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
+				_box3.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset, morphAttribute.normalized);
 
 				_vector$1.addVectors(this.boundingBox.min, _box3.min);
 				this.boundingBox.expandByPoint(_vector$1);
@@ -11064,12 +11072,12 @@ class Geometry extends EventDispatcher {
 		const positionOffset = position.offset;
 
 		if (morphAttributesPosition) {
-			_box3.setFromArray(position.buffer.array, bufferStride, positionOffset);
+			_box3.setFromArray(position.buffer.array, bufferStride, positionOffset, position.normalized);
 
 			for (let i = 0; i < morphAttributesPosition.length; i++) {
 				const morphAttribute = morphAttributesPosition[i];
 
-				_boxMorphTargets.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset);
+				_boxMorphTargets.setFromArray(morphAttribute.buffer.array, morphAttribute.buffer.stride, morphAttribute.offset, morphAttribute.normalized);
 
 				_vector$1.addVectors(_box3.min, _boxMorphTargets.min);
 				_box3.expandByPoint(_vector$1);
@@ -11107,7 +11115,7 @@ class Geometry extends EventDispatcher {
 
 			this.boundingSphere.radius = Math.sqrt(maxRadiusSq);
 		} else {
-			this.boundingSphere.setFromArray(position.buffer.array, bufferStride, positionOffset);
+			this.boundingSphere.setFromArray(position.buffer.array, bufferStride, positionOffset, position.normalized);
 		}
 	}
 

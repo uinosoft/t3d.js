@@ -1,4 +1,5 @@
 import { Vector3 } from './Vector3.js';
+import { MathUtils } from './MathUtils.js';
 
 /**
  * Represents an axis-aligned bounding box (AABB) in 3D space.
@@ -91,11 +92,12 @@ class Box3 {
 	/**
 	 * Sets the upper and lower bounds of this box to include all of the data in array.
 	 * @param {number[]} array - An array of position data that the resulting box will envelop.
-	 * @param {number} [gap=3]
-	 * @param {number} [offset=0]
-	 * @returns {Box3}
+	 * @param {number} [gap=3] - The number of elements between the start of each position in the array.
+	 * @param {number} [offset=0] - The offset in each gap where the position data starts.
+	 * @param {boolean} [denormalize=false] - Whether to denormalize the values in the array.
+	 * @returns {Box3} A reference to this box.
 	 */
-	setFromArray(array, gap = 3, offset = 0) {
+	setFromArray(array, gap = 3, offset = 0, denormalize = false) {
 		let minX = +Infinity;
 		let minY = +Infinity;
 		let minZ = +Infinity;
@@ -105,9 +107,15 @@ class Box3 {
 		let maxZ = -Infinity;
 
 		for (let i = 0, l = array.length; i < l; i += gap) {
-			const x = array[i + offset];
-			const y = array[i + offset + 1];
-			const z = array[i + offset + 2];
+			let x = array[i + offset];
+			let y = array[i + offset + 1];
+			let z = array[i + offset + 2];
+
+			if (denormalize) {
+				x = MathUtils.denormalize(x, denormalize);
+				y = MathUtils.denormalize(y, denormalize);
+				z = MathUtils.denormalize(z, denormalize);
+			}
 
 			if (x < minX) minX = x;
 			if (y < minY) minY = y;

@@ -62,19 +62,20 @@ class Sphere {
 
 	/**
 	 * Computes the minimum bounding sphere for an array of points.
-	 * @param {number[]} array - an Array of Vector3 positions.
-	 * @param {number} [gap=3] - array gap.
-	 * @param {number} [offset=0] - array offset.
-	 * @returns {Sphere}
+	 * @param {number[]} array - An Array of position data that the resulting sphere will envelop.
+	 * @param {number} [gap=3] - The number of elements between the start of each position in the array.
+	 * @param {number} [offset=0] - The offset in each gap where the position data starts.
+	 * @param {boolean} [denormalize=false] - whether to denormalize the values in the array.
+	 * @returns {Sphere} A reference to this sphere.
 	 */
-	setFromArray(array, gap = 3, offset = 0) {
+	setFromArray(array, gap = 3, offset = 0, denormalize = false) {
 		const center = this.center;
 
-		_box3_1.setFromArray(array, gap).getCenter(center);
+		_box3_1.setFromArray(array, gap, offset, denormalize).getCenter(center);
 
 		let maxRadiusSq = 0;
 		for (let i = 0, l = array.length; i < l; i += gap) {
-			_vec3_1.fromArray(array, i + offset);
+			_vec3_1.fromArray(array, i + offset, denormalize);
 			maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_vec3_1));
 		}
 		this.radius = Math.sqrt(maxRadiusSq);
