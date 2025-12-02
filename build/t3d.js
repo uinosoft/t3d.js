@@ -2245,7 +2245,7 @@
 		 */
 		slerp(qb, t) {
 			if (t <= 0) return this;
-			if (t >= 1) return this.copy(qb); // copy calls _onChangeCallback()
+			if (t >= 1) return this.copy(qb); // copy calls onChangeCallback()
 
 			let x = qb._x,
 				y = qb._y,
@@ -2271,7 +2271,7 @@
 				this._y = this._y * s + y * t;
 				this._z = this._z * s + z * t;
 				this._w = this._w * s + w * t;
-				this._onChangeCallback();
+				this.onChangeCallback();
 			} else {
 				// for small angles, lerp then normalize
 
@@ -2279,7 +2279,7 @@
 				this._y = this._y * s + y * t;
 				this._z = this._z * s + z * t;
 				this._w = this._w * s + w * t;
-				this.normalize(); // normalize calls _onChangeCallback()
+				this.normalize(); // normalize calls onChangeCallback()
 			}
 			return this;
 		}
