@@ -25,7 +25,8 @@
         {
             "imports": {
                 "t3d": "../build/t3d.module.js",
-                "t3d/addons/": "./jsm/"
+                "t3d/addons/": "./jsm/",
+				"ktx2-encoder": "https://cdn.jsdelivr.net/npm/ktx2-encoder/+esm"
             }
         }
     </script>
@@ -41,7 +42,8 @@
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
-
+ 		import { encodeToKTX2 } from 'ktx2-encoder';
+		
 		const devicePixelRatio = window.devicePixelRatio;
 
 		let width = window.innerWidth || 2;
@@ -197,7 +199,8 @@
 			draco: false,
 			onlyVisible: true,
 			maxTextureSize: Infinity,
-			wrapRoot: false
+			wrapRoot: false,
+			ktx2: false
 		};
 
 		const exporter = new GLTFExporter();
@@ -206,12 +209,22 @@
 		exporter.dracoOptions.encodeSpeed = 5;
 		exporter.dracoOptions.quantization = [16, 8, 8, 8, 8];
 
+		exporter.setKTX2wasmUrl('./libs/ktx2');
+		exporter.setKTX2Encoder(encodeToKTX2);
+		exporter.ktx2Options.isUASTC = false;
+		exporter.ktx2Options.generateMipmap = true;
+		exporter.ktx2Options.needSupercompression = true;
+		exporter.ktx2Options.compressionLevel = 2;
+		exporter.ktx2Options.qualityLevel = 128;
+
 		const gui = new GUI();
 		gui.add(exportOptions, 'format', [GLTF_FORMAT.GLTF, GLTF_FORMAT.GLB, GLTF_FORMAT.GLTF_SEPARATE]);
 		gui.add(exportOptions, 'onlyVisible');
 		gui.add(exportOptions, 'maxTextureSize', [64, 128, 256, 512, 1024, 2048, Infinity]);
 		gui.add(exportOptions, 'wrapRoot');
 		gui.add(exportOptions, 'draco');
+		gui.add(exportOptions, 'ktx2');
+
 		const dracoFolder = gui.addFolder('DRACO').close();
 		dracoFolder.add(exporter.dracoOptions, 'decodeSpeed', 0, 10, 1);
 		dracoFolder.add(exporter.dracoOptions, 'encodeSpeed', 0, 10, 1);
@@ -220,6 +233,12 @@
 		dracoFolder.add(exporter.dracoOptions.quantization, '2', 4, 16, 1).name('color');
 		dracoFolder.add(exporter.dracoOptions.quantization, '3', 4, 16, 1).name('texcoord');
 		dracoFolder.add(exporter.dracoOptions.quantization, '4', 4, 16, 1).name('generic');
+		const ktx2Folder = gui.addFolder('KTX2').close();
+		ktx2Folder.add(exporter.ktx2Options, 'isUASTC');
+		ktx2Folder.add(exporter.ktx2Options, 'generateMipmap');
+		ktx2Folder.add(exporter.ktx2Options, 'needSupercompression');
+		ktx2Folder.add(exporter.ktx2Options, 'compressionLevel', 0, 2, 1);
+		ktx2Folder.add(exporter.ktx2Options, 'qualityLevel', 0, 256, 1);
 		const button = gui.add({
 			export: async function() {
 				plane.ignoreForExport = true;

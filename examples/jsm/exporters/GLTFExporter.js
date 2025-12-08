@@ -22,8 +22,11 @@ class GLTFExporter {
 		this.dracoOptions = {};
 		this._dracoExporter = null;
 
+		this.ktx2Options = {};
+
 		this.register(GLTFMaterialsUnlitExtension);
 		this.register(GLTFMeshGpuInstancingExtension);
+		this.register(GLTFTextureBasisuExtension);
 	}
 
 	register(extension) {
@@ -50,11 +53,30 @@ class GLTFExporter {
 		return this._dracoExporter;
 	}
 
+	setKTX2Encoder(ktx2Encoder) {
+		this._ktx2Encoder = ktx2Encoder;
+		return this;
+	}
+
+	getKTX2Encoder() {
+		return this._ktx2Encoder;
+	}
+
+	setKTX2wasmUrl(wasmUrl) {
+		this._ktx2WasmUrl = wasmUrl;
+		return this;
+	}
+
+	getKTX2wasmUrl() {
+		return this._ktx2WasmUrl;
+	}
+
+
 	/**
 	 * Parse input root object(s) and generate GLTF output
 	 * @param {Object3D|Object3D[]} input root object(s)
 	 * @param {Function} onDone Callback on completed
-	 * @param {Function} onError Callback on errors
+	 * @param {Function} onError Callbac	k on errors
 	 * @param {object} options options
 	 */
 	parse(input, onDone, onError, options) {
@@ -65,7 +87,10 @@ class GLTFExporter {
 		writer.setPlugins(plugins);
 
 		writer.dracoOptions = this.dracoOptions;
+		writer.ktx2Options = this.ktx2Options;
 		writer.setDRACOExporter(this._dracoExporter);
+		writer.setKTX2Encoder(this._ktx2Encoder);
+		writer.setKTX2wasmUrl(this._ktx2WasmUrl);
 
 		writer.writeAsync(input, onDone, options).catch(onError);
 	}
@@ -409,6 +434,17 @@ class GLTFWriter {
 
 		this.dracoOptions = null;
 		this.dracoExporter = null;
+
+		this.ktx2Options = {
+			enableDebug: false,
+			isUASTC: false,
+			generateMipmap: true,
+			needSupercompression: true,
+			compressionLevel: 2,
+			isSetKTX2SRGBTransferFunc: false,
+			isHDR: false,
+			qualityLevel: 128
+		};
 	}
 
 	setPlugins(plugins) {
@@ -417,6 +453,14 @@ class GLTFWriter {
 
 	setDRACOExporter(dracoExporter) {
 		this.dracoExporter = dracoExporter;
+	}
+
+	setKTX2Encoder(KTX2Encoder) {
+		this.KTX2Encoder = KTX2Encoder;
+	}
+
+	setKTX2wasmUrl(wasmUrl) {
+		this.KTX2WasmUrl = wasmUrl;
 	}
 
 	/**
@@ -431,6 +475,8 @@ class GLTFWriter {
 			format: GLTF_FORMAT.GLTF,
 			// Draco compression
 			draco: false,
+			// KTX2 compression
+			ktx2: false,
 			// Resource directory, defualt is './'
 			resourcePath: './',
 			// Export position, rotation and scale instead of matrix per node. Default is false
@@ -452,6 +498,11 @@ class GLTFWriter {
 		if (this.options.draco && this.dracoExporter === null) {
 			console.warn('GLTFExporter: DRACOExporter is not set but options.draco is true. Ignoring Draco compression.');
 			this.options.draco = false;
+		}
+
+		if (this.options.ktx2 && !this.KTX2Encoder) {
+			console.warn('GLTFExporter: KTX2Encoder is not set but options.ktx2 is true. Ignoring KTX2 compression.');
+			this.options.ktx2 = false;
 		}
 
 		if (this.options.animations.length > 0) {
@@ -1297,6 +1348,13 @@ class GLTFWriter {
 
 		if (image.__name) imageDef.name = image.__name;
 
+		if (this.options.ktx2) {
+			imageDef.mimeType = 'image/ktx2';
+			const index = json.images.push(imageDef) - 1;
+			cachedImages[key] = index;
+			return index;
+		};
+
 		const canvas = getCanvas();
 
 		canvas.width = Math.min(image.width, options.maxTextureSize);
@@ -1692,7 +1750,7 @@ class GLTFWriter {
 			return;
 		}
 
-		const ext = imageDef.mimeType === 'image/jpeg' ? 'jpg' : 'png';
+		const ext = imageDef.mimeType === 'image/jpeg' ? 'jpg' : imageDef.mimeType === 'image/ktx2' ? 'ktx' : 'png';
 		const name = this.getUniqueFileName(imageDef.name || 'image', ext);
 
 		this.resources.push({ name, ext, content: dataURL });
@@ -1908,4 +1966,85 @@ class GLTFMeshGpuInstancingExtension {
 
 }
 
-export { GLTFExporter, GLTF_FORMAT, GLTFMaterialsUnlitExtension, GLTFMeshGpuInstancingExtension, GLTFLightExtension };
+/**
+ * Basis Universal Texture Extension
+ *
+ * Specification: https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_texture_basisu
+ */
+class GLTFTextureBasisuExtension {
+
+	constructor(writer) {
+		this.writer = writer;
+		this.name = 'KHR_texture_basisu';
+	}
+
+	writeTexture(texture, textureDef) {
+		const writer = this.writer;
+		const extensionsUsed = writer.extensionsUsed;
+		const KTX2Encoder = writer.KTX2Encoder;
+		if (writer.options.ktx2) {
+			const pending = writer.pending;
+			const base = writer.KTX2WasmUrl || '';
+			const wasmUrl = new URL((base.endsWith('/') ? base + 'basis_encoder.wasm' : base + '/basis_encoder.wasm'), window.location.href).toString();
+			const jsUrl = new URL((base.endsWith('/') ? base + 'basis_encoder.js' : base + '/basis_encoder.js'), window.location.href).toString();
+			const imageDef = writer.json.images[textureDef.source];
+
+			if (imageDef._ktx2Pending) {
+				textureDef.extensions = textureDef.extensions || {};
+				textureDef.extensions[this.name] = { source: textureDef.source };
+				return;
+			}
+
+			imageDef._ktx2Pending = true;
+
+			if (!textureDef.extensions) {
+				textureDef.extensions = {};
+			}
+			textureDef.extensions[this.name] = { source: textureDef.source };
+			pending.push(
+				(async () => {
+					const canvas = getCanvas();
+					canvas.width = texture.image.width;
+					canvas.height = texture.image.height;
+					const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+					if (texture.image.data && texture.image.data instanceof Uint8Array) {
+						const rgba = new Uint8ClampedArray(texture.image.data);
+						ctx.putImageData(new ImageData(rgba, canvas.width, canvas.height), 0, 0);
+					} else {
+						ctx.drawImage(texture.image, 0, 0);
+					}
+
+					const pngBlob = await getToBlobPromise(canvas, 'image/png');
+					const pngBuffer = await pngBlob.arrayBuffer();
+
+					const ktx2Data = await KTX2Encoder(new Uint8Array(pngBuffer), {
+						...writer.ktx2Options,
+						wasmUrl: wasmUrl,
+						jsUrl: jsUrl
+					});
+
+					const ktx2Blob = new Blob([ktx2Data], { type: 'image/ktx2' });
+
+					if (writer.options.format === GLTF_FORMAT.GLB) {
+						const bufferViewIndex = await writer.processBufferViewImage(ktx2Blob);
+						imageDef.bufferView = bufferViewIndex;
+					} else {
+						const reader = new FileReader();
+						reader.readAsDataURL(ktx2Blob);
+						await new Promise(resolve => {
+							reader.onloadend = resolve;
+						});
+						writer.setImageUri(imageDef, reader.result);
+					}
+					delete imageDef._ktx2Pending;
+				})()
+			);
+		}
+
+		extensionsUsed[this.name] = true;
+	}
+
+}
+
+export { GLTFExporter, GLTF_FORMAT, GLTFMaterialsUnlitExtension, GLTFMeshGpuInstancingExtension, GLTFLightExtension, GLTFTextureBasisuExtension };
