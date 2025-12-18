@@ -4,6 +4,7 @@ export class OceanMaterial extends ShaderMaterial {
 
 	constructor() {
 		super(OceanShader);
+		this.defines.SHORELINE = false;
 	}
 
 	setOceanField(oceanField) {
@@ -43,7 +44,10 @@ export const OceanShader = {
 		sizes: [0, 0, 0],
 		croppinesses: [0, 0, 0],
 		foamSpreading: 1.2,
-		foamContrast: 7.2
+		foamContrast: 7.2,
+		// for shoreline
+		tDepth: null,
+		tNoise: null
 	},
 	vertexShader: /* glsl */`
 		attribute vec3 a_Position;
@@ -94,6 +98,8 @@ export const OceanShader = {
 		uniform vec3 u_CameraPosition;
 		uniform samplerCube envMap;
 
+		#include <inverse>
+
 		uniform sampler2D dx_hy_dz_dxdz0;
 		uniform sampler2D sx_sz_dxdx_dzdz0;
 		uniform sampler2D dx_hy_dz_dxdz1;
@@ -104,6 +110,13 @@ export const OceanShader = {
 		uniform float croppinesses[3];
 		uniform float foamSpreading;
 		uniform float foamContrast;
+
+		#ifdef SHORELINE
+			uniform mat4 u_Projection;
+
+			uniform sampler2D tNoise;
+			uniform sampler2D tDepth;
+		#endif
 
 		varying vec3 _position;
 		varying vec2 _xz;
@@ -215,9 +228,64 @@ export const OceanShader = {
 		void main() {
 			float f = getFoam(_xz);
 			vec3 n = getNormal(_xz);
+			float a = 1.0;
+
+			#ifdef SHORELINE
+				mat4 projectionInv = inverseMat4(u_Projection);
+
+				ivec2 depthSize = textureSize(tDepth, 0);
+				vec2 screenUV = gl_FragCoord.xy / vec2(depthSize);
+				float depth = texture2D(tDepth, screenUV).r * 2.0 - 1.0;
+				vec4 projectedPos = vec4(screenUV * 2.0 - 1.0, depth, 1.0);
+				vec4 pos = projectionInv * projectedPos;
+				vec3 rayOrigin = pos.xyz / pos.w;
+
+				vec4 waterProjectedPos = vec4(screenUV * 2.0 - 1.0, gl_FragCoord.z * 2.0 - 1.0, 1.0);
+				vec4 waterPos = projectionInv * waterProjectedPos;
+				vec3 waterViewPos = waterPos.xyz / waterPos.w;
+
+				float realDist = distance(rayOrigin, waterViewPos);
+
+				// Shore Waves
+				vec3 dPosDx = dFdx(_position);
+				vec3 dPosDy = dFdy(_position);
+				float dDistDx = dFdx(realDist);
+				float dDistDy = dFdy(realDist);
+				vec3 rawGrad = dPosDx * dDistDx + dPosDy * dDistDy;
+				vec3 distGrad = length(rawGrad) > 1e-5 ? normalize(rawGrad) : vec3(0.0);
+
+				float _uTime = 0.0;
+				float shoreWaveSpeed = 1.0;
+				float phase = 2.0 * pow(max(realDist, 0.0), 0.8) + _uTime * shoreWaveSpeed;
+				float waveVal = sin(phase);
+				float dPhase = 1.6 * pow(max(realDist, 0.1), -0.2);
+				float waveHeight = exp(waveVal - 1.0);
+				float waveSlope = waveHeight * cos(phase) * dPhase;
+				float shoreMask = 1.0 - smoothstep(0.0, 30.0, realDist);
+				vec3 waveNormal = -distGrad * waveSlope * 0.8 * shoreMask;
+
+				n = normalize(n + waveNormal);
+
+				float _NoiseScale = 3.0;
+				float _EdgeSpeed = 0.9;
+				float _EdgeAmount = 1.0;
+				float _EdgeFoamDepth = 8.0;
+
+				vec2 samplerUV = vec2(_uTime * 0.1, 0.0);
+				float distortNoise = texture2D(tNoise, _xz / _NoiseScale + samplerUV).r * 2.3;
+				float edgeFoamMask = 1.0 - smoothstep(0.0, _EdgeFoamDepth, realDist);
+				edgeFoamMask = clamp(sin((edgeFoamMask - _uTime * _EdgeSpeed) * 3.14159 * _EdgeAmount), 0.0, 1.0) * edgeFoamMask * distortNoise;
+
+				f = max(f, edgeFoamMask);
+
+				float _DepthDensity = 0.1;
+				a = 1.0 - exp(-_DepthDensity * realDist);
+				a = mix(a, 1.0, clamp(f, 0.0, 0.4));
+			#endif
+
 			const vec3 foam = vec3(1.0f);
 			vec3 water = surface(n, u_CameraPosition - _position);
-			gl_FragColor = vec4(mix(water, foam, f), 1.0f);
+			gl_FragColor = vec4(mix(water, foam, f), a);
 		}
 	`
 };

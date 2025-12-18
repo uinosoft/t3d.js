@@ -35,10 +35,12 @@
     <script type='module'>
 		import * as t3d from 't3d';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GBuffer } from 't3d/addons/GBuffer.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
 		import { OceanFieldBuilder, OceanMaterial } from 't3d/addons/ocean/index.js';
+		import { Texture2DLoader } from 't3d/addons/loaders/Texture2DLoader.js';
 		import { EnvTextureCubeLoader } from 't3d/addons/loaders/EnvLoader.js';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
@@ -60,6 +62,11 @@
 		}
 
 		const forwardRenderer = new ForwardRenderer(canvas, gl);
+		forwardRenderer.matrixAutoUpdate = false;
+		forwardRenderer.renderStatesAutoUpdate = false;
+		forwardRenderer.renderQueueAutoUpdate = false;
+		const gBuffer = new GBuffer(width, height);
+		gBuffer.enableAlbedoMetalness = false;
 
 		const scene = new t3d.Scene();
 
@@ -166,6 +173,13 @@
 		const oceanMaterial = new OceanMaterial();
 		oceanMaterial.setOceanField(oceanField);
 
+		oceanMaterial.uniforms['tDepth'] = gBuffer.getDepthTexture();
+		new Texture2DLoader().loadAsync('./resources/cloudNoise.png').then(texture => {
+			texture.wrapS = t3d.TEXTURE_WRAP.REPEAT;
+			texture.wrapT = t3d.TEXTURE_WRAP.REPEAT;
+			oceanMaterial.uniforms['tNoise'] = texture;
+		});
+
 		const ocean = new t3d.Mesh(oceanGeometry, oceanMaterial);
 		scene.add(ocean);
 
@@ -177,6 +191,15 @@
 		wireframeOceanGeometry.boundingSphere = oceanGeometry.boundingSphere;
 
 		// GUI
+
+		function shoreline(enable) {
+			oceanMaterial.defines.SHORELINE = enable;
+			oceanMaterial.transparent = enable;
+			oceanMaterial.needsUpdate = true;
+		}
+		shoreline(true);
+
+		const runtimeParams = { shoreline: true };
 
 		const gui = new GUI();
 
@@ -197,6 +220,8 @@
 			oceanBuilder.update(oceanField, buildParams);
 			oceanMaterial.setOceanField(oceanField);
 		}).name('Random seed');
+
+		gui.add(runtimeParams, 'shoreline').onChange(shoreline);
 
 		let i = 0;
 		for (const cascade of buildParams.cascades) {
@@ -224,6 +249,14 @@
 			requestAnimationFrame(loop);
 		
 			controller.update();
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			if (runtimeParams.shoreline) {
+				gBuffer.update(forwardRenderer, scene, camera);
+			}
 		
 			oceanField.update(timestamp / 1000);
 
