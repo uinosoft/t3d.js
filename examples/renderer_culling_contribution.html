@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - Size-Based Culling</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - Size-Based Culling (Contribution Culling)
+	</div>
+
+	<script src="./libs/nanobar.js"></script>
+
+	<!-- Import maps polyfill -->
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/"
+			}
+		}
+	</script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { PolyhedronBuilder } from 't3d/addons/geometries/builders/PolyhedronBuilder.js';
+		import { GeometryUtils } from 't3d/addons/geometries/GeometryUtils.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.floor(width * window.devicePixelRatio);
+		canvas.height = Math.floor(height * window.devicePixelRatio);
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.appendChild(canvas);
+
+		const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+		const renderer = new t3d.WebGLRenderer(gl);
+
+		renderer.lightingOptions.clustered.enabled = true;
+		renderer.lightingOptions.clustered.gridDimensions.set(16, 8, 32);
+		renderer.lightingOptions.clustered.maxLightsPerCell = 256;
+
+		const screenRenderTarget = new t3d.ScreenRenderTarget(canvas);
+		screenRenderTarget.setColorClearValue(0, 0, 0, 1).setClear(true, true, false);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.FogExp2(0x000000, 0.0005);
+
+		const cubeTexture = new TextureCubeLoader().load([
+			'./resources/skybox/sunset/px.jpg', './resources/skybox/sunset/nx.jpg',
+			'./resources/skybox/sunset/py.jpg', './resources/skybox/sunset/ny.jpg',
+			'./resources/skybox/sunset/pz.jpg', './resources/skybox/sunset/nz.jpg'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		scene.environment = cubeTexture;
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(283, -49, 852);
+		camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 2000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+		controller.autoRotate = true;
+		controller.autoRotateSpeed = 0.5;
+
+		const cullOptions = {
+			enabled: true,
+			minContributionThreshold: 0.02, // Objects smaller than this screen fraction are culled
+			debugMode: false,
+			visibleCount: 0
+		};
+
+		const culledMaterial = new t3d.PBRMaterial();
+		culledMaterial.diffuse.setHex(0xff0000);
+		culledMaterial.emissive.setHex(0xff0000);
+		culledMaterial.transparent = true;
+		culledMaterial.opacity = 0.5;
+
+		const _tempSphere = new t3d.Sphere();
+		const _posView = new t3d.Vector3();
+		const _screenExtents = new t3d.Vector4();
+
+		// Override checkVisibility to implement size-based culling
+		scene.collector.checkVisibility = function(object, camera) {
+			if (!object.renderable) return false;
+
+			// Camera Frustum Culling
+			if (object.frustumCulled && camera.frustumCulled) {
+				_tempSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
+				if (camera.frustum.intersectsSphere(_tempSphere) === false) {
+					return false;
+				}
+			}
+
+			// Contribution (Size-Based) Culling
+			if (cullOptions.enabled && object._originalMaterial) {
+				_tempSphere.copy(object.geometry.boundingSphere).applyMatrix4(object.worldMatrix);
+		
+				// Calculate screen projected size
+				_posView.copy(_tempSphere.center).applyMatrix4(camera.viewMatrix);
+				sphereScreenExtents(_posView, _tempSphere.radius, camera.projectionMatrix, _screenExtents);
+		
+				// Calculate max dimension in screen space
+				const maxDim = Math.max(_screenExtents.z - _screenExtents.x, _screenExtents.w - _screenExtents.y);
+
+				if (maxDim < cullOptions.minContributionThreshold) {
+					if (cullOptions.debugMode) {
+						object.material = culledMaterial;
+						return true; // Render as debug material
+					} else {
+						return false; // Skip rendering
+					}
+				}
+			}
+
+			// Restore material if visible
+			if (cullOptions.debugMode && object._originalMaterial) {
+				object.material = object._originalMaterial;
+			}
+
+			cullOptions.visibleCount++;
+			return true;
+		};
+
+		// Calculate sphere extents in screen space
+		function sphereScreenExtents(posView, radius, projectionMat, target) {
+			const z = Math.abs(posView.z);
+			const r2 = radius * radius;
+			const x = posView.x, y = posView.y;
+		
+			if (z <= radius) return target.set(-1, -1, 1, 1);
+
+			const p = projectionMat.elements;
+
+			// Horizontal
+			const h2 = x * x + z * z - r2;
+			if (h2 < 0) return target.set(-1, -1, 1, 1);
+			const h = Math.sqrt(h2);
+			const left = ((x * h - z * radius) * p[0]) / (z * h + x * radius);
+			const right = ((x * h + z * radius) * p[0]) / (z * h - x * radius);
+
+			// Vertical
+			const v2 = y * y + z * z - r2;
+			if (v2 < 0) return target.set(-1, -1, 1, 1);
+			const v = Math.sqrt(v2);
+			const bottom = ((y * v - z * radius) * p[5]) / (z * v + y * radius);
+			const top = ((y * v + z * radius) * p[5]) / (z * v - y * radius);
+
+			return target.set(left, bottom, right, top);
+		}
+
+		// Scene Content Generation
+		const container = new t3d.Object3D();
+		scene.add(container);
+		const { meshes, lightCount } = generateGalaxy(container);
+		
+		renderer.lightingOptions.clustered.maxClusterLights = lightCount + 10;
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.3);
+		scene.add(ambientLight);
+		
+		const sunLight = new t3d.DirectionalLight(0xffffff, 0.4);
+		sunLight.position.set(40, 100, 40);
+		sunLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		scene.add(sunLight);
+
+		const gui = new GUI();
+		gui.add(cullOptions, 'enabled').name('Enable Size Culling');
+		gui.add(cullOptions, 'minContributionThreshold', 0, 0.2).name('Threshold');
+		gui.add(cullOptions, 'debugMode').name('Debug: Show Culled').onChange(v => {
+			if (!v) meshes.forEach(obj => obj.material = obj._originalMaterial);
+		});
+
+		const infoFolder = gui.addFolder('Info');
+		infoFolder.add(cullOptions, 'visibleCount').name('Visible Objects').listen().disable();
+		infoFolder.add({ total: meshes.length }, 'total').name('Total Objects').disable();
+
+		const stats = new Stats();
+		stats.showPanel(0);
+		document.body.appendChild(stats.dom);
+
+		const renderOption = { renderInfo: new t3d.RenderInfo() };
+		gui.add(renderOption.renderInfo.render, 'calls').disable().listen();
+
+		function loop() {
+			requestAnimationFrame(loop);
+			stats.begin();
+
+			controller.update();
+		
+			container.euler.y += 0.001;
+			container.euler.z += 0.0005;
+
+			scene.updateMatrix();
+		
+			// Reset counter before rendering
+			cullOptions.visibleCount = 0;
+			renderOption.renderInfo.reset();
+
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			renderer.renderScene(scene, camera, screenRenderTarget, renderOption);
+			stats.end();
+		}
+		requestAnimationFrame(loop);
+
+		window.addEventListener('resize', () => {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+			camera.setPerspective(60 / 180 * Math.PI, width / height, 0.1, 2000);
+		
+			const dpr = window.devicePixelRatio;
+			screenRenderTarget.resize(Math.floor(width * dpr), Math.floor(height * dpr));
+
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+		});
+
+		// Build scene
+		function generateGalaxy(root) {
+			const meshes = [];
+			let lightCount = 0;
+
+			const baseMat = new t3d.PBRMaterial();
+			baseMat.roughness = 0.4;
+			baseMat.metalness = 0.6;
+			baseMat.envMap = scene.environment;
+
+			const geoData = PolyhedronBuilder.getIcosahedronGeometryData(1, 0);
+			const geometry = createGeometryByData(geoData);
+
+			const _tempVec = new t3d.Vector3();
+			const _tempSpherical = new t3d.Spherical();
+
+			function createBody(level, pos, scaleMult) {
+				const mat = baseMat.clone();
+				const mesh = new t3d.Mesh(geometry, mat);
+				let size;
+
+				if (level === 1) {
+					size = 20 + Math.random() * 15;
+					mat.diffuse.setHSL(Math.random(), 1.0, 0.6);
+					mat.emissive.copy(mat.diffuse);
+					mat.emissive.r *= 0.5; mat.emissive.g *= 0.5; mat.emissive.b *= 0.5;
+
+					const light = new t3d.PointLight(undefined, 1.2, 300 * scaleMult);
+					light.color.copy(mat.diffuse);
+					light.position.copy(pos);
+					root.add(light);
+					lightCount++;
+				} else if (level === 2) {
+					size = 4 + Math.random() * 4;
+					mat.diffuse.setHSL(Math.random(), 0.8, 0.4);
+				} else {
+					size = 0.8 + Math.random() * 1.5;
+					mat.diffuse.setHSL(Math.random(), 0.2, 0.8);
+				}
+
+				mesh.scale.setScalar(size * scaleMult);
+				mesh.position.copy(pos);
+				mesh.euler.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+				mesh._originalMaterial = mat;
+		
+				root.add(mesh);
+				meshes.push(mesh);
+			}
+
+			const numStars = 100;
+			const starRadius = 1200;
+
+			for (let i = 0; i < numStars; i++) {
+				const systemScale = 0.5 + Math.random() * 2.5;
+		
+				// Random point in sphere
+				const r = Math.pow(Math.random(), 1 / 3) * starRadius;
+				const theta = Math.random() * Math.PI * 2;
+				const phi = Math.acos(2 * Math.random() - 1);
+				const starPos = new t3d.Vector3().setFromSpherical(_tempSpherical.set(r, phi, theta));
+
+				createBody(1, starPos, systemScale);
+
+				for (let j = 0; j < 8; j++) {
+					const r2 = (25 + Math.random() * 80) * systemScale;
+					const planetPos = starPos.clone().add(_tempVec.setFromSpherical(_tempSpherical.set(r2, Math.random() * Math.PI, Math.random() * Math.PI * 2)));
+					createBody(2, planetPos, systemScale);
+
+					for (let k = 0; k < 6; k++) {
+						const r3 = (5 + Math.random() * 15) * systemScale;
+						const moonPos = planetPos.clone().add(_tempVec.setFromSpherical(_tempSpherical.set(r3, Math.random() * Math.PI, Math.random() * Math.PI * 2)));
+						createBody(3, moonPos, systemScale);
+					}
+				}
+			}
+
+			return { meshes, lightCount };
+		}
+
+		function createGeometryByData(data) {
+			const geometry = new t3d.Geometry();
+			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(data.positions), 3)));
+			geometry.addAttribute('a_Uv', new t3d.Attribute(new t3d.Buffer(new Float32Array(data.uvs), 2)));
+			if (data.indices) geometry.setIndex(data.indices);
+			GeometryUtils.computeNormals(geometry);
+			geometry.computeBoundingSphere();
+			return geometry;
+		}
+
+	</script>
+</body>
+</html>

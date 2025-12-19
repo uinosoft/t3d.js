@@ -213,6 +213,7 @@
 	],
 	"renderer": [
 		"renderer_culling_frustum",
+		"renderer_culling_contribution",
 		"renderer_deferred",
 		"renderer_deferred_lighting",
 		"renderer_clustered_lighting"
