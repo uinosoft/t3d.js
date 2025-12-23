@@ -4652,9 +4652,9 @@
 				let y = array[i + offset + 1];
 				let z = array[i + offset + 2];
 				if (denormalize) {
-					x = MathUtils.denormalize(x, denormalize);
-					y = MathUtils.denormalize(y, denormalize);
-					z = MathUtils.denormalize(z, denormalize);
+					x = MathUtils.denormalize(x, array);
+					y = MathUtils.denormalize(y, array);
+					z = MathUtils.denormalize(z, array);
 				}
 				if (x < minX) minX = x;
 				if (y < minY) minY = y;
