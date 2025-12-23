@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - material_SSS</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div id="info">
+		<a href="https://github.com/uinosoft/t3d.js" target="_blank">t3d.js</a> - material_SSS demo Body with <a href="https://walkingfat.com/foliage-rendering-%e6%a0%91%e5%8f%b6%e4%bd%93%e7%a7%af%e6%84%9f%e6%b8%b2%e6%9f%93/" target="_blank">walkingfat</a>
+    </div>
+
+	<!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { SphericalSSSPBRMaterial } from 't3d/addons/materials/SphericalSSSPBRMaterial.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import { DirectionalLightHelper } from 't3d/addons/objects/DirectionalLightHelper.js';
+		import { DRACOLoader } from 't3d/addons/loaders/DRACOLoader.js';
+		import { KTX2Loader } from 't3d/addons/loaders/KTX2Loader.js';
+		import * as KTXParse from './libs/ktx-parse.module.js';
+		import { ZSTDDecoder } from './libs/zstddec.module.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const forwardRenderer = new ForwardRenderer(canvas);
+		forwardRenderer.screenRenderTarget.setColorClearValue(0.6, 0.7, 0.8, 1);
+		const cubeTexturePath = './resources/skybox/Park2/';
+		const cubeTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
+		]);
+		cubeTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+
+		const scene = new t3d.Scene();
+		scene.environment = cubeTexture;
+		const skyBox = new SkyBox(cubeTexture);
+		skyBox.level = 4;
+		skyBox.gamma = true;
+		scene.add(skyBox);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(-50, 0, 120);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+		scene.add(camera);
+
+		const controller = new OrbitControls(camera, canvas);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.5);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 2);
+		directionalLight.position.set(0, 0, 20);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		scene.add(directionalLight);
+		const directionalLightHelper = new DirectionalLightHelper(directionalLight, 2);
+		directionalLight.add(directionalLightHelper);
+
+		const material = new SphericalSSSPBRMaterial();
+		material.side = t3d.DRAW_SIDE.DOUBLE;
+		material.defines.USE_UV1 = true;
+
+		const dracoLoader = new DRACOLoader();
+		dracoLoader.setDecoderPath('libs/draco/');
+		let animation;
+
+		const loader = new GLTFLoader();
+		loader.setDRACOLoader(dracoLoader);
+		KTX2Loader.setKTXParser(KTXParse).setZSTDDecoder(ZSTDDecoder);
+		const ktx2Loader = new KTX2Loader()
+			.setTranscoderPath('./libs/basis/')
+			.detectSupport(forwardRenderer);
+		loader.autoLogError = false;
+		loader.setKTX2Loader(ktx2Loader);
+		loader.load(
+			'./resources/models/gltf/tree_animation.glb'
+		).then(function(result) {
+			const model = result.root;
+			model.position.set(0, -25, 0);
+			const action = new t3d.AnimationAction(result.animations[0]);
+			action.weight = 1;
+			animation = new t3d.AnimationMixer();
+			animation.addAction(action);
+			scene.add(model);
+			let material;
+			model.traverse(function(node) {
+				if (node.isMesh) {
+					node.castShadow = true;
+					node.receiveShadow = true;
+					if (node.name === 'mesh_1') {
+						material = new SphericalSSSPBRMaterial(node.material);
+						node.material = material;
+						node.geometry.computeBoundingSphere();
+						node.geometry.boundingSphere.center.toArray(node.material.uniforms.uSphereCenter);
+						node.material.uniforms.thicknessColor = [0.7, 0.7, 0.7];
+						node.material.roughness = 1.5;
+						node.material.metalness = 0;
+					}
+				};
+			});
+			const materialGui = gui.addFolder('Material');
+			materialGui.add(material.defines, 'SUBSURFACE').name('SUBSURFACE').onChange(() => {
+				material.needsUpdate = true;
+			});
+			materialGui.add(material.uniforms, 'uDensity', 0, 2, 0.01);
+			materialGui.addColor(material.uniforms, 'thicknessColor').name('thicknessColor');
+		}).catch(e => console.error(e));
+
+		function setLightPosition(angle) {
+			directionalLight.position.x = -Math.sin(angle / 180 * Math.PI) * 50;
+			directionalLight.position.y = 50;
+			directionalLight.position.z = -Math.cos(angle / 180 * Math.PI) * 50;
+			directionalLight.lookAt(new t3d.Vector3(0, 25, 0), new t3d.Vector3(0, 1, 0));
+		}
+
+		setLightPosition(180);
+		const gui = new GUI();
+		const lightGui = gui.addFolder('Light');
+		lightGui.add(directionalLight, 'intensity', 0, 5, 0.01);
+		lightGui.addColor(directionalLight, 'color');
+		lightGui.add({ angle: 180 }, 'angle', 0, 360, 0.01).onChange(setLightPosition);
+		lightGui.add(directionalLightHelper, 'visible').name('helper');
+
+		const clock = new Clock();
+		function loop(count) {
+			requestAnimationFrame(loop);
+
+			controller.update();
+			directionalLightHelper.update();
+			animation && animation.update(clock.getDelta());
+
+			forwardRenderer.render(scene, camera);
+		}
+
+		requestAnimationFrame(loop);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(45 / 180 * Math.PI, width / height, 1, 1000);
+
+			forwardRenderer.screenRenderTarget.resize(width, height);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+</html>
