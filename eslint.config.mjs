@@ -228,7 +228,9 @@ export default [
 			'jsdoc/require-param-description': 0,
 			'jsdoc/require-property-description': 0,
 			'jsdoc/require-returns-check': 0,
-			'jsdoc/require-returns-description': 0
+			'jsdoc/require-returns-description': 0,
+			'jsdoc/reject-any-type': 'off',
+			'jsdoc/reject-function-type': 'off'
 		}
 	},
 	{

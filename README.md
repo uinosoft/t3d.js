@@ -9,6 +9,8 @@
 
 ThingJS 3D Engine (t3d) is a lightweight, web-first, and extendable 3D rendering library. It is used by ThingJS for web3d rendering, but can also be used as a standalone library.
 
+t3d's API borrows the look and feel of three.js—familiar and easy to use—but it is not fully compatible or a drop-in replacement. It keeps a simple, flexible design while adding modern features and extra hooks for real‑time workflows, such as customizable rendering callbacks for finer control and post‑processing, clustered lighting for scalable many‑light scenes, light groups for organizing reusable lights, and other performance-minded optimizations.
+
 [Examples](https://uinosoft.github.io/t3d.js/examples/) &mdash;
 [Docs](https://uinosoft.github.io/t3d.js/docs/) &mdash;
 [Discord](https://discord.gg/urB54PPXc4)
