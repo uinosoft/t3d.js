@@ -156,8 +156,7 @@
 		const shadowFolder = gui.addFolder('Shadow');
 		shadowFolder.add(directionalLight, 'castShadow').name('enable');
 		shadowFolder.add(scene, 'disableShadowSampler');
-		const shadowTypes = ['hard', 'poisson_soft', 'pcf3_soft', 'pcf5_soft', 'pcss16_soft', 'pcss32_soft', 'pcss64_soft'];
-		shadowFolder.add(plane, 'shadowType', shadowTypes).onChange(function(value) {
+		shadowFolder.add(plane, 'shadowType', t3d.SHADOW_TYPE).onChange(function(value) {
 			if (model) {
 				model.traverse(node => {
 					if (node.isMesh) {

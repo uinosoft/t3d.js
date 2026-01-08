@@ -265,6 +265,7 @@ export { OPERATION };
 const SHADOW_TYPE = {
 	HARD: 'hard',
 	POISSON_SOFT: 'poisson_soft',
+	VOGEL5_SOFT: 'vogel5_soft',
 	PCF3_SOFT: 'pcf3_soft',
 	PCF5_SOFT: 'pcf5_soft',
 	/** Only webgl2 */

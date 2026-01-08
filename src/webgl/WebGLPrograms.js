@@ -138,8 +138,20 @@ class WebGLPrograms {
 
 		props.useShadowSampler = capabilities.version >= 2 && !disableShadowSampler;
 		props.shadowType = object.shadowType;
-		if (!props.useShadowSampler && props.shadowType !== SHADOW_TYPE.HARD) {
-			props.shadowType = SHADOW_TYPE.POISSON_SOFT;
+		if (!props.useShadowSampler &&
+			(
+				props.shadowType == SHADOW_TYPE.PCF3_SOFT ||
+				props.shadowType == SHADOW_TYPE.PCF5_SOFT ||
+				props.shadowType == SHADOW_TYPE.PCSS16_SOFT ||
+				props.shadowType == SHADOW_TYPE.PCSS32_SOFT ||
+				props.shadowType == SHADOW_TYPE.PCSS64_SOFT
+			)
+		) {
+			props.shadowType = SHADOW_TYPE.VOGEL5_SOFT;
+
+			if (props.useShadow) {
+				console.warn('WebGLPrograms: PCF and PCSS shadow type need shadow sampler support, falling back to VOGEL5_SOFT.');
+			}
 		}
 
 		props.dithering = material.dithering;
@@ -290,6 +302,35 @@ function uvAttributes(activeMapCoords) {
 	return str;
 }
 
+const shadowDefines = {
+	[SHADOW_TYPE.HARD]: '#define USE_HARD_SHADOW',
+	[SHADOW_TYPE.POISSON_SOFT]: '#define USE_POISSON_SOFT_SHADOW',
+	[SHADOW_TYPE.VOGEL5_SOFT]: '#define USE_VOGEL5_SOFT_SHADOW',
+	[SHADOW_TYPE.PCF3_SOFT]: '#define USE_PCF3_SOFT_SHADOW',
+	[SHADOW_TYPE.PCF5_SOFT]: '#define USE_PCF5_SOFT_SHADOW',
+	[SHADOW_TYPE.PCSS16_SOFT]: [
+		'#define USE_PCSS16_SOFT_SHADOW',
+		'#define USE_PCSS_SOFT_SHADOW'
+	].join('\n'),
+	[SHADOW_TYPE.PCSS32_SOFT]: [
+		'#define USE_PCSS32_SOFT_SHADOW',
+		'#define USE_PCSS_SOFT_SHADOW'
+	].join('\n'),
+	[SHADOW_TYPE.PCSS64_SOFT]: [
+		'#define USE_PCSS64_SOFT_SHADOW',
+		'#define USE_PCSS_SOFT_SHADOW'
+	].join('\n')
+};
+
+function getShadowTypeDefines(shadowType) {
+	if (shadowDefines[shadowType]) {
+		return shadowDefines[shadowType];
+	} else {
+		console.warn('unsupported shadow type: ' + shadowType);
+		return shadowDefines[SHADOW_TYPE.HARD];
+	}
+}
+
 function createProgram(gl, defines, props, vertex, fragment) {
 	let prefixVertex = [
 		'precision ' + props.precision + ' float;',
@@ -429,14 +470,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.useSphericalHarmonicsLight ? '#define USE_SPHERICALHARMONICS_LIGHT' : '',
 		props.useClusteredLights ? '#define USE_CLUSTERED_LIGHTS' : '',
 		props.useShadow ? '#define USE_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.HARD ? '#define USE_HARD_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.POISSON_SOFT ? '#define USE_POISSON_SOFT_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.PCF3_SOFT ? '#define USE_PCF3_SOFT_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.PCF5_SOFT ? '#define USE_PCF5_SOFT_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.PCSS16_SOFT ? '#define USE_PCSS16_SOFT_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.PCSS32_SOFT ? '#define USE_PCSS32_SOFT_SHADOW' : '',
-		props.shadowType === SHADOW_TYPE.PCSS64_SOFT ? '#define USE_PCSS64_SOFT_SHADOW' : '',
-		(props.shadowType === SHADOW_TYPE.PCSS16_SOFT || props.shadowType === SHADOW_TYPE.PCSS32_SOFT || props.shadowType === SHADOW_TYPE.PCSS64_SOFT) ? '#define USE_PCSS_SOFT_SHADOW' : '',
+		getShadowTypeDefines(props.shadowType),
 
 		props.dithering ? '#define DITHERING' : '',
 
