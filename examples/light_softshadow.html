@@ -91,6 +91,7 @@
 		spotLight.shadow.cameraFar = 350;
 		spotLight.shadow.mapSize.set(1024, 1024);
 		scene.add(spotLight);
+		window.spotLight = spotLight;
 		
 		const spotLightHelper = new SpotLightHelper(spotLight);
 		spotLight.add(spotLightHelper);
@@ -108,8 +109,9 @@
 		const gui = new GUI();
 		gui.add({ version: 'WebGL ' + forwardRenderer.capabilities.version }, 'version').disable();
 		gui.add(scene, 'disableShadowSampler');
-		const shadowTypes = ['hard', 'poisson_soft', 'pcf3_soft', 'pcf5_soft', 'pcss16_soft', 'pcss32_soft', 'pcss64_soft'];
+		const shadowTypes = ['hard', 'poisson_soft', 'pcf3_soft', 'pcf5_soft', 'pcss16_soft', 'pcss32_soft', 'pcss64_soft', 'vogel5_soft'];
 		gui.add(plane, 'shadowType', shadowTypes);
+		gui.add(spotLight.shadow, 'radius', 0.1, 10);
 
 		const clock = new Clock();
 

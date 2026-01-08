@@ -89,6 +89,32 @@ float computeShadowWithPCF5(sampler2DShadow shadowSampler, vec3 shadowCoord, vec
     return shadow;
 }
 
+#ifdef USE_VOGEL5_SOFT_SHADOW
+    float interleavedGradientNoise(vec2 position) {
+        return fract(52.9829189 * fract(dot(position, vec2(0.06711056, 0.00583715))));
+    }
+
+    vec2 vogelDiskSample(int sampleIndex, int samplesCount, float phi) {
+        const float goldenAngle = 2.399963229728653;
+        float r = sqrt((float(sampleIndex) + 0.5) / float(samplesCount));
+        float theta = float(sampleIndex) * goldenAngle + phi;
+        return vec2(cos(theta), sin(theta)) * r;
+    }
+
+    float computeShadowWithVogel5(sampler2DShadow shadowMap, vec3 shadowCoord, vec2 shadowMapSize, float shadowRadius) {
+        float radius = shadowRadius / shadowMapSize.x;
+        float phi = interleavedGradientNoise(gl_FragCoord.xy) * 6.28318530718;
+
+        float shadow = 0.0;
+        for (int i = 0; i < 5; i++) {
+            vec2 offset = vogelDiskSample(i, 5, phi) * radius;
+            shadow += computeShadow(shadowMap, vec3(shadowCoord.xy + offset, shadowCoord.z));
+        }
+
+        return shadow * 0.2;
+    }
+#endif
+
 float computeFallOff(float value, vec2 clipSpace, float frustumEdgeFalloff) {
     float factor = mix(clipSpace.y * abs(clipSpace.y), dot(clipSpace, clipSpace), step(0., frustumEdgeFalloff));
     float mask = smoothstep(1.0 - abs(frustumEdgeFalloff), 1.00000012, clamp(factor, 0., 1.));
@@ -120,8 +146,12 @@ float getShadow(sampler2DShadow shadowMap, vec4 shadowCoord, vec2 shadowMapSize,
                     vec2 shadowMapSizeAndInverse = vec2(shadowMapSize.x, 1. / shadowMapSize.x);
                     shadow = computeShadowWithPCF5(shadowMap, shadowCoord.xyz, shadowMapSizeAndInverse);
                 #else
-                    float texelSize = shadowParams.x * 0.5 / shadowMapSize.x;
-                    shadow = computeShadowWithPoissonSampling(shadowMap, shadowCoord.xyz, texelSize);
+                    #ifdef USE_VOGEL5_SOFT_SHADOW
+                        shadow = computeShadowWithVogel5(shadowMap, shadowCoord.xyz, shadowMapSize, shadowParams.x);
+                    #else
+                        float texelSize = shadowParams.x * 0.5 / shadowMapSize.x;
+                        shadow = computeShadowWithPoissonSampling(shadowMap, shadowCoord.xyz, texelSize);
+                    #endif
                 #endif
             #endif
         #endif
@@ -395,3 +425,4 @@ float getPointShadow(samplerCube shadowMap, vec4 shadowCoord, vec2 shadowMapSize
         return shadow;
     }
 #endif
+

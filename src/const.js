@@ -267,6 +267,7 @@ const SHADOW_TYPE = {
 	POISSON_SOFT: 'poisson_soft',
 	PCF3_SOFT: 'pcf3_soft',
 	PCF5_SOFT: 'pcf5_soft',
+	VOGEL5_SOFT: 'vogel5_soft',
 	/** Only webgl2 */
 	PCSS16_SOFT: 'pcss16_soft',
 	PCSS32_SOFT: 'pcss32_soft',
