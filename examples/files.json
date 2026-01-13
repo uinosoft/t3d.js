@@ -107,7 +107,8 @@
 	],
 	"camera": [
 		"camera_projection",
-		"camera_multiple"
+		"camera_multiple",
+		"camera_combined"
 	],
 	"controls": [
 		"controls_camera_orbit",
