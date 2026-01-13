@@ -16,12 +16,18 @@ const instancing_position_vert = `
 
 const instancing_normal_vert = `
 #ifdef USE_INSTANCING
-	mat4 instancingNormalMatrix = transposeMat4(inverseMat4(instancingMatrix));
+	mat3 im = mat3(instancingMatrix);
 
-	objectNormal = (instancingNormalMatrix * vec4(objectNormal, 0.0)).xyz;
+	// mirrored? (determinant sign: -1 or +1)
+    float detSign = (dot(im[0], cross(im[1], im[2])) < 0.0) ? -1.0 : 1.0;
+
+	// squared scale per basis (for non-uniform scale correction)
+    vec3 invScale = vec3(dot(im[0], im[0]), dot(im[1], im[1]), dot(im[2], im[2]));
+
+	objectNormal = (im * (objectNormal / invScale)) * detSign;
 
 	#ifdef USE_TANGENT
-		objectTangent = (instancingNormalMatrix * vec4(objectTangent, 0.0)).xyz;
+		objectTangent = (im * (objectTangent / invScale)) * detSign;
 	#endif
 #endif
 `;
