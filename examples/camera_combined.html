@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>t3d - combined camera</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div id="info">
+        <a href="" target="_blank">t3d</a> - combined camera
+        <br />
+        Switch between 2D (Orthographic) and 3D (Perspective) views seamlessly<br />
+        projectionWeight: 1 (Perspective) -> 0 (Orthographic)
+    </div>
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="./libs/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "t3d": "../build/t3d.module.js",
+                "t3d/addons/": "./jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as t3d from 't3d';
+        import { CombinedCamera } from 't3d/addons/objects/CombinedCamera.js';
+        import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+        import { GridHelper } from 't3d/addons/objects/GridHelper.js';
+        import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+        import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+        import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+        import { GUI } from './libs/lil-gui.esm.min.js';
+
+        let width = window.innerWidth || 2;
+        let height = window.innerHeight || 2;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width * window.devicePixelRatio;
+        canvas.height = height * window.devicePixelRatio;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        document.body.appendChild(canvas);
+
+        const forwardRenderer = new ForwardRenderer(canvas);
+
+        const scene = new t3d.Scene();
+
+        // CombinedCamera
+        const camera = new CombinedCamera(45, width / height, 1, 1000);
+        camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+        camera.position.set(20, 20, 20);
+        camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        scene.add(camera);
+
+        // Skybox & Environment
+        const cubeTexturePath = './resources/skybox/Bridge2/';
+        const cubeTexture = new TextureCubeLoader().load([
+        	cubeTexturePath + 'posx.jpg',
+        	cubeTexturePath + 'negx.jpg',
+        	cubeTexturePath + 'posy.jpg',
+        	cubeTexturePath + 'negy.jpg',
+        	cubeTexturePath + 'posz.jpg',
+        	cubeTexturePath + 'negz.jpg'
+        ]);
+
+        // Lights
+        const ambientLight = new t3d.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const directionalLight = new t3d.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(5, 10, 7);
+        directionalLight.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+        directionalLight.castShadow = true;
+        directionalLight.shadow.windowSize = 50;
+        scene.add(directionalLight);
+
+        // Helpers
+        const grid = new GridHelper(50, 50, 0xffffff, 0x111111);
+        grid.position.y = -0.1;
+        scene.add(grid);
+
+        // Scene Objects
+        const loader = new GLTFLoader();
+        loader.load('./resources/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf').then(function(result) {
+        	const object = result.root;
+        	object.scale.set(4, 4, 4);
+        	object.position.y = 4;
+        	object.traverse(node => {
+        		if (node.isMesh) {
+        			node.castShadow = true;
+        			node.receiveShadow = true;
+        			node.material.envMap = cubeTexture;
+        		}
+        	});
+        	scene.add(object);
+        }).catch(e => console.error(e));
+
+        const boxGeo = new t3d.BoxGeometry(2, 2, 2);
+        const boxMat = new t3d.PBRMaterial();
+        boxMat.roughness = 0.5;
+        boxMat.metalness = 0.1;
+        boxMat.diffuse.setHex(0x00aaff);
+
+        const positions = [
+        	[-10, 1, -10], [10, 1, -10],
+        	[-10, 1, 10], [10, 1, 10],
+        	[0, 1, -15], [0, 1, 15],
+        	[-15, 1, 0], [15, 1, 0]
+        ];
+
+        positions.forEach(pos => {
+        	const box = new t3d.Mesh(boxGeo, boxMat);
+        	box.position.set(pos[0], pos[1], pos[2]);
+        	box.castShadow = true;
+        	box.receiveShadow = true;
+        	scene.add(box);
+        });
+
+        // Controls
+        const controls = new OrbitControls(camera, canvas);
+        controls.target.set(0, 0, 0);
+        controls.enableDollying = false;
+
+        // GUI
+        const params = {
+        	weight: 1, // 0: Ortho, 1: Perspective
+        	fov: 45
+        };
+
+        const gui = new GUI();
+
+        gui.add(params, 'weight', 0, 1, 0.01).name('Proj Weight').onChange(value => {
+        	const t = 1 - value;
+        	const visualWeight = easeOut(t);
+
+        	camera.projectionWeight = 1 - visualWeight;
+        });
+
+        gui.add(params, 'fov', 10, 100).name('Perspective FOV').onChange(value => {
+        	camera.fov = value;
+        });
+
+        function easeOut(t) {
+        	return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        }
+
+        function loop(count) {
+        	requestAnimationFrame(loop);
+
+        	controls.update();
+
+        	// Critical: Update Orthographic Distance to match Camera Distance
+        	// This ensures the object size at the target point remains consistent during transition
+        	// We calculate distance from camera to the orbit target (center of interest)
+        	const dist = camera.position.distanceTo(controls.target);
+        	camera.orthographicDistance = dist;
+
+        	forwardRenderer.render(scene, camera);
+        }
+        requestAnimationFrame(loop);
+
+        function onWindowResize() {
+        	width = window.innerWidth || 2;
+        	height = window.innerHeight || 2;
+
+        	camera.aspect = width / height;
+
+        	canvas.width = width * window.devicePixelRatio;
+        	canvas.height = height * window.devicePixelRatio;
+
+        	canvas.style.width = width + 'px';
+        	canvas.style.height = height + 'px';
+
+        	forwardRenderer.screenRenderTarget.resize(width, height);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+    </script>
+</body>
+
+</html>
