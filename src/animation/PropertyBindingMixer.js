@@ -52,6 +52,14 @@ class PropertyBindingMixer {
 
 		this.cumulativeWeight = 0;
 		this.cumulativeWeightAdditive = 0;
+
+		// cache whether the bound property should be treated as an array-like value
+		// (treat existing arrays or types with toArray/fromArray as array bindings,
+		//  or when valueSize > 1)
+		const boundValue = this.target && this.target[this.property];
+		this._isArrayProperty = this.valueSize > 1 ||
+			Array.isArray(boundValue) ||
+			(boundValue && (typeof boundValue.toArray === 'function' || typeof boundValue.fromArray === 'function'));
 	}
 
 	parseBinding(target, propertyPath) {
@@ -81,11 +89,11 @@ class PropertyBindingMixer {
 			originalValueOffset = stride * 2;
 
 		// get value
-		if (this.valueSize > 1) {
+		if (this._isArrayProperty) {
 			if (this.target[this.property].toArray) {
 				this.target[this.property].toArray(buffer, originalValueOffset);
 			} else {
-				setArray(buffer, this.target[this.property], originalValueOffset, this.valueSize);
+				setArray(buffer, this.target[this.property], originalValueOffset, stride);
 			}
 		} else {
 			this.target[this.property] = buffer[originalValueOffset];
@@ -187,11 +195,11 @@ class PropertyBindingMixer {
 		}
 
 		// set value
-		if (this.valueSize > 1) {
+		if (this._isArrayProperty) {
 			if (this.target[this.property].fromArray) {
 				this.target[this.property].fromArray(buffer, stride);
 			} else {
-				getArray(this.target[this.property], buffer, stride, this.valueSize);
+				getArray(this.target[this.property], buffer, stride, stride);
 			}
 		} else {
 			this.target[this.property] = buffer[stride];
