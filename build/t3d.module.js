@@ -10250,6 +10250,371 @@ class Scene extends Object3D {
 Scene.prototype.isScene = true;
 
 /**
+ * Base camera projection class. All projection types should inherit from this.
+ * Should not be instantiated directly; subclasses must implement matrix calculation.
+ * @abstract
+ */
+class CameraProjection {
+
+	/**
+	 * Creates a CameraProjection instance.
+	 */
+	constructor() {
+		this._matrix = new Matrix4();
+		this._dirty = true;
+	}
+
+	/**
+	 * Get the current projection matrix.
+	 * @returns {Matrix4} The projection matrix.
+	 */
+	get matrix() {
+		if (this._dirty) {
+			this._updateMatrix();
+		}
+
+		return this._matrix;
+	}
+
+	/**
+	 * Copy parameters from another CameraProjection. Should be implemented by subclasses.
+	 * @param {CameraProjection} source The source projection object.
+	 * @returns {CameraProjection} this
+	 */
+	copy(source) {
+		console.warn('CameraProjection: copy() must be implemented in subclass.');
+		return this;
+	}
+
+	/**
+	 * Clone this projection object.
+	 * @returns {CameraProjection} A new projection object.
+	 */
+	clone() {
+		return new this.constructor().copy(this);
+	}
+
+	/**
+	 * Update the projection matrix. Should be implemented by subclasses.
+	 * @protected
+	 */
+	_updateMatrix() {
+		console.warn('CameraProjection: _updateMatrix() must be implemented in subclass.');
+		this._dirty = false;
+	}
+
+}
+
+/**
+ * Perspective projection camera class.
+ * Generates a perspective projection matrix based on field of view, aspect ratio, near and far planes.
+ * Field of view is specified in degrees.
+ */
+class PerspectiveProjection extends CameraProjection {
+
+	/**
+	 * Creates a PerspectiveProjection instance.
+	 * @param {number} [fov=50] Vertical field of view in degrees.
+	 * @param {number} [aspect=1] Aspect ratio (width / height).
+	 * @param {number} [near=0.1] Near clipping plane.
+	 * @param {number} [far=2000] Far clipping plane.
+	 */
+	constructor(fov = 50, aspect = 1, near = 0.1, far = 2000) {
+		super();
+
+		this._fov = fov;
+		this._aspect = aspect;
+		this._near = near;
+		this._far = far;
+	}
+
+	/**
+	 * The vertical field of view in degrees.
+	 * @type {number}
+	 * @default 50
+	 */
+	set fov(value) {
+		this._fov = value;
+		this._dirty = true;
+	}
+
+	get fov() {
+		return this._fov;
+	}
+
+	/**
+	 * The aspect ratio (width / height).
+	 * @type {number}
+	 * @default 1
+	 */
+	set aspect(value) {
+		this._aspect = value;
+		this._dirty = true;
+	}
+
+	get aspect() {
+		return this._aspect;
+	}
+
+	/**
+	 * The near clipping plane.
+	 * @type {number}
+	 * @default 0.1
+	 */
+	set near(value) {
+		this._near = value;
+		this._dirty = true;
+	}
+
+	get near() {
+		return this._near;
+	}
+
+	/**
+	 * The far clipping plane.
+	 * @type {number}
+	 * @default 2000
+	 */
+	set far(value) {
+		this._far = value;
+		this._dirty = true;
+	}
+
+	get far() {
+		return this._far;
+	}
+
+	/**
+	 * Sets all perspective parameters at once.
+	 * @param {number} fov Vertical field of view in degrees.
+	 * @param {number} aspect Aspect ratio (width / height).
+	 * @param {number} near Near clipping plane.
+	 * @param {number} far Far clipping plane.
+	 * @returns {PerspectiveProjection} this
+	 */
+	set(fov, aspect, near, far) {
+		this._fov = fov;
+		this._aspect = aspect;
+		this._near = near;
+		this._far = far;
+		this._dirty = true;
+		return this;
+	}
+
+	/**
+	 * Copies the parameters from another PerspectiveProjection.
+	 * @param {PerspectiveProjection} source
+	 * @returns {PerspectiveProjection} this
+	 */
+	copy(source) {
+		this._fov = source._fov;
+		this._aspect = source._aspect;
+		this._near = source._near;
+		this._far = source._far;
+		this._dirty = true;
+
+		return this;
+	}
+
+	/**
+	 * Updates the perspective projection matrix.
+	 * @protected
+	 */
+	_updateMatrix() {
+		const fov = this._fov * Math.PI / 180, aspect = this._aspect, near = this._near, far = this._far;
+		const f = 1 / Math.tan(fov / 2);
+		this._matrix.set(
+			f / aspect, 0, 0, 0,
+			0, f, 0, 0,
+			0, 0, (far + near) / (near - far), (2 * far * near) / (near - far),
+			0, 0, -1, 0
+		);
+		this._dirty = false;
+	}
+
+}
+
+/**
+ * Orthographic projection camera class.
+ * Generates an orthographic projection matrix based on left, right, top, bottom, near, and far planes.
+ */
+class OrthographicProjection extends CameraProjection {
+
+	/**
+	 * Creates an OrthographicProjection instance.
+	 * @param {number} [left=-1] Left plane of the orthographic box.
+	 * @param {number} [right=1] Right plane of the orthographic box.
+	 * @param {number} [top=1] Top plane of the orthographic box.
+	 * @param {number} [bottom=-1] Bottom plane of the orthographic box.
+	 * @param {number} [near=0.1] Near clipping plane.
+	 * @param {number} [far=2000] Far clipping plane.
+	 */
+	constructor(left = -1, right = 1, top = 1, bottom = -1, near = 0.1, far = 2000) {
+		super();
+
+		this._left = left;
+		this._right = right;
+		this._top = top;
+		this._bottom = bottom;
+		this._near = near;
+		this._far = far;
+	}
+
+	/**
+	 * The left plane of the orthographic box.
+	 * @type {number}
+	 * @default -1
+	 */
+	set left(value) {
+		this._left = value;
+		this._dirty = true;
+	}
+
+	get left() {
+		return this._left;
+	}
+
+	/**
+	 * The right plane of the orthographic box.
+	 * @type {number}
+	 * @default 1
+	 */
+	set right(value) {
+		this._right = value;
+		this._dirty = true;
+	}
+
+	get right() {
+		return this._right;
+	}
+
+	/**
+	 * The top plane of the orthographic box.
+	 * @type {number}
+	 * @default 1
+	 */
+	set top(value) {
+		this._top = value;
+		this._dirty = true;
+	}
+
+	get top() {
+		return this._top;
+	}
+
+	/**
+	 * The bottom plane of the orthographic box.
+	 * @type {number}
+	 * @default -1
+	 */
+	set bottom(value) {
+		this._bottom = value;
+		this._dirty = true;
+	}
+
+	get bottom() {
+		return this._bottom;
+	}
+
+	/**
+	 * The near clipping plane.
+	 * @type {number}
+	 * @default 0.1
+	 */
+	set near(value) {
+		this._near = value;
+		this._dirty = true;
+	}
+
+	get near() {
+		return this._near;
+	}
+
+	/**
+	 * The far clipping plane.
+	 * @type {number}
+	 * @default 2000
+	 */
+	set far(value) {
+		this._far = value;
+		this._dirty = true;
+	}
+
+	get far() {
+		return this._far;
+	}
+
+	/**
+	 * Sets all orthographic parameters at once.
+	 * @param {number} left The left plane of the orthographic box.
+	 * @param {number} right The right plane of the orthographic box.
+	 * @param {number} top The top plane of the orthographic box.
+	 * @param {number} bottom The bottom plane of the orthographic box.
+	 * @param {number} near The near clipping plane.
+	 * @param {number} far The far clipping plane.
+	 * @returns {OrthographicProjection} this
+	 */
+	set(left, right, top, bottom, near, far) {
+		this._left = left;
+		this._right = right;
+		this._top = top;
+		this._bottom = bottom;
+		this._near = near;
+		this._far = far;
+		this._dirty = true;
+		return this;
+	}
+
+	/**
+	 * Sets the orthographic box size by width and height, centered at (0, 0).
+	 * @param {number} width The width of the orthographic box.
+	 * @param {number} height The height of the orthographic box.
+	 * @returns {OrthographicProjection} this
+	 */
+	setSize(width, height) {
+		this._left = -width / 2;
+		this._right = width / 2;
+		this._top = height / 2;
+		this._bottom = -height / 2;
+		this._dirty = true;
+		return this;
+	}
+
+	/**
+	 * Copies the parameters from another OrthographicProjection.
+	 * @param {OrthographicProjection} source
+	 * @returns {OrthographicProjection} this
+	 */
+	copy(source) {
+		this._left = source._left;
+		this._right = source._right;
+		this._top = source._top;
+		this._bottom = source._bottom;
+		this._near = source._near;
+		this._far = source._far;
+		this._dirty = true;
+
+		return this;
+	}
+
+	/**
+	 * Updates the orthographic projection matrix.
+	 * @protected
+	 */
+	_updateMatrix() {
+		const left = this._left, right = this._right, bottom = this._bottom, top = this._top, near = this._near, far = this._far;
+		this._matrix.set(
+			2 / (right - left), 0, 0, -(right + left) / (right - left),
+			0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),
+			0, 0, -2 / (far - near), -(far + near) / (far - near),
+			0, 0, 0, 1
+		);
+		this._dirty = false;
+	}
+
+}
+
+/**
  * The camera used for rendering a 3D scene.
  * The camera's direction is defined as the 3-vector (0.0, 0,0, -1.0), that is, an untransformed camera points down the -Z axis.
  * @extends Object3D
@@ -10337,37 +10702,38 @@ class Camera extends Object3D {
 
 	/**
 	 * Set orthographic projection matrix.
-	 * @param {number} left — Camera frustum left plane.
-	 * @param {number} right — Camera frustum right plane.
-	 * @param {number} bottom — Camera frustum bottom plane.
-	 * @param {number} top — Camera frustum top plane.
-	 * @param {number} near — Camera frustum near plane.
-	 * @param {number} far — Camera frustum far plane.
+	 * @param {number} left Camera frustum left plane.
+	 * @param {number} right Camera frustum right plane.
+	 * @param {number} bottom Camera frustum bottom plane.
+	 * @param {number} top Camera frustum top plane.
+	 * @param {number} near Camera frustum near plane.
+	 * @param {number} far Camera frustum far plane.
+	 * @deprecated Use OrthographicProjection instead.
 	 */
 	setOrtho(left, right, bottom, top, near, far) {
-		this.projectionMatrix.set(
-			2 / (right - left), 0, 0, -(right + left) / (right - left),
-			0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),
-			0, 0, -2 / (far - near), -(far + near) / (far - near),
-			0, 0, 0, 1
-		);
-		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
+		_orthographicProjection.set(left, right, top, bottom, near, far);
+		this.setProjectionMatrix(_orthographicProjection.matrix);
 	}
 
 	/**
 	 * Set perspective projection matrix.
-	 * @param {number} fov — Camera frustum vertical field of view.
-	 * @param {number} aspect — Camera frustum aspect ratio.
-	 * @param {number} near — Camera frustum near plane.
-	 * @param {number} far — Camera frustum far plane.
+	 * @param {number} fov Camera frustum vertical field of view.
+	 * @param {number} aspect Camera frustum aspect ratio.
+	 * @param {number} near Camera frustum near plane.
+	 * @param {number} far Camera frustum far plane.
+	 * @deprecated Use PerspectiveProjection instead.
 	 */
 	setPerspective(fov, aspect, near, far) {
-		this.projectionMatrix.set(
-			1 / (aspect * Math.tan(fov / 2)), 0, 0, 0,
-			0, 1 / (Math.tan(fov / 2)), 0, 0,
-			0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
-			0, 0, -1, 0
-		);
+		_perspectiveProjection.set(fov * 180 / Math.PI, aspect, near, far);
+		this.setProjectionMatrix(_perspectiveProjection.matrix);
+	}
+
+	/**
+	 * Set the projection matrix.
+	 * @param {Matrix4} matrix The projection matrix.
+	 */
+	setProjectionMatrix(matrix) {
+		this.projectionMatrix.copy(matrix);
 		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
 	}
 
@@ -10411,6 +10777,8 @@ class Camera extends Object3D {
 Camera.prototype.isCamera = true;
 
 const _mat4_1 = new Matrix4();
+const _perspectiveProjection = new PerspectiveProjection();
+const _orthographicProjection = new OrthographicProjection();
 
 const _sphere = new Sphere();
 const _inverseMatrix = new Matrix4();
@@ -22550,4 +22918,4 @@ RenderTarget2DArray.prototype.isRenderTarget2DArray = true;
 // deprecated since 0.5.0
 ScreenRenderTarget.prototype.isRenderTargetBack = true;
 
-export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, Color3, Color4, ColorKeyframeTrack, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, OffscreenRenderTarget, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, ScreenRenderTarget as RenderTargetBack, RenderTargetBase, RenderTargetCube, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ScreenRenderTarget, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };
+export { ATTACHMENT, AmbientLight, AnimationAction, AnimationMixer, Attribute, BLEND_EQUATION, BLEND_FACTOR, BLEND_TYPE, BUFFER_USAGE, BasicMaterial, Bone, BooleanKeyframeTrack, Box2, Box3, BoxGeometry, Buffer, COMPARE_FUNC, CULL_FACE_TYPE, Camera, CameraProjection, Color3, Color4, ColorKeyframeTrack, CubicSplineInterpolant, CylinderGeometry, DRAW_MODE, DRAW_SIDE, DefaultLoadingManager, DepthMaterial, DirectionalLight, DirectionalLightShadow, DistanceMaterial, ENVMAP_COMBINE_TYPE, Euler, EventDispatcher, FileLoader, Fog, FogExp2, Frustum, Geometry, HemisphereLight, ImageLoader, KeyframeClip, KeyframeInterpolant, KeyframeTrack, LambertMaterial, Light, LightShadow, LineMaterial, LinearInterpolant, Loader, LoadingManager, MATERIAL_TYPE, Material, MathUtils, Matrix3, Matrix4, Mesh, NumberKeyframeTrack, OPERATION, Object3D, OffscreenRenderTarget, OrthographicProjection, PBR2Material, PBRMaterial, PIXEL_FORMAT, PIXEL_TYPE, PerspectiveProjection, PhongMaterial, Plane, PlaneGeometry, PointLight, PointLightShadow, PointsMaterial, PropertyBindingMixer, PropertyMap, QUERYSET_TYPE, QUERY_TYPE, Quaternion, QuaternionCubicSplineInterpolant, QuaternionKeyframeTrack, QuaternionLinearInterpolant, Query, QuerySet, Ray, Raycaster, RectAreaLight, RenderBuffer, RenderInfo, RenderQueue, RenderQueueLayer, RenderStates, RenderTarget2D, RenderTarget2DArray, RenderTarget3D, ScreenRenderTarget as RenderTargetBack, RenderTargetBase, RenderTargetCube, SHADING_TYPE, SHADOW_TYPE, Scene, SceneData, ScreenRenderTarget, ShaderChunk, ShaderLib, ShaderMaterial, ShaderPostPass, ShadowMapPass, Skeleton, SkinnedMesh, Sphere, SphereGeometry, Spherical, SphericalHarmonics3, SphericalHarmonicsLight, SpotLight, SpotLightShadow, StepInterpolant, StringKeyframeTrack, TEXEL_ENCODING_TYPE, TEXTURE_FILTER, TEXTURE_WRAP, Texture2D, Texture2DArray, Texture3D, TextureBase, TextureCube, ThinRenderer, TorusKnotGeometry, TransformUV, Triangle, VERTEX_COLOR, Vector2, Vector3, Vector4, VectorKeyframeTrack, WebGLAttribute, WebGLCapabilities, WebGLGeometries, WebGLProgram, WebGLPrograms, WebGLQueries, WebGLQuerySets, WebGLRenderBuffers, WebGLRenderer, WebGLState, WebGLTextures, WebGLUniforms, cloneJson, cloneUniforms, generateUUID, isPowerOfTwo, nearestPowerOfTwo, nextPowerOfTwo };

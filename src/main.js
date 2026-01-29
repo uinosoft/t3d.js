@@ -71,6 +71,10 @@ export { PhongMaterial } from './resources/materials/PhongMaterial.js';
 export { PointsMaterial } from './resources/materials/PointsMaterial.js';
 export { ShaderMaterial } from './resources/materials/ShaderMaterial.js';
 
+export { CameraProjection } from './resources/projections/CameraProjection.js';
+export { OrthographicProjection } from './resources/projections/OrthographicProjection.js';
+export { PerspectiveProjection } from './resources/projections/PerspectiveProjection.js';
+
 export { OffscreenRenderTarget } from './resources/targets/OffscreenRenderTarget.js';
 export { ScreenRenderTarget } from './resources/targets/ScreenRenderTarget.js';
 export { RenderTargetBase } from './resources/targets/RenderTargetBase.js';

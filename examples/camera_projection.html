@@ -90,45 +90,38 @@
 
 		// global variables
 
-		const params = { projWeight: 0, fov: 60, near: 0.1, far: 1000 };
 		const cameraDistance = camera.position.getLength();
-		const halfViewHeight = Math.tan(params.fov / 180 * Math.PI / 2) * cameraDistance;
 
+		const _perspectiveProjection = new t3d.PerspectiveProjection(60, width / height);
+
+		const viewHeight = Math.tan(_perspectiveProjection.fov / 180 * Math.PI / 2) * cameraDistance * 2;
+		const _orthographicProjection = new t3d.OrthographicProjection();
+		_orthographicProjection.setSize(viewHeight * width / height, viewHeight);
+
+		const _skyboxProjection = new t3d.PerspectiveProjection(90, width / height); // fov 90 for skybox when in ortho mode
+		
+		const _combinedProjectionMatrix = new t3d.Matrix4();
+
+		const params = { projWeight: 0 };
+		
 		// input
-
-		const projMatrix1 = new t3d.Matrix4(), projMatrix2 = new t3d.Matrix4();
-		const helperCamera = new t3d.Camera();
 
 		skyBox.material.uniforms.u_Projection = new Float32Array(16);
 
 		function setCameraProjection() {
 			if (params.projWeight == 0) {
-				camera.setPerspective(params.fov / 180 * Math.PI, width / height, params.near, params.far);
-
-				camera.projectionMatrix.toArray(skyBox.material.uniforms.u_Projection);
+				camera.setProjectionMatrix(_perspectiveProjection.matrix);
+				_perspectiveProjection.matrix.toArray(skyBox.material.uniforms.u_Projection);
 			} else if (params.projWeight == 1) {
-				const halfViewWidth = halfViewHeight * width / height;
-				camera.setOrtho(-halfViewWidth, halfViewWidth, -halfViewHeight, halfViewHeight, params.near, params.far);
-
-				// fixed skybox projection
-				helperCamera.setPerspective(90 / 180 * Math.PI, width / height, params.near, params.far);
-				helperCamera.projectionMatrix.toArray(skyBox.material.uniforms.u_Projection);
+				camera.setProjectionMatrix(_orthographicProjection.matrix);
+				_skyboxProjection.matrix.toArray(skyBox.material.uniforms.u_Projection);
 			} else {
-				helperCamera.setPerspective(params.fov / 180 * Math.PI, width / height, params.near, params.far);
-				projMatrix1.copy(helperCamera.projectionMatrix);
+				const alpha = easeOut(params.projWeight); // use easeOut to make the transition more 'linear'
+				_combinedProjectionMatrix.lerpMatrices(_perspectiveProjection.matrix, _orthographicProjection.matrix, alpha);
+				camera.setProjectionMatrix(_combinedProjectionMatrix);
 
-				const halfViewWidth = halfViewHeight * width / height;
-				helperCamera.setOrtho(-halfViewWidth, halfViewWidth, -halfViewHeight, halfViewHeight, params.near, params.far);
-				projMatrix2.copy(helperCamera.projectionMatrix);
-
-				// use easeOut to make the transition more 'linear'
-				camera.projectionMatrix.lerpMatrices(projMatrix1, projMatrix2, easeOut(params.projWeight));
-				camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
-
-				// fix skybox projection
-				helperCamera.setPerspective(90 / 180 * Math.PI, width / height, params.near, params.far);
-				projMatrix2.lerpMatrices(projMatrix1, helperCamera.projectionMatrix, params.projWeight);
-				projMatrix2.toArray(skyBox.material.uniforms.u_Projection);
+				_combinedProjectionMatrix.lerpMatrices(_perspectiveProjection.matrix, _skyboxProjection.matrix, params.projWeight);
+				_combinedProjectionMatrix.toArray(skyBox.material.uniforms.u_Projection);
 			}
 		}
 
@@ -154,6 +147,9 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
+			_perspectiveProjection.aspect = width / height;
+			_orthographicProjection.setSize(viewHeight * width / height, viewHeight);
+			_skyboxProjection.aspect = width / height;
 			setCameraProjection();
 
 			forwardRenderer.screenRenderTarget.resize(width, height);

@@ -4,6 +4,8 @@ import { Matrix4 } from '../math/Matrix4.js';
 import { Frustum } from '../math/Frustum.js';
 import { Vector4 } from '../math/Vector4.js';
 import { Vector3 } from '../math/Vector3.js';
+import { PerspectiveProjection } from '../resources/projections/PerspectiveProjection.js';
+import { OrthographicProjection } from '../resources/projections/OrthographicProjection.js';
 
 /**
  * The camera used for rendering a 3D scene.
@@ -93,37 +95,38 @@ class Camera extends Object3D {
 
 	/**
 	 * Set orthographic projection matrix.
-	 * @param {number} left — Camera frustum left plane.
-	 * @param {number} right — Camera frustum right plane.
-	 * @param {number} bottom — Camera frustum bottom plane.
-	 * @param {number} top — Camera frustum top plane.
-	 * @param {number} near — Camera frustum near plane.
-	 * @param {number} far — Camera frustum far plane.
+	 * @param {number} left Camera frustum left plane.
+	 * @param {number} right Camera frustum right plane.
+	 * @param {number} bottom Camera frustum bottom plane.
+	 * @param {number} top Camera frustum top plane.
+	 * @param {number} near Camera frustum near plane.
+	 * @param {number} far Camera frustum far plane.
+	 * @deprecated Use OrthographicProjection instead.
 	 */
 	setOrtho(left, right, bottom, top, near, far) {
-		this.projectionMatrix.set(
-			2 / (right - left), 0, 0, -(right + left) / (right - left),
-			0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),
-			0, 0, -2 / (far - near), -(far + near) / (far - near),
-			0, 0, 0, 1
-		);
-		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
+		_orthographicProjection.set(left, right, top, bottom, near, far);
+		this.setProjectionMatrix(_orthographicProjection.matrix);
 	}
 
 	/**
 	 * Set perspective projection matrix.
-	 * @param {number} fov — Camera frustum vertical field of view.
-	 * @param {number} aspect — Camera frustum aspect ratio.
-	 * @param {number} near — Camera frustum near plane.
-	 * @param {number} far — Camera frustum far plane.
+	 * @param {number} fov Camera frustum vertical field of view.
+	 * @param {number} aspect Camera frustum aspect ratio.
+	 * @param {number} near Camera frustum near plane.
+	 * @param {number} far Camera frustum far plane.
+	 * @deprecated Use PerspectiveProjection instead.
 	 */
 	setPerspective(fov, aspect, near, far) {
-		this.projectionMatrix.set(
-			1 / (aspect * Math.tan(fov / 2)), 0, 0, 0,
-			0, 1 / (Math.tan(fov / 2)), 0, 0,
-			0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
-			0, 0, -1, 0
-		);
+		_perspectiveProjection.set(fov * 180 / Math.PI, aspect, near, far);
+		this.setProjectionMatrix(_perspectiveProjection.matrix);
+	}
+
+	/**
+	 * Set the projection matrix.
+	 * @param {Matrix4} matrix The projection matrix.
+	 */
+	setProjectionMatrix(matrix) {
+		this.projectionMatrix.copy(matrix);
 		this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
 	}
 
@@ -167,5 +170,7 @@ class Camera extends Object3D {
 Camera.prototype.isCamera = true;
 
 const _mat4_1 = new Matrix4();
+const _perspectiveProjection = new PerspectiveProjection();
+const _orthographicProjection = new OrthographicProjection();
 
 export { Camera };
