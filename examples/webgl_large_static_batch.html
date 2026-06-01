@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>t3d - large static batch</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+	<style>
+		#statsPanel {
+			position: absolute;
+			top: 12px;
+			left: 12px;
+			padding: 12px 14px;
+			background: rgba(14, 18, 24, 0.78);
+			border: 1px solid rgba(255, 255, 255, 0.14);
+			border-radius: 10px;
+			color: #e8eef7;
+			font: 12px/1.55 Consolas, Monaco, monospace;
+			white-space: pre-line;
+			pointer-events: none;
+		}
+
+		#statusError {
+			color: #ff9e96;
+			font-weight: 700;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="info">
+		<a href="" target="_blank">t3d</a> - large static batch<br />
+		Single batched mesh using <code>WEBGL_multi_draw</code> + CPU culling + Texture2DArray.<br />
+		<div id="statusError" style="display:none"></div>
+	</div>
+	<div id="statsPanel"></div>
+
+	<script async src="./libs/es-module-shims.js"></script>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/"
+			}
+		}
+	</script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
+		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
+		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+		import { GUI } from './libs/lil-gui.esm.min.js';
+		import Stats from './libs/stats.module.js';
+		import { LargeStaticBatch } from './jsm/objects/LargeStaticBatch.js';
+
+		const MODEL_URL = 'http://10.100.41.9:8080/World.gltf';
+		const DEFAULT_LAYER_SIZE = 512;
+		const TEXTURE_ARRAY_TOTAL_BUDGET_MB = 96;
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const statsPanel = document.getElementById('statsPanel');
+		const statusError = document.getElementById('statusError');
+
+		const renderer = new ForwardRenderer(canvas);
+		const capabilities = renderer.capabilities;
+		const hasWebGL2 = capabilities.version >= 2;
+		const multiDrawExtension = capabilities.getExtension('WEBGL_multi_draw');
+		const supported = hasWebGL2 && !!multiDrawExtension;
+
+		if (!hasWebGL2) {
+			statusError.style.display = '';
+			statusError.textContent = 'This example requires WebGL2 because Texture2DArray and texelFetch are mandatory in v1.';
+		} else if (!multiDrawExtension) {
+			statusError.style.display = '';
+			statusError.textContent = 'WEBGL_multi_draw is not supported on this browser / GPU combination.';
+		}
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.Fog(0x0b1220, 350, 1600);
+
+		const cubeTexturePath = './resources/skybox/Bridge2/';
+		const environmentTexture = new TextureCubeLoader().load([
+			cubeTexturePath + 'posx.jpg',
+			cubeTexturePath + 'negx.jpg',
+			cubeTexturePath + 'posy.jpg',
+			cubeTexturePath + 'negy.jpg',
+			cubeTexturePath + 'posz.jpg',
+			cubeTexturePath + 'negz.jpg'
+		]);
+		environmentTexture.encoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		scene.environment = environmentTexture;
+
+		const skyBox = new SkyBox(environmentTexture);
+		skyBox.level = 0;
+		skyBox.gamma = true;
+		scene.add(skyBox);
+
+		const ambientLight = new t3d.AmbientLight(0xffffff, 0.35);
+		scene.add(ambientLight);
+
+		const directionalLight = new t3d.DirectionalLight(0xffffff, 1.2);
+		directionalLight.position.set(30, 80, 35);
+		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(directionalLight);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.position.set(420, 260, 420);
+		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
+		camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 3000);
+		scene.add(camera);
+
+		const controls = new OrbitControls(camera, canvas);
+		controls.target.set(0, 0, 0);
+
+		const fpsStats = new Stats();
+		fpsStats.domElement.style.position = 'absolute';
+		fpsStats.domElement.style.right = '0px';
+		fpsStats.domElement.style.left = 'auto';
+		fpsStats.domElement.style.top = '0px';
+		canvas.parentElement.appendChild(fpsStats.domElement);
+
+		const params = {
+			objectCount: 0,
+			enableBVH: true,
+			enablePerObjectCulling: true,
+			renderTransparent: true,
+			useNormalMap: true,
+			useORMMap: true,
+			useMipmaps: true,
+			freezeCulling: false,
+			showStats: true,
+			leafSize: 16
+		};
+
+		const gui = new GUI();
+		gui.add(params, 'objectCount').name('objectCount').listen();
+
+		let batches = [];
+		let transparentRoot = null;
+		let textureArraySet = null;
+		let modelDiagnostics = {
+			transparentMeshes: 0,
+			incompatibleMeshes: 0,
+			texturePlans: null
+		};
+
+		gui.add(params, 'enableBVH').onChange(value => {
+			if (batches.length === 0) return;
+			for (let i = 0; i < batches.length; i++) {
+				const batch = batches[i];
+				batch.enableBVH = value;
+				if (value && (!batch.bvh || batch.leafSize !== params.leafSize)) {
+					batch.rebuildBVH(params.leafSize);
+				}
+				batch.update(camera);
+			}
+		});
+		gui.add(params, 'enablePerObjectCulling').onChange(value => {
+			if (batches.length === 0) return;
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].enablePerObjectCulling = value;
+				batches[i].update(camera);
+			}
+		});
+		gui.add(params, 'renderTransparent').onChange(value => {
+			if (transparentRoot) {
+				transparentRoot.visible = value;
+			}
+		});
+		gui.add(params, 'useNormalMap').onChange(value => {
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].material[0].uniforms.u_UseNormalMap = value ? 1 : 0;
+			}
+		});
+		gui.add(params, 'useORMMap').onChange(value => {
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].material[0].uniforms.u_UseORMMap = value ? 1 : 0;
+			}
+		});
+		gui.add(params, 'useMipmaps').onChange(value => {
+			toggleTextureArrayMipmaps(textureArraySet, value);
+		});
+		gui.add(params, 'freezeCulling').onChange(value => {
+			if (batches.length === 0) return;
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].freezeCulling = value;
+				if (!value) batches[i].update(camera);
+			}
+		});
+		gui.add(params, 'showStats').onChange(value => {
+			statsPanel.style.display = value ? '' : 'none';
+			fpsStats.domElement.style.display = value ? '' : 'none';
+		});
+		gui.add(params, 'leafSize', 4, 64, 4).onChange(value => {
+			if (batches.length === 0) return;
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].rebuildBVH(value);
+				batches[i].update(camera);
+			}
+		});
+
+		if (supported) {
+			try {
+				await initModelBatch();
+			} catch (error) {
+				console.error(error);
+				statusError.style.display = '';
+				statusError.textContent = `Failed to load or batch World.gltf: ${error.message}`;
+			}
+		}
+
+		function loop() {
+			requestAnimationFrame(loop);
+
+			fpsStats.begin();
+
+			controls.update();
+			scene.updateMatrix();
+
+			if (batches.length > 0) {
+				for (let i = 0; i < batches.length; i++) {
+					const batch = batches[i];
+					batch.freezeCulling = params.freezeCulling;
+					batch.enableBVH = params.enableBVH;
+					batch.enablePerObjectCulling = params.enablePerObjectCulling;
+					batch.update(camera);
+				}
+				updateStatsPanel(batches);
+			} else {
+				updateUnsupportedStats();
+			}
+
+			renderer.render(scene, camera);
+
+			fpsStats.end();
+		}
+
+		requestAnimationFrame(loop);
+
+		async function initModelBatch() {
+			console.time('load model');
+			const loader = new GLTFLoader();
+			const result = await loader.load(MODEL_URL);
+			console.timeEnd('load model');
+
+			console.time('generate descriptors');
+			const modelSource = extractModelSource(result.root);
+			const materials = modelSource.materials;
+			modelDiagnostics.transparentMeshes = modelSource.transparentMeshes;
+			modelDiagnostics.incompatibleMeshes = modelSource.incompatibleMeshes;
+			assignTextureLayerIds(materials);
+			const indexedDescriptors = createDescriptorsFromEntries(modelSource.indexedMeshEntries, modelSource.modelNormalizeMatrix, materials);
+			const nonIndexedDescriptors = createDescriptorsFromEntries(modelSource.nonIndexedMeshEntries, modelSource.modelNormalizeMatrix, materials);
+			console.timeEnd('generate descriptors');
+
+			console.time('upload texture arrays');
+			const texturePlans = buildTextureArrayPlans(materials, capabilities);
+			modelDiagnostics.texturePlans = texturePlans;
+			const baseColorArray = createBaseColorArrayFromMaterials(materials, texturePlans.baseColor);
+			const normalMapArray = createNormalMapArrayFromMaterials(materials, texturePlans.normal);
+			const ormMapArray = createORMMapArrayFromMaterials(materials, texturePlans.orm);
+			const emissiveMapArray = createEmissiveMapArrayFromMaterials(materials, texturePlans.emissive);
+			textureArraySet = { baseColorArray, normalMapArray, ormMapArray, emissiveMapArray };
+			toggleTextureArrayMipmaps(textureArraySet, params.useMipmaps);
+			console.timeEnd('upload texture arrays');
+
+			params.objectCount = indexedDescriptors.length + nonIndexedDescriptors.length;
+
+			console.time('enable rendering');
+			batches = [];
+
+			if (indexedDescriptors.length > 0) {
+				const batch = new LargeStaticBatch(indexedDescriptors, {
+					materials,
+					enableBVH: params.enableBVH,
+					enablePerObjectCulling: params.enablePerObjectCulling,
+					leafSize: params.leafSize
+				});
+				batch.setBaseColorArray(baseColorArray);
+				batch.setNormalMapArray(normalMapArray);
+				batch.setORMMapArray(ormMapArray);
+				batch.setEmissiveMapArray(emissiveMapArray);
+				batch.material[0].uniforms.u_UseNormalMap = params.useNormalMap ? 1 : 0;
+				batch.material[0].uniforms.u_UseORMMap = params.useORMMap ? 1 : 0;
+				scene.add(batch);
+				batches.push(batch);
+			}
+
+			if (nonIndexedDescriptors.length > 0) {
+				const batch = new LargeStaticBatch(nonIndexedDescriptors, {
+					materials,
+					enableBVH: params.enableBVH,
+					enablePerObjectCulling: params.enablePerObjectCulling,
+					leafSize: params.leafSize
+				});
+				batch.setBaseColorArray(baseColorArray);
+				batch.setNormalMapArray(normalMapArray);
+				batch.setORMMapArray(ormMapArray);
+				batch.setEmissiveMapArray(emissiveMapArray);
+				batch.material[0].uniforms.u_UseNormalMap = params.useNormalMap ? 1 : 0;
+				batch.material[0].uniforms.u_UseORMMap = params.useORMMap ? 1 : 0;
+				scene.add(batch);
+				batches.push(batch);
+			}
+
+			transparentRoot = result.root;
+			transparentRoot.matrixAutoUpdate = false;
+			transparentRoot.matrix.copy(modelSource.modelNormalizeMatrix);
+			transparentRoot.matrixNeedsUpdate = false;
+			transparentRoot.worldMatrixNeedsUpdate = true;
+			transparentRoot.visible = params.renderTransparent;
+			scene.add(transparentRoot);
+			scene.updateMatrix();
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].update(camera);
+			}
+			fitCameraToBatches(batches);
+			console.timeEnd('enable rendering');
+		}
+
+		function updateStatsPanel(batchList) {
+			const summary = summarizeBatches(batchList);
+
+			statsPanel.textContent = [
+				`model: World.gltf`,
+				`batches: ${summary.batchCount} (indexed ${summary.indexedBatchCount}, non-indexed ${summary.nonIndexedBatchCount})`,
+				`total objects: ${summary.totalObjects}`,
+				`materials: ${summary.materialCount}`,
+				`transparent passthrough meshes: ${modelDiagnostics.transparentMeshes}`,
+				`transparent render: ${params.renderTransparent ? 'on' : 'off'}`,
+				`normal map: ${params.useNormalMap ? 'on' : 'off'}`,
+				`orm map: ${params.useORMMap ? 'on' : 'off'}`,
+				`mipmaps: ${params.useMipmaps ? 'on' : 'off'}`,
+				`incompatible opaque meshes: ${modelDiagnostics.incompatibleMeshes}`,
+				`visible objects: ${summary.visibleObjects}`,
+				`total triangles: ${summary.totalTriangles}`,
+				`visible triangles: ${summary.visibleTriangles}`,
+				`build merged geometry: ${summary.buildMergedGeometryMs.toFixed(2)} ms`,
+				`build GPU data textures: ${summary.buildGPUDataTexturesMs.toFixed(2)} ms`,
+				`BVH build time: ${summary.bvhBuildMs.toFixed(2)} ms`,
+				`CPU culling time: ${summary.cpuCullingMs.toFixed(2)} ms`,
+				`tex arrays: ${formatTexturePlans(modelDiagnostics.texturePlans)}`,
+				`tex wraps: ${formatTextureWraps(modelDiagnostics.texturePlans)}`,
+				`draw mode: ${summary.drawMode}`,
+				`extension: ${multiDrawExtension ? 'supported' : 'unsupported'}`,
+				`per-object culling: ${params.enablePerObjectCulling ? 'on' : 'off'}`,
+				`BVH: ${params.enableBVH ? `on (leaf=${params.leafSize})` : 'off'}`
+			].join('\n');
+		}
+
+		function updateUnsupportedStats() {
+			statsPanel.textContent = [
+				`model: World.gltf`,
+				`total objects: 0`,
+				`transparent passthrough meshes: ${modelDiagnostics.transparentMeshes}`,
+				`transparent render: ${params.renderTransparent ? 'on' : 'off'}`,
+				`normal map: ${params.useNormalMap ? 'on' : 'off'}`,
+				`orm map: ${params.useORMMap ? 'on' : 'off'}`,
+				`mipmaps: ${params.useMipmaps ? 'on' : 'off'}`,
+				`incompatible opaque meshes: ${modelDiagnostics.incompatibleMeshes}`,
+				`visible objects: 0`,
+				`total triangles: 0`,
+				`visible triangles: 0`,
+				`BVH build time: 0.00 ms`,
+				`CPU culling time: 0.00 ms`,
+				`tex arrays: ${formatTexturePlans(modelDiagnostics.texturePlans)}`,
+				`tex wraps: ${formatTextureWraps(modelDiagnostics.texturePlans)}`,
+				`draw mode: multiDraw`,
+				`extension: ${multiDrawExtension ? 'supported' : 'unsupported'}`
+			].join('\n');
+		}
+
+		function extractModelSource(root) {
+			root.updateMatrix();
+
+			const overallBounds = new t3d.Box3();
+			const indexedMeshEntries = [];
+			const nonIndexedMeshEntries = [];
+			const materials = [];
+			const materialMap = new Map();
+			let transparentMeshes = 0;
+			let incompatibleMeshes = 0;
+
+			root.traverse(node => {
+				if (!node.isMesh || !node.geometry) return;
+
+				const sourceMaterial = Array.isArray(node.material) ? node.material[0] : node.material;
+				if (!sourceMaterial || sourceMaterial.transparent) {
+					transparentMeshes++;
+					return;
+				}
+
+				const geometry = node.geometry;
+				const indexed = geometry.index !== null;
+
+				if (!geometry.getAttribute('a_Position')) {
+					incompatibleMeshes++;
+					return;
+				}
+
+				if (!geometry.boundingBox || geometry.boundingBox.isEmpty()) {
+					geometry.computeBoundingBox();
+				}
+				if (!geometry.boundingSphere || geometry.boundingSphere.isEmpty()) {
+					geometry.computeBoundingSphere();
+				}
+
+				const worldBounds = geometry.boundingBox.clone().applyMatrix4(node.worldMatrix);
+				overallBounds.union(worldBounds);
+
+				const materialKey = sourceMaterial.uuid || `${materials.length}`;
+				let materialId = materialMap.get(materialKey);
+				if (materialId === undefined) {
+					materialId = materials.length;
+					materialMap.set(materialKey, materialId);
+					materials.push(extractMaterialDefinition(sourceMaterial));
+				}
+
+				node.visible = false;
+
+				const entry = {
+					geometry,
+					matrix: node.worldMatrix.clone(),
+					materialId,
+					textureLayerId: 0
+				};
+
+				if (indexed) {
+					indexedMeshEntries.push(entry);
+				} else {
+					nonIndexedMeshEntries.push(entry);
+				}
+			});
+
+			if (indexedMeshEntries.length === 0 && nonIndexedMeshEntries.length === 0) {
+				throw new Error('No compatible opaque static meshes were found in World.gltf.');
+			}
+
+			if (transparentMeshes > 0 || incompatibleMeshes > 0) {
+				console.warn(`LargeStaticBatch kept ${transparentMeshes} transparent meshes as passthrough and skipped ${incompatibleMeshes} incompatible opaque meshes.`);
+			}
+
+			const modelCenter = overallBounds.getCenter(new t3d.Vector3());
+			const modelSize = overallBounds.getSize(new t3d.Vector3());
+			const maxAxis = Math.max(modelSize.x, modelSize.y, modelSize.z, 1);
+			const normalizeScale = 120 / maxAxis;
+			const normalizeMatrix = new t3d.Matrix4().makeScale(normalizeScale, normalizeScale, normalizeScale);
+			const recenterMatrix = new t3d.Matrix4().makeTranslation(-modelCenter.x, -overallBounds.min.y, -modelCenter.z);
+			const modelNormalizeMatrix = new t3d.Matrix4().multiplyMatrices(normalizeMatrix, recenterMatrix);
+
+			return {
+				indexedMeshEntries,
+				nonIndexedMeshEntries,
+				materials,
+				modelNormalizeMatrix,
+				transparentMeshes,
+				incompatibleMeshes
+			};
+		}
+
+		function createDescriptorsFromEntries(entries, normalizeMatrix, materials) {
+			const descriptors = new Array(entries.length);
+
+			for (let i = 0; i < entries.length; i++) {
+				const entry = entries[i];
+				const normalizedMeshMatrix = new t3d.Matrix4().multiplyMatrices(normalizeMatrix, entry.matrix);
+
+				descriptors[i] = {
+					geometry: entry.geometry,
+					matrix: normalizedMeshMatrix,
+					materialId: entry.materialId,
+					textureLayerId: materials[entry.materialId].textureLayerId
+				};
+			}
+
+			return descriptors;
+		}
+
+		function extractMaterialDefinition(sourceMaterial) {
+			const diffuse = sourceMaterial.diffuse;
+			const alpha = sourceMaterial.opacity !== undefined ? sourceMaterial.opacity : 1;
+			const uvTransform = sourceMaterial.diffuseMapTransform;
+			const emissive = sourceMaterial.emissive;
+
+			return {
+				baseColor: diffuse ? [diffuse.r, diffuse.g, diffuse.b, alpha] : [1, 1, 1, alpha],
+				roughness: sourceMaterial.roughness !== undefined ? sourceMaterial.roughness : 0.85,
+				metalness: sourceMaterial.metalness !== undefined ? sourceMaterial.metalness : 0.05,
+				alphaCutoff: sourceMaterial.alphaTest !== undefined ? sourceMaterial.alphaTest : 0,
+				uvScale: uvTransform ? { x: uvTransform.scale.x, y: uvTransform.scale.y } : { x: 1, y: 1 },
+				uvOffset: uvTransform ? { x: uvTransform.offset.x, y: uvTransform.offset.y } : { x: 0, y: 0 },
+				emissive: emissive ? [emissive.r, emissive.g, emissive.b, 1] : [0, 0, 0, 1],
+				diffuseImage: sourceMaterial.diffuseMap ? sourceMaterial.diffuseMap.image : null,
+				diffuseWrapS: sourceMaterial.diffuseMap ? sourceMaterial.diffuseMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
+				diffuseWrapT: sourceMaterial.diffuseMap ? sourceMaterial.diffuseMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
+				normalImage: sourceMaterial.normalMap ? sourceMaterial.normalMap.image : null,
+				normalWrapS: sourceMaterial.normalMap ? sourceMaterial.normalMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
+				normalWrapT: sourceMaterial.normalMap ? sourceMaterial.normalMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
+				roughnessImage: sourceMaterial.roughnessMap ? sourceMaterial.roughnessMap.image : null,
+				roughnessWrapS: sourceMaterial.roughnessMap ? sourceMaterial.roughnessMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
+				roughnessWrapT: sourceMaterial.roughnessMap ? sourceMaterial.roughnessMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
+				metalnessImage: sourceMaterial.metalnessMap ? sourceMaterial.metalnessMap.image : null,
+				metalnessWrapS: sourceMaterial.metalnessMap ? sourceMaterial.metalnessMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
+				metalnessWrapT: sourceMaterial.metalnessMap ? sourceMaterial.metalnessMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
+				aoImage: sourceMaterial.aoMap ? sourceMaterial.aoMap.image : null,
+				aoWrapS: sourceMaterial.aoMap ? sourceMaterial.aoMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
+				aoWrapT: sourceMaterial.aoMap ? sourceMaterial.aoMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
+				emissiveImage: sourceMaterial.emissiveMap ? sourceMaterial.emissiveMap.image : null,
+				emissiveWrapS: sourceMaterial.emissiveMap ? sourceMaterial.emissiveMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
+				emissiveWrapT: sourceMaterial.emissiveMap ? sourceMaterial.emissiveMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
+				aoMapIntensity: sourceMaterial.aoMapIntensity !== undefined ? sourceMaterial.aoMapIntensity : 1,
+				normalScale: sourceMaterial.normalScale ? { x: sourceMaterial.normalScale.x, y: sourceMaterial.normalScale.y } : { x: 1, y: 1 },
+				textureLayerId: 0
+			};
+		}
+
+		function fitCameraToBatches(batchList) {
+			const bounds = new t3d.Box3();
+			for (let i = 0; i < batchList.length; i++) {
+				const batchMesh = batchList[i];
+				for (let j = 0; j < batchMesh._objects.length; j++) {
+					bounds.union(batchMesh._objects[j].boundingBox);
+				}
+			}
+
+			const center = bounds.getCenter(new t3d.Vector3());
+			const size = bounds.getSize(new t3d.Vector3());
+			const radius = Math.max(size.x, size.y, size.z, 1) * 0.9;
+
+			camera.position.set(center.x + radius, center.y + radius * 0.55, center.z + radius);
+			camera.lookAt(center, new t3d.Vector3(0, 1, 0));
+			controls.target.copy(center);
+		}
+
+		function summarizeBatches(batchList) {
+			const summary = {
+				batchCount: batchList.length,
+				indexedBatchCount: 0,
+				nonIndexedBatchCount: 0,
+				totalObjects: 0,
+				materialCount: 0,
+				visibleObjects: 0,
+				totalTriangles: 0,
+				visibleTriangles: 0,
+				buildMergedGeometryMs: 0,
+				buildGPUDataTexturesMs: 0,
+				bvhBuildMs: 0,
+				cpuCullingMs: 0,
+				drawMode: 'multiDraw'
+			};
+
+			for (let i = 0; i < batchList.length; i++) {
+				const batch = batchList[i];
+				if (batch._indexed) {
+					summary.indexedBatchCount++;
+				} else {
+					summary.nonIndexedBatchCount++;
+				}
+
+				summary.totalObjects += batch.stats.totalObjects;
+				summary.materialCount = Math.max(summary.materialCount, batch.stats.materialCount);
+				summary.visibleObjects += batch.stats.visibleObjects;
+				summary.totalTriangles += batch.stats.totalTriangles;
+				summary.visibleTriangles += batch.stats.visibleTriangles;
+				summary.buildMergedGeometryMs += batch.stageTimings.buildMergedGeometryMs;
+				summary.buildGPUDataTexturesMs += batch.stageTimings.buildGPUDataTexturesMs;
+				summary.bvhBuildMs += batch.stats.bvhBuildMs;
+				summary.cpuCullingMs += batch.stats.cpuCullingMs;
+			}
+
+			return summary;
+		}
+
+		function createBaseColorArrayFromMaterials(materials, plan) {
+			const width = plan.width;
+			const height = plan.height;
+			const layerCount = plan.layerCount;
+			const data = new Uint8Array(layerCount * width * height * 4);
+
+			for (let layer = 0; layer < layerCount; layer++) {
+				const material = materials[layer] || {};
+				const baseOffset = layer * width * height * 4;
+
+				const imageData = getImageDataSafe(material.diffuseImage, width, height);
+				if (imageData) {
+					data.set(imageData.data, baseOffset);
+				} else {
+					fillSolidLayer(data, baseOffset, width, height, material.baseColor || [1, 1, 1, 1]);
+				}
+			}
+
+			return createTexture2DArray(data, width, height, layerCount, true, plan.wrapS, plan.wrapT);
+		}
+
+		function assignTextureLayerIds(materials) {
+			for (let i = 0; i < materials.length; i++) {
+				materials[i].textureLayerId = i;
+			}
+		}
+
+		function createNormalMapArrayFromMaterials(materials, plan) {
+			const width = plan.width;
+			const height = plan.height;
+			const layerCount = plan.layerCount;
+			const data = new Uint8Array(layerCount * width * height * 4);
+
+			for (let layer = 0; layer < layerCount; layer++) {
+				const material = materials[layer] || {};
+				const baseOffset = layer * width * height * 4;
+				const imageData = getImageDataSafe(material.normalImage, width, height);
+
+				if (imageData) {
+					data.set(imageData.data, baseOffset);
+				} else {
+					fillChannelLayer(data, baseOffset, width, height, [128, 128, 255, 255]);
+				}
+			}
+
+			return createTexture2DArray(data, width, height, layerCount, true, plan.wrapS, plan.wrapT);
+		}
+
+		function createORMMapArrayFromMaterials(materials, plan) {
+			const width = plan.width;
+			const height = plan.height;
+			const layerCount = plan.layerCount;
+			const data = new Uint8Array(layerCount * width * height * 4);
+
+			for (let layer = 0; layer < layerCount; layer++) {
+				const material = materials[layer] || {};
+				const baseOffset = layer * width * height * 4;
+				const aoData = getImageDataSafe(material.aoImage, width, height);
+				const roughnessData = getImageDataSafe(material.roughnessImage, width, height);
+				const metalnessData = getImageDataSafe(material.metalnessImage, width, height);
+
+				for (let i = 0; i < width * height; i++) {
+					const offset = baseOffset + i * 4;
+					const sampleOffset = i * 4;
+					data[offset + 0] = aoData ? aoData.data[sampleOffset + 0] : 255;
+					data[offset + 1] = roughnessData ? roughnessData.data[sampleOffset + 1] : 255;
+					data[offset + 2] = metalnessData ? metalnessData.data[sampleOffset + 2] : 255;
+					data[offset + 3] = 255;
+				}
+			}
+
+			return createTexture2DArray(data, width, height, layerCount, true, plan.wrapS, plan.wrapT);
+		}
+
+		function createEmissiveMapArrayFromMaterials(materials, plan) {
+			const width = plan.width;
+			const height = plan.height;
+			const layerCount = plan.layerCount;
+			const data = new Uint8Array(layerCount * width * height * 4);
+
+			for (let layer = 0; layer < layerCount; layer++) {
+				const material = materials[layer] || {};
+				const baseOffset = layer * width * height * 4;
+				const imageData = getImageDataSafe(material.emissiveImage, width, height);
+
+				if (imageData) {
+					data.set(imageData.data, baseOffset);
+				} else {
+					fillChannelLayer(data, baseOffset, width, height, [255, 255, 255, 255]);
+				}
+			}
+
+			return createTexture2DArray(data, width, height, layerCount, true, plan.wrapS, plan.wrapT);
+		}
+
+		function createTexture2DArray(data, width, height, layerCount, useMipmaps, wrapS = t3d.TEXTURE_WRAP.CLAMP_TO_EDGE, wrapT = t3d.TEXTURE_WRAP.CLAMP_TO_EDGE) {
+			const texture = new t3d.Texture2DArray();
+			texture.image = { data, width, height, depth: layerCount };
+			texture.format = t3d.PIXEL_FORMAT.RGBA;
+			texture.magFilter = t3d.TEXTURE_FILTER.LINEAR;
+			texture.minFilter = useMipmaps ? t3d.TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR : t3d.TEXTURE_FILTER.LINEAR;
+			texture.generateMipmaps = useMipmaps;
+			texture.wrapS = wrapS;
+			texture.wrapT = wrapT;
+			texture.flipY = false;
+			return texture;
+		}
+
+		function getImageDataSafe(image, width, height) {
+			if (!isDrawableImage(image)) {
+				return null;
+			}
+
+			try {
+				const canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+				const context = canvas.getContext('2d', { willReadFrequently: true });
+				context.clearRect(0, 0, width, height);
+				context.drawImage(image, 0, 0, width, height);
+				return context.getImageData(0, 0, width, height);
+			} catch (error) {
+				console.warn('Texture layer readback failed, using fallback layer.', error);
+				return null;
+			}
+		}
+
+		function buildTextureArrayPlans(materials, gpuCapabilities) {
+			const totalBudgetBytes = TEXTURE_ARRAY_TOTAL_BUDGET_MB * 1024 * 1024;
+			const layerCount = Math.max(materials.length, 1);
+			const maxSize = Math.max(4, Math.min(gpuCapabilities.maxTextureSize, DEFAULT_LAYER_SIZE));
+
+			const budgets = {
+				baseColor: Math.floor(totalBudgetBytes * 0.40),
+				normal: Math.floor(totalBudgetBytes * 0.25),
+				orm: Math.floor(totalBudgetBytes * 0.20),
+				emissive: Math.floor(totalBudgetBytes * 0.15)
+			};
+
+			return {
+				baseColor: buildSingleTextureArrayPlan(collectImages(materials, 'diffuseImage'), layerCount, maxSize, budgets.baseColor, 4, 4, chooseArrayWrap(materials, ['diffuseWrapS'], ['diffuseWrapT'])),
+				normal: buildSingleTextureArrayPlan(collectImages(materials, 'normalImage'), layerCount, maxSize, budgets.normal, 4, 4, chooseArrayWrap(materials, ['normalWrapS'], ['normalWrapT'])),
+				orm: buildSingleTextureArrayPlan(collectImages(materials, 'roughnessImage', 'metalnessImage', 'aoImage'), layerCount, maxSize, budgets.orm, 4, 4, chooseArrayWrap(materials, ['roughnessWrapS', 'metalnessWrapS', 'aoWrapS'], ['roughnessWrapT', 'metalnessWrapT', 'aoWrapT'])),
+				emissive: buildSingleTextureArrayPlan(collectImages(materials, 'emissiveImage'), layerCount, maxSize, budgets.emissive, 1, 1, chooseArrayWrap(materials, ['emissiveWrapS'], ['emissiveWrapT']))
+			};
+		}
+
+		function buildSingleTextureArrayPlan(images, layerCount, maxSize, budgetBytes, minWidth, minHeight, wrap) {
+			let width = minWidth;
+			let height = minHeight;
+
+			for (let i = 0; i < images.length; i++) {
+				const image = images[i];
+				if (image && image.width && image.height) {
+					width = Math.max(width, Math.min(image.width, maxSize));
+					height = Math.max(height, Math.min(image.height, maxSize));
+				}
+			}
+
+			width = clampToPowerOfTwo(width, minWidth, maxSize);
+			height = clampToPowerOfTwo(height, minHeight, maxSize);
+
+			while (width * height * layerCount * 4 > budgetBytes && (width > minWidth || height > minHeight)) {
+				if (width >= height && width > minWidth) {
+					width = Math.max(minWidth, width >> 1);
+				} else if (height > minHeight) {
+					height = Math.max(minHeight, height >> 1);
+				} else {
+					break;
+				}
+			}
+
+			return {
+				width,
+				height,
+				layerCount,
+				bytes: width * height * layerCount * 4,
+				wrapS: wrap.wrapS,
+				wrapT: wrap.wrapT
+			};
+		}
+
+		function chooseArrayWrap(materials, wrapSKeys, wrapTKeys) {
+			return {
+				wrapS: chooseWrapAxis(materials, wrapSKeys),
+				wrapT: chooseWrapAxis(materials, wrapTKeys)
+			};
+		}
+
+		function chooseWrapAxis(materials, keys) {
+			let hasMirrored = false;
+
+			for (let i = 0; i < materials.length; i++) {
+				for (let j = 0; j < keys.length; j++) {
+					const wrap = materials[i][keys[j]];
+					if (wrap === t3d.TEXTURE_WRAP.MIRRORED_REPEAT) {
+						hasMirrored = true;
+					}
+				}
+			}
+
+			if (hasMirrored) return t3d.TEXTURE_WRAP.MIRRORED_REPEAT;
+			return t3d.TEXTURE_WRAP.REPEAT;
+		}
+
+		function collectImages(materials, ...keys) {
+			const images = [];
+			for (let i = 0; i < materials.length; i++) {
+				for (let j = 0; j < keys.length; j++) {
+					const image = materials[i][keys[j]];
+					if (image && image.width && image.height) {
+						images.push(image);
+					}
+				}
+			}
+			return images;
+		}
+
+		function clampToPowerOfTwo(value, minValue, maxValue) {
+			let current = minValue;
+			while (current < value && current < maxValue) {
+				current <<= 1;
+			}
+			return Math.min(current, maxValue);
+		}
+
+		function formatTexturePlans(plans) {
+			if (!plans) {
+				return 'pending';
+			}
+
+			return [
+				`bc ${plans.baseColor.width}x${plans.baseColor.height}`,
+				`n ${plans.normal.width}x${plans.normal.height}`,
+				`orm ${plans.orm.width}x${plans.orm.height}`,
+				`em ${plans.emissive.width}x${plans.emissive.height}`
+			].join(', ');
+		}
+
+		function toggleTextureArrayMipmaps(textureSet, enabled) {
+			if (!textureSet) {
+				return;
+			}
+
+			const textures = [
+				textureSet.baseColorArray,
+				textureSet.normalMapArray,
+				textureSet.ormMapArray,
+				textureSet.emissiveMapArray
+			];
+
+			for (let i = 0; i < textures.length; i++) {
+				const texture = textures[i];
+				if (!texture) continue;
+				texture.generateMipmaps = enabled;
+				texture.minFilter = enabled ? t3d.TEXTURE_FILTER.LINEAR_MIPMAP_LINEAR : t3d.TEXTURE_FILTER.LINEAR;
+				texture.version++;
+			}
+		}
+
+		function formatTextureWraps(plans) {
+			if (!plans) {
+				return 'pending';
+			}
+
+			return [
+				`bc ${wrapName(plans.baseColor.wrapS)}/${wrapName(plans.baseColor.wrapT)}`,
+				`n ${wrapName(plans.normal.wrapS)}/${wrapName(plans.normal.wrapT)}`,
+				`orm ${wrapName(plans.orm.wrapS)}/${wrapName(plans.orm.wrapT)}`,
+				`em ${wrapName(plans.emissive.wrapS)}/${wrapName(plans.emissive.wrapT)}`
+			].join(', ');
+		}
+
+		function wrapName(value) {
+			if (value === t3d.TEXTURE_WRAP.REPEAT) return 'repeat';
+			if (value === t3d.TEXTURE_WRAP.MIRRORED_REPEAT) return 'mirror';
+			return 'clamp';
+		}
+
+		function isDrawableImage(image) {
+			return !!(image && image.width && image.height);
+		}
+
+		function fillSolidLayer(target, offset, width, height, color) {
+			const r = Math.round((color[0] !== undefined ? color[0] : 1) * 255);
+			const g = Math.round((color[1] !== undefined ? color[1] : 1) * 255);
+			const b = Math.round((color[2] !== undefined ? color[2] : 1) * 255);
+			const a = Math.round((color[3] !== undefined ? color[3] : 1) * 255);
+
+			for (let i = 0; i < width * height; i++) {
+				const pixelOffset = offset + i * 4;
+				target[pixelOffset + 0] = r;
+				target[pixelOffset + 1] = g;
+				target[pixelOffset + 2] = b;
+				target[pixelOffset + 3] = a;
+			}
+		}
+
+		function fillChannelLayer(target, offset, width, height, rgba) {
+			for (let i = 0; i < width * height; i++) {
+				const pixelOffset = offset + i * 4;
+				target[pixelOffset + 0] = rgba[0];
+				target[pixelOffset + 1] = rgba[1];
+				target[pixelOffset + 2] = rgba[2];
+				target[pixelOffset + 3] = rgba[3];
+			}
+		}
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+
+			camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 3000);
+			renderer.screenRenderTarget.resize(width, height);
+		}
+
+		window.addEventListener('resize', onWindowResize, false);
+	</script>
+</body>
+
+</html>
