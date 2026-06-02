@@ -51,17 +51,22 @@
 		import * as t3d from 't3d';
 		import { OrbitControls } from 't3d/addons/controls/OrbitControls.js';
 		import { GLTFLoader } from 't3d/addons/loaders/glTF/GLTFLoader.js';
+		import { ShadowAdapter } from 't3d/addons/math/ShadowAdapter.js';
 		import { TextureCubeLoader } from 't3d/addons/loaders/TextureCubeLoader.js';
 		import { SkyBox } from 't3d/addons/objects/SkyBox.js';
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
+		import { LargeStaticBatchDepthMaterial } from './jsm/materials/LargeStaticBatchDepthMaterial.js';
+		import { LargeStaticBatchDistanceMaterial } from './jsm/materials/LargeStaticBatchDistanceMaterial.js';
 		import { LargeStaticBatchPickMaterial } from './jsm/materials/LargeStaticBatchPickMaterial.js';
 		import { LargeStaticBatch } from './jsm/objects/LargeStaticBatch.js';
 
 		const MODEL_URL = 'http://10.100.41.9:8080/World.gltf';
 		const DEFAULT_LAYER_SIZE = 512;
 		const TEXTURE_ARRAY_TOTAL_BUDGET_MB = 96;
+		const CAMERA_NEAR = 1;
+		const CAMERA_FAR = 3000;
 
 		let width = window.innerWidth || 2;
 		let height = window.innerHeight || 2;
@@ -75,6 +80,7 @@
 		const statusError = document.getElementById('statusError');
 
 		const renderer = new ForwardRenderer(canvas);
+		renderer.shadowAutoUpdate = false;
 		const capabilities = renderer.capabilities;
 		const hasWebGL2 = capabilities.version >= 2;
 		const multiDrawExtension = capabilities.getExtension('WEBGL_multi_draw');
@@ -114,13 +120,16 @@
 		const directionalLight = new t3d.DirectionalLight(0xffffff, 1.2);
 		directionalLight.position.set(30, 80, 35);
 		directionalLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		directionalLight.castShadow = true;
+		directionalLight.shadow.mapSize.set(4096, 4096);
+		directionalLight.shadow.bias = -0.0003;
 		scene.add(directionalLight);
 
 		const camera = new t3d.Camera();
 		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
 		camera.position.set(420, 260, 420);
 		camera.lookAt(new t3d.Vector3(0, 0, 0), new t3d.Vector3(0, 1, 0));
-		camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 3000);
+		camera.setPerspective(50 / 180 * Math.PI, width / height, CAMERA_NEAR, CAMERA_FAR);
 		scene.add(camera);
 
 		const controls = new OrbitControls(camera, canvas);
@@ -137,6 +146,10 @@
 			objectCount: 0,
 			enableBVH: true,
 			enablePerObjectCulling: true,
+			enableShadow: true,
+			shadowAllVisible: true,
+			shadowBias: -0.0003,
+			shadowMapSize: 4096,
 			renderTransparent: false,
 			animationEnabled: true,
 			useBaseColorMap: true,
@@ -151,6 +164,15 @@
 			showStats: true,
 			leafSize: 16
 		};
+
+		const defaultGetDepthMaterial = renderer.shadowMapPass.getDepthMaterial.bind(renderer.shadowMapPass);
+		const defaultGetDistanceMaterial = renderer.shadowMapPass.getDistanceMaterial.bind(renderer.shadowMapPass);
+		const largeStaticBatchDepthMaterial = new LargeStaticBatchDepthMaterial();
+		const largeStaticBatchDistanceMaterial = new LargeStaticBatchDistanceMaterial();
+		const shadowSide = { front: t3d.DRAW_SIDE.BACK, back: t3d.DRAW_SIDE.FRONT, double: t3d.DRAW_SIDE.DOUBLE };
+		const directionalShadowBounds = new t3d.Box3();
+		const directionalShadowSphere = new t3d.Sphere();
+		const directionalShadowAngles = new t3d.Spherical().setFromVector3(directionalLight.position).makeSafe();
 
 		const gui = new GUI();
 		gui.add(params, 'objectCount').name('objectCount').listen();
@@ -174,6 +196,26 @@
 			texturePlans: null
 		};
 
+		renderer.shadowMapPass.getDepthMaterial = function(renderable, light) {
+			if (renderable.object.isLargeStaticBatch !== true) {
+				return defaultGetDepthMaterial(renderable, light);
+			}
+
+			syncLargeStaticBatchShadowMaterial(largeStaticBatchDepthMaterial, renderable);
+			return largeStaticBatchDepthMaterial;
+		};
+
+		renderer.shadowMapPass.getDistanceMaterial = function(renderable, light) {
+			if (renderable.object.isLargeStaticBatch !== true) {
+				return defaultGetDistanceMaterial(renderable, light);
+			}
+
+			syncLargeStaticBatchShadowMaterial(largeStaticBatchDistanceMaterial, renderable);
+			largeStaticBatchDistanceMaterial.uniforms.nearDistance = light.shadow.cameraNear;
+			largeStaticBatchDistanceMaterial.uniforms.farDistance = light.shadow.cameraFar;
+			return largeStaticBatchDistanceMaterial;
+		};
+
 		gui.add(params, 'enableBVH').onChange(value => {
 			if (batches.length === 0) return;
 			for (let i = 0; i < batches.length; i++) {
@@ -191,6 +233,17 @@
 				batches[i].enablePerObjectCulling = value;
 				batches[i].update(camera);
 			}
+		});
+		gui.add(params, 'enableShadow').onChange(() => {
+			syncShadowSettings();
+		});
+		gui.add(params, 'shadowAllVisible');
+		gui.add(params, 'shadowBias', -0.01, 0.01, 0.00001).onChange(() => {
+			syncShadowSettings();
+		});
+		gui.add(params, 'shadowMapSize', [512, 1024, 2048, 4096]).onChange(value => {
+			params.shadowMapSize = Number(value);
+			syncShadowSettings();
 		});
 		gui.add(params, 'renderTransparent').onChange(value => {
 			if (transparentRoot) {
@@ -280,6 +333,10 @@
 				updateUnsupportedStats();
 			}
 
+			if (params.enableShadow) {
+				renderBatchShadows();
+			}
+
 			renderer.render(scene, camera);
 
 			fpsStats.end();
@@ -337,6 +394,7 @@
 			initBatchPicking();
 
 			syncBatchMaterialUniforms();
+			syncShadowSettings();
 
 			transparentRoot = result.root;
 			transparentRoot.matrixAutoUpdate = false;
@@ -363,6 +421,9 @@
 				`materials: ${summary.materialCount}`,
 				`transparent passthrough meshes: ${modelDiagnostics.transparentMeshes}`,
 				`transparent render: ${params.renderTransparent ? 'on' : 'off'}`,
+				`shadow: ${params.enableShadow ? `on (${params.shadowAllVisible ? 'all-visible' : 'camera-visible'})` : 'off'}`,
+				`shadow bias: ${params.shadowBias.toFixed(5)}`,
+				`shadow map: ${params.shadowMapSize}`,
 				`animation: ${animationActions.length > 0 ? (params.animationEnabled ? `on (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)` : `off (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)`) : 'none'}`,
 				`base color map: ${params.useBaseColorMap ? 'on' : 'off'}`,
 				`normal map: ${params.useNormalMap ? 'on' : 'off'}`,
@@ -395,6 +456,9 @@
 				`total objects: 0`,
 				`transparent passthrough meshes: ${modelDiagnostics.transparentMeshes}`,
 				`transparent render: ${params.renderTransparent ? 'on' : 'off'}`,
+				`shadow: ${params.enableShadow ? `on (${params.shadowAllVisible ? 'all-visible' : 'camera-visible'})` : 'off'}`,
+				`shadow bias: ${params.shadowBias.toFixed(5)}`,
+				`shadow map: ${params.shadowMapSize}`,
 				`animation: ${animationActions.length > 0 ? (params.animationEnabled ? `on (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)` : `off (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)`) : 'none'}`,
 				`base color map: ${params.useBaseColorMap ? 'on' : 'off'}`,
 				`normal map: ${params.useNormalMap ? 'on' : 'off'}`,
@@ -774,6 +838,84 @@
 			}
 		}
 
+		function syncLargeStaticBatchShadowMaterial(material, renderable) {
+			const batchUniforms = renderable.object.material[0].uniforms;
+			material.uniforms.drawIdTexture = batchUniforms.drawIdTexture;
+			material.uniforms.staticMatrixTexture = batchUniforms.staticMatrixTexture;
+			material.uniforms.dynamicMatrixTexture = batchUniforms.dynamicMatrixTexture;
+			material.uniforms.objectDataTexture = batchUniforms.objectDataTexture;
+			material.uniforms.materialDataTexture = batchUniforms.materialDataTexture;
+			material.uniforms.baseColorArray = batchUniforms.baseColorArray;
+			material.uniforms.u_UseAlphaTest = params.useAlphaTest ? 1 : 0;
+			material.side = shadowSide[renderable.material.side] || renderable.material.side;
+			material.clippingPlanes = renderable.material.clippingPlanes;
+			material.drawMode = renderable.material.drawMode;
+		}
+
+		function syncShadowSettings() {
+			directionalLight.castShadow = params.enableShadow;
+			directionalLight.shadow.mapSize.set(params.shadowMapSize, params.shadowMapSize);
+			directionalLight.shadow.bias = params.shadowBias;
+			directionalLight.shadow.needsUpdate = true;
+		}
+
+		function fitDirectionalShadowToBatches() {
+			directionalShadowBounds.makeEmpty();
+
+			for (let i = 0; i < batches.length; i++) {
+				const batch = batches[i];
+				for (let j = 0; j < batch._objects.length; j++) {
+					directionalShadowBounds.union(batch._objects[j].boundingBox);
+				}
+			}
+
+			if (directionalShadowBounds.isEmpty()) {
+				return;
+			}
+
+			const clippedPolygons = ShadowAdapter.getSphereByBox3AndCamera(
+				directionalShadowBounds,
+				camera,
+				CAMERA_NEAR,
+				CAMERA_FAR - CAMERA_NEAR,
+				directionalShadowSphere
+			);
+
+			if (!clippedPolygons || !(directionalShadowSphere.radius > 0)) {
+				directionalShadowBounds.getBoundingSphere(directionalShadowSphere);
+			}
+
+			directionalShadowSphere.radius = Math.max(directionalShadowSphere.radius * 1.12, 8);
+			ShadowAdapter.setDirectionalLight(
+				directionalLight,
+				directionalShadowAngles.phi,
+				directionalShadowAngles.theta,
+				directionalShadowSphere
+			);
+		}
+			fitDirectionalShadowToBatches();
+
+		function renderBatchShadows() {
+			if (!directionalLight.castShadow || batches.length === 0) {
+				return;
+			}
+
+
+			for (let i = 0; i < batches.length; i++) {
+				if (params.shadowAllVisible) {
+					batches[i].updateAllVisible();
+				} else {
+					batches[i].update(camera);
+				}
+			}
+
+			renderer.shadowMapPass.render(renderer, scene);
+
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].update(camera);
+			}
+		}
+
 		function createBatchesForDescriptors(descriptors, materials, textureSet) {
 			if (descriptors.length === 0) {
 				return;
@@ -789,6 +931,9 @@
 					enablePerObjectCulling: params.enablePerObjectCulling,
 					leafSize: params.leafSize
 				});
+				batch.castShadow = true;
+				batch.receiveShadow = true;
+				batch.shadowType = t3d.SHADOW_TYPE.PCF5_SOFT;
 				batch.material[0].side = bucket.side;
 				if (bucket.hasTangents) {
 					batch.material[0].defines.USE_TANGENT = true;
@@ -1283,7 +1428,7 @@
 			width = window.innerWidth || 2;
 			height = window.innerHeight || 2;
 
-			camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 3000);
+			camera.setPerspective(50 / 180 * Math.PI, width / height, CAMERA_NEAR, CAMERA_FAR);
 			renderer.screenRenderTarget.resize(width, height);
 			if (pickRenderTarget) {
 				pickRenderTarget.resize(width, height);
