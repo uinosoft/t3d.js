@@ -1,10 +1,11 @@
-import { DRAW_SIDE, Matrix3, ShaderLib, ShaderMaterial } from 't3d';
+import { DRAW_SIDE, Matrix3, ShaderLib, ShaderMaterial, Vector3 } from 't3d';
 
 const batching_pars_vert = `
 #extension GL_ANGLE_multi_draw : require
 
 uniform sampler2D drawIdTexture;
-uniform sampler2D matrixTexture;
+uniform sampler2D staticMatrixTexture;
+uniform sampler2D dynamicMatrixTexture;
 uniform sampler2D objectDataTexture;
 uniform sampler2D materialDataTexture;
 
@@ -18,6 +19,8 @@ varying vec4 vBatchUvTransform;
 varying vec4 vBatchEmissive;
 varying vec4 vBatchExtraParams;
 varying float vBatchTextureLayer;
+varying float vBatchObjectFlags;
+varying float vBatchObjectId;
 varying vec2 vBatchUv;
 
 float getBatchTextureValue(const in sampler2D tex, const in int index) {
@@ -34,12 +37,12 @@ vec4 getBatchTextureTexel(const in sampler2D tex, const in int index) {
 	return texelFetch(tex, ivec2(x, y), 0);
 }
 
-mat4 getBatchMatrix(const in int matrixId) {
+mat4 getBatchMatrix(const in sampler2D tex, const in int matrixId) {
 	int pixelIndex = matrixId * 4;
-	vec4 c0 = getBatchTextureTexel(matrixTexture, pixelIndex + 0);
-	vec4 c1 = getBatchTextureTexel(matrixTexture, pixelIndex + 1);
-	vec4 c2 = getBatchTextureTexel(matrixTexture, pixelIndex + 2);
-	vec4 c3 = getBatchTextureTexel(matrixTexture, pixelIndex + 3);
+	vec4 c0 = getBatchTextureTexel(tex, pixelIndex + 0);
+	vec4 c1 = getBatchTextureTexel(tex, pixelIndex + 1);
+	vec4 c2 = getBatchTextureTexel(tex, pixelIndex + 2);
+	vec4 c3 = getBatchTextureTexel(tex, pixelIndex + 3);
 	return mat4(c0, c1, c2, c3);
 }
 `;
@@ -49,8 +52,10 @@ int objectId = int(getBatchTextureValue(drawIdTexture, gl_DrawID) + 0.5);
 vec4 objectData = getBatchTextureTexel(objectDataTexture, objectId);
 int materialId = int(objectData.r + 0.5);
 int matrixId = int(objectData.g + 0.5);
+float objectFlags = objectData.a;
+bool batchIsAnimated = mod(floor(objectFlags), 2.0) > 0.5;
 
-mat4 batchingMatrix = getBatchMatrix(matrixId);
+mat4 batchingMatrix = batchIsAnimated ? getBatchMatrix(dynamicMatrixTexture, matrixId) : getBatchMatrix(staticMatrixTexture, matrixId);
 vec4 worldPosition = u_Model * batchingMatrix * vec4(transformed, 1.0);
 
 vBatchTextureLayer = objectData.b;
@@ -59,6 +64,8 @@ vBatchSurfaceParams = getBatchTextureTexel(materialDataTexture, materialId * 5 +
 vBatchUvTransform = getBatchTextureTexel(materialDataTexture, materialId * 5 + 2);
 vBatchEmissive = getBatchTextureTexel(materialDataTexture, materialId * 5 + 3);
 vBatchExtraParams = getBatchTextureTexel(materialDataTexture, materialId * 5 + 4);
+vBatchObjectFlags = objectFlags;
+vBatchObjectId = float(objectId);
 vBatchUv = a_Uv;
 
 gl_Position = u_ProjectionView * worldPosition;
@@ -80,8 +87,16 @@ uniform sampler2DArray baseColorArray;
 uniform sampler2DArray normalMapArray;
 uniform sampler2DArray ormMapArray;
 uniform sampler2DArray emissiveMapArray;
+uniform float u_UseBaseColorMap;
 uniform float u_UseNormalMap;
 uniform float u_UseORMMap;
+uniform float u_UseAlphaTest;
+uniform float u_ShowNormalMapOnly;
+uniform float u_ShowTangentSpaceHealth;
+uniform float u_ForceFlatNormal;
+uniform float u_SelectedObjectId;
+uniform float u_HighlightMix;
+uniform vec3 u_HighlightColor;
 
 varying vec4 vBatchBaseColorFactor;
 varying vec4 vBatchSurfaceParams;
@@ -89,6 +104,8 @@ varying vec4 vBatchUvTransform;
 varying vec4 vBatchEmissive;
 varying vec4 vBatchExtraParams;
 varying float vBatchTextureLayer;
+varying float vBatchObjectFlags;
+varying float vBatchObjectId;
 varying vec2 vBatchUv;
 
 vec2 getBatchUv() {
@@ -102,11 +119,32 @@ vec4 batchSRGBToLinear(vec4 value) {
 
 const batching_diffuse_frag = `
 vec2 batchUvDiffuse = getBatchUv();
-vec4 batchBaseColor = batchSRGBToLinear(texture(baseColorArray, vec3(batchUvDiffuse, vBatchTextureLayer))) * vBatchBaseColorFactor;
+vec4 batchBaseColor = vBatchBaseColorFactor;
+if (u_UseBaseColorMap > 0.5) {
+	batchBaseColor *= batchSRGBToLinear(texture(baseColorArray, vec3(batchUvDiffuse, vBatchTextureLayer)));
+}
+if (u_SelectedObjectId > -0.5 && abs(vBatchObjectId - u_SelectedObjectId) < 0.5) {
+	batchBaseColor.rgb = mix(batchBaseColor.rgb, u_HighlightColor, u_HighlightMix);
+}
 outColor *= batchBaseColor;
 `;
 
 const batching_normal_frag = `
+vec2 batchUvNormal = getBatchUv();
+
+if (u_ShowTangentSpaceHealth > 0.5) {
+	vec2 batchUvDx = dFdx(batchUvNormal);
+	vec2 batchUvDy = dFdy(batchUvNormal);
+	float uvDerivativeStrength = clamp((length(batchUvDx) + length(batchUvDy)) * 8.0, 0.0, 1.0);
+	outColor = vec4(uvDerivativeStrength, 1.0 - uvDerivativeStrength, 0.0, 1.0);
+	return;
+}
+
+if (u_ShowNormalMapOnly > 0.5) {
+	outColor = vec4(texture(normalMapArray, vec3(batchUvNormal, vBatchTextureLayer)).rgb, 1.0);
+	return;
+}
+
 #ifdef FLAT_SHADED
 	vec3 fdx = dFdx(v_modelPos);
 	vec3 fdy = dFdy(v_modelPos);
@@ -129,19 +167,15 @@ const batching_normal_frag = `
 #endif
 
 vec3 geometryNormal = N;
+bool batchUseNormalMap = u_UseNormalMap > 0.5 && u_ForceFlatNormal < 0.5 && mod(floor(vBatchObjectFlags / 2.0), 2.0) > 0.5;
 
-vec2 batchUvNormal = getBatchUv();
-if (u_UseNormalMap > 0.5) {
+#ifdef USE_TANGENT
+if (batchUseNormalMap) {
 	vec3 mapN = texture(normalMapArray, vec3(batchUvNormal, vBatchTextureLayer)).rgb * 2.0 - 1.0;
 	mapN.xy *= vBatchExtraParams.xy;
-
-	#ifdef USE_TBN
-		N = normalize(tspace * mapN);
-	#else
-		mapN.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);
-		N = normalize(tsn(N, v_modelPos, batchUvNormal) * mapN);
-	#endif
+	N = normalize(tspace * mapN);
 }
+#endif
 
 #ifdef USE_CLEARCOAT
 	vec3 clearcoatNormal = geometryNormal;
@@ -150,7 +184,7 @@ if (u_UseNormalMap > 0.5) {
 
 const batching_alpha_test_frag = `
 float batchAlphaCutoff = vBatchSurfaceParams.b;
-if (outColor.a < batchAlphaCutoff) discard;
+if (u_UseAlphaTest > 0.5 && batchAlphaCutoff > 0.0 && outColor.a < batchAlphaCutoff) discard;
 `;
 
 const batching_surface_frag = `
@@ -211,15 +245,24 @@ class LargeStaticBatchMaterial extends ShaderMaterial {
 			},
 			uniforms: {
 				drawIdTexture: null,
-				matrixTexture: null,
+				staticMatrixTexture: null,
+				dynamicMatrixTexture: null,
 				objectDataTexture: null,
 				materialDataTexture: null,
 				baseColorArray: null,
 				normalMapArray: null,
 				ormMapArray: null,
 				emissiveMapArray: null,
+				u_UseBaseColorMap: 1,
 				u_UseNormalMap: 1,
 				u_UseORMMap: 1,
+				u_UseAlphaTest: 1,
+				u_ShowNormalMapOnly: 0,
+				u_ShowTangentSpaceHealth: 0,
+				u_ForceFlatNormal: 0,
+				u_SelectedObjectId: -1,
+				u_HighlightMix: 0.45,
+				u_HighlightColor: new Vector3(1.0, 0.82, 0.18),
 				uvTransform: new Matrix3().elements
 			},
 			vertexShader: pbr_vert,

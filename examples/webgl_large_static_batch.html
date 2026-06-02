@@ -56,6 +56,7 @@
 		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
 		import { GUI } from './libs/lil-gui.esm.min.js';
 		import Stats from './libs/stats.module.js';
+		import { LargeStaticBatchPickMaterial } from './jsm/materials/LargeStaticBatchPickMaterial.js';
 		import { LargeStaticBatch } from './jsm/objects/LargeStaticBatch.js';
 
 		const MODEL_URL = 'http://10.100.41.9:8080/World.gltf';
@@ -136,9 +137,15 @@
 			objectCount: 0,
 			enableBVH: true,
 			enablePerObjectCulling: true,
-			renderTransparent: true,
+			renderTransparent: false,
+			animationEnabled: true,
+			useBaseColorMap: true,
 			useNormalMap: true,
 			useORMMap: true,
+			useAlphaTest: true,
+			showNormalMapOnly: false,
+			showTangentSpaceHealth: false,
+			forceFlatNormal: false,
 			useMipmaps: true,
 			freezeCulling: false,
 			showStats: true,
@@ -149,8 +156,18 @@
 		gui.add(params, 'objectCount').name('objectCount').listen();
 
 		let batches = [];
+		let animationMixer = null;
+		let animationActions = [];
+		let defaultActiveAnimationActionIndices = [];
+		let animatedNodes = new Set();
+		let pickRenderTarget = null;
+		let batchPickIdRanges = [];
+		let selectedPickInfo = null;
+		let pickingBound = false;
+		const pickPixels = new Uint8Array(4);
 		let transparentRoot = null;
 		let textureArraySet = null;
+		let lastFrameTime = performance.now();
 		let modelDiagnostics = {
 			transparentMeshes: 0,
 			incompatibleMeshes: 0,
@@ -180,15 +197,29 @@
 				transparentRoot.visible = value;
 			}
 		});
+		gui.add(params, 'animationEnabled').name('animation').onChange(value => {
+			applyDefaultAnimationWeights(value);
+		});
+		gui.add(params, 'useBaseColorMap').onChange(() => {
+			syncBatchMaterialUniforms();
+		});
 		gui.add(params, 'useNormalMap').onChange(value => {
-			for (let i = 0; i < batches.length; i++) {
-				batches[i].material[0].uniforms.u_UseNormalMap = value ? 1 : 0;
-			}
+			syncBatchMaterialUniforms();
 		});
 		gui.add(params, 'useORMMap').onChange(value => {
-			for (let i = 0; i < batches.length; i++) {
-				batches[i].material[0].uniforms.u_UseORMMap = value ? 1 : 0;
-			}
+			syncBatchMaterialUniforms();
+		});
+		gui.add(params, 'useAlphaTest').onChange(() => {
+			syncBatchMaterialUniforms();
+		});
+		gui.add(params, 'showNormalMapOnly').onChange(() => {
+			syncBatchMaterialUniforms();
+		});
+		gui.add(params, 'showTangentSpaceHealth').onChange(() => {
+			syncBatchMaterialUniforms();
+		});
+		gui.add(params, 'forceFlatNormal').onChange(() => {
+			syncBatchMaterialUniforms();
 		});
 		gui.add(params, 'useMipmaps').onChange(value => {
 			toggleTextureArrayMipmaps(textureArraySet, value);
@@ -226,7 +257,13 @@
 			requestAnimationFrame(loop);
 
 			fpsStats.begin();
+			const now = performance.now();
+			const delta = Math.max(0, (now - lastFrameTime) / 1000);
+			lastFrameTime = now;
 
+			if (animationMixer && params.animationEnabled) {
+				animationMixer.update(delta);
+			}
 			controls.update();
 			scene.updateMatrix();
 
@@ -256,8 +293,21 @@
 			const result = await loader.load(MODEL_URL);
 			console.timeEnd('load model');
 
+			if (result.animations && result.animations.length > 0) {
+				animationMixer = new t3d.AnimationMixer();
+				animationActions = [];
+				animatedNodes = collectAnimatedNodes(result.animations);
+				result.animations.forEach(clip => {
+					const action = new t3d.AnimationAction(clip);
+					animationMixer.addAction(action);
+					animationActions.push(action);
+				});
+				defaultActiveAnimationActionIndices = selectNonConflictingAnimationActionIndices(animationActions);
+				applyDefaultAnimationWeights(params.animationEnabled);
+			}
+
 			console.time('generate descriptors');
-			const modelSource = extractModelSource(result.root);
+			const modelSource = extractModelSource(result.root, animatedNodes);
 			const materials = modelSource.materials;
 			modelDiagnostics.transparentMeshes = modelSource.transparentMeshes;
 			modelDiagnostics.incompatibleMeshes = modelSource.incompatibleMeshes;
@@ -281,40 +331,12 @@
 
 			console.time('enable rendering');
 			batches = [];
+			batchPickIdRanges = [];
+			createBatchesForDescriptors(indexedDescriptors, materials, textureArraySet);
+			createBatchesForDescriptors(nonIndexedDescriptors, materials, textureArraySet);
+			initBatchPicking();
 
-			if (indexedDescriptors.length > 0) {
-				const batch = new LargeStaticBatch(indexedDescriptors, {
-					materials,
-					enableBVH: params.enableBVH,
-					enablePerObjectCulling: params.enablePerObjectCulling,
-					leafSize: params.leafSize
-				});
-				batch.setBaseColorArray(baseColorArray);
-				batch.setNormalMapArray(normalMapArray);
-				batch.setORMMapArray(ormMapArray);
-				batch.setEmissiveMapArray(emissiveMapArray);
-				batch.material[0].uniforms.u_UseNormalMap = params.useNormalMap ? 1 : 0;
-				batch.material[0].uniforms.u_UseORMMap = params.useORMMap ? 1 : 0;
-				scene.add(batch);
-				batches.push(batch);
-			}
-
-			if (nonIndexedDescriptors.length > 0) {
-				const batch = new LargeStaticBatch(nonIndexedDescriptors, {
-					materials,
-					enableBVH: params.enableBVH,
-					enablePerObjectCulling: params.enablePerObjectCulling,
-					leafSize: params.leafSize
-				});
-				batch.setBaseColorArray(baseColorArray);
-				batch.setNormalMapArray(normalMapArray);
-				batch.setORMMapArray(ormMapArray);
-				batch.setEmissiveMapArray(emissiveMapArray);
-				batch.material[0].uniforms.u_UseNormalMap = params.useNormalMap ? 1 : 0;
-				batch.material[0].uniforms.u_UseORMMap = params.useORMMap ? 1 : 0;
-				scene.add(batch);
-				batches.push(batch);
-			}
+			syncBatchMaterialUniforms();
 
 			transparentRoot = result.root;
 			transparentRoot.matrixAutoUpdate = false;
@@ -341,8 +363,14 @@
 				`materials: ${summary.materialCount}`,
 				`transparent passthrough meshes: ${modelDiagnostics.transparentMeshes}`,
 				`transparent render: ${params.renderTransparent ? 'on' : 'off'}`,
+				`animation: ${animationActions.length > 0 ? (params.animationEnabled ? `on (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)` : `off (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)`) : 'none'}`,
+				`base color map: ${params.useBaseColorMap ? 'on' : 'off'}`,
 				`normal map: ${params.useNormalMap ? 'on' : 'off'}`,
+				`show normal map only: ${params.showNormalMapOnly ? 'on' : 'off'}`,
+				`tangent space health: ${params.showTangentSpaceHealth ? 'on' : 'off'}`,
+				`force flat normal: ${params.forceFlatNormal ? 'on' : 'off'}`,
 				`orm map: ${params.useORMMap ? 'on' : 'off'}`,
+				`alpha test: ${params.useAlphaTest ? 'on' : 'off'}`,
 				`mipmaps: ${params.useMipmaps ? 'on' : 'off'}`,
 				`incompatible opaque meshes: ${modelDiagnostics.incompatibleMeshes}`,
 				`visible objects: ${summary.visibleObjects}`,
@@ -367,8 +395,14 @@
 				`total objects: 0`,
 				`transparent passthrough meshes: ${modelDiagnostics.transparentMeshes}`,
 				`transparent render: ${params.renderTransparent ? 'on' : 'off'}`,
+				`animation: ${animationActions.length > 0 ? (params.animationEnabled ? `on (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)` : `off (${defaultActiveAnimationActionIndices.length}/${animationActions.length} clips)`) : 'none'}`,
+				`base color map: ${params.useBaseColorMap ? 'on' : 'off'}`,
 				`normal map: ${params.useNormalMap ? 'on' : 'off'}`,
+				`show normal map only: ${params.showNormalMapOnly ? 'on' : 'off'}`,
+				`tangent space health: ${params.showTangentSpaceHealth ? 'on' : 'off'}`,
+				`force flat normal: ${params.forceFlatNormal ? 'on' : 'off'}`,
 				`orm map: ${params.useORMMap ? 'on' : 'off'}`,
+				`alpha test: ${params.useAlphaTest ? 'on' : 'off'}`,
 				`mipmaps: ${params.useMipmaps ? 'on' : 'off'}`,
 				`incompatible opaque meshes: ${modelDiagnostics.incompatibleMeshes}`,
 				`visible objects: 0`,
@@ -383,7 +417,7 @@
 			].join('\n');
 		}
 
-		function extractModelSource(root) {
+		function extractModelSource(root, animatedNodeSet = new Set()) {
 			root.updateMatrix();
 
 			const overallBounds = new t3d.Box3();
@@ -397,14 +431,16 @@
 			root.traverse(node => {
 				if (!node.isMesh || !node.geometry) return;
 
-				const sourceMaterial = Array.isArray(node.material) ? node.material[0] : node.material;
-				if (!sourceMaterial || sourceMaterial.transparent) {
-					transparentMeshes++;
-					return;
-				}
-
 				const geometry = node.geometry;
 				const indexed = geometry.index !== null;
+				const geometryGroups = Array.isArray(geometry.groups) ? geometry.groups : [];
+				const sourceMaterials = Array.isArray(node.material) ? node.material : [node.material];
+				const hasMorphTargets = !!(geometry.morphAttributes && Object.keys(geometry.morphAttributes).length > 0);
+
+				if (node.isSkinnedMesh || node.morphTargetInfluences || hasMorphTargets) {
+					incompatibleMeshes++;
+					return;
+				}
 
 				if (!geometry.getAttribute('a_Position')) {
 					incompatibleMeshes++;
@@ -419,29 +455,76 @@
 				}
 
 				const worldBounds = geometry.boundingBox.clone().applyMatrix4(node.worldMatrix);
-				overallBounds.union(worldBounds);
+				const meshEntries = [];
+				let hasOpaqueBatchEntry = false;
+				let hasTransparentPassthrough = false;
 
-				const materialKey = sourceMaterial.uuid || `${materials.length}`;
-				let materialId = materialMap.get(materialKey);
-				if (materialId === undefined) {
-					materialId = materials.length;
-					materialMap.set(materialKey, materialId);
-					materials.push(extractMaterialDefinition(sourceMaterial));
+				if (Array.isArray(node.material) && geometryGroups.length > 0) {
+					for (let i = 0; i < geometryGroups.length; i++) {
+						const group = geometryGroups[i];
+						const sourceMaterial = sourceMaterials[group.materialIndex] || sourceMaterials[0];
+
+						if (!sourceMaterial) {
+							incompatibleMeshes++;
+							continue;
+						}
+
+						if (sourceMaterial.transparent) {
+							hasTransparentPassthrough = true;
+							continue;
+						}
+
+						const materialId = getOrCreateMaterialId(sourceMaterial, materials, materialMap);
+						meshEntries.push({
+							sourceId: node.uuid,
+							sourceNode: node,
+							isAnimated: isNodeAffectedByAnimation(node, animatedNodeSet, root),
+							geometry,
+							matrix: node.worldMatrix.clone(),
+							materialId,
+							textureLayerId: 0,
+							drawStart: group.start,
+							drawCount: group.count,
+							normalMapHealthy: evaluateDrawItemNormalMapHealth(geometry, group.start, group.count)
+						});
+						hasOpaqueBatchEntry = true;
+					}
+				} else {
+					const sourceMaterial = sourceMaterials[0];
+					if (!sourceMaterial || sourceMaterial.transparent) {
+						hasTransparentPassthrough = true;
+					} else {
+						const materialId = getOrCreateMaterialId(sourceMaterial, materials, materialMap);
+						meshEntries.push({
+							sourceId: node.uuid,
+							sourceNode: node,
+							isAnimated: isNodeAffectedByAnimation(node, animatedNodeSet, root),
+							geometry,
+							matrix: node.worldMatrix.clone(),
+							materialId,
+							textureLayerId: 0,
+							drawStart: 0,
+							drawCount: indexed ? geometry.index.buffer.count : geometry.getAttribute('a_Position').buffer.count,
+							normalMapHealthy: evaluateDrawItemNormalMapHealth(geometry, 0, indexed ? geometry.index.buffer.count : geometry.getAttribute('a_Position').buffer.count)
+						});
+						hasOpaqueBatchEntry = true;
+					}
 				}
 
-				node.visible = false;
+				if (hasOpaqueBatchEntry) {
+					overallBounds.union(worldBounds);
+					const targetEntries = indexed ? indexedMeshEntries : nonIndexedMeshEntries;
+					for (let i = 0; i < meshEntries.length; i++) {
+						targetEntries.push(meshEntries[i]);
+					}
+				}
 
-				const entry = {
-					geometry,
-					matrix: node.worldMatrix.clone(),
-					materialId,
-					textureLayerId: 0
-				};
+				if (hasTransparentPassthrough) {
+					transparentMeshes++;
+				}
 
-				if (indexed) {
-					indexedMeshEntries.push(entry);
-				} else {
-					nonIndexedMeshEntries.push(entry);
+				if (hasOpaqueBatchEntry && !hasTransparentPassthrough) {
+					node.visible = false;
 				}
 			});
 
@@ -479,14 +562,111 @@
 				const normalizedMeshMatrix = new t3d.Matrix4().multiplyMatrices(normalizeMatrix, entry.matrix);
 
 				descriptors[i] = {
+					sourceId: entry.sourceId,
+					sourceNode: entry.sourceNode,
+					isAnimated: entry.isAnimated === true,
 					geometry: entry.geometry,
 					matrix: normalizedMeshMatrix,
+					normalizeMatrix: normalizeMatrix.clone(),
 					materialId: entry.materialId,
-					textureLayerId: materials[entry.materialId].textureLayerId
+					textureLayerId: materials[entry.materialId].textureLayerId,
+					side: materials[entry.materialId].side,
+					hasTangent: !!entry.geometry.getAttribute('a_Tangent'),
+					normalMapEnabled: materials[entry.materialId].hasNormalMap && entry.normalMapHealthy !== false && !!entry.geometry.getAttribute('a_Tangent'),
+					flipWinding: normalizedMeshMatrix.determinant() < 0,
+					drawStart: entry.drawStart,
+					drawCount: entry.drawCount
 				};
 			}
 
 			return descriptors;
+		}
+
+		function collectAnimatedNodes(clips) {
+			const nodes = new Set();
+
+			for (let i = 0; i < clips.length; i++) {
+				const tracks = clips[i].tracks || [];
+				for (let j = 0; j < tracks.length; j++) {
+					if (tracks[j].target) {
+						nodes.add(tracks[j].target);
+					}
+				}
+			}
+
+			return nodes;
+		}
+
+		function selectNonConflictingAnimationActionIndices(actions) {
+			const selectedIndices = [];
+			const occupiedBindings = new Set();
+
+			for (let i = 0; i < actions.length; i++) {
+				const action = actions[i];
+				const bindings = getActionBindingKeys(action);
+				let conflicts = false;
+
+				for (let j = 0; j < bindings.length; j++) {
+					if (occupiedBindings.has(bindings[j])) {
+						conflicts = true;
+						break;
+					}
+				}
+
+				if (conflicts) {
+					continue;
+				}
+
+				selectedIndices.push(i);
+				for (let j = 0; j < bindings.length; j++) {
+					occupiedBindings.add(bindings[j]);
+				}
+			}
+
+			return selectedIndices;
+		}
+
+		function getActionBindingKeys(action) {
+			const tracks = action.clip.tracks || [];
+			const keys = new Array(tracks.length);
+
+			for (let i = 0; i < tracks.length; i++) {
+				const track = tracks[i];
+				const targetId = track.target ? (track.target.uuid || track.target.id || `target-${i}`) : `no-target-${i}`;
+				keys[i] = `${targetId}:${track.propertyPath}`;
+			}
+
+			return keys;
+		}
+
+		function applyDefaultAnimationWeights(enabled) {
+			for (let i = 0; i < animationActions.length; i++) {
+				animationActions[i].weight = 0;
+			}
+
+			if (!enabled || defaultActiveAnimationActionIndices.length === 0) {
+				return;
+			}
+
+			for (let i = 0; i < defaultActiveAnimationActionIndices.length; i++) {
+				animationActions[defaultActiveAnimationActionIndices[i]].weight = 1;
+			}
+		}
+
+		function isNodeAffectedByAnimation(node, animatedNodeSet, root) {
+			let current = node;
+
+			while (current) {
+				if (animatedNodeSet.has(current)) {
+					return true;
+				}
+				if (current === root) {
+					break;
+				}
+				current = current.parent;
+			}
+
+			return false;
 		}
 
 		function extractMaterialDefinition(sourceMaterial) {
@@ -507,6 +687,7 @@
 				diffuseWrapS: sourceMaterial.diffuseMap ? sourceMaterial.diffuseMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
 				diffuseWrapT: sourceMaterial.diffuseMap ? sourceMaterial.diffuseMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
 				normalImage: sourceMaterial.normalMap ? sourceMaterial.normalMap.image : null,
+				hasNormalMap: !!sourceMaterial.normalMap,
 				normalWrapS: sourceMaterial.normalMap ? sourceMaterial.normalMap.wrapS : t3d.TEXTURE_WRAP.REPEAT,
 				normalWrapT: sourceMaterial.normalMap ? sourceMaterial.normalMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
 				roughnessImage: sourceMaterial.roughnessMap ? sourceMaterial.roughnessMap.image : null,
@@ -523,8 +704,214 @@
 				emissiveWrapT: sourceMaterial.emissiveMap ? sourceMaterial.emissiveMap.wrapT : t3d.TEXTURE_WRAP.REPEAT,
 				aoMapIntensity: sourceMaterial.aoMapIntensity !== undefined ? sourceMaterial.aoMapIntensity : 1,
 				normalScale: sourceMaterial.normalScale ? { x: sourceMaterial.normalScale.x, y: sourceMaterial.normalScale.y } : { x: 1, y: 1 },
+				side: sourceMaterial.side || t3d.DRAW_SIDE.FRONT,
 				textureLayerId: 0
 			};
+		}
+
+		function getOrCreateMaterialId(sourceMaterial, materials, materialMap) {
+			const materialKey = sourceMaterial.uuid || `${materials.length}`;
+			let materialId = materialMap.get(materialKey);
+			if (materialId === undefined) {
+				materialId = materials.length;
+				materialMap.set(materialKey, materialId);
+				materials.push(extractMaterialDefinition(sourceMaterial));
+			}
+			return materialId;
+		}
+
+		function evaluateDrawItemNormalMapHealth(geometry, drawStart, drawCount) {
+			const uvAttribute = geometry.getAttribute('a_Uv');
+			if (!uvAttribute || drawCount < 3) {
+				return false;
+			}
+
+			const indexed = geometry.index !== null;
+			const uvSource = uvAttribute.buffer.array;
+			const uvStride = uvAttribute.buffer.stride;
+			const uvOffset = uvAttribute.offset;
+			const triangleCount = Math.floor(drawCount / 3);
+			let degenerateCount = 0;
+
+			for (let i = 0; i < triangleCount; i++) {
+				const base = drawStart + i * 3;
+				const i0 = indexed ? readIndexAt(geometry.index, base + 0) : base + 0;
+				const i1 = indexed ? readIndexAt(geometry.index, base + 1) : base + 1;
+				const i2 = indexed ? readIndexAt(geometry.index, base + 2) : base + 2;
+
+				const uv0x = uvSource[i0 * uvStride + uvOffset + 0];
+				const uv0y = uvSource[i0 * uvStride + uvOffset + 1];
+				const uv1x = uvSource[i1 * uvStride + uvOffset + 0];
+				const uv1y = uvSource[i1 * uvStride + uvOffset + 1];
+				const uv2x = uvSource[i2 * uvStride + uvOffset + 0];
+				const uv2y = uvSource[i2 * uvStride + uvOffset + 1];
+
+				const uvArea = Math.abs((uv1x - uv0x) * (uv2y - uv0y) - (uv1y - uv0y) * (uv2x - uv0x)) * 0.5;
+				if (uvArea < 1e-8) {
+					degenerateCount++;
+				}
+			}
+
+			return triangleCount > 0 && (degenerateCount / triangleCount) < 0.25;
+		}
+
+		function readIndexAt(indexAttribute, index) {
+			const source = indexAttribute.buffer.array;
+			return source[index * indexAttribute.buffer.stride + indexAttribute.offset];
+		}
+
+		function syncBatchMaterialUniforms() {
+			for (let i = 0; i < batches.length; i++) {
+				const uniforms = batches[i].material[0].uniforms;
+				uniforms.u_UseBaseColorMap = params.useBaseColorMap ? 1 : 0;
+				uniforms.u_UseNormalMap = params.useNormalMap && batches[i]._supportsNormalMap ? 1 : 0;
+				uniforms.u_UseORMMap = params.useORMMap ? 1 : 0;
+				uniforms.u_UseAlphaTest = params.useAlphaTest ? 1 : 0;
+				uniforms.u_ShowNormalMapOnly = params.showNormalMapOnly ? 1 : 0;
+				uniforms.u_ShowTangentSpaceHealth = params.showTangentSpaceHealth ? 1 : 0;
+				uniforms.u_ForceFlatNormal = params.forceFlatNormal ? 1 : 0;
+				uniforms.u_SelectedObjectId = selectedPickInfo && selectedPickInfo.batch === batches[i] ? selectedPickInfo.localObjectId : -1;
+			}
+		}
+
+		function createBatchesForDescriptors(descriptors, materials, textureSet) {
+			if (descriptors.length === 0) {
+				return;
+			}
+
+			const buckets = bucketDescriptorsBySideAndTangent(descriptors);
+
+			for (let i = 0; i < buckets.length; i++) {
+				const bucket = buckets[i];
+				const batch = new LargeStaticBatch(bucket.descriptors, {
+					materials,
+					enableBVH: params.enableBVH,
+					enablePerObjectCulling: params.enablePerObjectCulling,
+					leafSize: params.leafSize
+				});
+				batch.material[0].side = bucket.side;
+				if (bucket.hasTangents) {
+					batch.material[0].defines.USE_TANGENT = true;
+					if (batch._supportsNormalMap) {
+						batch.material[0].defines.USE_NORMAL_MAP = true;
+					}
+				} else {
+					delete batch.material[0].defines.USE_TANGENT;
+					delete batch.material[0].defines.USE_NORMAL_MAP;
+				}
+				batch.material[0].needsUpdate = true;
+				batch.setBaseColorArray(textureSet.baseColorArray);
+				batch.setNormalMapArray(textureSet.normalMapArray);
+				batch.setORMMapArray(textureSet.ormMapArray);
+				batch.setEmissiveMapArray(textureSet.emissiveMapArray);
+				scene.add(batch);
+				batches.push(batch);
+			}
+		}
+
+		function initBatchPicking() {
+			if (!pickRenderTarget) {
+				pickRenderTarget = new t3d.RenderTarget2D(width, height);
+			} else {
+				pickRenderTarget.resize(width, height);
+			}
+			pickRenderTarget.texture.minFilter = t3d.TEXTURE_FILTER.NEAREST;
+			pickRenderTarget.texture.magFilter = t3d.TEXTURE_FILTER.NEAREST;
+			pickRenderTarget.texture.generateMipmaps = false;
+
+			let nextPickIdOffset = 0;
+			for (let i = 0; i < batches.length; i++) {
+				const batch = batches[i];
+				const pickMaterial = new LargeStaticBatchPickMaterial();
+				pickMaterial.side = batch.material[0].side;
+				pickMaterial.uniforms.drawIdTexture = batch.material[0].uniforms.drawIdTexture;
+				pickMaterial.uniforms.staticMatrixTexture = batch.material[0].uniforms.staticMatrixTexture;
+				pickMaterial.uniforms.dynamicMatrixTexture = batch.material[0].uniforms.dynamicMatrixTexture;
+				pickMaterial.uniforms.objectDataTexture = batch.material[0].uniforms.objectDataTexture;
+				pickMaterial.uniforms.u_PickIdOffset = nextPickIdOffset;
+				batch.pickMaterial = pickMaterial;
+				batchPickIdRanges.push({
+					batch,
+					offset: nextPickIdOffset,
+					count: batch._objects.length
+				});
+				nextPickIdOffset += batch._objects.length;
+			}
+
+			if (!pickingBound) {
+				canvas.addEventListener('pointerdown', onCanvasPointerDown, false);
+				pickingBound = true;
+			}
+		}
+
+		function onCanvasPointerDown(event) {
+			if (!pickRenderTarget) {
+				return;
+			}
+
+			const rect = canvas.getBoundingClientRect();
+			const pixelX = Math.floor((event.clientX - rect.left) / rect.width * width);
+			const pixelY = Math.floor((event.clientY - rect.top) / rect.height * height);
+
+			scene.updateMatrix();
+			scene.updateRenderStates(camera);
+			scene.updateRenderQueue(camera);
+
+			for (let i = 0; i < batches.length; i++) {
+				batches[i].update(camera);
+			}
+
+			renderer.renderScene(scene, camera, pickRenderTarget, {
+				ifRender(renderable) {
+					return renderable.object.isLargeStaticBatch === true;
+				},
+				getMaterial(renderable) {
+					return renderable.object.pickMaterial;
+				}
+			});
+
+			renderer.readTexturePixelsSync(pickRenderTarget.texture, pixelX, height - pixelY, 1, 1, pickPixels);
+			const pickId = decodePickId(pickPixels);
+			applyPickedBatchObject(pickId);
+		}
+
+		function decodePickId(pixels) {
+			return pixels[0] + pixels[1] * 256 + pixels[2] * 65536;
+		}
+
+		function applyPickedBatchObject(pickId) {
+			selectedPickInfo = null;
+
+			for (let i = 0; i < batchPickIdRanges.length; i++) {
+				const range = batchPickIdRanges[i];
+				const start = range.offset + 1;
+				const end = start + range.count;
+				if (pickId >= start && pickId < end) {
+					selectedPickInfo = {
+						batch: range.batch,
+						localObjectId: pickId - start
+					};
+					break;
+				}
+			}
+
+			syncBatchMaterialUniforms();
+		}
+
+		function bucketDescriptorsBySideAndTangent(descriptors) {
+			const buckets = new Map();
+
+			for (let i = 0; i < descriptors.length; i++) {
+				const side = descriptors[i].side || t3d.DRAW_SIDE.FRONT;
+				const hasTangents = descriptors[i].hasTangent === true;
+				const bucketKey = `${side}|${hasTangents ? 'tangent' : 'no-tangent'}`;
+				if (!buckets.has(bucketKey)) {
+					buckets.set(bucketKey, { side, hasTangents, descriptors: [] });
+				}
+				buckets.get(bucketKey).descriptors.push(descriptors[i]);
+			}
+
+			return Array.from(buckets.values());
 		}
 
 		function fitCameraToBatches(batchList) {
@@ -898,6 +1285,9 @@
 
 			camera.setPerspective(50 / 180 * Math.PI, width / height, 1, 3000);
 			renderer.screenRenderTarget.resize(width, height);
+			if (pickRenderTarget) {
+				pickRenderTarget.resize(width, height);
+			}
 		}
 
 		window.addEventListener('resize', onWindowResize, false);
