@@ -41,7 +41,7 @@ class WebGLBuffers extends PropertyMap {
 
 		if (bufferProperties.glBuffer && !bufferProperties.__external) {
 			gl.deleteBuffer(bufferProperties.glBuffer);
-			this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
+			this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0, buffer, bufferProperties);
 		}
 
 		this.delete(buffer);
@@ -55,7 +55,7 @@ class WebGLBuffers extends PropertyMap {
 		if (!bufferProperties.__external) {
 			if (bufferProperties.glBuffer) {
 				gl.deleteBuffer(bufferProperties.glBuffer);
-				this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
+				this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0, buffer, bufferProperties);
 			}
 		}
 
@@ -92,10 +92,9 @@ class WebGLBuffers extends PropertyMap {
 
 		const oldByteLength = bufferProperties.__external ? 0 : (bufferProperties.__byteLength || 0);
 		const byteLength = array.byteLength;
-		this._gpuMemory._updateBuffer(oldByteLength, byteLength);
-		bufferProperties.__byteLength = byteLength;
-
 		bufferProperties.__external = false;
+		this._gpuMemory._updateBuffer(oldByteLength, byteLength, buffer, bufferProperties);
+		bufferProperties.__byteLength = byteLength;
 
 		buffer.updateRange.count = -1; // reset range
 	}
@@ -119,7 +118,7 @@ class WebGLBuffers extends PropertyMap {
 
 		const oldByteLength = bufferProperties.__byteLength || 0;
 		const byteLength = array.byteLength;
-		this._gpuMemory._updateBuffer(oldByteLength, byteLength);
+		this._gpuMemory._updateBuffer(oldByteLength, byteLength, buffer, bufferProperties);
 		bufferProperties.__byteLength = byteLength;
 
 		buffer.updateRange.count = -1; // reset range

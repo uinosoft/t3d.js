@@ -11163,6 +11163,8 @@ class Attribute {
 
 }
 
+let _bufferId = 0;
+
 /**
  * The Buffer contain the data that is used for the geometry of 3D models, animations, and skinning.
  */
@@ -11173,6 +11175,21 @@ class Buffer {
 	 * @param {number} stride -- The number of typed-array elements per vertex.
 	 */
 	constructor(array, stride) {
+		/**
+		 * Unique number for this buffer instance.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.id = _bufferId++;
+
+		/**
+		 * An object that can be used to store custom data about the {@link Buffer}.
+		 * It should not hold references to functions as these will not be cloned.
+		 * @type {object}
+		 * @default {}
+		 */
+		this.userData = {};
+
 		/**
 		 * A typed array with a shared buffer.
 		 * Stores the geometry data.
@@ -11227,6 +11244,7 @@ class Buffer {
 	 */
 	copy(source) {
 		this.array = new source.array.constructor(source.array);
+		this.userData = cloneJson(source.userData);
 		this.stride = source.stride;
 		this.count = source.array.length / this.stride;
 		this.usage = source.usage;
@@ -11238,10 +11256,7 @@ class Buffer {
 	 * @returns {Buffer}
 	 */
 	clone() {
-		const array = new this.array.constructor(this.array);
-		const ib = new Buffer(array, this.stride);
-		ib.usage = this.usage;
-		return ib;
+		return new Buffer(this.array, this.stride).copy(this);
 	}
 
 }
@@ -12829,13 +12844,45 @@ class PropertyMap {
 class GPUMemoryInfo {
 
 	constructor() {
+		this._records = false;
+		this._bufferRecords = new Map();
+
 		this.reset();
+	}
+
+	/**
+	 * Whether GPU memory resource records are tracked.
+	 * @type {boolean}
+	 */
+	get records() {
+		return this._records;
+	}
+
+	set records(value) {
+		this.setRecordsEnabled(value);
+	}
+
+	/**
+	 * Enable or disable GPU memory resource records.
+	 * @param {boolean} enabled - Whether to track resource records.
+	 * @returns {GPUMemoryInfo}
+	 */
+	setRecordsEnabled(enabled) {
+		this._records = enabled === true;
+
+		if (!this._records) {
+			this._bufferRecords.clear();
+		}
+
+		return this;
 	}
 
 	/**
 	 * Reset all GPU memory statistics.
 	 */
 	reset() {
+		this._bufferRecords.clear();
+
 		/**
 		 * Number of GPU buffers.
 		 * @type {number}
@@ -12897,10 +12944,24 @@ class GPUMemoryInfo {
 		this.totalBytes = 0;
 	}
 
-	_updateBuffer(oldBytes, newBytes) {
+	/**
+	 * Returns buffer records sorted by memory usage in descending order.
+	 * @returns {object[]}
+	 */
+	getBufferRecords() {
+		return Array.from(this._bufferRecords.values())
+			.map(record => Object.assign({}, record))
+			.sort((a, b) => b.bytes - a.bytes);
+	}
+
+	_updateBuffer(oldBytes, newBytes, buffer, bufferProperties) {
 		this._updateCount('buffers', oldBytes, newBytes);
 		this.bufferBytes += newBytes - oldBytes;
 		this._updateTotalBytes();
+
+		if (!this.records || buffer === undefined) return;
+
+		this._updateBufferRecord(newBytes, buffer, bufferProperties);
 	}
 
 	_updateTexture(oldBytes, newBytes) {
@@ -12938,6 +12999,24 @@ class GPUMemoryInfo {
 
 	_updateTotalBytes() {
 		this.totalBytes = this.bufferBytes + this.textureBytes + this.renderBufferBytes + this.readBufferBytes;
+	}
+
+	_updateBufferRecord(bytes, buffer, bufferProperties) {
+		if (bytes === 0) {
+			this._bufferRecords.delete(buffer.id);
+			return;
+		}
+
+		const userData = buffer.userData || {};
+		const label = userData.gpuMemoryLabel !== undefined ? userData.gpuMemoryLabel : (userData.label !== undefined ? userData.label : '');
+
+		this._bufferRecords.set(buffer.id, {
+			id: buffer.id,
+			bytes: bytes,
+			label: label,
+			external: bufferProperties !== undefined && bufferProperties.__external === true,
+			version: buffer.version
+		});
 	}
 
 }
@@ -20796,7 +20875,7 @@ class WebGLBuffers extends PropertyMap {
 
 		if (bufferProperties.glBuffer && !bufferProperties.__external) {
 			gl.deleteBuffer(bufferProperties.glBuffer);
-			this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
+			this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0, buffer, bufferProperties);
 		}
 
 		this.delete(buffer);
@@ -20810,7 +20889,7 @@ class WebGLBuffers extends PropertyMap {
 		if (!bufferProperties.__external) {
 			if (bufferProperties.glBuffer) {
 				gl.deleteBuffer(bufferProperties.glBuffer);
-				this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
+				this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0, buffer, bufferProperties);
 			}
 		}
 
@@ -20847,10 +20926,9 @@ class WebGLBuffers extends PropertyMap {
 
 		const oldByteLength = bufferProperties.__external ? 0 : (bufferProperties.__byteLength || 0);
 		const byteLength = array.byteLength;
-		this._gpuMemory._updateBuffer(oldByteLength, byteLength);
-		bufferProperties.__byteLength = byteLength;
-
 		bufferProperties.__external = false;
+		this._gpuMemory._updateBuffer(oldByteLength, byteLength, buffer, bufferProperties);
+		bufferProperties.__byteLength = byteLength;
 
 		buffer.updateRange.count = -1; // reset range
 	}
@@ -20874,7 +20952,7 @@ class WebGLBuffers extends PropertyMap {
 
 		const oldByteLength = bufferProperties.__byteLength || 0;
 		const byteLength = array.byteLength;
-		this._gpuMemory._updateBuffer(oldByteLength, byteLength);
+		this._gpuMemory._updateBuffer(oldByteLength, byteLength, buffer, bufferProperties);
 		bufferProperties.__byteLength = byteLength;
 
 		buffer.updateRange.count = -1; // reset range

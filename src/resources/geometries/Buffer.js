@@ -1,4 +1,7 @@
+import { cloneJson } from '../../base.js';
 import { BUFFER_USAGE } from '../../const.js';
+
+let _bufferId = 0;
 
 /**
  * The Buffer contain the data that is used for the geometry of 3D models, animations, and skinning.
@@ -10,6 +13,21 @@ class Buffer {
 	 * @param {number} stride -- The number of typed-array elements per vertex.
 	 */
 	constructor(array, stride) {
+		/**
+		 * Unique number for this buffer instance.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.id = _bufferId++;
+
+		/**
+		 * An object that can be used to store custom data about the {@link Buffer}.
+		 * It should not hold references to functions as these will not be cloned.
+		 * @type {object}
+		 * @default {}
+		 */
+		this.userData = {};
+
 		/**
 		 * A typed array with a shared buffer.
 		 * Stores the geometry data.
@@ -64,6 +82,7 @@ class Buffer {
 	 */
 	copy(source) {
 		this.array = new source.array.constructor(source.array);
+		this.userData = cloneJson(source.userData);
 		this.stride = source.stride;
 		this.count = source.array.length / this.stride;
 		this.usage = source.usage;
@@ -75,10 +94,7 @@ class Buffer {
 	 * @returns {Buffer}
 	 */
 	clone() {
-		const array = new this.array.constructor(this.array);
-		const ib = new Buffer(array, this.stride);
-		ib.usage = this.usage;
-		return ib;
+		return new Buffer(this.array, this.stride).copy(this);
 	}
 
 }

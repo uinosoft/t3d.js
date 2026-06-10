@@ -1,4 +1,5 @@
 import { GPUMemoryInfo } from '../../../../src/render/GPUMemoryInfo.js';
+import { Buffer } from '../../../../src/resources/geometries/Buffer.js';
 
 QUnit.module('GPUMemoryInfo');
 
@@ -106,4 +107,79 @@ QUnit.test('reset', assert => {
 	assert.strictEqual(info.renderBufferBytes, 0, 'renderBufferBytes reset to 0');
 	assert.strictEqual(info.readBufferBytes, 0, 'readBufferBytes reset to 0');
 	assert.strictEqual(info.totalBytes, 0, 'totalBytes reset to 0');
+});
+
+QUnit.test('buffer records are disabled by default', assert => {
+	const info = new GPUMemoryInfo();
+	const buffer = new Buffer(new Float32Array(6), 3);
+	const properties = { bytesPerElement: 4, __external: false };
+
+	info._updateBuffer(0, 24, buffer, properties);
+
+	assert.strictEqual(info.buffers, 1, 'buffer count is updated');
+	assert.strictEqual(info.bufferBytes, 24, 'buffer bytes are updated');
+	assert.deepEqual(info.getBufferRecords(), [], 'no buffer records are stored');
+});
+
+QUnit.test('tracks buffer records when enabled', assert => {
+	const info = new GPUMemoryInfo();
+	const smallBuffer = new Buffer(new Uint16Array(6), 3);
+	const largeBuffer = new Buffer(new Float32Array(12), 3);
+
+	smallBuffer.userData.label = 'small';
+	largeBuffer.userData.gpuMemoryLabel = 'large';
+
+	info.records = true;
+	info._updateBuffer(0, 12, smallBuffer, { bytesPerElement: 2, __external: false });
+	info._updateBuffer(0, 48, largeBuffer, { bytesPerElement: 4, __external: false });
+
+	const records = info.getBufferRecords();
+
+	assert.strictEqual(records.length, 2, 'two buffer records are stored');
+	assert.strictEqual(records[0].id, largeBuffer.id, 'records are sorted by bytes descending');
+	assert.strictEqual(records[0].bytes, 48, 'record bytes are stored');
+	assert.strictEqual(records[0].label, 'large', 'gpuMemoryLabel is preferred');
+	assert.strictEqual(records[0].external, false, 'external flag is stored');
+	assert.strictEqual(records[0].version, largeBuffer.version, 'version is stored');
+	assert.strictEqual(records[1].label, 'small', 'label fallback is used');
+});
+
+QUnit.test('updates and removes buffer records', assert => {
+	const info = new GPUMemoryInfo();
+	const buffer = new Buffer(new Float32Array(6), 3);
+
+	info.setRecordsEnabled(true);
+	info._updateBuffer(0, 24, buffer, { bytesPerElement: 4, __external: false });
+
+	buffer.array = new Float32Array(12);
+	buffer.count = 4;
+	buffer.version++;
+	info._updateBuffer(24, 48, buffer, { bytesPerElement: 4, __external: false });
+
+	let records = info.getBufferRecords();
+	assert.strictEqual(records.length, 1, 'record is updated instead of duplicated');
+	assert.strictEqual(records[0].bytes, 48, 'record bytes are updated');
+	assert.strictEqual(records[0].version, 1, 'record version is updated');
+
+	info._updateBuffer(48, 0, buffer, { bytesPerElement: 4, __external: false });
+	records = info.getBufferRecords();
+	assert.strictEqual(records.length, 0, 'record is removed when buffer bytes become zero');
+});
+
+QUnit.test('disabling buffer records clears existing records', assert => {
+	const info = new GPUMemoryInfo();
+	const buffer = new Buffer(new Float32Array(6), 3);
+
+	info.setRecordsEnabled(true);
+	info._updateBuffer(0, 24, buffer, { bytesPerElement: 4, __external: false });
+	assert.strictEqual(info.getBufferRecords().length, 1, 'record is stored when enabled');
+
+	info.setRecordsEnabled(false);
+	assert.strictEqual(info.records, false, 'records are disabled');
+	assert.deepEqual(info.getBufferRecords(), [], 'records are cleared when disabled');
+
+	info._updateBuffer(24, 48, buffer, { bytesPerElement: 4, __external: false });
+	assert.strictEqual(info.buffers, 1, 'aggregate statistics continue updating');
+	assert.strictEqual(info.bufferBytes, 48, 'aggregate bytes continue updating');
+	assert.deepEqual(info.getBufferRecords(), [], 'records are not recreated while disabled');
 });

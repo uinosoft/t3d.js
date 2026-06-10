@@ -7,13 +7,45 @@
 class GPUMemoryInfo {
 
 	constructor() {
+		this._records = false;
+		this._bufferRecords = new Map();
+
 		this.reset();
+	}
+
+	/**
+	 * Whether GPU memory resource records are tracked.
+	 * @type {boolean}
+	 */
+	get records() {
+		return this._records;
+	}
+
+	set records(value) {
+		this.setRecordsEnabled(value);
+	}
+
+	/**
+	 * Enable or disable GPU memory resource records.
+	 * @param {boolean} enabled - Whether to track resource records.
+	 * @returns {GPUMemoryInfo}
+	 */
+	setRecordsEnabled(enabled) {
+		this._records = enabled === true;
+
+		if (!this._records) {
+			this._bufferRecords.clear();
+		}
+
+		return this;
 	}
 
 	/**
 	 * Reset all GPU memory statistics.
 	 */
 	reset() {
+		this._bufferRecords.clear();
+
 		/**
 		 * Number of GPU buffers.
 		 * @type {number}
@@ -75,10 +107,24 @@ class GPUMemoryInfo {
 		this.totalBytes = 0;
 	}
 
-	_updateBuffer(oldBytes, newBytes) {
+	/**
+	 * Returns buffer records sorted by memory usage in descending order.
+	 * @returns {object[]}
+	 */
+	getBufferRecords() {
+		return Array.from(this._bufferRecords.values())
+			.map(record => Object.assign({}, record))
+			.sort((a, b) => b.bytes - a.bytes);
+	}
+
+	_updateBuffer(oldBytes, newBytes, buffer, bufferProperties) {
 		this._updateCount('buffers', oldBytes, newBytes);
 		this.bufferBytes += newBytes - oldBytes;
 		this._updateTotalBytes();
+
+		if (!this.records || buffer === undefined) return;
+
+		this._updateBufferRecord(newBytes, buffer, bufferProperties);
 	}
 
 	_updateTexture(oldBytes, newBytes) {
@@ -116,6 +162,24 @@ class GPUMemoryInfo {
 
 	_updateTotalBytes() {
 		this.totalBytes = this.bufferBytes + this.textureBytes + this.renderBufferBytes + this.readBufferBytes;
+	}
+
+	_updateBufferRecord(bytes, buffer, bufferProperties) {
+		if (bytes === 0) {
+			this._bufferRecords.delete(buffer.id);
+			return;
+		}
+
+		const userData = buffer.userData || {};
+		const label = userData.gpuMemoryLabel !== undefined ? userData.gpuMemoryLabel : (userData.label !== undefined ? userData.label : '');
+
+		this._bufferRecords.set(buffer.id, {
+			id: buffer.id,
+			bytes: bytes,
+			label: label,
+			external: bufferProperties !== undefined && bufferProperties.__external === true,
+			version: buffer.version
+		});
 	}
 
 }
