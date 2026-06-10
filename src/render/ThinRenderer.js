@@ -1,5 +1,6 @@
 import { Vector3 } from '../math/Vector3.js';
 import { Vector2 } from '../math/Vector2.js';
+import { GPUMemoryInfo } from './GPUMemoryInfo.js';
 
 let _rendererId = 0;
 
@@ -28,6 +29,12 @@ class ThinRenderer {
 		 * @type {object}
 		 */
 		this.capabilities = {};
+
+		/**
+		 * GPU memory statistics owned by this renderer.
+		 * @type {GPUMemoryInfo}
+		 */
+		this.gpuMemory = new GPUMemoryInfo();
 
 		/**
 		 * The shader compiler options.

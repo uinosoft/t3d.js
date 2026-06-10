@@ -11806,6 +11806,118 @@
 	}
 
 	/**
+	 * Statistics for GPU resources owned by the renderer.
+	 *
+	 * Note that WebGL does not expose real driver memory usage. These values are
+	 * estimates based on resources created and managed by the renderer.
+	 */
+	class GPUMemoryInfo {
+		constructor() {
+			this.reset();
+		}
+
+		/**
+		 * Reset all GPU memory statistics.
+		 */
+		reset() {
+			/**
+			 * Number of GPU buffers.
+			 * @type {number}
+			 */
+			this.buffers = 0;
+
+			/**
+			 * Number of GPU textures.
+			 * @type {number}
+			 */
+			this.textures = 0;
+
+			/**
+			 * Number of GPU renderbuffers.
+			 * @type {number}
+			 */
+			this.renderBuffers = 0;
+
+			/**
+			 * Number of GPU framebuffers.
+			 * @type {number}
+			 */
+			this.frameBuffers = 0;
+
+			/**
+			 * Number of GPU programs.
+			 * @type {number}
+			 */
+			this.programs = 0;
+
+			/**
+			 * Estimated byte length of GPU buffers.
+			 * @type {number}
+			 */
+			this.bufferBytes = 0;
+
+			/**
+			 * Estimated byte length of GPU textures.
+			 * @type {number}
+			 */
+			this.textureBytes = 0;
+
+			/**
+			 * Estimated byte length of GPU renderbuffers.
+			 * @type {number}
+			 */
+			this.renderBufferBytes = 0;
+
+			/**
+			 * Estimated byte length of GPU readback buffers.
+			 * @type {number}
+			 */
+			this.readBufferBytes = 0;
+
+			/**
+			 * Estimated total byte length of GPU memory.
+			 * @type {number}
+			 */
+			this.totalBytes = 0;
+		}
+		_updateBuffer(oldBytes, newBytes) {
+			this._updateCount('buffers', oldBytes, newBytes);
+			this.bufferBytes += newBytes - oldBytes;
+			this._updateTotalBytes();
+		}
+		_updateTexture(oldBytes, newBytes) {
+			this._updateCount('textures', oldBytes, newBytes);
+			this.textureBytes += newBytes - oldBytes;
+			this._updateTotalBytes();
+		}
+		_updateRenderBuffer(oldBytes, newBytes) {
+			this._updateCount('renderBuffers', oldBytes, newBytes);
+			this.renderBufferBytes += newBytes - oldBytes;
+			this._updateTotalBytes();
+		}
+		_updateReadBuffer(oldBytes, newBytes) {
+			this.readBufferBytes += newBytes - oldBytes;
+			this._updateTotalBytes();
+		}
+		_updateFramebuffer(delta) {
+			this.frameBuffers += delta;
+		}
+		_updateProgram(delta) {
+			this.programs += delta;
+		}
+		_updateCount(key, oldBytes, newBytes) {
+			if (oldBytes === 0 && newBytes > 0) {
+				this[key]++;
+			} else if (oldBytes > 0 && newBytes === 0) {
+				this[key]--;
+			}
+		}
+		_updateTotalBytes() {
+			this.totalBytes = this.bufferBytes + this.textureBytes + this.renderBufferBytes + this.readBufferBytes;
+		}
+	}
+
+	/**
 	 * Render info collector.
 	 * If you want to collect information about the rendering of this frame,
 	 * pass an instance of RenderInfo to RenderOption when calling renderRenderableList.
@@ -11894,6 +12006,12 @@
 			 * @type {object}
 			 */
 			this.capabilities = {};
+
+			/**
+			 * GPU memory statistics owned by this renderer.
+			 * @type {GPUMemoryInfo}
+			 */
+			this.gpuMemory = new GPUMemoryInfo();
 
 			/**
 			 * The shader compiler options.
@@ -16574,10 +16692,11 @@
 	}
 
 	class WebGLPrograms {
-		constructor(gl, state, capabilities) {
+		constructor(gl, state, capabilities, gpuMemory) {
 			this._gl = gl;
 			this._state = state;
 			this._capabilities = capabilities;
+			this._gpuMemory = gpuMemory;
 			this._programs = [];
 		}
 		getProgram(material, props, programCode, compileOptions) {
@@ -16600,6 +16719,7 @@
 				program.compile(compileOptions);
 				program.code = programCode;
 				programs.push(program);
+				this._gpuMemory._updateProgram(1);
 			}
 			return program;
 		}
@@ -16614,6 +16734,7 @@
 
 				// Free WebGL resources
 				program.dispose(this._gl);
+				this._gpuMemory._updateProgram(-1);
 			}
 		}
 		generateProps(material, object, lightingState, renderStates) {
@@ -17803,13 +17924,194 @@
 		}
 	}
 
+	function getTextureLevelByteLength(width, height, depth, format, type) {
+		depth = depth || 1;
+		try {
+			return getTexture2DByteLength(width, height, format, type) * depth;
+		} catch (e) {
+			const internalFormatByteLength = getInternalFormatByteLength(format);
+			if (internalFormatByteLength > 0) {
+				return width * height * depth * internalFormatByteLength;
+			}
+			throw e;
+		}
+	}
+	function getTextureByteLength(texture, textureProperties) {
+		const width = textureProperties.__width || 0;
+		const height = textureProperties.__height || 0;
+		const baseDepth = texture.isTexture3D || texture.isTexture2DArray ? texture.image.depth || 1 : 1;
+		const faceCount = texture.isTextureCube ? 6 : 1;
+		const maxMipLevel = Math.floor(textureProperties.__maxMipLevel || 0);
+		const format = texture.internalformat !== null ? texture.internalformat : texture.format;
+		let byteLength = 0;
+		for (let level = 0; level <= maxMipLevel; level++) {
+			const mipWidth = Math.max(width >> level, 1);
+			const mipHeight = Math.max(height >> level, 1);
+			const mipDepth = texture.isTexture3D ? Math.max(baseDepth >> level, 1) : baseDepth;
+			byteLength += getTextureLevelByteLength(mipWidth, mipHeight, mipDepth, format, texture.type) * faceCount;
+		}
+		return byteLength;
+	}
+	function getRenderBufferByteLength(renderBuffer, capabilities) {
+		const samples = renderBuffer.multipleSampling > 0 ? Math.min(renderBuffer.multipleSampling, capabilities.maxSamples) : 1;
+		return renderBuffer.width * renderBuffer.height * getInternalFormatByteLength(renderBuffer.format) * samples;
+	}
+	function getInternalFormatByteLength(format) {
+		switch (format) {
+			case PIXEL_FORMAT.R8:
+			case PIXEL_FORMAT.ALPHA:
+			case PIXEL_FORMAT.LUMINANCE:
+			case PIXEL_FORMAT.RED:
+			case PIXEL_FORMAT.RED_INTEGER:
+			case PIXEL_FORMAT.STENCIL_INDEX8:
+				return 1;
+			case PIXEL_FORMAT.R16F:
+			case PIXEL_FORMAT.RG8:
+			case PIXEL_FORMAT.LUMINANCE_ALPHA:
+			case PIXEL_FORMAT.RG:
+			case PIXEL_FORMAT.RG_INTEGER:
+			case PIXEL_FORMAT.RGBA4:
+			case PIXEL_FORMAT.RGB5_A1:
+			case PIXEL_FORMAT.DEPTH_COMPONENT16:
+				return 2;
+			case PIXEL_FORMAT.RGB8:
+			case PIXEL_FORMAT.RGB:
+			case PIXEL_FORMAT.RGB_INTEGER:
+			case PIXEL_FORMAT.DEPTH_COMPONENT24:
+				return 3;
+			case PIXEL_FORMAT.R32F:
+			case PIXEL_FORMAT.RG16F:
+			case PIXEL_FORMAT.RGBA8:
+			case PIXEL_FORMAT.RGBA:
+			case PIXEL_FORMAT.RGBA_INTEGER:
+			case PIXEL_FORMAT.R11F_G11F_B10F:
+			case PIXEL_FORMAT.DEPTH_COMPONENT:
+			case PIXEL_FORMAT.DEPTH_COMPONENT32F:
+			case PIXEL_FORMAT.DEPTH_STENCIL:
+			case PIXEL_FORMAT.DEPTH24_STENCIL8:
+				return 4;
+			case PIXEL_FORMAT.RG32F:
+			case PIXEL_FORMAT.RGB16F:
+			case PIXEL_FORMAT.RGBA16F:
+			case PIXEL_FORMAT.DEPTH32F_STENCIL8:
+				return 8;
+			case PIXEL_FORMAT.RGB32F:
+				return 12;
+			case PIXEL_FORMAT.RGBA32F:
+				return 16;
+		}
+		return 0;
+	}
+	function getTexture2DByteLength(width, height, format, type) {
+		const typeByteLength = getTextureTypeByteLength(type);
+		switch (format) {
+			// https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
+			case PIXEL_FORMAT.DEPTH_COMPONENT:
+				return width * height * typeByteLength.byteLength;
+			case PIXEL_FORMAT.DEPTH_STENCIL:
+				return width * height * getDepthStencilTypeByteLength(type);
+			case PIXEL_FORMAT.STENCIL_INDEX8:
+			case PIXEL_FORMAT.ALPHA:
+			case PIXEL_FORMAT.LUMINANCE:
+				return width * height;
+			case PIXEL_FORMAT.LUMINANCE_ALPHA:
+				return width * height * 2;
+			case PIXEL_FORMAT.RED:
+			case PIXEL_FORMAT.RED_INTEGER:
+				return width * height / typeByteLength.components * typeByteLength.byteLength;
+			case PIXEL_FORMAT.RG:
+			case PIXEL_FORMAT.RG_INTEGER:
+				return width * height * 2 / typeByteLength.components * typeByteLength.byteLength;
+			case PIXEL_FORMAT.RGB:
+			case PIXEL_FORMAT.RGB_INTEGER:
+				return width * height * 3 / typeByteLength.components * typeByteLength.byteLength;
+			case PIXEL_FORMAT.RGBA:
+			case PIXEL_FORMAT.RGBA_INTEGER:
+				return width * height * 4 / typeByteLength.components * typeByteLength.byteLength;
+
+			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_s3tc_srgb/
+			case PIXEL_FORMAT.RGB_S3TC_DXT1:
+			case PIXEL_FORMAT.RGBA_S3TC_DXT1:
+				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
+			case PIXEL_FORMAT.RGBA_S3TC_DXT3:
+			case PIXEL_FORMAT.RGBA_S3TC_DXT5:
+				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
+
+			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_pvrtc/
+			case PIXEL_FORMAT.RGB_PVRTC_2BPPV1:
+			case PIXEL_FORMAT.RGBA_PVRTC_2BPPV1:
+				return Math.max(width, 16) * Math.max(height, 8) / 4;
+			case PIXEL_FORMAT.RGB_PVRTC_4BPPV1:
+			case PIXEL_FORMAT.RGBA_PVRTC_4BPPV1:
+				return Math.max(width, 8) * Math.max(height, 8) / 2;
+
+			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_etc/
+			case PIXEL_FORMAT.RGB_ETC1:
+				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
+			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_astc/
+			case PIXEL_FORMAT.RGBA_ASTC_4x4:
+				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
+			// https://registry.khronos.org/webgl/extensions/EXT_texture_compression_bptc/
+			case PIXEL_FORMAT.RGBA_BPTC:
+			case PIXEL_FORMAT.RGB_BPTC_SIGNED_FORMAT:
+			case PIXEL_FORMAT.RGB_BPTC_UNSIGNED_FORMAT:
+				return Math.ceil(width / 4) * Math.ceil(height / 4) * 16;
+		}
+		throw new Error(`Unable to determine texture byte length for ${format} format.`);
+	}
+	const _tempTypeByteLength = {
+		byteLength: 0,
+		components: 0
+	};
+	function getTextureTypeByteLength(type) {
+		switch (type) {
+			case PIXEL_TYPE.UNSIGNED_BYTE:
+			case PIXEL_TYPE.BYTE:
+				_tempTypeByteLength.byteLength = 1;
+				_tempTypeByteLength.components = 1;
+				return _tempTypeByteLength;
+			case PIXEL_TYPE.UNSIGNED_SHORT:
+			case PIXEL_TYPE.SHORT:
+			case PIXEL_TYPE.HALF_FLOAT:
+				_tempTypeByteLength.byteLength = 2;
+				_tempTypeByteLength.components = 1;
+				return _tempTypeByteLength;
+			case PIXEL_TYPE.UNSIGNED_SHORT_5_6_5:
+				_tempTypeByteLength.byteLength = 2;
+				_tempTypeByteLength.components = 3;
+				return _tempTypeByteLength;
+			case PIXEL_TYPE.UNSIGNED_SHORT_4_4_4_4:
+			case PIXEL_TYPE.UNSIGNED_SHORT_5_5_5_1:
+				_tempTypeByteLength.byteLength = 2;
+				_tempTypeByteLength.components = 4;
+				return _tempTypeByteLength;
+			case PIXEL_TYPE.UNSIGNED_INT:
+			case PIXEL_TYPE.INT:
+			case PIXEL_TYPE.FLOAT:
+				_tempTypeByteLength.byteLength = 4;
+				_tempTypeByteLength.components = 1;
+				return _tempTypeByteLength;
+		}
+		throw new Error(`Unknown texture type ${type}.`);
+	}
+	function getDepthStencilTypeByteLength(type) {
+		switch (type) {
+			case PIXEL_TYPE.UNSIGNED_INT_24_8:
+				return 4;
+			case PIXEL_TYPE.FLOAT_32_UNSIGNED_INT_24_8_REV:
+				return 8;
+		}
+		return getTextureTypeByteLength(type).byteLength;
+	}
+
 	class WebGLTextures extends PropertyMap {
-		constructor(prefix, gl, state, capabilities, constants) {
+		constructor(prefix, gl, state, capabilities, constants, gpuMemory) {
 			super(prefix);
 			this._gl = gl;
 			this._state = state;
 			this._capabilities = capabilities;
 			this._constants = constants;
+			this._gpuMemory = gpuMemory;
 			this._usedTextureUnits = 0;
 			const that = this;
 			function onTextureDispose(event) {
@@ -17818,9 +18120,11 @@
 				texture.removeEventListener('dispose', onTextureDispose);
 				if (textureProperties.__webglTexture && !textureProperties.__external) {
 					gl.deleteTexture(textureProperties.__webglTexture);
+					that._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
 				}
 				if (textureProperties.__readBuffer) {
 					gl.deleteBuffer(textureProperties.__readBuffer);
+					that._gpuMemory._updateReadBuffer(textureProperties.__readBufferByteLength || 0, 0);
 				}
 				that.delete(texture);
 			}
@@ -17909,6 +18213,10 @@
 				if (texture.generateMipmaps && !uploadMipmaps && !needFallback) {
 					this.generateMipmaps(texture);
 				}
+				const oldByteLength = textureProperties.__byteLength || 0;
+				const byteLength = getTextureByteLength(texture, textureProperties);
+				this._gpuMemory._updateTexture(oldByteLength, byteLength);
+				textureProperties.__byteLength = byteLength;
 				textureProperties.__version = texture.version;
 				return textureProperties;
 			}
@@ -17924,6 +18232,12 @@
 				height = textureProperties.__height;
 			// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
 			textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
+			if (!textureProperties.__external) {
+				const oldByteLength = textureProperties.__byteLength || 0;
+				const byteLength = getTextureByteLength(texture, textureProperties);
+				this._gpuMemory._updateTexture(oldByteLength, byteLength);
+				textureProperties.__byteLength = byteLength;
+			}
 		}
 		setTextureExternal(texture, webglTexture) {
 			const gl = this._gl;
@@ -17931,11 +18245,13 @@
 			if (!textureProperties.__external) {
 				if (textureProperties.__webglTexture) {
 					gl.deleteTexture(textureProperties.__webglTexture);
+					this._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
 				} else {
 					texture.addEventListener('dispose', this._onTextureDispose);
 				}
 			}
 			textureProperties.__webglTexture = webglTexture;
+			textureProperties.__byteLength = 0;
 			textureProperties.__external = true;
 		}
 		_setTextureParameters(texture, textureType, needFallback) {
@@ -18075,7 +18391,7 @@
 			const image = texture.image;
 			if (texture.layerUpdates.size > 0) {
 				for (const layerIndex of texture.layerUpdates) {
-					const layerByteLength = getByteLength(image.width, image.height, texture.format, texture.type);
+					const layerByteLength = getTextureLevelByteLength(image.width, image.height, 1, texture.internalformat !== null ? texture.internalformat : texture.format, texture.type);
 					const layerData = image.data.subarray(layerIndex * layerByteLength / image.data.BYTES_PER_ELEMENT, (layerIndex + 1) * layerByteLength / image.data.BYTES_PER_ELEMENT);
 					gl.texSubImage3D(glTarget, 0, 0, 0, layerIndex, image.width, image.height, 1, glFormat, glType, layerData);
 				}
@@ -18148,90 +18464,6 @@
 	function domCheck(image) {
 		return typeof HTMLImageElement !== 'undefined' && image instanceof HTMLImageElement || typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement || typeof HTMLVideoElement !== 'undefined' && image instanceof HTMLVideoElement || typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap;
 	}
-	function getByteLength(width, height, format, type) {
-		const typeByteLength = getTextureTypeByteLength(type);
-		switch (format) {
-			// https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
-			case PIXEL_FORMAT.ALPHA:
-				return width * height;
-			case PIXEL_FORMAT.LUMINANCE:
-				return width * height;
-			case PIXEL_FORMAT.LUMINANCE_ALPHA:
-				return width * height * 2;
-			case PIXEL_FORMAT.RED:
-				return width * height / typeByteLength.components * typeByteLength.byteLength;
-			case PIXEL_FORMAT.RED_INTEGER:
-				return width * height / typeByteLength.components * typeByteLength.byteLength;
-			case PIXEL_FORMAT.RG:
-				return width * height * 2 / typeByteLength.components * typeByteLength.byteLength;
-			case PIXEL_FORMAT.RG_INTEGER:
-				return width * height * 2 / typeByteLength.components * typeByteLength.byteLength;
-			case PIXEL_FORMAT.RGB:
-				return width * height * 3 / typeByteLength.components * typeByteLength.byteLength;
-			case PIXEL_FORMAT.RGBA:
-				return width * height * 4 / typeByteLength.components * typeByteLength.byteLength;
-			case PIXEL_FORMAT.RGBA_INTEGER:
-				return width * height * 4 / typeByteLength.components * typeByteLength.byteLength;
-
-			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_s3tc_srgb/
-			case PIXEL_FORMAT.RGB_S3TC_DXT1:
-			case PIXEL_FORMAT.RGBA_S3TC_DXT1:
-				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
-			case PIXEL_FORMAT.RGBA_S3TC_DXT3:
-			case PIXEL_FORMAT.RGBA_S3TC_DXT5:
-				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
-
-			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_pvrtc/
-			case PIXEL_FORMAT.RGB_PVRTC_2BPPV1:
-			case PIXEL_FORMAT.RGBA_PVRTC_2BPPV1:
-				return Math.max(width, 16) * Math.max(height, 8) / 4;
-			case PIXEL_FORMAT.RGB_PVRTC_4BPPV1:
-			case PIXEL_FORMAT.RGBA_PVRTC_4BPPV1:
-				return Math.max(width, 8) * Math.max(height, 8) / 2;
-
-			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_etc/
-			case PIXEL_FORMAT.RGB_ETC1:
-				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
-			// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_astc/
-			case PIXEL_FORMAT.RGBA_ASTC_4x4:
-				return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
-			// https://registry.khronos.org/webgl/extensions/EXT_texture_compression_bptc/
-			case PIXEL_FORMAT.RGBA_BPTC:
-				return Math.ceil(width / 4) * Math.ceil(height / 4) * 16;
-		}
-		throw new Error(`Unable to determine texture byte length for ${format} format.`);
-	}
-	const _tempTypeByteLength = {
-		byteLength: 0,
-		components: 0
-	};
-	function getTextureTypeByteLength(type) {
-		switch (type) {
-			case PIXEL_TYPE.UNSIGNED_BYTE:
-			case PIXEL_TYPE.ByteType:
-				_tempTypeByteLength.byteLength = 1;
-				_tempTypeByteLength.components = 1;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_SHORT:
-			case PIXEL_TYPE.SHORT:
-			case PIXEL_TYPE.HALF_FLOAT:
-				_tempTypeByteLength.byteLength = 2;
-				_tempTypeByteLength.components = 1;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_SHORT_4_4_4_4:
-			case PIXEL_TYPE.UNSIGNED_SHORT_5_5_5_1:
-				_tempTypeByteLength.byteLength = 2;
-				_tempTypeByteLength.components = 4;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_INT:
-			case PIXEL_TYPE.INT:
-			case PIXEL_TYPE.FLOAT:
-				_tempTypeByteLength.byteLength = 4;
-				_tempTypeByteLength.components = 1;
-				return _tempTypeByteLength;
-		}
-		throw new Error(`Unknown texture type ${type}.`);
-	}
 	function getTextureTarget(gl, texture) {
 		if (texture.isTexture2D) {
 			return gl.TEXTURE_2D;
@@ -18247,11 +18479,12 @@
 	}
 
 	class WebGLRenderBuffers extends PropertyMap {
-		constructor(prefix, gl, capabilities, constants) {
+		constructor(prefix, gl, capabilities, constants, gpuMemory) {
 			super(prefix);
 			this._gl = gl;
 			this._capabilities = capabilities;
 			this._constants = constants;
+			this._gpuMemory = gpuMemory;
 			const that = this;
 			function onRenderBufferDispose(event) {
 				const renderBuffer = event.target;
@@ -18259,6 +18492,7 @@
 				const renderBufferProperties = that.get(renderBuffer);
 				if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 					gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
+					that._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
 				}
 				that.delete(renderBuffer);
 			}
@@ -18282,6 +18516,9 @@
 				} else {
 					gl.renderbufferStorage(gl.RENDERBUFFER, glFormat, renderBuffer.width, renderBuffer.height);
 				}
+				const byteLength = getRenderBufferByteLength(renderBuffer, capabilities);
+				this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, byteLength);
+				renderBufferProperties.__byteLength = byteLength;
 			} else {
 				gl.bindRenderbuffer(gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
 			}
@@ -18293,17 +18530,19 @@
 			if (!renderBufferProperties.__external) {
 				if (renderBufferProperties.__webglRenderbuffer) {
 					gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
+					this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
 				} else {
 					renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
 				}
 			}
 			renderBufferProperties.__webglRenderbuffer = webglRenderbuffer;
+			renderBufferProperties.__byteLength = 0;
 			renderBufferProperties.__external = true;
 		}
 	}
 
 	class WebGLRenderTargets extends PropertyMap {
-		constructor(prefix, gl, state, capabilities, textures, renderBuffers, constants) {
+		constructor(prefix, gl, state, capabilities, textures, renderBuffers, constants, gpuMemory) {
 			super(prefix);
 			this._gl = gl;
 			this._state = state;
@@ -18311,6 +18550,7 @@
 			this._textures = textures;
 			this._renderBuffers = renderBuffers;
 			this._constants = constants;
+			this._gpuMemory = gpuMemory;
 			const that = this;
 			function onRenderTargetDispose(event) {
 				const renderTarget = event.target;
@@ -18318,6 +18558,7 @@
 				const renderTargetProperties = that.get(renderTarget);
 				if (renderTargetProperties.__webglFramebuffer && !renderTargetProperties.__external) {
 					gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
+					that._gpuMemory._updateFramebuffer(-1);
 				}
 				that.delete(renderTarget);
 				if (state.currentRenderTarget === renderTarget) {
@@ -18340,6 +18581,8 @@
 			renderTargetProperties.__drawBuffers = drawBuffers;
 			renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 			renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
+			renderTargetProperties.__external = false;
+			this._gpuMemory._updateFramebuffer(1);
 			gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
 			for (const attachTarget in renderTarget._attachments) {
 				const glAttachTarget = attachTargetToGL[attachTarget];
@@ -18454,6 +18697,7 @@
 			if (!renderTargetProperties.__external) {
 				if (renderTargetProperties.__webglFramebuffer) {
 					this._gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
+					this._gpuMemory._updateFramebuffer(-1);
 				} else {
 					renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
 				}
@@ -18488,10 +18732,11 @@
 	}
 
 	class WebGLBuffers extends PropertyMap {
-		constructor(prefix, gl, capabilities) {
+		constructor(prefix, gl, capabilities, gpuMemory) {
 			super(prefix);
 			this._gl = gl;
 			this._capabilities = capabilities;
+			this._gpuMemory = gpuMemory;
 		}
 		setBuffer(buffer, bufferType, vertexArrayBindings) {
 			const bufferProperties = this.get(buffer);
@@ -18506,6 +18751,8 @@
 				// Because Buffer does not have a dispose interface at present,
 				// when the version increases, the external is automatically closed
 				this._createGLBuffer(bufferProperties, buffer, bufferType);
+			} else if (bufferProperties.__byteLength !== buffer.array.byteLength) {
+				this._bufferData(bufferProperties, buffer, bufferType);
 			} else {
 				this._updateGLBuffer(bufferProperties.glBuffer, buffer, bufferType);
 				bufferProperties.version = buffer.version;
@@ -18516,6 +18763,7 @@
 			const bufferProperties = this.get(buffer);
 			if (bufferProperties.glBuffer && !bufferProperties.__external) {
 				gl.deleteBuffer(bufferProperties.glBuffer);
+				this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
 			}
 			this.delete(buffer);
 		}
@@ -18525,6 +18773,7 @@
 			if (!bufferProperties.__external) {
 				if (bufferProperties.glBuffer) {
 					gl.deleteBuffer(bufferProperties.glBuffer);
+					this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
 				}
 			}
 			const type = getBufferType(gl, buffer.array);
@@ -18532,6 +18781,7 @@
 			bufferProperties.type = type;
 			bufferProperties.bytesPerElement = buffer.array.BYTES_PER_ELEMENT;
 			bufferProperties.version = buffer.version;
+			bufferProperties.__byteLength = 0;
 			bufferProperties.__external = true;
 		}
 		_createGLBuffer(bufferProperties, buffer, bufferType) {
@@ -18547,7 +18797,28 @@
 			bufferProperties.type = type;
 			bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
 			bufferProperties.version = buffer.version;
+			const oldByteLength = bufferProperties.__external ? 0 : bufferProperties.__byteLength || 0;
+			const byteLength = array.byteLength;
+			this._gpuMemory._updateBuffer(oldByteLength, byteLength);
+			bufferProperties.__byteLength = byteLength;
 			bufferProperties.__external = false;
+			buffer.updateRange.count = -1; // reset range
+		}
+		_bufferData(bufferProperties, buffer, bufferType) {
+			const gl = this._gl;
+			const array = buffer.array;
+			const usage = buffer.usage;
+			gl.bindBuffer(bufferType, bufferProperties.glBuffer);
+			gl.bufferData(bufferType, array, usage);
+			buffer.onUploadCallback();
+			const type = getBufferType(gl, array);
+			bufferProperties.type = type;
+			bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
+			bufferProperties.version = buffer.version;
+			const oldByteLength = bufferProperties.__byteLength || 0;
+			const byteLength = array.byteLength;
+			this._gpuMemory._updateBuffer(oldByteLength, byteLength);
+			bufferProperties.__byteLength = byteLength;
 			buffer.updateRange.count = -1; // reset range
 		}
 		_updateGLBuffer(glBuffer, buffer, bufferType) {
@@ -19505,17 +19776,19 @@
 			}
 			this.context = context;
 			const prefix = `_gl${this.increaseId()}`;
+			const gpuMemory = this.gpuMemory;
+			gpuMemory.reset();
 			const capabilities = new WebGLCapabilities(context);
 			const constants = new WebGLConstants(context, capabilities);
 			const state = new WebGLState(context, capabilities);
-			const textures = new WebGLTextures(prefix, context, state, capabilities, constants);
-			const renderBuffers = new WebGLRenderBuffers(prefix, context, capabilities, constants);
-			const renderTargets = new WebGLRenderTargets(prefix, context, state, capabilities, textures, renderBuffers, constants);
-			const buffers = new WebGLBuffers(prefix, context, capabilities);
+			const textures = new WebGLTextures(prefix, context, state, capabilities, constants, gpuMemory);
+			const renderBuffers = new WebGLRenderBuffers(prefix, context, capabilities, constants, gpuMemory);
+			const renderTargets = new WebGLRenderTargets(prefix, context, state, capabilities, textures, renderBuffers, constants, gpuMemory);
+			const buffers = new WebGLBuffers(prefix, context, capabilities, gpuMemory);
 			const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, context, capabilities, buffers);
 			const geometries = new WebGLGeometries(prefix, context, buffers, vertexArrayBindings);
 			const lights = new WebGLLights(prefix, capabilities, textures);
-			const programs = new WebGLPrograms(context, state, capabilities);
+			const programs = new WebGLPrograms(context, state, capabilities, gpuMemory);
 			const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
 			const querySets = new WebGLQuerySets(prefix, context, capabilities);
 			this.capabilities = capabilities;
@@ -19833,6 +20106,8 @@
 			}
 			gl.bindBuffer(gl.PIXEL_PACK_BUFFER, textureProperties.__readBuffer);
 			gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.STREAM_READ);
+			this.gpuMemory._updateReadBuffer(textureProperties.__readBufferByteLength || 0, buffer.byteLength);
+			textureProperties.__readBufferByteLength = buffer.byteLength;
 			gl.readPixels(x, y, width, height, glFormat, glType, 0);
 
 			// restore framebuffer binding
@@ -20526,6 +20801,7 @@
 	exports.Fog = Fog;
 	exports.FogExp2 = FogExp2;
 	exports.Frustum = Frustum;
+	exports.GPUMemoryInfo = GPUMemoryInfo;
 	exports.Geometry = Geometry;
 	exports.HemisphereLight = HemisphereLight;
 	exports.ImageLoader = ImageLoader;

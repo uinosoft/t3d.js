@@ -2,11 +2,12 @@ import { PropertyMap } from '../render/PropertyMap.js';
 
 class WebGLBuffers extends PropertyMap {
 
-	constructor(prefix, gl, capabilities) {
+	constructor(prefix, gl, capabilities, gpuMemory) {
 		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
+		this._gpuMemory = gpuMemory;
 	}
 
 	setBuffer(buffer, bufferType, vertexArrayBindings) {
@@ -25,6 +26,8 @@ class WebGLBuffers extends PropertyMap {
 			// Because Buffer does not have a dispose interface at present,
 			// when the version increases, the external is automatically closed
 			this._createGLBuffer(bufferProperties, buffer, bufferType);
+		} else if (bufferProperties.__byteLength !== buffer.array.byteLength) {
+			this._bufferData(bufferProperties, buffer, bufferType);
 		} else {
 			this._updateGLBuffer(bufferProperties.glBuffer, buffer, bufferType);
 			bufferProperties.version = buffer.version;
@@ -38,6 +41,7 @@ class WebGLBuffers extends PropertyMap {
 
 		if (bufferProperties.glBuffer && !bufferProperties.__external) {
 			gl.deleteBuffer(bufferProperties.glBuffer);
+			this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
 		}
 
 		this.delete(buffer);
@@ -51,6 +55,7 @@ class WebGLBuffers extends PropertyMap {
 		if (!bufferProperties.__external) {
 			if (bufferProperties.glBuffer) {
 				gl.deleteBuffer(bufferProperties.glBuffer);
+				this._gpuMemory._updateBuffer(bufferProperties.__byteLength || 0, 0);
 			}
 		}
 
@@ -60,6 +65,7 @@ class WebGLBuffers extends PropertyMap {
 		bufferProperties.type = type;
 		bufferProperties.bytesPerElement = buffer.array.BYTES_PER_ELEMENT;
 		bufferProperties.version = buffer.version;
+		bufferProperties.__byteLength = 0;
 
 		bufferProperties.__external = true;
 	}
@@ -84,7 +90,37 @@ class WebGLBuffers extends PropertyMap {
 		bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
 		bufferProperties.version = buffer.version;
 
+		const oldByteLength = bufferProperties.__external ? 0 : (bufferProperties.__byteLength || 0);
+		const byteLength = array.byteLength;
+		this._gpuMemory._updateBuffer(oldByteLength, byteLength);
+		bufferProperties.__byteLength = byteLength;
+
 		bufferProperties.__external = false;
+
+		buffer.updateRange.count = -1; // reset range
+	}
+
+	_bufferData(bufferProperties, buffer, bufferType) {
+		const gl = this._gl;
+
+		const array = buffer.array;
+		const usage = buffer.usage;
+
+		gl.bindBuffer(bufferType, bufferProperties.glBuffer);
+		gl.bufferData(bufferType, array, usage);
+
+		buffer.onUploadCallback();
+
+		const type = getBufferType(gl, array);
+
+		bufferProperties.type = type;
+		bufferProperties.bytesPerElement = array.BYTES_PER_ELEMENT;
+		bufferProperties.version = buffer.version;
+
+		const oldByteLength = bufferProperties.__byteLength || 0;
+		const byteLength = array.byteLength;
+		this._gpuMemory._updateBuffer(oldByteLength, byteLength);
+		bufferProperties.__byteLength = byteLength;
 
 		buffer.updateRange.count = -1; // reset range
 	}

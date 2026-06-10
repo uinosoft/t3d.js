@@ -5,10 +5,11 @@ import { ShaderLib } from '../shaders/ShaderLib.js';
 
 class WebGLPrograms {
 
-	constructor(gl, state, capabilities) {
+	constructor(gl, state, capabilities, gpuMemory) {
 		this._gl = gl;
 		this._state = state;
 		this._capabilities = capabilities;
+		this._gpuMemory = gpuMemory;
 
 		this._programs = [];
 	}
@@ -39,6 +40,7 @@ class WebGLPrograms {
 			program.code = programCode;
 
 			programs.push(program);
+			this._gpuMemory._updateProgram(1);
 		}
 
 		return program;
@@ -55,6 +57,7 @@ class WebGLPrograms {
 
 			// Free WebGL resources
 			program.dispose(this._gl);
+			this._gpuMemory._updateProgram(-1);
 		}
 	}
 

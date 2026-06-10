@@ -1,16 +1,18 @@
-import { TEXTURE_FILTER, TEXTURE_WRAP, PIXEL_FORMAT, PIXEL_TYPE } from '../const.js';
+import { TEXTURE_FILTER, TEXTURE_WRAP } from '../const.js';
 import { PropertyMap } from '../render/PropertyMap.js';
 import { MathUtils } from '../math/MathUtils.js';
+import { getTextureByteLength, getTextureLevelByteLength } from './WebGLMemoryUtils.js';
 
 class WebGLTextures extends PropertyMap {
 
-	constructor(prefix, gl, state, capabilities, constants) {
+	constructor(prefix, gl, state, capabilities, constants, gpuMemory) {
 		super(prefix);
 
 		this._gl = gl;
 		this._state = state;
 		this._capabilities = capabilities;
 		this._constants = constants;
+		this._gpuMemory = gpuMemory;
 
 		this._usedTextureUnits = 0;
 
@@ -24,10 +26,12 @@ class WebGLTextures extends PropertyMap {
 
 			if (textureProperties.__webglTexture && !textureProperties.__external) {
 				gl.deleteTexture(textureProperties.__webglTexture);
+				that._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
 			}
 
 			if (textureProperties.__readBuffer) {
 				gl.deleteBuffer(textureProperties.__readBuffer);
+				that._gpuMemory._updateReadBuffer(textureProperties.__readBufferByteLength || 0, 0);
 			}
 
 			that.delete(texture);
@@ -149,6 +153,11 @@ class WebGLTextures extends PropertyMap {
 				this.generateMipmaps(texture);
 			}
 
+			const oldByteLength = textureProperties.__byteLength || 0;
+			const byteLength = getTextureByteLength(texture, textureProperties);
+			this._gpuMemory._updateTexture(oldByteLength, byteLength);
+			textureProperties.__byteLength = byteLength;
+
 			textureProperties.__version = texture.version;
 
 			return textureProperties;
@@ -170,6 +179,13 @@ class WebGLTextures extends PropertyMap {
 		const width = textureProperties.__width, height = textureProperties.__height;
 		// Note: Math.log( x ) * Math.LOG2E used instead of Math.log2( x ) which is not supported by IE11
 		textureProperties.__maxMipLevel = Math.log(Math.max(width, height)) * Math.LOG2E;
+
+		if (!textureProperties.__external) {
+			const oldByteLength = textureProperties.__byteLength || 0;
+			const byteLength = getTextureByteLength(texture, textureProperties);
+			this._gpuMemory._updateTexture(oldByteLength, byteLength);
+			textureProperties.__byteLength = byteLength;
+		}
 	}
 
 	setTextureExternal(texture, webglTexture) {
@@ -180,12 +196,14 @@ class WebGLTextures extends PropertyMap {
 		if (!textureProperties.__external) {
 			if (textureProperties.__webglTexture) {
 				gl.deleteTexture(textureProperties.__webglTexture);
+				this._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
 			} else {
 				texture.addEventListener('dispose', this._onTextureDispose);
 			}
 		}
 
 		textureProperties.__webglTexture = webglTexture;
+		textureProperties.__byteLength = 0;
 		textureProperties.__external = true;
 	}
 
@@ -353,7 +371,7 @@ class WebGLTextures extends PropertyMap {
 
 		if (texture.layerUpdates.size > 0) {
 			for (const layerIndex of texture.layerUpdates) {
-				const layerByteLength = getByteLength(image.width, image.height, texture.format, texture.type);
+				const layerByteLength = getTextureLevelByteLength(image.width, image.height, 1, texture.internalformat !== null ? texture.internalformat : texture.format, texture.type);
 				const layerData = image.data.subarray(
 					layerIndex * layerByteLength / image.data.BYTES_PER_ELEMENT,
 					(layerIndex + 1) * layerByteLength / image.data.BYTES_PER_ELEMENT
@@ -456,93 +474,6 @@ function domCheck(image) {
 		|| (typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement)
 		|| (typeof HTMLVideoElement !== 'undefined' && image instanceof HTMLVideoElement)
 		|| (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap);
-}
-
-function getByteLength(width, height, format, type) {
-	const typeByteLength = getTextureTypeByteLength(type);
-
-	switch (format) {
-		// https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
-		case PIXEL_FORMAT.ALPHA:
-			return width * height;
-		case PIXEL_FORMAT.LUMINANCE:
-			return width * height;
-		case PIXEL_FORMAT.LUMINANCE_ALPHA:
-			return width * height * 2;
-		case PIXEL_FORMAT.RED:
-			return ((width * height) / typeByteLength.components) * typeByteLength.byteLength;
-		case PIXEL_FORMAT.RED_INTEGER:
-			return ((width * height) / typeByteLength.components) * typeByteLength.byteLength;
-		case PIXEL_FORMAT.RG:
-			return ((width * height * 2) / typeByteLength.components) * typeByteLength.byteLength;
-		case PIXEL_FORMAT.RG_INTEGER:
-			return ((width * height * 2) / typeByteLength.components) * typeByteLength.byteLength;
-		case PIXEL_FORMAT.RGB:
-			return ((width * height * 3) / typeByteLength.components) * typeByteLength.byteLength;
-		case PIXEL_FORMAT.RGBA:
-			return ((width * height * 4) / typeByteLength.components) * typeByteLength.byteLength;
-		case PIXEL_FORMAT.RGBA_INTEGER:
-			return ((width * height * 4) / typeByteLength.components) * typeByteLength.byteLength;
-
-		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_s3tc_srgb/
-		case PIXEL_FORMAT.RGB_S3TC_DXT1:
-		case PIXEL_FORMAT.RGBA_S3TC_DXT1:
-			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
-		case PIXEL_FORMAT.RGBA_S3TC_DXT3:
-		case PIXEL_FORMAT.RGBA_S3TC_DXT5:
-			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
-
-		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_pvrtc/
-		case PIXEL_FORMAT.RGB_PVRTC_2BPPV1:
-		case PIXEL_FORMAT.RGBA_PVRTC_2BPPV1:
-			return (Math.max(width, 16) * Math.max(height, 8)) / 4;
-		case PIXEL_FORMAT.RGB_PVRTC_4BPPV1:
-		case PIXEL_FORMAT.RGBA_PVRTC_4BPPV1:
-			return (Math.max(width, 8) * Math.max(height, 8)) / 2;
-
-		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_etc/
-		case PIXEL_FORMAT.RGB_ETC1:
-			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 8;
-		// https://registry.khronos.org/webgl/extensions/WEBGL_compressed_texture_astc/
-		case PIXEL_FORMAT.RGBA_ASTC_4x4:
-			return Math.floor((width + 3) / 4) * Math.floor((height + 3) / 4) * 16;
-		// https://registry.khronos.org/webgl/extensions/EXT_texture_compression_bptc/
-		case PIXEL_FORMAT.RGBA_BPTC:
-			return Math.ceil(width / 4) * Math.ceil(height / 4) * 16;
-	}
-
-	throw new Error(
-		`Unable to determine texture byte length for ${format} format.`
-	);
-}
-
-const _tempTypeByteLength = { byteLength: 0, components: 0 };
-function getTextureTypeByteLength(type) {
-	switch (type) {
-		case PIXEL_TYPE.UNSIGNED_BYTE:
-		case PIXEL_TYPE.ByteType:
-			_tempTypeByteLength.byteLength = 1;
-			_tempTypeByteLength.components = 1;
-			return _tempTypeByteLength;
-		case PIXEL_TYPE.UNSIGNED_SHORT:
-		case PIXEL_TYPE.SHORT:
-		case PIXEL_TYPE.HALF_FLOAT:
-			_tempTypeByteLength.byteLength = 2;
-			_tempTypeByteLength.components = 1;
-			return _tempTypeByteLength;
-		case PIXEL_TYPE.UNSIGNED_SHORT_4_4_4_4:
-		case PIXEL_TYPE.UNSIGNED_SHORT_5_5_5_1:
-			_tempTypeByteLength.byteLength = 2;
-			_tempTypeByteLength.components = 4;
-			return _tempTypeByteLength;
-		case PIXEL_TYPE.UNSIGNED_INT:
-		case PIXEL_TYPE.INT:
-		case PIXEL_TYPE.FLOAT:
-			_tempTypeByteLength.byteLength = 4;
-			_tempTypeByteLength.components = 1;
-			return _tempTypeByteLength;
-	}
-	throw new Error(`Unknown texture type ${type}.`);
 }
 
 function getTextureTarget(gl, texture) {

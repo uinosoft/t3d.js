@@ -3,7 +3,7 @@ import { PropertyMap } from '../render/PropertyMap.js';
 
 class WebGLRenderTargets extends PropertyMap {
 
-	constructor(prefix, gl, state, capabilities, textures, renderBuffers, constants) {
+	constructor(prefix, gl, state, capabilities, textures, renderBuffers, constants, gpuMemory) {
 		super(prefix);
 
 		this._gl = gl;
@@ -12,6 +12,7 @@ class WebGLRenderTargets extends PropertyMap {
 		this._textures = textures;
 		this._renderBuffers = renderBuffers;
 		this._constants = constants;
+		this._gpuMemory = gpuMemory;
 
 		const that = this;
 
@@ -24,6 +25,7 @@ class WebGLRenderTargets extends PropertyMap {
 
 			if (renderTargetProperties.__webglFramebuffer && !renderTargetProperties.__external) {
 				gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
+				that._gpuMemory._updateFramebuffer(-1);
 			}
 
 			that.delete(renderTarget);
@@ -54,6 +56,8 @@ class WebGLRenderTargets extends PropertyMap {
 		renderTargetProperties.__drawBuffers = drawBuffers;
 		renderTargetProperties.__currentActiveMipmapLevel = renderTarget.activeMipmapLevel;
 		renderTargetProperties.__currentActiveLayer = renderTarget.activeLayer;
+		renderTargetProperties.__external = false;
+		this._gpuMemory._updateFramebuffer(1);
 
 		gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
 
@@ -199,6 +203,7 @@ class WebGLRenderTargets extends PropertyMap {
 		if (!renderTargetProperties.__external) {
 			if (renderTargetProperties.__webglFramebuffer) {
 				this._gl.deleteFramebuffer(renderTargetProperties.__webglFramebuffer);
+				this._gpuMemory._updateFramebuffer(-1);
 			} else {
 				renderTarget.addEventListener('dispose', this._onRenderTargetDispose);
 			}

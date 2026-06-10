@@ -1,13 +1,15 @@
 import { PropertyMap } from '../render/PropertyMap.js';
+import { getRenderBufferByteLength } from './WebGLMemoryUtils.js';
 
 class WebGLRenderBuffers extends PropertyMap {
 
-	constructor(prefix, gl, capabilities, constants) {
+	constructor(prefix, gl, capabilities, constants, gpuMemory) {
 		super(prefix);
 
 		this._gl = gl;
 		this._capabilities = capabilities;
 		this._constants = constants;
+		this._gpuMemory = gpuMemory;
 
 		const that = this;
 
@@ -20,6 +22,7 @@ class WebGLRenderBuffers extends PropertyMap {
 
 			if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
+				that._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
 			}
 
 			that.delete(renderBuffer);
@@ -52,6 +55,10 @@ class WebGLRenderBuffers extends PropertyMap {
 			} else {
 				gl.renderbufferStorage(gl.RENDERBUFFER, glFormat, renderBuffer.width, renderBuffer.height);
 			}
+
+			const byteLength = getRenderBufferByteLength(renderBuffer, capabilities);
+			this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, byteLength);
+			renderBufferProperties.__byteLength = byteLength;
 		} else {
 			gl.bindRenderbuffer(gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
 		}
@@ -67,12 +74,14 @@ class WebGLRenderBuffers extends PropertyMap {
 		if (!renderBufferProperties.__external) {
 			if (renderBufferProperties.__webglRenderbuffer) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
+				this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
 			} else {
 				renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
 			}
 		}
 
 		renderBufferProperties.__webglRenderbuffer = webglRenderbuffer;
+		renderBufferProperties.__byteLength = 0;
 		renderBufferProperties.__external = true;
 	}
 

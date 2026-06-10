@@ -13,4 +13,7 @@ import './src/math/Vector2.tests.js';
 import './src/math/Vector3.tests.js';
 import './src/math/Vector4.tests.js';
 
+import './src/render/GPUMemoryInfo.tests.js';
+import './src/webgl/WebGLMemoryUtils.tests.js';
+
 import './src/EventDispatcher.tests.js';

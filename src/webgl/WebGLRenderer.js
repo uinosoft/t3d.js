@@ -145,18 +145,21 @@ class WebGLRenderer extends ThinRenderer {
 		this.context = context;
 
 		const prefix = `_gl${this.increaseId()}`;
+		const gpuMemory = this.gpuMemory;
+
+		gpuMemory.reset();
 
 		const capabilities = new WebGLCapabilities(context);
 		const constants = new WebGLConstants(context, capabilities);
 		const state = new WebGLState(context, capabilities);
-		const textures = new WebGLTextures(prefix, context, state, capabilities, constants);
-		const renderBuffers = new WebGLRenderBuffers(prefix, context, capabilities, constants);
-		const renderTargets = new WebGLRenderTargets(prefix, context, state, capabilities, textures, renderBuffers, constants);
-		const buffers = new WebGLBuffers(prefix, context, capabilities);
+		const textures = new WebGLTextures(prefix, context, state, capabilities, constants, gpuMemory);
+		const renderBuffers = new WebGLRenderBuffers(prefix, context, capabilities, constants, gpuMemory);
+		const renderTargets = new WebGLRenderTargets(prefix, context, state, capabilities, textures, renderBuffers, constants, gpuMemory);
+		const buffers = new WebGLBuffers(prefix, context, capabilities, gpuMemory);
 		const vertexArrayBindings = new WebGLVertexArrayBindings(prefix, context, capabilities, buffers);
 		const geometries = new WebGLGeometries(prefix, context, buffers, vertexArrayBindings);
 		const lights = new WebGLLights(prefix, capabilities, textures);
-		const programs = new WebGLPrograms(context, state, capabilities);
+		const programs = new WebGLPrograms(context, state, capabilities, gpuMemory);
 		const materials = new WebGLMaterials(prefix, programs, vertexArrayBindings);
 		const querySets = new WebGLQuerySets(prefix, context, capabilities);
 
@@ -557,6 +560,8 @@ class WebGLRenderer extends ThinRenderer {
 		}
 		gl.bindBuffer(gl.PIXEL_PACK_BUFFER, textureProperties.__readBuffer);
 		gl.bufferData(gl.PIXEL_PACK_BUFFER, buffer.byteLength, gl.STREAM_READ);
+		this.gpuMemory._updateReadBuffer(textureProperties.__readBufferByteLength || 0, buffer.byteLength);
+		textureProperties.__readBufferByteLength = buffer.byteLength;
 
 		gl.readPixels(x, y, width, height, glFormat, glType, 0);
 

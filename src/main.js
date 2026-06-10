@@ -40,6 +40,7 @@ export { ShaderPostPass } from './render/passes/ShaderPostPass.js';
 export { ShadowMapPass } from './render/passes/ShadowMapPass.js';
 
 export { PropertyMap } from './render/PropertyMap.js';
+export { GPUMemoryInfo } from './render/GPUMemoryInfo.js';
 export { RenderInfo } from './render/RenderInfo.js';
 export { RenderQueue } from './render/RenderQueue.js';
 export { RenderQueueLayer } from './render/RenderQueueLayer.js';
