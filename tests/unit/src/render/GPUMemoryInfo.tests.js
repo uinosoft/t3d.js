@@ -1,5 +1,8 @@
 import { GPUMemoryInfo } from '../../../../src/render/GPUMemoryInfo.js';
+import { PIXEL_FORMAT } from '../../../../src/const.js';
+import { RenderBuffer } from '../../../../src/resources/RenderBuffer.js';
 import { Buffer } from '../../../../src/resources/geometries/Buffer.js';
+import { Texture2D } from '../../../../src/resources/textures/Texture2D.js';
 
 QUnit.module('GPUMemoryInfo');
 
@@ -182,4 +185,149 @@ QUnit.test('disabling buffer records clears existing records', assert => {
 	assert.strictEqual(info.buffers, 1, 'aggregate statistics continue updating');
 	assert.strictEqual(info.bufferBytes, 48, 'aggregate bytes continue updating');
 	assert.deepEqual(info.getBufferRecords(), [], 'records are not recreated while disabled');
+});
+
+QUnit.test('texture records are disabled by default', assert => {
+	const info = new GPUMemoryInfo();
+	const texture = new Texture2D();
+	const properties = { __external: false, __width: 4, __height: 4, __maxMipLevel: 0 };
+
+	info._updateTexture(0, 64, texture, properties);
+
+	assert.strictEqual(info.textures, 1, 'texture count is updated');
+	assert.strictEqual(info.textureBytes, 64, 'texture bytes are updated');
+	assert.deepEqual(info.getTextureRecords(), [], 'no texture records are stored');
+});
+
+QUnit.test('tracks texture records when enabled', assert => {
+	const info = new GPUMemoryInfo();
+	const smallTexture = new Texture2D();
+	const largeTexture = new Texture2D();
+
+	smallTexture.userData.label = 'smallTexture';
+	largeTexture.userData.gpuMemoryLabel = 'largeTexture';
+	largeTexture.version = 2;
+
+	info.records = true;
+	info._updateTexture(0, 16, smallTexture, { __external: false, __width: 2, __height: 2, __maxMipLevel: 0 });
+	info._updateTexture(0, 64, largeTexture, { __external: false, __width: 4, __height: 4, __maxMipLevel: 1 });
+
+	const records = info.getTextureRecords();
+
+	assert.strictEqual(records.length, 2, 'two texture records are stored');
+	assert.strictEqual(records[0].id, largeTexture.id, 'records are sorted by bytes descending');
+	assert.strictEqual(records[0].bytes, 64, 'record bytes are stored');
+	assert.strictEqual(records[0].label, 'largeTexture', 'gpuMemoryLabel is preferred');
+	assert.strictEqual(records[0].external, false, 'external flag is stored');
+	assert.strictEqual(records[0].version, largeTexture.version, 'version is stored');
+	assert.strictEqual(records[0].type, 'Texture2D', 'texture type is stored');
+	assert.strictEqual(records[0].width, 4, 'texture width is stored');
+	assert.strictEqual(records[0].height, 4, 'texture height is stored');
+	assert.strictEqual(records[0].maxMipLevel, 1, 'max mip level is stored');
+	assert.strictEqual(records[1].label, 'smallTexture', 'label fallback is used');
+});
+
+QUnit.test('updates and removes texture records', assert => {
+	const info = new GPUMemoryInfo();
+	const texture = new Texture2D();
+
+	info.records = true;
+	info._updateTexture(0, 16, texture, { __external: false, __width: 2, __height: 2, __maxMipLevel: 0 });
+
+	texture.version++;
+	info._updateTexture(16, 64, texture, { __external: false, __width: 4, __height: 4, __maxMipLevel: 0 });
+
+	let records = info.getTextureRecords();
+	assert.strictEqual(records.length, 1, 'record is updated instead of duplicated');
+	assert.strictEqual(records[0].bytes, 64, 'record bytes are updated');
+	assert.strictEqual(records[0].version, 1, 'record version is updated');
+	assert.strictEqual(records[0].width, 4, 'record width is updated');
+
+	info._updateTexture(64, 0, texture, { __external: false, __width: 4, __height: 4, __maxMipLevel: 0 });
+	records = info.getTextureRecords();
+	assert.strictEqual(records.length, 0, 'record is removed when texture bytes become zero');
+});
+
+QUnit.test('tracks renderbuffer records when enabled', assert => {
+	const info = new GPUMemoryInfo();
+	const smallRenderBuffer = new RenderBuffer(2, 2, PIXEL_FORMAT.RGBA8, 0);
+	const largeRenderBuffer = new RenderBuffer(4, 4, PIXEL_FORMAT.DEPTH_COMPONENT16, 4);
+
+	smallRenderBuffer.userData.label = 'smallRenderBuffer';
+	largeRenderBuffer.userData.gpuMemoryLabel = 'largeRenderBuffer';
+
+	info.records = true;
+	info._updateRenderBuffer(0, 16, smallRenderBuffer, { __external: false });
+	info._updateRenderBuffer(0, 128, largeRenderBuffer, { __external: false });
+
+	const records = info.getRenderBufferRecords();
+
+	assert.strictEqual(records.length, 2, 'two renderbuffer records are stored');
+	assert.strictEqual(records[0].id, largeRenderBuffer.id, 'records are sorted by bytes descending');
+	assert.strictEqual(records[0].bytes, 128, 'record bytes are stored');
+	assert.strictEqual(records[0].label, 'largeRenderBuffer', 'gpuMemoryLabel is preferred');
+	assert.strictEqual(records[0].external, false, 'external flag is stored');
+	assert.strictEqual(records[0].width, 4, 'renderbuffer width is stored');
+	assert.strictEqual(records[0].height, 4, 'renderbuffer height is stored');
+	assert.strictEqual(records[0].format, PIXEL_FORMAT.DEPTH_COMPONENT16, 'renderbuffer format is stored');
+	assert.strictEqual(records[0].multipleSampling, 4, 'renderbuffer sample count is stored');
+	assert.strictEqual(records[1].label, 'smallRenderBuffer', 'label fallback is used');
+});
+
+QUnit.test('updates and removes renderbuffer records', assert => {
+	const info = new GPUMemoryInfo();
+	const renderBuffer = new RenderBuffer(2, 2);
+
+	info.records = true;
+	info._updateRenderBuffer(0, 16, renderBuffer, { __external: false });
+
+	renderBuffer.width = 4;
+	renderBuffer.height = 4;
+	info._updateRenderBuffer(16, 64, renderBuffer, { __external: false });
+
+	let records = info.getRenderBufferRecords();
+	assert.strictEqual(records.length, 1, 'record is updated instead of duplicated');
+	assert.strictEqual(records[0].bytes, 64, 'record bytes are updated');
+	assert.strictEqual(records[0].width, 4, 'record width is updated');
+	assert.strictEqual(records[0].height, 4, 'record height is updated');
+
+	info._updateRenderBuffer(64, 0, renderBuffer, { __external: false });
+	records = info.getRenderBufferRecords();
+	assert.strictEqual(records.length, 0, 'record is removed when renderbuffer bytes become zero');
+});
+
+QUnit.test('disabling records clears all record types', assert => {
+	const info = new GPUMemoryInfo();
+	const buffer = new Buffer(new Float32Array(6), 3);
+	const texture = new Texture2D();
+	const renderBuffer = new RenderBuffer(2, 2);
+
+	info.records = true;
+	info._updateBuffer(0, 24, buffer, { __external: false });
+	info._updateTexture(0, 16, texture, { __external: false, __width: 2, __height: 2, __maxMipLevel: 0 });
+	info._updateRenderBuffer(0, 16, renderBuffer, { __external: false });
+
+	info.records = false;
+
+	assert.deepEqual(info.getBufferRecords(), [], 'buffer records are cleared');
+	assert.deepEqual(info.getTextureRecords(), [], 'texture records are cleared');
+	assert.deepEqual(info.getRenderBufferRecords(), [], 'renderbuffer records are cleared');
+});
+
+QUnit.test('reset clears all record types', assert => {
+	const info = new GPUMemoryInfo();
+	const buffer = new Buffer(new Float32Array(6), 3);
+	const texture = new Texture2D();
+	const renderBuffer = new RenderBuffer(2, 2);
+
+	info.records = true;
+	info._updateBuffer(0, 24, buffer, { __external: false });
+	info._updateTexture(0, 16, texture, { __external: false, __width: 2, __height: 2, __maxMipLevel: 0 });
+	info._updateRenderBuffer(0, 16, renderBuffer, { __external: false });
+
+	info.reset();
+
+	assert.deepEqual(info.getBufferRecords(), [], 'buffer records are cleared');
+	assert.deepEqual(info.getTextureRecords(), [], 'texture records are cleared');
+	assert.deepEqual(info.getRenderBufferRecords(), [], 'renderbuffer records are cleared');
 });

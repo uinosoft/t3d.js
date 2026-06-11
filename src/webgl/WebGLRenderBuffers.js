@@ -22,7 +22,7 @@ class WebGLRenderBuffers extends PropertyMap {
 
 			if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
-				that._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
+				that._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0, renderBuffer, renderBufferProperties);
 			}
 
 			that.delete(renderBuffer);
@@ -57,7 +57,7 @@ class WebGLRenderBuffers extends PropertyMap {
 			}
 
 			const byteLength = getRenderBufferByteLength(renderBuffer, capabilities);
-			this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, byteLength);
+			this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, byteLength, renderBuffer, renderBufferProperties);
 			renderBufferProperties.__byteLength = byteLength;
 		} else {
 			gl.bindRenderbuffer(gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
@@ -74,7 +74,7 @@ class WebGLRenderBuffers extends PropertyMap {
 		if (!renderBufferProperties.__external) {
 			if (renderBufferProperties.__webglRenderbuffer) {
 				gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
-				this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
+				this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0, renderBuffer, renderBufferProperties);
 			} else {
 				renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
 			}

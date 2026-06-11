@@ -26,7 +26,7 @@ class WebGLTextures extends PropertyMap {
 
 			if (textureProperties.__webglTexture && !textureProperties.__external) {
 				gl.deleteTexture(textureProperties.__webglTexture);
-				that._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
+				that._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0, texture, textureProperties);
 			}
 
 			if (textureProperties.__readBuffer) {
@@ -155,7 +155,7 @@ class WebGLTextures extends PropertyMap {
 
 			const oldByteLength = textureProperties.__byteLength || 0;
 			const byteLength = getTextureByteLength(texture, textureProperties);
-			this._gpuMemory._updateTexture(oldByteLength, byteLength);
+			this._gpuMemory._updateTexture(oldByteLength, byteLength, texture, textureProperties);
 			textureProperties.__byteLength = byteLength;
 
 			textureProperties.__version = texture.version;
@@ -183,7 +183,7 @@ class WebGLTextures extends PropertyMap {
 		if (!textureProperties.__external) {
 			const oldByteLength = textureProperties.__byteLength || 0;
 			const byteLength = getTextureByteLength(texture, textureProperties);
-			this._gpuMemory._updateTexture(oldByteLength, byteLength);
+			this._gpuMemory._updateTexture(oldByteLength, byteLength, texture, textureProperties);
 			textureProperties.__byteLength = byteLength;
 		}
 	}
@@ -196,7 +196,7 @@ class WebGLTextures extends PropertyMap {
 		if (!textureProperties.__external) {
 			if (textureProperties.__webglTexture) {
 				gl.deleteTexture(textureProperties.__webglTexture);
-				this._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
+				this._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0, texture, textureProperties);
 			} else {
 				texture.addEventListener('dispose', this._onTextureDispose);
 			}

@@ -1,5 +1,8 @@
+import { cloneJson } from '../base.js';
 import { PIXEL_FORMAT } from '../const.js';
 import { EventDispatcher } from '../EventDispatcher.js';
+
+let _renderBufferId = 0;
 
 /**
  * Render Buffer can be attached to RenderTarget.
@@ -15,6 +18,21 @@ class RenderBuffer extends EventDispatcher {
 	 */
 	constructor(width, height, format = PIXEL_FORMAT.RGBA8, multipleSampling = 0) {
 		super();
+
+		/**
+		 * Unique number for this render buffer instance.
+		 * @readonly
+		 * @type {number}
+		 */
+		this.id = _renderBufferId++;
+
+		/**
+		 * An object that can be used to store custom data about the {@link RenderBuffer}.
+		 * It should not hold references to functions as these will not be cloned.
+		 * @type {object}
+		 * @default {}
+		 */
+		this.userData = {};
 
 		/**
 		 * The width of the render buffer.
@@ -83,6 +101,9 @@ class RenderBuffer extends EventDispatcher {
 	 * @returns {RenderBuffer}
 	 */
 	copy(source) {
+		this.userData = cloneJson(source.userData);
+		this.width = source.width;
+		this.height = source.height;
 		this.format = source.format;
 		this.multipleSampling = source.multipleSampling;
 

@@ -11830,6 +11830,8 @@
 		constructor() {
 			this._records = false;
 			this._bufferRecords = new Map();
+			this._textureRecords = new Map();
+			this._renderBufferRecords = new Map();
 			this.reset();
 		}
 
@@ -11853,6 +11855,8 @@
 			this._records = enabled === true;
 			if (!this._records) {
 				this._bufferRecords.clear();
+				this._textureRecords.clear();
+				this._renderBufferRecords.clear();
 			}
 			return this;
 		}
@@ -11862,6 +11866,8 @@
 		 */
 		reset() {
 			this._bufferRecords.clear();
+			this._textureRecords.clear();
+			this._renderBufferRecords.clear();
 
 			/**
 			 * Number of GPU buffers.
@@ -11929,7 +11935,23 @@
 		 * @returns {object[]}
 		 */
 		getBufferRecords() {
-			return Array.from(this._bufferRecords.values()).map(record => Object.assign({}, record)).sort((a, b) => b.bytes - a.bytes);
+			return this._getRecords(this._bufferRecords);
+		}
+
+		/**
+		 * Returns texture records sorted by memory usage in descending order.
+		 * @returns {object[]}
+		 */
+		getTextureRecords() {
+			return this._getRecords(this._textureRecords);
+		}
+
+		/**
+		 * Returns renderbuffer records sorted by memory usage in descending order.
+		 * @returns {object[]}
+		 */
+		getRenderBufferRecords() {
+			return this._getRecords(this._renderBufferRecords);
 		}
 		_updateBuffer(oldBytes, newBytes, buffer, bufferProperties) {
 			this._updateCount('buffers', oldBytes, newBytes);
@@ -11938,15 +11960,19 @@
 			if (!this.records || buffer === undefined) return;
 			this._updateBufferRecord(newBytes, buffer, bufferProperties);
 		}
-		_updateTexture(oldBytes, newBytes) {
+		_updateTexture(oldBytes, newBytes, texture, textureProperties) {
 			this._updateCount('textures', oldBytes, newBytes);
 			this.textureBytes += newBytes - oldBytes;
 			this._updateTotalBytes();
+			if (!this.records || texture === undefined) return;
+			this._updateTextureRecord(newBytes, texture, textureProperties);
 		}
-		_updateRenderBuffer(oldBytes, newBytes) {
+		_updateRenderBuffer(oldBytes, newBytes, renderBuffer, renderBufferProperties) {
 			this._updateCount('renderBuffers', oldBytes, newBytes);
 			this.renderBufferBytes += newBytes - oldBytes;
 			this._updateTotalBytes();
+			if (!this.records || renderBuffer === undefined) return;
+			this._updateRenderBufferRecord(newBytes, renderBuffer, renderBufferProperties);
 		}
 		_updateReadBuffer(oldBytes, newBytes) {
 			this.readBufferBytes += newBytes - oldBytes;
@@ -11968,21 +11994,67 @@
 		_updateTotalBytes() {
 			this.totalBytes = this.bufferBytes + this.textureBytes + this.renderBufferBytes + this.readBufferBytes;
 		}
+		_getRecords(records) {
+			return Array.from(records.values()).map(record => Object.assign({}, record)).sort((a, b) => b.bytes - a.bytes);
+		}
+		_getRecordLabel(resource) {
+			const userData = resource.userData || {};
+			return userData.gpuMemoryLabel !== undefined ? userData.gpuMemoryLabel : userData.label !== undefined ? userData.label : '';
+		}
 		_updateBufferRecord(bytes, buffer, bufferProperties) {
 			if (bytes === 0) {
 				this._bufferRecords.delete(buffer.id);
 				return;
 			}
-			const userData = buffer.userData || {};
-			const label = userData.gpuMemoryLabel !== undefined ? userData.gpuMemoryLabel : userData.label !== undefined ? userData.label : '';
 			this._bufferRecords.set(buffer.id, {
 				id: buffer.id,
 				bytes: bytes,
-				label: label,
+				label: this._getRecordLabel(buffer),
 				external: bufferProperties !== undefined && bufferProperties.__external === true,
 				version: buffer.version
 			});
 		}
+		_updateTextureRecord(bytes, texture, textureProperties) {
+			if (bytes === 0) {
+				this._textureRecords.delete(texture.id);
+				return;
+			}
+			const image = texture.image || {};
+			this._textureRecords.set(texture.id, {
+				id: texture.id,
+				bytes: bytes,
+				label: this._getRecordLabel(texture),
+				external: textureProperties !== undefined && textureProperties.__external === true,
+				version: texture.version,
+				type: getTextureRecordType(texture),
+				width: textureProperties !== undefined ? textureProperties.__width : undefined,
+				height: textureProperties !== undefined ? textureProperties.__height : undefined,
+				depth: image.depth,
+				maxMipLevel: textureProperties !== undefined ? textureProperties.__maxMipLevel : undefined
+			});
+		}
+		_updateRenderBufferRecord(bytes, renderBuffer, renderBufferProperties) {
+			if (bytes === 0) {
+				this._renderBufferRecords.delete(renderBuffer.id);
+				return;
+			}
+			this._renderBufferRecords.set(renderBuffer.id, {
+				id: renderBuffer.id,
+				bytes: bytes,
+				label: this._getRecordLabel(renderBuffer),
+				external: renderBufferProperties !== undefined && renderBufferProperties.__external === true,
+				width: renderBuffer.width,
+				height: renderBuffer.height,
+				format: renderBuffer.format,
+				multipleSampling: renderBuffer.multipleSampling
+			});
+		}
+	}
+	function getTextureRecordType(texture) {
+		if (texture.isTextureCube) return 'TextureCube';
+		if (texture.isTexture3D) return 'Texture3D';
+		if (texture.isTexture2DArray) return 'Texture2DArray';
+		return 'Texture2D';
 	}
 
 	/**
@@ -13552,6 +13624,8 @@
 	 */
 	RenderTargetBase.prototype.isRenderTarget = true;
 
+	let _renderBufferId = 0;
+
 	/**
 	 * Render Buffer can be attached to RenderTarget.
 	 * @extends EventDispatcher
@@ -13565,6 +13639,21 @@
 		 */
 		constructor(width, height, format = PIXEL_FORMAT.RGBA8, multipleSampling = 0) {
 			super();
+
+			/**
+			 * Unique number for this render buffer instance.
+			 * @readonly
+			 * @type {number}
+			 */
+			this.id = _renderBufferId++;
+
+			/**
+			 * An object that can be used to store custom data about the {@link RenderBuffer}.
+			 * It should not hold references to functions as these will not be cloned.
+			 * @type {object}
+			 * @default {}
+			 */
+			this.userData = {};
 
 			/**
 			 * The width of the render buffer.
@@ -13631,6 +13720,9 @@
 		 * @returns {RenderBuffer}
 		 */
 		copy(source) {
+			this.userData = cloneJson(source.userData);
+			this.width = source.width;
+			this.height = source.height;
 			this.format = source.format;
 			this.multipleSampling = source.multipleSampling;
 			return this;
@@ -18188,7 +18280,7 @@
 				texture.removeEventListener('dispose', onTextureDispose);
 				if (textureProperties.__webglTexture && !textureProperties.__external) {
 					gl.deleteTexture(textureProperties.__webglTexture);
-					that._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
+					that._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0, texture, textureProperties);
 				}
 				if (textureProperties.__readBuffer) {
 					gl.deleteBuffer(textureProperties.__readBuffer);
@@ -18283,7 +18375,7 @@
 				}
 				const oldByteLength = textureProperties.__byteLength || 0;
 				const byteLength = getTextureByteLength(texture, textureProperties);
-				this._gpuMemory._updateTexture(oldByteLength, byteLength);
+				this._gpuMemory._updateTexture(oldByteLength, byteLength, texture, textureProperties);
 				textureProperties.__byteLength = byteLength;
 				textureProperties.__version = texture.version;
 				return textureProperties;
@@ -18303,7 +18395,7 @@
 			if (!textureProperties.__external) {
 				const oldByteLength = textureProperties.__byteLength || 0;
 				const byteLength = getTextureByteLength(texture, textureProperties);
-				this._gpuMemory._updateTexture(oldByteLength, byteLength);
+				this._gpuMemory._updateTexture(oldByteLength, byteLength, texture, textureProperties);
 				textureProperties.__byteLength = byteLength;
 			}
 		}
@@ -18313,7 +18405,7 @@
 			if (!textureProperties.__external) {
 				if (textureProperties.__webglTexture) {
 					gl.deleteTexture(textureProperties.__webglTexture);
-					this._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0);
+					this._gpuMemory._updateTexture(textureProperties.__byteLength || 0, 0, texture, textureProperties);
 				} else {
 					texture.addEventListener('dispose', this._onTextureDispose);
 				}
@@ -18560,7 +18652,7 @@
 				const renderBufferProperties = that.get(renderBuffer);
 				if (renderBufferProperties.__webglRenderbuffer && !renderBufferProperties.__external) {
 					gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
-					that._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
+					that._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0, renderBuffer, renderBufferProperties);
 				}
 				that.delete(renderBuffer);
 			}
@@ -18585,7 +18677,7 @@
 					gl.renderbufferStorage(gl.RENDERBUFFER, glFormat, renderBuffer.width, renderBuffer.height);
 				}
 				const byteLength = getRenderBufferByteLength(renderBuffer, capabilities);
-				this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, byteLength);
+				this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, byteLength, renderBuffer, renderBufferProperties);
 				renderBufferProperties.__byteLength = byteLength;
 			} else {
 				gl.bindRenderbuffer(gl.RENDERBUFFER, renderBufferProperties.__webglRenderbuffer);
@@ -18598,7 +18690,7 @@
 			if (!renderBufferProperties.__external) {
 				if (renderBufferProperties.__webglRenderbuffer) {
 					gl.deleteRenderbuffer(renderBufferProperties.__webglRenderbuffer);
-					this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0);
+					this._gpuMemory._updateRenderBuffer(renderBufferProperties.__byteLength || 0, 0, renderBuffer, renderBufferProperties);
 				} else {
 					renderBuffer.addEventListener('dispose', this._onRenderBufferDispose);
 				}
