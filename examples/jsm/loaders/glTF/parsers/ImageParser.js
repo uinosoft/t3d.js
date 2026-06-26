@@ -58,13 +58,20 @@ export class ImageParser {
 							throw new Error('GLTFLoader: WebP or AVIF required by asset but unsupported.');
 						});
 					} else {
-						return loadImage(param);
+						promise = loadImage(param);
 					}
 				}
-				if (loader.detailLoadProgress) {
-					promise.catch(() => loader.manager.itemEnd(imageUrl));
-				}
-				return promise;
+				return promise.catch(error => {
+					if (isObjectURL === true) {
+						URL.revokeObjectURL(sourceUrl);
+					}
+
+					if (loader.detailLoadProgress) {
+						loader.manager.itemEnd(imageUrl);
+					}
+
+					return createImageLoadError(imageUrl, imageName, error);
+				});
 			})
 		).then(images => {
 			context.images = images;
@@ -76,6 +83,14 @@ export class ImageParser {
 function isDDS(imageDef) {
 	const { mimeType, uri = '' } = imageDef;
 	return mimeType === 'image/vnd-ms.dds' || /\.dds($|\?)/i.test(uri);
+}
+
+function createImageLoadError(imageUrl, imageName, error) {
+	return {
+		__loadError: error,
+		__name: imageName,
+		__url: imageUrl
+	};
 }
 
 function detectSupport(mimeType) {

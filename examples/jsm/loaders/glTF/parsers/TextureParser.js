@@ -43,11 +43,16 @@ export class TextureParser {
 				}
 
 				const texture = new Texture2D();
+				const image = images[sourceIndex];
+
+				if (image && image.__loadError) {
+					throw image.__loadError;
+				}
 
 				if (isTextureData) {
-					const { image, mipmaps, type, format, minFilter, magFilter, generateMipmaps, encoding, premultiplyAlpha } = images[sourceIndex];
+					const { image: textureImage, mipmaps, type, format, minFilter, magFilter, generateMipmaps, encoding, premultiplyAlpha } = image;
 
-					texture.image = image;
+					texture.image = textureImage;
 					texture.mipmaps = mipmaps;
 					texture.type = type;
 					texture.format = format;
@@ -57,7 +62,7 @@ export class TextureParser {
 					texture.encoding = encoding;
 					texture.premultiplyAlpha = premultiplyAlpha;
 				} else {
-					texture.image = images[sourceIndex];
+					texture.image = image;
 				}
 
 				texture.version++;
