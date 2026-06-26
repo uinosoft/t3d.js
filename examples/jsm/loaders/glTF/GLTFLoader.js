@@ -28,6 +28,7 @@ import { KHR_materials_unlit } from './extensions/KHR_materials_unlit.js';
 import { KHR_texture_basisu } from './extensions/KHR_texture_basisu.js';
 import { KHR_texture_transform } from './extensions/KHR_texture_transform.js';
 import { KHR_animation_pointer } from './extensions/KHR_animation_pointer.js';
+import { MSFT_texture_dds } from './extensions/MSFT_texture_dds.js';
 
 const DefaultParsePipeline = [
 	IndexParser,
@@ -56,7 +57,8 @@ const DefaultExtensions = new Map([
 	['KHR_mesh_quantization', {}], // This is supported by default
 	['KHR_texture_basisu', KHR_texture_basisu],
 	['KHR_texture_transform', KHR_texture_transform],
-	['KHR_animation_pointer', KHR_animation_pointer]
+	['KHR_animation_pointer', KHR_animation_pointer],
+	['MSFT_texture_dds', MSFT_texture_dds]
 ]);
 
 export class GLTFLoader {
@@ -83,6 +85,7 @@ export class GLTFLoader {
 		this._dracoLoader = null;
 		this._meshoptDecoder = null;
 		this._ktx2Loader = null;
+		this._ddsLoader = null;
 
 		this._fileLoader = new FileLoader();
 
@@ -175,6 +178,15 @@ export class GLTFLoader {
 	}
 	getKTX2Loader() {
 		return this._ktx2Loader;
+	}
+
+	setDDSLoader(ddsLoader) {
+		this._ddsLoader = ddsLoader;
+		return this;
+	}
+
+	getDDSLoader() {
+		return this._ddsLoader;
 	}
 
 	loadFile(url, type = 'json') {

@@ -8,6 +8,7 @@ export class ImageParser {
 		if (!gltf.images) return;
 
 		const basisuExt = loader.extensions.get('KHR_texture_basisu');
+		const ddsExt = loader.extensions.get('MSFT_texture_dds');
 
 		return Promise.all(
 			gltf.images.map((params, index) => {
@@ -38,6 +39,17 @@ export class ImageParser {
 						}
 						return transcodeResult;
 					});
+				} else if (isDDS(params) && ddsExt) {
+					promise = ddsExt.loadTextureData(imageUrl, loader.getDDSLoader()).then(textureData => {
+						if (loader.detailLoadProgress) {
+							if (isObjectURL) {
+								loader.manager.itemEnd(GLTFUtils.resolveURL('blob<' + index + '>', path));
+							} else {
+								loader.manager.itemEnd(imageUrl);
+							}
+						}
+						return textureData;
+					});
 				} else {
 					const param = { loader, imageUrl, imageName, isObjectURL, sourceUrl, index, path };
 					if (mimeType && (mimeType.includes('avif') || mimeType.includes('webp'))) {
@@ -59,6 +71,11 @@ export class ImageParser {
 		});
 	}
 
+}
+
+function isDDS(imageDef) {
+	const { mimeType, uri = '' } = imageDef;
+	return mimeType === 'image/vnd-ms.dds' || /\.dds($|\?)/i.test(uri);
 }
 
 function detectSupport(mimeType) {
