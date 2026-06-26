@@ -60,9 +60,10 @@ class DDSLoader extends Loader {
 		// const DDPF_YUV = 0x200;
 		// const DDPF_LUMINANCE = 0x20000;
 
-		// TODO: support DXGI formats
-		// const DXGI_FORMAT_BC6H_UF16 = 95;
-		// const DXGI_FORMAT_BC6H_SF16 = 96;
+		const DXGI_FORMAT_BC6H_UF16 = 95;
+		const DXGI_FORMAT_BC6H_SF16 = 96;
+		const DXGI_FORMAT_BC7_UNORM = 98;
+		const DXGI_FORMAT_BC7_UNORM_SRGB = 99;
 
 		function fourCCToInt32(value) {
 			return value.charCodeAt(0) +
@@ -106,8 +107,10 @@ class DDSLoader extends Loader {
 		const FOURCC_DXT3 = fourCCToInt32('DXT3');
 		const FOURCC_DXT5 = fourCCToInt32('DXT5');
 		const FOURCC_ETC1 = fourCCToInt32('ETC1');
+		const FOURCC_DX10 = fourCCToInt32('DX10');
 
 		const headerLengthInt = 31; // The header length in 32 bit ints
+		const extendedHeaderLengthInt = 5; // The extended header length in 32 bit ints
 
 		// Offsets into the header array
 
@@ -133,6 +136,9 @@ class DDSLoader extends Loader {
 		// const off_caps3 = 29;
 		// const off_caps4 = 30;
 
+		// If fourCC = DX10, the extended header starts after DDS header
+		const off_dxgiFormat = 0;
+
 		// Parse header
 
 		const header = new Int32Array(buffer, 0, headerLengthInt);
@@ -147,6 +153,7 @@ class DDSLoader extends Loader {
 		const fourCC = header[off_pfFourCC];
 
 		let isRGBAUncompressed = false;
+		let dataOffset = header[off_size] + 4;
 
 		switch (fourCC) {
 			case FOURCC_DXT1:
@@ -165,6 +172,33 @@ class DDSLoader extends Loader {
 				blockBytes = 8;
 				dds.format = PIXEL_FORMAT.RGB_ETC1;
 				break;
+			case FOURCC_DX10: {
+				dataOffset += extendedHeaderLengthInt * 4;
+
+				const extendedHeader = new Int32Array(buffer, (headerLengthInt + 1) * 4, extendedHeaderLengthInt);
+				const dxgiFormat = extendedHeader[off_dxgiFormat];
+
+				switch (dxgiFormat) {
+					case DXGI_FORMAT_BC6H_SF16:
+						blockBytes = 16;
+						dds.format = PIXEL_FORMAT.RGB_BPTC_SIGNED_FORMAT;
+						break;
+					case DXGI_FORMAT_BC6H_UF16:
+						blockBytes = 16;
+						dds.format = PIXEL_FORMAT.RGB_BPTC_UNSIGNED_FORMAT;
+						break;
+					case DXGI_FORMAT_BC7_UNORM:
+					case DXGI_FORMAT_BC7_UNORM_SRGB:
+						blockBytes = 16;
+						dds.format = PIXEL_FORMAT.RGBA_BPTC;
+						break;
+					default:
+						console.error('DDSLoader.parse: Unsupported DXGI_FORMAT code ', dxgiFormat);
+						return dds;
+				}
+
+				break;
+			}
 			default:
 				if (header[off_RGBBitCount] === 32
 					&& header[off_RBitMask] & 0xff0000
@@ -202,8 +236,6 @@ class DDSLoader extends Loader {
 
 		dds.width = header[off_width];
 		dds.height = header[off_height];
-
-		let dataOffset = header[off_size] + 4;
 
 		// Extract mipmaps buffers
 
