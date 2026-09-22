@@ -46,7 +46,8 @@ export class TextureParser {
 				const image = images[sourceIndex];
 
 				if (image && image.__loadError) {
-					throw image.__loadError;
+					console.warn('GLTFLoader: Failed to load texture image.', image.__url, image.__loadError);
+					return null;
 				}
 
 				if (isTextureData) {
