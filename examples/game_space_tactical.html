@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>t3d - space tactical game</title>
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+	<style>
+		html, body { margin: 0; overflow: hidden; background: #02080b; color: #bfefff; font-family: "Rajdhani", "Segoe UI", sans-serif; }
+		canvas { display: block; }
+		#hud { position: fixed; inset: 0; pointer-events: none; user-select: none; text-transform: uppercase; letter-spacing: .08em; }
+		.panel { position: absolute; background: linear-gradient(135deg, rgba(2, 13, 18, .9), rgba(3, 19, 25, .66)); border: 1px solid rgba(66, 214, 255, .36); box-shadow: 0 0 24px rgba(0, 160, 220, .08), inset 0 0 24px rgba(0, 120, 180, .05); backdrop-filter: blur(4px); }
+		.panel:before, .panel:after { content: ""; position: absolute; width: 18px; height: 1px; background: #54dcff; top: -1px; }
+		.panel:before { left: -1px; } .panel:after { right: -1px; }
+		#fleet { left: 18px; top: 18px; width: 300px; padding: 14px 14px 10px; }
+		.panel-title { display: flex; justify-content: space-between; color: #d9f8ff; font-size: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(73, 202, 235, .24); }
+		.unit-row { display: grid; grid-template-columns: 25px 1fr 90px 40px; align-items: center; gap: 7px; min-height: 42px; border-bottom: 1px solid rgba(72, 171, 204, .12); cursor: pointer; pointer-events: auto; }
+		.unit-row:hover, .unit-row.active { background: linear-gradient(90deg, rgba(44, 204, 255, .16), transparent); }
+		.unit-index { color: #4edcff; border: 1px solid rgba(78, 220, 255, .35); text-align: center; line-height: 24px; }
+		.unit-name { font-size: 12px; color: #c4f1ff; } .unit-name small { display: block; color: #5a9daf; font-size: 9px; }
+		.bar { height: 4px; background: rgba(36, 100, 116, .45); position: relative; overflow: hidden; }
+		.bar > i { display: block; height: 100%; background: #50dcff; box-shadow: 0 0 8px #34cfff; transition: width .15s; }
+		.unit-hp { font-size: 10px; color: #78dff8; text-align: right; }
+		#objective { top: 20px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 12px; color: #bceeff; text-shadow: 0 0 12px rgba(47, 207, 255, .65); }
+		#objective b { display: block; margin-top: 8px; color: #55dcff; font-size: 14px; }
+		#help { right: 18px; top: 18px; padding: 12px 14px; width: 245px; font-size: 10px; line-height: 1.9; color: #75bccc; }
+		#help strong { color: #d8f8ff; }
+		#minimap-wrap { left: 18px; bottom: 18px; width: 250px; height: 180px; padding: 8px; }
+		#minimap { width: 100%; height: 100%; background: rgba(0, 9, 13, .78); }
+		#selected { right: 18px; bottom: 18px; width: 290px; min-height: 150px; padding: 14px; }
+		#selected-name { font-size: 15px; color: #d9f8ff; border-bottom: 1px solid rgba(74, 204, 237, .25); padding-bottom: 10px; }
+		#selected-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; margin-top: 12px; font-size: 10px; color: #72b7c8; }
+		#selected-stats b { color: #d7f8ff; font-weight: 500; }
+		#commands { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 7px; }
+		.command { pointer-events: auto; min-width: 76px; padding: 11px 10px 9px; border: 1px solid rgba(78, 216, 255, .36); color: #a9eafd; background: rgba(1, 13, 18, .78); text-align: center; font-size: 10px; cursor: pointer; }
+		.command:hover { background: rgba(35, 163, 204, .22); box-shadow: 0 0 14px rgba(42, 198, 245, .18); }
+		.command span { display: block; color: #4edcff; font-size: 16px; margin-bottom: 4px; }
+		.marker { position: fixed; transform: translate(-50%, -100%); min-width: 86px; text-align: center; font-size: 9px; pointer-events: none; text-shadow: 0 0 8px #001; }
+		.marker .label { display: inline-block; padding: 2px 5px; border: 1px solid currentColor; background: rgba(0, 8, 12, .72); }
+		.marker .hp { width: 74px; height: 3px; margin: 4px auto 0; background: rgba(0, 0, 0, .7); }
+		.marker .hp i { display: block; height: 100%; background: currentColor; box-shadow: 0 0 7px currentColor; }
+		.marker.friendly { color: #50dcff; } .marker.enemy { color: #ff5c2b; }
+		.damage { position: fixed; color: #ff9b3d; font-size: 14px; font-weight: 700; pointer-events: none; text-shadow: 0 0 8px #ff4a00; transform: translate(-50%, -50%); }
+		#message { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); display: none; padding: 24px 34px; color: #d7f8ff; background: rgba(0, 12, 18, .91); border: 1px solid #4edcff; box-shadow: 0 0 60px rgba(37, 199, 246, .22); text-align: center; pointer-events: auto; }
+		#message h2 { margin: 0 0 8px; color: #55dcff; } #message button { margin-top: 15px; padding: 9px 18px; background: transparent; border: 1px solid #55dcff; color: #d7f8ff; cursor: pointer; }
+		#scanlines { position: fixed; inset: 0; pointer-events: none; opacity: .13; background: repeating-linear-gradient(0deg, rgba(80, 225, 255, .06), rgba(80, 225, 255, .06) 1px, transparent 1px, transparent 4px); mix-blend-mode: screen; }
+		@media (max-width: 900px) { #fleet { width: 220px; } #help { display: none; } #selected { width: 220px; } #commands { bottom: 8px; } .command { min-width: 55px; padding: 8px 5px; } }
+	</style>
+</head>
+<body>
+	<div id="hud">
+		<section id="fleet" class="panel">
+			<div class="panel-title"><span>▼ Fleet Alpha</span><span id="fleet-count">4/4</span></div>
+			<div id="fleet-list"></div>
+		</section>
+		<div id="objective">Reinforcements inbound <span id="reinforcement-time">00:25</span><b id="objective-text">Objective: clear the ruins</b></div>
+		<section id="help" class="panel"><strong>Controls</strong><br>Left click: select / attack<br>Right click: move formation<br>WASD: pan camera · wheel: zoom<br>1–4: select ship · Space: pause · R: restart</section>
+		<section id="minimap-wrap" class="panel"><canvas id="minimap" width="500" height="360"></canvas></section>
+		<section id="selected" class="panel">
+			<div id="selected-name">No unit selected</div>
+			<div id="selected-stats"></div>
+		</section>
+		<div id="commands">
+			<button class="command" id="attack-command"><span>⌖</span>Attack nearest</button>
+			<button class="command" id="guard-command"><span>◇</span>Regroup</button>
+			<button class="command" id="pause-command"><span>Ⅱ</span>Pause</button>
+		</div>
+	</div>
+	<div id="message"><h2 id="message-title">Mission complete</h2><div id="message-copy"></div><button id="restart-button">Restart simulation</button></div>
+	<div id="scanlines"></div>
+
+	<!-- Import maps polyfill -->
+	<script async src="./libs/es-module-shims.js"></script>
+	<script type="importmap">
+		{
+			"imports": {
+				"t3d": "../build/t3d.module.js",
+				"t3d/addons/": "./jsm/"
+			}
+		}
+	</script>
+
+	<script type="module">
+		import * as t3d from 't3d';
+		import { Clock } from 't3d/addons/Clock.js';
+		import { ForwardRenderer } from 't3d/addons/render/ForwardRenderer.js';
+
+		const FRIENDLY = 0;
+		const ENEMY = 1;
+		const WORLD_SIZE = 760;
+		const FRIENDLY_COLOR = 0x35cfff;
+		const ENEMY_COLOR = 0xff4b1f;
+		const TMP_A = new t3d.Vector3();
+		const TMP_B = new t3d.Vector3();
+
+		let width = window.innerWidth || 2;
+		let height = window.innerHeight || 2;
+		let pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+		let gameTime = 0;
+		let reinforcementTimer = 25;
+		let reinforcementsSpawned = false;
+		let paused = false;
+		let ended = false;
+		let selectedUnit = null;
+		let cameraDistance = 480;
+
+		const canvas = document.createElement('canvas');
+		canvas.width = width * pixelRatio;
+		canvas.height = height * pixelRatio;
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		document.body.insertBefore(canvas, document.body.firstChild);
+
+		const renderer = new ForwardRenderer(canvas);
+		renderer.screenRenderTarget.setColorClearValue(0.005, 0.02, 0.027, 1).setClear(true, true, false);
+
+		const scene = new t3d.Scene();
+		scene.fog = new t3d.FogExp2(0x06161b, 0.00135);
+
+		const camera = new t3d.Camera();
+		camera.outputEncoding = t3d.TEXEL_ENCODING_TYPE.SRGB;
+		camera.setPerspective(40 / 180 * Math.PI, width / height, 1, 2200);
+		scene.add(camera);
+		const cameraTarget = new t3d.Vector3(0, 0, 20);
+
+		const ambient = new t3d.AmbientLight(0x91d9e6, 0.28);
+		scene.add(ambient);
+		const keyLight = new t3d.DirectionalLight(0xb8f4ff, 1.35);
+		keyLight.position.set(-220, 360, 180);
+		keyLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(keyLight);
+		const rimLight = new t3d.DirectionalLight(0x207894, 0.75);
+		rimLight.position.set(300, 130, -300);
+		rimLight.lookAt(new t3d.Vector3(), new t3d.Vector3(0, 1, 0));
+		scene.add(rimLight);
+
+		const battlefield = new t3d.Object3D();
+		const unitLayer = new t3d.Object3D();
+		const effectsLayer = new t3d.Object3D();
+		scene.add(battlefield);
+		scene.add(unitLayer);
+		scene.add(effectsLayer);
+
+		const units = [];
+		const projectiles = [];
+		const impacts = [];
+		const damageLabels = [];
+		const keys = Object.create(null);
+		const raycaster = new t3d.Raycaster();
+		const pointer = new t3d.Vector2();
+		const groundPlane = new t3d.Plane(new t3d.Vector3(0, 1, 0), 0);
+		const groundHit = new t3d.Vector3();
+		const clock = new Clock();
+
+		const fleetList = document.getElementById('fleet-list');
+		const fleetCount = document.getElementById('fleet-count');
+		const selectedName = document.getElementById('selected-name');
+		const selectedStats = document.getElementById('selected-stats');
+		const reinforcementTime = document.getElementById('reinforcement-time');
+		const objectiveText = document.getElementById('objective-text');
+		const message = document.getElementById('message');
+		const messageTitle = document.getElementById('message-title');
+		const messageCopy = document.getElementById('message-copy');
+		const minimap = document.getElementById('minimap');
+		const minimapContext = minimap.getContext('2d');
+
+		const shared = createSharedAssets();
+		createStarField();
+		createRuins();
+		createBattlefieldGrid();
+		resetGame();
+
+		function createSharedAssets() {
+			const hullGeometry = new t3d.BoxGeometry(1, 1, 1);
+			const coneGeometry = new t3d.CylinderGeometry(0, 1, 1, 5, 1, false);
+			const engineGeometry = new t3d.SphereGeometry(1, 8, 6);
+			const projectileGeometry = new t3d.SphereGeometry(1, 6, 4);
+			const impactGeometry = new t3d.SphereGeometry(1, 12, 8);
+			const debrisGeometry = new t3d.BoxGeometry(1, 1, 1);
+
+			const friendlyHull = createPbrMaterial(0x173b48, 0x0a6f8f, 0.62, 0.38);
+			const enemyHull = createPbrMaterial(0x4a231d, 0x9b2f14, 0.68, 0.34);
+			const friendlyGlow = createGlowMaterial(FRIENDLY_COLOR, 0.92);
+			const enemyGlow = createGlowMaterial(ENEMY_COLOR, 0.92);
+			const projectileFriendly = createGlowMaterial(0x65e9ff, 1);
+			const projectileEnemy = createGlowMaterial(0xff6b2f, 1);
+			const debrisMaterial = createPbrMaterial(0x0d2025, 0x021014, 0.94, 0.05);
+
+			return { hullGeometry, coneGeometry, engineGeometry, projectileGeometry, impactGeometry, debrisGeometry, friendlyHull, enemyHull, friendlyGlow, enemyGlow, projectileFriendly, projectileEnemy, debrisMaterial };
+		}
+
+		function createPbrMaterial(diffuse, emissive, roughness, metalness) {
+			const material = new t3d.PBRMaterial();
+			material.diffuse.setHex(diffuse);
+			material.emissive.setHex(emissive);
+			material.roughness = roughness;
+			material.metalness = metalness;
+			return material;
+		}
+
+		function createGlowMaterial(color, opacity) {
+			const material = new t3d.BasicMaterial();
+			material.diffuse.setHex(color);
+			material.transparent = true;
+			material.opacity = opacity;
+			material.blending = t3d.BLEND_TYPE.ADD;
+			material.depthWrite = false;
+			return material;
+		}
+
+		function createStarField() {
+			const geometry = new t3d.Geometry();
+			const vertices = [];
+			for (let i = 0; i < 1100; i++) {
+				vertices.push((Math.random() - 0.5) * 1800, -40 - Math.random() * 360, (Math.random() - 0.5) * 1800);
+			}
+			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(vertices), 3)));
+			geometry.computeBoundingBox();
+			geometry.computeBoundingSphere();
+			const material = new t3d.PointsMaterial();
+			material.diffuse.setHex(0x72bbca);
+			material.size = 1.6;
+			material.transparent = true;
+			material.opacity = 0.52;
+			material.depthWrite = false;
+			const stars = new t3d.Mesh(geometry, material);
+			battlefield.add(stars);
+		}
+
+		function createRuins() {
+			for (let i = 0; i < 46; i++) {
+				const ruin = new t3d.Mesh(shared.debrisGeometry, shared.debrisMaterial);
+				const angle = Math.random() * Math.PI * 2;
+				const radius = 160 + Math.random() * 500;
+				ruin.position.set(Math.cos(angle) * radius, -18 - Math.random() * 85, Math.sin(angle) * radius);
+				ruin.scale.set(18 + Math.random() * 54, 24 + Math.random() * 160, 18 + Math.random() * 48);
+				ruin.euler.set(Math.random() * .6, Math.random() * Math.PI, Math.random() * .5);
+				battlefield.add(ruin);
+			}
+			for (let i = 0; i < 26; i++) {
+				const slab = new t3d.Mesh(shared.debrisGeometry, shared.debrisMaterial);
+				slab.position.set((Math.random() - .5) * 1100, -8 - Math.random() * 30, (Math.random() - .5) * 1100);
+				slab.scale.set(5 + Math.random() * 26, 4 + Math.random() * 18, 35 + Math.random() * 90);
+				slab.euler.set(Math.random(), Math.random() * Math.PI, Math.random());
+				battlefield.add(slab);
+			}
+		}
+
+		function createBattlefieldGrid() {
+			const material = createGlowMaterial(0x1d6a7d, 0.18);
+			material.drawMode = t3d.DRAW_MODE.LINES;
+			const geometry = new t3d.Geometry();
+			const vertices = [];
+			for (let i = -WORLD_SIZE; i <= WORLD_SIZE; i += 80) {
+				vertices.push(-WORLD_SIZE, -1, i, WORLD_SIZE, -1, i);
+				vertices.push(i, -1, -WORLD_SIZE, i, -1, WORLD_SIZE);
+			}
+			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(vertices), 3)));
+			geometry.computeBoundingBox();
+			geometry.computeBoundingSphere();
+			battlefield.add(new t3d.Mesh(geometry, material));
+		}
+
+		function createCircleGeometry(radius, segments = 64, dashed = false) {
+			const geometry = new t3d.Geometry();
+			const vertices = [];
+			if (dashed) {
+				for (let i = 0; i < segments; i += 2) {
+					const a0 = i / segments * Math.PI * 2;
+					const a1 = (i + 1) / segments * Math.PI * 2;
+					vertices.push(Math.cos(a0) * radius, .3, Math.sin(a0) * radius, Math.cos(a1) * radius, .3, Math.sin(a1) * radius);
+				}
+			} else {
+				for (let i = 0; i < segments; i++) {
+					const a = i / segments * Math.PI * 2;
+					vertices.push(Math.cos(a) * radius, .3, Math.sin(a) * radius);
+				}
+			}
+			geometry.addAttribute('a_Position', new t3d.Attribute(new t3d.Buffer(new Float32Array(vertices), 3)));
+			geometry.computeBoundingBox();
+			geometry.computeBoundingSphere();
+			return geometry;
+		}
+
+		function createRing(radius, color, opacity, dashed = false) {
+			const material = createGlowMaterial(color, opacity);
+			material.drawMode = dashed ? t3d.DRAW_MODE.LINES : t3d.DRAW_MODE.LINE_LOOP;
+			return new t3d.Mesh(createCircleGeometry(radius, 72, dashed), material);
+		}
+
+		function createShipModel(team, scale = 1) {
+			const root = new t3d.Object3D();
+			const hullMaterial = team === FRIENDLY ? shared.friendlyHull : shared.enemyHull;
+			const glowMaterial = team === FRIENDLY ? shared.friendlyGlow : shared.enemyGlow;
+
+			const core = new t3d.Mesh(shared.hullGeometry, hullMaterial);
+			core.scale.set(10 * scale, 3.2 * scale, 18 * scale);
+			root.add(core);
+
+			const nose = new t3d.Mesh(shared.coneGeometry, hullMaterial);
+			nose.scale.set(8.5 * scale, 18 * scale, 8.5 * scale);
+			nose.euler.x = Math.PI / 2;
+			nose.position.z = 16.5 * scale;
+			root.add(nose);
+
+			const wing = new t3d.Mesh(shared.hullGeometry, hullMaterial);
+			wing.scale.set(24 * scale, 1.2 * scale, 6.5 * scale);
+			wing.position.z = -2 * scale;
+			root.add(wing);
+
+			const bridge = new t3d.Mesh(shared.hullGeometry, glowMaterial);
+			bridge.scale.set(2.4 * scale, 1.2 * scale, 8 * scale);
+			bridge.position.set(0, 3.8 * scale, 3 * scale);
+			root.add(bridge);
+
+			for (const x of [-5.2, 5.2]) {
+				const engine = new t3d.Mesh(shared.engineGeometry, glowMaterial);
+				engine.scale.set(2.2 * scale, 1.4 * scale, 4.6 * scale);
+				engine.position.set(x * scale, 0, -19 * scale);
+				root.add(engine);
+			}
+			return root;
+		}
+
+		function spawnUnit(options) {
+			const root = createShipModel(options.team, options.scale || 1);
+			root.position.set(options.x, 3, options.z);
+			unitLayer.add(root);
+
+			const color = options.team === FRIENDLY ? FRIENDLY_COLOR : ENEMY_COLOR;
+			const ring = createRing(28 * (options.scale || 1), color, options.team === FRIENDLY ? .68 : .72);
+			ring.visible = options.team === ENEMY;
+			root.add(ring);
+			const rangeRing = createRing(options.range, color, .18, true);
+			rangeRing.visible = false;
+			root.add(rangeRing);
+
+			const unit = {
+				id: options.id,
+				name: options.name,
+				className: options.className,
+				team: options.team,
+				root,
+				ring,
+				rangeRing,
+				maxHp: options.hp,
+				hp: options.hp,
+				speed: options.speed,
+				range: options.range,
+				damage: options.damage,
+				fireDelay: options.fireDelay,
+				cooldown: Math.random() * options.fireDelay,
+				destination: null,
+				target: null,
+				alive: true,
+				marker: createUnitMarker(options.team, options.name),
+				fleetRow: null
+			};
+			root._unit = unit;
+			root.traverse(child => { child._unit = unit; });
+			units.push(unit);
+			if (unit.team === FRIENDLY) createFleetRow(unit);
+			return unit;
+		}
+
+		function createUnitMarker(team, name) {
+			const marker = document.createElement('div');
+			marker.className = 'marker ' + (team === FRIENDLY ? 'friendly' : 'enemy');
+			marker.innerHTML = '<div class="label">' + name + '</div><div class="hp"><i></i></div>';
+			document.body.appendChild(marker);
+			return marker;
+		}
+
+		function createFleetRow(unit) {
+			const row = document.createElement('div');
+			row.className = 'unit-row';
+			row.innerHTML = '<span class="unit-index">' + unit.id + '</span><span class="unit-name">' + unit.name + '<small>' + unit.className + '</small></span><span class="bar"><i></i></span><span class="unit-hp">100%</span>';
+			row.addEventListener('click', () => selectUnit(unit));
+			fleetList.appendChild(row);
+			unit.fleetRow = row;
+		}
+
+		function resetGame() {
+			for (const unit of units) {
+				unitLayer.remove(unit.root);
+				unit.marker.remove();
+			}
+			for (const projectile of projectiles) effectsLayer.remove(projectile.mesh);
+			for (const impact of impacts) effectsLayer.remove(impact.mesh);
+			for (const label of damageLabels) label.element.remove();
+			units.length = 0;
+			projectiles.length = 0;
+			impacts.length = 0;
+			damageLabels.length = 0;
+			fleetList.innerHTML = '';
+			gameTime = 0;
+			reinforcementTimer = 25;
+			reinforcementsSpawned = false;
+			paused = false;
+			ended = false;
+			message.style.display = 'none';
+			objectiveText.textContent = 'Objective: clear the ruins';
+
+			const friendlyData = [
+				[1, 'Vanguard', 'FRG-01', -80, 90, 130, 58, 190, 15, .68, 1.12],
+				[2, 'Wraith', 'INT-02', -210, 20, 92, 82, 165, 10, .38, .78],
+				[3, 'Aegis', 'SUP-03', 55, 175, 150, 48, 205, 12, .8, 1.18],
+				[4, 'Harbinger', 'TAC-04', 155, 65, 112, 62, 220, 18, .9, .92]
+			];
+			for (const d of friendlyData) spawnUnit({ id: d[0], name: d[1], className: d[2], x: d[3], z: d[4], hp: d[5], speed: d[6], range: d[7], damage: d[8], fireDelay: d[9], scale: d[10], team: FRIENDLY });
+
+			const enemyData = [
+				['Raider-1', 230, -70, 78, 54, 175, 9, .65, .72],
+				['Raider-2', 355, 35, 78, 54, 175, 9, .65, .72],
+				['Destroyer', 250, -225, 160, 38, 225, 17, 1.05, 1.22],
+				['Raider-3', 60, -250, 78, 56, 170, 9, .62, .72],
+				['Sentinel', -170, -205, 112, 42, 195, 12, .82, .95]
+			];
+			for (let i = 0; i < enemyData.length; i++) {
+				const d = enemyData[i];
+				spawnUnit({ id: 'E' + (i + 1), name: d[0], className: 'HOSTILE', x: d[1], z: d[2], hp: d[3], speed: d[4], range: d[5], damage: d[6], fireDelay: d[7], scale: d[8], team: ENEMY });
+			}
+
+			cameraTarget.set(0, 0, 10);
+			cameraDistance = 480;
+			selectUnit(units.find(unit => unit.team === FRIENDLY));
+		}
+
+		function selectUnit(unit) {
+			if (!unit || !unit.alive || unit.team !== FRIENDLY) return;
+			selectedUnit = unit;
+			for (const item of units) {
+				if (item.team === FRIENDLY) {
+					item.ring.visible = item === unit;
+					item.rangeRing.visible = item === unit;
+					if (item.fleetRow) item.fleetRow.classList.toggle('active', item === unit);
+				}
+			}
+			updateSelectedPanel();
+		}
+
+		function commandMove(point) {
+			const selected = units.filter(unit => unit.alive && unit.team === FRIENDLY && (unit === selectedUnit || keys.Shift));
+			if (!selected.length) return;
+			const spacing = 52;
+			selected.forEach((unit, index) => {
+				const column = index % 2;
+				const row = Math.floor(index / 2);
+				unit.destination = new t3d.Vector3(point.x + (column - .5) * spacing, 3, point.z + row * spacing);
+				unit.target = null;
+			});
+			spawnCommandPulse(point, FRIENDLY_COLOR);
+		}
+
+		function commandAttack(target) {
+			if (!selectedUnit || !selectedUnit.alive || !target || !target.alive || target.team !== ENEMY) return;
+			selectedUnit.target = target;
+			selectedUnit.destination = null;
+			spawnCommandPulse(target.root.position, ENEMY_COLOR);
+		}
+
+		function attackNearest() {
+			if (!selectedUnit || !selectedUnit.alive) return;
+			const target = nearestAliveUnit(selectedUnit, ENEMY);
+			if (target) commandAttack(target);
+		}
+
+		function regroup() {
+			const leader = selectedUnit && selectedUnit.alive ? selectedUnit : units.find(unit => unit.alive && unit.team === FRIENDLY);
+			if (!leader) return;
+			const friendlies = units.filter(unit => unit.alive && unit.team === FRIENDLY);
+			friendlies.forEach((unit, index) => {
+				const angle = index / Math.max(1, friendlies.length) * Math.PI * 2;
+				unit.destination = new t3d.Vector3(leader.root.position.x + Math.cos(angle) * 70, 3, leader.root.position.z + Math.sin(angle) * 70);
+				unit.target = null;
+			});
+		}
+
+		function nearestAliveUnit(source, team) {
+			let best = null;
+			let bestDistance = Infinity;
+			for (const unit of units) {
+				if (!unit.alive || unit.team !== team) continue;
+				const distance = distanceXZ(source.root.position, unit.root.position);
+				if (distance < bestDistance) { best = unit; bestDistance = distance; }
+			}
+			return best;
+		}
+
+		function updateUnits(delta) {
+			for (const unit of units) {
+				if (!unit.alive) continue;
+				unit.cooldown -= delta;
+				if (unit.team === ENEMY && (!unit.target || !unit.target.alive)) unit.target = nearestAliveUnit(unit, FRIENDLY);
+				if (unit.target && !unit.target.alive) unit.target = null;
+				let desired = unit.destination;
+				if (unit.target) {
+					const distance = distanceXZ(unit.root.position, unit.target.root.position);
+					if (distance > unit.range * .82) {
+						desired = unit.target.root.position;
+					} else {
+						desired = null;
+						if (unit.cooldown <= 0) fire(unit, unit.target);
+					}
+				}
+				if (desired) moveUnitTowards(unit, desired, delta);
+				else if (unit.target) faceUnit(unit, unit.target.root.position, delta);
+				unit.ring.euler.y += delta * (unit.team === FRIENDLY ? .6 : -.45);
+				if (unit === selectedUnit) {
+					const pulse = 1 + Math.sin(gameTime * 4.5) * .07;
+					unit.ring.scale.set(pulse, pulse, pulse);
+				}
+			}
+		}
+
+		function moveUnitTowards(unit, target, delta) {
+			TMP_A.set(target.x - unit.root.position.x, 0, target.z - unit.root.position.z);
+			const distance = Math.sqrt(TMP_A.x * TMP_A.x + TMP_A.z * TMP_A.z);
+			if (distance < 3) {
+				if (unit.destination === target) unit.destination = null;
+				return;
+			}
+			TMP_A.multiplyScalar(1 / distance);
+			const step = Math.min(distance, unit.speed * delta);
+			unit.root.position.x += TMP_A.x * step;
+			unit.root.position.z += TMP_A.z * step;
+			const desiredYaw = Math.atan2(TMP_A.x, TMP_A.z);
+			unit.root.euler.y = lerpAngle(unit.root.euler.y, desiredYaw, Math.min(1, delta * 4.5));
+		}
+
+		function faceUnit(unit, target, delta) {
+			const desiredYaw = Math.atan2(target.x - unit.root.position.x, target.z - unit.root.position.z);
+			unit.root.euler.y = lerpAngle(unit.root.euler.y, desiredYaw, Math.min(1, delta * 4.5));
+		}
+
+		function fire(source, target) {
+			source.cooldown = source.fireDelay;
+			const material = source.team === FRIENDLY ? shared.projectileFriendly : shared.projectileEnemy;
+			const mesh = new t3d.Mesh(shared.projectileGeometry, material);
+			mesh.scale.set(1.4, 1.4, 4.6);
+			mesh.position.copy(source.root.position);
+			mesh.position.y = 6;
+			effectsLayer.add(mesh);
+			projectiles.push({ mesh, source, target, speed: 390, damage: source.damage, life: 3 });
+		}
+
+		function updateProjectiles(delta) {
+			for (let i = projectiles.length - 1; i >= 0; i--) {
+				const projectile = projectiles[i];
+				projectile.life -= delta;
+				if (!projectile.target.alive || projectile.life <= 0) {
+					effectsLayer.remove(projectile.mesh);
+					projectiles.splice(i, 1);
+					continue;
+				}
+				TMP_A.copy(projectile.target.root.position).sub(projectile.mesh.position);
+				TMP_A.y = 0;
+				const distance = TMP_A.getLength();
+				if (distance < 9) {
+					applyDamage(projectile.target, projectile.damage);
+					spawnImpact(projectile.target.root.position, projectile.source.team === FRIENDLY ? FRIENDLY_COLOR : ENEMY_COLOR);
+					effectsLayer.remove(projectile.mesh);
+					projectiles.splice(i, 1);
+					continue;
+				}
+				TMP_A.multiplyScalar(1 / Math.max(distance, .001));
+				projectile.mesh.position.addScaledVector(TMP_A, projectile.speed * delta);
+				projectile.mesh.euler.y = Math.atan2(TMP_A.x, TMP_A.z);
+			}
+		}
+
+		function applyDamage(unit, damage) {
+			const value = Math.round(damage * (.82 + Math.random() * .36));
+			unit.hp = Math.max(0, unit.hp - value);
+			spawnDamageLabel(unit.root.position, value);
+			if (unit.hp <= 0) destroyUnit(unit);
+		}
+
+		function destroyUnit(unit) {
+			unit.alive = false;
+			unit.root.visible = false;
+			unit.marker.style.display = 'none';
+			if (unit.fleetRow) unit.fleetRow.style.opacity = .25;
+			for (let i = 0; i < 4; i++) spawnImpact(unit.root.position, unit.team === FRIENDLY ? FRIENDLY_COLOR : ENEMY_COLOR, i * .12);
+			if (unit === selectedUnit) {
+				selectedUnit = units.find(item => item.alive && item.team === FRIENDLY) || null;
+				if (selectedUnit) selectUnit(selectedUnit);
+			}
+			checkEndState();
+		}
+
+		function spawnImpact(position, color, delay = 0) {
+			const material = createGlowMaterial(color, .9);
+			const mesh = new t3d.Mesh(shared.impactGeometry, material);
+			mesh.position.copy(position);
+			mesh.position.y = 7;
+			mesh.scale.setScalar(.2);
+			effectsLayer.add(mesh);
+			impacts.push({ mesh, material, age: -delay, duration: .65 + Math.random() * .35 });
+		}
+
+		function spawnCommandPulse(position, color) {
+			const material = createGlowMaterial(color, .85);
+			material.drawMode = t3d.DRAW_MODE.LINE_LOOP;
+			const mesh = new t3d.Mesh(createCircleGeometry(18, 48, false), material);
+			mesh.position.set(position.x, .6, position.z);
+			effectsLayer.add(mesh);
+			impacts.push({ mesh, material, age: 0, duration: .8, ring: true });
+		}
+
+		function updateImpacts(delta) {
+			for (let i = impacts.length - 1; i >= 0; i--) {
+				const impact = impacts[i];
+				impact.age += delta;
+				if (impact.age < 0) { impact.mesh.visible = false; continue; }
+				impact.mesh.visible = true;
+				const t = impact.age / impact.duration;
+				if (t >= 1) {
+					effectsLayer.remove(impact.mesh);
+					impacts.splice(i, 1);
+					continue;
+				}
+				const scale = impact.ring ? 1 + t * 5 : .2 + t * 10;
+				impact.mesh.scale.setScalar(scale);
+				impact.material.opacity = (1 - t) * (impact.ring ? .72 : .88);
+			}
+		}
+
+		function spawnDamageLabel(position, value) {
+			const element = document.createElement('div');
+			element.className = 'damage';
+			element.textContent = value;
+			document.body.appendChild(element);
+			damageLabels.push({ element, position: position.clone().add(new t3d.Vector3(0, 18, 0)), age: 0 });
+		}
+
+		function updateDamageLabels(delta) {
+			for (let i = damageLabels.length - 1; i >= 0; i--) {
+				const item = damageLabels[i];
+				item.age += delta;
+				item.position.y += delta * 15;
+				if (item.age > .9) {
+					item.element.remove();
+					damageLabels.splice(i, 1);
+					continue;
+				}
+				setElementWorldPosition(item.element, item.position, 18);
+				item.element.style.opacity = String(1 - item.age / .9);
+			}
+		}
+
+		function spawnReinforcements() {
+			reinforcementsSpawned = true;
+			const data = [['Reinforcement-A', 430, -310], ['Reinforcement-B', 520, -190], ['Reinforcement-C', 420, -70]];
+			for (let i = 0; i < data.length; i++) {
+				const d = data[i];
+				spawnUnit({ id: 'R' + (i + 1), name: d[0], className: 'HOSTILE', x: d[1], z: d[2], hp: 92, speed: 60, range: 180, damage: 10, fireDelay: .68, scale: .76, team: ENEMY });
+			}
+			objectiveText.textContent = 'Objective updated: destroy reinforcements';
+		}
+
+		function updateCamera(delta) {
+			const panSpeed = 230 * delta * (cameraDistance / 480);
+			if (keys.KeyW || keys.ArrowUp) cameraTarget.z -= panSpeed;
+			if (keys.KeyS || keys.ArrowDown) cameraTarget.z += panSpeed;
+			if (keys.KeyA || keys.ArrowLeft) cameraTarget.x -= panSpeed;
+			if (keys.KeyD || keys.ArrowRight) cameraTarget.x += panSpeed;
+			cameraTarget.x = clamp(cameraTarget.x, -430, 430);
+			cameraTarget.z = clamp(cameraTarget.z, -430, 430);
+			camera.position.set(cameraTarget.x, cameraDistance * .68, cameraTarget.z + cameraDistance * .82);
+			camera.lookAt(cameraTarget, new t3d.Vector3(0, 1, 0));
+		}
+
+		function updateHud() {
+			const friendlyAlive = units.filter(unit => unit.alive && unit.team === FRIENDLY).length;
+			const friendlyTotal = units.filter(unit => unit.team === FRIENDLY).length;
+			fleetCount.textContent = friendlyAlive + '/' + friendlyTotal;
+			for (const unit of units) {
+				if (!unit.alive) continue;
+				const percent = Math.max(0, unit.hp / unit.maxHp * 100);
+				unit.marker.querySelector('.hp i').style.width = percent.toFixed(1) + '%';
+				setElementWorldPosition(unit.marker, TMP_A.copy(unit.root.position).add(new t3d.Vector3(0, 25, 0)), 0);
+				if (unit.fleetRow) {
+					unit.fleetRow.querySelector('.bar i').style.width = percent.toFixed(1) + '%';
+					unit.fleetRow.querySelector('.unit-hp').textContent = Math.round(percent) + '%';
+				}
+			}
+			reinforcementTime.textContent = reinforcementsSpawned ? 'deployed' : formatTime(Math.max(0, reinforcementTimer));
+			updateSelectedPanel();
+			drawMinimap();
+		}
+
+		function updateSelectedPanel() {
+			if (!selectedUnit || !selectedUnit.alive) {
+				selectedName.textContent = 'No unit selected';
+				selectedStats.innerHTML = '';
+				return;
+			}
+			selectedName.textContent = selectedUnit.name + ' — ' + selectedUnit.className;
+			selectedStats.innerHTML = '<span>Hull<br><b>' + Math.ceil(selectedUnit.hp) + ' / ' + selectedUnit.maxHp + '</b></span>' +
+				'<span>Range<br><b>' + selectedUnit.range + ' m</b></span>' +
+				'<span>Speed<br><b>' + selectedUnit.speed + ' m/s</b></span>' +
+				'<span>Weapon<br><b>' + selectedUnit.damage + ' dmg</b></span>' +
+				'<span>Order<br><b>' + (selectedUnit.target ? 'Attack ' + selectedUnit.target.name : selectedUnit.destination ? 'Move' : 'Hold') + '</b></span>' +
+				'<span>Status<br><b>' + (paused ? 'Paused' : 'Combat ready') + '</b></span>';
+		}
+
+		function setElementWorldPosition(element, position, yOffset) {
+			TMP_B.copy(position).project(camera);
+			const visible = TMP_B.z > -1 && TMP_B.z < 1 && Math.abs(TMP_B.x) < 1.2 && Math.abs(TMP_B.y) < 1.2;
+			element.style.display = visible ? 'block' : 'none';
+			if (!visible) return;
+			element.style.left = ((TMP_B.x + 1) * .5 * width) + 'px';
+			element.style.top = ((1 - TMP_B.y) * .5 * height - yOffset) + 'px';
+		}
+
+		function drawMinimap() {
+			const ctx = minimapContext;
+			const w = minimap.width;
+			const h = minimap.height;
+			ctx.clearRect(0, 0, w, h);
+			ctx.fillStyle = 'rgba(0, 10, 14, .92)';
+			ctx.fillRect(0, 0, w, h);
+			ctx.strokeStyle = 'rgba(65, 202, 235, .15)';
+			ctx.lineWidth = 1;
+			for (let i = 0; i <= 8; i++) {
+				ctx.beginPath(); ctx.moveTo(i / 8 * w, 0); ctx.lineTo(i / 8 * w, h); ctx.stroke();
+				ctx.beginPath(); ctx.moveTo(0, i / 8 * h); ctx.lineTo(w, i / 8 * h); ctx.stroke();
+			}
+			for (const unit of units) {
+				if (!unit.alive) continue;
+				const x = (unit.root.position.x / (WORLD_SIZE * 2) + .5) * w;
+				const y = (unit.root.position.z / (WORLD_SIZE * 2) + .5) * h;
+				ctx.fillStyle = unit.team === FRIENDLY ? '#4edcff' : '#ff5428';
+				ctx.beginPath();
+				ctx.arc(x, y, unit === selectedUnit ? 6 : 4, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.strokeStyle = 'rgba(190, 245, 255, .65)';
+			ctx.strokeRect((cameraTarget.x / (WORLD_SIZE * 2) + .5) * w - 28, (cameraTarget.z / (WORLD_SIZE * 2) + .5) * h - 20, 56, 40);
+		}
+
+		function checkEndState() {
+			const friendlyAlive = units.some(unit => unit.alive && unit.team === FRIENDLY);
+			const enemyAlive = units.some(unit => unit.alive && unit.team === ENEMY);
+			if (!friendlyAlive) endGame(false);
+			else if (!enemyAlive && reinforcementsSpawned) endGame(true);
+		}
+
+		function endGame(victory) {
+			ended = true;
+			paused = true;
+			message.style.display = 'block';
+			messageTitle.textContent = victory ? 'Mission complete' : 'Fleet destroyed';
+			messageCopy.textContent = victory ? 'The ruin sector is secure.' : 'Command link lost. Reinitialize the simulation.';
+			objectiveText.textContent = victory ? 'Sector secured' : 'Mission failed';
+		}
+
+		function update(delta) {
+			updateCamera(delta);
+			if (!paused && !ended) {
+				gameTime += delta;
+				reinforcementTimer -= delta;
+				if (!reinforcementsSpawned && reinforcementTimer <= 0) spawnReinforcements();
+				updateUnits(delta);
+				updateProjectiles(delta);
+				updateImpacts(delta);
+				updateDamageLabels(delta);
+			}
+			updateHud();
+		}
+
+		function loop() {
+			requestAnimationFrame(loop);
+			const delta = Math.min(clock.getDelta(), .05);
+			update(delta);
+			renderer.render(scene, camera);
+		}
+		requestAnimationFrame(loop);
+
+		function updatePointer(event) {
+			const rect = canvas.getBoundingClientRect();
+			pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+			pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+			raycaster.setFromCamera(pointer, camera);
+		}
+
+		canvas.addEventListener('pointerdown', event => {
+			if (event.button !== 0 || ended) return;
+			updatePointer(event);
+			const hits = raycaster.intersectObject(unitLayer, true);
+			const hit = hits.find(item => item.object._unit && item.object._unit.alive);
+			if (!hit) return;
+			const unit = hit.object._unit;
+			if (unit.team === FRIENDLY) selectUnit(unit);
+			else commandAttack(unit);
+		});
+
+		canvas.addEventListener('contextmenu', event => {
+			event.preventDefault();
+			if (ended) return;
+			updatePointer(event);
+			if (raycaster.ray.intersectPlane(groundPlane, groundHit)) commandMove(groundHit);
+		});
+
+		canvas.addEventListener('wheel', event => {
+			event.preventDefault();
+			cameraDistance = clamp(cameraDistance + event.deltaY * .35, 260, 720);
+		}, { passive: false });
+
+		window.addEventListener('keydown', event => {
+			keys[event.code] = true;
+			keys[event.key] = true;
+			if (event.code === 'Space') { event.preventDefault(); paused = !paused; }
+			if (event.code === 'KeyR') resetGame();
+			if (/^Digit[1-4]$/.test(event.code)) {
+				const id = Number(event.code.slice(-1));
+				selectUnit(units.find(unit => unit.id === id));
+			}
+		});
+		window.addEventListener('keyup', event => { keys[event.code] = false; keys[event.key] = false; });
+
+		document.getElementById('attack-command').addEventListener('click', attackNearest);
+		document.getElementById('guard-command').addEventListener('click', regroup);
+		document.getElementById('pause-command').addEventListener('click', () => { paused = !paused; });
+		document.getElementById('restart-button').addEventListener('click', resetGame);
+
+		function onWindowResize() {
+			width = window.innerWidth || 2;
+			height = window.innerHeight || 2;
+			pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+			canvas.width = width * pixelRatio;
+			canvas.height = height * pixelRatio;
+			canvas.style.width = width + 'px';
+			canvas.style.height = height + 'px';
+			camera.setPerspective(40 / 180 * Math.PI, width / height, 1, 2200);
+			renderer.screenRenderTarget.resize(width * pixelRatio, height * pixelRatio);
+		}
+		window.addEventListener('resize', onWindowResize, false);
+
+		function distanceXZ(a, b) {
+			const x = a.x - b.x;
+			const z = a.z - b.z;
+			return Math.sqrt(x * x + z * z);
+		}
+
+		function lerpAngle(a, b, t) {
+			let delta = (b - a + Math.PI) % (Math.PI * 2) - Math.PI;
+			if (delta < -Math.PI) delta += Math.PI * 2;
+			return a + delta * t;
+		}
+
+		function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+		function formatTime(value) {
+			const seconds = Math.ceil(value);
+			return '00:' + String(seconds).padStart(2, '0');
+		}
+	</script>
+</body>
+</html>

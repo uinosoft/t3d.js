@@ -105,6 +105,9 @@
 		"scene_anchor",
 		"scene_clippingplanes"
 	],
+	"game": [
+		"game_space_tactical"
+	],
 	"camera": [
 		"camera_projection",
 		"camera_multiple"
