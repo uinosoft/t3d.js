@@ -5,6 +5,7 @@
 #include <uv_pars_vert>
 #include <color_pars_vert>
 #include <diffuseMap_pars_vert>
+#include <normalMap_pars_vert>
 #include <modelPos_pars_vert>
 #include <envMap_pars_vert>
 #include <aoMap_pars_vert>
@@ -26,6 +27,7 @@ void main() {
     #include <uv_vert>
     #include <color_vert>
     #include <diffuseMap_vert>
+    #include <normalMap_vert>
     #include <modelPos_vert>
     #include <envMap_vert>
     #include <aoMap_vert>

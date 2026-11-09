@@ -128,8 +128,9 @@ class WebGLPrograms {
 		props.alphaMapUv = HAS_ALPHAMAP && getUVChannel(material.alphaMapCoord);
 		props.emissiveMapUv = HAS_EMISSIVEMAP && getUVChannel(material.emissiveMapCoord);
 		props.aoMapUv = HAS_AOMAP && getUVChannel(material.aoMapCoord);
+		props.normalMapUv = HAS_NORMALMAP && getUVChannel(material.normalMapCoord);
 
-		if (HAS_NORMALMAP || HAS_BUMPMAP || HAS_SPECULARMAP || HAS_ROUGHNESSMAP || HAS_METALNESSMAP || HAS_GLOSSINESSMAP || HAS_CLEARCOATMAP || HAS_CLEARCOAT_ROUGHNESSMAP || HAS_CLEARCOAT_NORMALMAP) {
+		if (HAS_BUMPMAP || HAS_SPECULARMAP || HAS_ROUGHNESSMAP || HAS_METALNESSMAP || HAS_GLOSSINESSMAP || HAS_CLEARCOATMAP || HAS_CLEARCOAT_ROUGHNESSMAP || HAS_CLEARCOAT_NORMALMAP) {
 			_activeMapCoords |= 1 << 0; // these maps use uv coord 0 by default
 		}
 
@@ -368,6 +369,7 @@ function createProgram(gl, defines, props, vertex, fragment) {
 		props.alphaMapUv ? '#define ALPHAMAP_UV ' + props.alphaMapUv : '',
 		props.emissiveMapUv ? '#define EMISSIVEMAP_UV ' + props.emissiveMapUv : '',
 		props.aoMapUv ? '#define AOMAP_UV ' + props.aoMapUv : '',
+		props.normalMapUv ? '#define NORMALMAP_UV ' + props.normalMapUv : '',
 
 		props.activeMapCoords > 0 ? '#define USE_UV' : '',
 		props.activeMapCoords & 1 ? '#define USE_UV1' : '',

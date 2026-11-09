@@ -230,8 +230,8 @@ function createAttributesKey(attributes) {
 }
 
 function decompose(matrix3) {
-	const tx = matrix3.elements[2];
-	const ty = matrix3.elements[5];
+	const tx = matrix3.elements[6];
+	const ty = matrix3.elements[7];
 
 	const sx = Math.sqrt(matrix3.elements[0] * matrix3.elements[0] + matrix3.elements[1] * matrix3.elements[1]);
 	const sy = Math.sqrt(matrix3.elements[3] * matrix3.elements[3] + matrix3.elements[4] * matrix3.elements[4]);
@@ -1177,7 +1177,8 @@ class GLTFWriter {
 		// normalTexture
 		if (material.normalMap) {
 			const normalMapDef = {
-				index: await this.processTextureAsync(material.normalMap)
+				index: await this.processTextureAsync(material.normalMap),
+				texCoord: material.normalMapCoord
 			};
 
 			if (material.normalScale && material.normalScale.x !== 1) {
@@ -1185,6 +1186,7 @@ class GLTFWriter {
 				normalMapDef.scale = material.normalScale.x;
 			}
 
+			this.applyTextureTransform(normalMapDef, material.normalMapTransform);
 			materialDef.normalTexture = normalMapDef;
 		}
 

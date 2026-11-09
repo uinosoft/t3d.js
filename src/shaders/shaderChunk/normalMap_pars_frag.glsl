@@ -1,6 +1,7 @@
 #ifdef USE_NORMAL_MAP
     uniform sampler2D normalMap;
     uniform vec2 normalScale;
+    varying vec2 vNormalMapUV;
 #endif
 
 #if defined(USE_NORMAL_MAP) || defined(USE_CLEARCOAT_NORMALMAP)

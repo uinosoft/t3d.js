@@ -219,7 +219,7 @@ class Material extends EventDispatcher {
 
 		/**
 		 * The uv-transform matrix of diffuse map.
-		 * This will also affect other maps that cannot be individually specified uv transform, such as normalMap, bumpMap, etc.
+		 * This will also affect other maps that cannot be individually specified uv transform, such as bumpMap, roughnessMap, etc.
 		 * @type {TransformUV}
 		 * @default TransformUV()
 		 */
@@ -310,6 +310,20 @@ class Material extends EventDispatcher {
 		 * @default null
 		 */
 		this.normalMap = null;
+
+		/**
+		 * Define the UV channel for the normal map to use starting from 0 and defaulting to 0.
+		 * @type {number}
+		 * @default 0
+		 */
+		this.normalMapCoord = 0;
+
+		/**
+		 * The uv-transform matrix of normal map, independent of diffuseMapTransform.
+		 * @type {TransformUV}
+		 * @default TransformUV()
+		 */
+		this.normalMapTransform = new TransformUV();
 
 		/**
 		 * How much the normal map affects the material. Typical ranges are 0-1.
@@ -660,6 +674,8 @@ class Material extends EventDispatcher {
 		this.aoMapCoord = source.aoMapCoord;
 		this.aoMapTransform.copy(source.aoMapTransform);
 		this.normalMap = source.normalMap;
+		this.normalMapCoord = source.normalMapCoord;
+		this.normalMapTransform.copy(source.normalMapTransform);
 		this.normalScale.copy(source.normalScale);
 		this.bumpMap = source.bumpMap;
 		this.bumpScale = source.bumpScale;

@@ -16,6 +16,9 @@ import './src/math/Vector4.tests.js';
 import './src/render/GPUMemoryInfo.tests.js';
 import './src/resources/RenderBuffer.tests.js';
 import './src/resources/geometries/Buffer.tests.js';
+import './src/resources/materials/Material.tests.js';
 import './src/webgl/WebGLMemoryUtils.tests.js';
 
 import './src/EventDispatcher.tests.js';
+
+import './addons/exporters/GLTFExporter.tests.js';
