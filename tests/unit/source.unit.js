@@ -18,6 +18,7 @@ import './src/resources/RenderBuffer.tests.js';
 import './src/resources/geometries/Buffer.tests.js';
 import './src/resources/materials/Material.tests.js';
 import './src/webgl/WebGLMemoryUtils.tests.js';
+import './src/webgl/WebGLTextures.tests.js';
 
 import './src/EventDispatcher.tests.js';
 

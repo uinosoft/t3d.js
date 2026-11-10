@@ -18114,15 +18114,11 @@
 
 	function getTextureLevelByteLength(width, height, depth, format, type) {
 		depth = depth || 1;
-		try {
-			return getTexture2DByteLength(width, height, format, type) * depth;
-		} catch (e) {
-			const internalFormatByteLength = getInternalFormatByteLength(format);
-			if (internalFormatByteLength > 0) {
-				return width * height * depth * internalFormatByteLength;
-			}
-			throw e;
+		const internalFormatByteLength = _sizedInternalFormatByteLengths.get(format);
+		if (internalFormatByteLength !== undefined) {
+			return width * height * depth * internalFormatByteLength;
 		}
+		return getTexture2DByteLength(width, height, format, type) * depth;
 	}
 	function getTextureByteLength(texture, textureProperties) {
 		const width = textureProperties.__width || 0;
@@ -18130,13 +18126,15 @@
 		const baseDepth = texture.isTexture3D || texture.isTexture2DArray ? texture.image.depth || 1 : 1;
 		const faceCount = texture.isTextureCube ? 6 : 1;
 		const maxMipLevel = Math.floor(textureProperties.__maxMipLevel || 0);
-		const format = texture.internalformat !== null ? texture.internalformat : texture.format;
+		// Storage size is determined by the sized internal format, not the upload type.
+		const internalFormatByteLength = _sizedInternalFormatByteLengths.get(textureProperties.__glInternalFormat) || _sizedInternalFormatByteLengths.get(texture.internalformat) || 0;
 		let byteLength = 0;
 		for (let level = 0; level <= maxMipLevel; level++) {
 			const mipWidth = Math.max(width >> level, 1);
 			const mipHeight = Math.max(height >> level, 1);
 			const mipDepth = texture.isTexture3D ? Math.max(baseDepth >> level, 1) : baseDepth;
-			byteLength += getTextureLevelByteLength(mipWidth, mipHeight, mipDepth, format, texture.type) * faceCount;
+			const levelByteLength = internalFormatByteLength > 0 ? mipWidth * mipHeight * mipDepth * internalFormatByteLength : getTextureLevelByteLength(mipWidth, mipHeight, mipDepth, texture.format, texture.type);
+			byteLength += levelByteLength * faceCount;
 		}
 		return byteLength;
 	}
@@ -18145,59 +18143,37 @@
 		return renderBuffer.width * renderBuffer.height * getInternalFormatByteLength(renderBuffer.format) * samples;
 	}
 	function getInternalFormatByteLength(format) {
+		const byteLength = _sizedInternalFormatByteLengths.get(format);
+		if (byteLength !== undefined) return byteLength;
 		switch (format) {
-			case PIXEL_FORMAT.R8:
 			case PIXEL_FORMAT.ALPHA:
 			case PIXEL_FORMAT.LUMINANCE:
 			case PIXEL_FORMAT.RED:
 			case PIXEL_FORMAT.RED_INTEGER:
-			case PIXEL_FORMAT.STENCIL_INDEX8:
 				return 1;
-			case PIXEL_FORMAT.R16F:
-			case PIXEL_FORMAT.RG8:
 			case PIXEL_FORMAT.LUMINANCE_ALPHA:
 			case PIXEL_FORMAT.RG:
 			case PIXEL_FORMAT.RG_INTEGER:
-			case PIXEL_FORMAT.RGBA4:
-			case PIXEL_FORMAT.RGB5_A1:
-			case PIXEL_FORMAT.DEPTH_COMPONENT16:
 				return 2;
-			case PIXEL_FORMAT.RGB8:
 			case PIXEL_FORMAT.RGB:
 			case PIXEL_FORMAT.RGB_INTEGER:
-			case PIXEL_FORMAT.DEPTH_COMPONENT24:
 				return 3;
-			case PIXEL_FORMAT.R32F:
-			case PIXEL_FORMAT.RG16F:
-			case PIXEL_FORMAT.RGBA8:
 			case PIXEL_FORMAT.RGBA:
 			case PIXEL_FORMAT.RGBA_INTEGER:
-			case PIXEL_FORMAT.R11F_G11F_B10F:
 			case PIXEL_FORMAT.DEPTH_COMPONENT:
-			case PIXEL_FORMAT.DEPTH_COMPONENT32F:
 			case PIXEL_FORMAT.DEPTH_STENCIL:
-			case PIXEL_FORMAT.DEPTH24_STENCIL8:
 				return 4;
-			case PIXEL_FORMAT.RG32F:
-			case PIXEL_FORMAT.RGB16F:
-			case PIXEL_FORMAT.RGBA16F:
-			case PIXEL_FORMAT.DEPTH32F_STENCIL8:
-				return 8;
-			case PIXEL_FORMAT.RGB32F:
-				return 12;
-			case PIXEL_FORMAT.RGBA32F:
-				return 16;
 		}
 		return 0;
 	}
 	function getTexture2DByteLength(width, height, format, type) {
+		format = _textureFormatAliases.get(format) || format;
 		const typeByteLength = getTextureTypeByteLength(type);
 		switch (format) {
 			// https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml
 			case PIXEL_FORMAT.DEPTH_COMPONENT:
-				return width * height * typeByteLength.byteLength;
 			case PIXEL_FORMAT.DEPTH_STENCIL:
-				return width * height * getDepthStencilTypeByteLength(type);
+				return width * height * typeByteLength.byteLength;
 			case PIXEL_FORMAT.STENCIL_INDEX8:
 			case PIXEL_FORMAT.ALPHA:
 			case PIXEL_FORMAT.LUMINANCE:
@@ -18247,49 +18223,39 @@
 		}
 		throw new Error(`Unable to determine texture byte length for ${format} format.`);
 	}
-	const _tempTypeByteLength = {
-		byteLength: 0,
-		components: 0
-	};
 	function getTextureTypeByteLength(type) {
-		switch (type) {
-			case PIXEL_TYPE.UNSIGNED_BYTE:
-			case PIXEL_TYPE.BYTE:
-				_tempTypeByteLength.byteLength = 1;
-				_tempTypeByteLength.components = 1;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_SHORT:
-			case PIXEL_TYPE.SHORT:
-			case PIXEL_TYPE.HALF_FLOAT:
-				_tempTypeByteLength.byteLength = 2;
-				_tempTypeByteLength.components = 1;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_SHORT_5_6_5:
-				_tempTypeByteLength.byteLength = 2;
-				_tempTypeByteLength.components = 3;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_SHORT_4_4_4_4:
-			case PIXEL_TYPE.UNSIGNED_SHORT_5_5_5_1:
-				_tempTypeByteLength.byteLength = 2;
-				_tempTypeByteLength.components = 4;
-				return _tempTypeByteLength;
-			case PIXEL_TYPE.UNSIGNED_INT:
-			case PIXEL_TYPE.INT:
-			case PIXEL_TYPE.FLOAT:
-				_tempTypeByteLength.byteLength = 4;
-				_tempTypeByteLength.components = 1;
-				return _tempTypeByteLength;
-		}
+		const byteLength = _textureTypeByteLengths.get(type);
+		if (byteLength !== undefined) return byteLength;
 		throw new Error(`Unknown texture type ${type}.`);
 	}
-	function getDepthStencilTypeByteLength(type) {
-		switch (type) {
-			case PIXEL_TYPE.UNSIGNED_INT_24_8:
-				return 4;
-			case PIXEL_TYPE.FLOAT_32_UNSIGNED_INT_24_8_REV:
-				return 8;
+
+	// Accept the same source format and type representations as WebGLConstants.
+	const _textureFormatAliases = new Map();
+	for (const [name, glFormat] of [['DEPTH_COMPONENT', 0x1902], ['DEPTH_STENCIL', 0x84F9], ['ALPHA', 0x1906], ['RED', 0x1903], ['RGB', 0x1907], ['RGBA', 0x1908], ['LUMINANCE', 0x1909], ['LUMINANCE_ALPHA', 0x190A], ['RED_INTEGER', 0x8D94], ['RG', 0x8227], ['RG_INTEGER', 0x8228], ['RGB_INTEGER', 0x8D98], ['RGBA_INTEGER', 0x8D99]]) {
+		_textureFormatAliases.set(name, PIXEL_FORMAT[name]);
+		_textureFormatAliases.set(glFormat, PIXEL_FORMAT[name]);
+	}
+	const _textureTypeByteLengths = new Map();
+	for (const [name, glType, byteLength, components] of [['UNSIGNED_BYTE', 0x1401, 1, 1], ['BYTE', 0x1400, 1, 1], ['UNSIGNED_SHORT', 0x1403, 2, 1], ['SHORT', 0x1402, 2, 1], ['HALF_FLOAT', 0x140B, 2, 1], ['HALF_FLOAT_OES', 0x8D61, 2, 1], ['UNSIGNED_SHORT_5_6_5', 0x8363, 2, 3], ['UNSIGNED_SHORT_4_4_4_4', 0x8033, 2, 4], ['UNSIGNED_SHORT_5_5_5_1', 0x8034, 2, 4], ['UNSIGNED_INT', 0x1405, 4, 1], ['INT', 0x1404, 4, 1], ['FLOAT', 0x1406, 4, 1], ['UNSIGNED_INT_2_10_10_10_REV', 0x8368, 4, 4], ['UNSIGNED_INT_10F_11F_11F_REV', 0x8C3B, 4, 3], ['UNSIGNED_INT_5_9_9_9_REV', 0x8C3E, 4, 3], ['UNSIGNED_INT_24_8', 0x84FA, 4, 2], ['FLOAT_32_UNSIGNED_INT_24_8_REV', 0x8DAD, 8, 2]]) {
+		const info = {
+			byteLength,
+			components
+		};
+		_textureTypeByteLengths.set(name, info);
+		_textureTypeByteLengths.set(glType, info);
+		if (PIXEL_TYPE[name] !== undefined) {
+			_textureTypeByteLengths.set(PIXEL_TYPE[name], info);
 		}
-		return getTextureTypeByteLength(type).byteLength;
+	}
+
+	// WebGL sized internal formats: name, native GL enum, and logical bytes per texel.
+	const _sizedInternalFormatByteLengths = new Map();
+	for (const [name, glFormat, byteLength] of [['R8', 0x8229, 1], ['R8_SNORM', 0x8F94, 1], ['R16F', 0x822D, 2], ['R32F', 0x822E, 4], ['R8UI', 0x8232, 1], ['R8I', 0x8231, 1], ['R16UI', 0x8234, 2], ['R16I', 0x8233, 2], ['R32UI', 0x8236, 4], ['R32I', 0x8235, 4], ['RG8', 0x822B, 2], ['RG8_SNORM', 0x8F95, 2], ['RG16F', 0x822F, 4], ['RG32F', 0x8230, 8], ['RG8UI', 0x8238, 2], ['RG8I', 0x8237, 2], ['RG16UI', 0x823A, 4], ['RG16I', 0x8239, 4], ['RG32UI', 0x823C, 8], ['RG32I', 0x823B, 8], ['RGB8', 0x8051, 3], ['SRGB8', 0x8C41, 3], ['RGB565', 0x8D62, 2], ['RGB8_SNORM', 0x8F96, 3], ['R11F_G11F_B10F', 0x8C3A, 4], ['RGB9_E5', 0x8C3D, 4], ['RGB16F', 0x881B, 6], ['RGB32F', 0x8815, 12], ['RGB8UI', 0x8D7D, 3], ['RGB8I', 0x8D8F, 3], ['RGB16UI', 0x8D77, 6], ['RGB16I', 0x8D89, 6], ['RGB32UI', 0x8D71, 12], ['RGB32I', 0x8D83, 12], ['RGBA8', 0x8058, 4], ['SRGB8_ALPHA8', 0x8C43, 4], ['RGBA8_SNORM', 0x8F97, 4], ['RGB5_A1', 0x8057, 2], ['RGBA4', 0x8056, 2], ['RGB10_A2', 0x8059, 4], ['RGBA16F', 0x881A, 8], ['RGBA32F', 0x8814, 16], ['RGBA8UI', 0x8D7C, 4], ['RGBA8I', 0x8D8E, 4], ['RGB10_A2UI', 0x906F, 4], ['RGBA16UI', 0x8D76, 8], ['RGBA16I', 0x8D88, 8], ['RGBA32I', 0x8D82, 16], ['RGBA32UI', 0x8D70, 16], ['DEPTH_COMPONENT16', 0x81A5, 2], ['DEPTH_COMPONENT24', 0x81A6, 3], ['DEPTH_COMPONENT32F', 0x8CAC, 4], ['DEPTH24_STENCIL8', 0x88F0, 4], ['DEPTH32F_STENCIL8', 0x8CAD, 8], ['STENCIL_INDEX8', 0x8D48, 1]]) {
+		_sizedInternalFormatByteLengths.set(name, byteLength);
+		_sizedInternalFormatByteLengths.set(glFormat, byteLength);
+		if (PIXEL_FORMAT[name] !== undefined) {
+			_sizedInternalFormatByteLengths.set(PIXEL_FORMAT[name], byteLength);
+		}
 	}
 
 	class WebGLTextures extends PropertyMap {
@@ -18578,8 +18544,9 @@
 				glInternalFormat = textureProperties.__glInternalFormat;
 			const image = texture.image;
 			if (texture.layerUpdates.size > 0) {
+				// Slice the source data using its upload format and type, not the GPU storage format.
+				const layerByteLength = getTextureLevelByteLength(image.width, image.height, 1, texture.format, texture.type);
 				for (const layerIndex of texture.layerUpdates) {
-					const layerByteLength = getTextureLevelByteLength(image.width, image.height, 1, texture.internalformat !== null ? texture.internalformat : texture.format, texture.type);
 					const layerData = image.data.subarray(layerIndex * layerByteLength / image.data.BYTES_PER_ELEMENT, (layerIndex + 1) * layerByteLength / image.data.BYTES_PER_ELEMENT);
 					gl.texSubImage3D(glTarget, 0, 0, 0, layerIndex, image.width, image.height, 1, glFormat, glType, layerData);
 				}
