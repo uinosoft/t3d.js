@@ -6,6 +6,7 @@
 
 #if defined(USE_ENV_MAP) && !defined(USE_VERTEX_ENVDIR)
     #include <normal_pars_vert>
+    #include <normalMap_pars_vert>
 #endif
 
 #include <envMap_pars_vert>
@@ -31,6 +32,7 @@ void main() {
 
         #ifndef USE_VERTEX_ENVDIR
             #include <normal_vert>
+            #include <normalMap_vert>
         #endif  
     #endif
 

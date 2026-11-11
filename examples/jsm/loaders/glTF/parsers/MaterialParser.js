@@ -117,6 +117,7 @@ export class MaterialParser {
 			if (!KHR_materials_unlit) {
 				if (normalTexture) {
 					material.normalMap = textures[normalTexture.index];
+					material.normalMapCoord = normalTexture.texCoord || 0;
 
 					material.normalScale.set(1, -1);
 					if (normalTexture.scale !== undefined) {
@@ -125,7 +126,9 @@ export class MaterialParser {
 						material.normalScale.set(normalTexture.scale, -normalTexture.scale);
 					}
 
-					// normal map transform not supported yet
+					if (material.normalMap) {
+						transformExt && transformExt.handleMaterialMap(material, 'normalMap', normalTexture);
+					}
 				}
 			}
 

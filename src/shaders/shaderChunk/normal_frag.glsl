@@ -25,13 +25,13 @@
 vec3 geometryNormal = N;
 
 #ifdef USE_NORMAL_MAP
-    vec3 mapN = texture2D(normalMap, v_Uv).rgb * 2.0 - 1.0;
+    vec3 mapN = texture2D(normalMap, vNormalMapUV).rgb * 2.0 - 1.0;
     mapN.xy *= normalScale;
     #ifdef USE_TBN
         N = normalize(tspace * mapN);
     #else
         mapN.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);
-        N = normalize(tsn(N, v_modelPos, v_Uv) * mapN);
+        N = normalize(tsn(N, v_modelPos, vNormalMapUV) * mapN);
     #endif
 #elif defined(USE_BUMPMAP)
     N = perturbNormalArb(v_modelPos, N, dHdxy_fwd(v_Uv));

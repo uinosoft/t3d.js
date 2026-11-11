@@ -58,7 +58,7 @@ const reflection_fragment = `
         reflectionUV.xyz = reflectionUV.xyz / reflectionUV.w;
 
         #ifdef USE_NORMAL_MAP
-            reflectionUV.xyz += ((texture2D(normalMap, v_Uv).rgb - 0.5) * reflectNormalScale) / 50.;
+            reflectionUV.xyz += ((texture2D(normalMap, vNormalMapUV).rgb - 0.5) * reflectNormalScale) / 50.;
         #endif
 
         vec4 reflectionColor = sRGBToLinear(texture2D(reflectTexture, reflectionUV.xy));

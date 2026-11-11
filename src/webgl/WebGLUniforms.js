@@ -25,6 +25,7 @@ const internalUniforms = {
 	'alphaMap': [4, function(material, textures) { this.set(material.alphaMap, textures) }],
 	'alphaMapUVTransform': [4, function(material, textures) { const transform = material.alphaMapTransform; transform.isTransformUV && transform.update(); this.set(transform.elements) }],
 	'normalMap': [4, function(material, textures) { this.set(material.normalMap, textures) }],
+	'normalMapUVTransform': [4, function(material, textures) { const transform = material.normalMapTransform; transform.isTransformUV && transform.update(); this.set(transform.elements) }],
 	'normalScale': [4, function(material, textures) { this.setValue(material.normalScale.x, material.normalScale.y) }],
 	'bumpMap': [4, function(material, textures) { this.set(material.bumpMap, textures) }],
 	'bumpScale': [4, function(material, textures) { this.set(material.bumpScale) }],

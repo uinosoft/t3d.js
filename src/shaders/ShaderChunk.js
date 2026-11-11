@@ -41,6 +41,8 @@ import alphamap_frag from './shaderChunk/alphamap_frag.glsl';
 import alphamap_pars_vert from './shaderChunk/alphamap_pars_vert.glsl';
 import alphamap_vert from './shaderChunk/alphamap_vert.glsl';
 import normalMap_pars_frag from './shaderChunk/normalMap_pars_frag.glsl';
+import normalMap_pars_vert from './shaderChunk/normalMap_pars_vert.glsl';
+import normalMap_vert from './shaderChunk/normalMap_vert.glsl';
 import normal_frag from './shaderChunk/normal_frag.glsl';
 import normal_pars_frag from './shaderChunk/normal_pars_frag.glsl';
 import normal_pars_vert from './shaderChunk/normal_pars_vert.glsl';
@@ -121,6 +123,8 @@ export const ShaderChunk = {
 	alphamap_pars_vert: alphamap_pars_vert,
 	alphamap_vert: alphamap_vert,
 	normalMap_pars_frag: normalMap_pars_frag,
+	normalMap_pars_vert: normalMap_pars_vert,
+	normalMap_vert: normalMap_vert,
 	normal_frag: normal_frag,
 	normal_pars_frag: normal_pars_frag,
 	normal_pars_vert: normal_pars_vert,

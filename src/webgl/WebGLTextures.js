@@ -370,8 +370,9 @@ class WebGLTextures extends PropertyMap {
 		const image = texture.image;
 
 		if (texture.layerUpdates.size > 0) {
+			// Slice the source data using its upload format and type, not the GPU storage format.
+			const layerByteLength = getTextureLevelByteLength(image.width, image.height, 1, texture.format, texture.type);
 			for (const layerIndex of texture.layerUpdates) {
-				const layerByteLength = getTextureLevelByteLength(image.width, image.height, 1, texture.internalformat !== null ? texture.internalformat : texture.format, texture.type);
 				const layerData = image.data.subarray(
 					layerIndex * layerByteLength / image.data.BYTES_PER_ELEMENT,
 					(layerIndex + 1) * layerByteLength / image.data.BYTES_PER_ELEMENT

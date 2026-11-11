@@ -132,6 +132,7 @@ const terrainShader = {
 		#include <common_vert>
 		#include <normal_pars_vert>
 		#include <uv_pars_vert>
+		#include <normalMap_pars_vert>
 		#include <color_pars_vert>
 		#include <modelPos_pars_vert>
 		#include <aoMap_pars_vert>
@@ -148,6 +149,7 @@ const terrainShader = {
 			myNormal = a_Normal;
 		
 			#include <uv_vert>
+			#include <normalMap_vert>
 		
 			#include <color_vert>
 			#include <modelPos_vert>
